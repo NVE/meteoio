@@ -73,6 +73,7 @@ namespace mio {
  * - linear: linear data resampling, see LinearResampling
  * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
+ * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
  */
 
 /**
@@ -117,7 +118,7 @@ class ResamplingAlgorithms {
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
 		static Date getDailyStart(const Date& resampling_date);
-		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& pos, const Date& intervalStart, const Date& intervalEnd);
+		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, size_t pos, const Date& intervalStart, const Date& intervalEnd);
 
 		const std::string algo, parname;
 		double window_size;
@@ -263,13 +264,13 @@ class Daily_solar : public ResamplingAlgorithms {
  * fraction of the day when the minimum is reached). If data bearing the same name followed by "_MIN" or "_MAX"
  * exist, there is no need to provide an amplitude as they will be used instead.
  * 
- * @note current limitations: this generates a discontinuity at midnight. If both the average (the parameter itself in the data set), 
- * min and max are provided, an error message will be returned. 
  * @code
  * [Interpolations1D]
  * TA::resample = daily_avg
  * TA::daily_avg = 5                 ;assume that TA varies +/- 5K around its average during the day
  * @endcode
+ * @note If both the average (the parameter itself in the data set), 
+ * min and max are provided, an error message will be returned. 
  */
 class DailyAverage : public ResamplingAlgorithms {
 	public:

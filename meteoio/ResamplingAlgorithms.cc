@@ -170,10 +170,20 @@ Date ResamplingAlgorithms::getDailyStart(const Date& resampling_date)
  * @param intervalEnd end of the interval within which we will look for a valid value (often, end of the day)
  * @return index of the parameter's valid value
  */
-size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& pos, const Date& intervalStart, const Date& intervalEnd)
+size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, size_t pos, const Date& intervalStart, const Date& intervalEnd)
 {
 	size_t indexP1=IOUtils::npos;
 	size_t indexP2=IOUtils::npos;
+	
+	//if pos was not properly pre-positioned, do it
+	if (vecM[pos].date<intervalStart) {
+		for (pos; pos<vecM.size(); pos++)
+			if (vecM[pos].date>=intervalStart) break;
+	}
+	if (vecM[pos].date>intervalEnd) {
+		for (pos; pos-- >0;)
+			if (vecM[pos].date<=intervalEnd) break;
+	}
 
 	//look for daily sum before the current point
 	for (size_t ii=pos; ii-- >0; ) {
@@ -698,6 +708,7 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
 	} else if (nr_args==2) {
 		IOUtils::convertString(range, vecArgs[0]);
 		IOUtils::convertString(phase, vecArgs[1]);
+		phase *= -1; //shift the minimum *later* in the day
 	} else {
 		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
@@ -728,33 +739,75 @@ void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*pos
 	if (indexP==IOUtils::npos)
 		return;
 	
-	const double avg = vecM[indexP](paramindex);
+	//define various time parameters
 	const double julian = md.date.getJulian();
+	double frac_day = (julian+.5 - Optim::intPart(julian+.5)); // julian day starts at noon and we want the fraction of the day, from 0 to 1!
+	if (frac_day==0.) frac_day = 1.; //because we considere here that midnight belongs to the day before
+	const double w = 2.*Cst::PI;
 	
-	double local_range = 0.;
+	//get the day before and the day after
+	const size_t indexBefore = getDailyValue(vecM, paramindex, index, dayStart-1., dayEnd-1.);
+	const size_t indexAfter = getDailyValue(vecM, paramindex, index, dayStart+1., dayEnd+1.);
+	const double avg0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore](paramindex) ;
+	const double avg1 = vecM[indexP](paramindex);
+	const double avg2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter](paramindex) ;
 	
+	//define the distances to the current day at noon
+	const double d0 = (avg0==IOUtils::nodata)? 1e12 : frac_day+0.5;
+	const double d1 = (avg1==IOUtils::nodata)? 1e12 : abs(.5-frac_day);
+	const double d2 = (avg2==IOUtils::nodata)? 1e12 : 1.5-frac_day;
+	
+	//define the amplitude
 	if (range!=IOUtils::nodata) {
-		local_range = range;
+		const double sin_curve = range*sin(w*(frac_day-.25+phase));
+		double offset = 0.;
+		if (d1!=0.) {
+			const double w0 = 1./Optim::pow2(d0);
+			const double w1 = 1./Optim::pow2(d1);
+			const double w2 = 1./Optim::pow2(d2);
+			offset = (w0*avg0 + w1*avg1 + w2*avg2) / (w0+w1+w2);
+		} else {
+			offset = avg1;
+		}
+		md(paramindex) = sin_curve + offset;
 	} else {
 		//search for min or max or both
 		const string param_name = vecM[indexP].getNameForParameter(paramindex);
 		const bool min_exist =  vecM[indexP].param_exists( param_name+"_MIN" );
 		const bool max_exist =  vecM[indexP].param_exists( param_name+"_MAX" );
 		
-		if (min_exist && !max_exist)
-			local_range = (avg -  vecM[indexP]( param_name+"_MIN" )) * 2.;
-		else if (!min_exist && max_exist)
-			local_range = (vecM[indexP]( param_name+"_MAX" ) - avg) * 2.;
-		else if (!min_exist && !max_exist) 
+		double A0 = 0., A1 = 0., A2 = 0.;
+		if (min_exist && !max_exist) {
+			const double min0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore]( param_name+"_MIN" );
+			const double min1 = vecM[indexP]( param_name+"_MIN" );
+			const double min2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter]( param_name+"_MIN" );
+			
+			A0 = (min0==IOUtils::nodata || avg0==IOUtils::nodata)? IOUtils::nodata : (avg0 -  min0) * 2.;
+			A1 = (min1==IOUtils::nodata || avg1==IOUtils::nodata)? IOUtils::nodata : (avg1 -  min1) * 2.;
+			A2 = (min2==IOUtils::nodata || avg2==IOUtils::nodata)? IOUtils::nodata : (avg2 -  min2) * 2.;
+		} else if (!min_exist && max_exist) {
+			const double max0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore]( param_name+"_MAX" );
+			const double max1 = vecM[indexP]( param_name+"_MAX" );
+			const double max2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter]( param_name+"_MAX" );
+			
+			A0 = (max0==IOUtils::nodata || avg0==IOUtils::nodata)? IOUtils::nodata : (max0 - avg0) * 2.;
+			A1 = (max1==IOUtils::nodata || avg1==IOUtils::nodata)? IOUtils::nodata : (max1 - avg1) * 2.;
+			A2 = (max2==IOUtils::nodata || avg2==IOUtils::nodata)? IOUtils::nodata : (max2 - avg2) * 2.;
+		} else if (!min_exist && !max_exist) {
 			return; // nothing else that we can do...
-		else { //we have both min, max and avg
+		} else { //we have both min, max and avg
 			throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
 		}
+		
+		if (d1!=0.) {
+			const double w0 = 1./Optim::pow2(d0);
+			const double w1 = 1./Optim::pow2(d1);
+			const double w2 = 1./Optim::pow2(d2);
+			md(paramindex) = 1./(w0+w1+w2) * ( w0*(A0*sin(w*(frac_day-.25+phase))+avg0) + w1*(A1*sin(w*(frac_day-.25+phase))+avg1) + w2*(A2*sin(w*(frac_day-.25+phase))+avg2) );
+		} else {
+			md(paramindex) = A1*sin(w*(frac_day-.25+phase)) + avg1;
+		}
 	}
-	
-	const double t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!
-	const double w = 2.*Cst::PI;
-	md(paramindex) = local_range * sin(w*t) + avg;
 	
 	//very basic range checking
 	//HACK this means that this should be implemented as a data creator so it could be filtered afterward
