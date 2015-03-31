@@ -108,13 +108,6 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
-}
-
-void TEMPLATE::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 	
 	/* Example: how to read coordinate in the input coordinate system and make them availabe to any other coordinate system*/
 	/* //we assume we already have eatsing, northing and altitude in "double" variables
@@ -159,6 +152,13 @@ void TEMPLATE::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vec
 	* timeseries.push_back( md );					//add the MeteoData to the time vector
 	 * }
 	 */
+}
+
+void TEMPLATE::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+                              const std::string&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
 }
 
 void TEMPLATE::readPOI(std::vector<Coords>&)
