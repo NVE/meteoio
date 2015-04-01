@@ -177,11 +177,11 @@ size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, c
 	
 	//if pos was not properly pre-positioned, do it
 	if (vecM[pos].date<intervalStart) {
-		for (pos; pos<vecM.size(); pos++)
+		for (; pos<vecM.size(); pos++)
 			if (vecM[pos].date>=intervalStart) break;
 	}
 	if (vecM[pos].date>intervalEnd) {
-		for (pos; pos-- >0;)
+		for (; pos-- >0;)
 			if (vecM[pos].date<=intervalEnd) break;
 	}
 
@@ -805,8 +805,8 @@ void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*pos
 	//HACK this means that this should be implemented as a data creator so it could be filtered afterward
 	//HACK or we could one more pass of filtering *after* the resampling
 	if (paramindex==MeteoData::RH) {
-		if (md(paramindex)<0.01) md(paramindex)==0.01;
-		if (md(paramindex)>1.) md(paramindex)==1.;
+		if (md(paramindex)<0.01) md(paramindex)=0.01;
+		if (md(paramindex)>1.) md(paramindex)=1.;
 	} else if (paramindex==MeteoData::TA ||  paramindex==MeteoData::VW ||  paramindex==MeteoData::VW_MAX || paramindex==MeteoData::ISWR || paramindex==MeteoData::RSWR || paramindex==MeteoData::ILWR || paramindex==MeteoData::TSG || paramindex==MeteoData::TSS || paramindex==MeteoData::TAU_CLD) {
 		if (md(paramindex)<0.)
 			md(paramindex)=0.;
