@@ -267,7 +267,7 @@ class Daily_solar : public ResamplingAlgorithms {
  * @code
  * [Interpolations1D]
  * TA::resample = daily_avg
- * TA::daily_avg = 5                 ;assume that TA varies +/- 5K around its average during the day
+ * TA::daily_avg = 5 .25                ;assume that TA varies +/- 5K around its average during the day and reaches its minimum at 6am
  * @endcode
  * @note If both the average (the parameter itself in the data set), 
  * min and max are provided, an error message will be returned. 
@@ -280,6 +280,7 @@ class DailyAverage : public ResamplingAlgorithms {
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
+		double getValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& dayStart, const double& frac_day) const;
 		double range, phase;
 };
 

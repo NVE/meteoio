@@ -727,90 +727,83 @@ std::string DailyAverage::toString() const
 	return ss.str();
 }
 
+double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& dayStart, const double& frac_day) const
+{
+	const Date dayEnd = dayStart+1.;
+	const size_t indexP = getDailyValue(vecM, paramindex, index, dayStart, dayEnd);
+	if (indexP==IOUtils::npos)
+		return IOUtils::nodata;
+	
+	const double avg = vecM[indexP](paramindex); //from getDailyValue we are guaranteed to have a value
+	
+	double A=range;
+	if (A==IOUtils::nodata) { //ie no "range" was provided by the user
+		//search for min or max or both
+		const string param_name = vecM[indexP].getNameForParameter(paramindex);
+		const string min_name = param_name+"_MIN";
+		const string max_name = param_name+"_MAX";
+		const double min = (vecM[indexP].param_exists( min_name ))?  vecM[indexP](min_name) : IOUtils::nodata;
+		const double max = (vecM[indexP].param_exists( max_name ))?  vecM[indexP](max_name) : IOUtils::nodata;
+		
+		if (!(min!=IOUtils::nodata) != !(max!=IOUtils::nodata)) { //cheap implementation of XOR
+			if  (min!=IOUtils::nodata)
+				A = (avg -  min) * 2.;
+			else //max!=IOUtils::nodata
+				A =(max - avg) * 2.;
+		} else {
+			if (min==IOUtils::nodata && max==IOUtils::nodata)
+				return IOUtils::nodata;
+			else
+				throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
+		}
+	}
+
+	return A * sin( 2.*Cst::PI * (frac_day-.25+phase) ) + avg;
+}
+
 void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	const Date dayStart = getDailyStart(md.date);
-	const Date dayEnd = dayStart+1.;
-	const size_t indexP = getDailyValue(vecM, paramindex, index, dayStart, dayEnd);
-	if (indexP==IOUtils::npos)
-		return;
-	
 	//define various time parameters
 	const double julian = md.date.getJulian();
 	double frac_day = (julian+.5 - Optim::intPart(julian+.5)); // julian day starts at noon and we want the fraction of the day, from 0 to 1!
 	if (frac_day==0.) frac_day = 1.; //because we considere here that midnight belongs to the day before
-	const double w = 2.*Cst::PI;
 	
-	//get the day before and the day after
-	const size_t indexBefore = getDailyValue(vecM, paramindex, index, dayStart-1., dayEnd-1.);
-	const size_t indexAfter = getDailyValue(vecM, paramindex, index, dayStart+1., dayEnd+1.);
-	const double avg0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore](paramindex) ;
-	const double avg1 = vecM[indexP](paramindex);
-	const double avg2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter](paramindex) ;
+	const Date dayStart = getDailyStart(md.date);
+	const double val1 = getValue(vecM, paramindex, index, dayStart, frac_day);
+	if (val1==IOUtils::nodata)
+		return; //we could also decide to use val0 & val2 
 	
-	//define the distances to the current day at noon
-	const double d0 = (avg0==IOUtils::nodata)? 1e12 : frac_day+0.5;
-	const double d1 = (avg1==IOUtils::nodata)? 1e12 : abs(.5-frac_day);
-	const double d2 = (avg2==IOUtils::nodata)? 1e12 : 1.5-frac_day;
+	//get the other values (day before, day after)
+	const double val0 = getValue(vecM, paramindex, index, dayStart-1., frac_day);
+	const double val2 = getValue(vecM, paramindex, index, dayStart+1., frac_day);
 	
-	//define the amplitude
-	if (range!=IOUtils::nodata) {
-		const double sin_curve = range*sin(w*(frac_day-.25+phase));
-		double offset = 0.;
-		if (d1!=0.) {
-			const double w0 = 1./Optim::pow2(d0);
-			const double w1 = 1./Optim::pow2(d1);
-			const double w2 = 1./Optim::pow2(d2);
-			offset = (w0*avg0 + w1*avg1 + w2*avg2) / (w0+w1+w2);
-		} else {
-			offset = avg1;
-		}
-		md(paramindex) = sin_curve + offset;
-	} else {
-		//search for min or max or both
-		const string param_name = vecM[indexP].getNameForParameter(paramindex);
-		const bool min_exist =  vecM[indexP].param_exists( param_name+"_MIN" );
-		const bool max_exist =  vecM[indexP].param_exists( param_name+"_MAX" );
+	double val = val1;
+	if (frac_day!=0.5) { //at noon, we purely take val1
+		const double w1 = 1./Optim::pow2( abs(.5-frac_day) );
+		double norm = w1;
+		val *= w1;
 		
-		double A0 = 0., A1 = 0., A2 = 0.;
-		if (min_exist && !max_exist) {
-			const double min0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore]( param_name+"_MIN" );
-			const double min1 = vecM[indexP]( param_name+"_MIN" );
-			const double min2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter]( param_name+"_MIN" );
-			
-			A0 = (min0==IOUtils::nodata || avg0==IOUtils::nodata)? IOUtils::nodata : (avg0 -  min0) * 2.;
-			A1 = (min1==IOUtils::nodata || avg1==IOUtils::nodata)? IOUtils::nodata : (avg1 -  min1) * 2.;
-			A2 = (min2==IOUtils::nodata || avg2==IOUtils::nodata)? IOUtils::nodata : (avg2 -  min2) * 2.;
-		} else if (!min_exist && max_exist) {
-			const double max0 = (indexBefore==IOUtils::npos)? IOUtils::nodata : vecM[indexBefore]( param_name+"_MAX" );
-			const double max1 = vecM[indexP]( param_name+"_MAX" );
-			const double max2 = (indexAfter==IOUtils::npos)? IOUtils::nodata : vecM[indexAfter]( param_name+"_MAX" );
-			
-			A0 = (max0==IOUtils::nodata || avg0==IOUtils::nodata)? IOUtils::nodata : (max0 - avg0) * 2.;
-			A1 = (max1==IOUtils::nodata || avg1==IOUtils::nodata)? IOUtils::nodata : (max1 - avg1) * 2.;
-			A2 = (max2==IOUtils::nodata || avg2==IOUtils::nodata)? IOUtils::nodata : (max2 - avg2) * 2.;
-		} else if (!min_exist && !max_exist) {
-			return; // nothing else that we can do...
-		} else { //we have both min, max and avg
-			throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
+		if (val0!=IOUtils::nodata) {
+			const double w0 = 1./Optim::pow2( frac_day+0.5 );
+			val += w0*val0;
+			norm += w0;
 		}
-		
-		if (d1!=0.) {
-			const double w0 = 1./Optim::pow2(d0);
-			const double w1 = 1./Optim::pow2(d1);
-			const double w2 = 1./Optim::pow2(d2);
-			md(paramindex) = 1./(w0+w1+w2) * ( w0*(A0*sin(w*(frac_day-.25+phase))+avg0) + w1*(A1*sin(w*(frac_day-.25+phase))+avg1) + w2*(A2*sin(w*(frac_day-.25+phase))+avg2) );
-		} else {
-			md(paramindex) = A1*sin(w*(frac_day-.25+phase)) + avg1;
+		if (val2!=IOUtils::nodata) {
+			const double w2 = 1./Optim::pow2( 1.5-frac_day );
+			val += w2*val2;
+			norm += w2;
 		}
+		val /= norm;
 	}
 	
+	md(paramindex) = val;
 	//very basic range checking
 	//HACK this means that this should be implemented as a data creator so it could be filtered afterward
+	//HACK or we could one more pass of filtering *after* the resampling
 	if (paramindex==MeteoData::RH) {
 		if (md(paramindex)<0.01) md(paramindex)==0.01;
 		if (md(paramindex)>1.) md(paramindex)==1.;
