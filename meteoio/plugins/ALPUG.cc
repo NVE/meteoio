@@ -50,30 +50,30 @@ namespace mio {
  * - METEOPATH: where to find/write the meteo data; [Input] and [Output] section
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
  * - ALPUG_FIELDS: comma delimited list of fields. The fields <b>MUST</b> use the \ref meteoparam "MeteoData" naming scheme. Unknown or ignored fields are replaced by "%".
+ *  - WRAP_MONTH: which month (numerical) triggers the start of a new file (belonging to the next year. Default: 10); [Input] section
  * 
  * @code
  * METEO        = ALPUG
  * METEOPATH    = ./Met_files
  * STATION1     = CAND5
  * ALPUG_FIELDS = %,%,ID,timestamp,VW,VW_MAX,DW,TA,RH, RSWR,HS,%,%,%,%,%,TSG,%,%,%,TSS,ISWR,P
+ * WRAP_MONTH = 10
  * @endcode
  */
 
 const std::string ALPUG::dflt_extension = ".met";
 const double ALPUG::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const size_t ALPUG::max_buffered_lines = 4; //how many lines to keep in buffer in order to detect and skip duplicates
 
-ALPUG::ALPUG(const std::string& configfile) : cfg(configfile)
+ALPUG::ALPUG(const std::string& configfile) : cfg(configfile), wrap_month(10)
 {
 	parseInputOutputSection();
 }
 
-ALPUG::ALPUG(const Config& cfgreader) : cfg(cfgreader)
+ALPUG::ALPUG(const Config& cfgreader) : cfg(cfgreader), wrap_month(10)
 {
 	parseInputOutputSection();
 }
-
-ALPUG::~ALPUG() throw()
-{}
 
 void ALPUG::parseInputOutputSection()
 {
@@ -91,7 +91,9 @@ void ALPUG::parseInputOutputSection()
 	if (in_meteo == "ALPUG") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		vecIDs.clear();
-		cfg.getValues("STATION", "INPUT", vecIDs);
+		cfg.getValues("STATION", "Input", vecIDs);
+		
+		cfg.getValue("WRAP_MONTH", "Input", wrap_month, IOUtils::nothrow);
 		
 		string fields;
 		cfg.getValue("ALPUG_FIELDS", "Input", fields);
@@ -177,10 +179,7 @@ bool ALPUG::parseLine(const std::string& filename, const char& eoln, const size_
 					throw InvalidFormatException("Invalid date \'"+tmp_vec[ii]+"\' in file \'"+filename+"\'", AT);
 				
 				if (date<dateStart) return true;
-				if (date>dateEnd) {
-					std::cout << date.toString(Date::ISO) << " > " << dateEnd.toString(Date::ISO) << "\n";
-					return false;
-				}
+				if (date>dateEnd) return false;
 				md.setDate(date);
 				continue;
 			}
@@ -207,55 +206,70 @@ bool ALPUG::parseLine(const std::string& filename, const char& eoln, const size_
 	return true;
 }
 
+//since ALPUG files seem to often contain duplicate lines, just skip them
+bool ALPUG::isDuplicate(const std::string& line) 
+{
+	for(size_t ii=0; ii<LinesBuffer.size(); ++ii) {
+		if (line==LinesBuffer[ii]) return true;
+	}
+	
+	if (LinesBuffer.size()>max_buffered_lines) LinesBuffer.pop_front();
+	LinesBuffer.push_back( line );
+	return false;
+}
+
 void ALPUG::readMetoFile(const std::string& station_id, const Date& dateStart, const Date& dateEnd, 
                                               std::vector<MeteoData>& vecM)
 {
 	vecM.clear();
 	
-	//TODO: read accross multiple years
-	// start in the previous file, keep going in the next file (since files are restarted on Oct. 01)
+	int start_year, start_month, start_day;
+	int end_year, end_month, end_day;
+	dateStart.getDate(start_year, start_month, start_day);
+	dateEnd.getDate(end_year, end_month, end_day);
 	
-	stringstream ss;
-	ss << dateStart.getYear();
-	const string extension = IOUtils::getExtension(station_id);
-	const string filename = (extension!="")?  inpath + "/" + ss.str().substr(2,2) + station_id : inpath + "/" + ss.str().substr(2,2) + station_id + dflt_extension;
+	if (start_month>=wrap_month) start_year++;
+	if (end_month>=wrap_month) end_year++;
+	std::cout << "start_year=" << start_year << " end_year=" << end_year << "\n";
 	
-	std::ifstream fin; //Input file streams
-	fin.clear();
-	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
-	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
-		ss << " Please check file existence and permissions!";
-		throw FileAccessException(ss.str(), AT);
-	}
-	
-	const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
-	
-	const size_t nr_of_data_fields = vecFields.size();
-	string line;
-	size_t linenr = 0;
-	while (!fin.eof()){
+	for(int year=start_year; year<=end_year; ++year) {
+		stringstream ss;
+		ss << year;
+		const string extension = IOUtils::getExtension(station_id);
+		const string filename = (!extension.empty())?  inpath + "/" + ss.str().substr(2,2) + station_id : inpath + "/" + ss.str().substr(2,2) + station_id + dflt_extension;
+		
+		std::ifstream fin; //Input file streams
+		fin.clear();
+		fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+		if (fin.fail()) {
+			ostringstream ss;
+			ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+			ss << " Please check file existence and permissions!";
+			throw FileAccessException(ss.str(), AT);
+		}
+		
+		const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
+		const size_t nr_of_data_fields = vecFields.size();
 		string line;
-		getline(fin, line, eoln);
-		linenr++;
-
-		if (line.empty())
-			continue; //Pure comment lines and empty lines are ignored
+		while (!fin.eof()){
+			string line;
+			getline(fin, line, eoln);
+			if (line.empty())
+				continue; //Pure comment lines and empty lines are ignored
+			if (isDuplicate(line))
+				continue;
+			
+			Coords pos;
+			MeteoData md(Date(), StationData(pos, station_id, station_id));
+			bool isValid;
+			if (!parseLine(filename, eoln, nr_of_data_fields, dateStart, dateEnd, line, md, isValid))
+				break;
+			if(isValid)
+				vecM.push_back( md );
+		}
 		
-		Coords pos;
-		StationData sd(pos, station_id, station_id);
-		MeteoData md;
-		md.meta = sd;
-		bool isValid;
-		if (!parseLine(filename, eoln, nr_of_data_fields, dateStart, dateEnd, line, md, isValid))
-			break;
-		
-		if(isValid)
-			vecM.push_back( md );
+		fin.close();
 	}
-	
-	fin.close();
 }
 
 void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -293,11 +307,6 @@ void ALPUG::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Param
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::cleanup() throw()
-{
-
 }
 
 } //namespace

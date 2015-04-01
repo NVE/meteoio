@@ -158,7 +158,7 @@ void SMETIO::parseInputOutputSection()
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 			const string filename = vecFilenames[ii];
 			const string extension = IOUtils::getExtension(filename);
-			const std::string file_and_path = (extension!="")? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
+			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
 			if (!IOUtils::validFileName(file_and_path)) //Check whether filename is valid
 				throw InvalidFileNameException(file_and_path, AT);

@@ -22,6 +22,7 @@
 #include <meteoio/Config.h>
 
 #include <string>
+#include <deque>
 
 namespace mio {
 
@@ -38,7 +39,7 @@ class ALPUG : public IOInterface {
 		ALPUG(const std::string& configfile);
 		ALPUG(const ALPUG&);
 		ALPUG(const Config& cfgreader);
-		~ALPUG() throw();
+		~ALPUG() throw() {};
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -60,7 +61,7 @@ class ALPUG : public IOInterface {
 
 	private:
 		void parseInputOutputSection();
-		void cleanup() throw();
+		bool isDuplicate(const std::string& line) ;
 		Date parseDINDate(const std::string& datum) const;
 		bool parseLine(const std::string& filename, const char& eoln, const size_t& nr_of_data_fields, const Date& dateStart, const Date& dateEnd, const std::string& line, MeteoData &md, bool &isValid) const;
 		void readMetoFile(const std::string& station_name, const Date& dateStart, const Date& dateEnd, 
@@ -68,12 +69,15 @@ class ALPUG : public IOInterface {
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const size_t max_buffered_lines; //how many lines to keep in buffer to check for duplicates?
 		static const std::string dflt_extension;
+		std::deque<std::string> LinesBuffer; 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<std::string> vecIDs, vecFields;  //read from the Config [Input] section
 		std::string inpath, outpath;                //read from the Config [Output] section
 		
 		double in_dflt_TZ, out_dflt_TZ;
+		unsigned short wrap_month;
 };
 
 } //namespace
