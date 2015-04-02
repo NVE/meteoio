@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -49,14 +50,15 @@ namespace mio {
  * @endcode
  *
  * @section alpug_units Units
- * Temperatures are in Celsius, relative humidity between 0 and 100%, snow heights in cm.
+ * Temperatures are in Celsius, relative humidity between 0 and 100%, snow heights in cm. The timestamp is formatted as <a href="https://de.wikipedia.org/wiki/DIN_1355-1">DIN 1355</A>, 
+ * that is as "DD.MM.YYYY HH:MIN".
  *
  * @section alpug_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: where to find/write the meteo data; [Input] and [Output] section
- * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
+ * - STATION#: input stations ID to be found in METEOPATH. As many stations as needed may be specified
  * - ALPUG_FIELDS: comma delimited list of fields. The fields <b>MUST</b> use the \ref meteoparam "MeteoData" naming scheme. Unknown or ignored fields are replaced by "%".
  * - WRAP_MONTH: which month (numerical) triggers the start of a new file (belonging to the next year. Default: 10); [Input] section
  * - METAFILE: file within METEOPATH that contains the stations' metadata; [Input] section
@@ -326,21 +328,25 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 	
 	const string station_id = vecIDs[station_index];
 	Date prev_date(0., 0.);
-	bool file_found = false; //this will turn to true if at least one file could be opened for reading data
-	for(int year=start_year; year<=end_year; ++year) {
+	list<string> dirlist = IOUtils::readDirectory( inpath, station_id+dflt_extension );
+	if (dirlist.empty()) {
+		const std::string msg = "No data file found for station "+station_id+" in \'"+inpath+"\'"+". Files should be named as {YY}{station_id}"+dflt_extension+" with {YY} the last two digits of the year.";
+		throw NoAvailableDataException(msg, AT);
+	}
+	
+	for (int year=start_year; year<=end_year; ++year) {
 		stringstream ss;
 		ss << year;
-		const string extension = IOUtils::getExtension(station_id);
-		const string filename = (!extension.empty())?  inpath + "/" + ss.str().substr(2,2) + station_id : inpath + "/" + ss.str().substr(2,2) + station_id + dflt_extension;
+		const string filename = ss.str().substr(2,2) + station_id + dflt_extension;
+		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist
+			continue;
 		
 		std::ifstream fin; //Input file streams
 		fin.clear();
-		fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
-		if (fin.fail()) {
-			std::cerr << "[W] file \'" << filename << "\' could not be opened. Possible reason: " << strerror(errno) << "\n";
-			continue;
-		}
-		file_found = true;
+		const string file_and_path = inpath + "/" + filename;
+		fin.open (file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+		if (fin.fail()) 
+			throw FileAccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
 		
 		const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
 		const size_t nr_of_data_fields = vecFields.size();
@@ -350,20 +356,18 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 			string line;
 			getline(fin, line, eoln);
 			nr_line++;
-			if (line.empty())
-				continue; //Pure comment lines and empty lines are ignored
-			if (isDuplicate(line))
-				continue;
+			if (line.empty()) continue; //Pure comment lines and empty lines are ignored
+			//if (isDuplicate(line)) continue;
 			
 			Coords pos;
 			MeteoData md(Date(), vecMeta[station_index]);
 			bool isValid;
-			if (!parseLine(filename, nr_of_data_fields, dateStart, dateEnd, line, md, isValid))
+			if (!parseLine(file_and_path, nr_of_data_fields, dateStart, dateEnd, line, md, isValid))
 				break;
-			if(isValid) {
+			if (isValid) {
 				if (md.date<=prev_date) { //this happens when large blocks of data are duplicated
 					if (print_warning)
-						std::cerr << "[W] timstamps not in order in file \'" << filename << "\' starting at line " << nr_line << "; please check your data!\n";
+						std::cerr << "[W] timstamps not in order in file \'" << file_and_path << "\' starting at line " << nr_line << "; please check your data!\n";
 					print_warning = false;
 					continue;
 				}
@@ -374,13 +378,6 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 		}
 		
 		fin.close();
-	}
-	
-	if (!file_found) {
-		ostringstream ss;
-		ss << "Error opening files for station " << station_id << " in directory \'" << inpath << "\' for reading.";
-		ss << " Please check file existence and permissions!";
-		throw FileAccessException(ss.str(), AT);
 	}
 }
 

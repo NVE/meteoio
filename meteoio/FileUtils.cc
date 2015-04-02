@@ -179,7 +179,7 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
-	const std::string filepath = path+"\\"+pattern;
+	const std::string filepath = path+"\\";
 	WIN32_FIND_DATA ffd;
 	const HANDLE hFind = FindFirstFile(filepath.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
@@ -191,7 +191,10 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 			//this is a directory -> do nothing
 		} else {
 			const std::string filename(ffd.cFileName);
-			dirlist.push_back(filename);
+			const size_t pos = filename.find(pattern);
+				if (pos!=std::string::npos) {
+					dirlist.push_back(filename);
+				}
 		}
 	}
 	while (FindNextFile(hFind, &ffd) != 0);

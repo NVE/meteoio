@@ -118,7 +118,7 @@ namespace IOUtils {
 	/**
 	* @class file_indexer
 	* @brief helps building an index of stream positions
-	* to quickly jump closer to the proper position in an file
+	* to quickly jump closer to the proper position in a file
 	*
 	* @ingroup plugins
 	* @author Mathias Bavay
