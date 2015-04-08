@@ -21,7 +21,9 @@
 #include <fstream>
 
 #if defined _WIN32 || defined __MINGW32__
-	#define NOMINMAX
+	#ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 	#include <windows.h>
 	#include "Shlwapi.h"
 #else
