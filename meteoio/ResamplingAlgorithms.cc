@@ -181,8 +181,10 @@ size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, c
 			if (vecM[pos].date>=intervalStart) break;
 	}
 	if (vecM[pos].date>intervalEnd) {
-		for (; pos-- >0;)
+		for (size_t ii = pos; ii-- >0; ) {
+			pos=ii; //because ii gets corrupted at the final iteration if going all the way down
 			if (vecM[pos].date<=intervalEnd) break;
+		}
 	}
 
 	//look for daily sum before the current point
