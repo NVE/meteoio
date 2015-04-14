@@ -24,13 +24,19 @@ namespace mio {
 /**
  * @page smetio SMET
  * @section smetio_format Format
- * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG, RH, VW, DW, ISWR, OSWR, ILWR, OLWR, PINT, PSUM, HS).
- * This plugin can also provide Points Of Interest, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter, the header must contain the epsg code (see example below).
+ * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its 
+ * <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG, 
+ * RH, VW, DW, ISWR, OSWR, ILWR, OLWR, PINT, PSUM, HS). For PINT, it is assumed that the intensity (in mm/h) is valid for the whole period between the actual
+ * time step and the previous one.
+ * 
+ * This plugin can also provide Points Of Interest, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter,
+ * the header must contain the epsg code (see example below).
  *
- * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase. It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
+ * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase. 
+ * It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
  *
  * @section smetio_units Units
- * All units are MKSA, the only exception being the precipitations that are in mm/h. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
+ * All units are MKSA, the only exception being the precipitations that are in mm/h or mm/{time step}. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
  *
  * @section smetio_keywords Keywords
  * This plugin uses the following keywords:
