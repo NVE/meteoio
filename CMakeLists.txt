@@ -178,16 +178,6 @@ INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteoLaws COMPONENT head
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT headers)
 INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteoStats COMPONENT headers)
 
-IF(WIN32) #only having it in meteoio/CMake... is not enough...
-	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
-	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dll")
-	INSTALL(FILES ${dlls} ${importlibs} DESTINATION lib COMPONENT libraries)
-ENDIF(WIN32)
-IF(APPLE) #only having it in meteoio/CMake... is not enough...
-	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dylib")
-	INSTALL(FILES ${dlls} DESTINATION lib COMPONENT libraries)
-ENDIF(APPLE)
-
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
 	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
@@ -268,16 +258,12 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.txt")
 
-IF (DEST MATCHES "par")
-	SET(PACKAGE_EXTRA "-par")
-ENDIF(DEST MATCHES "par")
 SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
 SET(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
 SET(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-#SET(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
-SET(CPACK_ARCH "i386")
-SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${VERSION}-${CPACK_ARCH}")
+SET(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}-${CPACK_ARCH}")
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
@@ -310,33 +296,42 @@ IF(UNIX)
 	IF(APPLE)
 		SET(CPACK_GENERATOR "PackageMaker")
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/Applications/${CPACK_PACKAGE_NAME}")
+		SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
+		SET(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
+		SET_SOURCE_FILES_PROPERTIES(${CPACK_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	ELSE(APPLE)
 		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
 		SET(CPACK_DEBIAN_PACKAGE_SECTION "devel")
 		SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
-		SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
+		#SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
+		IF("${CPACK_ARCH}" STREQUAL "x86_64")
+			SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+		ELSE("${CPACK_ARCH}" STREQUAL "x86_64")
+			SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
+		ENDIF("${CPACK_ARCH}" STREQUAL "x86_64")
 		SET(CPACK_RPM_PACKAGE_NAME "meteoio")
 		SET(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
 		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6") #simply libproj for OpenSuse
-		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
+		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
 		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
 		SET(CPACK_GENERATOR "NSIS")
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
+		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
 		IF(INSTALL_DOC)
 			SET(CPACK_NSIS_MENU_LINKS
 				"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
 				"${DOC_PATH}/examples" "MeteoIO examples"
-				"https://models.slf.ch/p/meteoio/" "Home page")
+				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 		ELSEIF(INSTALL_DOC)
 			SET(CPACK_NSIS_MENU_LINKS
-				"https://models.slf.ch/p/meteoio/" "Home page")
+				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 		ENDIF(INSTALL_DOC)
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
