@@ -153,9 +153,9 @@ void ProcUndercatch_WMO::parse_args(std::vector<std::string> filter_args)
 		IOUtils::convertString(factor_snow, filter_args[1]);
 		IOUtils::convertString(factor_mixed, filter_args[2]);
 		if(filter_args.size()==5) {
-			IOUtils::convertString(Tsnow, filter_args[1]);
+			IOUtils::convertString(Tsnow, filter_args[3]);
 			Tsnow = K_TO_C(Tsnow);
-			IOUtils::convertString(Train, filter_args[2]);
+			IOUtils::convertString(Train, filter_args[4]);
 			Train = K_TO_C(Train);
 		}
 	} else if(filter_args[0]=="nipher") {
