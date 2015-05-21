@@ -176,14 +176,13 @@ bool fileExists(const std::string& filename)
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
 	const size_t path_length = path.length();
-	if (path_length > (MAX_PATH - 3)) {
+	if (path_length > (MAX_PATH - 1)) {
 		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
-	const std::string filepath = path+"\\";
 	WIN32_FIND_DATA ffd;
-	const HANDLE hFind = FindFirstFile(filepath.c_str(), &ffd);
+	const HANDLE hFind = FindFirstFileA(path.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
