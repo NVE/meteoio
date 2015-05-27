@@ -181,8 +181,9 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
+	const std::string inpath = path+"\\\\*";
 	WIN32_FIND_DATA ffd;
-	const HANDLE hFind = FindFirstFileA(path.c_str(), &ffd);
+	const HANDLE hFind = FindFirstFileA(inpath.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
