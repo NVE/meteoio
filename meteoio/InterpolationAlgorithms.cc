@@ -511,7 +511,13 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//Compute dew point temperatures at stations
 	std::vector<double> vecTd(vecDataRH.size());
 	for (size_t ii=0; ii<vecDataRH.size(); ii++){
-		vecTd[ii] = Atmosphere::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
+		const double rh = vecDataRH[ii];
+		if (rh<0. || rh>1.) {
+			ostringstream ss;
+			ss << "Invalid relative humidity: " << rh << " on " << date.toString(Date::ISO) << "\n";
+			throw InvalidArgumentException(ss.str(), AT);
+		}
+		vecTd[ii] = Atmosphere::RhtoDewPoint(rh, vecDataTA[ii], 1);
 	}
 
 	Fit1D trend;

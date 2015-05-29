@@ -78,6 +78,7 @@ namespace mio {
  * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
  * - ALLSKY_LW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
  * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
+ * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -95,6 +96,8 @@ namespace mio {
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  * - Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
  * - Meeus -- <i>"Astronomical Algorithms"</i>, second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA
+ * - Mair et al. -- <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height 
+ * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013.
  *
  *
  * @author Mathias Bavay
@@ -381,9 +384,24 @@ class AllSkySWGenerator : public GeneratorAlgorithm {
 		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
 
-class HSSweGenerator : public GeneratorAlgorithm {
+/**
+ * @class ESOLIPGenerator
+ * @brief Generate precipitation from changes in snow height.
+ * This implements the approach laid out in 
+ * Mair et al., <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height 
+ * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013.
+ * The snow density relies on Zwart, <i>"Significance of new-snow properties for snowcover development"</i>,master's thesis, 
+ * Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp, 2007.
+ * 
+ * @note only identified precipitation events are written out, this means that it is recommended to run through a Cst=0 data generator afterward 
+ * 
+ * @code
+ * HNW::generators = ESOLIP
+ * @endcode
+ */
+class ESOLIPGenerator : public GeneratorAlgorithm {
 	public:
-		HSSweGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ESOLIPGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);

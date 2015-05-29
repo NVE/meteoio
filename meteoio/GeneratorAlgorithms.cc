@@ -50,8 +50,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new AllSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_SW"){
 		return new AllSkySWGenerator(vecArgs, i_algoname);
-	} else if (algoname == "HS_SWE"){
-		return new HSSweGenerator(vecArgs, i_algoname);
+	} else if (algoname == "ESOLIP"){
+		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -671,22 +671,22 @@ double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, cons
 }
 
 
-const bool HSSweGenerator::soft = true;
-void HSSweGenerator::parse_args(const std::vector<std::string>& vecArgs)
+const bool ESOLIPGenerator::soft = true;
+void ESOLIPGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	if(vecArgs.size()>0) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
 }
 
-bool HSSweGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
+bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 {//HACK: modify prototype so we can get the full vector + the index of the replacement
 	return false; //all missing values could be filled
 }
 
 //when we can not guarantee HNW=0, we leave it at nodata. Therefore, it is highly recommended to
 //run through a Cst=0 data generator afterward
-bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ESOLIPGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (param!=MeteoData::HNW)
 		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to HNW!!", AT);
@@ -728,7 +728,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 	return all_filled;
 }
 
-double HSSweGenerator::newSnowDensity(const MeteoData& md) const
+double ESOLIPGenerator::newSnowDensity(const MeteoData& md) const
 { //C. Zwart, "Significance of new-snow properties for snowcover development",
 //master's thesis, 2007, Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp.
 	const double vw = max(2., md(MeteoData::VW));
