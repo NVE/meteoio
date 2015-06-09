@@ -8,7 +8,7 @@ function data = import_smet(fn)
 
 data = struct([]);
 
-if ~isfile(fn)
+if exist(fn, 'file') ~= 2
     warning(sprintf('file %s not found', fn))
     return;
 end
