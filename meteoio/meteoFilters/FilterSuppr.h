@@ -30,10 +30,16 @@ namespace mio {
  * @author Mathias Bavay
  * @date   2013-12-06
  * @brief Suppression filter.
- * This filter simply reject all values. This is convenient to quickly turn a parameter off
- * without modifying the original data.
+ * Normally, this filter simply reject all values. This is convenient to quickly turn a parameter off
+ * without modifying the original data. 
+ * But it is also possible to suppress a given fraction of the data at random by providing
+ * such fraction as an argument. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
+ * data set contains <i>nodata</i> for this parameter.
  * @code
- * ILWR::filter1	= suppr
+ * ILWR::filter1     = suppr
+ * 
+ * TA::filter1       = suppr
+ * TA::arg1          = 0.5
  * @endcode
  */
 
@@ -46,6 +52,8 @@ class FilterSuppr : public FilterBlock {
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
+		
+		double range;
 };
 
 } //end namespace
