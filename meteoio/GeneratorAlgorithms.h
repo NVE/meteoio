@@ -389,7 +389,10 @@ class AllSkySWGenerator : public GeneratorAlgorithm {
  * @brief Generate precipitation from changes in snow height.
  * This implements the approach laid out in 
  * Mair et al., <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height 
- * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013.
+ * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013. or
+ * Mair E., Leitinger G., Della Chiesa S., Niedrist G., Tappeiner U., Bertoldi G., <i>"A simple method to combine snow height and 
+ * meteorological observations to estimate winter precipitation at sub-daily resolution"</i>, Journal of Hydrological Sciences, 
+ * in revision, 2015.
  * The snow density relies on Zwart, <i>"Significance of new-snow properties for snowcover development"</i>,master's thesis, 
  * Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp, 2007.
  * 

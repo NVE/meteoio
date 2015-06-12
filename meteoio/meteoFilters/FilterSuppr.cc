@@ -64,7 +64,8 @@ void FilterSuppr::parse_args(std::vector<std::string> vec_args)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 	
 	if (nrArgs==1) {
-		IOUtils::convertString(range, vec_args[0]);
+		if (!IOUtils::convertString(range, vec_args[0]))
+			throw InvalidArgumentException("Invalid range \""+vec_args[0]+"\" specified for the "+getName()+" filter.", AT);
 		if (range<0. || range>1.)
 			throw InvalidArgumentException("Wrong range for filter " + getName() + ", it should be between 0 and 1", AT);
 	}

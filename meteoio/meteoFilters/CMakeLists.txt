@@ -22,6 +22,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcUndercatch_Forland.cc
 	meteoFilters/ProcAdd.cc
 	meteoFilters/ProcMult.cc
+	meteoFilters/ProcNoise.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
 	meteoFilters/FilterBlock.cc

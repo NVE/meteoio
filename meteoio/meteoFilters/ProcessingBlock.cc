@@ -43,6 +43,7 @@
 #include <meteoio/meteoFilters/ProcUnshade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
+#include <meteoio/meteoFilters/ProcNoise.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 
@@ -93,9 +94,10 @@ namespace mio {
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedHNW
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
- * - SUPPR: delete all data, see FilterSuppr
+ * - SUPPR: delete data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
+ * - NOISE: add noise to the data, see ProcNoise
  *
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -156,6 +158,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcMult(vec_args, blockname, root_path);
 	} else if (blockname == "ADD"){
 		return new ProcAdd(vec_args, blockname, root_path);
+	} else if (blockname == "NOISE"){
+		return new ProcNoise(vec_args, blockname);
 	} else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
