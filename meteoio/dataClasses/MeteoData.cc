@@ -293,7 +293,7 @@ const std::string MeteoData::toString() const {
 
 	for (size_t ii=0; ii<getNrOfParameters(); ii++) {
 		const double& value = operator()(ii);
-		if(value != IOUtils::nodata)
+		if (value != IOUtils::nodata)
 			os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
 	}
 
@@ -306,7 +306,7 @@ std::iostream& operator<<(std::iostream& os, const MeteoData& data) {
 	os << data.meta;
 	const size_t s_vector = data.param_name.size();
 	os.write(reinterpret_cast<const char*>(&s_vector), sizeof(size_t));
-	for(size_t ii=0; ii<s_vector; ii++) {
+	for (size_t ii=0; ii<s_vector; ii++) {
 		const size_t s_string = data.param_name[ii].size();
 		os.write(reinterpret_cast<const char*>(&s_string), sizeof(size_t));
 		os.write(reinterpret_cast<const char*>(&data.param_name[ii][0]), s_string*sizeof(data.param_name[ii][0]));
@@ -327,7 +327,7 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 	size_t s_vector;
 	is.read(reinterpret_cast<char*>(&s_vector), sizeof(size_t));
 	data.param_name.resize(s_vector);
-	for(size_t ii=0; ii<s_vector; ii++) {
+	for (size_t ii=0; ii<s_vector; ii++) {
 		size_t s_string;
 		is.read(reinterpret_cast<char*>(&s_string), sizeof(size_t));
 		data.param_name[ii].resize(s_string);
@@ -346,24 +346,22 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge)
 {
-	if(vec1.empty() && vec2.empty() && vec1[0].date!=vec2[0].date) return; //vectors MUST contain data at the same date
+	if (vec2.empty()) return;
 
-	if(simple_merge) {
+	if (simple_merge || vec1.empty()) {
 		vec1.reserve( vec1.size()+vec2.size() );
 		for(size_t ii=0; ii<vec2.size(); ii++) vec1.push_back( vec2[ii] );
 	} else {
-		for(size_t ii=0; ii<vec2.size(); ii++) merge(vec1, vec2[ii]);
+		for (size_t ii=0; ii<vec2.size(); ii++) merge(vec1, vec2[ii]);
 	}
 }
 
 void MeteoData::merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge)
 {
-	if(vec.empty() && vec[0].date!=meteo2.date) return; //the data must be time synchronized!
-
-	if(!simple_merge) {
-		for(size_t ii=0; ii<vec.size(); ii++) {
+	if (!simple_merge) {
+		for (size_t ii=0; ii<vec.size(); ii++) {
 			//two stations are considered the same if they point to the same 3D position
-			if( vec[ii].meta.position==meteo2.meta.position ) {
+			if (vec[ii].meta.position==meteo2.meta.position) {
 				vec[ii].merge(meteo2);
 				return;
 			}
@@ -372,6 +370,30 @@ void MeteoData::merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, cons
 
 	//the station was not found in the vector -> adding it
 	vec.push_back( meteo2 );
+}
+
+void MeteoData::merge(std::vector<MeteoData>& vec)
+{
+	const size_t nElems = vec.size();
+	if (nElems<2) return;
+	
+	std::vector<MeteoData> vecResult;
+	std::vector<size_t> mergeIdx(nElems);
+	for(size_t ii=0; ii<nElems; ii++) mergeIdx[ii] = ii;
+	
+	for (size_t ii=0; ii<nElems; ii++) {
+		if (mergeIdx[ii]==IOUtils::npos) continue; //this element has already been merged, skip
+		
+		for (size_t jj=1; jj<nElems; jj++) {
+			if (vec[ii].meta.position==vec[jj].meta.position) {
+				vec[ii].merge( vec[jj] );
+				mergeIdx[jj]=IOUtils::npos; //this element will be skipped in the next loops
+			}
+		}
+		vecResult.push_back( vec[ii] );
+	}
+	
+	vec.swap( vecResult );
 }
 
 MeteoData MeteoData::merge(const MeteoData& meteo1, const MeteoData& meteo2)
@@ -383,7 +405,7 @@ MeteoData MeteoData::merge(const MeteoData& meteo1, const MeteoData& meteo2)
 
 void MeteoData::merge(const MeteoData& meteo2)
 {
-	if( !date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) {
+	if (!date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) {
 		//the data must be time synchronized!
 		std::ostringstream ss;
 		ss << "Trying to merge MeteoData at " << date.toString(Date::ISO);
@@ -391,14 +413,14 @@ void MeteoData::merge(const MeteoData& meteo2)
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	if(date.isUndef()) date=meteo2.date;
+	if (date.isUndef()) date=meteo2.date;
 	meta.merge(meteo2.meta);
 
-	if( meteo2.resampled==true ) resampled=true;
+	if (meteo2.resampled==true ) resampled=true;
 
 	//merge standard parameters
-	for(size_t ii=0; ii<nrOfParameters; ii++) {
-		if(data[ii]==IOUtils::nodata) data[ii]=meteo2.data[ii];
+	for (size_t ii=0; ii<nrOfParameters; ii++) {
+		if (data[ii]==IOUtils::nodata) data[ii]=meteo2.data[ii];
 	}
 
 	//merge extra parameters
@@ -406,11 +428,11 @@ void MeteoData::merge(const MeteoData& meteo2)
 	const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
 
 	//no extra parameters to add -> return
-	if(nrExtra2==0) return;
+	if (nrExtra2==0) return;
 
 	//extra parameters only in meteo2 -> add them
-	if(nrExtra1==0) {
-		for(size_t ii=0; ii<nrExtra2; ii++) {
+	if (nrExtra1==0) {
+		for (size_t ii=0; ii<nrExtra2; ii++) {
 			const size_t new_idx = addParameter( meteo2.param_name[nrOfParameters+ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}
@@ -420,20 +442,20 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//extra parameters in both the current meteodata and meteo2 -> tedious merge...
 	std::vector<bool> meteo2_flags(nrExtra2, false); //to keep track of which elements have been copied
 	//merge the extra field of the current meteodata
-	for(size_t ii=0; ii<nrExtra1; ii++) {
+	for (size_t ii=0; ii<nrExtra1; ii++) {
 		const std::string curr_name = param_name[nrOfParameters+ii];
 		//look for this parameter in meteo2
-		for(size_t jj=0; jj<nrExtra2; jj++) {
-			if( meteo2.param_name[nrOfParameters+jj]==curr_name ) {
+		for (size_t jj=0; jj<nrExtra2; jj++) {
+			if (meteo2.param_name[nrOfParameters+jj]==curr_name ) {
 				meteo2_flags[jj] = true;
-				if(data[nrOfParameters+ii]==IOUtils::nodata) data[nrOfParameters+ii]=meteo2.data[nrOfParameters+jj];
+				if (data[nrOfParameters+ii]==IOUtils::nodata) data[nrOfParameters+ii]=meteo2.data[nrOfParameters+jj];
 				break;
 			}
 		}
 	}
 	//merge the extra fields of meteo2 that were NOT in the current meteodata
-	for(size_t ii=0; ii<nrExtra2; ii++) {
-		if( meteo2_flags[ii]==false ) {
+	for (size_t ii=0; ii<nrExtra2; ii++) {
+		if (meteo2_flags[ii]==false) {
 			const size_t new_idx = addParameter( meteo2.param_name[nrOfParameters+ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}

@@ -202,6 +202,19 @@ class MeteoData {
 		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false);
 
 		/**
+		 * @brief Simple merge strategy within a vector of MeteoData.
+		 * All stations that can be considerd as identical (see note) will be merged in case of fields set to nodata. 
+		 * The priority goes to the stations at the begining of the vector. For example, if vec[0] has TA but no HS and 
+		 * vec[3] has TA and HS, then vec[0] will <i>keep</i> its TA and get HS from vec[3]. If vec[2] is further away than
+		 * 5m from vec[0], then it can not contribute to vec[0].
+		 * @note two stations are considered to be identical if they fit within a 5m 3D box
+		 * @note the datasets are supposed to contain data at a given time stamp. If the stations don't match a
+		 * common time stamp, nothing is done
+		 * @param vec vector of stations
+		 */
+		static void merge(std::vector<MeteoData>& vec);
+		
+		/**
 		 * @brief Simple merge strategy.
 		 * If some fields of the object given as first argument are nodata, they will be filled by the matching field from the
 		 * provided argument.
