@@ -711,7 +711,7 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
 		IOUtils::convertString(range, vecArgs[0]);
 		IOUtils::convertString(phase, vecArgs[1]);
 		phase *= -1; //shift the minimum *later* in the day
-	} else {
+	} else if (nr_args>2) {
 		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
 }
@@ -738,27 +738,26 @@ double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& 
 	
 	const double avg = vecM[indexP](paramindex); //from getDailyValue we are guaranteed to have a value
 	
-	double A=range;
-	if (A==IOUtils::nodata) { //ie no "range" was provided by the user
-		//search for min or max or both
-		const string param_name = vecM[indexP].getNameForParameter(paramindex);
-		const string min_name = param_name+"_MIN";
-		const string max_name = param_name+"_MAX";
-		const double min = (vecM[indexP].param_exists( min_name ))?  vecM[indexP](min_name) : IOUtils::nodata;
-		const double max = (vecM[indexP].param_exists( max_name ))?  vecM[indexP](max_name) : IOUtils::nodata;
-		
-		if (!(min!=IOUtils::nodata) != !(max!=IOUtils::nodata)) { //cheap implementation of XOR
-			if  (min!=IOUtils::nodata)
-				A = (avg -  min) * 2.;
-			else //max!=IOUtils::nodata
-				A =(max - avg) * 2.;
-		} else {
-			if (min==IOUtils::nodata && max==IOUtils::nodata)
-				return IOUtils::nodata;
-			else
-				throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
+	//search for min or max or both
+	const string param_name = vecM[indexP].getNameForParameter(paramindex);
+	const string min_name = param_name+"_MIN";
+	const string max_name = param_name+"_MAX";
+	const double min = (vecM[indexP].param_exists( min_name ))?  vecM[indexP](min_name) : IOUtils::nodata;
+	const double max = (vecM[indexP].param_exists( max_name ))?  vecM[indexP](max_name) : IOUtils::nodata;
+	double A=range; //fallback: user provided range
+	
+	if (min==IOUtils::nodata && max==IOUtils::nodata) {
+		if (A==IOUtils::nodata) {
+			ostringstream ss;
+			ss << "Missing parameters for " << algo << " on " << dayStart.toString(Date::ISO_DATE) << ". Please consider providing a fallback range argument!";
+			throw InvalidArgumentException(ss.str(), AT);
 		}
-	}
+	} else if (min!=IOUtils::nodata && max==IOUtils::nodata) {
+		A = (avg -  min) * 2.;
+	} else if (min==IOUtils::nodata && max!=IOUtils::nodata) {
+		A =(max - avg) * 2.;
+	} else
+		throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
 
 	return A * sin( 2.*Cst::PI * (frac_day-.25+phase) ) + avg;
 }

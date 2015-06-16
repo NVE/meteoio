@@ -63,7 +63,8 @@ class Date {
 			FULL, ///< ISO 8601 followed by the julian date (in parenthesis)
 			NUM, ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
 			DIN, ///<DIN5008 format: DD.MM.YYYY HH:MM
-			ISO_WEEK ///< ISO 8601 week date: YYYY-Www-D (for example: 2014-W41-1)
+			ISO_WEEK, ///< ISO 8601 week date: YYYY-Www-D (for example: 2014-W41-1)
+			ISO_DATE ///< ISO 8601 date format without the time (ie YYYY-MM-DD)
 		} FORMATS;
 
 		///Keywords for selecting rounding strategy

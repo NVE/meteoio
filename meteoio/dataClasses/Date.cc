@@ -1061,6 +1061,12 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 				<< setw(2) << setfill('0') << tz_min;
 			}
 			break;
+		case(ISO_DATE):
+			tmpstr
+			<< setw(4) << setfill('0') << year_out << "-"
+			<< setw(2) << setfill('0') << month_out << "-"
+			<< setw(2) << setfill('0') << day_out;
+			break;
 		case(NUM):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out
