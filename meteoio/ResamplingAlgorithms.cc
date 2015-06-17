@@ -753,9 +753,9 @@ double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& 
 			throw InvalidArgumentException(ss.str(), AT);
 		}
 	} else if (min!=IOUtils::nodata && max==IOUtils::nodata) {
-		A = (avg -  min) * 2.;
+		A = (avg -  min);
 	} else if (min==IOUtils::nodata && max!=IOUtils::nodata) {
-		A =(max - avg) * 2.;
+		A =(max - avg);
 	} else
 		throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
 

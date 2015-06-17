@@ -262,7 +262,8 @@ class Daily_solar : public ResamplingAlgorithms {
  * The paremeter to be interpolated is assumed to be a daily average and a sinusoidal variation of the
  * amplitude given as argument will be generated (it is also possible to provide the "phase" or the 
  * fraction of the day when the minimum is reached). If data bearing the same name followed by "_MIN" or "_MAX"
- * exist, there is no need to provide an amplitude as they will be used instead.
+ * exist, there is no need to provide an amplitude as they will be used instead (but if the amplitude is provided, it
+ * will be used as a fallback when no min or max is available).
  * 
  * @code
  * [Interpolations1D]

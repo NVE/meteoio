@@ -383,8 +383,7 @@ void MeteoData::merge(std::vector<MeteoData>& vec)
 	
 	for (size_t ii=0; ii<nElems; ii++) {
 		if (mergeIdx[ii]==IOUtils::npos) continue; //this element has already been merged, skip
-		
-		for (size_t jj=1; jj<nElems; jj++) {
+		for (size_t jj=ii+1; jj<nElems; jj++) {
 			if (vec[ii].meta.position==vec[jj].meta.position) {
 				vec[ii].merge( vec[jj] );
 				mergeIdx[jj]=IOUtils::npos; //this element will be skipped in the next loops
