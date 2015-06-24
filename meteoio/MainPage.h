@@ -389,120 +389,93 @@ namespace mio {
 
 /**
  * @page examples Examples
- * Here is a simple exmaple showing how to get some meteorological data into the MeteoData and StationData vectors.
+ * This page shows you how to integrate MeteoIO within your own aplication. Several of the basics calls are shown 
+ * here below in the code examples. Finally, some tips are given in order to polish such integration.
+ * 
+ * Please keep in mind that the given examples are very simple, in order to keep them compact. For a real application, 
+ * you will need to add some error checking code (as shown in the "tips" section).
+ * 
+ * @section reading_meteo_data Reading meteorological time series
+ * Here is a simple exmaple showing how to get some meteorological data into the MeteoData vectors.
  * \code
  * #include <iostream>
- * #include "MeteoIO.h"
- *
+ * #include <meteoio/MeteoIO.h>
+ * 
+ * using namespace mio; //The MeteoIO namespace is called mio
+ * 
+ * //This is the most basic example. It does not check any exceptions, it only tries to be as c-like as possible
+ * //provide date as ISO formatted, for example 2008-12-01T15:35:00 and
+ * //it will retrieve the data for this date according to the io.ini configuration file
  * int main(int argc, char** argv) {
- * 	(void)argc;
- * 	//provide date as ISO formatted, for example 2008-12-01T15:35:00
  * 	Date d1;
- * 	std::vector<mio::MeteoData> vecMeteo;
- *
- * 	mio::IOManager *io = NULL;
- *
- * 	try {
- * 		mio::Config cfg("io.ini");
- * 		io = new mio::IOManager(cfg);
- * 	} catch (const IOException& e){
- * 		std::cout << "Problem with IOManager creation, cause: " << e.what() << std::endl;
- * 	}
- *
- * 	try {
- * 		mio::IOUtils::convertString(d1,argv[1]);
- * 		io->readMeteoData(d1, vecMeteo);
- * 	} catch (const IOException& e){
- * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
- * 	}
- *
+ * 	std::vector<MeteoData> vecMeteo;
+ * 
+ * 	Config cfg("io.ini");
+ * 	IOManager io(cfg);
+ * 
+ * 	//we assume that the time given on the command line is in TZ=+1
+ * 	IOUtils::convertString(d1,argv[1], 1.);
+ * 	//io.setProcessingLevel(IOManager::raw); //set the processing level: raw, filtered or resampled
+ * 	io.getMeteoData(d1, vecMeteo);
+ * 
+ * 	std::cout << vecMeteo.size() << " stations with an average sampling rate of " << io.getAvgSamplingRate() << " or 1 point every " << 1./(io.getAvgSamplingRate()*60.+1e-12) << " minutes\n";
  * 	//writing some data out in order to prove that it really worked!
  * 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
  * 		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
- * 		std::cout << vecMeteo[ii] << std::endl;
+ * 		std::cout << vecMeteo[ii].toString() << std::endl;
  * 	}
- *
- * 	delete io;
- *
+ * 
  * 	return 0;
  * }
  * \endcode
  *
- * Now, we can also read a Digital Elevation Model, extract a sub set as defined by some geographical coordinates and distances and write it back to disk:
- * \code
- * #include "MeteoIO.h"
+ * @section reading_dem_example Reading Digital Elevation Models
+ * Now, we can also read a Digital Elevation Model, print some information about it, write it back to disk with (potentially) another plugin as well as the slope and azimuth:
  *
+ * \code
+ *  #include <meteoio/MeteoIO.h>
+ * 
+ * using namespace mio; //The MeteoIO namespace is called mio
+ * 
+ * //This is a basic example of using as dem: the dem is read, the grid coordinates of a point given by its (lat,long) are retrieved
+ * //and a sub-dem is extracted starting at these coordinates and extending dist_x and dist_y and written out.
  * int main(void) {
- * 	const double dist_x=700, dist_y=1200;
- * 	mio::DEMObject dem;
- * 	mio::IOManager *io = NULL;
- * 	mio::Config *cfg = NULL;
- * 	int i,j;
- *
- * 	try {
- * 		cfg = new mio::Config("io.ini");
- * 		io = new mio::IOManager(cfg);
- * 	} catch (const IOException& e){
- * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
- * 	}
- *
- * 	try {
- * 		io->readDEM(dem);
- * 		mio::Coords point(*cfg);
- * 		point.setLatLon(46.1592, 8.12993);
- * 		dem.WGS84_to_grid(point, i,j);
- *
- * 		const int ncols = (int)ceil(dist_x/dem.cellsize);
- * 		const int nrows = (int)ceil(dist_y/dem.cellsize);
- *
- * 		mio::DEMObject sub_dem(dem, i, j, ncols, nrows);
- * 		io->write2DGrid(sub_dem,"sub_dem.dem");
- * 	} catch (const IOException& e){
- * 		std::cout << "Problem processing DEM: " << e.what() << std::endl;
- * 	}
- *
- * 	return 0;
- * }
- * \endcode
- *
- * The next example shows how to compute and output spatial interpolations.
- * \code
- * #include "MeteoIO.h"
- *
- * void real_main(void) {
- * 	mio::Date d1;
- *
- * 	//initializing the io handlers according to the config file
- * 	mio::Config cfg("io.ini");
- * 	mio::IOManager io(cfg);
- *
- * 	//reading the dem (necessary for several spatial interpolations algoritms)
- * 	mio::DEMObject dem;
+ * 	DEMObject dem;
+ * 	Config cfg("io.ini");
+ * 	IOManager io(cfg);
+ * 
+ * 	//reading dem
+ * 	dem.setUpdatePpt(DEMObject::SLOPE);
  * 	io.readDEM(dem);
- *
- * 	//we assume that the time given on the command line is in TZ=+1
- * 	d1.setTimeZone(1.);
- * 	mio::IOUtils::convertString(d1,argv[1]);
- *
- * 	//performing spatial interpolations
- * 	mio::Grid2DObject ta_grid;
- * 	io.interpolate(d1, dem, MeteoData::TA, ta_grid);
- * 	io.write2DGrid(param,"ta.asc");
- * }
- *
- * int main(void) {
- * 	try {
- * 		real_main();
- * 	} catch (const IOException& e){
- * 		std::cout << e.what() << std::endl;
- * 	}
- *
+ * 
+ * 	//writing some statistics about this dem
+ * 	//dem.grid2D.getMin() scans the DEM grid to get the min, while dem.min_altitude is cached and therefore very cheap
+ * 	//The raw content of the 2D grids can also be accessed, for example dem.grid2D.getMin(IOUtils::RAW_NODATA). In this case, there would be no interpretation of some values as nodata.
+ * 	std::cout << "DEM information: \n";
+ * 	std::cout << "\tmin=" << dem.grid2D.getMin() << " max=" << dem.grid2D.getMax() << " mean=" << dem.grid2D.getMean() << "\n";
+ * 	std::cout << "\tmin slope=" << dem.min_slope << " max slope=" << dem.max_slope << std::endl;
+ * 
+ * 	io.write2DGrid(dem, MeteoGrids::DEM, Date(0.));
+ * 	
+ * 	Grid2DObject slope(dem.cellsize, dem.llcorner, dem.slope);
+ * 	io.write2DGrid(slope, MeteoGrids::SLOPE, Date(0.));
+ * 	Grid2DObject azi(dem.cellsize, dem.llcorner, dem.azi);
+ * 	io.write2DGrid(azi,"azi.png");
+ * 
  * 	return 0;
  * }
  * \endcode
  *
- * Do not forget to have a look at the examples provided in doc/examples! An example io.ini is provided as well as some data sets
+ * @section examples_tips Programming Tips
+ * First, more examples are provided in <b>doc/examples</b> (see the readme.txt file), alongside with an example io.ini as well as some data sets
  * (7 weather stations as well as one DEM).
+ * 
+ * Then, for a real world application, the following would also be needed:
+ * 	+ wrapping up the MeteoIO calls in a <i>try/catch</i> block (at least for calls such as <i>getMeteoData</i>). This is particularly required for Windows and Mac platforms since uncaught exceptions on these plateforms won't print any error message on the screen.
+ * 	+ checking the data returned by <i>getMeteoData</i> against your application's minimum requirements. For example, you might want to check that there is at least one air temperature and one wind velocity at each time step. If your application's requirements are not fulfilled, then print an error message and exit (or thrown an exception with a proper error message).
+ * 	+ if your application is written in another language (for example C or Fortran), then you need a wrapper that will wrapp the call to MeteoIO and copy the returned data into your own data structures. 
+ * 	+ finally, it might be a good idea to print the MeteoIO version information somewhere in your application's output. This could help with support and debugging. Such version information is returned by <i>getLibVersion()</i>.
+ *
  */
 
 } //end namespace mio
