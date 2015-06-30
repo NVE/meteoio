@@ -60,7 +60,7 @@ class NetCDFIO : public IOInterface {
 
 	private:
 		enum TimeUnit { seconds, hours, days };
-		enum Naming { full, cnrm, ecmwf };
+		enum Naming { cf, cnrm, ecmwf };
 
 		void parseInputOutputSection();
 		void create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
@@ -89,7 +89,7 @@ class NetCDFIO : public IOInterface {
 		void fill_data(const Grid2DObject& grid, double*& data);
 		void copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
 		               const double * const grid, const double& nodata, Grid2DObject& grid_out);
-		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+		static double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
 		                          double& factor_x, double& factor_y);
 		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);

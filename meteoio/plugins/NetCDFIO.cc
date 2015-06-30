@@ -201,11 +201,8 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	string filename;
-	cfg.getValue("GRID2DFILE", "Input", filename);
-
+	const string filename = cfg.get("GRID2DFILE", "Input");
 	const string varname = get_varname(parameter);
-
 	read2DGrid_internal(grid_out, filename, varname, date);
 }
 
@@ -342,11 +339,11 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 	const double distanceY = Coords::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
 
 	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
-	const double cellsize_x = distanceX / (lonlen-1);
-	const double cellsize_y = distanceY / (latlen-1);
+	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);
+	const double cellsize_y = distanceY / static_cast<double>(latlen-1);
 
 	// round to 1cm precision for numerical stability
-	const double cellsize = Optim::round( std::min(cellsize_x, cellsize_y)*100. ) / 100.;
+	const double cellsize = static_cast<double>(Optim::round( std::min(cellsize_x, cellsize_y)*100. )) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
@@ -360,11 +357,8 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 
 void NetCDFIO::readDEM(DEMObject& dem_out)
 {
-	string filename, varname;
-
-	cfg.getValue("DEMFILE", "Input", filename);
-	cfg.getValue("DEMVAR", "Input", varname);
-
+	const string filename = cfg.get("DEMFILE", "Input");
+	const string varname = cfg.get("DEMVAR", "Input");
 	read2DGrid_internal(dem_out, filename, varname);
 }
 
@@ -387,8 +381,7 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 		return;
 	}
 
-	string filename;
-	cfg.getValue("METEOFILE", "Input", filename);
+	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
 	open_file(filename, NC_NOWRITE, ncid);
@@ -470,8 +463,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 {
 	vecMeteo.clear();
 
-	string filename;
-	cfg.getValue("METEOFILE", "Input", filename);
+	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
 	open_file(filename, NC_NOWRITE, ncid);
@@ -760,8 +752,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	const size_t number_of_records = vecMeteo[0].size();
 
-	string filename;
-	cfg.getValue("METEOFILE", "Output", filename);
+	const string filename = cfg.get("METEOFILE", "Output");
 
 	int ncid, did_time, vid_time, did_points;
 	bool create_time = false, create_points = false, create_locations = false, create_variables = false;
@@ -924,7 +915,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 	double interval = 0;
 	for (size_t ii=0; ii<number_of_records; ii++) {
 		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate();
-		if (ii == 1) interval = Optim::round((dates[ii] - dates[ii-1]) * 86400.);
+		if (ii == 1) interval = static_cast<double>( Optim::round((dates[ii] - dates[ii-1]) * 86400.) );
 	}
 
 	const size_t nr_of_parameters = (!vecMeteo[0].empty())? vecMeteo[0][0].getNrOfParameters() : 0 ;
@@ -994,9 +985,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	string filename;
-	cfg.getValue("GRID2DFILE", "Output", filename);
-
+	const string filename = cfg.get("GRID2DFILE", "Output");
 	const string varname = get_varname(parameter);
 
 	write2DGrid_internal(grid_in, filename, varname, date);
@@ -1129,9 +1118,9 @@ std::string NetCDFIO::get_varname(const MeteoGrids::Parameters& parameter)
 {
 	string varname = MeteoGrids::getParameterName(parameter);
 
-	const Naming naming_scheme=full;
+	const Naming naming_scheme=cf;
 
-	if (naming_scheme==full) {
+	if (naming_scheme==cf) {
 		if (parameter == MeteoGrids::TA) varname = cf_ta;
 		else if (parameter == MeteoGrids::RH) varname = cf_rh;
 		else if (parameter == MeteoGrids::DEM) varname = cf_altitude;
@@ -1248,20 +1237,20 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 	// The idea is to use the difference in coordinates of the upper right and the lower left
 	// corner to calculate the lat/lon intervals between cells
 	Coords urcorner(grid.llcorner);
-	urcorner.setGridIndex(grid.getNx()-1, grid.getNy()-1, IOUtils::nodata, true);
+	urcorner.setGridIndex(grid.getNx() - 1, grid.getNy() - 1, IOUtils::nodata, true);
 	grid.gridify(urcorner);
 
-	const double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.getNy()-1);
-	const double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.getNx()-1);
+	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
+	const double lon_interval = (urcorner.getLon() - lon_array[0]) / static_cast<double>(grid.getNx()-1);
 
 	// The method to use interval*ii is consistent with the corresponding
 	// calculation of the Grid2DObject::gridify method -> numerical stability
 	for (size_t ii=1; ii<grid.getNy(); ++ii) {
-		lat_array[ii] = lat_array[0] + lat_interval*ii;
+		lat_array[ii] = lat_array[0] + lat_interval*static_cast<double>(ii);
 	}
 
 	for (size_t ii=1; ii<grid.getNx(); ++ii) {
-		lon_array[ii] = lon_array[0] + lon_interval*ii;
+		lon_array[ii] = lon_array[0] + lon_interval*static_cast<double>(ii);
 	}
 }
 
