@@ -555,6 +555,56 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 	}
 }
 
+/**
+* @brief Distribute precipitation in a way that reflects snow redistribution on the ground, according to (Huss, 2008)
+* This method modifies the solid precipitation distribution according to the local slope and curvature. See
+* <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
+* and
+* <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+* @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
+* @param ta array of air temperatures used to determine if precipitation is rain or snow
+* @param grid 2D array of precipitation to fill
+* @author Florian Kobierska, Jan Magnusson and Mathias Bavay
+*/
+void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
+{
+	if(!grid.isSameGeolocalization(dem)) {
+		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);
+	}
+	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
+
+	const size_t nrows = grid.getNy();
+	const size_t ncols = grid.getNx();
+	
+	for (size_t j=0;j<nrows;j++) {
+		for (size_t i=0;i<ncols;i++) {
+			// Get input data
+			const double slope = dem.slope(i, j);
+			const double curvature = dem.curvature(i, j);
+			double val = grid.grid2D(i, j);
+
+			if(ta.grid2D(i, j)<=Cst::t_water_freezing_pt) {
+				//we only modify the grid of precipitations if air temperature
+				//at this point is below or at freezing
+				if(slope==IOUtils::nodata || curvature==IOUtils::nodata) {
+					val = IOUtils::nodata;
+				} else if (slope>60.) {
+					//No snow precipitation happens for these slopes
+					val = 0.;
+				} else if (slope>40.) {
+					//Linear transition from no snow to 100% snow
+					val *= (60.-slope)/20.;
+				} //else: unchanged
+
+				if(val!=IOUtils::nodata && dem_range_curvature!=0.) {
+					//cf Huss
+					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
+				}
+			}
+		}
+	}
+}
+
 //Compute the wind direction changes by the terrain, see Ryan, "a mathematical model for diagnosis
 //and prediction of surface winds in mountainous terrain", 1977, journal of applied meteorology, 16, 6
 /**

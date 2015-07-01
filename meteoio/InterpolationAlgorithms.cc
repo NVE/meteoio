@@ -989,12 +989,11 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//retrieve optional arguments
-	std::string base_algo;
-	if (vecArgs.empty()){
-		base_algo=std::string("IDW_LAPSE");
-	} else if (vecArgs.size() == 1){
+	std::string base_algo("IDW_LAPSE");
+	const size_t nrArgs = vecArgs.size();
+	if (nrArgs == 1){
 		IOUtils::convertString(base_algo, vecArgs[0]);
-	} else { //incorrect arguments, throw an exception
+	} else if (nrArgs>1){ //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
@@ -1012,7 +1011,8 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::TA, ta);
 
 	//slope/curvature correction for solid precipitation
-	Interpol2D::SteepSlopeRedistribution(dem, ta, grid);
+	Interpol2D::PrecipSnow(dem, ta, grid);
+	//Interpol2D::SteepSlopeRedistribution(dem, ta, grid);
 	//Interpol2D::CurvatureCorrection(dem, ta, grid);
 }
 

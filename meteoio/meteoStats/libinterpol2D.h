@@ -60,6 +60,7 @@ class Interpol2D {
 		static void ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
+		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void ODKriging(const std::vector<double>& vecData,
 		                      const std::vector<StationData>& vecStations,
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
@@ -94,7 +95,7 @@ class Interpol2D {
 
 		static void steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest);
 		static double depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid);
-
+		
 		static void WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 		//weighting methods
