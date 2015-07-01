@@ -86,12 +86,6 @@ class NetCDFIO : public IOInterface {
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
 		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
-		void fill_data(const Grid2DObject& grid, double*& data);
-		void copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
-		               const double * const grid, const double& nodata, Grid2DObject& grid_out);
-		static double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
-		                          double& factor_x, double& factor_y);
-		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);

@@ -16,6 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/libncpp.h>
+#include <meteoio/MathOptim.h>
+#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/dataClasses/Coords.h>
 
 using namespace std;
 using namespace mio;  // for the IOExceptions and IOUtils
@@ -424,6 +427,127 @@ void close_file(const std::string& filename, const int& ncid)
 		throw IOException("Could not close netcdf file  '" + filename + "': " + nc_strerror(status), AT);
 
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Wrappers to MeteoIO's data classes
+void copy_grid(const std::string& coordin, const std::string& coordinparam, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+                         const double * const grid, const double& nodata, mio::Grid2DObject& grid_out)
+{
+	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
+	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
+
+	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
+	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
+
+	//computing lower left corner by using the center point as reference
+	mio::Coords cntr(coordin, coordinparam);
+	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
+	cntr.moveByXY(-.5*(double)(lonlen-1)*cellsize, -.5*(double)(latlen-1)*cellsize);
+
+	grid_out.set(lonlen, latlen, cellsize, cntr);
+
+	//Handle the case of llcorner/urcorner swapped
+	if (lat[0]<=lat[latlen-1]) {
+		for (size_t kk=0; kk < latlen; kk++) {
+			const size_t row = kk*lonlen;
+			if (lon[0]<=lon[lonlen-1]) {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = mio::IOUtils::standardizeNodata(grid[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = mio::IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
+			}
+		}
+	} else {
+		for (size_t kk=0; kk < latlen; kk++) {
+			const size_t row = ((latlen-1) - kk)*lonlen;
+			if (lon[0]<=lon[lonlen-1]) {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = mio::IOUtils::standardizeNodata(grid[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = mio::IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
+			}
+		}
+	}
+
+	if (resampling_factor_x != mio::IOUtils::nodata) {
+		grid_out.grid2D = mio::ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
+	}
+}
+
+/* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file
+ * stores the grid as discrete latitude and longitude values. It is necessary to calculate
+ * the distance between the edges of the grid and determine the cellsize. This cellsize may
+ * be different for X and Y directions. We then choose one cellsize for our grid and
+ * determine a factor that will be used for resampling the grid to likewise consist of
+ * quadratic cells.
+ */
+double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+                                    double& factor_x, double& factor_y)
+{
+	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
+	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
+	double alpha;
+
+	const double distanceX = mio::Coords::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
+	const double distanceY = mio::Coords::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
+
+	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
+	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);
+	const double cellsize_y = distanceY / static_cast<double>(latlen-1);
+
+	// round to 1cm precision for numerical stability
+	const double cellsize = static_cast<double>(Optim::round( std::min(cellsize_x, cellsize_y)*100. )) / 100.;
+
+	if (cellsize_x == cellsize_y) {
+		return cellsize_x;
+	} else {
+		factor_x =  cellsize_x / cellsize;
+		factor_y =  cellsize_y / cellsize;
+
+		return cellsize;
+	}
+}
+
+/* Fill the arrays of lat/lon with the lat/lon intervals
+ * as calculated from the cellsize of the grid object.
+ */
+void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, double*& lon_array)
+{
+	lat_array[0] = grid.llcorner.getLat();
+	lon_array[0] = grid.llcorner.getLon();
+
+	// The idea is to use the difference in coordinates of the upper right and the lower left
+	// corner to calculate the lat/lon intervals between cells
+	Coords urcorner(grid.llcorner);
+	urcorner.setGridIndex(grid.getNx() - 1, grid.getNy() - 1, IOUtils::nodata, true);
+	grid.gridify(urcorner);
+
+	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
+	const double lon_interval = (urcorner.getLon() - lon_array[0]) / static_cast<double>(grid.getNx()-1);
+
+	// The method to use interval*ii is consistent with the corresponding
+	// calculation of the Grid2DObject::gridify method -> numerical stability
+	for (size_t ii=1; ii<grid.getNy(); ++ii) {
+		lat_array[ii] = lat_array[0] + lat_interval*static_cast<double>(ii);
+	}
+
+	for (size_t ii=1; ii<grid.getNx(); ++ii) {
+		lon_array[ii] = lon_array[0] + lon_interval*static_cast<double>(ii);
+	}
+}
+
+// Fill a NetCDF 2D array with the data from a Grid2DObject
+void fill_grid_data(const mio::Grid2DObject& grid, double*& data)
+{
+	for (size_t kk=0; kk<grid.getNy(); ++kk) {
+		for (size_t ll=0; ll<grid.getNx(); ++ll) {
+			data[kk*grid.getNx() + ll] = grid.grid2D(ll,kk);
+		}
+	}
+}
+
 
 } //end namespace
 

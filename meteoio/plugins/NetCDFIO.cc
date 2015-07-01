@@ -27,7 +27,6 @@
 #include <algorithm>
 
 using namespace std;
-using namespace ncpp; // wrappers for libnetcdf
 
 namespace mio {
 /**
@@ -216,9 +215,9 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
-	open_file(filename, NC_NOWRITE, ncid);
-	get_variable(ncid, varname, varid);
-	get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
+	ncpp::open_file(filename, NC_NOWRITE, ncid);
+	ncpp::get_variable(ncid, varname, varid);
+	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
 	if (is_record) { // In case we're reading a record the first index is always the record index
 		lat_index = 1;
@@ -240,24 +239,24 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	double *lon = new double[dimlen[lon_index]];
 	double *grid = new double[dimlen[lat_index]*dimlen[lon_index]];
 
-	read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
-	read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
+	ncpp::read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
+	ncpp::read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
 
 	if (is_record) {
-		const size_t pos = find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
+		const size_t pos = ncpp::find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
 		if (pos == IOUtils::npos)
 			throw IOException("No record for date " + date.toString(Date::ISO), AT);
 
-		read_data(ncid, varname, varid, pos, dimlen[lat_index], dimlen[lon_index], grid);
+		ncpp::read_data(ncid, varname, varid, pos, dimlen[lat_index], dimlen[lon_index], grid);
 	} else {
-		read_data(ncid, varname, varid, grid);
+		ncpp::read_data(ncid, varname, varid, grid);
 	}
 
 	double missing_value=plugin_nodata;
 	if (ncpp::check_attribute(ncid, varid, "missing_value"))
 		ncpp::get_attribute(ncid, varname, varid, "missing_value", missing_value);
 
-	copy_grid(dimlen[lat_index], dimlen[lon_index], lat, lon, grid, missing_value, grid_out);
+	ncpp::copy_grid(coordin, coordinparam, dimlen[lat_index], dimlen[lon_index], lat, lon, grid, missing_value, grid_out);
 
 	//handle data packing if necessary
 	if (ncpp::check_attribute(ncid, varid, "scale_factor")) {
@@ -271,88 +270,8 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		grid_out.grid2D += add_offset;
 	}
 
-	close_file(filename, ncid);
+	ncpp::close_file(filename, ncid);
 	delete[] lat; delete[] lon; delete[] grid;
-}
-
-void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
-                         const double * const grid, const double& nodata, Grid2DObject& grid_out)
-{
-	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
-	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
-
-	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
-	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
-
-	//computing lower left corner by using the center point as reference
-	Coords cntr(coordin, coordinparam);
-	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
-	cntr.moveByXY(-.5*(double)(lonlen-1)*cellsize, -.5*(double)(latlen-1)*cellsize);
-
-	grid_out.set(lonlen, latlen, cellsize, cntr);
-
-	//Handle the case of llcorner/urcorner swapped
-	if (lat[0]<=lat[latlen-1]) {
-		for (size_t kk=0; kk < latlen; kk++) {
-			const size_t row = kk*lonlen;
-			if (lon[0]<=lon[lonlen-1]) {
-				for (size_t ll=0; ll < lonlen; ll++)
-					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + ll], nodata);
-			} else {
-				for (size_t ll=0; ll < lonlen; ll++)
-					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
-			}
-		}
-	} else {
-		for (size_t kk=0; kk < latlen; kk++) {
-			const size_t row = ((latlen-1) - kk)*lonlen;
-			if (lon[0]<=lon[lonlen-1]) {
-				for (size_t ll=0; ll < lonlen; ll++)
-					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + ll], nodata);
-			} else {
-				for (size_t ll=0; ll < lonlen; ll++)
-					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
-			}
-		}
-	}
-
-	if (resampling_factor_x != IOUtils::nodata) {
-		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
-	}
-}
-
-/* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file
- * stores the grid as discrete latitude and longitude values. It is necessary to calculate
- * the distance between the edges of the grid and determine the cellsize. This cellsize may
- * be different for X and Y directions. We then choose one cellsize for our grid and
- * determine a factor that will be used for resampling the grid to likewise consist of
- * quadratic cells.
- */
-double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
-                                    double& factor_x, double& factor_y)
-{
-	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
-	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
-	double alpha;
-
-	const double distanceX = Coords::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
-	const double distanceY = Coords::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
-
-	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
-	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);
-	const double cellsize_y = distanceY / static_cast<double>(latlen-1);
-
-	// round to 1cm precision for numerical stability
-	const double cellsize = static_cast<double>(Optim::round( std::min(cellsize_x, cellsize_y)*100. )) / 100.;
-
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-
-		return cellsize;
-	}
 }
 
 void NetCDFIO::readDEM(DEMObject& dem_out)
@@ -384,9 +303,9 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
-	open_file(filename, NC_NOWRITE, ncid);
+	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
-	close_file(filename, ncid);
+	ncpp::close_file(filename, ncid);
 
 	vecStation = vecMetaData;
 }
@@ -399,7 +318,7 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 	size_t dimlen;
 	map<string, int> map_vid;
 
-	get_dimension(ncid, cnrm_points, dimid, dimlen);
+	ncpp::get_dimension(ncid, cnrm_points, dimid, dimlen);
 	if (dimlen == 0) return; // There are no stations
 
 	get_meta_data_ids(ncid, map_vid);
@@ -410,11 +329,11 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 	double *aspect = new double[dimlen];
 	double *slope = new double[dimlen];
 
-	read_data(ncid, cnrm_altitude, map_vid[cnrm_altitude], alt);
-	read_data(ncid, cnrm_latitude, map_vid[cnrm_latitude], lat);
-	read_data(ncid, cnrm_longitude, map_vid[cnrm_longitude], lon);
-	read_data(ncid, cnrm_aspect, map_vid[cnrm_aspect], aspect);
-	read_data(ncid, cnrm_slope, map_vid[cnrm_slope], slope);
+	ncpp::read_data(ncid, cnrm_altitude, map_vid[cnrm_altitude], alt);
+	ncpp::read_data(ncid, cnrm_latitude, map_vid[cnrm_latitude], lat);
+	ncpp::read_data(ncid, cnrm_longitude, map_vid[cnrm_longitude], lon);
+	ncpp::read_data(ncid, cnrm_aspect, map_vid[cnrm_aspect], aspect);
+	ncpp::read_data(ncid, cnrm_slope, map_vid[cnrm_slope], slope);
 
 	//Parse to StationData objects
 	Coords location(coordin, coordinparam);
@@ -439,34 +358,13 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 	delete[] alt; delete[] lat; delete[] lon; delete[] aspect; delete[] slope;
 }
 
-void NetCDFIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_vid)
-{
-	const string names[] = {cnrm_altitude, cnrm_latitude, cnrm_longitude, cnrm_aspect, cnrm_slope};
-	vector<string> varname(names, names + sizeof(names) / sizeof(names[0]));
-
-	vector<string> dimensions;
-	dimensions.push_back(cnrm_points); // All variables have to have the dimension cnrm_points
-
-	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); ++it) {
-		int varid;
-		const string& name = *it;
-
-		get_variable(ncid, name, varid);
-		if (!check_dimensions(ncid, name, varid, dimensions))
-			throw IOException("Variable '" + name  + "' fails dimension check", AT);
-
-		map_vid[name] = varid;
-	}
-}
-
 void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
 {
 	vecMeteo.clear();
-
 	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
-	open_file(filename, NC_NOWRITE, ncid);
+	ncpp::open_file(filename, NC_NOWRITE, ncid);
 
 	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);
 
@@ -479,12 +377,11 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 		if ((index_start != IOUtils::npos) && (index_end != IOUtils::npos)) {
 			map<string, size_t> map_parameters;
 			get_parameters(ncid, map_parameters, meteo_data); //get a list of parameters present an render the template
-
 			readData(ncid, index_start, vec_date, map_parameters, meteo_data, vecMeteo);
 		}
 	}
 
-	close_file(filename, ncid);
+	ncpp::close_file(filename, ncid);
 }
 
 void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date,
@@ -511,8 +408,8 @@ void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::v
 		map_data[varname] = data;
 
 		int varid;
-		get_variable(ncid, varname, varid);
-		read_data_2D(ncid, varname, varid, index_start, number_of_records, number_of_stations, data);
+		ncpp::get_variable(ncid, varname, varid);
+		ncpp::read_data_2D(ncid, varname, varid, index_start, number_of_records, number_of_stations, data);
 	}
 
 	copy_data(ncid, map_parameters, map_data, number_of_stations, number_of_records, vecMeteo);
@@ -542,8 +439,8 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& m
 		if (param == IOUtils::npos) {
 			if ((varname == cnrm_snowf) || (varname == cnrm_hnw)) {
 				int varid;
-				get_variable(ncid, cnrm_timestep, varid);
-				read_value(ncid, cnrm_timestep, varid, multiplier);
+				ncpp::get_variable(ncid, cnrm_timestep, varid);
+				ncpp::read_value(ncid, cnrm_timestep, varid, multiplier);
 
 				if (multiplier <= 0) throw InvalidArgumentException("The variable '" + cnrm_timestep + "' is invalid", AT);
 
@@ -610,10 +507,10 @@ void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& ma
 	dimensions.push_back(cf_time);
 	dimensions.push_back(cnrm_points);
 
-	vector<string> present_parameters;
-	get_variables(ncid, dimensions, present_parameters);
+	vector<string> parameters_present;
+	ncpp::get_variables(ncid, dimensions, parameters_present);
 
-	for (vector<string>::const_iterator it = present_parameters.begin(); it != present_parameters.end(); ++it) {
+	for (vector<string>::const_iterator it = parameters_present.begin(); it != parameters_present.end(); ++it) {
 		const string& name = *it;
 		//cout << "Found parameter: " << name << endl;
 
@@ -651,18 +548,18 @@ void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& d
 
 	int varid, dimid;
 	size_t dimlen;
-	get_dimension(ncid, NetCDFIO::cf_time, dimid, dimlen);
-	get_variable(ncid, NetCDFIO::cf_time, varid);
+	ncpp::get_dimension(ncid, NetCDFIO::cf_time, dimid, dimlen);
+	ncpp::get_variable(ncid, NetCDFIO::cf_time, varid);
 
 	// Get the units attribute and calculate the offset date
 	string units_str;
 	NetCDFIO::TimeUnit unit_type;
 	Date offset;
-	get_attribute(ncid, NetCDFIO::cf_time, varid, cf_units, units_str);
+	ncpp::get_attribute(ncid, NetCDFIO::cf_time, varid, cf_units, units_str);
 	calculate_offset(units_str, unit_type, offset);
 
 	double *time = new double[dimlen];
-	read_data(ncid, NetCDFIO::cf_time, varid, time);
+	ncpp::read_data(ncid, NetCDFIO::cf_time, varid, time);
 
 	// Firstly, check whether search makes any sense, that is dateStart and dateEnd overlap with the times present
 	bool search = true;
@@ -751,7 +648,6 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	if (number_of_stations == 0) return; //Nothing to write
 
 	const size_t number_of_records = vecMeteo[0].size();
-
 	const string filename = cfg.get("METEOFILE", "Output");
 
 	int ncid, did_time, vid_time, did_points;
@@ -773,26 +669,26 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	get_parameters(vecMeteo, map_param_name, map_data, dates);
 
-	create_file(filename, NC_CLASSIC_MODEL, ncid);
+	ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
 	create_time = create_points = create_locations = create_variables = true;
 
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
-	if (create_points) add_dimension(ncid, cnrm_points, number_of_stations, did_points);
+	if (create_points) ncpp::add_dimension(ncid, cnrm_points, number_of_stations, did_points);
 	if (create_locations) create_meta_data(ncid, did_points, map_data, varid);
 	if (create_variables) create_parameters(ncid, did_time, did_points, number_of_records, number_of_stations, map_param_name, map_data, varid);
 
-	end_definitions(filename, ncid);
+	ncpp::end_definitions(filename, ncid);
 
 	copy_data(number_of_stations, number_of_records, vecMeteo, map_param_name, map_data);
 
-	write_record(ncid, NetCDFIO::cf_time, vid_time, 0, number_of_records, dates);
+	ncpp::write_record(ncid, NetCDFIO::cf_time, vid_time, 0, number_of_records, dates);
 	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); ++it) {
 		const string& varname = it->first;
-		write_data(ncid, varname, varid[varname], map_data[varname]);
+		ncpp::write_data(ncid, varname, varid[varname], map_data[varname]);
 		delete[] it->second;
 	}
 
-	close_file(filename, ncid);
+	ncpp::close_file(filename, ncid);
 
 	delete[] dates;
 }
@@ -846,11 +742,11 @@ void NetCDFIO::create_meta_data(const int& ncid, const int& did, std::map<std::s
 		const string& varname = it->first;
 
 		if (varname == cnrm_timestep) {
-			add_0D_variable(ncid, cnrm_timestep, NC_DOUBLE, vid);
+			ncpp::add_0D_variable(ncid, cnrm_timestep, NC_DOUBLE, vid);
 		} else {
-			add_1D_variable(ncid, varname, NC_DOUBLE, did, vid);
+			ncpp::add_1D_variable(ncid, varname, NC_DOUBLE, did, vid);
 		}
-		add_attribute(ncid, vid, "_FillValue", plugin_nodata);
+		ncpp::add_attribute(ncid, vid, "_FillValue", plugin_nodata);
 		add_attributes_for_variable(ncid, vid, varname);
 
 		varid[varname] = vid;
@@ -891,8 +787,8 @@ void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int
 			double* data = new double[number_of_records*number_of_stations];
 			map_data_2D[varname] = data;
 
-			add_2D_variable(ncid, varname, NC_DOUBLE, did_time, did_points, vid);
-			add_attribute(ncid, vid, "_FillValue", plugin_nodata);
+			ncpp::add_2D_variable(ncid, varname, NC_DOUBLE, did_time, did_points, vid);
+			ncpp::add_attribute(ncid, vid, "_FillValue", plugin_nodata);
 			add_attributes_for_variable(ncid, vid, varname);
 
 			varid[varname] = vid;
@@ -1000,17 +896,17 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	double *lon_array = new double[grid_in.getNx()];
 	double *data = new double[grid_in.getNy() * grid_in.getNx()];
 
-	calculate_dimensions(grid_in, lat_array, lon_array);
-	fill_data(grid_in, data);
+	ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
+	ncpp::fill_grid_data(grid_in, data);
 
 	int ncid, did_lat, did_lon, did_time, vid_lat, vid_lon, vid_var, vid_time;
 	bool create_dimensions(false), create_variable(false), create_time(false);
 
 	if (exists) {
-		open_file(filename, NC_WRITE, ncid);
+		ncpp::open_file(filename, NC_WRITE, ncid);
 
 		//check of lat/lon are defined and consistent
-		if (check_dim_var(ncid, cf_latitude) && check_dim_var(ncid, cf_longitude)) {
+		if (ncpp::check_dim_var(ncid, cf_latitude) && ncpp::check_dim_var(ncid, cf_longitude)) {
 			check_consistency(ncid, grid_in, lat_array, lon_array, did_lat, did_lon, vid_lat, vid_lon);
 		} else {
 			create_dimensions = true;
@@ -1018,22 +914,22 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 
 		if (is_record) {
 			//check if a time dimension/variable already exists
-			if (check_dim_var(ncid, NetCDFIO::cf_time)) {
-				get_dimension(ncid, NetCDFIO::cf_time, did_time);
-				get_variable(ncid, NetCDFIO::cf_time, vid_time);
+			if (ncpp::check_dim_var(ncid, NetCDFIO::cf_time)) {
+				ncpp::get_dimension(ncid, NetCDFIO::cf_time, did_time);
+				ncpp::get_variable(ncid, NetCDFIO::cf_time, vid_time);
 			} else {
 				create_time = true;
 			}
 		}
 
-		if (check_variable(ncid, varname)) { // variable exists
-			get_variable(ncid, varname, vid_var);
+		if (ncpp::check_variable(ncid, varname)) { // variable exists
+			ncpp::get_variable(ncid, varname, vid_var);
 
 			vector<int> dimid, dim_varid;
 			vector<string> dimname;
 			vector<size_t> dimlen;
 
-			get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
+			ncpp::get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
 
 			if (is_record) {
 				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != cf_latitude) || (dimname[2] != cf_longitude) || (dimlen[1]!=grid_in.getNy()) || (dimlen[2]!=grid_in.getNx()))
@@ -1046,10 +942,10 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 			create_variable = true;
 		}
 
-		start_definitions(filename, ncid);
+		ncpp::start_definitions(filename, ncid);
 	} else {
-		create_file(filename, NC_CLASSIC_MODEL, ncid);
-		add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
+		ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
 
 		create_variable = create_dimensions = true;
 
@@ -1060,56 +956,47 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
 
 	if (is_record && create_variable) {
-		add_3D_variable(ncid, varname, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
+		ncpp::add_3D_variable(ncid, varname, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
 		add_attributes_for_variable(ncid, vid_var, varname);
 	} else if (create_variable) {
-		add_2D_variable(ncid, varname, NC_DOUBLE, did_lat, did_lon, vid_var);
+		ncpp::add_2D_variable(ncid, varname, NC_DOUBLE, did_lat, did_lon, vid_var);
 		add_attributes_for_variable(ncid, vid_var, varname);
 	}
 
-	end_definitions(filename, ncid);
+	ncpp::end_definitions(filename, ncid);
 
 	if (create_dimensions) {
-		write_data(ncid, cf_latitude, vid_lat, lat_array);
-		write_data(ncid, cf_longitude, vid_lon, lon_array);
+		ncpp::write_data(ncid, cf_latitude, vid_lat, lat_array);
+		ncpp::write_data(ncid, cf_longitude, vid_lon, lon_array);
 	}
 
 	if (is_record) {
-		size_t pos_start = add_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
-		write_data(ncid, varname, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
+		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
+		ncpp::write_data(ncid, varname, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
-		write_data(ncid, varname, vid_var, data);
+		ncpp::write_data(ncid, varname, vid_var, data);
 	}
 
-	close_file(filename, ncid);
+	ncpp::close_file(filename, ncid);
 	delete[] lat_array; delete[] lon_array; delete[] data;
 }
 
 void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_in, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon)
 {
-	add_dimension(ncid, cf_latitude, grid_in.getNy(), did_lat);
-	add_1D_variable(ncid, cf_latitude, NC_DOUBLE, did_lat, vid_lat);
+	ncpp::add_dimension(ncid, cf_latitude, grid_in.getNy(), did_lat);
+	ncpp::add_1D_variable(ncid, cf_latitude, NC_DOUBLE, did_lat, vid_lat);
 	add_attributes_for_variable(ncid, vid_lat, cf_latitude);
 
-	add_dimension(ncid, cf_longitude, grid_in.getNx(), did_lon);
-	add_1D_variable(ncid, cf_longitude, NC_DOUBLE, did_lon, vid_lon);
+	ncpp::add_dimension(ncid, cf_longitude, grid_in.getNx(), did_lon);
+	ncpp::add_1D_variable(ncid, cf_longitude, NC_DOUBLE, did_lon, vid_lon);
 	add_attributes_for_variable(ncid, vid_lon, cf_longitude);
 }
 
 void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time)
 {
-	add_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
-	add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
+	ncpp::add_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
+	ncpp::add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
 	add_attributes_for_variable(ncid, vid_time, NetCDFIO::cf_time);
-}
-
-void NetCDFIO::fill_data(const Grid2DObject& grid, double*& data)
-{
-	for (size_t kk=0; kk<grid.getNy(); ++kk) {
-		for (size_t ll=0; ll<grid.getNx(); ++ll) {
-			data[kk*grid.getNx() + ll] = grid.grid2D(ll,kk);
-		}
-	}
 }
 
 // When reading or writing gridded variables we should have a consistent naming
@@ -1155,102 +1042,77 @@ std::string NetCDFIO::get_varname(const MeteoGrids::Parameters& parameter)
 void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname)
 {
 	if (varname == cf_latitude) {
-		add_attribute(ncid, varid, "standard_name", "latitude");
-		add_attribute(ncid, varid, "long_name", "latitude");
-		add_attribute(ncid, varid, "units", "degrees_north");
+		ncpp::add_attribute(ncid, varid, "standard_name", "latitude");
+		ncpp::add_attribute(ncid, varid, "long_name", "latitude");
+		ncpp::add_attribute(ncid, varid, "units", "degrees_north");
 	} else if (varname == cf_longitude) {
-		add_attribute(ncid, varid, "standard_name", "longitude");
-		add_attribute(ncid, varid, "long_name", "longitude");
-		add_attribute(ncid, varid, "units", "degrees_east");
+		ncpp::add_attribute(ncid, varid, "standard_name", "longitude");
+		ncpp::add_attribute(ncid, varid, "long_name", "longitude");
+		ncpp::add_attribute(ncid, varid, "units", "degrees_east");
 	} else if (varname == cf_altitude) {
-		add_attribute(ncid, varid, "standard_name", "altitude");
-		add_attribute(ncid, varid, "long_name", "height above mean sea level");
-		add_attribute(ncid, varid, "units", "m");
-		add_attribute(ncid, varid, "positive", "up");
-		add_attribute(ncid, varid, "axis", "Z");
+		ncpp::add_attribute(ncid, varid, "standard_name", "altitude");
+		ncpp::add_attribute(ncid, varid, "long_name", "height above mean sea level");
+		ncpp::add_attribute(ncid, varid, "units", "m");
+		ncpp::add_attribute(ncid, varid, "positive", "up");
+		ncpp::add_attribute(ncid, varid, "axis", "Z");
 	} else if (varname == cf_p) {
-		add_attribute(ncid, varid, "standard_name", "air_pressure");
-		add_attribute(ncid, varid, "long_name", "near surface air pressure");
-		add_attribute(ncid, varid, "units", "Pa");
+		ncpp::add_attribute(ncid, varid, "standard_name", "air_pressure");
+		ncpp::add_attribute(ncid, varid, "long_name", "near surface air pressure");
+		ncpp::add_attribute(ncid, varid, "units", "Pa");
 	} else if (varname == cf_ta) {
-		add_attribute(ncid, varid, "standard_name", "air_temperature");
-		add_attribute(ncid, varid, "long_name", "near surface air temperature");
-		add_attribute(ncid, varid, "units", "K");
+		ncpp::add_attribute(ncid, varid, "standard_name", "air_temperature");
+		ncpp::add_attribute(ncid, varid, "long_name", "near surface air temperature");
+		ncpp::add_attribute(ncid, varid, "units", "K");
 	} else if (varname == cf_rh) {
-		add_attribute(ncid, varid, "standard_name", "relative humidity");
-		add_attribute(ncid, varid, "long_name", "relative humidity");
-		add_attribute(ncid, varid, "units", "fraction");
+		ncpp::add_attribute(ncid, varid, "standard_name", "relative humidity");
+		ncpp::add_attribute(ncid, varid, "long_name", "relative humidity");
+		ncpp::add_attribute(ncid, varid, "units", "fraction");
 	} else if (varname == cf_time) {
-		add_attribute(ncid, varid, "standard_name", NetCDFIO::cf_time);
-		add_attribute(ncid, varid, "long_name", NetCDFIO::cf_time);
-		add_attribute(ncid, varid, "units", "days since 1858-11-17 00:00:00");
+		ncpp::add_attribute(ncid, varid, "standard_name", NetCDFIO::cf_time);
+		ncpp::add_attribute(ncid, varid, "long_name", NetCDFIO::cf_time);
+		ncpp::add_attribute(ncid, varid, "units", "days since 1858-11-17 00:00:00");
 	} else if (varname == NetCDFIO::cnrm_altitude) {
-		add_attribute(ncid, varid, "long_name", "altitude");
-		add_attribute(ncid, varid, "units", "m");
+		ncpp::add_attribute(ncid, varid, "long_name", "altitude");
+		ncpp::add_attribute(ncid, varid, "units", "m");
 	} else if (varname == NetCDFIO::cnrm_aspect) {
-		add_attribute(ncid, varid, "long_name", "slope aspect");
-		add_attribute(ncid, varid, "units", "degrees from north");
+		ncpp::add_attribute(ncid, varid, "long_name", "slope aspect");
+		ncpp::add_attribute(ncid, varid, "units", "degrees from north");
 	} else if (varname == NetCDFIO::cnrm_slope) {
-		add_attribute(ncid, varid, "long_name", "slope angle");
-		add_attribute(ncid, varid, "units", "degrees from horizontal");
+		ncpp::add_attribute(ncid, varid, "long_name", "slope angle");
+		ncpp::add_attribute(ncid, varid, "units", "degrees from horizontal");
 	} else if (varname == NetCDFIO::cnrm_latitude) {
-		add_attribute(ncid, varid, "long_name", "latitude");
-		add_attribute(ncid, varid, "units", "degrees_north");
+		ncpp::add_attribute(ncid, varid, "long_name", "latitude");
+		ncpp::add_attribute(ncid, varid, "units", "degrees_north");
 	} else if (varname == NetCDFIO::cnrm_longitude) {
-		add_attribute(ncid, varid, "long_name", "longitude");
-		add_attribute(ncid, varid, "units", "degrees_east");
+		ncpp::add_attribute(ncid, varid, "long_name", "longitude");
+		ncpp::add_attribute(ncid, varid, "units", "degrees_east");
 	} else if (varname == NetCDFIO::cnrm_ta) {
-		add_attribute(ncid, varid, "long_name", "Near Surface Air Temperature");
-		add_attribute(ncid, varid, "units", "K");
+		ncpp::add_attribute(ncid, varid, "long_name", "Near Surface Air Temperature");
+		ncpp::add_attribute(ncid, varid, "units", "K");
 	} else if (varname == NetCDFIO::cnrm_timestep) {
-		add_attribute(ncid, varid, "long_name", "Forcing_Time_Step");
-		add_attribute(ncid, varid, "units", "s");
+		ncpp::add_attribute(ncid, varid, "long_name", "Forcing_Time_Step");
+		ncpp::add_attribute(ncid, varid, "units", "s");
 	} else if (varname == NetCDFIO::cnrm_vw) {
-		add_attribute(ncid, varid, "long_name", "Wind Speed");
-		add_attribute(ncid, varid, "units", "m/s");
+		ncpp::add_attribute(ncid, varid, "long_name", "Wind Speed");
+		ncpp::add_attribute(ncid, varid, "units", "m/s");
 	} else if (varname == NetCDFIO::cnrm_dw) {
-		add_attribute(ncid, varid, "long_name", "Wind Direction");
-		add_attribute(ncid, varid, "units", "deg");
+		ncpp::add_attribute(ncid, varid, "long_name", "Wind Direction");
+		ncpp::add_attribute(ncid, varid, "units", "deg");
 	} else if (varname == NetCDFIO::cnrm_swr_direct) {
-		add_attribute(ncid, varid, "long_name", "Surface Incident Direct Shortwave Radiation");
-		add_attribute(ncid, varid, "units", "W/m2");
+		ncpp::add_attribute(ncid, varid, "long_name", "Surface Incident Direct Shortwave Radiation");
+		ncpp::add_attribute(ncid, varid, "units", "W/m2");
 	} else if (varname == NetCDFIO::cnrm_hnw) {
-		add_attribute(ncid, varid, "long_name", "Rainfall Rate");
-		add_attribute(ncid, varid, "units", "kg/m2/s");
+		ncpp::add_attribute(ncid, varid, "long_name", "Rainfall Rate");
+		ncpp::add_attribute(ncid, varid, "units", "kg/m2/s");
 	} else if (varname == NetCDFIO::cnrm_rh) {
-		add_attribute(ncid, varid, "long_name", "Relative Humidity");
-		add_attribute(ncid, varid, "units", "%");
+		ncpp::add_attribute(ncid, varid, "long_name", "Relative Humidity");
+		ncpp::add_attribute(ncid, varid, "units", "%");
 	} else if (varname == NetCDFIO::cnrm_ilwr) {
-		add_attribute(ncid, varid, "long_name", "Surface Incident Longwave Radiation");
-		add_attribute(ncid, varid, "units", "W/m2");
+		ncpp::add_attribute(ncid, varid, "long_name", "Surface Incident Longwave Radiation");
+		ncpp::add_attribute(ncid, varid, "units", "W/m2");
 	} else if (varname == NetCDFIO::cnrm_p) {
-		add_attribute(ncid, varid, "long_name", "Surface Pressure");
-		add_attribute(ncid, varid, "units", "Pa");
-	}
-}
-
-void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array)
-{
-	lat_array[0] = grid.llcorner.getLat();
-	lon_array[0] = grid.llcorner.getLon();
-
-	// The idea is to use the difference in coordinates of the upper right and the lower left
-	// corner to calculate the lat/lon intervals between cells
-	Coords urcorner(grid.llcorner);
-	urcorner.setGridIndex(grid.getNx() - 1, grid.getNy() - 1, IOUtils::nodata, true);
-	grid.gridify(urcorner);
-
-	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
-	const double lon_interval = (urcorner.getLon() - lon_array[0]) / static_cast<double>(grid.getNx()-1);
-
-	// The method to use interval*ii is consistent with the corresponding
-	// calculation of the Grid2DObject::gridify method -> numerical stability
-	for (size_t ii=1; ii<grid.getNy(); ++ii) {
-		lat_array[ii] = lat_array[0] + lat_interval*static_cast<double>(ii);
-	}
-
-	for (size_t ii=1; ii<grid.getNx(); ++ii) {
-		lon_array[ii] = lon_array[0] + lon_interval*static_cast<double>(ii);
+		ncpp::add_attribute(ncid, varid, "long_name", "Surface Pressure");
+		ncpp::add_attribute(ncid, varid, "units", "Pa");
 	}
 }
 
@@ -1259,11 +1121,11 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 {
 	size_t latlen, lonlen;
 
-	get_dimension(ncid, cf_latitude, did_lat, latlen);
-	get_dimension(ncid, cf_longitude, did_lon, lonlen);
+	ncpp::get_dimension(ncid, cf_latitude, did_lat, latlen);
+	ncpp::get_dimension(ncid, cf_longitude, did_lon, lonlen);
 
-	get_variable(ncid, cf_latitude, vid_lat);
-	get_variable(ncid, cf_longitude, vid_lon);
+	ncpp::get_variable(ncid, cf_latitude, vid_lat);
+	ncpp::get_variable(ncid, cf_longitude, vid_lon);
 
 	if ((latlen != grid.getNy()) || (lonlen != grid.getNx()))
 		throw IOException("Error while writing grid - grid size and lat/lon coordinates are inconsistent", AT);
@@ -1271,8 +1133,8 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 	double *lat = new double[grid.getNy()];
 	double *lon = new double[grid.getNx()];
 
-	read_data(ncid, cf_latitude, vid_lat, lat);
-	read_data(ncid, cf_longitude, vid_lon, lon);
+	ncpp::read_data(ncid, cf_latitude, vid_lat, lat);
+	ncpp::read_data(ncid, cf_longitude, vid_lon, lon);
 
 	for (size_t ii=0; ii<latlen; ++ii) {
 		if (lat_array[ii] != lat[ii])
@@ -1285,6 +1147,26 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 	}
 
 	delete[] lat; delete[] lon;
+}
+
+void NetCDFIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_vid)
+{
+	const string names[] = {cnrm_altitude, cnrm_latitude, cnrm_longitude, cnrm_aspect, cnrm_slope};
+	vector<string> varname(names, names + sizeof(names) / sizeof(names[0]));
+
+	vector<string> dimensions;
+	dimensions.push_back(cnrm_points); // All variables have to have the dimension cnrm_points
+
+	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); ++it) {
+		int varid;
+		const string& name = *it;
+
+		ncpp::get_variable(ncid, name, varid);
+		if (!ncpp::check_dimensions(ncid, name, varid, dimensions))
+			throw IOException("Variable '" + name  + "' fails dimension check", AT);
+
+		map_vid[name] = varid;
+	}
 }
 
 } //namespace
