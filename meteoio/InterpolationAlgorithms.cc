@@ -1011,7 +1011,13 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::TA, ta);
 
 	//slope/curvature correction for solid precipitation
+	const double orig_mean = grid.grid2D.getMean();
 	Interpol2D::PrecipSnow(dem, ta, grid);
+	//HACK: correction for precipitation sum over the whole domain
+	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
+	const double new_mean = grid.grid2D.getMean();
+	if(new_mean!=0.) grid *= orig_mean/new_mean;
+	
 	//Interpol2D::SteepSlopeRedistribution(dem, ta, grid);
 	//Interpol2D::CurvatureCorrection(dem, ta, grid);
 }
