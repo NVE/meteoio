@@ -82,6 +82,11 @@ namespace mio {
  * @section pngio_compilation
  * In order to compile this plugin, you need libpng and zlib. For Linux, please select both the libraries and their development files in your package manager.
  *
+ * For Mac, you can either install using <A href="http://www.finkproject.org/">Fink</A> or directly from <a href="http://www.libpng.org">source</a>. 
+ * In this case, please install <a href="http://zlib.net/">zlib</a> at the prefix of your choice (for example with the <i>"--prefix=/usr/local"</i> options 
+ * to its configure script, build with <i>"make"</i> and install with <i>"sudo make install"</i>). Then provide the libpng configure script with the 
+ * <i>"--enable-shared --prefix=/usr/local"</i> options (and build with <i>"make"</i> followed by <i>"sudo make install"</i>).
+ * 
  * For Windows, you can find zlib at http://switch.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3.exe
  * and libpng at http://switch.dl.sourceforge.net/project/gnuwin32/libpng/1.2.37/libpng-1.2.37-setup.exe . Once this has been installed, if you plan on using
  * Visual c++, you also need to edit the file zconf.h in the libpng installation directory and transform the line 287:
