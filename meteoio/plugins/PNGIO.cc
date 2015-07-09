@@ -717,11 +717,20 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 	metadata_key.push_back("Cellsize");
 	ss.str(""); ss << fixed << setprecision(2) << grid.cellsize;
 	metadata_text.push_back(ss.str());
-	metadata_key.push_back("Latitude");
-	ss.str(""); ss << fixed << setprecision(6) << lat;
+	metadata_key.push_back("LL_Latitude");
+	ss.str(""); ss << fixed << setprecision(7) << lat;
 	metadata_text.push_back(ss.str());
-	metadata_key.push_back("Longitude");
-	ss.str(""); ss << fixed << setprecision(6) << lon;
+	metadata_key.push_back("LL_Longitude");
+	ss.str(""); ss << fixed << setprecision(7) << lon;
+	metadata_text.push_back(ss.str());
+	
+	Coords UR(grid.llcorner);
+	UR.moveByXY( grid.cellsize*static_cast<double>(grid.getNx()) , grid.cellsize*static_cast<double>(grid.getNy()) );
+	metadata_key.push_back("UR_Latitude");
+	ss.str(""); ss << fixed << setprecision(7) << UR.getLat();
+	metadata_text.push_back(ss.str());
+	metadata_key.push_back("UR_Longitude");
+	ss.str(""); ss << fixed << setprecision(7) << UR.getLon();
 	metadata_text.push_back(ss.str());
 
 	if(lat<0.) {

@@ -48,15 +48,21 @@ class MeteoGrids {
 		enum Parameters {firstparam=0,
 		                 TA=firstparam, ///< Air temperature
 		                 RH, ///< Relative humidity
+				 QI, ///< Specific humidity
+				 TD, ///< Dew Point temperature
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
 		                 VW_MAX, ///< Maximum wind velocity
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
+				 ISW_DIFF, ///< Incoming short wave, diffuse
+				 ISW_DIR, ///< Incoming short wave, direct
 		                 ILWR, ///< Incoming long wave radiation
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 HS, ///< Height of snow
 		                 HNW, ///< Water equivalent of precipitations, either solid or liquid
+				 HNW_S, ///<  Water equivalent of precipitations, solid
+				 HNW_L, ///<  Water equivalent of precipitations, liquid
 		                 TSG, ///< Temperature ground surface
 		                 TSS, ///< Temperature snow surface
 		                 P, ///< Air pressure

@@ -435,17 +435,13 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 {
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
 	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
-
 	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
 	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
 
-	//computing lower left corner by using the center point as reference
 	mio::Coords cntr(coordin, coordinparam);
-	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
-	cntr.moveByXY(-.5*(double)(lonlen-1)*cellsize, -.5*(double)(latlen-1)*cellsize);
-
+	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata); //it will be moved to llcorner later, after correcting the aspect ratio
 	grid_out.set(lonlen, latlen, cellsize, cntr);
-
+	
 	//Handle the case of llcorner/urcorner swapped
 	if (lat[0]<=lat[latlen-1]) {
 		for (size_t kk=0; kk < latlen; kk++) {
@@ -470,10 +466,13 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 			}
 		}
 	}
-
+	
 	if (resampling_factor_x != mio::IOUtils::nodata) {
 		grid_out.grid2D = mio::ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
 	}
+	
+	//computing lower left corner by using the center point as reference, AFTER we corrected for the aspect ratio
+	grid_out.llcorner.moveByXY(-.5*(double)grid_out.getNx()*cellsize, -.5*(double)grid_out.getNy()*cellsize);
 }
 
 /* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file

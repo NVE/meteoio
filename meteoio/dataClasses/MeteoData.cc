@@ -36,15 +36,21 @@ bool MeteoGrids::initStaticData()
 	//the order must be the same as in the enum
 	paramname.push_back("TA");
 	paramname.push_back("RH");
+	paramname.push_back("QI");
+	paramname.push_back("TD");
 	paramname.push_back("VW");
 	paramname.push_back("DW");
 	paramname.push_back("VW_MAX");
 	paramname.push_back("ISWR");
 	paramname.push_back("RSWR");
+	paramname.push_back("ISW_DIFF");
+	paramname.push_back("ISW_DIR");
 	paramname.push_back("ILWR");
 	paramname.push_back("TAU_CLD");
 	paramname.push_back("HS");
 	paramname.push_back("HNW");
+	paramname.push_back("HNW_S");
+	paramname.push_back("HNW_L");
 	paramname.push_back("TSG");
 	paramname.push_back("TSS");
 	paramname.push_back("P");

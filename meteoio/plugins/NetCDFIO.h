@@ -59,51 +59,35 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		enum TimeUnit { seconds, hours, days };
-		enum Naming { cf, cnrm, ecmwf };
+		typedef struct ATTRIBUTES {
+			ATTRIBUTES() : var(), standard_name(), long_name(), units(), height(IOUtils::nodata) {};
+			ATTRIBUTES(const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
+			                     : var(str1), standard_name(str2), long_name(str3), units(str4), height(hgt) {};
+  
+			std::string var;
+			std::string standard_name;
+			std::string long_name;
+			std::string units;
+			double height;
+		} attributes;
 
+		void initAttributesMap(std::string schema, std::map<MeteoGrids::Parameters, attributes> &attr);
 		void parseInputOutputSection();
-		void create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
-		                       const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
-		                       std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid);
-		void create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid);
-		void get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
-		                    std::map<std::string, double*>& map_data_1D, double*& dates);
-		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
-		size_t get_dates(const std::vector< std::vector<MeteoData> >& vecMeteo, double*& dates);
-		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
-                         const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D);
-		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data,
-		               const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters,
-		              const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
-		void get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_vid);
-		std::string get_varname(const MeteoGrids::Parameters& parameter);
-		void get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate);
-		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
-		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
-		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
+		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);		
+		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
 		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
-		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
+		//void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double epsilon; //for numerical comparisons of double values
-		static const std::string cf_time, cf_units, cf_days, cf_hours, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
-		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
-		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
-		static const std::string ecmwf_ta, ecmwf_p, ecmwf_iswr, ecmwf_ilwr, ecmwf_hnw, ecmwf_u10, ecmwf_v10, ecmwf_td;
-
-		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
-		static std::map<std::string, std::string> map_name; ///Associate MeteoIO parameter names with CNRM parameter names
-		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map
+		static const std::string cf_time, cf_latitude, cf_longitude, cf_altitude;
 
 		const Config cfg;
+		std::map <MeteoGrids::Parameters, attributes> in_attributes, out_attributes;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 		bool in_strict, out_strict;

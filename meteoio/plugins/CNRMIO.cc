@@ -32,21 +32,13 @@ namespace mio {
 /**
  * @page cnrm CNRM
  * @section cnrm_format Format
- * In order to promote creation, access and sharing of scientific data, the NetCDF format has been
- * created as a machine-independent format. NetCDF (network Common Data Form) is therefore an interface
- * for array-oriented data access and a library that provides an implementation of the interface. The
- * <A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF software</A> was developed
- * at the <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado.
+ * The <A HREF="http://www.cnrm.meteo.fr/">CNRM</A> has built a schema on the NetCDF format
+ * to contain meteorological timeseries suitable for forcing snow models. The NetCDF (network Common Data Form) 
+ * format has been created as a machine-independent format by the 
+ * <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado. It is 
+ * an interface for array-oriented data access and a library that provides an implementation of the interface.
  * In order to graphicaly explore the content and structure of NetCDF files, you can use the
- * <A REF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse></A> java software.
- *
- * The <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata
- * are designed to promote the processing and sharing of netCDF files. The conventions define metadata
- * that provide a definitive description of what the data represents, and the spatial and temporal properties of the data.
- * This plugin follows such conventions as well as the naming extensions defined by the
- * <A HREF="http://www.cnrm.meteo.fr/">CNRM</A>.
- *
- * *Put here the more informations about the standard format that is implemented*
+ * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software.
  *
  * @section cnrm_units Units
  *
