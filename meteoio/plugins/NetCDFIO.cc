@@ -161,13 +161,12 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 	}
 }
 
-void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& /*parameter*/, const Date& date)
 {
 	const string filename = cfg.get("GRID2DFILE", "Input");
 	
 	string varname="";
 	read2DGrid_internal(grid_out, filename, varname, date);
-	
 
 }
 

@@ -66,7 +66,7 @@ class GRIBIO : public IOInterface {
 		void listFields(const std::string& filename);
 		void getDate(grib_handle* h, Date &base, double &d1, double &d2);
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
-		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& read_geolocalization);
+		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
 		bool read2DGrid_indexed(const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void readWind(const std::string& filename, const Date& date);
@@ -74,8 +74,6 @@ class GRIBIO : public IOInterface {
 		void readStations(std::vector<Coords> &vecPoints);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
-		/*void rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const;
-		void trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const;*/
 		void cleanup() throw();
 
 		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats, double *lons);
@@ -102,13 +100,14 @@ class GRIBIO : public IOInterface {
 		grib_index *idx; //because it needs to be kept between calls
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
-		double cellsize_x, cellsize_y, factor_x, factor_y;
+		double cellsize, factor_x, factor_y;
 
 		static const std::string default_ext;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double tz_in; //GRIB time zone
 		bool indexed; //flag to know if the file has already been indexed
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
+		bool llcorner_initialized; //set to true after we properly computed llcorner
 		bool update_dem;
 
 };

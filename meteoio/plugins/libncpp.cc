@@ -520,7 +520,7 @@ void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, dou
 	// The idea is to use the difference in coordinates of the upper right and the lower left
 	// corner to calculate the lat/lon intervals between cells
 	Coords urcorner(grid.llcorner);
-	urcorner.setGridIndex(grid.getNx() - 1, grid.getNy() - 1, IOUtils::nodata, true);
+	urcorner.setGridIndex(static_cast<int>(grid.getNx() - 1), static_cast<int>(grid.getNy() - 1), IOUtils::nodata, true);
 	grid.gridify(urcorner);
 
 	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
