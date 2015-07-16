@@ -67,6 +67,7 @@ namespace ncpp {
 	                const size_t& pos_start, const double * const data);
 
 	//Dealing with variables that have dimension NC_UNLIMITED
+	bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max);
 	size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 	size_t add_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 	void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& pos,

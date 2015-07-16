@@ -78,6 +78,7 @@ class Date {
 		static const int daysNonLeapYear[];
 		static const double DST_shift;
 		static const float MJD_offset;
+		static const float RFC868_offset;
 		static const float Unix_offset;
 		static const float Excel_offset;
 		static const float Matlab_offset;
@@ -99,6 +100,7 @@ class Date {
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const time_t& in_time, const bool& in_dst=false);
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
+		void setRFC868Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
 		void setExcelDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
 		void setMatlabDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
@@ -110,6 +112,7 @@ class Date {
 		double getJulian(const bool& gmt=false) const;
 		double getModifiedJulianDate(const bool& gmt=false) const;
 		double getTruncatedJulianDate(const bool& gmt=false) const;
+		double getRFC868Date(const bool& gmt=false) const;
 		time_t getUnixDate() const;
 		double getExcelDate(const bool& gmt=false) const;
 		double getMatlabDate(const bool& gmt=false) const;

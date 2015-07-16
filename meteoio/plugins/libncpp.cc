@@ -303,6 +303,28 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 	return dimlen;
 }
 
+bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max)
+{
+	int dimid;
+	size_t dimlen;
+
+	get_dimension(ncid, varname, dimid, dimlen);
+	
+	//check if record already exists
+	if (dimlen > 0) {
+		double *record_value = new double[dimlen];
+		read_data(ncid, varname, varid, record_value);
+
+		min = record_value[0];
+		max =  record_value[dimlen-1];
+
+		delete[] record_value;
+	} else 
+		return false; // data not found
+		
+	return true;
+}
+
 // Finding a certain record variable value (e.g. timestamp) by retrieving all
 // record values and then performing a linear search
 size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data)

@@ -55,8 +55,8 @@ class MeteoGrids {
 		                 VW_MAX, ///< Maximum wind velocity
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
-				 ISW_DIFF, ///< Incoming short wave, diffuse
-				 ISW_DIR, ///< Incoming short wave, direct
+				 ISWR_DIFF, ///< Incoming short wave, diffuse
+				 ISWR_DIR, ///< Incoming short wave, direct
 		                 ILWR, ///< Incoming long wave radiation
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 HS, ///< Height of snow
@@ -66,6 +66,7 @@ class MeteoGrids {
 		                 TSG, ///< Temperature ground surface
 		                 TSS, ///< Temperature snow surface
 		                 P, ///< Air pressure
+				 P_SEA, ///< Sea level air pressure
 		                 U, ///< East component of wind
 		                 V, ///< North component of wind
 		                 W, ///< Vertical component of wind

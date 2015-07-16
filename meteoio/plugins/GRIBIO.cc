@@ -37,7 +37,7 @@ namespace mio {
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (https://software.ecmwf.int/wiki/display/GRIB/Home), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
  * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://rda.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
- * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB .
+ * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB while NCEP are listed at http://www.cpc.ncep.noaa.gov/products/wesley/opn_gribtable.html.
  *
  * Several assumptions/approximations are held/made when reading grids:
  * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm , part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".
@@ -578,10 +578,10 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			grid_out.grid2D *= -1.;
 		} else read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
 	}
-	/*if(parameter==MeteoGrids::CLD) { //cloudiness
+	if(parameter==MeteoGrids::TAU_CLD) { //cloudiness
 		if(read2DGrid_indexed(74.2, 1, 0, date, grid_out)) //CLCM
 		grid_out.grid2D /= 100.;
-	}*/
+	}
 
 	if(parameter==MeteoGrids::ISWR) {
 		if(read2DGrid_indexed(116.2, 1, 0, date, grid_out)) { //short wave

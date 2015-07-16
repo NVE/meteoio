@@ -43,8 +43,8 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("VW_MAX");
 	paramname.push_back("ISWR");
 	paramname.push_back("RSWR");
-	paramname.push_back("ISW_DIFF");
-	paramname.push_back("ISW_DIR");
+	paramname.push_back("ISWR_DIFF");
+	paramname.push_back("ISWR_DIR");
 	paramname.push_back("ILWR");
 	paramname.push_back("TAU_CLD");
 	paramname.push_back("HS");
@@ -54,6 +54,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("TSG");
 	paramname.push_back("TSS");
 	paramname.push_back("P");
+	paramname.push_back("P_SEA");
 	paramname.push_back("U");
 	paramname.push_back("V");
 	paramname.push_back("W");

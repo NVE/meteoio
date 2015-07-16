@@ -49,6 +49,7 @@ const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const double Date::DST_shift = 1.0; //in hours
 const float Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
 const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
+const float Date::RFC868_offset = 2415020.5; ///< offset between julian date and RFC868 time (ref is 1900-01-01T00:00 GMT)
 const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
@@ -273,6 +274,17 @@ void Date::setModifiedJulianDate(const double& julian_in, const double& i_timezo
 }
 
 /**
+* @brief Set date from an RFC868 date (time since 1900-01-01T00:00 GMT).
+* @param julian_in julian date to set
+* @param i_timezone timezone as an offset to GMT (in hours, optional)
+* @param i_dst is it DST? (default: no)
+*/
+void Date::setRFC868Date(const double& julian_in, const double& i_timezone, const bool& i_dst) {
+	const double tmp_julian = julian_in + RFC868_offset;
+	setDate(tmp_julian, i_timezone, i_dst);
+}
+
+/**
 * @brief Set date from a Unix date.
 * @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param in_dst is it DST? (default: no)
@@ -368,6 +380,24 @@ double Date::getModifiedJulianDate(const bool& gmt) const {
 	} else {
 		const double local_julian = GMTToLocal(gmt_julian);
 		return (local_julian - MJD_offset);
+	}
+}
+
+/**
+* @brief Return RFC868 date.
+* The RFC868 date is defined as the fractional number of days since 1900-01-01T00:00 GMT
+* @param gmt convert returned value to GMT? (default: false)
+* @return RFC868 julian date in the current timezone / in GMT depending on the gmt parameter
+*/
+double Date::getRFC868Date(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
+	if(gmt) {
+		return (gmt_julian - RFC868_offset);
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		return (local_julian - RFC868_offset);
 	}
 }
 
