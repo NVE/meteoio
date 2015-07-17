@@ -413,7 +413,7 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 
 	// Write image data
 	if(indexed_png) {
-		for(size_t y=(nrows-1) ; y-- > 0; ) {
+		for(size_t y=nrows ; y-- > 0; ) {
 			size_t x=0;
 			for(; x<ncols ; x++) {
 				const size_t i=x*channels;
@@ -430,7 +430,7 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 			png_write_row(png_ptr, row);
 		}
 	} else {
-		for(size_t y=(nrows-1) ; y -- > 0; ) {
+		for(size_t y=nrows ; y -- > 0; ) {
 			size_t x=0;
 			for(; x<ncols ; x++) {
 				const size_t i=x*channels;

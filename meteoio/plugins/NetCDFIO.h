@@ -95,7 +95,7 @@ class NetCDFIO : public IOInterface {
 		double in_dflt_TZ, out_dflt_TZ; //default time zones
 		double in_time_offset, in_time_multiplier; //each schema defines its own time specification...
 		double out_time_offset, out_time_multiplier; //each schema defines its own time specification...
-		bool in_strict, out_strict;
+		bool dem_altimeter, in_strict, out_strict;
 		std::vector<StationData> vecMetaData;
 };
 

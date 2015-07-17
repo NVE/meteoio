@@ -60,6 +60,7 @@ namespace mio {
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
  * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF); [Input] and [Output] section
+ * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
  * @section netcdf_example Example use
  * @code
@@ -83,7 +84,7 @@ const std::string NetCDFIO::cf_altitude = "z";
 
 NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), in_attributes(), out_attributes(), coordin(), coordinparam(), coordout(), coordoutparam(),
                                                     in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(0.), in_time_multiplier(1.), out_time_offset(0.), out_time_multiplier(1.), 
-                                                    in_strict(false), out_strict(false), vecMetaData()
+                                                    dem_altimeter(false), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -91,7 +92,7 @@ NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), in_attribut
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), in_attributes(), out_attributes(), coordin(), coordinparam(), coordout(), coordoutparam(),
                                               in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(0.), in_time_multiplier(1.), out_time_offset(0.), out_time_multiplier(1.), 
-                                              in_strict(false), out_strict(false), vecMetaData()
+                                              dem_altimeter(false), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -105,6 +106,7 @@ void NetCDFIO::parseInputOutputSection()
 	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
+	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow);
 	
 	const string in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
 	initAttributesMap(in_schema, in_attributes);
@@ -261,16 +263,18 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 		if (read2DGrid_internal(dem_out, filename, "z")) return; //GDAL naming
 		
 		//last chance: read from pressure grids
-		Grid2DObject p, ta, p_sea;
-		if (read2DGrid_internal(p_sea, filename, MeteoGrids::P_SEA, Date(2015,1,1,12,0,0)) &&
-		     read2DGrid_internal(p, filename, MeteoGrids::P, Date(2015,1,1,12,0,0)) && 
-		     read2DGrid_internal(ta, filename, MeteoGrids::TA, Date(2015,1,1,12,0,0))) {
-			dem_out.set(p, IOUtils::nodata);
-			const double ex = Cst::gravity*Cst::dry_air_mol_mass / (Cst::gaz_constant*Cst::dry_adiabatique_lapse_rate);
-			const double ex_inv = 1./ex;
-			for(size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++)
-				dem_out(ii) = 1./Cst::dry_adiabatique_lapse_rate * (pow(p(ii)/p_sea(ii), -ex_inv) - ta(ii));
-			return;
+		if (dem_altimeter) {
+			Grid2DObject p, ta, p_sea;
+			if (read2DGrid_internal(p_sea, filename, MeteoGrids::P_SEA, Date(2015,1,1,12,0,0)) &&
+			read2DGrid_internal(p, filename, MeteoGrids::P, Date(2015,1,1,12,0,0)) && 
+			read2DGrid_internal(ta, filename, MeteoGrids::TA, Date(2015,1,1,12,0,0))) {
+				dem_out.set(p, IOUtils::nodata);
+				const double k = Cst::gravity*Cst::dry_air_mol_mass / (Cst::gaz_constant*Cst::dry_adiabatique_lapse_rate);
+				const double k_inv = 1./k;
+				for(size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++)
+					dem_out(ii) = ta(ii)/Cst::dry_adiabatique_lapse_rate * (pow(p(ii)/p_sea(ii), -k_inv) - 1.);
+				return;
+			}
 		}
 		
 		throw InvalidArgumentException("The variable containing the DEM could not be found. Please specify it using the DEMVAR key.", AT);
