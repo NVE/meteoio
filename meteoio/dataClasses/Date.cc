@@ -684,8 +684,9 @@ unsigned short Date::getDayOfWeek(const bool& gmt) const {
 * year (See https://en.wikipedia.org/wiki/ISO_week_date).
 * @param gmt convert returned value to GMT? (default: false)
 */
-unsigned short Date::getISOWeekNr(const bool& gmt) const
+unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 {
+	ISO_year = getYear(gmt);
 	const double jdn = getJulianDayNumber(gmt);
 	Date newYear(*this - jdn + 1);
 	const unsigned short newYear_dow = newYear.getDayOfWeek(gmt);
@@ -698,23 +699,33 @@ unsigned short Date::getISOWeekNr(const bool& gmt) const
 		const unsigned char week_offset = (is_leapYear)? 1 : 0; //for leap years, dec. 31 is one dow later as jan. 1st 
 		const double lastDay_dow = (newYear_dow + week_offset - 1) % 7 + 1;
 		const double lastMonday = jdn_last - lastDay_dow + 1; //dow starts at 1
-		if (jdn>=lastMonday && lastDay_dow<4) return 1;
+		if (jdn>=lastMonday && lastDay_dow<4) {
+			ISO_year++;
+			return 1;
+		}
 	}
 	
 	//these are certainly normal days, ie no special case
 	if (jdn>=firstWeekMonday) { //at worst, we are in week 01, otherwise after...
 		return static_cast<unsigned short>( Optim::intPart( (jdn+3-(double)firstThursday) / 7 ) + 1);
-	}
-
-	//handle the first few days of the new year that are before week 1
-	//we are *before* the Monday of the first week. This implies that dow>4 (otherwise, the current week would be week 01)
-	//so these few days belong to the last week of the previous year
-	else if (newYear_dow==5) return 53; // Friday indicates a leap year
-	else if (newYear_dow==7) return 52; // Sunday is no leap year
-	else { //Saturday depends on the year before...
-		if (isLeapYear(gmt_year-1)) return 53;
+	} else {
+		//handle the first few days of the new year that are before week 1
+		//we are *before* the Monday of the first week. This implies that dow>4 (otherwise, the current week would be week 01)
+		//so these few days belong to the last week of the previous year
+		ISO_year--;
+		if (newYear_dow==5) return 53; // Friday indicates a leap year
+		if (newYear_dow==7) return 52; // Sunday is no leap year
+		
+		//Saturday depends on the year before...
+		if (isLeapYear(ISO_year)) return 53;
 		else return 52;
 	}
+}
+
+unsigned short Date::getISOWeekNr(const bool& gmt) const
+{
+	int ISO_year;
+	return getISOWeekNr(ISO_year, gmt);
 }
 
 /**
@@ -1136,12 +1147,16 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << minute_out << ":"
 			<< setw(2) << setfill('0') << second_out;
 			break;
-		case(ISO_WEEK):
+		case(ISO_WEEK): 
+		{
+			int ISO_year;
+			const int ISO_week = getISOWeekNr(ISO_year, gmt);
 			tmpstr
-			<< setw(4) << setfill('0') << year_out << "-W"
-			<< setw(2) << setfill('0') << getISOWeekNr(gmt) << "-"
+			<< setw(4) << setfill('0') << ISO_year << "-W"
+			<< setw(2) << setfill('0') << ISO_week << "-"
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;
+		}
 		default:
 			throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
