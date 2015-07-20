@@ -687,15 +687,26 @@ unsigned short Date::getDayOfWeek(const bool& gmt) const {
 unsigned short Date::getISOWeekNr(const bool& gmt) const
 {
 	const double jdn = getJulianDayNumber(gmt);
-	const Date newYear( gmt_julian - jdn + 1 , timezone);
+	Date newYear(*this - jdn + 1);
 	const unsigned short newYear_dow = newYear.getDayOfWeek(gmt);
 	const int firstThursday = (7 - newYear_dow + 4) % 7 + 1; //first Thursday of the year belongs to week 1
 	const int firstWeekMonday = firstThursday - 3; //this could be <0, for example if Jan 01 is a Thursday
-
+	
+	if (jdn>=359) { //handle the last few days before the new year that might belong to week 1
+		const bool is_leapYear = isLeapYear();
+		const int jdn_last = (is_leapYear)? 366 : 365;
+		const unsigned char week_offset = (is_leapYear)? 1 : 0; //for leap years, dec. 31 is one dow later as jan. 1st 
+		const double lastDay_dow = (newYear_dow + week_offset - 1) % 7 + 1;
+		const double lastMonday = jdn_last - lastDay_dow + 1; //dow starts at 1
+		if (jdn>=lastMonday && lastDay_dow<4) return 1;
+	}
+	
+	//these are certainly normal days, ie no special case
 	if (jdn>=firstWeekMonday) { //at worst, we are in week 01, otherwise after...
-		return static_cast<unsigned short>( Optim::intPart( (jdn+3-(double)firstThursday) / 7 + 1 ) );
+		return static_cast<unsigned short>( Optim::intPart( (jdn+3-(double)firstThursday) / 7 ) + 1);
 	}
 
+	//handle the first few days of the new year that are before week 1
 	//we are *before* the Monday of the first week. This implies that dow>4 (otherwise, the current week would be week 01)
 	//so these few days belong to the last week of the previous year
 	else if (newYear_dow==5) return 53; // Friday indicates a leap year
@@ -710,7 +721,7 @@ unsigned short Date::getISOWeekNr(const bool& gmt) const
 * @brief Return the julian day for the current date.
 * Return the day of the year index for the current Date object
 * @param gmt convert returned value to GMT? (default: false)
-* @return julian day number
+* @return julian day number, starting from 1
 */
 int Date::getJulianDayNumber(const bool& gmt) const {
 	if(undef==true)
@@ -718,12 +729,12 @@ int Date::getJulianDayNumber(const bool& gmt) const {
 
 	if(gmt) {
 		const double first_day_of_year = static_cast<double>(getJulianDayNumber(gmt_year, 1, 1));
-		return static_cast<int>(gmt_julian - first_day_of_year + 1);
+		return static_cast<int>(gmt_julian - first_day_of_year + 1.5);
 	} else {
 		const double local_julian = GMTToLocal(gmt_julian);
 		int local_year, local_month, local_day, local_hour, local_minute, local_second;
 		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute, local_second);
-		return static_cast<int>(Optim::intPart(local_julian)) - static_cast<int>(getJulianDayNumber(local_year, 1, 1)) + 1;
+		return static_cast<int>(Optim::intPart(local_julian+0.5)) - static_cast<int>(getJulianDayNumber(local_year, 1, 1)) + 1;
 	}
 }
 
@@ -1197,7 +1208,7 @@ std::iostream& operator>>(std::iostream& is, Date& date) {
 double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second) const
 {
 	const long julday = getJulianDayNumber(i_year, i_month, i_day);
-	const double frac = (i_hour-12.)/24. + i_minute/(24.*60.) + i_second/(24.*60.*60.); //the julian date reference is at 12:00
+	const double frac = (i_hour-12.)/24. + i_minute/(24.*60.) + i_second/(24.*3600.); //the julian date reference is at 12:00
 
 	return (((double)julday) + frac);
 }
@@ -1223,12 +1234,14 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
 	if ( o_year <= 0 ) o_year--;
-
+	
 	double integral;
 	const double frac = modf(tmp_julian+.5, &integral); //the julian date reference is at 12:00
-	o_second = static_cast<int>(Optim::round(frac*24.*60.*60.)) % 60;
-	o_minute = static_cast<int>(Optim::round(frac*24.*60.)) % 60;
-	o_hour = static_cast<int>(Optim::round( (24.*60.*frac - (double)o_minute)/60. - (double)o_second/3600. ));
+	const int sec = static_cast<int>(Optim::round(frac*(24.*3600.)));
+	
+	o_hour   = static_cast<int>(double(sec)/3600.);
+	o_minute = static_cast<int>(double(sec - 3600*o_hour)/60.);
+	o_second = sec - 3600*o_hour - 60*o_minute;
 }
 
 bool Date::isLeapYear(const int& i_year) const {
