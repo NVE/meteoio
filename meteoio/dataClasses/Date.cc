@@ -682,6 +682,7 @@ unsigned short Date::getDayOfWeek(const bool& gmt) const {
 * The week number range from 1 to 53 for a leap year. The first week is the week that contains
 * the first Thursday of the year. Previous days are attributed to the last week of the previous
 * year (See https://en.wikipedia.org/wiki/ISO_week_date).
+* @param[out] ISO_year get filled with the matching ISO year (since the fist/last few days might belong to the previous/next year)
 * @param gmt convert returned value to GMT? (default: false)
 */
 unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const

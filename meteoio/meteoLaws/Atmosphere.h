@@ -32,6 +32,7 @@ namespace mio {
  */
 class Atmosphere {
 	public:
+		static double gravity(const double& altitude, const double& latitude);
 		static double stdAirPressure(const double& altitude);
 		static double stdDryAirDensity(const double& altitude, const double& temperature);
 		static double waterSaturationPressure(const double& T);

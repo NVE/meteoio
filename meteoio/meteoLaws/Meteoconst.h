@@ -25,7 +25,8 @@ namespace mio {
 namespace Cst {
 	const double stefan_boltzmann = 5.670373e-8; // (W m-2 K-4)
 	const double gravity = 9.80665; // (m s-2)
-	const double std_press = 101325.; // (Pa)
+	const double std_press = 101325.; // (Pa) at sea level
+	const double std_temp = 288.15; // (K) at sea level
 	const double dry_adiabatique_lapse_rate = 0.0065; // (K/m)
 
 	const double gaz_constant_dry_air = 287.058; // (J kg-1 K-1)
@@ -35,11 +36,11 @@ namespace Cst {
 	const double p_water_triple_pt = 611.73; // (Pa)
 	const double t_water_freezing_pt = 273.15; // (K)
 	const double t_water_triple_pt = 273.16; // (K)
-	const double l_water_sublimation = 2.838e6; // (J Kg-1)
-	const double l_water_vaporization = 2.504e6; // (J Kg-1)
+	const double l_water_sublimation = 2.838e6; // (J kg-1)
+	const double l_water_vaporization = 2.504e6; // (J kg-1)
 	const double l_water_fusion = 3.34e5; // (J Kg-1)
-	const double water_molecular_mass = 18.0153e-3; // (Kg)
-	const double dry_air_mol_mass =0.0289644 ; // (Kg/mol)
+	const double water_molecular_mass = 18.0153e-3; // (kg)
+	const double dry_air_mol_mass =0.0289644 ; // (kg/mol)
 
 	const double specific_heat_ice = 2100.0; // (J K-1), at 0C
 	const double specific_heat_water = 4190.0; // (J K-1) at 0C

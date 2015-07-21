@@ -52,20 +52,32 @@ double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
 }
 
 /**
-* @brief Standard atmosphere pressure
+* @brief Standard atmospheric pressure as a function of the altitude.
+* This is based on the following formula (with h the altitude, P<sub>0</sub> 
+* and T<sub>0</sub> the standard sea level pressure and temperature, L the 
+* dry adiabatic lapse rate and R<sub>0</sub> the earth's radius):
+* \f[
+* P = P_0 \cdot {\left( 1 - \frac{L \cdot R_0 \cdot h}{T_0 ( R_0 + h )}  \right)}^{\frac{g}{L R}}
+* \f]
 * @param altitude altitude above sea level (m)
 * @return standard pressure (Pa)
 */
 double Atmosphere::stdAirPressure(const double& altitude) {
-	const double p0 = Cst::std_press; // Air and standard pressure in Pa
-	const double lapse_rate = 0.0065; // K m-1
-	const double sea_level_temp = 288.15; // K
-	const double expo = Cst::gravity / (lapse_rate * Cst::gaz_constant_dry_air);
-	const double R0 = Cst::earth_R0; // Earth's radius in m
+	const double expo = Cst::gravity / (Cst::dry_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+	const double p = Cst::std_press * pow( 1. - ( (Cst::dry_adiabatique_lapse_rate * Cst::earth_R0 * altitude) / (Cst::std_temp * (Cst::earth_R0 + altitude)) ), expo );
+	return p;
+}
 
-	const double p = p0 * pow( 1. - ( (lapse_rate * R0 * altitude) / (sea_level_temp * (R0 + altitude)) ), expo );
-
-	return(p);
+/**
+ * @brief Acceleration due to gravity
+ * @param altitude altitude above sea level (m)
+ * @param latitude latitude in degrees
+ * @return acceleration due to gravity (m/s2)
+ */
+double Atmosphere::gravity(const double& altitude, const double& latitude) {
+	const double lat = latitude*Cst::to_rad;
+	const double g = 9.780356 * (1. + 0.0052885*Optim::pow2(sin(lat)) - 0.0000059*Optim::pow2(sin(2.*lat))) - 0.003086 * altitude*1e-3;
+	return g;
 }
 
 /**
