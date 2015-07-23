@@ -250,8 +250,9 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 /**
  * @class ConstLapseRateAlgorithm
  * @brief Constant filling with elevation lapse rate interpolation algorithm.
- * Assuming that average values occured at the average of the elevations, the grid is filled with average values
- * reprojected to real grid elevation according to a lapse rate. The lapse rate is either calculated from the data
+ * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it 
+ * differently, the following operations are performed: detrending - averaging - re-trending.
+ * The lapse rate is either calculated from the data
  * (if no extra argument is provided), or given by the user-provided the optional argument <i>"cst_lapse"</i>.
  * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
  * unsuccessful, then user provided lapse rate is used as a fallback. If the optional user given lapse rate is
