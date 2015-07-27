@@ -76,10 +76,13 @@ class NetCDFIO : public IOInterface {
 		void parseInputOutputSection();
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
+		//void read2DGrid_meta(const std::string& filename, const std::string& varname, int &ncid, int &varid, std::vector<size_t> &dimlen, size_t &time_index, size_t &lat_index, size_t &lon_index, double &missing_value,double &lat, double &lon);
 		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const MeteoGrids::Parameters& parameter, const Date& date=Date());
-		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
+		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date(), const bool& isPrecip=false);
 		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
+		void add_attributes_for_variable(const int& ncid, const int& varid, const MeteoGrids::Parameters& parameter);
 		//void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
+		void getTimeTransform(const int& ncid, const int& varid, double &time_offset, double &time_multiplier) const;
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 		void readWind(const std::string& filename, const Date& date);
@@ -94,7 +97,6 @@ class NetCDFIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ; //default time zones
 		double in_time_offset, in_time_multiplier; //each schema defines its own time specification...
-		double out_time_offset, out_time_multiplier; //each schema defines its own time specification...
 		bool dem_altimeter, in_strict, out_strict;
 		std::vector<StationData> vecMetaData;
 };
