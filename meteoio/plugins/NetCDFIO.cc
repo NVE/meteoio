@@ -309,27 +309,29 @@ void NetCDFIO::readPOI(std::vector<Coords>&)
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-	
 	// arguments is a string of the format filname:varname
 	vector<string> vec_argument;
-	IOUtils::readLineToVec(arguments, vec_argument, ':');
-
-	if (vec_argument.size() != 2)
+	if (IOUtils::readLineToVec(arguments, vec_argument, ':')  != 2)
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname", AT);
 
-	write2DGrid_internal(grid_in, vec_argument[0], vec_argument[1]);
+	const string name = vec_argument[1];
+	const attributes attr(name, name, name, "", IOUtils::nodata);
+	write2DGrid_internal(grid_in, vec_argument[0], attr);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-	
 	const string filename = cfg.get("GRID2DFILE", "Output");
-	const string varname = "";
-	write2DGrid_internal(grid_in, filename, varname, date);
+	
+	const std::map<MeteoGrids::Parameters, attributes>::const_iterator it = in_attributes.find(parameter);
+	if (it!=in_attributes.end()) {
+		const bool isPrecip = (parameter==MeteoGrids::HNW || parameter==MeteoGrids::SWE);
+		write2DGrid_internal(grid_in, filename, it->second, date, isPrecip);
+	} else {
+		const string name = MeteoGrids::getParameterName(parameter);
+		const attributes attr(name, name, name, "", IOUtils::nodata);
+		write2DGrid_internal(grid_in, filename, attr, date);
+	}
 }
 
 bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -443,7 +445,6 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		if (units=="m**2 s**-2") grid_out /= Cst::gravity;
 		if (units=="%") grid_out /= 100.;
 		if (units=="J m**-2") grid_out /= (3600.*3.);
-		
 		if (isPrecip && units=="m") grid_out *= 100.;
 		if (isPrecip) {//reset very low precip to zero
 			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
@@ -455,10 +456,10 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	return true;
 }
 
-void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date)
+void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const attributes& attr, const Date& date, const bool& isPrecip)
 {
-	const bool is_record = (date != Date());
-	const bool exists = IOUtils::fileExists(filename);
+	const string varname = attr.var;
+	const bool is_record = (date != Date() && date!=Date(0.));
 
 	double *lat_array = new double[grid_in.getNy()];
 	double *lon_array = new double[grid_in.getNx()];
@@ -466,11 +467,25 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 
 	ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
 	ncpp::fill_grid_data(grid_in, data);
+	
+	//Correct the units if necessary
+	const string units = attr.units;
+	double factor = 1.;
+	if (units=="m**2 s**-2") factor = Cst::gravity;
+	if (units=="%") factor = 100.;
+	if (units=="J m**-2") factor = (3600.*1.); //HACK: assuming that we do hourly outputs
+	if (isPrecip && units=="m") factor = 0.01;
+	if (factor!=1.) {
+		for(size_t ii=0; ii<grid_in.getNx()*grid_in.getNy(); ii++) {
+			if (data[ii]!=IOUtils::nodata)
+				data[ii] *= factor;
+		}
+	}
 
 	int ncid, did_lat, did_lon, did_time, vid_lat, vid_lon, vid_var, vid_time;
 	bool create_dimensions(false), create_variable(false), create_time(false);
 
-	if (exists) {
+	if ( IOUtils::fileExists(filename) ) {
 		ncpp::open_file(filename, NC_WRITE, ncid);
 
 		//check of lat/lon are defined and consistent
@@ -490,20 +505,20 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 			}
 		}
 
-		if (ncpp::check_variable(ncid, varname)) { // variable exists
-			ncpp::get_variable(ncid, varname, vid_var);
+		if (ncpp::check_variable(ncid, attr.var)) { // variable exists
+			ncpp::get_variable(ncid, attr.var, vid_var);
 
 			vector<int> dimid, dim_varid;
 			vector<string> dimname;
 			vector<size_t> dimlen;
-			ncpp::get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
+			ncpp::get_dimension(ncid, attr.var, vid_var, dimid, dim_varid, dimname, dimlen);
 
 			if (is_record) {
 				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != cf_latitude) || (dimname[2] != cf_longitude) || (dimlen[1]!=grid_in.getNy()) || (dimlen[2]!=grid_in.getNx()))
-					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
+					throw IOException("Variable '" + attr.var  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
 			} else {
 				if ((dimname[0] != cf_latitude) || (dimname[1] != cf_longitude) || (dimlen[0]!=grid_in.getNy()) || (dimlen[1]!=grid_in.getNx()))
-					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
+					throw IOException("Variable '" + attr.var  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
 			}
 		} else {
 			create_variable = true;
@@ -521,11 +536,11 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
 
 	if (is_record && create_variable) {
-		ncpp::add_3D_variable(ncid, varname, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
-		//add_attributes_for_variable(ncid, vid_var, varname);
+		ncpp::add_3D_variable(ncid, attr.var, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
+		add_attributes_for_variable(ncid, vid_var, attr);
 	} else if (create_variable) {
-		ncpp::add_2D_variable(ncid, varname, NC_DOUBLE, did_lat, did_lon, vid_var);
-		//add_attributes_for_variable(ncid, vid_var, varname);
+		ncpp::add_2D_variable(ncid, attr.var, NC_DOUBLE, did_lat, did_lon, vid_var);
+		add_attributes_for_variable(ncid, vid_var, attr);
 	}
 
 	ncpp::end_definitions(filename, ncid);
@@ -536,10 +551,10 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	}
 
 	if (is_record) {
-		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
-		ncpp::write_data(ncid, varname, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
+		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, static_cast<double>( 3600*date.getUnixDate() ));
+		ncpp::write_data(ncid, attr.var, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
-		ncpp::write_data(ncid, varname, vid_var, data);
+		ncpp::write_data(ncid, attr.var, vid_var, data);
 	}
 
 	ncpp::close_file(filename, ncid);
@@ -569,45 +584,42 @@ void NetCDFIO::getTimeTransform(const int& ncid, const int& varid, double &time_
 	time_offset = refDate.getJulian();
 }
 
-void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_in, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon)
+void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_in, int& did_lat, int& did_lon, int& varid_lat, int& varid_lon)
 {
 	ncpp::add_dimension(ncid, cf_latitude, grid_in.getNy(), did_lat);
-	ncpp::add_1D_variable(ncid, cf_latitude, NC_DOUBLE, did_lat, vid_lat);
-	//add_attributes_for_variable(ncid, vid_lat, cf_latitude);
+	ncpp::add_1D_variable(ncid, cf_latitude, NC_DOUBLE, did_lat, varid_lat);
+	ncpp::add_attribute(ncid, varid_lat, "standard_name", cf_latitude);
+	ncpp::add_attribute(ncid, varid_lat, "long_name", cf_latitude);
+	ncpp::add_attribute(ncid, varid_lat, "units", "degrees_north");
 
 	ncpp::add_dimension(ncid, cf_longitude, grid_in.getNx(), did_lon);
-	ncpp::add_1D_variable(ncid, cf_longitude, NC_DOUBLE, did_lon, vid_lon);
-	//add_attributes_for_variable(ncid, vid_lon, cf_longitude);
+	ncpp::add_1D_variable(ncid, cf_longitude, NC_DOUBLE, did_lon, varid_lon);
+	ncpp::add_attribute(ncid, varid_lon, "standard_name", cf_longitude);
+	ncpp::add_attribute(ncid, varid_lon, "long_name", cf_longitude);
+	ncpp::add_attribute(ncid, varid_lon, "units", "degrees_east");
 }
 
-void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time)
+void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& varid_time)
 {
 	ncpp::add_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
-	ncpp::add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
-	//add_attributes_for_variable(ncid, vid_time, NetCDFIO::cf_time);
+	ncpp::add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, varid_time);
+	ncpp::add_attribute(ncid, varid_time, "standard_name", cf_time);
+	ncpp::add_attribute(ncid, varid_time, "long_name", cf_time);
+	ncpp::add_attribute(ncid, varid_time, "units", "hours since 1970-01-01 00:00:0.0");
+	ncpp::add_attribute(ncid, varid_time, "calendar", "gregorian");
 }
 
-void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, const MeteoGrids::Parameters& parameter)
+void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr)
 {
-	const std::map<MeteoGrids::Parameters, attributes>::const_iterator it = out_attributes.find(parameter);
-	if (it!=out_attributes.end()) {
-		ncpp::add_attribute(ncid, varid, "standard_name", it->second.standard_name);
-		ncpp::add_attribute(ncid, varid, "long_name", it->second.long_name);
-		ncpp::add_attribute(ncid, varid, "units", it->second.units);
-		if (parameter==MeteoGrids::DEM) {
-			ncpp::add_attribute(ncid, varid, "positive", "up");
-			ncpp::add_attribute(ncid, varid, "axis", "Z");
-		}
-		return;
-	} else {
-		ncpp::add_attribute(ncid, varid, "standard_name", MeteoGrids::getParameterName(parameter));
-		ncpp::add_attribute(ncid, varid, "long_name", MeteoGrids::getParameterName(parameter));
-		ncpp::add_attribute(ncid, varid, "units", "");
-		if (parameter==MeteoGrids::DEM) {
-			ncpp::add_attribute(ncid, varid, "positive", "up");
-			ncpp::add_attribute(ncid, varid, "axis", "Z");
-		}
+	ncpp::add_attribute(ncid, varid, "standard_name", attr.standard_name);
+	ncpp::add_attribute(ncid, varid, "long_name", attr.long_name);
+	ncpp::add_attribute(ncid, varid, "units", attr.units);
+	if (attr.var=="z" || attr.var=="ZS") { //for DEM
+		ncpp::add_attribute(ncid, varid, "positive", "up");
+		ncpp::add_attribute(ncid, varid, "axis", "Z");
 	}
+	ncpp::add_attribute(ncid, varid, "missing_value", IOUtils::nodata);
+	//HACK: handle data packing!
 }
 
 void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
