@@ -37,7 +37,7 @@ namespace mio {
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (https://software.ecmwf.int/wiki/display/GRIB/Home), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
  * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://rda.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
- * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB while NCEP are listed at http://www.cpc.ncep.noaa.gov/products/wesley/opn_gribtable.html.
+ * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB while NCEP are listed at http://www.cpc.ncep.noaa.gov/products/wesley/opn_gribtable.html. Users with access to <a href="http://www.cscs.ch">CSCS</a> can find the up-to-date parameters description under <i>/oprusers/osm/opr/lib/dictionary_cosmo.txt</i>
  *
  * Several assumptions/approximations are held/made when reading grids:
  * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm , part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".
@@ -995,11 +995,14 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 			Meteo[ii](MeteoData::ISWR) = -values[ii];
 		}
 	} else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
-	if(readMeteoValues(116.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //SWAVR
-	else if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
+	if(readMeteoValues(109.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB_H
 	else {
-		if(readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values) //ASWDIFD_S
-		   && readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values2)) { //ASWDIR_S
+		const bool read_dir = (readMeteoValues(108.250, 1, 0, i_date, npoints, lats, lons, values) //ASWDIR_SH
+		                                 || readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values) //O_ASWDIR_S
+		                                 || readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values)); //ASWDIR_S
+		const bool read_diff = (readMeteoValues(117.2, 1, 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S
+		                                  || readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values2)); //ASWDIFD_S
+		if(read_dir && read_diff){
 			for(size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::ISWR) = values[ii] + values2[ii];
 			}
