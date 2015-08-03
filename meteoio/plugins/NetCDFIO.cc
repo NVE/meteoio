@@ -456,31 +456,36 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	return true;
 }
 
-void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const attributes& attr, const Date& date, const bool& isPrecip)
+void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& filename, const attributes& attr, const Date& date, const bool& isPrecip)
 {
 	const string varname = attr.var;
 	const bool is_record = (date != Date() && date!=Date(0.));
 
 	double *lat_array = new double[grid_in.getNy()];
 	double *lon_array = new double[grid_in.getNx()];
-	double *data = new double[grid_in.getNy() * grid_in.getNx()];
-
-	ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
-	ncpp::fill_grid_data(grid_in, data);
+	int *data = new int[grid_in.getNy() * grid_in.getNx()];
 	
 	//Correct the units if necessary
 	const string units = attr.units;
-	double factor = 1.;
-	if (units=="m**2 s**-2") factor = Cst::gravity;
-	if (units=="%") factor = 100.;
-	if (units=="J m**-2") factor = (3600.*1.); //HACK: assuming that we do hourly outputs
-	if (isPrecip && units=="m") factor = 0.01;
-	if (factor!=1.) {
-		for(size_t ii=0; ii<grid_in.getNx()*grid_in.getNy(); ii++) {
-			if (data[ii]!=IOUtils::nodata)
-				data[ii] *= factor;
-		}
+	if (units=="m**2 s**-2") grid_in *= Cst::gravity;
+	if (units=="%") grid_in *= 100.;
+	if (units=="J m**-2") grid_in *= (3600.*1.); //HACK: assuming that we do hourly outputs
+	if (isPrecip && units=="m") grid_in *= 0.01;
+	
+	//Compute data packing
+	const double data_min = grid_in.grid2D.getMin();
+	const double range = grid_in.grid2D.getMax() - data_min;
+	double add_offset = 0., scale_factor = 1.;
+	if (range!=0.) {
+		const long double type_range = 0.5* (static_cast<long double>(std::numeric_limits<int>::max()) - static_cast<long double>(std::numeric_limits<int>::min()));
+		scale_factor = static_cast<double> ( range / (type_range - 1.) ); //we reserve the max for nodata
+		add_offset = data_min + range/2.; //center the data on the central value of the type
+		grid_in -= add_offset;
+		grid_in /= scale_factor;
 	}
+	const double nodata_out = (range!=0)? std::numeric_limits<int>::max() : IOUtils::nodata;
+	ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
+	ncpp::fill_grid_data(grid_in, nodata_out, data);
 
 	int ncid, did_lat, did_lon, did_time, vid_lat, vid_lon, vid_var, vid_time;
 	bool create_dimensions(false), create_variable(false), create_time(false);
@@ -536,13 +541,18 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
 
 	if (is_record && create_variable) {
-		ncpp::add_3D_variable(ncid, attr.var, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
-		add_attributes_for_variable(ncid, vid_var, attr);
+		ncpp::add_3D_variable(ncid, attr.var, NC_INT, did_time, did_lat, did_lon, vid_var); //NC_DOUBLE or NC_INT or NC_SHORT
+		add_attributes_for_variable(ncid, vid_var, attr, nodata_out);
 	} else if (create_variable) {
-		ncpp::add_2D_variable(ncid, attr.var, NC_DOUBLE, did_lat, did_lon, vid_var);
-		add_attributes_for_variable(ncid, vid_var, attr);
+		ncpp::add_2D_variable(ncid, attr.var, NC_INT, did_lat, did_lon, vid_var); //NC_DOUBLE
+		add_attributes_for_variable(ncid, vid_var, attr, nodata_out);
 	}
 
+	if (range!=0.) {
+		ncpp::add_attribute(ncid, vid_var, "add_offset", add_offset);
+		ncpp::add_attribute(ncid, vid_var, "scale_factor", scale_factor);
+	}
+	
 	ncpp::end_definitions(filename, ncid);
 
 	if (create_dimensions) {
@@ -609,7 +619,7 @@ void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& varid_
 	ncpp::add_attribute(ncid, varid_time, "calendar", "gregorian");
 }
 
-void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr)
+void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr, const double& nodata_out)
 {
 	ncpp::add_attribute(ncid, varid, "standard_name", attr.standard_name);
 	ncpp::add_attribute(ncid, varid, "long_name", attr.long_name);
@@ -618,8 +628,7 @@ void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, co
 		ncpp::add_attribute(ncid, varid, "positive", "up");
 		ncpp::add_attribute(ncid, varid, "axis", "Z");
 	}
-	ncpp::add_attribute(ncid, varid, "missing_value", IOUtils::nodata);
-	//HACK: handle data packing!
+	ncpp::add_attribute(ncid, varid, "missing_value", nodata_out);
 }
 
 void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,

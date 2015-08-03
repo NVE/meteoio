@@ -65,6 +65,9 @@ namespace ncpp {
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data);
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
 	                const size_t& pos_start, const double * const data);
+	void write_data(const int& ncid, const std::string& varname, const int& varid, const int * const data);
+	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
+	                const size_t& pos_start, const int * const data);
 
 	//Dealing with variables that have dimension NC_UNLIMITED
 	bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max);
@@ -91,6 +94,7 @@ namespace ncpp {
 	                                          double& factor_x, double& factor_y);
 	void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, double*& lon_array);
 	void fill_grid_data(const mio::Grid2DObject& grid, double*& data);
+	void fill_grid_data(const mio::Grid2DObject& grid, const double& new_nodata, int*& data);
 } // end namespace
 
 #endif

@@ -79,8 +79,8 @@ class NetCDFIO : public IOInterface {
 		//void read2DGrid_meta(const std::string& filename, const std::string& varname, int &ncid, int &varid, std::vector<size_t> &dimlen, size_t &time_index, size_t &lat_index, size_t &lon_index, double &missing_value,double &lat, double &lon);
 		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const MeteoGrids::Parameters& parameter, const Date& date=Date());
 		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date(), const bool& isPrecip=false);
-		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const attributes& attr, const Date& date=Date(), const bool& isPrecip=false);
-		void add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr);
+		void write2DGrid_internal(Grid2DObject grid_in, const std::string& filename, const attributes& attr, const Date& date=Date(), const bool& isPrecip=false);
+		void add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr, const double& nodata_out);
 		void getTimeTransform(const int& ncid, const int& varid, double &time_offset, double &time_multiplier) const;
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);

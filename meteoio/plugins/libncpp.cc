@@ -271,6 +271,25 @@ void write_data(const int& ncid, const std::string& varname, const int& varid, c
 	}
 }
 
+void write_data(const int& ncid, const std::string& varname, const int& varid, const int * const data)
+{
+	const int status = nc_put_var_int(ncid, varid, data);
+	if (status != NC_NOERR)
+		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);
+}
+
+void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
+                const size_t& pos_start, const int * const data)
+{
+	size_t start[] = {pos_start, 0, 0};
+	size_t count[] = {1, nrows, ncols};
+
+	const int status = nc_put_vara_int(ncid, varid, start, count, data);
+	if (status != NC_NOERR) {
+		throw IOException("Could not write variable '" + varname + "': " + string(nc_strerror(status)), AT);
+	}
+}
+
 // Adding a record value (e.g. timestamp), in case it doesn't already exist and
 // that the value is greater than the last record variable value. For example,
 // timestamps have to be strictly monotonically increasing or already existent.
@@ -562,9 +581,24 @@ void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, dou
 // Fill a NetCDF 2D array with the data from a Grid2DObject
 void fill_grid_data(const mio::Grid2DObject& grid, double*& data)
 {
-	for (size_t kk=0; kk<grid.getNy(); ++kk) {
-		for (size_t ll=0; ll<grid.getNx(); ++ll) {
-			data[kk*grid.getNx() + ll] = grid.grid2D(ll,kk);
+	const size_t nrows = grid.getNy(), ncols = grid.getNx();
+	for (size_t kk=0; kk<nrows; ++kk) {
+		for (size_t ll=0; ll<ncols; ++ll) {
+			data[kk*ncols + ll] = grid.grid2D(ll,kk);
+		}
+	}
+}
+
+void fill_grid_data(const mio::Grid2DObject& grid, const double& new_nodata, int*& data)
+{
+	const size_t nrows = grid.getNy(), ncols = grid.getNx();
+	for (size_t kk=0; kk<nrows; ++kk) {
+		for (size_t ll=0; ll<ncols; ++ll) {
+			const double val = grid.grid2D(ll,kk);
+			if (val!=IOUtils::nodata) 
+				data[kk*ncols + ll] = static_cast<int>( Optim::round(val) );
+			else 
+				data[kk*ncols + ll] = static_cast<int>( new_nodata );
 		}
 	}
 }
