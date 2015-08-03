@@ -139,7 +139,7 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::P] = attributes("PSurf", "", "Surface Pressure", "Pa", IOUtils::nodata);
 		attr[MeteoGrids::ILWR] = attributes("LWdown", "", "Surface Incident Longwave Radiation", "W/m2", IOUtils::nodata);
 	} else if (schema=="ECMWF") {
-		attr[MeteoGrids::DEM] = attributes("z", "", "Geopotential", "m**2 s**-2", IOUtils::nodata);
+		attr[MeteoGrids::DEM] = attributes("z", "geopotential_height", "geopotential_height", "m", IOUtils::nodata);
 		attr[MeteoGrids::TA] = attributes("t2m", "", "2 metre temperature", "K", 2.);
 		attr[MeteoGrids::TD] = attributes("d2m", "", "2 metre dewpoint temperature", "K", 2.);
 		attr[MeteoGrids::P] = attributes("sp", "surface_air_pressure", "Surface pressure", "Pa", IOUtils::nodata);
@@ -561,7 +561,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 	}
 
 	if (is_record) {
-		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, static_cast<double>( 3600*date.getUnixDate() ));
+		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, static_cast<double>( date.getUnixDate()/3600 ));
 		ncpp::write_data(ncid, attr.var, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
 		ncpp::write_data(ncid, attr.var, vid_var, data);
@@ -615,7 +615,7 @@ void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& varid_
 	ncpp::add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, varid_time);
 	ncpp::add_attribute(ncid, varid_time, "standard_name", cf_time);
 	ncpp::add_attribute(ncid, varid_time, "long_name", cf_time);
-	ncpp::add_attribute(ncid, varid_time, "units", "hours since 1970-01-01 00:00:0.0");
+	ncpp::add_attribute(ncid, varid_time, "units", "hours since 1970-1-1");
 	ncpp::add_attribute(ncid, varid_time, "calendar", "gregorian");
 }
 
