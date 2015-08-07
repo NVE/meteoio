@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <meteoio/IOUtils.h>
 #include <meteoio/IOHandler.h>
 
 #cmakedefine PLUGIN_ALPUG
@@ -400,8 +401,8 @@ void IOHandler::create_exclude_map()
 		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
 		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
 
-		std::ifstream fin; //Input file streams
-		fin.open(filename.c_str(), std::ifstream::in);
+		if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+		std::ifstream fin(filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw FileAccessException(filename, AT);
 
 		try {
@@ -463,8 +464,8 @@ void IOHandler::create_keep_map()
 		const std::string path = IOUtils::getPath(prefix+keep_file, true);  //clean & resolve path
 		const std::string filename = path + "/" + IOUtils::getFilename(keep_file);
 
-		std::ifstream fin; //Input file streams
-		fin.open(filename.c_str(), std::ifstream::in);
+		if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+		std::ifstream fin(filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw FileAccessException(filename, AT);
 
 		try {

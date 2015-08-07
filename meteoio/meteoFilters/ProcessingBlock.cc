@@ -204,7 +204,8 @@ std::string ProcessingBlock::getName() const {
 
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
 {
-	std::ifstream fin(filename.c_str());
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	std::ifstream fin(filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		std::ostringstream ss;
 		ss << "Filter " << filter << ": ";

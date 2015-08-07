@@ -410,6 +410,7 @@ void ARPSIO::openGridFile(const std::string& in_filename)
 	unsigned int v1;
 	filename = in_filename;
 
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	if((fin=fopen(filename.c_str(),"r")) == NULL) {
 		cleanup();
 		throw FileAccessException("Can not open file "+filename, AT);

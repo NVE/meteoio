@@ -197,6 +197,7 @@ void CNRMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& file
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	ncpp::get_variable(ncid, varname, varid);
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
@@ -285,6 +286,7 @@ void CNRMIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
 	ncpp::close_file(filename, ncid);
@@ -346,6 +348,7 @@ void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 	const string filename = cfg.get("METEOFILE", "Input");
 
 	int ncid;
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 
 	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);

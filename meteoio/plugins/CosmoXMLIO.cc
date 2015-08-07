@@ -243,7 +243,9 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
 
-	if(in_encoding==XML_CHAR_ENCODING_NONE) {
+	if (!IOUtils::fileExists(in_meteofile)) throw FileAccessException(in_meteofile, AT); //prevent invalid filenames
+	
+	if (in_encoding==XML_CHAR_ENCODING_NONE) {
 		in_doc = xmlParseFile(in_meteofile.c_str());
 	} else {
 		xmlParserCtxtPtr ctxt = xmlCreateFileParserCtxt( in_meteofile.c_str() );
@@ -256,14 +258,14 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 		throw FileNotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
 	}
 
-	if(in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
+	if (in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
 	in_xpathCtx = xmlXPathNewContext(in_doc);
-	if(in_xpathCtx == NULL) {
+	if (in_xpathCtx == NULL) {
 		closeIn_XML();
 		throw IOException("Unable to create new XPath context", AT);
 	}
 
-	if(xmlXPathRegisterNs(in_xpathCtx,  xml_namespace_abrev, xml_namespace) != 0) {
+	if (xmlXPathRegisterNs(in_xpathCtx,  xml_namespace_abrev, xml_namespace) != 0) {
 		throw IOException("Unable to register namespace with prefix", AT);
 	}
 }
@@ -319,14 +321,14 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
-	if(xpathObj == NULL) return false;
+	if (xpathObj == NULL) return false;
 
 	//check the number of matches
 	const xmlNodeSetPtr &metadata = xpathObj->nodesetval;
 	const int nr_metadata = (metadata) ? metadata->nodeNr : 0;
-	if(nr_metadata==0)
+	if (nr_metadata==0)
 		throw NoAvailableDataException("No metadata found for station \""+station_id+"\"", AT);
-	if(nr_metadata>1)
+	if (nr_metadata>1)
 		throw InvalidFormatException("Multiple definition of metadata for station \""+station_id+"\"", AT);
 
 	//collect all the data fields
@@ -427,21 +429,21 @@ CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStar
 
 size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 {
-	if(cache_meteo_files.empty())
+	if (cache_meteo_files.empty())
 		throw InvalidArgumentException("No input files found or configured!", AT);
 
 	//find which file we should open
-	if(cache_meteo_files.size()==1) {
+	if (cache_meteo_files.size()==1) {
 		return 0;
 	} else {
-		for(size_t idx=1; idx<cache_meteo_files.size(); idx++) {
-			if(start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
+		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
+			if (start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
 				return idx--;
 			}
 		}
 
 		//not found, we take the closest timestamp we have
-		if(start_date<cache_meteo_files.front().first)
+		if (start_date<cache_meteo_files.front().first)
 			return 0;
 		else
 			return cache_meteo_files.size()-1;
@@ -473,21 +475,21 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 	const std::string xpath = MeteoData_xpath+"[@id='identifier' and text()='"+station_id+"']";
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
-	if(xpathObj == NULL) return false;
+	if (xpathObj == NULL) return false;
 
 	//check the number of matches
 	const xmlNodeSetPtr &data = xpathObj->nodesetval;
 	const int nr_data = (data) ? data->nodeNr : 0;
-	if(nr_data==0)
+	if (nr_data==0)
 		throw NoAvailableDataException("No data found for station \""+station_id+"\"", AT);
 
 	//loop over all data for this station_id
-	for(int ii=0; ii<nr_data; ii++) {
+	for (int ii=0; ii<nr_data; ii++) {
 		MeteoData md( Date(), sd);
 
 		const MeteoReadStatus status = parseMeteoDataPoint(dateStart, dateEnd, data->nodeTab[ii], md);
-		if(status==read_stop) break;
-		if(status==read_ok) vecMeteo.push_back( md );
+		if (status==read_stop) break;
+		if (status==read_ok) vecMeteo.push_back( md );
 	}
 
 	xmlXPathFreeObject(xpathObj);
@@ -513,7 +515,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		//read all the stations' metadata
 		std::vector<StationData> vecStation;
-		for(size_t ii=0; ii<input_id.size(); ii++) {
+		for (size_t ii=0; ii<input_id.size(); ii++) {
 			StationData sd;
 			if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
 				closeIn_XML();
@@ -523,27 +525,27 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 
 		//read all the stations' data
-		for(size_t ii=0; ii<input_id.size(); ii++) {
+		for (size_t ii=0; ii<input_id.size(); ii++) {
 			const string station_id = xml_stations_id[ input_id[ii] ];
 
 			//do we already have a vector with this station meteo?
 			size_t found_id = IOUtils::npos;
-			for(size_t jj=0; jj<vecMeteo.size(); jj++) {
-				if(vecMeteo[jj].front().meta.stationID==input_id[ii]) {
+			for (size_t jj=0; jj<vecMeteo.size(); jj++) {
+				if (vecMeteo[jj].front().meta.stationID==input_id[ii]) {
 					found_id = jj;
 					break;
 				}
 			}
 
-			if(found_id==IOUtils::npos) { //creating the station
+			if (found_id==IOUtils::npos) { //creating the station
 				vector<MeteoData> vecTmp;
-				if(!parseMeteoData(dateStart, nextDate, station_id, vecStation[ii], in_xpathCtx, vecTmp)) {
+				if (!parseMeteoData(dateStart, nextDate, station_id, vecStation[ii], in_xpathCtx, vecTmp)) {
 					closeIn_XML();
 					throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 				}
 				vecMeteo.push_back(vecTmp);
 			} else { //appending to the station
-				if(!parseMeteoData(dateStart, nextDate, station_id, vecStation[ii], in_xpathCtx, vecMeteo[found_id])) {
+				if (!parseMeteoData(dateStart, nextDate, station_id, vecStation[ii], in_xpathCtx, vecMeteo[found_id])) {
 					closeIn_XML();
 					throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 				}

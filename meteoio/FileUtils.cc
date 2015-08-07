@@ -76,7 +76,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 	#else //POSIX
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 
-		char *real_path = realpath(in_path.c_str(), NULL); //POSIX
+		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
 		if(real_path!=NULL) {
 			const std::string tmp(real_path);
 			free(real_path);
@@ -170,7 +170,13 @@ std::string getCWD()
 
 bool fileExists(const std::string& filename)
 {
-	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );
+	const DWORD attributes = GetFileAttributes( filename.c_str() );
+	
+	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL 
+	     || attributes==FILE_ATTRIBUTE_DIRECTORY || attributes==FILE_ATTRIBUTE_DEVICE)
+		return false;
+	
+	return true;
 }
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
@@ -222,11 +228,14 @@ bool fileExists(const std::string& filename)
 {
 	struct stat buffer ;
 
-	if ((stat( filename.c_str(), &buffer))==0) {//File exists if stat returns 0
-		return true ;
+	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
+		return false;
 	}
-
-	return false;
+	
+	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
+		return true;
+	else
+		return false; //exclude char device, block device, sockets, etc
 }
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)

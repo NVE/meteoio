@@ -256,8 +256,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 			indexes.push_back(IOUtils::npos-5);
 		} else {
 			//this is an extra parameter, we convert to uppercase
-			std::string extra_param = key;
-			IOUtils::toUpper(extra_param);
+			const std::string extra_param = IOUtils::strToUpper(key);
 			md.addParameter(extra_param);
 			indexes.push_back(md.getParameterIndex(extra_param));
 		}
@@ -707,8 +706,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 
 void SMETIO::readPOI(std::vector<Coords>& pts)
 {
-	std::string filename;
-	cfg.getValue("POIFILE", "Input", filename);
+	const std::string filename = cfg.get("POIFILE", "Input");
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}

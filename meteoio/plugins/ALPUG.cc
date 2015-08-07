@@ -104,8 +104,7 @@ void ALPUG::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	std::string in_meteo;
-	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
+	std::string in_meteo = cfg.get("METEO", "Input", IOUtils::nothrow);
 	if (in_meteo == "ALPUG") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		vecIDs.clear();
@@ -113,8 +112,7 @@ void ALPUG::parseInputOutputSection()
 		readMetaData();
 		cfg.getValue("WRAP_MONTH", "Input", wrap_month, IOUtils::nothrow);
 		
-		string fields;
-		cfg.getValue("ALPUG_FIELDS", "Input", fields);
+		const string fields = cfg.get("ALPUG_FIELDS", "Input");
 		IOUtils::readLineToVec(fields, vecFields, ',');
 		if (vecFields.empty())
 			throw InvalidArgumentException("Please provide a comma delimited list of fields!", AT);
@@ -136,8 +134,8 @@ void ALPUG::readMetaData()
 	
 	const string filename = cfg.get("METAFILE", "Input");
 	const string metafile = inpath + "/" + filename;
-	std::ifstream fin;
-	fin.open (metafile.c_str(), std::ifstream::in);
+	if (!IOUtils::fileExists(metafile)) throw FileAccessException(metafile, AT); //prevent invalid filenames
+	std::ifstream fin(metafile.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
 		ss << "File \'" << metafile << "\' could not be opened. Possible reason: " << strerror(errno) << "\n";
@@ -341,10 +339,9 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist
 			continue;
 		
-		std::ifstream fin; //Input file streams
-		fin.clear();
 		const string file_and_path = inpath + "/" + filename;
-		fin.open (file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+		if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 		if (fin.fail()) 
 			throw FileAccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
 		

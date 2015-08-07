@@ -244,7 +244,7 @@ void PGMIO::readPOI(std::vector<Coords>&)
 
 void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	std::string full_name = grid2dpath_out+"/"+name;
+	const std::string full_name = grid2dpath_out+"/"+name;
 	const unsigned int nr_colors = 256;
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
@@ -263,9 +263,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	try {
 		const double min_value = grid_in.grid2D.getMin();
 		const double max_value = grid_in.grid2D.getMax();
-		double scaling;
-		if(min_value!=max_value) scaling = 1./(max_value - min_value) * (double)(nr_colors-1); //so we keep color 0 for nodata
-		else scaling = 1.;
+		const double scaling = (min_value==max_value)? 1. : 1./(max_value - min_value) * (double)(nr_colors-1); //so we keep color 0 for nodata
 
 		//writing the header
 		fout << "P2\n";

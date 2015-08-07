@@ -108,9 +108,11 @@ void NetCDFIO::parseInputOutputSection()
 	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow);
 	
-	const string in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
+	string in_schema = "ECMWF";
+	in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
 	initAttributesMap(in_schema, in_attributes);
-	const string out_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) );
+	string out_schema = "ECMWF";
+	out_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) );
 	initAttributesMap(out_schema, out_attributes);
 }
 
@@ -353,6 +355,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	if (!ncpp::check_variable(ncid, varname)) return false;
 	ncpp::get_variable(ncid, varname, varid);

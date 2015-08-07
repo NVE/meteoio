@@ -130,8 +130,7 @@ ARCIO::ARCIO(const Config& cfgreader)
 
 void ARCIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
-	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
+	string tmp = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	tmp.clear();
@@ -186,7 +185,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		throw FileAccessException(ss.str(), AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
@@ -287,22 +286,19 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 
 void ARCIO::readDEM(DEMObject& dem_out)
 {
-	string filename;
-	cfg.getValue("DEMFILE", "Input", filename);
+	const string filename = cfg.get("DEMFILE", "Input");
 	read2DGrid_internal(dem_out, filename);
 }
 
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
-	string filename;
-	cfg.getValue("LANDUSEFILE", "Input", filename);
+	const string filename = cfg.get("LANDUSEFILE", "Input");
 	read2DGrid_internal(landuse_out, filename);
 }
 
 void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
-	string filepath;
-	cfg.getValue("DAPATH", "Input", filepath);
+	const string filepath = cfg.get("DAPATH", "Input");
 
 	string dateStr( date_in.toString(Date::NUM) );
 	dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
@@ -336,7 +332,8 @@ void ARCIO::readPOI(std::vector<Coords>&)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	std::string full_name = grid2dpath_out+"/"+name;
+	const std::string full_name = grid2dpath_out+"/"+name;
+	if (!IOUtils::fileExists(full_name)) throw FileAccessException(full_name, AT); //prevent invalid filenames
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
 		ostringstream ss;

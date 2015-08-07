@@ -434,6 +434,7 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
 	const std::string filename = grid2dpath_in+"/"+i_name;
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
 		ostringstream ss;
@@ -461,6 +462,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 
 void GRIBIO::indexFile(const std::string& filename)
 {
+	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
 		ostringstream ss;
@@ -665,9 +667,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 void GRIBIO::readDEM(DEMObject& dem_out)
 {
 	const Date d; //ie: undef. This will be caught when reading the GRIB file
-	std::string filename;
-
-	cfg.getValue("DEMFILE", "Input", filename);
+	const std::string filename = cfg.get("DEMFILE", "Input");
 	read2DGrid(filename, dem_out, MeteoGrids::DEM, d);
 	if(update_dem) {
 		dem_out.update();
