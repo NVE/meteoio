@@ -768,10 +768,10 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	for(size_t ii=0; ii<nr; ii++) {
 		key[ii] = (char *)calloc(sizeof(char), max_len);
 		text[ii] = (char *)calloc(sizeof(char), max_len);
-		strncpy(key[ii], metadata_key[ii].c_str(), max_len);
-		strncpy(text[ii], metadata_text[ii].c_str(), max_len);
-		info_text[ii].key = key[ii];
-		info_text[ii].text = text[ii];
+		strncpy(key[ii], metadata_key[ii].c_str(), max_len-1); //in case the '\0' was not counted by maxlen
+		strncpy(text[ii], metadata_text[ii].c_str(), max_len-1);
+		info_text[ii].key = key[ii]+'\0'; //strncpy does not always '\0' terminate
+		info_text[ii].text = text[ii]+'\0';
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
 	}
 

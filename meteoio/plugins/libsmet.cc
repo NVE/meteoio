@@ -20,6 +20,12 @@
 #include <string.h>
 #include <limits>
 
+#if defined _WIN32 || defined __MINGW32__
+	#include <windows.h>
+#else
+	#include <sys/stat.h>
+#endif
+
 using namespace std;
 
 namespace smet {
@@ -78,6 +84,33 @@ bool SMETCommon::initStaticData()
 
 	return true;
 }
+
+#if defined _WIN32 || defined __MINGW32__
+bool fileExists(const std::string& filename)
+{
+	const DWORD attributes = GetFileAttributes( filename.c_str() );
+	
+	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL 
+	     || attributes==FILE_ATTRIBUTE_DIRECTORY || attributes==FILE_ATTRIBUTE_DEVICE)
+		return false;
+	
+	return true;
+}
+#else
+bool fileExists(const std::string& filename)
+{
+	struct stat buffer ;
+
+	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
+		return false;
+	}
+	
+	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
+		return true;
+	else
+		return false; //exclude char device, block device, sockets, etc
+}
+#endif
 
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
@@ -659,6 +692,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();
+	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
@@ -964,6 +998,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 
 	ifstream fin;
 	fin.clear();
+	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
 		ostringstream ss;
@@ -1011,10 +1046,9 @@ void SMETReader::read(std::vector<double>& vec_data)
 		throw SMETException("Requesting not to read timestamp when there is one present in \""+filename+"\"", SMET_AT);
 
 	ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
-	/*if (!isAscii)
-		mode = ios::in | ios::binary;*/
 
 	ifstream fin;
+	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
 	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
 		ostringstream ss;

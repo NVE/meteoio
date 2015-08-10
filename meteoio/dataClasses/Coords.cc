@@ -958,7 +958,7 @@ lat, double& lon)
 	char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 	char lon_str[len]="";
 
-	if(coordinates.size()>len) {
+	if(coordinates.size()>=len) {
 		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
 	}
 

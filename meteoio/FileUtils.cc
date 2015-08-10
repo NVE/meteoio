@@ -22,14 +22,16 @@
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
+		#define NOMINMAX
+	#endif
 	#include <windows.h>
 	#include "Shlwapi.h"
 #else
 	#include <dirent.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
+	#include <errno.h>
+	#include <cstring>
 #endif
 
 #include <meteoio/FileUtils.h>
@@ -42,9 +44,11 @@ void copy_file(const std::string& src, const std::string& dest)
 {
 	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
 
+	if (!IOUtils::fileExists(src)) throw FileNotFoundException(src, AT);
 	std::ifstream fin(src.c_str(), std::ios::binary);
 	if (fin.fail()) throw FileAccessException(src, AT);
 
+	if (!IOUtils::validFileName(dest)) throw InvalidFileNameException(dest, AT);
 	std::ofstream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
@@ -59,7 +63,7 @@ void copy_file(const std::string& src, const std::string& dest)
 
 std::string cleanPath(std::string in_path, const bool& resolve)
 {
-	if(!resolve) { //do not resolve links, relative paths, etc
+	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 		return in_path;
 	} else {
@@ -68,21 +72,23 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 		char **ptr = NULL;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
 		const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
-		if(status!=0 && status<=MAX_PATH) in_path = out_buff;
+		if (status!=0 && status<=MAX_PATH) in_path = out_buff;
 		free(out_buff);
 
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 		return in_path;
 	#else //POSIX
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
-
+		
 		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
-		if(real_path!=NULL) {
+		if (real_path!=NULL) {
 			const std::string tmp(real_path);
 			free(real_path);
 			return tmp;
-		} else
+		} else {
+			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
+		}
 	#endif
 	}
 }
@@ -130,13 +136,20 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
+//this checks for path+file
 bool validFileName(const std::string& filename)
 {
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
-	if ((startpos!=0) || (filename==".") || (filename=="..")) {
+	const size_t invalid_char = filename.find_first_of("\000*:<>?|"); //find possible invalid characters
+#else
+	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
+	const size_t invalid_char = filename.find_first_of("\000"); //find possible invalid characters
+#endif
+	
+	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..")) {
 		return false;
 	}
-
 	return true;
 }
 

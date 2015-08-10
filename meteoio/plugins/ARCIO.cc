@@ -170,12 +170,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileName(full_name)) {
-		throw InvalidFileNameException(full_name, AT);
-	}
-	if (!IOUtils::fileExists(full_name)) {
-		throw FileNotFoundException(full_name, AT);
-	}
+	if (!IOUtils::validFileName(full_name)) throw InvalidFileNameException(full_name, AT);
+	if (!IOUtils::fileExists(full_name)) throw FileNotFoundException(full_name, AT);
 
 	fin.clear();
 	fin.open (full_name.c_str(), ifstream::in);
