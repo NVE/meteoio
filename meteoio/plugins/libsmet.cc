@@ -86,25 +86,25 @@ bool SMETCommon::initStaticData()
 }
 
 #if defined _WIN32 || defined __MINGW32__
-bool fileExists(const std::string& filename)
+bool SMETCommon::fileExists(const std::string& filename)
 {
 	const DWORD attributes = GetFileAttributes( filename.c_str() );
-	
-	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL 
+
+	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL
 	     || attributes==FILE_ATTRIBUTE_DIRECTORY || attributes==FILE_ATTRIBUTE_DEVICE)
 		return false;
-	
+
 	return true;
 }
 #else
-bool fileExists(const std::string& filename)
+bool SMETCommon::fileExists(const std::string& filename)
 {
 	struct stat buffer ;
 
 	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
 		return false;
 	}
-	
+
 	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
 		return true;
 	else
