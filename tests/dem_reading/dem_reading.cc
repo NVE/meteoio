@@ -9,7 +9,7 @@ using namespace std;
 const double epsilon = 1.0e-7;
 
 // --- File names ---
-int n_files= 3;
+unsigned int n_files= 3;
 string files[] ={"DEM.asc", "AZI.asc","SLOPE.asc"};
 string prefix_ref("ref_");
 
@@ -19,7 +19,7 @@ double r_DEM[]		={	193.,	4204.81,	1302.38,	0.,		43.486};
 double r_SUB_DEM[]	={	403.4,	4027.3,		1291.28,	0.,		40.0628};
 
 // controll basic values on dem
-bool simpleDEMcontroll(DEMObject& dem, double results[]){
+bool simpleDEMcontroll(DEMObject& dem, double results[]) {
 	bool status = true;
 
 	if(!IOUtils::checkEpsilonEquality(dem.grid2D.getMin(), results[0], epsilon)){
@@ -52,8 +52,7 @@ bool simpleDEMcontroll(DEMObject& dem, double results[]){
 }
 
 // Make output files
-bool makeDEMfiles()
-{
+bool makeDEMfiles() {
 	bool status=true;
 	cout << " ----- Read DEM, make subfiles and some basic controll \n";
 
@@ -63,7 +62,7 @@ bool makeDEMfiles()
 	IOManager io(cfg);
 
 	cout << " ---- If output files exist, empty them \n"; // HACK need to make this ???
-	for(int i = 0; i < n_files; i++){
+	for(unsigned int i = 0; i < n_files; i++){
 		ofstream ofs(files[i].c_str(), ofstream::out | ofstream::trunc);
 		ofs << " " ;
 		ofs.close();
@@ -120,34 +119,35 @@ bool makeDEMfiles()
 	return status;
 }
 
-bool compareFiles(){
-
+bool compareFiles() {
 	bool status=true;
-	for(int i = 0; i < n_files; i++) {
+	for(unsigned int i = 0; i < n_files; i++) {
 		// ------ Compare reference file with generated results ---------
 		cout << " --- Comparing reference file with generated output file " << files[i] << endl;
 		ifstream ifref((prefix_ref+files[i]).c_str());
 		ifstream ifout(files[i].c_str());
 		string l_ref, l_out;
+		size_t lineNr = 0;
 
 		while (!ifref.eof()) {
-			if(ifout.eof()) {
-				cerr << "Generated file has less lines than the reference!" << endl;
+			if (ifout.eof()) {
+				cerr << "Generated file has less lines than the reference for " << files[i] << endl;
 				return false;
 			}
 
 			getline(ifref,l_ref);
 			getline(ifout,l_out);
+			lineNr++;
 			if (l_ref!=l_out) {
-				cerr << "Generated and reference files differ!" << endl;
+				cerr << "Generated and reference files differ for " << files[i] << " at line " << lineNr << endl;
 				cerr << "ref : \n " << l_ref << endl;
 				cerr << "out : \n " << l_out << endl;
 				status=false;
 			}
 		}
 
-		if(!ifout.eof()) {
-			cerr << "Generated file has more lines than the reference!" << endl;
+		if (!ifout.eof()) {
+			cerr << "Generated file has more lines than the reference for " <<  files[i] << endl;
 			status=false;
 		}
 		ifout.close();
