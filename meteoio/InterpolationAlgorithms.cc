@@ -952,7 +952,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	filename = getGridFileName();
 
-	if (!IOUtils::validFileName(filename)) {
+	if (!IOUtils::validFileAndPath(filename)) {
 		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}

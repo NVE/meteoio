@@ -730,6 +730,7 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 		const size_t size = data[ii].size();
 		if(size>0) {
 			const std::string filename = tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt";
+			if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
 			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if(!file) {
 				throw FileAccessException("[E] Can not open file "+filename, AT);
@@ -821,7 +822,7 @@ void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
 	out << year;
 
 	const std::string filename = fileprefix+out.str()+".txt";
-
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
 	file.open(filename.c_str(), ios::out | ios::trunc);
 	if(!file) {
 		throw FileAccessException("Can not create file "+filename, AT);

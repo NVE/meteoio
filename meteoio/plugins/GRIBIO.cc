@@ -435,6 +435,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
 	const std::string filename = grid2dpath_in+"/"+i_name;
 	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
 		ostringstream ss;
@@ -463,6 +464,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 void GRIBIO::indexFile(const std::string& filename)
 {
 	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
 		ostringstream ss;

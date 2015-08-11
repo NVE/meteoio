@@ -48,7 +48,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	std::ifstream fin(src.c_str(), std::ios::binary);
 	if (fin.fail()) throw FileAccessException(src, AT);
 
-	if (!IOUtils::validFileName(dest)) throw InvalidFileNameException(dest, AT);
+	if (!IOUtils::validFileAndPath(dest)) throw InvalidFileNameException(dest, AT);
 	std::ofstream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
@@ -80,6 +80,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 	#else //POSIX
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 		
+		errno = 0;
 		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
 		if (real_path!=NULL) {
 			const std::string tmp(real_path);
@@ -136,8 +137,7 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
-//this checks for path+file
-bool validFileName(const std::string& filename)
+bool validFileAndPath(const std::string& filename)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
@@ -152,7 +152,6 @@ bool validFileName(const std::string& filename)
 	}
 	return true;
 }
-
 
 bool isAbsolutePath(const std::string& in_path)
 {

@@ -48,7 +48,7 @@ namespace IOUtils {
 	
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="");
 
-	bool validFileName(const std::string& filename);
+	bool validFileAndPath(const std::string& filename);
 
 	bool fileExists(const std::string& filename);
 

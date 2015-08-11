@@ -79,12 +79,8 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileName(filename)) {
-		throw InvalidFileNameException(filename, AT);
-	}
-	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
-	}
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
+	if (!IOUtils::fileExists(filename)) throw FileNotFoundException(filename, AT);
 
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
@@ -226,7 +222,8 @@ void GrassIO::readPOI(std::vector<Coords>&)
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	fout.open(name.c_str());
+	if (!IOUtils::validFileAndPath(name)) throw InvalidFileNameException(name, AT);
+	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {
 		throw FileAccessException(name, AT);
 	}

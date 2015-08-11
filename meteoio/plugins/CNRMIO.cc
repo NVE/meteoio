@@ -929,6 +929,7 @@ void CNRMIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string
 
 		ncpp::start_definitions(filename, ncid);
 	} else {
+		if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
 		ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
 

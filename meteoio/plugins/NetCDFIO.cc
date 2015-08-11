@@ -534,6 +534,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 
 		ncpp::start_definitions(filename, ncid);
 	} else {
+		if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
 		ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
 		create_variable = create_dimensions = true;

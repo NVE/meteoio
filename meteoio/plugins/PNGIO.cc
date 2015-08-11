@@ -318,9 +318,7 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height)
 {
 	// Open file for writing (binary mode)
-	if (!IOUtils::validFileName(filename)) {
-		throw InvalidFileNameException(filename, AT);
-	}
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
@@ -674,8 +672,8 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 	world_ref.setProj(coordout, coordoutparam);
 	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
 
-	std::ofstream fout;
-	fout.open(world_file.c_str());
+	if (!IOUtils::validFileAndPath(world_file)) throw InvalidFileNameException(world_file, AT);
+	std::ofstream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) {
 		throw FileAccessException(world_file, AT);
 	}

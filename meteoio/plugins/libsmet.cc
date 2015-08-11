@@ -112,6 +112,22 @@ bool SMETCommon::fileExists(const std::string& filename)
 }
 #endif
 
+bool SMETCommon::validFileAndPath(const std::string& filename)
+{
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
+	const size_t invalid_char = filename.find_first_of("\000*:<>?|"); //find possible invalid characters
+#else
+	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
+	const size_t invalid_char = filename.find_first_of("\000"); //find possible invalid characters
+#endif
+	
+	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..")) {
+		return false;
+	}
+	return true;
+}
+
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
 	char* conversion_end = NULL;
@@ -449,6 +465,8 @@ bool SMETWriter::valid_header()
 
 void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
 {
+	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
+	errno = 0;
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -495,6 +513,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 
 void SMETWriter::write(const std::vector<double>& data)
 {
+	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
+	errno = 0;
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -609,6 +629,7 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data)
 
 	if (!file_is_binary){ //open it as binary file
 		fout.close();
+		errno = 0;
 		fout.open(filename.c_str(), ios::out | ios::app | ios::binary); //reopen as binary file
 		if (fout.fail()) {
 			ostringstream ss;
@@ -693,6 +714,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	std::ifstream fin; //Input file streams
 	fin.clear();
 	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	errno = 0;
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
@@ -999,6 +1021,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	ifstream fin;
 	fin.clear();
 	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	errno = 0;
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
 		ostringstream ss;
@@ -1049,6 +1072,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 
 	ifstream fin;
 	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	errno = 0;
 	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
 		ostringstream ss;

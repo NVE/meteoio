@@ -186,14 +186,8 @@ void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 
-	if (!IOUtils::validFileName(filename)) {
-		throw InvalidFileNameException(filename,AT);
-	}
-
-	//Check whether file exists
-	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
-	}
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+	if (!IOUtils::fileExists(filename)) throw FileNotFoundException(filename, AT);
 
 	//Open file
 	fin.open (filename.c_str(), ifstream::in);
@@ -361,9 +355,8 @@ std::string Config::clean_import_path(const std::string& in_path) const
 
 void Config::write(const std::string& filename) const
 {
-
-	std::ofstream fout;
-	fout.open(filename.c_str());
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+	std::ofstream fout(filename.c_str(), ios::out);
 	if (fout.fail())
 		throw FileAccessException(filename, AT);
 

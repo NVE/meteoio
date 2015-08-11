@@ -63,6 +63,7 @@ class SMETException : public std::exception {
  */
 class SMETCommon {
 	public:
+		static bool validFileAndPath(const std::string& filename);
 		static bool fileExists(const std::string& filename);
 		static double convert_to_double(const std::string& in_string);
 		static int convert_to_int(const std::string& in_string);

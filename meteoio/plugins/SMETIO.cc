@@ -166,7 +166,7 @@ void SMETIO::parseInputOutputSection()
 			const string extension = IOUtils::getExtension(filename);
 			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
-			if (!IOUtils::validFileName(file_and_path)) //Check whether filename is valid
+			if (!IOUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 				throw InvalidFileNameException(file_and_path, AT);
 			vecFiles.push_back(file_and_path);
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
@@ -455,7 +455,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		}
 
 		const string filename = outpath + "/" + sd.stationID + ".smet";
-		if (!IOUtils::validFileName(filename)) //Check whether filename is valid
+		if (!IOUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidFileNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use

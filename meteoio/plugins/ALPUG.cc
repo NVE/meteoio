@@ -135,6 +135,7 @@ void ALPUG::readMetaData()
 	const string filename = cfg.get("METAFILE", "Input");
 	const string metafile = inpath + "/" + filename;
 	if (!IOUtils::fileExists(metafile)) throw FileAccessException(metafile, AT); //prevent invalid filenames
+	errno = 0;
 	std::ifstream fin(metafile.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
@@ -341,6 +342,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 		
 		const string file_and_path = inpath + "/" + filename;
 		if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+		errno = 0;
 		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 		if (fin.fail()) 
 			throw FileAccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);

@@ -103,14 +103,11 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	std::vector<std::string> tmpvec;
 	std::string line;
 
-	if (!IOUtils::validFileName(full_name)) {
-		throw InvalidFileNameException(full_name, AT);
-	}
-	if (!IOUtils::fileExists(full_name)) {
-		throw FileNotFoundException(full_name, AT);
-	}
+	if (!IOUtils::validFileAndPath(full_name)) throw InvalidFileNameException(full_name, AT);
+	if (!IOUtils::fileExists(full_name)) throw FileNotFoundException(full_name, AT);
 
 	fin.clear();
+	errno = 0;
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
@@ -246,7 +243,9 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name = grid2dpath_out+"/"+name;
 	const unsigned int nr_colors = 256;
-	fout.open(full_name.c_str());
+	if (!IOUtils::validFileAndPath(full_name)) throw InvalidFileNameException(full_name, AT);
+	errno = 0;
+	fout.open(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		ostringstream ss;
 		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
