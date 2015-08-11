@@ -489,30 +489,30 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 
 		//extract date/time
 		const size_t date_beg = s.find_first_of(NUM);
-		if(date_beg==npos || date_beg==in_len) return false;
+		if (date_beg==npos || date_beg==in_len) return false;
 		size_t date_end = s.find_first_not_of(NUM, date_beg+1);
-		if(date_end==npos) date_end = in_len;
+		if (date_end==npos) date_end = in_len;
 		const std::string date = s.substr(date_beg, date_end-date_beg);
 
 		//parse date/time
 		const size_t date_len = date.length();
-		if(date_len<10 || date_len>14) return false;
-		if( convertString(year,date.substr(0,4))==false ) return false;
-		if( convertString(month,date.substr(4,2))==false ) return false;
-		if( convertString(day,date.substr(6,2))==false ) return false;
-		if( convertString(hour,date.substr(8,2))==false ) return false;
-		if(date_len==10)
+		if (date_len<10 || date_len>14) return false;
+		if (convertString(year,date.substr(0,4))==false) return false;
+		if (convertString(month,date.substr(4,2))==false) return false;
+		if (convertString(day,date.substr(6,2))==false) return false;
+		if (convertString(hour,date.substr(8,2))==false) return false;
+		if (date_len==10)
 			minute=0;
 		else {
-			if(date_len>=12) {
+			if (date_len>=12) {
 				if( convertString(minute,date.substr(10,2))==false ) return false;
 			} else
 				return false;
-			if(date_len==12)
+			if (date_len==12)
 				second=0;
 			else {
-				if(date_len==14) {
-					if( convertString(second,date.substr(12,2))==false ) return false;
+				if (date_len==14) {
+					if (convertString(second,date.substr(12,2))==false) return false;
 				} else
 					return false;
 			}
@@ -521,9 +521,9 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		//extract potential ISO time zone string
 		double tz = time_zone;
 		const size_t tz_beg = s.find_first_of("+-", date_end);
-		if(tz_beg!=npos && tz_beg!=in_len) {
+		if (tz_beg!=npos && tz_beg!=in_len) {
 			size_t tz_end = s.find_first_not_of("0123456789:", date_end+1);
-			if(tz_end==npos) tz_end = in_len;
+			if (tz_end==npos) tz_end = in_len;
 			const std::string timezone_iso = s.substr(tz_beg, tz_end-tz_beg);
 			if(!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
 		}

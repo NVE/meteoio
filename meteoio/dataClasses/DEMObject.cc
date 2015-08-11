@@ -779,17 +779,12 @@ double DEMObject::CalculateAspect(const double& o_Nx, const double& o_Ny, const 
 
 	if ( o_slope > 0. ) { //there is some slope
 		if ( o_Nx == 0. ) { //no E-W slope, so it is purely N-S
-			if ( o_Ny < 0. ) {
-				return(180.); // south facing
-			} else {
-				return (0.); // north facing
-			}
+			const double aspect = (o_Ny < 0.)? 180. : 0.;
+			return aspect;
 		} else { //there is a E-W slope
-			if ( o_Nx > 0. ) {
-				return (90. - atan(o_Ny/o_Nx)*Cst::to_deg);
-			} else {
-				return (270. - atan(o_Ny/o_Nx)*Cst::to_deg);
-			}
+			const double angle_deg = static_cast<double>(Optim::round( atan2(o_Ny, o_Nx)*Cst::to_deg * 10.)) / 10.; //round angle to 0.1
+			const double aspect = fmod( 90. - angle_deg + 360., 360.); //convert angle to bearing
+			return aspect;
 		}
 	} else { // if slope = 0
 		return (no_slope);          // undefined or plain surface
