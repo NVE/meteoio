@@ -186,12 +186,12 @@ double Atmosphere::windChill(const double& TA, const double& VW)
 {
 	if(TA>(273.15+10.) || VW<5.) return TA; //not applicable in this case
 
-	const double t = K_TO_C(TA); //in Celsius
+	const double t = IOUtils::K_TO_C(TA); //in Celsius
 	const double v = VW*3.6; //in km/h
 	const double v016 = pow(v, 0.16);
 
 	const double WCT = 13.12 + 0.6215*t - 11.37*v016 + 0.3965*t*v016;
-	return C_TO_K(WCT);
+	return IOUtils::C_TO_K(WCT);
 }
 
 /**
@@ -207,7 +207,7 @@ double Atmosphere::heatIndex(const double& TA, const double& RH)
 {
 	if(TA<(273.15+26.7) || RH<0.4) return TA; //not applicable in this case
 
-	const double t = K_TO_C(TA); //in Celsius
+	const double t = IOUtils::K_TO_C(TA); //in Celsius
 	const double t2 = t*t;
 	const double rh = RH*100.; //in percent
 	const double rh2 = rh*rh;
@@ -217,7 +217,7 @@ double Atmosphere::heatIndex(const double& TA, const double& RH)
 
 	const double HI = c1 + c2*t + c3*rh + c4*t*rh + c5*t2 + c6*rh2 + c7*t2*rh + c8*t*rh2 + c9*t2*rh2;
 
-	return C_TO_K(HI);
+	return IOUtils::C_TO_K(HI);
 }
 
 /**
@@ -757,7 +757,7 @@ double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const
 */
 double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 {
-	TA = K_TO_C(TA);
+	TA = IOUtils::K_TO_C(TA);
 	double Es, E, Tdw, Tdi; //saturation and current water vapor pressure
 	const double Aw = 611.21, Bw = 17.502, Cw = 240.97; //parameters for water
 	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
@@ -773,13 +773,13 @@ double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
 		E = RH * Es;
 		Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
-		return C_TO_K(Tdw);
+		return IOUtils::C_TO_K(Tdw);
 	}
 	if (TA < Tnucl) { //below nucleation, ice
 		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
 		E = RH * Es;
 		Tdi = ( Ci * log(E / Ai) ) / ( Bi - log(E / Ai) );
-		return C_TO_K(Tdi);
+		return IOUtils::C_TO_K(Tdi);
 	}
 
 	//no clear state, we do a smooth interpolation between water and ice
@@ -791,7 +791,7 @@ double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 	E = RH * Es;
 	Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
 
-	return C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
+	return IOUtils::C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
 }
 
 /**
@@ -805,8 +805,8 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 {
 	//Convert a dew point temperature into a Relative Humidity
 	//TA, TD are in Kelvins, RH is returned between 0 and 1
-	TA = K_TO_C(TA);
-	TD = K_TO_C(TD);
+	TA = IOUtils::K_TO_C(TA);
+	TD = IOUtils::K_TO_C(TD);
 	double Es, E, Rhi, Rhw, Rh;                         //saturation and current water vapro pressure
 	const double Aw = 611.21, Bw = 17.502, Cw = 240.97; //parameters for water
 	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice

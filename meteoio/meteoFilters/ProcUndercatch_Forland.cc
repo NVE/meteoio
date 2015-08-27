@@ -74,7 +74,7 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 //TA in celsius
 double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW)
 {
-	TA = K_TO_C(TA); //convert to celsius
+	TA = IOUtils::K_TO_C(TA); //convert to celsius
 	if(type!=wfj)
 		VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 	else

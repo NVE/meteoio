@@ -454,16 +454,13 @@ void GSNIO::convertUnits(MeteoData& meteo) const
 {
 	//converts C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
-	if (ta != IOUtils::nodata)
-		ta = C_TO_K(ta);
+	ta = IOUtils::C_TO_K(ta);
 
 	double& tsg = meteo(MeteoData::TSG);
-	if (tsg != IOUtils::nodata)
-		tsg = C_TO_K(tsg);
+	tsg = IOUtils::C_TO_K(tsg);
 
 	double& tss = meteo(MeteoData::TSS);
-	if (tss != IOUtils::nodata)
-		tss = C_TO_K(tss);
+	tss = IOUtils::C_TO_K(tss);
 
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)

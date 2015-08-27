@@ -28,7 +28,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	//default window_size is 2 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
 	if (window_size <= 1.)
-		throw IOException("WINDOW_SIZE not valid", AT);
+		throw IOException("WINDOW_SIZE not valid, it should be a duration in seconds at least greater than 1", AT);
 	window_size /= 86400.; //user uses seconds, internally julian day is used
 
 	//read the Config object to create the resampling algorithms for each

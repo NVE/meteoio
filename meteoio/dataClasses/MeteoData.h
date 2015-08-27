@@ -46,38 +46,38 @@ class MeteoGrids {
 	public:
 		/// \anchor meteogrids this enum provides names for possible meteogrids (from an ARPS file, etc)
 		enum Parameters {firstparam=0,
-		                 TA=firstparam, ///< Air temperature
-		                 RH, ///< Relative humidity
-				 QI, ///< Specific humidity
-				 TD, ///< Dew Point temperature
-		                 VW, ///< Wind velocity
-		                 DW, ///< Wind direction
-		                 VW_MAX, ///< Maximum wind velocity
-		                 ISWR, ///< Incoming short wave radiation
-		                 RSWR, ///< Reflected short wave radiation
-				 ISWR_DIFF, ///< Incoming short wave, diffuse
-				 ISWR_DIR, ///< Incoming short wave, direct
-		                 ILWR, ///< Incoming long wave radiation
-		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
-		                 HS, ///< Height of snow
-		                 HNW, ///< Water equivalent of precipitations, either solid or liquid
-				 HNW_S, ///<  Water equivalent of precipitations, solid
-				 HNW_L, ///<  Water equivalent of precipitations, liquid
-		                 TSG, ///< Temperature ground surface
-		                 TSS, ///< Temperature snow surface
-		                 P, ///< Air pressure
-				 P_SEA, ///< Sea level air pressure
-		                 U, ///< East component of wind
-		                 V, ///< North component of wind
-		                 W, ///< Vertical component of wind
-		                 SWE, ///< Snow Water Equivalent
-		                 ROT, ///< Total generated runoff
-		                 ALB, ///< Albedo
-		                 DEM, ///< Digital Elevation Model
-		                 SHADE, ///< Hillshade
-		                 SLOPE, ///< DEM slope angle
-		                 AZI, ///< DEM slope azimuth
-		                 lastparam=AZI};
+				TA=firstparam, ///< Air temperature
+				RH, ///< Relative humidity
+				QI, ///< Specific humidity
+				TD, ///< Dew Point temperature
+				VW, ///< Wind velocity
+				DW, ///< Wind direction
+				VW_MAX, ///< Maximum wind velocity
+				ISWR, ///< Incoming short wave radiation
+				RSWR, ///< Reflected short wave radiation
+				ISWR_DIFF, ///< Incoming short wave, diffuse
+				ISWR_DIR, ///< Incoming short wave, direct
+				ILWR, ///< Incoming long wave radiation
+				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
+				HS, ///< Height of snow
+				HNW, ///< Water equivalent of precipitations, either solid or liquid
+				HNW_S, ///<  Water equivalent of precipitations, solid
+				HNW_L, ///<  Water equivalent of precipitations, liquid
+				TSG, ///< Temperature ground surface
+				TSS, ///< Temperature snow surface
+				P, ///< Air pressure
+				P_SEA, ///< Sea level air pressure
+				U, ///< East component of wind
+				V, ///< North component of wind
+				W, ///< Vertical component of wind
+				SWE, ///< Snow Water Equivalent
+				ROT, ///< Total generated runoff
+				ALB, ///< Albedo
+				DEM, ///< Digital Elevation Model
+				SHADE, ///< Hillshade
+				SLOPE, ///< DEM slope angle
+				AZI, ///< DEM slope azimuth
+				lastparam=AZI};
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);

@@ -803,16 +803,13 @@ void PSQLIO::convertUnitsBack(MeteoData& meteo)
 {
 	//converts Kelvin to °C, converts RH to [0,100]
 	double& ta = meteo(MeteoData::TA);
-	if (ta != IOUtils::nodata)
-		ta = K_TO_C(ta);
+	ta = IOUtils::K_TO_C(ta);
 
 	double& tsg = meteo(MeteoData::TSG);
-	if (tsg != IOUtils::nodata)
-		tsg = K_TO_C(tsg);
+	tsg = IOUtils::K_TO_C(tsg);
 
 	double& tss = meteo(MeteoData::TSS);
-	if (tss != IOUtils::nodata)
-		tss = K_TO_C(tss);
+	tss = IOUtils::K_TO_C(tss);
 
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)
@@ -831,16 +828,13 @@ void PSQLIO::convertUnits(MeteoData& meteo)
 {
 	//converts °C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
-	if (ta != IOUtils::nodata)
-		ta = C_TO_K(ta);
+	ta = IOUtils::C_TO_K(ta);
 
 	double& tsg = meteo(MeteoData::TSG);
-	if (tsg != IOUtils::nodata)
-		tsg = C_TO_K(tsg);
+	tsg = IOUtils::C_TO_K(tsg);
 
 	double& tss = meteo(MeteoData::TSS);
-	if (tss != IOUtils::nodata)
-		tss = C_TO_K(tss);
+	tss = IOUtils::C_TO_K(tss);
 
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)

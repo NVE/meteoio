@@ -180,12 +180,10 @@ void A3DIO::convertUnits(MeteoData& meteo)
 
 	//converts C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
-	if (ta != IOUtils::nodata)
-		ta = C_TO_K(ta);
+	ta = IOUtils::C_TO_K(ta);
 
 	double& tsg = meteo(MeteoData::TSG);
-	if (tsg != IOUtils::nodata)
-		tsg = C_TO_K(tsg);
+	tsg = IOUtils::C_TO_K(tsg);
 
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)
@@ -755,7 +753,7 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 				if(data[ii][j](MeteoData::TA) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) <<  IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) <<  K_TO_C(data[ii][j](MeteoData::TA)) << " ";
+					file << setw(6) << setprecision(2) <<  IOUtils::K_TO_C(data[ii][j](MeteoData::TA)) << " ";
 				if(data[ii][j](MeteoData::ISWR) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
@@ -866,7 +864,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 			if(value==IOUtils::nodata) {
 				file << " " << setw(7) << setprecision(0) << IOUtils::nodata;
 			} else {
-				if(parindex==mio::MeteoData::TA) value = K_TO_C(value);
+				if(parindex==mio::MeteoData::TA) value = IOUtils::K_TO_C(value);
 				if(parindex==mio::MeteoData::RH) value = value*100.;
 				file << " " << setw(7) << setprecision(2) << value;
 			}

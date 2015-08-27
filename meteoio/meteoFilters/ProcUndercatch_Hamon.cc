@@ -44,7 +44,7 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 		VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 		double t = ovec[ii](MeteoData::TA);
 		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
-		t = K_TO_C(t); //t in celsius
+		t = IOUtils::K_TO_C(t); //t in celsius
 		double k=0.;
 
 		if (tmp == IOUtils::nodata || tmp==0.) {

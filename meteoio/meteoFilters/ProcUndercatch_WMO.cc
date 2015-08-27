@@ -46,7 +46,7 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 		double t = ovec[ii](MeteoData::TA);
 		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
-		t=K_TO_C(t); //t in celsius
+		t=IOUtils::K_TO_C(t); //t in celsius
 		precip_type precip = (t<=Tsnow)? snow : (t>=Train)? rain : mixed;
 
 		//We don't use Tmax, Tmin, Tmean but only the current temperature instead
@@ -88,7 +88,7 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 			const double alt = ovec[ii].meta.position.getAltitude();
 			double k=100.;
 			if(rh!=IOUtils::nodata && alt!=IOUtils::nodata) {
-				const double t_wb = K_TO_C(Atmosphere::wetBulbTemperature(ovec[ii](MeteoData::TA), rh, alt));
+				const double t_wb = IOUtils::K_TO_C(Atmosphere::wetBulbTemperature(ovec[ii](MeteoData::TA), rh, alt));
 				double ts_rate;
 				if(t_wb<1.1) ts_rate = 1. - .5*exp(-2.2*pow(1.1-t_wb, 1.3));
 				else ts_rate = .5*exp(-2.2*pow(t_wb-1.1, 1.3));
@@ -154,9 +154,9 @@ void ProcUndercatch_WMO::parse_args(std::vector<std::string> filter_args)
 		IOUtils::convertString(factor_mixed, filter_args[2]);
 		if(filter_args.size()==5) {
 			IOUtils::convertString(Tsnow, filter_args[3]);
-			Tsnow = K_TO_C(Tsnow);
+			Tsnow = IOUtils::K_TO_C(Tsnow);
 			IOUtils::convertString(Train, filter_args[4]);
-			Train = K_TO_C(Train);
+			Train = IOUtils::K_TO_C(Train);
 		}
 	} else if(filter_args[0]=="nipher") {
 		type=nipher;

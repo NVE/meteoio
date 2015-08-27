@@ -517,9 +517,9 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	if ((ea <= 1) && (ea != plugin_nodata)){
 		if ((md(MeteoData::TA) != plugin_nodata) && (md(MeteoData::RH) != plugin_nodata)) {
 			if(ea==0.)
-				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., C_TO_K(md(MeteoData::TA)));
+				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)));
 			else
-				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
+				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
 		} else {
 			ea = plugin_nodata;
 		}
@@ -657,7 +657,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			failure_count++;
 			fout << setw(6) << setprecision(0) << ta << " ";
 		} else
-			fout << setw(6) << setprecision(2) << K_TO_C(ta) << " ";
+			fout << setw(6) << setprecision(2) << IOUtils::K_TO_C(ta) << " ";
 		if(rh==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(5) << setprecision(0) << rh << " ";
@@ -701,13 +701,13 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			Dirichlet_failure_count++;
 			fout << setw(7) << setprecision(1) << "0.0" << " ";
 		} else {
-			fout << setw(7) << setprecision(2) << K_TO_C(tss) << " ";
+			fout << setw(7) << setprecision(2) << IOUtils::K_TO_C(tss) << " ";
 		}
 		if(tsg==IOUtils::nodata) {
 			Dirichlet_failure_count++;
 			fout << setw(6) << setprecision(1) << "0.0" << " ";
 		} else {
-			fout << setw(6) << setprecision(2) << K_TO_C(tsg) << " ";
+			fout << setw(6) << setprecision(2) << IOUtils::K_TO_C(tsg) << " ";
 		}
 
 		//HNW, HS
@@ -737,7 +737,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 					optional_failure_count++;
 					fout << setw(7) << setprecision(0) << ts << " ";
 				} else {
-					fout << setw(7) << setprecision(2) << K_TO_C(ts) << " ";
+					fout << setw(7) << setprecision(2) << IOUtils::K_TO_C(ts) << " ";
 				}
 			} else {
 				break;
@@ -817,19 +817,19 @@ void SNIO::convertUnits(MeteoData& meteo)
 	double& ta = meteo(MeteoData::TA);
 	if (ta != IOUtils::nodata) {
 		if (ta < 100)
-			ta = C_TO_K(ta);
+			ta = IOUtils::C_TO_K(ta);
 	}
 
 	double& tsg = meteo(MeteoData::TSG);
 	if ( tsg != IOUtils::nodata) {
 		if (tsg < 100)
-			tsg = C_TO_K(tsg);
+			tsg = IOUtils::C_TO_K(tsg);
 	}
 
 	double& tss = meteo(MeteoData::TSS);
 	if (tss != IOUtils::nodata) {
 		if (tss < 100)
-			tss = C_TO_K(tss);
+			tss = IOUtils::C_TO_K(tss);
 	}
 
 	double& rh = meteo(MeteoData::RH);
@@ -844,7 +844,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 		ss << "TS" << ii;
 		if (meteo.param_exists(ss.str())){
 			double& value = meteo(ss.str());
-			value = C_TO_K(value);
+			value = IOUtils::C_TO_K(value);
 		} else {
 			break;
 		}
