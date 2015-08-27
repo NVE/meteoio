@@ -68,11 +68,8 @@ namespace IOUtils {
 	const double lon_epsilon = grid_epsilon / Cst::earth_R0 *  Cst::to_deg; ///<in degrees. Small angle for longitudes, so sin(x)=x
 	const double lat_epsilon = lon_epsilon; ///<in degrees. Small angle for latitudes.
 
-	/*inline double C_TO_K(const double& T) {return ((T==nodata)? T : T + Cst::t_water_freezing_pt);}
-	inline double K_TO_C(const double& T) {return ((T==nodata)? T : T - Cst::t_water_freezing_pt);}*/
-	
-	inline double C_TO_K(const double& T) {return (T + Cst::t_water_freezing_pt);}
-	inline double K_TO_C(const double& T) {return (T - Cst::t_water_freezing_pt);}
+	inline double C_TO_K(const double& T) {return ((T==nodata)? T : T + Cst::t_water_freezing_pt);}
+	inline double K_TO_C(const double& T) {return ((T==nodata)? T : T - Cst::t_water_freezing_pt);}
 	
 	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
