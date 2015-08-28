@@ -79,6 +79,7 @@ namespace mio {
  * - ALLSKY_LW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
  * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
+ * - PPHASE: generate precipitation phase with a user-selected method (see PPhaseGenerator)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -412,8 +413,39 @@ class ESOLIPGenerator : public GeneratorAlgorithm {
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double newSnowDensity(const MeteoData& md) const;
+};
 
-		static const bool soft;
+/**
+ * @class PPhaseGenerator
+ * @brief Generate precipitation splitting according to the selected method
+ * The methods that are offered are currently the following:
+ * - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
+ * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation. 
+ *                 Within the provided range, a linear transition is assumed.
+ *
+ * @code
+ * PSUM_PH::generators = PPHASE
+ * PSUM_PH::PPHASE = THRESH 274.35
+ * @endcode
+ */
+class PPhaseGenerator : public GeneratorAlgorithm {
+	public:
+		PPhaseGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), fixed_thresh(IOUtils::nodata), 
+			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
+		
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		
+		typedef enum PARAMETRIZATION {
+			THRESH,
+			RANGE
+		} parametrization;
+		parametrization model;
+		double fixed_thresh, range_start, range_norm;
 };
 
 } //end namespace mio

@@ -52,6 +52,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new AllSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
+	} else if (algoname == "PPHASE"){
+		return new PPhaseGenerator(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -398,7 +400,7 @@ const double AllSkyLWGenerator::snow_thresh = .1; //if snow height greater than 
 void AllSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
-	if(vecArgs.size()==1) {
+	if (vecArgs.size()==1) {
 		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
 
 		if (user_algo=="OMSTEDT") model = OMSTEDT;
@@ -671,7 +673,6 @@ double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, cons
 }
 
 
-const bool ESOLIPGenerator::soft = true;
 void ESOLIPGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	if(vecArgs.size()>0) { //incorrect arguments, throw an exception
@@ -741,6 +742,68 @@ double ESOLIPGenerator::newSnowDensity(const MeteoData& md) const
 		arg += beta02; // += beta2*ta;
 
 	return min( max(30., pow(10., arg)), 250. ); //limit the density to the [30, 250] kg/m3 range
+}
+
+
+void PPhaseGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	const size_t nArgs = vecArgs.size();
+	
+	if (nArgs<1 || IOUtils::isNumeric(vecArgs[0]))
+		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" generator. Please provide the method to use and its arguments!", AT);
+	
+	const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
+	if (user_algo=="THRESH") {
+		if (nArgs!=2)
+			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
+		IOUtils::convertString(fixed_thresh, vecArgs[1]);
+		model = THRESH;
+	} else if (user_algo=="RANGE") {
+		if (nArgs!=3)
+			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
+		double range_thresh1, range_thresh2;
+		IOUtils::convertString(range_thresh1, vecArgs[1]);
+		IOUtils::convertString(range_thresh2, vecArgs[2]);
+		if (range_thresh1==range_thresh2)
+			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: the two provided threshold must be different", AT);
+		if (range_thresh1>range_thresh2) 
+			std::swap(range_thresh1, range_thresh2);
+		range_start = range_thresh1;
+		range_norm = 1. / (range_thresh2-range_thresh1);
+		model = RANGE;
+	} else
+		throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied to the "+algo+" generator", AT);
+}
+
+bool PPhaseGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if (value==IOUtils::nodata) {
+		const double TA=md(MeteoData::TA);
+		if (TA==IOUtils::nodata) return false;
+		
+		if (model==THRESH) {
+			value = (TA>=fixed_thresh)? 1. : 0.;
+		} else if (model==RANGE) {
+			const double tmp_rainfraction = range_norm * (TA - range_start);
+			value = (tmp_rainfraction>1)? 1. : (tmp_rainfraction<0.)? 0. : tmp_rainfraction;
+		}
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool PPhaseGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if (vecMeteo.empty()) return true;
+	
+	bool all_filled = true;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (!generate(param, vecMeteo[ii]))
+			all_filled = false;
+	}
+
+	return all_filled;
 }
 
 } //namespace
