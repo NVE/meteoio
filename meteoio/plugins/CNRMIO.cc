@@ -95,7 +95,7 @@ const std::string CNRMIO::cnrm_qair = "Qair";
 const std::string CNRMIO::cnrm_co2air = "CO2air";
 const std::string CNRMIO::cnrm_theorsw = "theorSW";
 const std::string CNRMIO::cnrm_neb = "NEB";
-const std::string CNRMIO::cnrm_hnw = "Rainf";
+const std::string CNRMIO::cnrm_psum = "Rainf";
 const std::string CNRMIO::cnrm_snowf = "Snowf";
 const std::string CNRMIO::cnrm_swr_direct = "DIR_SWdown";
 const std::string CNRMIO::cnrm_swr_diffuse = "SCA_SWdown";
@@ -118,7 +118,7 @@ bool CNRMIO::initStaticData()
 	paramname[cnrm_rh] = MeteoData::RH;
 	paramname[cnrm_vw] = MeteoData::VW;
 	paramname[cnrm_dw] = MeteoData::DW;
-	paramname[cnrm_hnw] = IOUtils::npos;
+	paramname[cnrm_psum] = IOUtils::npos;
 	paramname[cnrm_snowf] = IOUtils::npos;
 	paramname[cnrm_swr_direct] = IOUtils::npos;
 	paramname[cnrm_swr_diffuse] = IOUtils::npos;
@@ -132,7 +132,7 @@ bool CNRMIO::initStaticData()
 	map_name["VW"] = cnrm_vw;
 	map_name["DW"] = cnrm_dw;
 	map_name["ISWR"] = cnrm_swr_direct;
-	map_name["HNW"] = cnrm_hnw;
+	map_name["PSUM"] = cnrm_psum;
 	map_name[cnrm_co2air] = cnrm_co2air;
 	map_name[cnrm_qair] = cnrm_qair;
 	map_name[cnrm_theorsw] = cnrm_theorsw;
@@ -407,7 +407,7 @@ void CNRMIO::readData(const int& ncid, const size_t& index_start, const std::vec
 // The copying of data into vecMeteo is a process consisting of:
 // 1. A check what the relation between MeteoIO parameters and CNRM parameters present is, check map_parameters
 // 2. If there is no direct association between the parameters present and the meteo_data parameters we might
-//    have to deal with the parameter in a more complex way: e.g., HNW or SWR measurements
+//    have to deal with the parameter in a more complex way: e.g., PSUM or SWR measurements
 // 3. Once we know how to deal with the parameter we loop through all stations and all parameters and copy them
 //    into the appropriate places. All unit conversion have been accomplished at that point.
 void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data,
@@ -417,19 +417,19 @@ void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map
 		const string& varname = it->first;
 
 		//find correct handling for each parameter
-		bool simple_copy = false, mutiply_copy = false, hnw_measurement = false, sw_measurement = false;
+		bool simple_copy = false, mutiply_copy = false, psum_measurement = false, sw_measurement = false;
 		double multiplier = IOUtils::nodata;
 		const size_t param = map_parameters.find(varname)->second; //must exist, at this point we know it does
 
 		if (param == IOUtils::npos) {
-			if ((varname == cnrm_snowf) || (varname == cnrm_hnw)) {
+			if ((varname == cnrm_snowf) || (varname == cnrm_psum)) {
 				int varid;
 				ncpp::get_variable(ncid, cnrm_timestep, varid);
 				ncpp::read_value(ncid, cnrm_timestep, varid, multiplier);
 
 				if (multiplier <= 0) throw InvalidArgumentException("The variable '" + cnrm_timestep + "' is invalid", AT);
 
-				hnw_measurement = true;
+				psum_measurement = true;
 			} else if ((varname == cnrm_swr_diffuse) || (varname == cnrm_swr_direct)) {
 				sw_measurement = true;
 			} else {
@@ -463,11 +463,11 @@ void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map
 					} else {
 						vecMeteo[ii][jj](param) = value * multiplier;
 					}
-				} else if (hnw_measurement) {
+				} else if (psum_measurement) {
 					if (!nodata) {
-						double& hnw = vecMeteo[ii][jj](MeteoData::HNW);
-						if (hnw == IOUtils::nodata) hnw = 0.0;
-						hnw += value * multiplier;
+						double& psum = vecMeteo[ii][jj](MeteoData::PSUM);
+						if (psum == IOUtils::nodata) psum = 0.0;
+						psum += value * multiplier;
 					}
 				} else if (sw_measurement) {
 					if (!nodata) {
@@ -696,7 +696,7 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
 		if (param == MeteoData::RH) {
 			multiplier = 100.;
 			multiply_copy = true;
-		} else if (param == MeteoData::HNW) {
+		} else if (param == MeteoData::PSUM) {
 			multiply_copy = true;
 			multiplier = 1./3600.;
 		} else {
@@ -998,7 +998,7 @@ std::string CNRMIO::get_varname(const MeteoGrids::Parameters& parameter)
 	else if (parameter == MeteoGrids::VW) varname = cnrm_vw;
 	else if (parameter == MeteoGrids::DW) varname = cnrm_dw;
 	else if (parameter == MeteoGrids::ILWR) varname = cnrm_ilwr;
-	else if (parameter == MeteoGrids::HNW) varname = cnrm_hnw; //HACK this should add snowf!
+	else if (parameter == MeteoGrids::PSUM) varname = cnrm_psum; //HACK this should add snowf!
 	else if (parameter == MeteoGrids::SLOPE) varname = cnrm_slope;
 	else if (parameter == MeteoGrids::AZI) varname = cnrm_aspect;
 	//HACK: iswr=dir+diff
@@ -1069,7 +1069,7 @@ void CNRMIO::add_attributes_for_variable(const int& ncid, const int& varid, cons
 	} else if (varname == CNRMIO::cnrm_swr_direct) {
 		ncpp::add_attribute(ncid, varid, "long_name", "Surface Incident Direct Shortwave Radiation");
 		ncpp::add_attribute(ncid, varid, "units", "W/m2");
-	} else if (varname == CNRMIO::cnrm_hnw) {
+	} else if (varname == CNRMIO::cnrm_psum) {
 		ncpp::add_attribute(ncid, varid, "long_name", "Rainfall Rate");
 		ncpp::add_attribute(ncid, varid, "units", "kg/m2/s");
 	} else if (varname == CNRMIO::cnrm_rh) {

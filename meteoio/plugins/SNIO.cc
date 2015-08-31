@@ -368,7 +368,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
-	 * M Date Time Date(Julian) TA RH VW DW ISWR RSWR ILWR TSS TSG HNW HS (TS1 TS2 ... TSN CONC0 CONC1 ... CONCM rho_hn)
+	 * M Date Time Date(Julian) TA RH VW DW ISWR RSWR ILWR TSS TSG PSUM HS (TS1 TS2 ... TSN CONC0 CONC1 ... CONCM rho_hn)
 	 * The first line may be a comment, it won't start with "M", but with "MTO"
 	 * The meteo data is terminated by a singular "END" on a line of its own
 	 */
@@ -528,7 +528,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md(MeteoData::ILWR) = ea;
 	md(MeteoData::TSS)  = tmpdata[ii++];
 	md(MeteoData::TSG)  = tmpdata[ii++];
-	md(MeteoData::HNW)  = tmpdata[ii++];
+	md(MeteoData::PSUM)  = tmpdata[ii++];
 	md(MeteoData::HS)   = tmpdata[ii++]; // nr_meteoData
 
 	// Read optional values
@@ -632,7 +632,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		const double sn_julian = tmp_date.getJulian() - sn_julian_offset + 0.5;
 		const double ta = vecmd[jj](MeteoData::TA);
 		const double rh = vecmd[jj](MeteoData::RH);
-		const double hnw = vecmd[jj](MeteoData::HNW);
+		const double psum = vecmd[jj](MeteoData::PSUM);
 		const double vw = vecmd[jj](MeteoData::VW);
 		const double dw = vecmd[jj](MeteoData::DW);
 		const double iswr = vecmd[jj](MeteoData::ISWR);
@@ -710,15 +710,15 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			fout << setw(6) << setprecision(2) << IOUtils::K_TO_C(tsg) << " ";
 		}
 
-		//HNW, HS
-		if(hnw==IOUtils::nodata && hs==IOUtils::nodata) {
+		//PSUM, HS
+		if(psum==IOUtils::nodata && hs==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(7) << setprecision(2) << hnw << " " << setw(6) << setprecision(3) << hs << " ";
+			fout << setw(7) << setprecision(2) << psum << " " << setw(6) << setprecision(3) << hs << " ";
 		} else {
-			if(hnw==IOUtils::nodata)
+			if(psum==IOUtils::nodata)
 				fout << setw(7) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(7) << setprecision(4) << hnw << " ";
+				fout << setw(7) << setprecision(4) << psum << " ";
 			if(hs==IOUtils::nodata)
 				fout << setw(6) << setprecision(1) << "0.0";
 			else

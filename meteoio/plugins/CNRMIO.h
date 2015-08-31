@@ -95,8 +95,8 @@ class CNRMIO : public IOInterface {
 		static const double epsilon; //for numerical comparisons of double values
 		static const std::string cf_time, cf_units, cf_days, cf_hours, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
 		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
-		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
-		static const std::string ecmwf_ta, ecmwf_p, ecmwf_iswr, ecmwf_ilwr, ecmwf_hnw, ecmwf_u10, ecmwf_v10, ecmwf_td;
+		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_psum, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
+		static const std::string ecmwf_ta, ecmwf_p, ecmwf_iswr, ecmwf_ilwr, ecmwf_psum, ecmwf_u10, ecmwf_v10, ecmwf_td;
 
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
 		static std::map<std::string, std::string> map_name; ///Associate MeteoIO parameter names with CNRM parameter names

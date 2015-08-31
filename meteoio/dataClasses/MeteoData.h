@@ -60,9 +60,10 @@ class MeteoGrids {
 				ILWR, ///< Incoming long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 				HS, ///< Height of snow
-				HNW, ///< Water equivalent of precipitations, either solid or liquid
-				HNW_S, ///<  Water equivalent of precipitations, solid
-				HNW_L, ///<  Water equivalent of precipitations, liquid
+				PSUM, ///< Water equivalent of precipitations, either solid or liquid
+				PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
+				PSUM_L, ///< Water equivalent of liquid precipitation
+				PSUM_S, ///< Water equivalent of solid precipitation
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
 				P, ///< Air pressure
@@ -115,8 +116,8 @@ class MeteoData {
 		                 ISWR, ///< Incoming short wave radiation
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
-		                 HNW, ///< Water equivalent (water depth) of precipitations, either solid or liquid
-		                 lastparam=HNW};
+		                 PSUM, ///< Water equivalent of precipitations, either solid or liquid
+		                 lastparam=PSUM};
 
 		static const std::string& getParameterName(const size_t& parindex);
 

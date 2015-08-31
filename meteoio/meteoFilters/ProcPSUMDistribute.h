@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PROCHNWDISTIBUTE_H__
-#define __PROCHNWDISTIBUTE_H__
+#ifndef __PROCPSUMDISTIBUTE_H__
+#define __PROCPSUMDISTIBUTE_H__
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>
@@ -25,7 +25,7 @@
 namespace mio {
 
 /**
- * @class  ProcHNWDistribute
+ * @class  ProcPSUMDistribute
  * @ingroup processing
  * @author Mathias Bavay
  * @date   2011-01-24
@@ -40,20 +40,20 @@ namespace mio {
  * The precipitation is distributed on the preceeding timesteps by using criterias on relative humidity
  * and the difference between the air temperature and the surface temperature.
  * @code
- * HNW::filter1	= HNW_DISTRIBUTE
- * HNW::arg1	= 86400
+ * PSUM::filter1	= PSUM_DISTRIBUTE
+ * PSUM::arg1	= 86400
  * @endcode
  */
 
-class ProcHNWDistribute : public ProcessingBlock {
+class ProcPSUMDistribute : public ProcessingBlock {
 	public:
-		ProcHNWDistribute(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcPSUMDistribute(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
-		static void SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
-		static void CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
+		static void SmartDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
+		static void CstDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 		static size_t findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii);

@@ -65,9 +65,9 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  *
  * RH::algorithms = RH IDW_LAPSE CST_LAPSE CST
  *
- * HNW::algorithms = HNW_SNOW IDW_LAPSE CST_LAPSE CST
- * HNW::hnw_snow = cst_lapse
- * HNW::cst_lapse = 0.0005 frac
+ * PSUM::algorithms = PSUM_SNOW IDW_LAPSE CST_LAPSE CST
+ * PSUM::psum_snow = cst_lapse
+ * PSUM::cst_lapse = 0.0005 frac
  *
  * VW::algorithms = IDW_LAPSE CST_LAPSE
  *
@@ -88,7 +88,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - LISTON_WIND: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see ListonWindAlgorithm)
  * - RYAN: the wind direction is interpolated using IDW and then altered depending on the local slope (see RyanAlgorithm)
  * - WINSTRAL: the solid precipitation is redistributed by wind according to (Winstral, 2002) (see WinstralAlgorithm)
- * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
+ * - PSUM_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowPSUMInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
@@ -215,8 +215,8 @@ class NoneAlgorithm : public InterpolationAlgorithm {
  * Optionally, it is also possible to provide the constant that should be used if no measurements
  * are avaiblable.
  * @code
- * HNW::algorithms = CST
- * HNW::cst        = 0.
+ * PSUM::algorithms = CST
+ * PSUM::cst        = 0.
  * @endcode
  */
 class ConstAlgorithm : public InterpolationAlgorithm {
@@ -447,8 +447,8 @@ class RyanAlgorithm : public InterpolationAlgorithm {
  *
  * @remarks Only cells with an air temperature below freezing participate in the redistribution
  * @code
- * HNW::algorithms    = WINSTRAL
- * HNW::winstral = idw_lapse 180
+ * PSUM::algorithms    = WINSTRAL
+ * PSUM::winstral = idw_lapse 180
  * @endcode
  */
 class WinstralAlgorithm : public InterpolationAlgorithm {
@@ -501,7 +501,7 @@ class USERInterpolation : public InterpolationAlgorithm {
 };
 
 /**
- * @class SnowHNWInterpolation
+ * @class SnowPSUMInterpolation
  * @brief Precipitation distribution according to the local slope and curvature.
  * The precipitation distribution is initialized using a specified algorithm (IDW_LAPSE by default, see IDWLapseAlgorithm).
  * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
@@ -514,16 +514,16 @@ class USERInterpolation : public InterpolationAlgorithm {
  *
  * An example using this algorithm, initializing the grid with a constant lapse rate fill using +0.05% precipitation increase per meter of elevation, is given below:
  * @code
- * HNW::algorithms = HNW_SNOW
- * HNW::hnw_snow = cst_lapse
- * HNW::cst_lapse = 0.0005 frac
+ * PSUM::algorithms = PSUM_SNOW
+ * PSUM::psum_snow = cst_lapse
+ * PSUM::cst_lapse = 0.0005 frac
  * @endcode
  *
  * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
  */
-class SnowHNWInterpolation : public InterpolationAlgorithm {
+class SnowPSUMInterpolation : public InterpolationAlgorithm {
 	public:
-		SnowHNWInterpolation(Meteo2DInterpolator& i_mi,
+		SnowPSUMInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
   			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}

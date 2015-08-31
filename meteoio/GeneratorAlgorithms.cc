@@ -19,7 +19,7 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
-#include <meteoio/meteoFilters/ProcHNWDistribute.h> //for the precipitation distribution
+#include <meteoio/meteoFilters/ProcPSUMDistribute.h> //for the precipitation distribution
 
 #include <algorithm>
 
@@ -685,12 +685,12 @@ bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 	return false; //all missing values could be filled
 }
 
-//when we can not guarantee HNW=0, we leave it at nodata. Therefore, it is highly recommended to
+//when we can not guarantee PSUM=0, we leave it at nodata. Therefore, it is highly recommended to
 //run through a Cst=0 data generator afterward
 bool ESOLIPGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if (param!=MeteoData::HNW)
-		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to HNW!!", AT);
+	if (param!=MeteoData::PSUM)
+		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to PSUM!!", AT);
 
 	if (vecMeteo.empty()) return true;
 
@@ -718,7 +718,7 @@ bool ESOLIPGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 		if (HS_delta>0.) {
 			const double rho = newSnowDensity(vecMeteo[ii]);
 			const double precip = HS_delta * rho; //in kg/m2 or mm
-			ProcHNWDistribute::SmartDistributeHNW(precip, start_idx, ii, param, vecMeteo);
+			ProcPSUMDistribute::SmartDistributePSUM(precip, start_idx, ii, param, vecMeteo);
 		} else {
 			all_filled = false;
 		}

@@ -560,7 +560,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	if(parameter==MeteoGrids::TSG) read2DGrid_indexed(11.2, 1, 0, date, grid_out); //T_G
 
 	//hydrological parameters
-	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(61.2, 1, 0, date, grid_out); //tp
+	if(parameter==MeteoGrids::PSUM) read2DGrid_indexed(61.2, 1, 0, date, grid_out); //tp
 	if(parameter==MeteoGrids::ROT) read2DGrid_indexed(90.2, 112, 0, date, grid_out); //RUNOFF
 	if(parameter==MeteoGrids::SWE) read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
 	if(parameter==MeteoGrids::HS) {
@@ -982,7 +982,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	}
 
 	//hydrological parameters
-	if(readMeteoValues(61.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HNW, npoints, Meteo); //tp
+	if(readMeteoValues(61.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::PSUM, npoints, Meteo); //tp
 	if(readMeteoValues(66.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HS, npoints, Meteo);
 	else if(readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
 	   && readMeteoValues(65.2, 1, 0, i_date, npoints, lats, lons, values2)) { //W_SNOW

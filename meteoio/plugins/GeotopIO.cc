@@ -106,7 +106,7 @@ void GeotopIO::readLanduse(Grid2DObject&) {
 }
 
 void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
-	mapParam["Iprec"] = MeteoData::HNW;
+	mapParam["Iprec"] = MeteoData::PSUM;
 	mapParam["WindSp"] = MeteoData::VW;
 	mapParam["WindDir"] = MeteoData::DW;
 	mapParam["RH"] = MeteoData::RH;
@@ -445,7 +445,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 				vecAlt = tmpvec;
 				meta_counter |= 16;
 			} else if (line.find("HeaderIPrec") == 0) {
-				mapColumnNames[getValueForKey(line)] = MeteoData::HNW;
+				mapColumnNames[getValueForKey(line)] = MeteoData::PSUM;
 			} else if (line.find("HeaderAirPress") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::P;
 			} else if (line.find("HeaderWindVelocity") == 0) {

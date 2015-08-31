@@ -20,7 +20,7 @@
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
-#include <meteoio/meteoFilters/ProcHNWDistribute.h> //for the precipitation distribution
+#include <meteoio/meteoFilters/ProcPSUMDistribute.h> //for the precipitation distribution
 
 #include <cmath>
 #include <algorithm>
@@ -451,7 +451,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 	for (size_t ii=0; ii<nr_args; ii++) {
 		if (IOUtils::isNumeric(vecArgs[ii])) {
 			if (period_read==true)
-				throw InvalidArgumentException("Two arguments "+i_algoname+" resampling has been deprecated! Please use the \"HNW_Distribute\" Processing Element instead!", AT);
+				throw InvalidArgumentException("Two arguments "+i_algoname+" resampling has been deprecated! Please use the \"PSUM_Distribute\" Processing Element instead!", AT);
 
 			IOUtils::convertString(accumulate_period, vecArgs[ii]);
 			accumulate_period /= 86400.; //user uses seconds, internally julian day is used

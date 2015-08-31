@@ -243,7 +243,7 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
 void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, MeteoData& md, StationData& sd)
 {
 	double ta=IOUtils::nodata, iswr=IOUtils::nodata, vw=IOUtils::nodata, dw=IOUtils::nodata;
-	double rh=IOUtils::nodata, ilwr=IOUtils::nodata, hnw=IOUtils::nodata, tsg=IOUtils::nodata;
+	double rh=IOUtils::nodata, ilwr=IOUtils::nodata, psum=IOUtils::nodata, tsg=IOUtils::nodata;
 	double tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 	double longitude=IOUtils::nodata, latitude=IOUtils::nodata, altitude=IOUtils::nodata;
 
@@ -291,9 +291,9 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		const std::string str_rh = xmlGetNodeContent(pNode, "rlf");
 		xmlParseStringToDouble(str_rh, rh, "rlf");
 
-		//ni = hnw //TODO: not sure that this field really contains what we want...
+		//ni = psum //TODO: not sure that this field really contains what we want...
 		const std::string str_ns = xmlGetNodeContent(pNode, "ni");
-		xmlParseStringToDouble(str_ns, hnw, "ni");
+		xmlParseStringToDouble(str_ns, psum, "ni");
 
 		//sb = ilwr
 		const std::string str_sb = xmlGetNodeContent(pNode, "sb");
@@ -314,7 +314,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		md(MeteoData::DW)   = dw;
 		md(MeteoData::RH)   = rh;
 		md(MeteoData::ILWR) = ilwr;
-		md(MeteoData::HNW)  = hnw;
+		md(MeteoData::PSUM)  = psum;
 		md(MeteoData::TSG)  = tsg;
 		md(MeteoData::TSS)  = tss;
 		md(MeteoData::HS)   = hs;

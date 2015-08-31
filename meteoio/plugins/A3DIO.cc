@@ -312,7 +312,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 
 	const Date tmp_date(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3], 0, in_tz);
 
-	//Read rest of line with values ta, iswr, vw, rh, ea, hnw
+	//Read rest of line with values ta, iswr, vw, rh, ea, psum
 	double tmp_values[6];
 	for (size_t ii=0; ii<6; ii++) { //go through the columns
 		if (!IOUtils::convertString(tmp_values[ii], tmpvec.at(ii+4), std::dec)) {
@@ -326,7 +326,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	tmpdata(MeteoData::VW)   = tmp_values[2];
 	tmpdata(MeteoData::RH)   = tmp_values[3];
 	tmpdata(MeteoData::ILWR) = tmp_values[4];
-	tmpdata(MeteoData::HNW)  = tmp_values[5];
+	tmpdata(MeteoData::PSUM)  = tmp_values[5];
 
 	return false;
 }
@@ -355,7 +355,7 @@ void A3DIO::read2DStations(const Date& timestamp, std::vector<StationData>& vecS
 
 /*
   Preamble: Files are in METEOFILE directory. 4 types of files:
-  prec????.txt == hnw
+  prec????.txt == psum
   rh????.txt == rh
   ta????.txt == ta
   wspd????.txt == vw
@@ -572,9 +572,9 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 				tmpmd.date = curr_date;
 
 				if (parameter == "nswc") {
-					if (!IOUtils::convertString(tmpmd(MeteoData::HNW), tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::PSUM), tmpvec[ii], std::dec)) {
 						fin.close();
-						throw ConversionFailedException("For hnw value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
+						throw ConversionFailedException("For psum value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
 
 				} else if (parameter == "rh") {
@@ -770,10 +770,10 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
 					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::ILWR) << " ";
-				if(data[ii][j](MeteoData::HNW) == IOUtils::nodata)
+				if(data[ii][j](MeteoData::PSUM) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << "\n";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::HNW) << "\n";
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::PSUM) << "\n";
 			}
 			file.close();
 		}
@@ -883,7 +883,7 @@ void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data)
 	write2DmeteoFile(data, mio::MeteoData::RH, tmp_path+"/rhum", "relative humidity");
 	write2DmeteoFile(data, mio::MeteoData::VW, tmp_path+"/wspd", "wind velocity");
 	write2DmeteoFile(data, mio::MeteoData::DW, tmp_path+"/wdir", "wind direction");
-	write2DmeteoFile(data, mio::MeteoData::HNW, tmp_path+"/prec", "precipitations");
+	write2DmeteoFile(data, mio::MeteoData::PSUM, tmp_path+"/prec", "precipitations");
 }
 
 } //namespace

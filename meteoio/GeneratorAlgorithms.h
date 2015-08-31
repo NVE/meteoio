@@ -400,7 +400,7 @@ class AllSkySWGenerator : public GeneratorAlgorithm {
  * @note only identified precipitation events are written out, this means that it is recommended to run through a Cst=0 data generator afterward 
  * 
  * @code
- * HNW::generators = ESOLIP
+ * PSUM::generators = ESOLIP
  * @endcode
  */
 class ESOLIPGenerator : public GeneratorAlgorithm {

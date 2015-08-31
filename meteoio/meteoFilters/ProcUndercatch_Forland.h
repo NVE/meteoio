@@ -43,8 +43,8 @@ namespace mio {
  * - Geonor - Alter shield
  *
  * @code
- * HNW::filter1	= undercatch_forland
- * HNW::arg1	= wfj
+ * PSUM::filter1	= undercatch_forland
+ * PSUM::arg1	= wfj
  * @endcode
  */
 

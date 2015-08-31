@@ -33,7 +33,7 @@ ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector<std::string>& vec_a
 void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	if(param!=MeteoData::HNW)
+	if(param!=MeteoData::PSUM)
 		throw InvalidArgumentException("Trying to use "+getName()+" filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec = ivec;
 

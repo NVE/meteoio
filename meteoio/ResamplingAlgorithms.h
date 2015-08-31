@@ -53,8 +53,8 @@ namespace mio {
  * VW::resample    = n_neighbor
  * VW::n_neighbor  = extrapolate
  *
- * HNW::resample   = accumulate
- * HNW::accumulate = 3600
+ * PSUM::resample   = accumulate
+ * PSUM::accumulate = 3600
  * @endcode
  *
  * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the WINDOW_SIZE. Otherwise, the section's WINDOW_SIZE is
@@ -205,8 +205,8 @@ class LinearResampling : public ResamplingAlgorithms {
  * - the accumulation period has to be provided as an argument (in seconds)
  * - if giving the argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
  * @code
- * HNW::resample   = accumulate
- * HNW::accumulate = 3600
+ * PSUM::resample   = accumulate
+ * PSUM::accumulate = 3600
  * @endcode
  */
 class Accumulate : public ResamplingAlgorithms {

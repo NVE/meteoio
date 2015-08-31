@@ -36,8 +36,8 @@ namespace mio {
  * and the matching factor in the second column (<a href="http://www.cplusplus.com/reference/cctype/isspace/">whitespace</a> delimited).
  * Comments following the same syntax as in the ini file are accepted, missing indices are treated as 1.
  * @code
- * HNW::filter1	= mult
- * HNW::arg1	= 1.3
+ * PSUM::filter1	= mult
+ * PSUM::arg1	= 1.3
  *
  * ISWR::filter1	= mult
  * ISWR::arg1		= monthly input/ISWR_corr.dat

@@ -31,14 +31,14 @@
 #include <meteoio/meteoFilters/FilterWindAvg.h>
 #include <meteoio/meteoFilters/FilterStdDev.h>
 #include <meteoio/meteoFilters/FilterRate.h>
-#include <meteoio/meteoFilters/FilterUnheatedHNW.h>
+#include <meteoio/meteoFilters/FilterUnheatedPSUM.h>
 #include <meteoio/meteoFilters/FilterTukey.h>
 #include <meteoio/meteoFilters/FilterMAD.h>
 #include <meteoio/meteoFilters/ProcButterworth.h>
 #include <meteoio/meteoFilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Forland.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Hamon.h>
-#include <meteoio/meteoFilters/ProcHNWDistribute.h>
+#include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <meteoio/meteoFilters/ProcUnventilatedT.h>
 #include <meteoio/meteoFilters/ProcUnshade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
@@ -76,10 +76,10 @@ namespace mio {
  * RH::filter2	= min_max
  * RH::arg2	= soft 0.0 1.0
  *
- * HNW::filter1	= min
- * HNW::arg1	= -0.1
- * HNW::filter2	= min
- * HNW::arg2	= soft 0.
+ * PSUM::filter1	= min
+ * PSUM::arg1	= -0.1
+ * PSUM::filter2	= min
+ * PSUM::arg2	= soft 0.
  * @endcode
  *
  * @section processing_available Available processing elements
@@ -91,7 +91,7 @@ namespace mio {
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
- * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedHNW
+ * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete data, see FilterSuppr
@@ -110,7 +110,7 @@ namespace mio {
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
- * - HNW_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcHNWDistribute
+ * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  *
  */
 
@@ -141,15 +141,15 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "BUTTERWORTH"){
 		return new ProcButterworth(vec_args, blockname);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
-		return new FilterUnheatedHNW(vec_args, blockname);
+		return new FilterUnheatedPSUM(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
 		return new ProcUndercatch_WMO(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_FORLAND"){
 		return new ProcUndercatch_Forland(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
 		return new ProcUndercatch_Hamon(vec_args, blockname);
-	} else if (blockname == "HNW_DISTRIBUTE"){
-		return new ProcHNWDistribute(vec_args, blockname);
+	} else if (blockname == "PSUM_DISTRIBUTE"){
+		return new ProcPSUMDistribute(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
 	} else if (blockname == "UNSHADE"){

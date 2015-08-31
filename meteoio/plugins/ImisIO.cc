@@ -50,11 +50,11 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0).
- * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedHNW to detect snow melting in the rain gauge.
- * - USE_SNOWPACK_HNW: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute HNW. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will <b>overwrite</b> hnw. (default=false)
+ * - USE_IMIS_PSUM: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedPSUM to detect snow melting in the rain gauge.
+ * - USE_SNOWPACK_PSUM: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged psum while all data that can properly be computed will <b>overwrite</b> psum. (default=false)
  *
- * It is possible to use both USE_IMIS_HNW and USE_SNOWPACK_HNW to create composite HNW (from SNOWPACK in the snow season and from IMIS otherwise).
- * In such a case, as soon as SNOWPACK SWE > 0, all previous HNW data will be deleted (ie those potentially coming from IMIS_HNW).
+ * It is possible to use both USE_IMIS_PSUM and USE_SNOWPACK_PSUM to create composite PSUM (from SNOWPACK in the snow season and from IMIS otherwise).
+ * In such a case, as soon as SNOWPACK SWE > 0, all previous PSUM data will be deleted (ie those potentially coming from IMIS_PSUM).
  * But if there is no SNOWPACK data, the IMIS measurements will be kept.
  */
 
@@ -71,7 +71,7 @@ const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-
 
 const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
 
-const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into HNW
+const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into PSUM
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
@@ -181,13 +181,13 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBPASS", "Input", oraclePassword_in);
 
 	cfg.getValue("USEANETZ", "Input", useAnetz, IOUtils::nothrow);
-	cfg.getValue("USE_IMIS_HNW", "Input", use_imis_hnw, IOUtils::nothrow);
-	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, IOUtils::nothrow);
+	cfg.getValue("USE_IMIS_PSUM", "Input", use_imis_psum, IOUtils::nothrow);
+	cfg.getValue("USE_SNOWPACK_PSUM", "Input", use_psum_snowpack, IOUtils::nothrow);
 }
 
 ImisIO::ImisIO(const std::string& configfile)
         : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
-          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_hnw(false), use_hnw_snowpack(false)
+          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_psum(false), use_psum_snowpack(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -195,7 +195,7 @@ ImisIO::ImisIO(const std::string& configfile)
 
 ImisIO::ImisIO(const Config& cfgreader)
         : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
-          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_hnw(false), use_hnw_snowpack(false)
+          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_psum(false), use_psum_snowpack(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -460,7 +460,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, stmt);
 
 			//We got all the data, now calc psum for all ANETZ stations
-			vector< vector<double> > vec_of_psums; //6 hour accumulations of hnw
+			vector< vector<double> > vec_of_psums; //6 hour accumulations of psum
 			calculatePsum(date_anetz_start, date_anetz_end, vecMeteoAnetz, vec_of_psums);
 
 			for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
@@ -470,7 +470,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			}
 		}
 
-		if(use_hnw_snowpack) {
+		if(use_psum_snowpack) {
 			for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
 				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 			}
@@ -489,9 +489,9 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
                                  const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
                                  std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	//Do coefficient calculation (getHNW) for every single station and data point
+	//Do coefficient calculation (getPSUM) for every single station and data point
 	vector<double> current_station_psum;
-	getAnetzHNW(ad, mapAnetzNames, vec_of_psums, current_station_psum);
+	getAnetzPSUM(ad, mapAnetzNames, vec_of_psums, current_station_psum);
 
 	size_t counter = 0;
 	Date current_slice_date = dateStart;
@@ -506,15 +506,15 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 
 		if (counter >= current_station_psum.size()) { break; } //should never happen
 
-		double& hnw = vecMeteo[stationindex][jj](MeteoData::HNW);
-		if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.001))){
+		double& psum = vecMeteo[stationindex][jj](MeteoData::PSUM);
+		if ((psum == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(psum, 0.0, 0.001))){
 			//replace by psum if there is no own value measured
-			hnw = current_station_psum.at(counter);
+			psum = current_station_psum.at(counter);
 		}
 	}
 }
 
-void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
+void ImisIO::getAnetzPSUM(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
                          const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum)
 {
 	vector<size_t> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
@@ -539,11 +539,11 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t
 		// Exactly two ANETZ stations with one interaction term
 		for (size_t kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
 			double sum = 0.0;
-			const double& hnw0 = vec_of_psums.at(vecIndex.at(0))[kk];
-			const double& hnw1 = vec_of_psums.at(vecIndex.at(1))[kk];
-			sum += ad.coeffs[0] * hnw0;
-			sum += ad.coeffs[1] * hnw1;
-			sum += ad.coeffs[2] * hnw0 * hnw1;
+			const double& psum0 = vec_of_psums.at(vecIndex.at(0))[kk];
+			const double& psum1 = vec_of_psums.at(vecIndex.at(1))[kk];
+			sum += ad.coeffs[0] * psum0;
+			sum += ad.coeffs[1] * psum1;
+			sum += ad.coeffs[2] * psum0 * psum1;
 
 			psum.push_back(sum/12.0);
 		}
@@ -565,7 +565,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 		size_t counter_of_elements = 0;
 		for (size_t jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
 			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
-			const double& hnw = vecMeteoAnetz[ii][jj](MeteoData::HNW);
+			const double& psum = vecMeteoAnetz[ii][jj](MeteoData::PSUM);
 
 			if ((current_date < anetzdate) && ((current_date+0.25) > anetzdate)){
 				;
@@ -580,8 +580,8 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 				counter_of_elements = 0;
 			}
 
-			if (hnw != IOUtils::nodata){
-				tmp_psum += hnw;
+			if (psum != IOUtils::nodata){
+				tmp_psum += psum;
 				counter_of_elements++;
 			}
 
@@ -667,16 +667,16 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd);
 
-		//For IMIS stations the hnw value is a rate (kg m-2 h-1), therefore we need to
+		//For IMIS stations the psum value is a rate (kg m-2 h-1), therefore we need to
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
-				if(use_imis_hnw==false) {
-					tmpmd(MeteoData::HNW) = IOUtils::nodata;
+				if(use_imis_psum==false) {
+					tmpmd(MeteoData::PSUM) = IOUtils::nodata;
 				} else {
-					double& hnw = tmpmd(MeteoData::HNW);
-					if(hnw!=IOUtils::nodata) {
-						hnw /= 2.; //half hour accumulated value for IMIS stations only
+					double& psum = tmpmd(MeteoData::PSUM);
+					if(psum!=IOUtils::nodata) {
+						psum /= 2.; //half hour accumulated value for IMIS stations only
 					}
 				}
 			}
@@ -687,7 +687,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 }
 
 /**
- * @brief Read simulated SWE from the database, compute Delta(SWE) and use it as HNW for one specific station (specified by the stationindex)
+ * @brief Read simulated SWE from the database, compute Delta(SWE) and use it as PSUM for one specific station (specified by the stationindex)
  * @param dateStart     The beginning of the interval to retrieve data for
  * @param dateEnd       The end of the interval to retrieve data for
  * @param vecMeteo      The vector that will hold all MeteoData for each station
@@ -766,15 +766,15 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 			}
 
 			if ((curr_date.getJulian()-prev_date.getJulian())<=max_interval || curr_swe==0.) {
-				vecMeteo[stationindex][ii_serie](MeteoData::HNW) = 0.;
+				vecMeteo[stationindex][ii_serie](MeteoData::PSUM) = 0.;
 				//data not too far apart, so we accept it for Delta SWE
 				if (vecMeteo[stationindex][ii_serie].date==curr_date) {
-					//we found the matching timestamp -> writing Delta(SWE) as hnw
-					const double new_hnw_sum = curr_swe - prev_swe;
-					if (new_hnw_sum>eps_swe) {
-						accumulator += new_hnw_sum;
+					//we found the matching timestamp -> writing Delta(SWE) as psum
+					const double new_psum_sum = curr_swe - prev_swe;
+					if (new_psum_sum>eps_swe) {
+						accumulator += new_psum_sum;
 						if (accumulator>=swe_threshold) {
-							vecMeteo[stationindex][ii_serie](MeteoData::HNW) = accumulator;
+							vecMeteo[stationindex][ii_serie](MeteoData::PSUM) = accumulator;
 							accumulator = 0.;
 						}
 					}
@@ -782,7 +782,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 				prev_swe = curr_swe;
 				prev_date = curr_date;
 			} else {
-				//data points in SWE too far apart, we could not use it for hnw but we reset our prev_swe to this new point
+				//data points in SWE too far apart, we could not use it for psum but we reset our prev_swe to this new point
 				prev_swe = curr_swe;
 				prev_date = curr_date;
 			}
@@ -813,7 +813,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 	IOUtils::convertString(md(MeteoData::VW_MAX), i_meteo.at(5),  std::dec);
 	IOUtils::convertString(md(MeteoData::RH),     i_meteo.at(6),  std::dec);
 	IOUtils::convertString(md(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
-	IOUtils::convertString(md(MeteoData::HNW),    i_meteo.at(8),  std::dec);
+	IOUtils::convertString(md(MeteoData::PSUM),    i_meteo.at(8),  std::dec);
 	IOUtils::convertString(md(MeteoData::TSG),    i_meteo.at(9),  std::dec);
 	IOUtils::convertString(md(MeteoData::TSS),    i_meteo.at(10), std::dec);
 	IOUtils::convertString(md(MeteoData::HS),     i_meteo.at(11), std::dec);

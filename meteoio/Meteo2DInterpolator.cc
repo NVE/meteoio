@@ -50,7 +50,7 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 }
 
 /* By reading the Config object build up a list of user configured algorithms
-* for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
+* for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, psum, ...)
 * Concept of this constructor: loop over all MeteoData::Parameters and then look
 * for configuration of interpolation algorithms within the Config object.
 */
@@ -143,10 +143,10 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	vecAlgs[bestalgorithm]->calculate(dem, result);
 	InfoString = vecAlgs[bestalgorithm]->getInfo();
 
-	//Run soft min/max filter for RH, HNW and HS
+	//Run soft min/max filter for RH, PSUM and HS
 	if (meteoparam == MeteoData::RH){
 		Meteo2DInterpolator::checkMinMax(0.0, 1.0, result);
-	} else if (meteoparam == MeteoData::HNW){
+	} else if (meteoparam == MeteoData::PSUM){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	} else if (meteoparam == MeteoData::HS){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);

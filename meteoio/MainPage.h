@@ -323,7 +323,7 @@ namespace mio {
  * that is developed). Templates header and code files are available to get you started, look into the "meteoFilters" subdirectory of the source directory (files "template.cc" and "template.h").
  *
  * It is important to understand that the processing elements operate on a "per parameter" basis.
- * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the
+ * This means that an element might be executed for the parameter TA and another one for the parameter PSUM, so the
  * algorithm only has to deal with a generic processing method based on double values.
  *
  * To implement a new processing element, the following steps are necessary:
@@ -383,7 +383,7 @@ namespace mio {
  * @endcode
  * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
  *
- * Another good example is the FilterUnheatedHNW that uses a combination of several meteorological parameters to filter the
+ * Another good example is the FilterUnheatedPSUM that uses a combination of several meteorological parameters to filter the
  * precipitation.
  */
 

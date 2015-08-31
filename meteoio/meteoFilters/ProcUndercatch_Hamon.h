@@ -39,8 +39,8 @@ namespace mio {
  * - Hellmannsh - shielded and fitted on Weissflujoch (Switzerland) data
  *
  * @code
- * HNW::filter1	= undercatch_hamon
- * HNW::arg1	= sh
+ * PSUM::filter1	= undercatch_hamon
+ * PSUM::arg1	= sh
  * @endcode
  */
 

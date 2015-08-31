@@ -46,7 +46,7 @@ IOInterface* DEMLoader::generateIOInterface(
 		cfg.addKey("TA::algorithms", "Interpolations2D", "IDW_LAPSE CST_LAPSE");
 		cfg.addKey("TA::cst_lapse", "Interpolations2D", "-0.008");
 		cfg.addKey("RH::algorithms", "Interpolations2D", "RH IDW_LAPSE CST");
-		cfg.addKey("HNW::algorithms", "Interpolations2D", "IDW_LAPSE CST");
+		cfg.addKey("PSUM::algorithms", "Interpolations2D", "IDW_LAPSE CST");
 		cfg.addKey("VW::algorithms", "Interpolations2D", "IDW_LAPSE CST");
 		cfg.addKey("DW::algorithms", "Interpolations2D", "IDW CST");
 		cfg.addKey("P::algorithms", "Interpolations2D", "STD_PRESS");

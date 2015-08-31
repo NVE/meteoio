@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERHUNHEATEDHNW_H__
-#define __FILTERHUNHEATEDHNW_H__
+#ifndef __FILTERHUNHEATEDPSUM_H__
+#define __FILTERHUNHEATEDPSUM_H__
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>
@@ -25,7 +25,7 @@
 namespace mio {
 
 /**
- * @class  FilterUnheatedHNW
+ * @class  FilterUnheatedPSUM
  * @ingroup processing
  * @author Mathias Bavay
  * @date   2011-11-11
@@ -37,14 +37,14 @@ namespace mio {
  * the lack of validation data keeps the precipitation as it is.
  *
  * @code
- * HNW::filter2	= unheated_raingauge
- * HNW::arg2	= soft 0.5 3.
+ * PSUM::filter2	= unheated_raingauge
+ * PSUM::arg2	= soft 0.5 3.
  * @endcode
  */
 
-class FilterUnheatedHNW : public FilterBlock {
+class FilterUnheatedPSUM : public FilterBlock {
 	public:
-		FilterUnheatedHNW(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterUnheatedPSUM(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

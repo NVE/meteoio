@@ -189,7 +189,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 
 	//Hydrological parameters
 	if(parameter==MeteoGrids::HS) readGridLayer("snowdpth", 2, grid_out);
-	if(parameter==MeteoGrids::HNW) {
+	if(parameter==MeteoGrids::PSUM) {
 		readGridLayer("prcrate1", 2, grid_out); //in kg/m^2/s
 		grid_out.grid2D *= 3600.; //we need kg/m^2/h
 	}

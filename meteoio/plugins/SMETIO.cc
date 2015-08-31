@@ -232,7 +232,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 
 		//specific key mapping
 		if (key == "PSUM") {
-			indexes.push_back(md.getParameterIndex("HNW"));
+			indexes.push_back(md.getParameterIndex("PSUM"));
 		} else if (key == "OSWR") {
 			indexes.push_back(md.getParameterIndex("RSWR"));
 		} else if (key == "OLWR") {
@@ -381,13 +381,13 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			current_index++;
 		}
 
-		if ((pint_present) && (tmp_md(MeteoData::HNW) == IOUtils::nodata)) {
+		if ((pint_present) && (tmp_md(MeteoData::PSUM) == IOUtils::nodata)) {
 			const double pint = tmp_md("PINT");
 			if (pint==0.) {
-				tmp_md(MeteoData::HNW) = 0.;
+				tmp_md(MeteoData::PSUM) = 0.;
 			} else if (previous_ts!=IOUtils::nodata) {
 				const double acc_period = (tmp_md.date.getJulian() - previous_ts) * 24.; //in hours
-				tmp_md(MeteoData::HNW) = pint * acc_period;
+				tmp_md(MeteoData::PSUM) = pint * acc_period;
 			}
 		}
 
@@ -574,7 +574,6 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		if (vecParamInUse[ll]) {
 			string column = vecColumnName.at(ll);
 			if (column == "RSWR") column = "OSWR";
-			if (column == "HNW")  column = "PSUM";
 			ss << " " << column;
 
 			getFormatting(ll, tmpprecision, tmpwidth);
@@ -608,7 +607,7 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	} else if ((param == MeteoData::ISWR) || (param == MeteoData::RSWR) || (param == MeteoData::ILWR)){
 		prec = 0;
 		width = 6;
-	} else if (param == MeteoData::HNW){
+	} else if (param == MeteoData::PSUM){
 		prec = 3;
 		width = 6;
 	} else if (param == MeteoData::HS){

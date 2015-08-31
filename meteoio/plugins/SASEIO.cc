@@ -321,8 +321,8 @@ void SASEIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 		throw ConversionFailedException("Invalid ISWR for station "+statID+": "+i_meteo.at(7), AT);
 	if (!IOUtils::convertString(md(MeteoData::ILWR), i_meteo.at(8)))
 		throw ConversionFailedException("Invalid ILWR for station "+statID+": "+i_meteo.at(8), AT);
-	if (!IOUtils::convertString(md(MeteoData::HNW), i_meteo.at(9)))
-		throw ConversionFailedException("Invalid HNW for station "+statID+": "+i_meteo.at(9), AT);
+	if (!IOUtils::convertString(md(MeteoData::PSUM), i_meteo.at(9)))
+		throw ConversionFailedException("Invalid PSUM for station "+statID+": "+i_meteo.at(9), AT);
 	if (!IOUtils::convertString(md(MeteoData::P), i_meteo.at(10)))
 		throw ConversionFailedException("Invalid P for station "+statID+": "+i_meteo.at(10), AT);
 }

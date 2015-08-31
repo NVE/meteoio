@@ -42,7 +42,7 @@ namespace mio {
  * This query is used to retrieve the data for the user selected stations within a given time interval.
  * The SQL query may retrieve the following columns as result set (any order, only date is mandatory):
  *
- *      date (mandatory, as date), ta (double), rh (double), p (double), vw (double), dw (double), iprec (the HNW value, double), iswr (double)
+ *      date (mandatory, as date), ta (double), rh (double), p (double), vw (double), dw (double), iprec (the PSUM value, double), iswr (double)
  *
  * The SQL query must retrieve the data for one station only, which has to be specified as \a STATIONID (this will be dynamically replaced by the plugin).
  * To set the upper and lower bounds for the date the SQL query has to contain \a DATE_START and \a DATE_END. These keywords will be dynamically replaced by
@@ -458,7 +458,7 @@ void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>
 		} else if (field_name == "HS") {
 			index.push_back(MeteoData::HS);
 		} else if (field_name == "IPREC") {
-			index.push_back(MeteoData::HNW);
+			index.push_back(MeteoData::PSUM);
 		} else if (field_name == "TSS") {
 			index.push_back(MeteoData::TSS);
 		} else if (field_name == "TSG") {
@@ -606,7 +606,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 			for (size_t jj=0; jj<vecColumnName.size(); jj++) {
 				if (type == vecColumnName[jj]) map_sensor_type[jj] = id;
-				if (type == "IPREC" && vecColumnName[jj] == "HNW") map_sensor_type[jj] = id;
+				if (type == "IPREC" && vecColumnName[jj] == "PSUM") map_sensor_type[jj] = id;
 			}
 		}
 
@@ -657,7 +657,7 @@ void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string
 
 			for (size_t jj=0; jj<vecColumnName.size(); jj++) {
 				if (type == vecColumnName[jj]) map_sensor_id[jj] = id;
-				if (type == "IPREC" && vecColumnName[jj] == "HNW") map_sensor_id[jj] = id;
+				if (type == "IPREC" && vecColumnName[jj] == "PSUM") map_sensor_id[jj] = id;
 			}
 		}
 

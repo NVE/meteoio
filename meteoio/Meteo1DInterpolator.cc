@@ -32,7 +32,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	window_size /= 86400.; //user uses seconds, internally julian day is used
 
 	//read the Config object to create the resampling algorithms for each
-	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
+	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, psum, ...)
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string parname = MeteoData::getParameterName(ii); //Current parameter name
 		vector<string> vecArgs;

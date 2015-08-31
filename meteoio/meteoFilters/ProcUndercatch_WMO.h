@@ -59,8 +59,8 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
  * @code
- * HNW::filter1	= undercatch_wmo
- * HNW::arg1	= cst 1.3 1.1
+ * PSUM::filter1	= undercatch_wmo
+ * PSUM::arg1	= cst 1.3 1.1
  * @endcode
  */
 

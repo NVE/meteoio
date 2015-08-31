@@ -208,7 +208,7 @@ void DataGenerator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 
 /** @brief build the generators for each meteo parameter
  * By reading the Config object build up a list of user configured algorithms
- * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
+ * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, psum, ...)
  * Concept of this constructor: loop over all MeteoData::Parameters and then look
  * for configuration of interpolation algorithms within the Config object.
  * @param[in] cfg configuration object to use for getting the algorithms configuration

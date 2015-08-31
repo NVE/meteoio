@@ -15,23 +15,23 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoFilters/ProcHNWDistribute.h>
+#include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <cmath>
 
 using namespace std;
 
 namespace mio {
 
-const double ProcHNWDistribute::thresh_rh = .7;
-const double ProcHNWDistribute::thresh_Dt = 3.;
+const double ProcPSUMDistribute::thresh_rh = .7;
+const double ProcPSUMDistribute::thresh_Dt = 3.;
 
-ProcHNWDistribute::ProcHNWDistribute(const std::vector<std::string>& vec_args, const std::string& name)
+ProcPSUMDistribute::ProcPSUMDistribute(const std::vector<std::string>& vec_args, const std::string& name)
                   : ProcessingBlock(name), measured_period(IOUtils::nodata), is_soft(false)
 {
 	parse_args(vec_args);
 }
 
-void ProcHNWDistribute::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                             std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
@@ -80,15 +80,15 @@ void ProcHNWDistribute::process(const unsigned int& param, const std::vector<Met
 
 		//we have a start, and end and a value -> we can redistribute it!
 		const double precip = ovec[endIdx](param);
-		//CstDistributeHNW(precip, ii+1, endIdx, param, ovec);
-		SmartDistributeHNW(precip, ii+1, endIdx, param, ovec);
+		//CstDistributePSUM(precip, ii+1, endIdx, param, ovec);
+		SmartDistributePSUM(precip, ii+1, endIdx, param, ovec);
 
 		ii = endIdx;
 	}
 }
 
 //find first value before or at endDate
-size_t ProcHNWDistribute::findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii)
+size_t ProcPSUMDistribute::findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii)
 {
 	const size_t nr_elems = ivec.size();
 	while (ii<nr_elems && ivec[ii].date<=endDate && ivec[ii](param)==IOUtils::nodata) ii++;
@@ -98,14 +98,14 @@ size_t ProcHNWDistribute::findNextAccumulation(const unsigned int& param, const 
 	return ii;
 }
 
-void ProcHNWDistribute::fillInterval(const unsigned int& param, std::vector<MeteoData>& ovec, const size_t& start, const size_t& end, const double value)
+void ProcPSUMDistribute::fillInterval(const unsigned int& param, std::vector<MeteoData>& ovec, const size_t& start, const size_t& end, const double value)
 {
 	for (size_t ii=start; ii<=end; ii++)
 		ovec[ii](param) = value;
 }
 
 
-void ProcHNWDistribute::parse_args(std::vector<std::string> vec_args)
+void ProcPSUMDistribute::parse_args(std::vector<std::string> vec_args)
 {
 	if (vec_args.size() == 2){
 		is_soft = ProcessingBlock::is_soft(vec_args);
@@ -123,7 +123,7 @@ void ProcHNWDistribute::parse_args(std::vector<std::string> vec_args)
 
 //distribute the precipitation equally on all time steps in [start_idx ; end_idx]
 //it also handles non-uniform sampling rates
-void ProcHNWDistribute::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
+void ProcPSUMDistribute::CstDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
 	if (precip==IOUtils::nodata) return;
 
@@ -145,11 +145,11 @@ void ProcHNWDistribute::CstDistributeHNW(const double& precip, const size_t& sta
 
 //distribute the given precipitation amount equally on the timesteps that have the highest probability of precipitation
 //it also handles non-uniform sampling rates
-void ProcHNWDistribute::SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
+void ProcPSUMDistribute::SmartDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
 	if (precip==IOUtils::nodata) return;
 	if (precip==0.) {
-		CstDistributeHNW(precip, start_idx, end_idx, paramindex, vecM);
+		CstDistributePSUM(precip, start_idx, end_idx, paramindex, vecM);
 		return;
 	}
 

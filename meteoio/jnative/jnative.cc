@@ -42,15 +42,15 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		vecStation.push_back(station);
 
 		//building MeteoData
-		double p=IOUtils::nodata, hnw=IOUtils::nodata, ta=IOUtils::nodata, rh=IOUtils::nodata;
+		double p=IOUtils::nodata, psum=IOUtils::nodata, ta=IOUtils::nodata, rh=IOUtils::nodata;
 		double vw=IOUtils::nodata, dw=IOUtils::nodata, iswr=IOUtils::nodata, ilwr=IOUtils::nodata;
 		double tsg=IOUtils::nodata, tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 		if(algorithm =="P"){
 			interpolation_type=MeteoData::P;
 			p=cData[nbDataPerStation*i];
-		} else if(algorithm =="HNW" ){
-			interpolation_type=MeteoData::HNW;
-			hnw=cData[nbDataPerStation*i];
+		} else if(algorithm =="PSUM" ){
+			interpolation_type=MeteoData::PSUM;
+			psum=cData[nbDataPerStation*i];
 		} else if(algorithm =="TA" ){
 			interpolation_type=MeteoData::TA;
 			ta=cData[nbDataPerStation*i];
@@ -81,7 +81,7 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		meteo(MeteoData::DW)   = dw;
 		meteo(MeteoData::RH)   = rh;
 		meteo(MeteoData::ILWR) = ilwr;
-		meteo(MeteoData::HNW)  = hnw;
+		meteo(MeteoData::PSUM)  = psum;
 		meteo(MeteoData::TSG)  = tsg;
 		meteo(MeteoData::TSS)  = tss;
 		meteo(MeteoData::HS)   = hs;

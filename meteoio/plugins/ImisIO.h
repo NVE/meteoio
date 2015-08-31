@@ -137,7 +137,7 @@ class ImisIO : public IOInterface {
 		//helper functions for the Anetz coefficient mangling:
 		void findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
 		                       std::map<std::string, size_t>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
-		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
+		void getAnetzPSUM(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
 		                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
 		void assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 		                         const std::vector< std::vector<double> > vec_of_psums,
@@ -162,7 +162,7 @@ class ImisIO : public IOInterface {
 		std::string oracleUserName_in;
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;
-		bool useAnetz, use_imis_hnw, use_hnw_snowpack;
+		bool useAnetz, use_imis_psum, use_psum_snowpack;
 
 		static std::map<std::string, AnetzData> mapAnetz;
 		static const bool __init;    ///<helper variable to enable the init of static collection data

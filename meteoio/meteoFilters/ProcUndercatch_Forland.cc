@@ -37,7 +37,7 @@ ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector<std::string>& v
 void ProcUndercatch_Forland::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	if(param!=MeteoData::HNW)
+	if(param!=MeteoData::PSUM)
 		throw InvalidArgumentException("Trying to use "+getName()+" filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec = ivec;
 
@@ -59,7 +59,7 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 				continue;
 			}
 			const Date timestep = ovec[ii].date - ovec[ii-1].date;
-			const double Pint = ovec[ii](MeteoData::HNW) / (timestep.getJulian(true)*24.);
+			const double Pint = ovec[ii](MeteoData::PSUM) / (timestep.getJulian(true)*24.);
 			const double krain = liquidPrecipitation(Pint, VW);
 			if(TA>=Train_WMO) {
 				tmp *= krain;

@@ -15,23 +15,23 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoFilters/FilterUnheatedHNW.h>
+#include <meteoio/meteoFilters/FilterUnheatedPSUM.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args, const std::string& name)
+FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector<std::string>& vec_args, const std::string& name)
                   : FilterBlock(name), thresh_rh(0.), thresh_Dt(0.), soft(true)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
-void FilterUnheatedHNW::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	if(param!=MeteoData::HNW) {
+	if(param!=MeteoData::PSUM) {
 		ostringstream ss;
 		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
@@ -58,7 +58,7 @@ void FilterUnheatedHNW::process(const unsigned int& param, const std::vector<Met
 }
 
 
-void FilterUnheatedHNW::parse_args(std::vector<std::string> vec_args) {
+void FilterUnheatedPSUM::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
 	soft = false;

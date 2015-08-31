@@ -55,12 +55,12 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.getMeteoData(d1, dem, MeteoData::HNW, param);
-	if(gen_ref) io.write2DGrid(param, MeteoGrids::HNW, d1);
+	io.getMeteoData(d1, dem, MeteoData::PSUM, param);
+	if(gen_ref) io.write2DGrid(param, MeteoGrids::PSUM, d1);
 	else {
-		io.read2DGrid(ref, date_str+"_HNW_ref.asc");
+		io.read2DGrid(ref, date_str+"_PSUM_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "HNW grids don't match!\n"; status = EXIT_FAILURE;
+			cout << "PSUM grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 

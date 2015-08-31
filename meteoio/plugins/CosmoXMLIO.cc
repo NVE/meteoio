@@ -405,7 +405,7 @@ CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStar
 					else if(field=="108015") md(MeteoData::VW) = tmp;
 					else if(field=="108017") md(MeteoData::DW) = tmp;
 					else if(field=="108018") md(MeteoData::VW_MAX) = tmp;
-					else if(field=="108023") md(MeteoData::HNW) = tmp;
+					else if(field=="108023") md(MeteoData::PSUM) = tmp;
 					else if(field=="108060") md(MeteoData::HS) = tmp/100.;
 					else if(field=="108062") md(MeteoData::TSS) = tmp;
 					else if(field=="108064") iswr_diff = tmp;

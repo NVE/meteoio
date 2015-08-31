@@ -134,8 +134,8 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::QI] = attributes("Qair", "", "", "", IOUtils::nodata);
 		attr[MeteoGrids::VW] = attributes("Wind", "", "Wind Speed", "m/s", IOUtils::nodata);
 		attr[MeteoGrids::DW] = attributes("Wind_DIR", "", "Wind Direction", "deg", IOUtils::nodata);
-		attr[MeteoGrids::HNW_L] = attributes("Rainf", "", "Rainfall Rate", "kg/m2/s", IOUtils::nodata);
-		attr[MeteoGrids::HNW_S] = attributes("Snowf", "", "", "", IOUtils::nodata);
+		attr[MeteoGrids::PSUM_L] = attributes("Rainf", "", "Rainfall Rate", "kg/m2/s", IOUtils::nodata);
+		attr[MeteoGrids::PSUM_S] = attributes("Snowf", "", "", "", IOUtils::nodata);
 		attr[MeteoGrids::ISWR_DIR] = attributes("DIR_SWdown", "", "Surface Incident Direct Shortwave Radiation", "W/m2", IOUtils::nodata);
 		attr[MeteoGrids::ISWR_DIFF] = attributes("SCA_SWdown", "", "", "", IOUtils::nodata);
 		attr[MeteoGrids::P] = attributes("PSurf", "", "Surface Pressure", "Pa", IOUtils::nodata);
@@ -148,7 +148,7 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::P_SEA] = attributes("msl", "air_pressure_at_sea_level", "Mean sea level pressure", "Pa", IOUtils::nodata);
 		attr[MeteoGrids::ISWR] = attributes("ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J m**-2", IOUtils::nodata);
 		attr[MeteoGrids::ILWR] = attributes("strd", "", "Surface thermal radiation downwards", "J m**-2", IOUtils::nodata);
-		attr[MeteoGrids::HNW] = attributes("tp", "", "Total precipitation", "m", IOUtils::nodata);
+		attr[MeteoGrids::PSUM] = attributes("tp", "", "Total precipitation", "m", IOUtils::nodata);
 		attr[MeteoGrids::U] = attributes("u10", "", "10 metre U wind component", "m s**-1", 10.);
 		attr[MeteoGrids::V] = attributes("v10", "", "10 metre V wind component", "m s**-1", 10.);
 		attr[MeteoGrids::SWE] = attributes("sd", "lwe_thickness_of_surface_snow_amount", "Snow depth", "m of water equivalent", IOUtils::nodata);
@@ -227,12 +227,28 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		}
 	}
 	
-	if (parameter==MeteoGrids::HNW) {								//HNW
-		Grid2DObject hnw_s;
-		const bool hasHNW_S = read2DGrid_internal(hnw_s, filename, MeteoGrids::HNW_S);
-		const bool hasHNW_L = read2DGrid_internal(grid_out, filename, MeteoGrids::HNW_L);
-		if (hasHNW_S && hasHNW_L) {
-			grid_out += hnw_s;
+	if (parameter==MeteoGrids::PSUM) {								//PSUM
+		Grid2DObject psum_s;
+		const bool hasPSUM_S = read2DGrid_internal(psum_s, filename, MeteoGrids::PSUM_S);
+		const bool hasPSUM_L = read2DGrid_internal(grid_out, filename, MeteoGrids::PSUM_L);
+		if (hasPSUM_S && hasPSUM_L) {
+			grid_out += psum_s;
+			return;
+		}
+	}
+	
+	if (parameter==MeteoGrids::PSUM_PH) {								//PSUM_PH
+		Grid2DObject psum_l;
+		const bool hasPSUM_S = read2DGrid_internal(grid_out, filename, MeteoGrids::PSUM_S);
+		const bool hasPSUM_L = read2DGrid_internal(psum_l, filename, MeteoGrids::PSUM_L);
+		if (hasPSUM_S && hasPSUM_L) {
+			grid_out += psum_l;
+			const size_t nrCells = grid_out.getNx()*grid_out.getNy();
+			for (size_t ii=0; ii<nrCells; ii++) {
+				const double psum = grid_out(ii);
+				if (psum!=IOUtils::nodata && psum>0)
+					grid_out(ii) = psum_l(ii) / psum;
+			}
 			return;
 		}
 	}
@@ -327,7 +343,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 	
 	const std::map<MeteoGrids::Parameters, attributes>::const_iterator it = in_attributes.find(parameter);
 	if (it!=in_attributes.end()) {
-		const bool isPrecip = (parameter==MeteoGrids::HNW || parameter==MeteoGrids::SWE);
+		const bool isPrecip = (parameter==MeteoGrids::PSUM || parameter==MeteoGrids::SWE);
 		write2DGrid_internal(grid_in, filename, it->second, date, isPrecip);
 	} else {
 		const string name = MeteoGrids::getParameterName(parameter);
@@ -341,7 +357,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	const std::map<MeteoGrids::Parameters, attributes>::const_iterator it = in_attributes.find(parameter);
 	if (it==in_attributes.end()) return false;
 	
-	const bool isPrecip = (parameter==MeteoGrids::HNW || parameter==MeteoGrids::SWE);
+	const bool isPrecip = (parameter==MeteoGrids::PSUM || parameter==MeteoGrids::SWE);
 	const bool status = read2DGrid_internal(grid_out, filename, it->second.var, date, isPrecip);
 	
 	return status;

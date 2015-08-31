@@ -51,7 +51,7 @@ namespace mio {
  * <tr><td>OUTGOING_SHORTWAVE_RADIATION</td><td>MeteoData::RSWR</td></tr>
  * <tr><td>OUTGOING_LONGWAVE_RADIATION</td><td>equivalent MeteoData::TSS</td></tr>
  * <tr><td>SNOW_HEIGHT</td><td>MeteoData::HS</td></tr>
- * <tr><td>RAIN_METER</td><td>MeteoData::HNW</td></tr>
+ * <tr><td>RAIN_METER</td><td>MeteoData::PSUM</td></tr>
  * <tr><td>SURFACE_TEMP</td><td>MeteoData::TSS</td></tr>
  * <tr><td>SOLAR_RAD</td><td>MeteoData::ISWR</td></tr>
  * </table></td></tr>
@@ -362,7 +362,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1") {
 			index.push_back(MeteoData::HS);
 		} else if (field_name == "RAIN_METER" || field_name == "PINT" || field_name == "PRECIPITATION") {
-			index.push_back(MeteoData::HNW);
+			index.push_back(MeteoData::PSUM);
 		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS" || field_name == "SNOW_SURFACE_TEMPERATURE") {
 			index.push_back(MeteoData::TSS);
 		} else if (field_name == "ATM_PRESSURE" || field_name == "P") {

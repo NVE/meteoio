@@ -12,11 +12,11 @@ SET(meteoFilters_sources
 	meteoFilters/FilterStdDev.cc
 	meteoFilters/FilterTukey.cc
 	meteoFilters/FilterRate.cc
-	meteoFilters/FilterUnheatedHNW.cc
+	meteoFilters/FilterUnheatedPSUM.cc
 	meteoFilters/ProcButterworth.cc
 	meteoFilters/ProcUnventilatedT.cc
 	meteoFilters/ProcUnshade.cc
-	meteoFilters/ProcHNWDistribute.cc
+	meteoFilters/ProcPSUMDistribute.cc
 	meteoFilters/ProcUndercatch_WMO.cc
 	meteoFilters/ProcUndercatch_Hamon.cc
 	meteoFilters/ProcUndercatch_Forland.cc

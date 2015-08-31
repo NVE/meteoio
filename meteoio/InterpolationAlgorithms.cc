@@ -63,8 +63,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "USER"){// read user provided grid
 		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "HNW_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
-		return new SnowHNWInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+	} else if (algoname == "PSUM_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
+		return new SnowPSUMInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -742,8 +742,8 @@ WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vecto
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for HNW (we could add HS later)
-	if (in_param!=MeteoData::HNW)
+	//This algorithm is only valid for PSUM (we could add HS later)
+	if (in_param!=MeteoData::PSUM)
 		return 0.0;
 
 	date = i_date;
@@ -972,7 +972,7 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 }
 
 
-double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double SnowPSUMInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
@@ -984,7 +984,7 @@ double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoDat
 	return 0.9;
 }
 
-void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
+void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 

@@ -159,7 +159,7 @@ namespace mio {
  * per line followed by a space delimited list of \ref meteoparam "meteorological parameters" to keep for the station).
  *
  * @code
- * WFJ2::EXCLUDE = HS HNW                       ;inline declaration of parameters exclusion
+ * WFJ2::EXCLUDE = HS PSUM                       ;inline declaration of parameters exclusion
  * KLO3::KEEP = TA RH VW DW                     ;inline declaration of parameters to keep
  *
  * EXCLUDE_FILE = ../input/meteo/excludes.csv    ;parameters exclusions defined in a separate file
@@ -169,7 +169,7 @@ namespace mio {
  * In the second example (relying on a separate file), the file "../input/meteo/excludes.csv" could look like this:
  * @code
  * WFJ2 TA RH
- * KLO3 HS HNW
+ * KLO3 HS PSUM
  * @endcode
  *
  */
