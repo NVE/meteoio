@@ -16,8 +16,6 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-//AUTHORS: Tuan Anh Nguyen (original implementation in popc)
-//         Mathias Bavay (port and rewrite for Alpine3D, then MeteoIO)
 
 #ifndef __TIMER_H__
 #define __TIMER_H__
@@ -32,6 +30,7 @@ namespace mio {
 
 /**
  * @class Timer
+ * @author Tuan Anh Nguyen (original implementation in popc), Mathias Bavay (port and rewrite for Alpine3D and MeteoIO)
  * @brief Time code execution with at least 1 us resolution.
  * The time resolution can be stored up to .1 ns resolution, but is measured to the following accuracy:
  *    - 1 us on Posix systems (Linux, osX, BSD);
@@ -58,6 +57,8 @@ protected:
 /**
  * @class UsageTimer
  * @author Thomas Egger
+ * @brief Process usage timer for Posix
+ * This is based on \em getrusage and thus returns detailed timing information about how the time was spend (userland, system time).
  */
 class UsageTimer {
  public:

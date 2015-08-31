@@ -1,5 +1,4 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-#SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
@@ -40,26 +39,42 @@ IF(MSVC)
 ELSE(MSVC)
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall -Wno-long-long")
-	SET(PROFILING "-pg -fprofile-arcs")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
-	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
-	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
-		IF(WIN32) #for gcc on windows
-			SET(CMAKE_SHARED_LINKER_FLAGS "--enable-auto-import")
-		ENDIF(WIN32)
-	ENDIF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
-	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS") #-flto for gcc>4.5?
-	EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-	IF (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
-		SET(ARCH_OPTIM  "-march=native -mtune=native")
-	ENDIF()
+	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
+	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 	SET(ARCH_SAFE  "")
 	SET(DEBUG "-g3 -O0 -D__DEBUG")
 	SET(_VERSION "-D_VERSION=\\\"${_versionString}\\\"")
 	#IF(BUILD_SHARED_LIBS)
 	#	ADD_DEFINITIONS(-DMIO_DLL)
 	#ENDIF(BUILD_SHARED_LIBS)
+	
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
+		IF(NOT ANDROID)
+			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
+			IF(WIN32) #for gcc on windows
+				SET(CMAKE_SHARED_LINKER_FLAGS "--enable-auto-import")
+				SET(CMAKE_EXE_LINKER_FLAGS "--enable-auto-import")
+			ENDIF(WIN32)
+		ENDIF(NOT ANDROID)
+		EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+		IF(GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
+			SET(ARCH_OPTIM  "-march=native -mtune=native")
+		ENDIF()
+		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+			SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
+			IF(CMAKE_BUILD_TYPE STREQUAL "debug")
+				SET(LEAKS_CHECK ON CACHE BOOL "Set to ON to dynamically check for memory corruption")
+			else()
+				SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption")
+			ENDIF()
+			IF (LEAKS_CHECK)
+				SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
+			ENDIF(LEAKS_CHECK)
+		ENDIF()
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+	
 ENDIF(MSVC)
 
 #The following pre-processor variables are automatically defined:
@@ -127,7 +142,7 @@ SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON o
 ###########################################################
 #finally, SET compile flags
 
-SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
