@@ -231,9 +231,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 		}
 
 		//specific key mapping
-		if (key == "PSUM") {
-			indexes.push_back(md.getParameterIndex("PSUM"));
-		} else if (key == "OSWR") {
+		if (key == "OSWR") {
 			indexes.push_back(md.getParameterIndex("RSWR"));
 		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
@@ -610,6 +608,9 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	} else if (param == MeteoData::PSUM){
 		prec = 3;
 		width = 6;
+	} else if (param == MeteoData::PSUM_PH){
+		prec = 3;
+		width = 4;
 	} else if (param == MeteoData::HS){
 		prec = 3;
 		width = 8;

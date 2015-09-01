@@ -104,6 +104,7 @@ bool MeteoData::initStaticData()
 	static_meteoparamname[ILWR]   = "ILWR";
 	static_meteoparamname[TAU_CLD]= "TAU_CLD";
 	static_meteoparamname[PSUM]    = "PSUM";
+	static_meteoparamname[PSUM_PH]    = "PSUM_PH";
 
 	s_default_paramname.push_back("P");
 	s_default_paramname.push_back("TA");
@@ -119,6 +120,7 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("ILWR");
 	s_default_paramname.push_back("TAU_CLD");
 	s_default_paramname.push_back("PSUM");
+	s_default_paramname.push_back("PSUM_PH");
 
 	return true;
 }
