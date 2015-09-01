@@ -6,6 +6,20 @@ PROJECT(meteoio_examples)
 FIND_PACKAGE(MeteoIO)
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${METEOIO_INCLUDE_DIR})
 
+IF(CMAKE_COMPILER_IS_GNUCXX)
+	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
+	EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+		# if set to ON, all binaries depending on the library have to be compiled the same way. 
+		#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
+		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
+		IF (LEAKS_CHECK)
+			SET(EXTRA "-fsanitize=address -fno-omit-frame-pointer")
+		ENDIF(LEAKS_CHECK)
+	ENDIF()
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+SET(CMAKE_CXX_FLAGS "${EXTRA}" CACHE STRING "" FORCE)
+
 #####################################################################
 # add all the executables
 ADD_EXECUTABLE(2D_interpolations 2D_interpolations.cc)
