@@ -45,12 +45,13 @@ namespace mio {
  *
  * @section cnrm_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+ * - COORDSYS: coordinate system (see Coords); [Input] and [Output] sections
+ * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] sections
  * - DEMFILE: The filename of the file containing the DEM; [Input] section
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
- * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] section
- * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ * - METEOPATH: where to find the meteofiles as refered to here below; [Input] and [Output] sections
+ * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] sections
+ * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] sections
  * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
  *                 in the specification will be omitted; [Input] and [Output] section
  *
@@ -283,13 +284,15 @@ void CNRMIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		return;
 	}
 
+	const string path = cfg.get("METEOPATH", "Input");
 	const string filename = cfg.get("METEOFILE", "Input");
+	const string file_and_path = path + "/" + filename;
 
 	int ncid;
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
-	ncpp::open_file(filename, NC_NOWRITE, ncid);
+	if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
-	ncpp::close_file(filename, ncid);
+	ncpp::close_file(file_and_path, ncid);
 
 	vecStation = vecMetaData;
 }
@@ -345,11 +348,13 @@ void CNRMIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
 {
 	vecMeteo.clear();
+	const string path = cfg.get("METEOPATH", "Input");
 	const string filename = cfg.get("METEOFILE", "Input");
+	const string file_and_path = path + "/" + filename;
 
 	int ncid;
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
-	ncpp::open_file(filename, NC_NOWRITE, ncid);
+	if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 
 	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);
 
@@ -366,7 +371,7 @@ void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 		}
 	}
 
-	ncpp::close_file(filename, ncid);
+	ncpp::close_file(file_and_path, ncid);
 }
 
 void CNRMIO::readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date,
@@ -633,13 +638,15 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	if (number_of_stations == 0) return; //Nothing to write
 
 	const size_t number_of_records = vecMeteo[0].size();
+	const string path = cfg.get("METEOPATH", "Output");
 	const string filename = cfg.get("METEOFILE", "Output");
+	const string file_and_path = path + "/" + filename;
 
 	int ncid, did_time, vid_time, did_points;
 	bool create_time = false, create_points = false, create_locations = false, create_variables = false;
 
-	const bool exists = IOUtils::fileExists(filename);
-	if (exists) remove(filename.c_str()); // NOTE: file is deleted if it exists
+	const bool exists = IOUtils::fileExists(file_and_path);
+	if (exists) remove(file_and_path.c_str()); // NOTE: file is deleted if it exists
 
 	double* dates;
 	map<string, double*> map_data; // holds a pointer for every C array to be written
@@ -654,7 +661,7 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 	get_parameters(vecMeteo, map_param_name, map_data, dates);
 
-	ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
+	ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
 	create_time = create_points = create_locations = create_variables = true;
 
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
@@ -662,7 +669,7 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	if (create_locations) create_meta_data(ncid, did_points, map_data, varid);
 	if (create_variables) create_parameters(ncid, did_time, did_points, number_of_records, number_of_stations, map_param_name, map_data, varid);
 
-	ncpp::end_definitions(filename, ncid);
+	ncpp::end_definitions(file_and_path, ncid);
 
 	copy_data(number_of_stations, number_of_records, vecMeteo, map_param_name, map_data);
 
@@ -673,7 +680,7 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		delete[] it->second;
 	}
 
-	ncpp::close_file(filename, ncid);
+	ncpp::close_file(file_and_path, ncid);
 
 	delete[] dates;
 }
