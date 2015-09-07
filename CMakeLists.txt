@@ -21,7 +21,7 @@ ENDIF(WIN32)
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
 BuildVersion()
 
-IF(MSVC)
+IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
 	SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
 	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
@@ -36,7 +36,7 @@ IF(MSVC)
 	IF(GUI_EXCEPTIONS)
 		SET(MSG_BOX "/DMESG_BOX")
 	ENDIF(GUI_EXCEPTIONS)
-ELSE(MSVC)
+ELSE()
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall -Wno-long-long")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
@@ -48,8 +48,8 @@ ELSE(MSVC)
 	#IF(BUILD_SHARED_LIBS)
 	#	ADD_DEFINITIONS(-DMIO_DLL)
 	#ENDIF(BUILD_SHARED_LIBS)
-	
-	IF(CMAKE_COMPILER_IS_GNUCXX)
+
+	IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
 		IF(NOT ANDROID)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
@@ -64,16 +64,28 @@ ELSE(MSVC)
 		ENDIF()
 		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
 			SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
-			# if set to ON, all binaries depending on the library have to be compiled the same way. 
+			# if set to ON, all binaries depending on the library have to be compiled the same way.
 			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
 			SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
 			IF (LEAKS_CHECK)
 				SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
 			ENDIF(LEAKS_CHECK)
 		ENDIF()
-	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-	
-ENDIF(MSVC)
+	ENDIF()
+	IF("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+		SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
+		SET(EXTRA "${EXTRA} -fcolor-diagnostics") #-fapple-pragma-pack does not seems necessary; -ftrapv should be replaced by sanitize=integer
+		SET(OPTIM "${OPTIM} -flto")
+		SET(WARNINGS "${WARNINGS} -Weverything -Wno-date-time -Wno-float-equal -Wno-documentation -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables") #obviously, we should try to fix the warnings!
+		SET(DEEP_WARNINGS "${DEEP_WARNINGS} -Rpass=.*")
+		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
+			IF (LEAKS_CHECK)
+				SET(EXTRA "${EXTRA} -ftrapv -fno-omit-frame-pointer") #-fsanitize=address,undefined,integer,undefined-trap but this is currently not supported by Apple
+			ENDIF(LEAKS_CHECK)
+		SET(ARCH_OPTIM  "-march=native")
+	ENDIF()
+
+ENDIF()
 
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__

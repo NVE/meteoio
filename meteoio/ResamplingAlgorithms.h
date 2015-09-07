@@ -97,11 +97,11 @@ class ResamplingAlgorithms {
 		};
 
 		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& /*vecArgs*/)
-		                    : algo(i_algoname), parname(i_parname), window_size(dflt_window_size) {};
+		                    : algo(i_algoname), parname(i_parname), window_size(dflt_window_size) {}
 
-		virtual ~ResamplingAlgorithms() {};
+		virtual ~ResamplingAlgorithms() {}
 
-		const std::string getAlgo() const {return algo;};
+		const std::string getAlgo() const {return algo;}
 
 		virtual void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;
@@ -260,18 +260,18 @@ class Daily_solar : public ResamplingAlgorithms {
 /**
  * @brief Generate daily variations of a given amplitude around a single daily average.
  * The paremeter to be interpolated is assumed to be a daily average and a sinusoidal variation of the
- * amplitude given as argument will be generated (it is also possible to provide the "phase" or the 
+ * amplitude given as argument will be generated (it is also possible to provide the "phase" or the
  * fraction of the day when the minimum is reached). If data bearing the same name followed by "_MIN" or "_MAX"
  * exist, there is no need to provide an amplitude as they will be used instead (but if the amplitude is provided, it
  * will be used as a fallback when no min or max is available).
- * 
+ *
  * @code
  * [Interpolations1D]
  * TA::resample = daily_avg
  * TA::daily_avg = 5 .25                ;assume that TA varies +/- 5K around its average during the day and reaches its minimum at 6am
  * @endcode
- * @note If both the average (the parameter itself in the data set), 
- * min and max are provided, an error message will be returned. 
+ * @note If both the average (the parameter itself in the data set),
+ * min and max are provided, an error message will be returned.
  */
 class DailyAverage : public ResamplingAlgorithms {
 	public:

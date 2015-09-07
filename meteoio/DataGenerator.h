@@ -101,7 +101,7 @@ class DataGenerator {
 	public:
 		DataGenerator(const Config& cfg);
 		DataGenerator(const DataGenerator& c) : mapGenerators(c.mapGenerators), mapCreators(c.mapCreators),
-		                                        generators_defined(c.generators_defined), creators_defined(c.creators_defined) {};
+		                                        generators_defined(c.generators_defined), creators_defined(c.creators_defined) {}
 		~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo) const;

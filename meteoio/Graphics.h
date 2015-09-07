@@ -132,9 +132,9 @@ namespace Color {
 //Gradients scale between 0 and 1, but might receive some out of range values for special effects (below sea level, above snow line, etc)
 class Gradient_model {
 	public:
-		Gradient_model() : X(), v_h(), v_s(), v_v() {}; //do not use this constructor!
-		virtual ~Gradient_model() {};
-		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) : X(), v_h(), v_s(), v_v() { (void)i_min; (void)i_max; (void)i_autoscale;};
+		Gradient_model() : X(), v_h(), v_s(), v_v() {} //do not use this constructor!
+		virtual ~Gradient_model() {}
+		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) : X(), v_h(), v_s(), v_v() { (void)i_min; (void)i_max; (void)i_autoscale;}
 		//setBgColor()
 		//setFgColor()
 
@@ -200,7 +200,7 @@ class Gradient {
 		* @brief Default Constructor.
 		* This should be followed by a call to set() before calling getColor
 		*/
-		Gradient() : min(0.), max(0.), delta(0.), type(none), model(NULL), nr_unique_cols(0), autoscale(true) { };
+		Gradient() : min(0.), max(0.), delta(0.), type(none), model(NULL), nr_unique_cols(0), autoscale(true) {}
 
 		/**
 		* @brief Constructor.
@@ -214,7 +214,7 @@ class Gradient {
 
 		Gradient(const Gradient& c);
 
-		~Gradient() {delete model;};
+		~Gradient() {delete model;}
 
 		/**
 		* @brief Setter
@@ -284,7 +284,7 @@ class Gradient {
 
 class gr_heat : public Gradient_model {
 	public:
-		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {(void)i_min; (void)i_max; (void)i_autoscale;};
+		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {(void)i_min; (void)i_max; (void)i_autoscale;}
 		void getColor(const double &i_val, double &r, double &g, double &b) const;
 };
 

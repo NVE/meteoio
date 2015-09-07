@@ -35,7 +35,7 @@ class SunTrajectory {
 		SunTrajectory();
 		SunTrajectory(const double& i_latitude, const double& i_longitude);
 
-		virtual ~SunTrajectory() {};
+		virtual ~SunTrajectory() {}
 
 		/** @brief Set the date and time
 		* if no timezone is specified, GMT is assumed
@@ -104,7 +104,7 @@ class SunTrajectory {
 class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
-		~SunMeeus() {};
+		~SunMeeus() {}
 		SunMeeus(const double& i_latitude, const double& i_longitude);
 		SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ=0.);
 

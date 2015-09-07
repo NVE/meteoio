@@ -729,7 +729,7 @@ double unitsConversion(const double& val, std::string unitIn, std::string unitOu
 		const double ratio = inFactor / outFactor;
 		return val*ratio;
 	}
-	throw ConversionFailedException("Unable to perform unit conversion.", AT);
+	//throw ConversionFailedException("Unable to perform unit conversion.", AT);
 }
 
 } //namespace IOUtils

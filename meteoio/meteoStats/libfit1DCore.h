@@ -29,21 +29,21 @@ namespace mio {
 //class to use as an interface
 class FitModel {
 	public:
-		FitModel() : Lambda(), X(), Y(), infoString(), regname(), nPts(0), nParam(0), min_nb_pts(0), fit_ready(false) {};
-		virtual ~FitModel() {};
+		FitModel() : Lambda(), X(), Y(), infoString(), regname(), nPts(0), nParam(0), min_nb_pts(0), fit_ready(false) {}
+		virtual ~FitModel() {}
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double>& lambda_in);
-		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);};
+		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);}
 		virtual bool fit() = 0;
 		virtual double f(const double& x) const = 0;
 		void getParams(std::vector<double>& o_coefficients) const;
-		std::string getName() const {return regname;};
+		std::string getName() const {return regname;}
 		std::string getInfo() const;
-		void setInfo(const std::string& info) {infoString=info;};
+		void setInfo(const std::string& info) {infoString=info;}
 		FitModel& operator =(const FitModel& source);
 		std::string toString() const;
 	protected:
-		virtual bool checkInputs() {return true;};
+		virtual bool checkInputs() {return true;}
 
 		std::vector<double> Lambda; //parameters of the fit
 		std::vector<double> X; //X of input data set to fit
@@ -68,7 +68,7 @@ class FitModel {
  */
 class FitLeastSquare : public FitModel {
  	public:
-		FitLeastSquare() {};
+		FitLeastSquare() {}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		virtual double f(const double& x) const = 0;

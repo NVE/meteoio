@@ -39,7 +39,7 @@ class ALPUG : public IOInterface {
 		ALPUG(const std::string& configfile);
 		ALPUG(const ALPUG&);
 		ALPUG(const Config& cfgreader);
-		~ALPUG() throw() {};
+		~ALPUG() throw() {}
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);

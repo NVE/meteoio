@@ -153,8 +153,8 @@ class InterpolationAlgorithm {
 		                       const std::vector<std::string>& i_vecArgs,
 		                       const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager) :
 		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecArgs(i_vecArgs), vecMeteo(), vecData(),
-		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0) {};
-		virtual ~InterpolationAlgorithm() {};
+		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0) {}
+		virtual ~InterpolationAlgorithm() {}
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param) = 0;
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) = 0;
@@ -251,7 +251,7 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 /**
  * @class ConstLapseRateAlgorithm
  * @brief Constant filling with elevation lapse rate interpolation algorithm.
- * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it 
+ * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it
  * differently, the following operations are performed: detrending - averaging - re-trending.
  * The lapse rate is either calculated from the data
  * (if no extra argument is provided), or given by the user-provided the optional argument <i>"cst_lapse"</i>.
@@ -506,10 +506,10 @@ class USERInterpolation : public InterpolationAlgorithm {
  * @brief Precipitation phase splitting generation
  * This does not interpolate any measured precipitation phase but generates it for each point based on parametrizations, similarly to the PPHASE generator
  * (see PPhaseGenerator).
- * 
+ *
  * The methods that are offered are currently the following:
  * - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
- * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation. 
+ * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
  * @code
  * PSUM::algorithms = PPHASE
@@ -521,7 +521,7 @@ class PPHASEInterpolation : public InterpolationAlgorithm {
 		PPHASEInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), 
+  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager),
   			model(THRESH), fixed_thresh(IOUtils::nodata), range_start(IOUtils::nodata), range_norm(IOUtils::nodata) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);

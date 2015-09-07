@@ -97,7 +97,7 @@ namespace mio {
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  * - Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
  * - Meeus -- <i>"Astronomical Algorithms"</i>, second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA
- * - Mair et al. -- <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height 
+ * - Mair et al. -- <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height
  * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013.
  *
  *
@@ -120,7 +120,7 @@ namespace mio {
 class GeneratorAlgorithm {
 
 	public:
-		GeneratorAlgorithm(const std::vector<std::string>& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {};
+		GeneratorAlgorithm(const std::vector<std::string>& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {}
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
@@ -388,17 +388,17 @@ class AllSkySWGenerator : public GeneratorAlgorithm {
 /**
  * @class ESOLIPGenerator
  * @brief Generate precipitation from changes in snow height.
- * This implements the approach laid out in 
- * Mair et al., <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height 
+ * This implements the approach laid out in
+ * Mair et al., <i>" ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height
  * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013. or
- * Mair E., Leitinger G., Della Chiesa S., Niedrist G., Tappeiner U., Bertoldi G., <i>"A simple method to combine snow height and 
- * meteorological observations to estimate winter precipitation at sub-daily resolution"</i>, Journal of Hydrological Sciences, 
+ * Mair E., Leitinger G., Della Chiesa S., Niedrist G., Tappeiner U., Bertoldi G., <i>"A simple method to combine snow height and
+ * meteorological observations to estimate winter precipitation at sub-daily resolution"</i>, Journal of Hydrological Sciences,
  * in revision, 2015.
- * The snow density relies on Zwart, <i>"Significance of new-snow properties for snowcover development"</i>,master's thesis, 
+ * The snow density relies on Zwart, <i>"Significance of new-snow properties for snowcover development"</i>,master's thesis,
  * Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp, 2007.
- * 
- * @note only identified precipitation events are written out, this means that it is recommended to run through a Cst=0 data generator afterward 
- * 
+ *
+ * @note only identified precipitation events are written out, this means that it is recommended to run through a Cst=0 data generator afterward
+ *
  * @code
  * PSUM::generators = ESOLIP
  * @endcode
@@ -420,7 +420,7 @@ class ESOLIPGenerator : public GeneratorAlgorithm {
  * @brief Generate precipitation splitting according to the selected method
  * The methods that are offered are currently the following:
  * - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
- * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation. 
+ * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
  *
  * @code
@@ -431,15 +431,15 @@ class ESOLIPGenerator : public GeneratorAlgorithm {
 class PPhaseGenerator : public GeneratorAlgorithm {
 	public:
 		PPhaseGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), fixed_thresh(IOUtils::nodata), 
+			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
-		
+
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
-		
+
 		typedef enum PARAMETRIZATION {
 			THRESH,
 			RANGE

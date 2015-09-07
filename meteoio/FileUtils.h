@@ -45,7 +45,7 @@ namespace IOUtils {
 	* @param pattern optional pattern that must be part of the file names
 	*/
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");
-	
+
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="");
 
 	bool validFileAndPath(const std::string& filename);
@@ -126,7 +126,7 @@ namespace IOUtils {
 	*/
 	class FileIndexer {
 		public:
-			FileIndexer() : vecIndex() {};
+			FileIndexer() : vecIndex() {}
 
 			/**
 			* @brief Add a new position to the index
@@ -151,7 +151,7 @@ namespace IOUtils {
 
 		private:
 			struct file_index {
-				file_index(const Date& i_date, const std::streampos& i_pos) : date(i_date), pos(i_pos) {};
+				file_index(const Date& i_date, const std::streampos& i_pos) : date(i_date), pos(i_pos) {}
 				bool operator<(const file_index& a) const {
 					return date < a.date;
 				}

@@ -64,7 +64,7 @@ class Config {
 		 */
 		Config();
 
-		virtual ~Config() {};
+		virtual ~Config() {}
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
@@ -97,7 +97,7 @@ class Config {
 		 * @param[in] value string representing the matching value to be added
 		 */
 		void addKey(const std::string& key, const std::string& value);
-		
+
 		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive

@@ -41,7 +41,7 @@ namespace mio {
 class IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
-		~IOException() throw();
+		~IOException() throw() {}
 		virtual const char* what() const throw();
 
 	protected:

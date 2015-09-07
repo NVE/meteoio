@@ -162,8 +162,7 @@ void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 		case GEO_VINCENTY:
 			VincentyInverse(latitude, longitude, i_distance, i_bearing, new_lat, new_lon);
 			break;
-		default:
-			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+		throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 	}
 
 	setLatLon(new_lat, new_lon, altitude, true);
@@ -1577,8 +1576,7 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 			case GEO_VINCENTY:
 				o_distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), o_bearing);
 				break;
-			default:
-				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 		}
 	}
 }
@@ -1607,8 +1605,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 			case GEO_VINCENTY:
 				dist = VincentyDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
 				break;
-			default:
-				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 		}
 
 		east_out = dist*sin(alpha*Cst::to_rad);
@@ -1641,8 +1638,7 @@ void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, do
 			case GEO_VINCENTY:
 				VincentyInverse(ref_latitude, ref_longitude, dist, bearing, lat_out, long_out);
 				break;
-			default:
-				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 		}
 	}
 }

@@ -43,7 +43,7 @@ namespace mio {
  */
 class Matrix {
 	public:
-		Matrix() : vecData(), ncols(0), nrows(0) {};
+		Matrix() : vecData(), ncols(0), nrows(0) {}
 
 		/**
 		* @brief A constructor that creates a matrix of a given size
@@ -51,7 +51,7 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		*/
 		Matrix(const int& rows, const int& cols);
-		Matrix(const size_t& rows, const size_t& cols) : vecData(rows*cols), ncols(cols), nrows(rows) {};
+		Matrix(const size_t& rows, const size_t& cols) : vecData(rows*cols), ncols(cols), nrows(rows) {}
 
 		/**
 		* @brief A constructor that creates a matrix filled with constant values
@@ -59,7 +59,7 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		* @param init initial value to fill the matrix with
 		*/
-		Matrix(const size_t& rows, const size_t& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows) {};
+		Matrix(const size_t& rows, const size_t& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows) {}
 
 		/**
 		* @brief A constructor that creates a diagonal matrix of size n
@@ -72,7 +72,7 @@ class Matrix {
 		* @brief Copy constructor
 		* @param init matrix to copy
 		*/
-		Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows) {};
+		Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows) {}
 
 		/**
 		* @brief Convert the current matrix to a identity matrix of size n

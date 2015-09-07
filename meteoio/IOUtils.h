@@ -59,10 +59,10 @@ namespace IOUtils {
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
 	//const double not_set = std::numeric_limits<double>::max()-2.;
-	const unsigned int unodata = (unsigned int)-1;
+	const unsigned int unodata = static_cast<unsigned int>(-1);
 	const int inodata = -999;
 	const short int snodata = -999;
-	const size_t npos    = (size_t)-1;  ///<npos is the out-of-range value
+	const size_t npos    = static_cast<size_t>(-1);  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
 	const double lon_epsilon = grid_epsilon / Cst::earth_R0 *  Cst::to_deg; ///<in degrees. Small angle for longitudes, so sin(x)=x

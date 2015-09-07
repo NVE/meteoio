@@ -177,6 +177,8 @@ namespace Optim {
 		}
 	}
 
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wundefined-reinterpret-cast"
 	//see http://metamerist.com/cbrt/cbrt.htm
 	template <int n> inline float nth_rootf(float x) {
 		const bool sgn = (x<0.)? true : false;
@@ -205,6 +207,7 @@ namespace Optim {
 		if (sgn) return -x;
 		else return x;
 	}
+	#pragma clang diagnostic pop
 
 	/**
 	* @brief Optimized version of cubic root

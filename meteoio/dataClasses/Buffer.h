@@ -37,7 +37,7 @@ namespace mio {
 */
 class MeteoBuffer {
 	public:
-		MeteoBuffer() : ts_buffer(), ts_start(), ts_end() {};
+		MeteoBuffer() : ts_buffer(), ts_start(), ts_end() {}
 
 		/**
 		 * @brief Get buffer data for a specific date
@@ -127,25 +127,25 @@ class MeteoBuffer {
 class GridBuffer {
 	public:
 		GridBuffer(const size_t& in_max_grids);
-		
-		bool empty() const {return IndexBufferedGrids.empty();};
-		void clear() {mapBufferedGrids.clear(); mapBufferedInfos.clear(); IndexBufferedGrids.clear();};
-		size_t size() const {return IndexBufferedGrids.size();};
-		
-		void setMaxGrids(const size_t& in_max_grids) {max_grids=in_max_grids;};
-		
+
+		bool empty() const {return IndexBufferedGrids.empty();}
+		void clear() {mapBufferedGrids.clear(); mapBufferedInfos.clear(); IndexBufferedGrids.clear();}
+		size_t size() const {return IndexBufferedGrids.size();}
+
+		void setMaxGrids(const size_t& in_max_grids) {max_grids=in_max_grids;}
+
 		bool get(DEMObject& grid, const std::string& grid_hash) const;
 		bool get(Grid2DObject& grid, const std::string& grid_hash) const;
 		bool get(Grid2DObject& grid, const std::string& grid_hash, std::string& grid_info) const;
 		bool get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const;
-		
+
 		void push(const DEMObject& grid, const std::string& grid_hash);
 		void push(const Grid2DObject& grid, const std::string& grid_hash);
 		void push(const Grid2DObject& grid, const std::string& grid_hash, const std::string& grid_info);
 		void push(const Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 		const std::string toString() const;
-	private:		
+	private:
 		std::map<std::string, Grid2DObject> mapBufferedGrids;  ///< Buffer interpolated grids
 		std::map<std::string, DEMObject> mapBufferedDEMs;  ///< Buffer interpolated grids
 		std::map<std::string, std::string> mapBufferedInfos; ///< Buffer interpolations info messages

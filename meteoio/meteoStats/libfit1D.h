@@ -27,19 +27,19 @@ namespace mio {
 
 class Zero : public FitModel {
 	public:
-		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";};
-		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { };
-		bool fit() { return true;};
-		double f(const double& /*x*/) const {return 0.;};
+		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";}
+		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { }
+		bool fit() { return true;}
+		double f(const double& /*x*/) const {return 0.;}
 };
 
 class SimpleLinear : public FitModel {
 	public:
-		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "SimpleLinear";};
+		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "SimpleLinear";}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;};
+		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;}
 	protected:
 		bool checkInputs();
 		double fixed_lapse_rate;
@@ -47,48 +47,48 @@ class SimpleLinear : public FitModel {
 
 class NoisyLinear : public SimpleLinear {
 	public:
-		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "NoisyLinear";};
+		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "NoisyLinear";}
 		bool fit();
 };
 
 class SphericVario : public FitLeastSquare {
 	public:
-		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";};
+		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinVario : public FitLeastSquare {
 	public:
-		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";};
+		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class ExpVario : public FitLeastSquare {
 	public:
-		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";};
+		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class RatQuadVario : public FitLeastSquare {
 	public:
-		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";};
+		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinearLS : public FitLeastSquare {
 	public:
-		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";};
+		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class Quadratic : public FitLeastSquare {
 	public:
-		Quadratic() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "Quadratic";};
+		Quadratic() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "Quadratic";}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
@@ -136,7 +136,7 @@ class Fit1D {
 		* @brief Empty Constructor. The model must be set afterwards.
 		* If the model has not been set before calling other methods, a NULL pointer exception will be thrown.
 		*/
-		Fit1D() : model(NULL) {};
+		Fit1D() : model(NULL) {}
 
 		/**
 		* @brief Constructor.
@@ -162,7 +162,7 @@ class Fit1D {
 		*/
 		Fit1D(const Fit1D& i_fit);
 
-		~Fit1D() {delete model;};
+		~Fit1D() {delete model;}
 
 		/**
 		* @brief Set or reset the regression model.
@@ -190,20 +190,20 @@ class Fit1D {
 		* thus allowing the user to force his model parameters.
 		* @param lambda_in one initial value per model parameter
 		*/
-		void setGuess(const std::vector<double>& lambda_in) {model->setGuess(lambda_in);};
+		void setGuess(const std::vector<double>& lambda_in) {model->setGuess(lambda_in);}
 
 		/**
 		* @brief Set a forced lapse rate for linear regressions
 		* This will throw an exception for all other regression models!
 		* @param lapse_rate lapse rate to set
 		*/
-		void setLapseRate(const double& lapse_rate) {model->setLapseRate(lapse_rate);};
+		void setLapseRate(const double& lapse_rate) {model->setLapseRate(lapse_rate);}
 
 		/**
 		* @brief Compute the regression parameters
 		* @return false if could not compute the parameters
 		*/
-		bool fit() {return model->fit();};
+		bool fit() {return model->fit();}
 
 		/**
 		* @brief Calculate a value using the computed least square fit.
@@ -211,27 +211,27 @@ class Fit1D {
 		* @param x abscissa
 		* @return f(x) using the computed least square fit
 		*/
-		double f(const double& x) const {return model->f(x);};
+		double f(const double& x) const {return model->f(x);}
 
 		/**
 		* @brief Calculate the parameters of the fit.
 		* The fit has to be computed before.
 		* @param coefficients vector containing the coefficients
 		*/
-		void getParams(std::vector<double>& coefficients) const {model->getParams(coefficients);};
+		void getParams(std::vector<double>& coefficients) const {model->getParams(coefficients);}
 
 		/**
 		* @brief Return the name of the fit model.
 		* @return model name
 		*/
-		std::string getName() const {return model->getName();};
+		std::string getName() const {return model->getName();}
 
 		/**
 		* @brief Return a string of information about the fit.
 		* The fit has to be computed before.
 		* @return info string
 		*/
-		std::string getInfo() const {return model->getInfo();};
+		std::string getInfo() const {return model->getInfo();}
 
 		/**
 		* @brief Set the information string.
@@ -239,7 +239,7 @@ class Fit1D {
 		* This should be called <b>after</b> computing the fit (otherwise it will be overwritten).
 		* @param info string
 		*/
-		void setInfo(const std::string& info) {model->setInfo(info);};
+		void setInfo(const std::string& info) {model->setInfo(info);}
 
 		Fit1D& operator =(const Fit1D& source);
 
@@ -249,9 +249,9 @@ class Fit1D {
 		* @param x abscissa
 		* @return f(x) using the computed least square fit
 		*/
-		double operator ()(const double& x) const {return model->f(x);};
+		double operator ()(const double& x) const {return model->f(x);}
 
-		std::string toString() const {return model->toString();};
+		std::string toString() const {return model->toString();}
 
 	private:
 		FitModel *model;

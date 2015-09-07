@@ -693,11 +693,11 @@ unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 	const unsigned short newYear_dow = newYear.getDayOfWeek(gmt);
 	const int firstThursday = (7 - newYear_dow + 4) % 7 + 1; //first Thursday of the year belongs to week 1
 	const int firstWeekMonday = firstThursday - 3; //this could be <0, for example if Jan 01 is a Thursday
-	
+
 	if (jdn>=359) { //handle the last few days before the new year that might belong to week 1
 		const bool is_leapYear = isLeapYear();
 		const int jdn_last = (is_leapYear)? 366 : 365;
-		const unsigned char week_offset = (is_leapYear)? 1 : 0; //for leap years, dec. 31 is one dow later as jan. 1st 
+		const unsigned char week_offset = (is_leapYear)? 1 : 0; //for leap years, dec. 31 is one dow later as jan. 1st
 		const double lastDay_dow = (newYear_dow + week_offset - 1) % 7 + 1;
 		const double lastMonday = jdn_last - lastDay_dow + 1; //dow starts at 1
 		if (jdn>=lastMonday && lastDay_dow<4) {
@@ -705,7 +705,7 @@ unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 			return 1;
 		}
 	}
-	
+
 	//these are certainly normal days, ie no special case
 	if (jdn>=firstWeekMonday) { //at worst, we are in week 01, otherwise after...
 		return static_cast<unsigned short>( Optim::intPart( (jdn+3-(double)firstThursday) / 7 ) + 1);
@@ -716,7 +716,7 @@ unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 		ISO_year--;
 		if (newYear_dow==5) return 53; // Friday indicates a leap year
 		if (newYear_dow==7) return 52; // Sunday is no leap year
-		
+
 		//Saturday depends on the year before...
 		if (isLeapYear(ISO_year)) return 53;
 		else return 52;
@@ -1083,6 +1083,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 		day_out = gmt_day;
 		hour_out = gmt_hour;
 		minute_out = gmt_minute;
+		second_out = gmt_second;
 	} else {
 		julian_out = GMTToLocal(gmt_julian);
 		calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out, second_out);
@@ -1148,7 +1149,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << minute_out << ":"
 			<< setw(2) << setfill('0') << second_out;
 			break;
-		case(ISO_WEEK): 
+		case(ISO_WEEK):
 		{
 			int ISO_year;
 			const int ISO_week = getISOWeekNr(ISO_year, gmt);
@@ -1158,8 +1159,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;
 		}
-		default:
-			throw InvalidArgumentException("Wrong date conversion format requested", AT);
+		throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
 
 	return tmpstr.str();
@@ -1250,11 +1250,11 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
 	if ( o_year <= 0 ) o_year--;
-	
+
 	double integral;
 	const double frac = modf(tmp_julian+.5, &integral); //the julian date reference is at 12:00
 	const int sec = static_cast<int>(Optim::round(frac*(24.*3600.)));
-	
+
 	o_hour   = static_cast<int>(double(sec)/3600.);
 	o_minute = static_cast<int>(double(sec - 3600*o_hour)/60.);
 	o_second = sec - 3600*o_hour - 60*o_minute;
