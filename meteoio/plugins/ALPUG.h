@@ -65,9 +65,9 @@ class ALPUG : public IOInterface {
 		bool isDuplicate(const std::string& line) ;
 		Date parseDINDate(const std::string& datum) const;
 		bool parseLine(const std::string& filename, const size_t& nr_of_data_fields, const Date& dateStart, const Date& dateEnd, const std::string& line, MeteoData &md, bool &isValid) const;
-		void readMetoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd, 
+		void readMetoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd,
                                               std::vector<MeteoData>& vecM);
-		
+
 		const Config cfg;
 		std::vector<StationData> vecMeta;
 		std::deque<std::string> LinesBuffer;
@@ -76,10 +76,10 @@ class ALPUG : public IOInterface {
 		std::string inpath, outpath;
 		double in_dflt_TZ, out_dflt_TZ;
 		unsigned short wrap_month;
-		
+
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const size_t max_buffered_lines; //how many lines to keep in buffer to check for duplicates?
-		static const std::string dflt_extension;
+		static const char* dflt_extension;
 };
 
 } //namespace

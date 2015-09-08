@@ -30,19 +30,13 @@ using namespace std;
 
 namespace smet {
 
-const std::string SMETCommon::smet_version = "1.1";
+const char* SMETCommon::smet_version = "1.1";
 set<string> SMETCommon::all_mandatory_header_keys = set<std::string>();
 set<string> SMETCommon::all_optional_header_keys  = set<std::string>();
 set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 
-SMETException::SMETException(const std::string& message, const std::string& position) : msg()
-{
-	if (position.empty()) {
-		msg = "At unknown position: " + message;
-	} else {
-		msg = position + ": " + message;
-	}
-}
+SMETException::SMETException(const std::string& message, const std::string& position)
+              : msg( (position.empty())? "At unknown position: " + message : position + ": " + message) {}
 
 SMETException::~SMETException() throw() {}
 
@@ -121,7 +115,7 @@ bool SMETCommon::validFileAndPath(const std::string& filename)
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	const size_t invalid_char = filename.find_first_of("\000"); //find possible invalid characters
 #endif
-	
+
 	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..")) {
 		return false;
 	}

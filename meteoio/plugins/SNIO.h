@@ -87,7 +87,7 @@ class SNIO : public IOInterface {
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_tz, out_tz;
-		static const std::string dflt_extension;
+		static const char* dflt_extension;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const int sn_julian_offset;
 		static const size_t min_nr_meteoData; // minimal number of parameters on data input lines

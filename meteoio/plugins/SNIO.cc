@@ -117,7 +117,7 @@ const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 const size_t SNIO::min_nr_meteoData = 15;
 const size_t SNIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
-const std::string SNIO::dflt_extension = ".inp";
+const char* SNIO::dflt_extension = ".inp";
 
 SNIO::SNIO(const std::string& configfile)
       : cfg(configfile),

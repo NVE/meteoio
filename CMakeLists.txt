@@ -39,7 +39,7 @@ IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 ELSE()
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall -Wno-long-long")
-	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
+	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded
 	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
 	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 	SET(ARCH_SAFE  "")
@@ -51,6 +51,7 @@ ELSE()
 
 	IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wvector-operation-performance")
 		IF(NOT ANDROID)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
 			IF(WIN32) #for gcc on windows

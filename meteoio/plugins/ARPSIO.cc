@@ -46,7 +46,7 @@ namespace mio {
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
-const std::string ARPSIO::default_ext=".asc"; //filename extension
+const char* ARPSIO::default_ext=".asc"; //filename extension
 
 ARPSIO::ARPSIO(const std::string& configfile)
         : cfg(configfile),

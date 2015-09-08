@@ -42,7 +42,7 @@ using namespace std;
 namespace mio {
 
 #if defined(MSG_BOX)
-void messageBox(const std::string& msg) {
+void inline messageBox(const std::string& msg) {
 	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());

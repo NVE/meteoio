@@ -32,16 +32,16 @@ namespace mio {
  * This plugin reads the ASCII data produced by the automatic weather stations by <A href="http://www.alpug.ch/">ALPUG</A>. The metadata
  * for the stations must be provided in an additional file as well as the "description" of the fields that must be provided through the configuration
  * key ALPUG_FIELDS.
- * 
+ *
  * @section alpug_format Format
  * The files are named with the following schema: {YY}{ID}.met where {YY} represents the last two digits of the year and {ID} is the station ID.
- * 
+ *
  * The files contain all the measurements but no metadata and no header. The following fields can be present:
  * @code
  * cod area,cod,id_AWS,date hour,Mean Wind,MaxWind,WD,AT (C),HR %, SWOR,HS (cm),empty,HTS0 (cm),empty,6697,empty,GST (C),empty,????,empty,TSS (C),ISWR,P(hpa)
  * @endcode
- * 
- * The metadata are provided in a separate file. This comma delimited file can contain comments (same syntax as for the configuration files) and must contain 
+ *
+ * The metadata are provided in a separate file. This comma delimited file can contain comments (same syntax as for the configuration files) and must contain
  * first the station ID (as used in the meteo data file name and in the configuration file), a full name, the decimal latitude, decimal longitude and the altitude.
  * @code
  * #ID,name,lat,lon,alt
@@ -50,7 +50,7 @@ namespace mio {
  * @endcode
  *
  * @section alpug_units Units
- * Temperatures are in Celsius, relative humidity between 0 and 100%, snow heights in cm. The timestamp is formatted as <a href="https://de.wikipedia.org/wiki/DIN_1355-1">DIN 1355</A>, 
+ * Temperatures are in Celsius, relative humidity between 0 and 100%, snow heights in cm. The timestamp is formatted as <a href="https://de.wikipedia.org/wiki/DIN_1355-1">DIN 1355</A>,
  * that is as "DD.MM.YYYY HH:MIN".
  *
  * @section alpug_keywords Keywords
@@ -62,7 +62,7 @@ namespace mio {
  * - ALPUG_FIELDS: comma delimited list of fields. The fields <b>MUST</b> use the \ref meteoparam "MeteoData" naming scheme. Unknown or ignored fields are replaced by "%".
  * - WRAP_MONTH: which month (numerical) triggers the start of a new file (belonging to the next year. Default: 10); [Input] section
  * - METAFILE: file within METEOPATH that contains the stations' metadata; [Input] section
- * 
+ *
  * @code
  * METEO        = ALPUG
  * METEOPATH    = ./Met_files
@@ -73,12 +73,12 @@ namespace mio {
  * @endcode
  */
 
-const std::string ALPUG::dflt_extension = ".met";
+const char* ALPUG::dflt_extension = ".met";
 const double ALPUG::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const size_t ALPUG::max_buffered_lines = 4; //how many lines to keep in buffer in order to detect and silently skip duplicates
 
-ALPUG::ALPUG(const std::string& configfile) 
-             : cfg(configfile), vecMeta(), LinesBuffer(), vecIDs(), vecFields(), 
+ALPUG::ALPUG(const std::string& configfile)
+             : cfg(configfile), vecMeta(), LinesBuffer(), vecIDs(), vecFields(),
                coordin(), coordinparam(), coordout(), coordoutparam(), inpath(), outpath(),
 	       in_dflt_TZ(0.), out_dflt_TZ(0.), wrap_month(10)
 {
@@ -86,7 +86,7 @@ ALPUG::ALPUG(const std::string& configfile)
 }
 
 ALPUG::ALPUG(const Config& cfgreader)
-             : cfg(cfgreader), vecMeta(), LinesBuffer(), vecIDs(), vecFields(), 
+             : cfg(cfgreader), vecMeta(), LinesBuffer(), vecIDs(), vecFields(),
                coordin(), coordinparam(), coordout(), coordoutparam(), inpath(), outpath(),
 	       in_dflt_TZ(0.), out_dflt_TZ(0.), wrap_month(10)
 {
@@ -111,7 +111,7 @@ void ALPUG::parseInputOutputSection()
 		cfg.getValues("STATION", "Input", vecIDs);
 		readMetaData();
 		cfg.getValue("WRAP_MONTH", "Input", wrap_month, IOUtils::nothrow);
-		
+
 		const string fields = cfg.get("ALPUG_FIELDS", "Input");
 		IOUtils::readLineToVec(fields, vecFields, ',');
 		if (vecFields.empty())
@@ -131,7 +131,7 @@ void ALPUG::readMetaData()
 	vecMeta.clear();
 	vecMeta.resize( nr_ids );
 	vector<bool> foundID(nr_ids, false);
-	
+
 	const string filename = cfg.get("METAFILE", "Input");
 	const string metafile = inpath + "/" + filename;
 	if (!IOUtils::fileExists(metafile)) throw FileAccessException(metafile, AT); //prevent invalid filenames
@@ -152,7 +152,7 @@ void ALPUG::readMetaData()
 			string line;
 			linenr++;
 			getline(fin, line, eoln); //read complete line of data
-			
+
 			//strip comments, white spaces and skip empty lines
 			IOUtils::stripComments(line);
 			IOUtils::trim(line);
@@ -165,14 +165,14 @@ void ALPUG::readMetaData()
 				ss << "Error in file \'" << metafile << "\' at line" <<linenr << ": invalid number of columns";
 				throw InvalidFormatException(ss.str(), AT);
 			}
-			
+
 			const string line_id = vecLine[0];
-				
+
 			for(size_t ii=0; ii<nr_ids; ++ii) {
 				if (line_id==vecIDs[ii]) { //station ID found in the input list
 					if (foundID[ii])
 						throw InvalidFormatException("Error: station "+line_id+" appears multiple times in metafile \'"+metafile+"\'", AT);
-					
+
 					vector<double> tmpdata = vector<double>(vecLine.size());
 					for (size_t jj=2; jj<5; jj++) {
 						if (!IOUtils::convertString(tmpdata[jj], vecLine[jj], std::dec))
@@ -191,7 +191,7 @@ void ALPUG::readMetaData()
 		fin.close();
 		throw;
 	}
-	
+
 	string msg;
 	for (size_t ii=0; ii<nr_ids; ++ii) {
 		if (!foundID[ii]) {
@@ -246,13 +246,13 @@ Date ALPUG::parseDINDate(const std::string& datum) const
 	unsigned int month, day, hour, minute;
 	double second;
 	char rest[32] = "";
-	
+
 	if (sscanf(datum.c_str(), "%u.%u.%d %u:%u:%lg%31s", &day, &month, &year, &hour, &minute, &second, rest) >= 6) {
 		return Date(year, month, day, hour, minute, in_dflt_TZ);
 	} else if (sscanf(datum.c_str(), "%u.%u.%d %u:%u%31s", &day, &month, &year, &hour, &minute, rest) >= 5) {
 		return Date(year, month, day, hour, minute, in_dflt_TZ);
 	}
-	
+
 	return Date();
 }
 
@@ -261,7 +261,7 @@ Date ALPUG::parseDINDate(const std::string& datum) const
 bool ALPUG::parseLine(const std::string& filename, const size_t& nr_of_data_fields, const Date& dateStart, const Date& dateEnd, const std::string& line, MeteoData &md, bool &isValid) const
 {
 	md.reset();
-	
+
 	isValid = false;
 	vector<string> tmp_vec;
 	if (IOUtils::readLineToVec(line, tmp_vec, ',') == nr_of_data_fields){
@@ -272,23 +272,23 @@ bool ALPUG::parseLine(const std::string& filename, const size_t& nr_of_data_fiel
 				Date date = parseDINDate(tmp_vec[ii]);
 				if (date.isUndef())
 					throw InvalidFormatException("Invalid date \'"+tmp_vec[ii]+"\' in file \'"+filename+"\'", AT);
-				
+
 				if (date<dateStart) return true;
 				if (date>dateEnd) return false;
 				md.setDate(date);
 				continue;
 			}
-			
+
 			double val;
 			IOUtils::convertString(val, tmp_vec[ii]);
-			
+
 			if (field=="TA" || field=="TSG" || field=="TSS")
 				val += Cst::t_water_freezing_pt;
 			else if (field=="RH" || field=="HS")
 				val *= 0.01;
 			else if (field=="P")
 				val *= 100.;
-			
+
 			md(field) = val;
 		}
 		isValid = true;
@@ -302,29 +302,29 @@ bool ALPUG::parseLine(const std::string& filename, const size_t& nr_of_data_fiel
 }
 
 //since ALPUG files seem to often contain duplicate lines, just skip them
-bool ALPUG::isDuplicate(const std::string& line) 
+bool ALPUG::isDuplicate(const std::string& line)
 {
 	for(size_t ii=0; ii<LinesBuffer.size(); ++ii) {
 		if (line==LinesBuffer[ii]) return true;
 	}
-	
+
 	if (LinesBuffer.size()>max_buffered_lines) LinesBuffer.pop_front();
 	LinesBuffer.push_back( line );
 	return false;
 }
 
-void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd, 
+void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd,
                                               std::vector<MeteoData>& vecM)
 {
 	vecM.clear();
-	
+
 	int start_year, start_month, start_day;
 	int end_year, end_month, end_day;
 	dateStart.getDate(start_year, start_month, start_day);
 	dateEnd.getDate(end_year, end_month, end_day);
 	if (start_month>=wrap_month) start_year++;
 	if (end_month>=wrap_month) end_year++;
-	
+
 	const string station_id = vecIDs[station_index];
 	Date prev_date(0., 0.);
 	list<string> dirlist = IOUtils::readDirectory( inpath, station_id+dflt_extension );
@@ -332,21 +332,21 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 		const std::string msg = "No data file found for station "+station_id+" in \'"+inpath+"\'"+". Files should be named as {YY}{station_id}"+dflt_extension+" with {YY} the last two digits of the year.";
 		throw NoAvailableDataException(msg, AT);
 	}
-	
+
 	for (int year=start_year; year<=end_year; ++year) {
 		stringstream ss;
 		ss << year;
 		const string filename = ss.str().substr(2,2) + station_id + dflt_extension;
 		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist
 			continue;
-		
+
 		const string file_and_path = inpath + "/" + filename;
 		if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
 		errno = 0;
 		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
-		if (fin.fail()) 
+		if (fin.fail())
 			throw FileAccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
-		
+
 		const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
 		const size_t nr_of_data_fields = vecFields.size();
 		unsigned int nr_line = 0.;
@@ -357,7 +357,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 			nr_line++;
 			if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 			//if (isDuplicate(line)) continue;
-			
+
 			Coords pos;
 			MeteoData md(Date(), vecMeta[station_index]);
 			bool isValid;
@@ -375,7 +375,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 				print_warning = true;
 			}
 		}
-		
+
 		fin.close();
 	}
 }

@@ -92,14 +92,6 @@ class Config {
 
 		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
-		 *        key is case insensitive
-		 * @param[in] key string representing the key to be added
-		 * @param[in] value string representing the matching value to be added
-		 */
-		void addKey(const std::string& key, const std::string& value);
-
-		/**
-		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
@@ -112,7 +104,7 @@ class Config {
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		*/
-		void deleteKey(const std::string& key, const std::string& section=Config::defaultSection);
+		void deleteKey(const std::string& key, const std::string& section);
 
 		/**
 		 * @brief Delete keys matching a specific pattern from the internal map object, key/section are case insensitive
@@ -124,7 +116,7 @@ class Config {
 		 *  cfg.deleteKeys("STATION", "Input");
 		 * @endcode
 		*/
-		void deleteKeys(const std::string& keymatch, const std::string& section=Config::defaultSection, const bool& anywhere=false);
+		void deleteKeys(const std::string& keymatch, const std::string& section, const bool& anywhere=false);
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.
@@ -144,7 +136,7 @@ class Config {
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @return true if the key exists
 		 */
-		bool keyExists(const std::string& key, const std::string& section=Config::defaultSection) const;
+		bool keyExists(const std::string& key, const std::string& section) const;
 
 		/**
 		 * @brief Print the content of the Config object (usefull for debugging)
@@ -154,13 +146,6 @@ class Config {
 
 		friend std::iostream& operator<<(std::iostream& os, const Config& cfg);
 		friend std::iostream& operator>>(std::iostream& is, Config& cfg);
-
-		template <typename T> std::vector<T> getValue(const std::string& key, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
-		{
-			std::vector<T> tmp;
-			getValue(key, Config::defaultSection, tmp, opt);
-			return tmp;
-		}
 
 		template <typename T> std::vector<T> getValue(const std::string& key, const std::string& section,
 		                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
@@ -306,9 +291,7 @@ class Config {
 		 * @endcode
 		 */
 		size_t findKeys(std::vector<std::string>& vecResult,
-		               const std::string& keymatch, std::string section=Config::defaultSection, const bool& anywhere=false) const;
-
-		static const std::string defaultSection;
+		               const std::string& keymatch, std::string section, const bool& anywhere=false) const;
 
 	private:
 		void parseCmdLine(const std::string& cmd_line);
@@ -321,6 +304,7 @@ class Config {
 		std::vector<std::string> imported; //list of files already imported (to avoid circular references)
 		std::string sourcename; //description of the data source for the key/value pair
 		std::string configRootDir; //directory of the root config file
+		static const char* defaultSection;
 }; //end class definition Config
 
 class ConfigProxy {

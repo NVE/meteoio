@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-const std::string Config::defaultSection = "GENERAL";
+const char* Config::defaultSection = "GENERAL";
 
 //Constructors
 Config::Config() : properties(), imported(), sourcename(), configRootDir()
@@ -34,11 +34,6 @@ Config::Config(const std::string& i_filename) : properties(), imported(), source
 {
 
 	addFile(i_filename);
-}
-
-ConfigProxy Config::get(const std::string& key, const IOUtils::ThrowOptions& opt) const
-{
-	return ConfigProxy(*this, key, Config::defaultSection, opt);
 }
 
 ConfigProxy Config::get(const std::string& key, const std::string& section, const IOUtils::ThrowOptions& opt) const
@@ -59,12 +54,6 @@ void Config::addCmdLine(const std::string& cmd_line)
 	if (configRootDir.empty()) configRootDir = IOUtils::getPath(IOUtils::getCWD(), true); //resolve symlinks, etc
 	sourcename = std::string("Command line");
 	parseCmdLine(cmd_line);
-}
-
-void Config::addKey(const std::string& key, const std::string& value)
-{
-	const std::string section=defaultSection;
-	addKey(key, section, value);
 }
 
 void Config::addKey(const std::string& key, const std::string& section, const std::string& value)
@@ -195,7 +184,7 @@ void Config::parseFile(const std::string& filename)
 		throw FileAccessException(filename, AT);
 	}
 
-	std::string section=defaultSection;
+	std::string section( defaultSection );
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 0;
 	std::vector<std::string> import_after; //files to import after the current one
@@ -222,7 +211,7 @@ void Config::parseFile(const std::string& filename)
 		addFile(file_name);
 		import_after.pop_back();
 	}
-	
+
 	//HACK: since HNW is now obsolete, check for keys related to HNW to warn the user
 	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 		const size_t found_obsoleteHNW = (it->first).find("HNW", 0);
@@ -278,14 +267,14 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	} else {
 		ostringstream tmp;
 		tmp << linenr;
-		
+
 		const string key_msg = (key.empty())? "" : "key "+key+" ";
 		const string key_value_link = (key.empty() && !value.empty())? "value " : "";
 		const string value_msg = (value.empty())? "" : value+" " ;
 		const string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
 		const string section_msg = (section.empty())? "" : "in section "+section+" ";
 		const string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+tmp.str();
-		
+
 		throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 	}
 
@@ -347,7 +336,7 @@ std::string Config::extract_section(std::string key) const
 		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
 		return sectionname;
 	}
-	return defaultSection;
+	return string( defaultSection );
 }
 
 std::string Config::clean_import_path(const std::string& in_path) const
@@ -385,7 +374,7 @@ void Config::write(const std::string& filename) const
 			const size_t key_start = key_full.find_first_of(":");
 			const string value = it->second;
 			if (value.empty()) continue;
-			
+
 			if (key_start!=string::npos) //start after the "::" marking the section prefix
 				fout << key_full.substr(key_start+2) << " = " << value << endl;
 			else //every key should have a section prefix, but just in case...

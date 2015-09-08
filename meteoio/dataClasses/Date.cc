@@ -1159,7 +1159,6 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;
 		}
-		throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
 
 	return tmpstr.str();

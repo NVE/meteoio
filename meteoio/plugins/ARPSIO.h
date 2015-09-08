@@ -87,7 +87,7 @@ class ARPSIO : public IOInterface {
 		FILE *fin;
 		std::string filename;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string default_ext;
+		static const char* default_ext;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string grid2dpath_in; //where are input grids stored
 		std::string ext; //file extension

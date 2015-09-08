@@ -25,7 +25,9 @@
 #include <string>
 
 #ifdef _MSC_VER
+
 	#pragma warning(disable:4512) //we don't need any = operator!
+
 #endif
 
 namespace mio {
@@ -84,7 +86,7 @@ class SMETIO : public IOInterface {
 		                        const std::vector<std::string>& vecColumnName,
 		                        smet::SMETWriter& mywriter);
 
-		static const std::string dflt_extension;
+		static const char* dflt_extension;
 		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;

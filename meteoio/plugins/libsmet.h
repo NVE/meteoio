@@ -73,14 +73,14 @@ class SMETCommon {
 		static void toUpper(std::string& str);
 		static bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
 		                             std::map<std::string,std::string>& out_map);
-
 		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vec_string);
 		static bool is_decimal(const std::string& value);
 
+	public:
 		static std::set<std::string> all_optional_header_keys;
 		static std::set<std::string> all_decimal_header_values;
 		static std::set<std::string> all_mandatory_header_keys;
-		static const std::string smet_version;
+		static const char* smet_version;
 
 	private:
 		static const bool __init;     ///<helper variable to enable the init of static collection data
