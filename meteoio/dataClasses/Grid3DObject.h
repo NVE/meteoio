@@ -159,24 +159,24 @@ class Grid3DObject{
 		Grid3DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid3DObject& operator+=(const double& rhs);
-		const Grid3DObject operator+(const double& rhs);
+		const Grid3DObject operator+(const double& rhs) const;
 		Grid3DObject& operator+=(const Grid3DObject& rhs);
-		const Grid3DObject operator+(const Grid3DObject& rhs);
+		const Grid3DObject operator+(const Grid3DObject& rhs) const;
 
 		Grid3DObject& operator-=(const double& rhs);
-		const Grid3DObject operator-(const double& rhs);
+		const Grid3DObject operator-(const double& rhs) const;
 		Grid3DObject& operator-=(const Grid3DObject& rhs);
-		const Grid3DObject operator-(const Grid3DObject& rhs);
+		const Grid3DObject operator-(const Grid3DObject& rhs) const;
 
 		Grid3DObject& operator*=(const double& rhs);
-		const Grid3DObject operator*(const double& rhs);
+		const Grid3DObject operator*(const double& rhs) const;
 		Grid3DObject& operator*=(const Grid3DObject& rhs);
-		const Grid3DObject operator*(const Grid3DObject& rhs);
+		const Grid3DObject operator*(const Grid3DObject& rhs) const;
 
 		Grid3DObject& operator/=(const double& rhs);
-		const Grid3DObject operator/(const double& rhs);
+		const Grid3DObject operator/(const double& rhs) const;
 		Grid3DObject& operator/=(const Grid3DObject& rhs);
-		const Grid3DObject operator/(const Grid3DObject& rhs);
+		const Grid3DObject operator/(const Grid3DObject& rhs) const;
 
 		bool operator==(const Grid3DObject& in) const; ///<Operator that tests for equality
 		bool operator!=(const Grid3DObject& in) const; ///<Operator that tests for inequality

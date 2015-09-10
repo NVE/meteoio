@@ -107,24 +107,24 @@ class DEMObject : public Grid2DObject {
 		DEMObject& operator=(const double& value); ///<Assignement operator
 
 		DEMObject& operator+=(const double& rhs);
-		const DEMObject operator+(const double& rhs);
+		const DEMObject operator+(const double& rhs) const;
 		DEMObject& operator+=(const Grid2DObject& rhs);
-		const DEMObject operator+(const Grid2DObject& rhs);
+		const DEMObject operator+(const Grid2DObject& rhs) const;
 
 		DEMObject& operator-=(const double& rhs);
-		const DEMObject operator-(const double& rhs);
+		const DEMObject operator-(const double& rhs) const;
 		DEMObject& operator-=(const Grid2DObject& rhs);
-		const DEMObject operator-(const Grid2DObject& rhs);
+		const DEMObject operator-(const Grid2DObject& rhs) const;
 
 		DEMObject& operator*=(const double& rhs);
-		const DEMObject operator*(const double& rhs);
+		const DEMObject operator*(const double& rhs) const;
 		DEMObject& operator*=(const Grid2DObject& rhs);
-		const DEMObject operator*(const Grid2DObject& rhs);
+		const DEMObject operator*(const Grid2DObject& rhs) const;
 
 		DEMObject& operator/=(const double& rhs);
-		const DEMObject operator/(const double& rhs);
+		const DEMObject operator/(const double& rhs) const;
 		DEMObject& operator/=(const Grid2DObject& rhs);
-		const DEMObject operator/(const Grid2DObject& rhs);
+		const DEMObject operator/(const Grid2DObject& rhs) const;
 
 		bool operator==(const DEMObject& in) const; ///<Operator that tests for equality
 		bool operator!=(const DEMObject& in) const; ///<Operator that tests for inequality

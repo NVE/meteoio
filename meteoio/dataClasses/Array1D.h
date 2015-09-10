@@ -119,24 +119,24 @@ template<class T> class Array1D {
 		Array1D<T>& operator =(const T& value);
 
 		Array1D<T>& operator+=(const T& rhs);
-		const Array1D<T> operator+(const T& rhs);
+		const Array1D<T> operator+(const T& rhs) const;
 		Array1D<T>& operator+=(const Array1D<T>& rhs);
-		const Array1D<T> operator+(const Array1D<T>& rhs);
+		const Array1D<T> operator+(const Array1D<T>& rhs) const;
 
 		Array1D<T>& operator-=(const T& rhs);
-		const Array1D<T> operator-(const T& rhs);
+		const Array1D<T> operator-(const T& rhs) const;
 		Array1D<T>& operator-=(const Array1D<T>& rhs);
-		const Array1D<T> operator-(const Array1D<T>& rhs);
+		const Array1D<T> operator-(const Array1D<T>& rhs) const;
 
 		Array1D<T>& operator*=(const T& rhs);
-		const Array1D<T> operator*(const T& rhs);
+		const Array1D<T> operator*(const T& rhs) const;
 		Array1D<T>& operator*=(const Array1D<T>& rhs);
-		const Array1D<T> operator*(const Array1D<T>& rhs);
+		const Array1D<T> operator*(const Array1D<T>& rhs) const;
 
 		Array1D<T>& operator/=(const T& rhs);
-		const Array1D<T> operator/(const T& rhs);
+		const Array1D<T> operator/(const T& rhs) const;
 		Array1D<T>& operator/=(const Array1D<T>& rhs);
-		const Array1D<T> operator/(const Array1D<T>& rhs);
+		const Array1D<T> operator/(const Array1D<T>& rhs) const;
 
 		bool operator==(const Array1D<T>&) const; ///<Operator that tests for equality
 		bool operator!=(const Array1D<T>&) const; ///<Operator that tests for inequality
@@ -249,7 +249,7 @@ template<class T> const std::string Array1D<T>::toString() const {
 template<class P> std::iostream& operator<<(std::iostream& os, const Array1D<P>& array) {
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
-	os.write(reinterpret_cast<const char*>(&array.vecData[0]), array.nx*sizeof(P));
+	os.write(reinterpret_cast<const char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*sizeof(P)));
 	return os;
 }
 
@@ -257,7 +257,7 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array1D<P>& array
 	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	array.vecData.resize(array.nx);
-	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*sizeof(P)); //30 times faster than assign() or copy()
+	is.read(reinterpret_cast<char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*sizeof(P))); //30 times faster than assign() or copy()
 	return is;
 }
 
@@ -440,7 +440,7 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const Array1D<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator+(const Array1D<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator+(const Array1D<T>& rhs) const
 {
 	Array1D<T> result(*this); //make a copy
 	result += rhs; //already implemented
@@ -465,7 +465,7 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator+(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator+(const T& rhs) const
 {
 	Array1D<T> result(*this);
 	result += rhs; //already implemented
@@ -500,7 +500,7 @@ template<class T> Array1D<T>& Array1D<T>::operator-=(const Array1D<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator-(const Array1D<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator-(const Array1D<T>& rhs) const
 {
 	Array1D<T> result(*this); //make a copy
 	result -= rhs; //already implemented
@@ -514,7 +514,7 @@ template<class T> Array1D<T>& Array1D<T>::operator-=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator-(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator-(const T& rhs) const
 {
 	Array1D<T> result(*this);
 	result += -rhs; //already implemented
@@ -548,7 +548,7 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const Array1D<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator*(const Array1D<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator*(const Array1D<T>& rhs) const
 {
 	Array1D<T> result(*this); //make a copy
 	result *= rhs; //already implemented
@@ -573,7 +573,7 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator*(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator*(const T& rhs) const
 {
 	Array1D<T> result(*this);
 	result *= rhs; //already implemented
@@ -607,7 +607,7 @@ template<class T> Array1D<T>& Array1D<T>::operator/=(const Array1D<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator/(const Array1D<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator/(const Array1D<T>& rhs) const
 {
 	Array1D<T> result(*this); //make a copy
 	result /= rhs; //already implemented
@@ -621,7 +621,7 @@ template<class T> Array1D<T>& Array1D<T>::operator/=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs) const
 {
 	Array1D<T> result(*this);
 	result *= 1./rhs; //already implemented

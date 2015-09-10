@@ -1110,7 +1110,7 @@ DEMObject& DEMObject::operator+=(const double& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator+(const double& rhs) {
+const DEMObject DEMObject::operator+(const double& rhs) const {
 	DEMObject result = *this;
 	result.grid2D += rhs;
 	result.updateAllMinMax();
@@ -1125,7 +1125,7 @@ DEMObject& DEMObject::operator+=(const Grid2DObject& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator+(const Grid2DObject& rhs) {
+const DEMObject DEMObject::operator+(const Grid2DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	DEMObject result(*this);
@@ -1140,7 +1140,7 @@ DEMObject& DEMObject::operator-=(const double& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator-(const double& rhs) {
+const DEMObject DEMObject::operator-(const double& rhs) const {
 	DEMObject result(*this);
 	result.grid2D -= rhs;
 	result.updateAllMinMax();
@@ -1155,7 +1155,7 @@ DEMObject& DEMObject::operator-=(const Grid2DObject& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator-(const Grid2DObject& rhs) {
+const DEMObject DEMObject::operator-(const Grid2DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	DEMObject result(*this);
@@ -1170,7 +1170,7 @@ DEMObject& DEMObject::operator*=(const double& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator*(const double& rhs) {
+const DEMObject DEMObject::operator*(const double& rhs) const {
 	DEMObject result(*this);
 	result.grid2D *= rhs;
 	result.update();
@@ -1185,7 +1185,7 @@ DEMObject& DEMObject::operator*=(const Grid2DObject& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator*(const Grid2DObject& rhs) {
+const DEMObject DEMObject::operator*(const Grid2DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	DEMObject result(*this);
@@ -1200,7 +1200,7 @@ DEMObject& DEMObject::operator/=(const double& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator/(const double& rhs) {
+const DEMObject DEMObject::operator/(const double& rhs) const {
 	DEMObject result(*this);
 	result.grid2D /= rhs;
 	result.update();
@@ -1215,7 +1215,7 @@ DEMObject& DEMObject::operator/=(const Grid2DObject& rhs) {
 	return *this;
 }
 
-const DEMObject DEMObject::operator/(const Grid2DObject& rhs) {
+const DEMObject DEMObject::operator/(const Grid2DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	DEMObject result(*this);

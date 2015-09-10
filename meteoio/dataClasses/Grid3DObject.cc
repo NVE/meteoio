@@ -43,7 +43,7 @@ Grid3DObject& Grid3DObject::operator+=(const double& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator+(const double& rhs) {
+const Grid3DObject Grid3DObject::operator+(const double& rhs) const {
 	Grid3DObject result = *this;
 	result.grid3D += rhs;
 	return result;
@@ -56,7 +56,7 @@ Grid3DObject& Grid3DObject::operator+=(const Grid3DObject& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator+(const Grid3DObject& rhs) {
+const Grid3DObject Grid3DObject::operator+(const Grid3DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	Grid3DObject result(*this);
@@ -69,7 +69,7 @@ Grid3DObject& Grid3DObject::operator-=(const double& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator-(const double& rhs) {
+const Grid3DObject Grid3DObject::operator-(const double& rhs) const {
 	Grid3DObject result(*this);
 	result.grid3D -= rhs;
 	return result;
@@ -82,7 +82,7 @@ Grid3DObject& Grid3DObject::operator-=(const Grid3DObject& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator-(const Grid3DObject& rhs) {
+const Grid3DObject Grid3DObject::operator-(const Grid3DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	Grid3DObject result(*this);
@@ -95,7 +95,7 @@ Grid3DObject& Grid3DObject::operator*=(const double& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator*(const double& rhs) {
+const Grid3DObject Grid3DObject::operator*(const double& rhs) const {
 	Grid3DObject result(*this);
 	result.grid3D *= rhs;
 	return result;
@@ -108,7 +108,7 @@ Grid3DObject& Grid3DObject::operator*=(const Grid3DObject& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator*(const Grid3DObject& rhs) {
+const Grid3DObject Grid3DObject::operator*(const Grid3DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	Grid3DObject result(*this);
@@ -121,7 +121,7 @@ Grid3DObject& Grid3DObject::operator/=(const double& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator/(const double& rhs) {
+const Grid3DObject Grid3DObject::operator/(const double& rhs) const {
 	Grid3DObject result(*this);
 	result.grid3D /= rhs;
 	return result;
@@ -134,7 +134,7 @@ Grid3DObject& Grid3DObject::operator/=(const Grid3DObject& rhs) {
 	return *this;
 }
 
-const Grid3DObject Grid3DObject::operator/(const Grid3DObject& rhs) {
+const Grid3DObject Grid3DObject::operator/(const Grid3DObject& rhs) const {
 	if (!isSameGeolocalization(rhs))
 		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
 	Grid3DObject result(*this);
