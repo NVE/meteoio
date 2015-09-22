@@ -135,8 +135,10 @@ class Grid3DObject{
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
 		* @param vec_points vector containing the coordinates to convert
+		* @param vec_invalid vector containing the rejected coordinates
 		* @return false if invalid or external points had to be removed
 		*/
+		bool gridify(std::vector<Coords>& vec_points, std::vector<Coords>& vec_invalid) const;
 		bool gridify(std::vector<Coords>& vec_points) const;
 
 		/**

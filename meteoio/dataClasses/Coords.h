@@ -89,6 +89,13 @@ public:
 		GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)
 		GEO_VINCENTY ///< Vincenty ellispoid formula (See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, or http://www.springerlink.com/content/y7108u6862473583 for more)
 	} geo_distances;
+	
+	///Keywords for selecting the toString formats
+	typedef enum {
+		DEBUG, ///< As much information as possible, useful for debugging
+		FULL, ///< Provide all the usually necessary information
+		CARTESIAN ///< Compact representation only containing the X/Y and I/J coordinates
+	} FORMATS;
 
 	//Constructors
 	Coords();
@@ -121,7 +128,7 @@ public:
 	std::string printLatLon() const;
 	short int getEPSG() const;
 
-	const std::string toString() const;
+	const std::string toString(const FORMATS& type = DEBUG) const;
 	friend std::iostream& operator<<(std::iostream& os, const Coords& coord);
 	friend std::iostream& operator>>(std::iostream& is, Coords& coord);
 

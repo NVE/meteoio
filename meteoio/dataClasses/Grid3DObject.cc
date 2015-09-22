@@ -186,13 +186,16 @@ Grid3DObject::Grid3DObject(const double& i_cellsize, const Coords& i_llcorner, c
               : grid3D(i_grid3D), z(), llcorner(i_llcorner),
                 cellsize(i_cellsize), z_is_absolute(true) {}
 
-bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
+                
+bool Grid3DObject::gridify(std::vector<Coords>& vec_points, std::vector<Coords>& vec_invalid) const 
 {
 	bool status=true;
 
+	vec_invalid.clear();
 	std::vector<Coords>::iterator v_Itr = vec_points.begin();
 	while ( v_Itr != vec_points.end() ) {
 		if( gridify(*v_Itr)==false ) {
+			vec_invalid.push_back( *v_Itr );
 			v_Itr = vec_points.erase(v_Itr);
 			status=false;
 		} else {
@@ -201,6 +204,12 @@ bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
 	}
 
 	return status;
+}
+
+bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
+{
+	std::vector<Coords> vec_invalid;
+	return gridify(vec_points, vec_invalid);
 }
 
 bool Grid3DObject::gridify(Coords& point) const

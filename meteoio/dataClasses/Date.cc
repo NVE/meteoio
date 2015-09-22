@@ -1068,7 +1068,7 @@ std::string Date::printFractionalDay(const double& fractional) {
 * @param gmt convert returned value to GMT? (default: false)
 * @return formatted time in a string
 */
-const string Date::toString(FORMATS type, const bool& gmt) const
+const string Date::toString(const FORMATS& type, const bool& gmt) const
 {//the date are displayed in LOCAL timezone (more user friendly)
 	int year_out, month_out, day_out, hour_out, minute_out, second_out;
 	double julian_out;

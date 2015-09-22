@@ -99,8 +99,10 @@ class Grid2DObject {
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
 		* If the given point had a "NULL" projection, it will be set to the grid's.
 		* @param vec_points vector containing the coordinates to convert
+		* @param vec_invalid vector containing the rejected coordinates
 		* @return false if invalid or external points had to be removed
 		*/
+		bool gridify(std::vector<Coords>& vec_points, std::vector<Coords>& vec_invalid) const;
 		bool gridify(std::vector<Coords>& vec_points) const;
 
 		/**

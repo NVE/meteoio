@@ -222,20 +222,31 @@ void Coords::merge(const Coords& coord2) {
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
-const std::string Coords::toString() const {
+const std::string Coords::toString(const FORMATS& type) const 
+{
 	std::ostringstream os;
-	os << "<Coords>\n";
-	os << "Altitude\t" << altitude << "\n";
-	os << "Lat/Long\t" << printLatLon() << "\n";
-	std::streamsize p = os.precision();
-	os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
-	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
-	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
-	os.precision(p);
-	os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
-	os << "Projection\t" << coordsystem << " " << coordparam << "\n";
-	os << "EPSG\t\t" << getEPSG() << "\n";
-	os << "</Coords>\n";
+	if (type==DEBUG) {
+		os << "<Coords>\n";
+		os << "Altitude\t" << altitude << "\n";
+		os << "Lat/Long\t" << printLatLon() << "\n";
+		std::streamsize p = os.precision();
+		os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
+		os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
+		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
+		os.precision(p);
+		os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
+		os << "Projection\t" << coordsystem << " " << coordparam << "\n";
+		os << "EPSG\t\t" << getEPSG() << "\n";
+		os << "</Coords>\n";
+	} else if (type==FULL) {
+		os << altitude << " a.s.l.;\t";
+		os << "WGS84: (" << getLat() << "," << getLon() << ");\t";
+		os << "EPSG " << getEPSG() << ": (" << getEasting() << "," << getNorthing() << ");\t";
+		os << "grid: (" << getGridI() << "," << getGridJ() << ")";
+	}else if (type==CARTESIAN) {
+		os << altitude << "; (" << getEasting() << "," << getNorthing() << "); (" << getGridI() << "," << getGridJ() << ")";
+	} else
+		throw InvalidArgumentException("Selected output type is not supported!", AT);
 	return os.str();
 }
 
