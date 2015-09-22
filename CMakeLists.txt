@@ -134,12 +134,8 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 ###########################################################
 #targets providing SETs of compiler options
 IF(NOT DEST)
-	SET(DEST "safe" CACHE STRING "Choose safe, optimized, hera" FORCE)
+	SET(DEST "safe" CACHE STRING "Choose safe or optimized" FORCE)
 ENDIF(NOT DEST)
-
-IF (DEST STREQUAL "hera")
-	SET(ARCH  "-march=amdfam10")
-ENDIF(DEST STREQUAL "hera")
 
 IF (DEST STREQUAL "safe")
 	SET(ARCH  "${ARCH_SAFE}")
