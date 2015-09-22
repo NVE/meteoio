@@ -114,7 +114,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	
 	//Get grid from buffer if it exists
 	std::ostringstream grid_hash;
-	grid_hash << dem.llcorner.printLatLon() << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << " " << date.toString(Date::ISO) << " " << param_name;
+	grid_hash << dem.llcorner.toString(Coords::LATLON) << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << " " << date.toString(Date::ISO) << " " << param_name;
 	if (grid_buffer.get(result, grid_hash.str(), InfoString))
 		return;
 

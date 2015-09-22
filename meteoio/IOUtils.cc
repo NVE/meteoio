@@ -24,6 +24,7 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/Config.h>    // to avoid forward declaration hell
 #include <meteoio/dataClasses/MeteoData.h> // to avoid forward declaration hell
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
 
 namespace mio {
 
@@ -542,7 +543,7 @@ template<> bool convertString<Coords>(Coords& t, const std::string& str, std::io
 	(void)f;
 	double lat, lon;
 	try {
-		Coords::parseLatLon(s, lat, lon);
+		CoordsAlgorithms::parseLatLon(s, lat, lon);
 	} catch(const IOException&) {
 		return false;
 	}

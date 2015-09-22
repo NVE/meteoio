@@ -94,6 +94,7 @@ public:
 	typedef enum {
 		DEBUG, ///< As much information as possible, useful for debugging
 		FULL, ///< Provide all the usually necessary information
+		LATLON, ///< Simplified, lat/lon only
 		CARTESIAN ///< Compact representation only containing the X/Y and I/J coordinates
 	} FORMATS;
 
@@ -125,7 +126,6 @@ public:
 	int getGridJ() const;
 	int getGridK() const;
 	void getProj(std::string& proj_type, std::string& proj_args) const;
-	std::string printLatLon() const;
 	short int getEPSG() const;
 
 	const std::string toString(const FORMATS& type = DEBUG) const;
@@ -142,48 +142,22 @@ public:
 	void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
 	void setLocalRef(const std::string in_coordparam);
 	void setDistances(const geo_distances in_algo);
-	void setEPSG(const int epsg);
+	void setEPSG(const int& epsg);
 
 	void check();
 	double distance(const Coords& destination) const;
 	bool isSameProj(const Coords& target) const;
 	void copyProj(const Coords& source, const bool i_update=true);
 
-	//Static helper methods
-	static double dms_to_decimal(const std::string& dms);
-	static std::string decimal_to_dms(const double& decimal);
-	static void parseLatLon(const std::string& coordinates, double& lat, double& lon);
-
-	static double lat_degree_lenght(const double& latitude);
-	static double lon_degree_lenght(const double& latitude);
-
-	static void rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true);
-	static void trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot);
-
-	static double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
-	static void cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
-	static double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
-	static void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
-
  private:
 	//Coordinates conversions
 	void convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const;
 	void convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const;
 
-	void WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-	void WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-	void WGS84_to_UPS(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void UPS_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-	void WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_NULL(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-
-	void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber) const;
 
 	//Distances calculations
 	void distance(const Coords& destination, double& o_distance, double& o_bearing) const;
@@ -191,7 +165,6 @@ public:
  private:
 	void clearCoordinates();
 	void setDefaultValues();
-	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
  private:
 	double ref_latitude, ref_longitude;
@@ -207,21 +180,6 @@ public:
 	std::string coordsystem;
 	std::string coordparam;
 	geo_distances distance_algo;
-
-	///Keywords for selecting an ellipsoid to use
-	enum ELLIPSOIDS_NAMES {
-		E_WGS84, ///<Globally useable WGS84 ellipsoid
-		E_GRS80, ///<GRS80 ellispoid, equivalent to WGS84 but used by America and Australia
-		E_AIRY, ///<Airy ellispoid, good fit for the UK
-		E_INTL1924, ///<International 1924 ellispoid, good for most of Europe
-		E_CLARKE1880, ///<Clarke 1880, good for Africa
-		E_GRS67 ///<GRS67 ellispoid, good for South America
-	};
-	struct ELLIPSOID {
-		double a;
-		double b;
-	};
-	static const struct ELLIPSOID ellipsoids[6];
 };
 } //end namespace
 
