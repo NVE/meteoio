@@ -769,8 +769,7 @@ short int Coords::getEPSG() const
 void Coords::setEPSG(const int& epsg) {
 //TODO: get rid of the zone letter. This is not part of the standard and redundant (and messy)
 	std::string coord_sys, coord_param;
-	CoordsAlgorithms::EPSG_to_str(epsg, coordsystem, coordparam);
-	
+	CoordsAlgorithms::EPSG_to_str(epsg, coord_sys, coord_param);
 	setProj(coord_sys, coord_param);
 }
 

@@ -53,7 +53,7 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - POIFILE: a path+file name to the a file containing grid coordinates of Points of Interest (for special outputs)
+ * - POIFILE: a path+file name to the a file containing grid coordinates of Points of Interest (for special outputs). Everything after a comment marker will be ignored until the end of the line.
  */
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
@@ -680,15 +680,10 @@ void A3DIO::readPOI(std::vector<Coords>& pts)
 {
 	std::string filename;
 	cfg.getValue("POIFILE", "Input", filename);
-	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
-	}
 
 	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
 	std::ifstream fin(filename.c_str(), std::ifstream::in);
-	if (fin.fail()) {
-		throw FileAccessException(filename,AT);
-	}
+	if (fin.fail()) throw FileAccessException(filename,AT);
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
@@ -697,6 +692,7 @@ void A3DIO::readPOI(std::vector<Coords>& pts)
 	while (!fin.eof()) {
 		getline(fin, line_in, eoln);
 
+		IOUtils::stripComments(line_in);
 		if (IOUtils::readLineToVec(line_in, tmpvec)==2) { //Try to convert
 			int x, y;
 			if (!IOUtils::convertString(x, tmpvec.at(0), std::dec)) {
