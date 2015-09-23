@@ -134,12 +134,12 @@ class Grid3DObject{
 		* This means that the Coords::point object that is given either contains geographic coordinates or
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
+		* If the given point had a "NULL" projection, it will be set to the grid's.
 		* @param vec_points vector containing the coordinates to convert
-		* @param vec_invalid vector containing the rejected coordinates
+		* @param keep_invalid keep invalid coordinates? (default: false)
 		* @return false if invalid or external points had to be removed
 		*/
-		bool gridify(std::vector<Coords>& vec_points, std::vector<Coords>& vec_invalid) const;
-		bool gridify(std::vector<Coords>& vec_points) const;
+		bool gridify(std::vector<Coords>& vec_points, const bool& keep_invalid=false) const;
 
 		/**
 		* @brief check if the current Grid3DObject has the same geolocalization attributes

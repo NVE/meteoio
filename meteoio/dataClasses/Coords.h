@@ -125,6 +125,7 @@ public:
 	int getGridI() const;
 	int getGridJ() const;
 	int getGridK() const;
+	bool indexIsValid() const;
 	void getProj(std::string& proj_type, std::string& proj_args) const;
 	short int getEPSG() const;
 
@@ -136,7 +137,7 @@ public:
 	void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);
 	void setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update=true);
 	void setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update=true);
-	void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool in_invalidate=true);
+	void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool setValid=false);
 	void setAltitude(const double in_altitude, const bool in_update=true);
 	void setProj(const std::string& in_coordinatesystem, const std::string& in_parameters="");
 	void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
@@ -176,6 +177,7 @@ public:
 	int grid_i; ///<grid index i (please notice that this index is NOT automatically regenerated NOR checked)
 	int grid_j; ///<grid index j (please notice that this index is NOT automatically regenerated NOR checked)
 	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
+	bool validIndex; ///< are grid index invalid?
 
 	std::string coordsystem;
 	std::string coordparam;

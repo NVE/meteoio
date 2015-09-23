@@ -74,14 +74,14 @@ namespace mio {
 */
 bool Coords::operator==(const Coords& in) const {
 	//check on lat/lon
-	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
 		                          IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) &&
 		                          IOUtils::checkEpsilonEquality(getAltitude(), in.getAltitude(), IOUtils::grid_epsilon) );
 		return comparison;
 	}
 	//check on easting/northing
-	if(easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
+	if (easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
 		//in this case, it means that we don't know anything about the projection parameters
 		//otherwise the lat/long would have been calculated. So EPSG should be nodata
 		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), IOUtils::grid_epsilon) &&
@@ -90,13 +90,13 @@ bool Coords::operator==(const Coords& in) const {
 		                          getEPSG()==in.getEPSG());
 		return comparison;
 	}
-	if(grid_i!=IOUtils::nodata && grid_j!=IOUtils::nodata && grid_k!=IOUtils::nodata) {
+	if (validIndex) {
 		//only available information is grid indices
 		const bool comparison = ( grid_i==in.grid_i && grid_j==in.grid_j && grid_k==in.grid_k );
 		return comparison;
 	}
 	//every field is nodata... the objects can only be equal if both are nodata
-	if(in.isNodata()==true) return true;
+	if (in.isNodata()==true) return true;
 	else return false;
 }
 
@@ -110,7 +110,7 @@ bool Coords::operator!=(const Coords& in) const {
 }
 
 Coords& Coords::operator=(const Coords& source) {
-	if(this != &source) {
+	if (this != &source) {
 		altitude = source.altitude;
 		latitude = source.latitude;
 		longitude = source.longitude;
@@ -124,15 +124,17 @@ Coords& Coords::operator=(const Coords& source) {
 		grid_i = source.grid_i;
 		grid_j = source.grid_j;
 		grid_k = source.grid_k;
+		validIndex = source.validIndex;
 	}
 	return *this;
 }
 
 bool Coords::isNodata() const {
-	if( latitude==IOUtils::nodata && longitude==IOUtils::nodata &&
+	if (latitude==IOUtils::nodata && longitude==IOUtils::nodata &&
 	    easting==IOUtils::nodata && northing==IOUtils::nodata &&
 	    altitude==IOUtils::nodata &&
-	    grid_i==IOUtils::nodata && grid_j==IOUtils::nodata && grid_k==IOUtils::nodata) {
+	    grid_i==IOUtils::nodata && grid_j==IOUtils::nodata && grid_k==IOUtils::nodata &&
+	    validIndex==false) {
 		return true;
 	}
 	return false;
@@ -180,32 +182,33 @@ Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 * @param coord2 extra Coords to merge, lowest priority
 */
 void Coords::merge(const Coords& coord2) {
-	if(altitude==IOUtils::nodata) altitude=coord2.altitude;
-	if(latitude==IOUtils::nodata) latitude=coord2.latitude;
-	if(longitude==IOUtils::nodata) longitude=coord2.longitude;
-	if(easting==IOUtils::nodata) easting=coord2.easting;
-	if(northing==IOUtils::nodata) northing=coord2.northing;
+	if (altitude==IOUtils::nodata) altitude=coord2.altitude;
+	if (latitude==IOUtils::nodata) latitude=coord2.latitude;
+	if (longitude==IOUtils::nodata) longitude=coord2.longitude;
+	if (easting==IOUtils::nodata) easting=coord2.easting;
+	if (northing==IOUtils::nodata) northing=coord2.northing;
 
-	if(grid_i==IOUtils::nodata) grid_i=coord2.grid_i;
-	if(grid_j==IOUtils::nodata) grid_j=coord2.grid_j;
-	if(grid_k==IOUtils::nodata) grid_k=coord2.grid_k;
+	if (validIndex==false) validIndex=coord2.validIndex;
+	if (grid_i==IOUtils::nodata) grid_i=coord2.grid_i;
+	if (grid_j==IOUtils::nodata) grid_j=coord2.grid_j;
+	if (grid_k==IOUtils::nodata) grid_k=coord2.grid_k;
 
-	if(ref_latitude==IOUtils::nodata) ref_latitude=coord2.ref_latitude;
-	if(ref_longitude==IOUtils::nodata) ref_longitude=coord2.ref_longitude;
+	if (ref_latitude==IOUtils::nodata) ref_latitude=coord2.ref_latitude;
+	if (ref_longitude==IOUtils::nodata) ref_longitude=coord2.ref_longitude;
 
-	if(coordsystem=="NULL") coordsystem=coord2.coordsystem;
-	if(coordparam=="NULL") coordparam=coord2.coordparam;
+	if (coordsystem=="NULL") coordsystem=coord2.coordsystem;
+	if (coordparam=="NULL") coordparam=coord2.coordparam;
 
-	if(distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
+	if (distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
 
 	//in LOCAL projection, the check for the existence of the ref point will be done in the projection functions
-	if(coordsystem=="LOCAL" && !coordparam.empty()) {
+	if (coordsystem=="LOCAL" && !coordparam.empty()) {
 		CoordsAlgorithms::parseLatLon(coordparam, ref_latitude, ref_longitude);
 	}
-	if(latitude!=IOUtils::nodata && coordsystem!="NULL") {
+	if (latitude!=IOUtils::nodata && coordsystem!="NULL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
-	if(latitude==IOUtils::nodata && coordsystem!="NULL") {
+	if (latitude==IOUtils::nodata && coordsystem!="NULL") {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 }
@@ -226,7 +229,8 @@ const std::string Coords::toString(const FORMATS& type) const
 		os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 		os.precision(p);
-		os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
+		if (validIndex) 
+			os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
 		os << "Projection\t" << coordsystem << " " << coordparam << "\n";
 		os << "EPSG\t\t" << getEPSG() << "\n";
 		os << "</Coords>\n";
@@ -234,7 +238,8 @@ const std::string Coords::toString(const FORMATS& type) const
 		os << altitude << " a.s.l.;\t";
 		os << "WGS84: (" << getLat() << "," << getLon() << ");\t";
 		os << "EPSG " << getEPSG() << ": (" << getEasting() << "," << getNorthing() << ");\t";
-		os << "grid: (" << getGridI() << "," << getGridJ() << ")";
+		if (validIndex) 
+			os << "grid: (" << getGridI() << "," << getGridJ() << ")";
 	} else if (type==LATLON) {
 		os << CoordsAlgorithms::printLatLon(latitude, longitude);
 	} else if (type==CARTESIAN) {
@@ -255,6 +260,7 @@ std::iostream& operator<<(std::iostream& os, const Coords& coord) {
 	os.write(reinterpret_cast<const char*>(&coord.grid_i), sizeof(coord.grid_i));
 	os.write(reinterpret_cast<const char*>(&coord.grid_j), sizeof(coord.grid_j));
 	os.write(reinterpret_cast<const char*>(&coord.grid_k), sizeof(coord.grid_k));
+	os.write(reinterpret_cast<const char*>(&coord.validIndex), sizeof(coord.validIndex));
 
 	const size_t s_coordsystem = coord.coordsystem.size();
 	os.write(reinterpret_cast<const char*>(&s_coordsystem), sizeof(size_t));
@@ -278,6 +284,7 @@ std::iostream& operator>>(std::iostream& is, Coords& coord) {
 	is.read(reinterpret_cast<char*>(&coord.grid_i), sizeof(coord.grid_i));
 	is.read(reinterpret_cast<char*>(&coord.grid_j), sizeof(coord.grid_j));
 	is.read(reinterpret_cast<char*>(&coord.grid_k), sizeof(coord.grid_k));
+	is.read(reinterpret_cast<char*>(&coord.validIndex), sizeof(coord.validIndex));
 
 	size_t s_coordsystem, s_coordparam;
 	is.read(reinterpret_cast<char*>(&s_coordsystem), sizeof(size_t));
@@ -299,7 +306,7 @@ std::iostream& operator>>(std::iostream& is, Coords& coord) {
 Coords::Coords() : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
-                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false),
                    coordsystem("NULL"), coordparam("NULL"), distance_algo(GEO_COSINE) {}
 
 /**
@@ -313,7 +320,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
                    ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
-                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
                    coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
 	setProj(in_coordinatesystem, in_parameters);
@@ -330,7 +337,7 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
                    ref_latitude(in_lat_ref), ref_longitude(in_long_ref),
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
-                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false),
                    coordsystem("LOCAL"), coordparam(), distance_algo(GEO_COSINE)
 {
 	setLocalRef(in_lat_ref, in_long_ref);
@@ -340,7 +347,7 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
 Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.ref_longitude),
                    altitude(c.altitude), latitude(c.latitude), longitude(c.longitude),
                    easting(c.easting), northing(c.northing),
-                   grid_i(c.grid_i), grid_j(c.grid_j), grid_k(c.grid_k),
+                   grid_i(c.grid_i), grid_j(c.grid_j), grid_k(c.grid_k), validIndex(c.validIndex),
                    coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo) {}
 
 /**
@@ -357,7 +364,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
        : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
          altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
          easting(IOUtils::nodata), northing(IOUtils::nodata),
-         grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+         grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
          coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
 	std::istringstream iss(coord_spec);
@@ -368,11 +375,11 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 	iss >> std::skipws >> coord2;
 	iss >> std::skipws >> epsg;
 
-	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
+	if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
 		setEPSG(epsg);
 		setXY(coord1, coord2, IOUtils::nodata);
 		setProj(in_coordinatesystem, in_parameters);
-	} else if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
+	} else if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
 		setLatLon(coord1, coord2, IOUtils::nodata);
 	}
 }
@@ -442,13 +449,21 @@ int Coords::getGridK() const {
 }
 
 /**
+* @brief Returns true if the (i,j,k) index are valid
+* @return index can be used (ie they match the other components of the coordinate)
+*/
+bool Coords::indexIsValid() const {
+	return validIndex;
+}
+
+/**
 * @brief Returns the projection parameters
 * @param[out] proj_type projection type
 * @param[out] proj_args optional arguments
 */
 void Coords::getProj(std::string& proj_type, std::string& proj_args) const {
 	proj_type = coordsystem;
-	if(coordsystem=="LOCAL") {
+	if (coordsystem=="LOCAL") {
 		std::ostringstream dms;
 		dms << "(" << CoordsAlgorithms::decimal_to_dms(ref_latitude) << " , " << CoordsAlgorithms::decimal_to_dms(ref_longitude) << ")";
 		proj_args=dms.str();
@@ -485,13 +500,14 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) {
 	latitude = in_latitude;
 	longitude = in_longitude;
-	if(in_altitude!=IOUtils::nodata) {
+	if (in_altitude!=IOUtils::nodata) {
 		altitude = in_altitude;
 	}
-	if(coordsystem!="NULL" && in_update==true) {
+	if (coordsystem!="NULL" && in_update==true) {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 	grid_i = grid_j = grid_k = IOUtils::inodata;
+	validIndex = false;
 }
 
 /**
@@ -507,13 +523,14 @@ void Coords::setLatLon(const double in_latitude, const double in_longitude, cons
 void Coords::setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update) {
 	easting = in_easting;
 	northing = in_northing;
-	if(in_altitude!=IOUtils::nodata) {
+	if (in_altitude!=IOUtils::nodata) {
 		altitude = in_altitude;
 	}
-	if(coordsystem!="NULL" && in_update==true) {
+	if (coordsystem!="NULL" && in_update==true) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 	grid_i = grid_j = grid_k = IOUtils::inodata;
+	validIndex = false;
 }
 
 /**
@@ -523,8 +540,8 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 * Therefore, the coordinate object needs to be given to a grid object that will either set (i,j) or
 * (lat,lon)/(easting,northing) as well as the grid's matching altitude if it is not already set.
 * Any subsequent change of either (lat,lon) or (easting,northing) will reset these indexes to IOUtils::inodata.
-* By default, setting (i,j) will invalidate (ie: delete) ALL geographic coordinates for the object (since we can not
-* convert from grid indices to/from geographic coordinates in the current object by lack of information).
+* By default, setting (i,j) will mark the coordinates as invalid (meaning that there is no match between
+* the (i,j,k) coordinates and the lat/lon or x/y coordinates).
 * Finally, the given indices are <b>NOT checked for validity</b>: such check must be done
 * by calling Grid2DObject::gridify or Grid3DObject::gridify .
 *
@@ -532,19 +549,17 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 * @param[in] in_grid_i grid index along the X direction
 * @param[in] in_grid_j grid index along the Y direction
 * @param[in] in_grid_k grid index along the Z direction
-* @param[in] in_invalidate should the geographic coordinates be invalidated? (default=true, this flag should be false ONLY when calling from Grid2/3DObject)
+* @param[in] setValid should the geographic coordinates be marked as valid? (default=false, this flag should be true ONLY when calling from Grid2/3DObject)
 */
-void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool in_invalidate) {
+void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool setValid) {
+	if (in_grid_i==IOUtils::inodata || in_grid_j==IOUtils::inodata) {
+		validIndex = false;
+		return;
+	}
 	grid_i = in_grid_i;
 	grid_j = in_grid_j;
 	grid_k = in_grid_k;
-	if(in_invalidate==true) {
-		latitude = IOUtils::nodata;
-		longitude = IOUtils::nodata;
-		easting = IOUtils::nodata;
-		northing = IOUtils::nodata;
-		altitude = IOUtils::nodata;
-	}
+	validIndex = setValid;
 }
 
 /**
@@ -556,8 +571,9 @@ void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in
 */
 void Coords::setAltitude(const double in_altitude, const bool in_update) {
 	altitude = in_altitude;
-	if(in_update==true) {
+	if (in_update==true) {
 		grid_i = grid_j = grid_k = IOUtils::inodata;
+		validIndex = false;
 	}
 }
 
@@ -574,29 +590,35 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 * - PROJ4 for coordinate conversion relying on the Proj4 library [ref: http://trac.osgeo.org/proj/]
 * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
 */
-void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) {
+void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
+{
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
 	if ((coordsystem != "NULL") && ((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata))) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 
-	if(in_coordinatesystem.empty()) {
+	if (in_coordinatesystem.empty()) {
 		coordsystem = std::string("NULL");
 	} else {
 		coordsystem = in_coordinatesystem;
 	}
 	coordparam  = in_parameters;
-	if(coordsystem=="LOCAL" && !coordparam.empty()) {
+	if (coordsystem=="LOCAL" && !coordparam.empty()) {
 		CoordsAlgorithms::parseLatLon(coordparam, ref_latitude, ref_longitude);
 	}
 
+	//If the new coordinate system is exactly the same as the old one, do not recompute X/Y 
+	//to avoids the inaccuracies due to conversion to and from WGS84
+	if ((coordsystem == in_coordinatesystem) && (coordparam == in_parameters))
+		return;
+	
 	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
-	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 	//if we only had x/y but not even a coord system, we could not compute lat/long. We now do it
-	if( (latitude==IOUtils::nodata || longitude==IOUtils::nodata) &&
+	if ( (latitude==IOUtils::nodata || longitude==IOUtils::nodata) &&
 	    (easting!=IOUtils::nodata && northing!=IOUtils::nodata) &&
 	    (coordsystem != "NULL") ) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
@@ -610,12 +632,12 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 * @param[in] in_ref_longitude longitude of the local origin
 */
 void Coords::setLocalRef(const double in_ref_latitude, const double in_ref_longitude) {
-	if(in_ref_latitude==IOUtils::nodata || in_ref_longitude==IOUtils::nodata) {
+	if (in_ref_latitude==IOUtils::nodata || in_ref_longitude==IOUtils::nodata) {
 		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
 	}
 	ref_latitude = in_ref_latitude;
 	ref_longitude = in_ref_longitude;
-	if(coordsystem=="LOCAL") {
+	if (coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 }
@@ -628,7 +650,7 @@ void Coords::setLocalRef(const double in_ref_latitude, const double in_ref_longi
 void Coords::setLocalRef(const std::string in_coordparam) {
 	coordparam = in_coordparam;
 	CoordsAlgorithms::parseLatLon(coordparam, ref_latitude, ref_longitude);
-	if(coordsystem=="LOCAL") {
+	if (coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 }
@@ -640,7 +662,7 @@ void Coords::setLocalRef(const std::string in_coordparam) {
 */
 void Coords::setDistances(const geo_distances in_algo) {
 	distance_algo = in_algo;
-	if(coordsystem=="LOCAL") {
+	if (coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 }
@@ -656,23 +678,23 @@ void Coords::setDistances(const geo_distances in_algo) {
 void Coords::check()
 {
 	//calculate/check coordinates if necessary
-	if(coordsystem=="LOCAL" && (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata)) {
+	if (coordsystem=="LOCAL" && (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata)) {
 		throw InvalidArgumentException("please define a reference point for LOCAL coordinate system", AT);
 	}
 
-	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
-		if(easting==IOUtils::nodata || northing==IOUtils::nodata) {
+	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
+		if (easting==IOUtils::nodata || northing==IOUtils::nodata) {
 			throw InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
 		}
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	} else {
-		if(easting==IOUtils::nodata || northing==IOUtils::nodata) {
+		if (easting==IOUtils::nodata || northing==IOUtils::nodata) {
 			convert_from_WGS84(latitude, longitude, easting, northing);
 		} else {
 			double tmp_lat, tmp_lon;
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
-			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
+			if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
 				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for coordinate", AT);
 			}
 		}
@@ -696,7 +718,7 @@ double Coords::distance(const Coords& destination) const {
 * @return true or false
 */
 bool Coords::isSameProj(const Coords& target) const {
-	if(coordsystem=="LOCAL") {
+	if (coordsystem=="LOCAL") {
 		return ( target.coordsystem=="LOCAL" && ref_latitude==target.ref_latitude && ref_longitude==target.ref_longitude );
 	} else {
 		return ( coordsystem==target.coordsystem && coordparam==target.coordparam );
@@ -709,9 +731,9 @@ bool Coords::isSameProj(const Coords& target) const {
 * @param i_update should the necessary coordinates be updated? (default=true)
 */
 void Coords::copyProj(const Coords& source, const bool i_update) {
-	if(!isSameProj(source)) {
+	if (!isSameProj(source)) {
 		//we only do a copy if we are not already using the same projection
-		if(source.coordsystem=="LOCAL") {
+		if (source.coordsystem=="LOCAL") {
 			coordsystem="LOCAL";
 			coordparam=source.coordparam;
 			ref_latitude=source.ref_latitude;
@@ -721,8 +743,8 @@ void Coords::copyProj(const Coords& source, const bool i_update) {
 			coordparam=source.coordparam;
 		}
 
-		if(i_update==true) {
-			if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
+		if (i_update==true) {
+			if ((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
 				convert_from_WGS84(latitude, longitude, easting, northing);
 			} else {
 				convert_to_WGS84(easting, northing, latitude, longitude);
@@ -762,14 +784,14 @@ void Coords::setEPSG(const int& epsg) {
 */
 void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const
 {
-	if((i_easting!=IOUtils::nodata) && (i_northing!=IOUtils::nodata)) {
-		if(coordsystem=="UTM") CoordsAlgorithms::UTM_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
-		else if(coordsystem=="UPS") CoordsAlgorithms::UPS_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
-		else if(coordsystem=="CH1903") CoordsAlgorithms::CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else if(coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2e6, i_northing-1e6, o_latitude, o_longitude);
-		else if(coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else if(coordsystem=="PROJ4") CoordsAlgorithms::PROJ4_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
-		else if(coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+	if ((i_easting!=IOUtils::nodata) && (i_northing!=IOUtils::nodata)) {
+		if (coordsystem=="UTM") CoordsAlgorithms::UTM_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
+		else if (coordsystem=="UPS") CoordsAlgorithms::UPS_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
+		else if (coordsystem=="CH1903") CoordsAlgorithms::CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if (coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2e6, i_northing-1e6, o_latitude, o_longitude);
+		else if (coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if (coordsystem=="PROJ4") CoordsAlgorithms::PROJ4_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
+		else if (coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
 	} else {
 		o_latitude = IOUtils::nodata;
@@ -786,18 +808,18 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 */
 void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const
 {
-	if((i_latitude!=IOUtils::nodata) && (i_longitude!=IOUtils::nodata)) {
-		if(coordsystem=="UTM") CoordsAlgorithms::WGS84_to_UTM(i_latitude, i_longitude, coordparam, o_easting, o_northing);
-		else if(coordsystem=="UPS") CoordsAlgorithms::WGS84_to_UPS(i_latitude, i_longitude, coordparam, o_easting, o_northing);
-		else if(coordsystem=="CH1903") CoordsAlgorithms::WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
-		else if(coordsystem=="CH1903+") {
+	if ((i_latitude!=IOUtils::nodata) && (i_longitude!=IOUtils::nodata)) {
+		if (coordsystem=="UTM") CoordsAlgorithms::WGS84_to_UTM(i_latitude, i_longitude, coordparam, o_easting, o_northing);
+		else if (coordsystem=="UPS") CoordsAlgorithms::WGS84_to_UPS(i_latitude, i_longitude, coordparam, o_easting, o_northing);
+		else if (coordsystem=="CH1903") CoordsAlgorithms::WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
+		else if (coordsystem=="CH1903+") {
 			CoordsAlgorithms::WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
 			o_easting += 2e6;
 			o_northing += 1e6;
 		}
-		else if(coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
-		else if(coordsystem=="PROJ4") CoordsAlgorithms::WGS84_to_PROJ4(i_latitude, i_longitude, coordparam, o_easting, o_northing);
-		else if(coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
+		else if (coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
+		else if (coordsystem=="PROJ4") CoordsAlgorithms::WGS84_to_PROJ4(i_latitude, i_longitude, coordparam, o_easting, o_northing);
+		else if (coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
 		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
 	} else {
 		o_easting = IOUtils::nodata;
@@ -807,7 +829,7 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 
 void Coords::distance(const Coords& destination, double& o_distance, double& o_bearing) const {
 //HACK: this is the 2D distance, it does not work in 3D!!
-	if(isSameProj(destination)) {
+	if (isSameProj(destination)) {
 		//we can use simple cartesian grid arithmetic
 		o_distance = sqrt( Optim::pow2(easting - destination.getEasting()) + Optim::pow2(northing - destination.getNorthing()) );
 		o_bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
@@ -836,7 +858,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 	double alpha;
 	double dist;
 
-	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
+	if ((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		east_out = IOUtils::nodata;
 		north_out = IOUtils::nodata;
 		//throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
@@ -867,7 +889,7 @@ void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, do
 	const double dist = sqrt( Optim::pow2(east_in) + Optim::pow2(north_in) );
 	const double bearing = fmod( atan2(east_in, north_in)*Cst::to_deg+360. , 360.);
 
-	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
+	if ((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		lat_out = IOUtils::nodata;
 		long_out = IOUtils::nodata;
 		//throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
@@ -899,6 +921,7 @@ void Coords::clearCoordinates() {
 	altitude = IOUtils::nodata;
 	easting = northing = IOUtils::nodata;
 	grid_i = grid_j = grid_k = IOUtils::inodata;
+	validIndex = false;
 }
 
 void Coords::setDefaultValues() {

@@ -187,16 +187,14 @@ Grid3DObject::Grid3DObject(const double& i_cellsize, const Coords& i_llcorner, c
                 cellsize(i_cellsize), z_is_absolute(true) {}
 
                 
-bool Grid3DObject::gridify(std::vector<Coords>& vec_points, std::vector<Coords>& vec_invalid) const 
+bool Grid3DObject::gridify(std::vector<Coords>& vec_points, const bool& keep_invalid) const 
 {
 	bool status=true;
 
-	vec_invalid.clear();
 	std::vector<Coords>::iterator v_Itr = vec_points.begin();
 	while ( v_Itr != vec_points.end() ) {
-		if( gridify(*v_Itr)==false ) {
-			vec_invalid.push_back( *v_Itr );
-			v_Itr = vec_points.erase(v_Itr);
+		if ( gridify(*v_Itr)==false ) {
+			if (!keep_invalid) v_Itr = vec_points.erase(v_Itr);
 			status=false;
 		} else {
 			++v_Itr;
@@ -204,12 +202,6 @@ bool Grid3DObject::gridify(std::vector<Coords>& vec_points, std::vector<Coords>&
 	}
 
 	return status;
-}
-
-bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
-{
-	std::vector<Coords> vec_invalid;
-	return gridify(vec_points, vec_invalid);
 }
 
 bool Grid3DObject::gridify(Coords& point) const
@@ -236,6 +228,7 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const
 
 	if(i==IOUtils::inodata || j==IOUtils::inodata || k==IOUtils::inodata) {
 		//the point is invalid (outside the grid or contains nodata)
+		point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
 		return false;
 	}
 
@@ -251,7 +244,7 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const
 		if(i>ncols) i=ncols;
 		if(j>nrows) j=nrows;
 		if(k>ndepths) k=ndepths;
-		point.setGridIndex(i, j, k, false);
+		point.setGridIndex(i, j, k, false); //mark the point as invalid
 		return false;
 	}
 
@@ -271,6 +264,8 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const
 		point.setXY(easting, northing, altitude);
 		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
 	}
+	
+	point.setGridIndex(i, j, k, true); //mark the point as valid
 	return true;
 }
 
@@ -278,10 +273,10 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 {
 	if(point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata || point.getAltitude()==IOUtils::nodata) {
 		//if the point is invalid, there is nothing we can do
+		point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
 		return false;
 	}
 
-	bool error_code=true;
 	int i,j,k;
 
 	if(point.isSameProj(llcorner)==true) {
@@ -298,35 +293,36 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 		k = (int)floor( (point.getAltitude()-llcorner.getAltitude()) / cellsize );
 	}
 
+	bool status=true;
 	//checking that the calculated indices fit in the grid2D
 	//and giving them the closest value within the grid if not.
 	if(i<0) {
 		i=0;
-		error_code=false;
+		status=false;
 	}
 	if(i>(signed)grid3D.getNx()) {
 		i=(signed)grid3D.getNx();
-		error_code=false;
+		status=false;
 	}
 	if(j<0) {
 		j=0;
-		error_code=false;
+		status=false;
 	}
 	if(j>(signed)grid3D.getNy()) {
 		j=(signed)grid3D.getNy();
-		error_code=false;
+		status=false;
 	}
 	if(k<0) {
 		k=0;
-		error_code=false;
+		status=false;
 	}
 	if(k>(signed)grid3D.getNz()) {
 		k=(signed)grid3D.getNz();
-		error_code=false;
+		status=false;
 	}
 
-	point.setGridIndex(i, j, k, false);
-	return error_code;
+	point.setGridIndex(i, j, k, status);  //mark as valid or invalid according to status
+	return status;
 }
 
 void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,

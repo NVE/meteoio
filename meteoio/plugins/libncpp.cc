@@ -562,7 +562,7 @@ void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, dou
 	// corner to calculate the lat/lon intervals between cells
 	Coords urcorner(grid.llcorner);
 	urcorner.setGridIndex(static_cast<int>(grid.getNx() - 1), static_cast<int>(grid.getNy() - 1), IOUtils::nodata, true);
-	grid.gridify(urcorner);
+	grid.gridify(urcorner); //no need to check the return value: we know it fits within the grid
 
 	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
 	const double lon_interval = (urcorner.getLon() - lon_array[0]) / static_cast<double>(grid.getNx()-1);
