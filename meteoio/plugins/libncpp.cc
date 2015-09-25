@@ -19,6 +19,7 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
 
 using namespace std;
 using namespace mio;  // for the IOExceptions and IOUtils
@@ -530,8 +531,8 @@ double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const doub
 	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
 	double alpha;
 
-	const double distanceX = mio::Coords::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
-	const double distanceY = mio::Coords::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
+	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
+	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
 
 	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
 	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);

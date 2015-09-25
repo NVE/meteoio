@@ -21,6 +21,7 @@
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for PI
 #include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/MathOptim.h>
 
 #include <cmath>
@@ -184,7 +185,7 @@ void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 		if(!tmp.isNodata())
 			vecPoints.push_back( tmp );
 
-		std::cerr <<  "\tRead virtual station " << vecPoints.back().printLatLon() << "\n";
+		std::cerr <<  "\tRead virtual station " << vecPoints.back().toString(Coords::LATLON) << "\n";
 	}
 }
 
@@ -314,26 +315,26 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y
 	double ll_latitude, ll_longitude, ll_lat, ll_lon;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfFirstGridPointInDegrees",&ll_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfFirstGridPointInDegrees",&ll_longitude),0);
-	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ll_latitude, ll_longitude, ll_lat, ll_lon);
+	CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ll_latitude, ll_longitude, ll_lat, ll_lon);
 	double ur_latitude, ur_longitude, ur_lat, ur_lon;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfLastGridPointInDegrees",&ur_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfLastGridPointInDegrees",&ur_longitude),0);
-	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ur_latitude, ur_longitude, ur_lat, ur_lon);
+	CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ur_latitude, ur_longitude, ur_lat, ur_lon);
 	double cntr_lat, cntr_lon; //geographic coordinates
-	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
+	CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
 
 	//determining cell size
 	long Ni, Nj;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
 	double bearing;
-	cell_x = Coords::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
-	cell_y = Coords::VincentyDistance(ll_lat, cntr_lon, ur_lat, cntr_lon, bearing) / (double)Nj;
+	cell_x = CoordsAlgorithms::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
+	cell_y = CoordsAlgorithms::VincentyDistance(ll_lat, cntr_lon, ur_lat, cntr_lon, bearing) / (double)Nj;
 
 	//determining bearing offset
 	double delta_lat, delta_lon; //geographic coordinates
-	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude)+1., .5*(ll_longitude+ur_longitude), delta_lat, delta_lon);
-	Coords::VincentyDistance(cntr_lat, cntr_lon, delta_lat, delta_lon, bearing_offset);
+	CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude)+1., .5*(ll_longitude+ur_longitude), delta_lat, delta_lon);
+	CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon, delta_lat, delta_lon, bearing_offset);
 	bearing_offset = fmod( bearing_offset + 180., 360.) - 180.; // turn into [-180;180)
 
 	//returning the center point as reference
@@ -856,7 +857,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 
 	//build GRIB local coordinates for the points
 	for(size_t ii=0; ii<npoints; ii++) {
-		Coords::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
+		CoordsAlgorithms::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
 	}
 
 	//retrieve nearest points
@@ -883,7 +884,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		StationData sd;
 		sd.position.setProj(coordin, coordinparam);
 		double true_lat, true_lon;
-		Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
+		CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
 		sd.position.setLatLon(true_lat, true_lon, values[ii]);
 		ostringstream ss;
 		ss << "Point_" << indexes[ii];
