@@ -231,7 +231,13 @@ const std::string Coords::toString(const FORMATS& type) const
 		os.precision(p);
 		if (validIndex) 
 			os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
-		os << "Projection\t" << coordsystem << " " << coordparam << "\n";
+		
+		os << "Projection\t" << coordsystem;
+		if (!coordparam.empty())
+			os << " (" << coordparam << ")";
+		if (coordsystem=="LOCAL")
+			os << " ref=(" << ref_latitude << "," << ref_longitude << ")";
+		os << "\n";
 		os << "EPSG\t\t" << getEPSG() << "\n";
 		os << "</Coords>\n";
 	} else if (type==FULL) {
@@ -243,7 +249,7 @@ const std::string Coords::toString(const FORMATS& type) const
 	} else if (type==LATLON) {
 		os << CoordsAlgorithms::printLatLon(latitude, longitude);
 	} else if (type==CARTESIAN) {
-		os << altitude << "; (" << getEasting() << "," << getNorthing() << "); (" << getGridI() << "," << getGridJ() << ")";
+		os << "[ (" << getEasting() << "," << getNorthing() << ");(" << getGridI() << "," << getGridJ() << ");@" << altitude << " ]";
 	} else
 		throw InvalidArgumentException("Selected output type is not supported!", AT);
 	return os.str();
@@ -597,9 +603,14 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 	if ((coordsystem != "NULL") && ((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata))) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
+	
+	//If the new coordinate system is exactly the same as the old one, do not recompute X/Y 
+	//to avoids the inaccuracies due to conversion to and from WGS84
+	if ((coordsystem == in_coordinatesystem) && (coordparam == in_parameters))
+		return;
 
 	if (in_coordinatesystem.empty()) {
-		coordsystem = std::string("NULL");
+		coordsystem = "NULL";
 	} else {
 		coordsystem = in_coordinatesystem;
 	}
@@ -607,11 +618,6 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 	if (coordsystem=="LOCAL" && !coordparam.empty()) {
 		CoordsAlgorithms::parseLatLon(coordparam, ref_latitude, ref_longitude);
 	}
-
-	//If the new coordinate system is exactly the same as the old one, do not recompute X/Y 
-	//to avoids the inaccuracies due to conversion to and from WGS84
-	if ((coordsystem == in_coordinatesystem) && (coordparam == in_parameters))
-		return;
 	
 	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
 	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
