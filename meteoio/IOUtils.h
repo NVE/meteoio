@@ -294,7 +294,7 @@ namespace IOUtils {
 	* @param[out] startx calculated start index for the current slice
 	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
 	*/
-	void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx);
+	void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t &wk, size_t& startx, size_t& nx);
 
 	/**
 	* @brief Convert a textual representation of a unit prefix (like 'm' or 'G') to multiplying factor

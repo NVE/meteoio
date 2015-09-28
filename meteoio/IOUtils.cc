@@ -624,7 +624,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	return npos;
 }
 
-void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx)
+void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t &wk, size_t& startx, size_t& nx)
 {
 	if(nbworkers>dimx) {
 		std::ostringstream ss;
