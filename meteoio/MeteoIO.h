@@ -16,8 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __METEOIO_H__
-#define __METEOIO_H__
+#ifndef METEOIO_H
+#define METEOIO_H
 
 #ifdef _MSC_VER
 //VC++ complains that it can not generate an assignment operator

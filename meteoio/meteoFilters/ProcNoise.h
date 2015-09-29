@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __NOISE_H__
-#define __NOISE_H__
+#ifndef NOISE_H
+#define NOISE_H
 
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 

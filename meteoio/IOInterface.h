@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __IOINTERFACE_H__
-#define __IOINTERFACE_H__
+#ifndef IOINTERFACE_H
+#define IOINTERFACE_H
 
 #include <meteoio/dataClasses/Array1D.h>
 #include <meteoio/dataClasses/Array2D.h>

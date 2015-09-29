@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __IOHANDLER_H__
-#define __IOHANDLER_H__
+#ifndef IOHANDLER_H
+#define IOHANDLER_H
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOExceptions.h>

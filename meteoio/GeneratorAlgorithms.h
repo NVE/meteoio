@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __GENERATORALGORITHMS_H__
-#define __GENERATORALGORITHMS_H__
+#ifndef GENERATORALGORITHMS_H
+#define GENERATORALGORITHMS_H
 
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/meteoLaws/Sun.h>

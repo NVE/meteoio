@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __RESAMPLINGALGORITHMS_H__
-#define __RESAMPLINGALGORITHMS_H__
+#ifndef RESAMPLINGALGORITHMS_H
+#define RESAMPLINGALGORITHMS_H
 
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/StationData.h>

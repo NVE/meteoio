@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __LIBINTERPOL1D_H__
-#define __LIBINTERPOL1D_H__
+#ifndef LIBINTERPOL1D_H
+#define LIBINTERPOL1D_H
 
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>

@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __BUFFER_H__
-#define __BUFFER_H__
+#ifndef BUFFER_H
+#define BUFFER_H
 
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/dataClasses/DEMObject.h>

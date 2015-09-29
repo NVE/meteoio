@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __GRIDSMANAGER_H__
-#define __GRIDSMANAGER_H__
+#ifndef GRIDSMANAGER_H
+#define GRIDSMANAGER_H
 
 #include <meteoio/DataGenerator.h>
 #include <meteoio/dataClasses/Buffer.h>

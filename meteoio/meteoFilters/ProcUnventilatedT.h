@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __UNVENTILATED_T_H__
-#define __UNVENTILATED_T_H__
+#ifndef UNVENTILATED_T_H
+#define UNVENTILATED_T_H
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>

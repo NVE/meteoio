@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __ALPUG_H__
-#define __ALPUG_H__
+#ifndef ALPUG_H
+#define ALPUG_H
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>

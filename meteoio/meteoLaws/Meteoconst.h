@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __METEOCONST_H__
-#define __METEOCONST_H__
+#ifndef METEOCONST_H
+#define METEOCONST_H
 
 #include <cfloat>
 

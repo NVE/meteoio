@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __MATHOPTIM_H__
-#define __MATHOPTIM_H__
+#ifndef MATHOPTIM_H
+#define MATHOPTIM_H
 
 #include <stdint.h>
 #include <cmath>

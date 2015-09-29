@@ -15,8 +15,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __CosmoXMLIO_H__
-#define __CosmoXMLIO_H__
+#ifndef CosmoXMLIO_H
+#define CosmoXMLIO_H
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>

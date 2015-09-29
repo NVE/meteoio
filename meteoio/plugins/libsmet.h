@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __LIBSMET_H__
-#define __LIBSMET_H__
+#ifndef LIBSMET_H
+#define LIBSMET_H
 
 #include <meteoio/FileUtils.h>
 

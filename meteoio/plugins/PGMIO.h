@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PGMIO_H__
-#define __PGMIO_H__
+#ifndef PGMIO_H
+#define PGMIO_H
 
 #include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>

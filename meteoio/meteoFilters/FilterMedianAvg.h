@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMEDIANAVG_H__
-#define __FILTERMEDIANAVG_H__
+#ifndef FILTERMEDIANAVG_H
+#define FILTERMEDIANAVG_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
 #include <meteoio/meteoStats/libinterpol1D.h>

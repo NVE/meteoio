@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PROCUNSHADE_H__
-#define __PROCUNSHADE_H__
+#ifndef PROCUNSHADE_H
+#define PROCUNSHADE_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
 #include <meteoio/meteoStats/libinterpol1D.h>

@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __GRIBIO_H__
-#define __GRIBIO_H__
+#ifndef GRIBIO_H
+#define GRIBIO_H
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>

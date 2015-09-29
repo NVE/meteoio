@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __METEO1DINTERPOLATOR_H__
-#define __METEO1DINTERPOLATOR_H__
+#ifndef METEO1DINTERPOLATOR_H
+#define METEO1DINTERPOLATOR_H
 
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/StationData.h>

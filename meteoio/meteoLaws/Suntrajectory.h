@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __SUNTAJECTORY_H__
-#define __SUNTAJECTORY_H__
+#ifndef SUNTAJECTORY_H
+#define SUNTAJECTORY_H
 
 #include <meteoio/IOUtils.h>
 

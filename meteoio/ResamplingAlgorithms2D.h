@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __RESAMPLINGALGORITHMS2D_H__
-#define __RESAMPLINGALGORITHMS2D_H__
+#ifndef RESAMPLINGALGORITHMS2D_H
+#define RESAMPLINGALGORITHMS2D_H
 
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <iostream>

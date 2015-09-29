@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __GRID3DOBJECT_H__
-#define __GRID3DOBJECT_H__
+#ifndef GRID3DOBJECT_H
+#define GRID3DOBJECT_H
 
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array3D.h>

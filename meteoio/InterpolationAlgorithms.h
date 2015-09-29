@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __INTERPOLATIONALGORITHMS_H__
-#define __INTERPOLATIONALGORITHMS_H__
+#ifndef INTERPOLATIONALGORITHMS_H
+#define INTERPOLATIONALGORITHMS_H
 
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/dataClasses/MeteoData.h>

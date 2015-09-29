@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __COORDSALGORITHMS_H__
-#define __COORDSALGORITHMS_H__
+#ifndef COORDSALGORITHMS_H
+#define COORDSALGORITHMS_H
 
 #include <string>
 

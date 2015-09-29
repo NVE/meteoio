@@ -16,8 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __DATAGENERATOR_H__
-#define __DATAGENERATOR_H__
+#ifndef DATAGENERATOR_H
+#define DATAGENERATOR_H
 
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>

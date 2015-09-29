@@ -16,8 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __METEO2DINTERPOLATOR_H__
-#define __METEO2DINTERPOLATOR_H__
+#ifndef METEO2DINTERPOLATOR_H
+#define METEO2DINTERPOLATOR_H
 
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/Config.h>

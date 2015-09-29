@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __CONFIGREADER_H__
-#define __CONFIGREADER_H__
+#ifndef CONFIGREADER_H
+#define CONFIGREADER_H
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>

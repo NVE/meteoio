@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PROCBUTTERWORTH_H__
-#define __PROCBUTTERWORTH_H__
+#ifndef PROCBUTTERWORTH_H
+#define PROCBUTTERWORTH_H
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>
