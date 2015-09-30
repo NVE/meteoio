@@ -20,6 +20,9 @@
 #include <ctype.h>
 #include <algorithm>
 #include <unistd.h>
+#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
+	#include <winsock.h>
+#endif
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
@@ -218,15 +221,24 @@ std::string getLogName() {
 }
 
 std::string getHostName() {
-	const size_t len = 128;
-	char name[len];
+	const size_t len = 4096;
 	
-	if (gethostname(name, len) != 0) {
-		return std::string("N/A");
-	}
+	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
+		TCHAR infoBuf[len];
+		DWORD bufCharCount = len;
+		if( !GetComputerName( infoBuf, &bufCharCount ) )
+			return std::string("N/A");
 
-	if (name[0] == '\0') return std::string("N/A");
-	return std::string(name);
+		return std::string(infoBuf);
+    #else
+		char name[len];
+		if (gethostname(name, len) != 0) {
+			return std::string("N/A");
+		}
+
+		if (name[0] == '\0') return std::string("N/A");
+		return std::string(name);
+	#endif
 }
 
 void readKeyValueHeader(std::map<std::string,std::string>& headermap,
