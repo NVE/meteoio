@@ -19,6 +19,7 @@
 #include <cstring>
 #include <ctype.h>
 #include <algorithm>
+#include <unistd.h>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
@@ -214,6 +215,18 @@ std::string getLogName() {
 
 	if(tmp==NULL) return std::string("N/A");
 	return std::string(tmp);
+}
+
+std::string getHostName() {
+	const size_t len = 128;
+	char name[len];
+	
+	if (gethostname(name, len) != 0) {
+		return std::string("N/A");
+	}
+
+	if (name[0] == '\0') return std::string("N/A");
+	return std::string(name);
 }
 
 void readKeyValueHeader(std::map<std::string,std::string>& headermap,

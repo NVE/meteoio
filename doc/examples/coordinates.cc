@@ -29,7 +29,7 @@ int main() {
 
 	//A nice finishing touch: we print nicely formatted lat/lon
 	cout << "Pretty printing\n";
-	cout << "\t(" << point1.getLat() << " , " << point1.getLon() << ") = " << point1.printLatLon() << endl;
+	cout << "\t(" << point1.getLat() << " , " << point1.getLon() << ") = " << point1.toString(Coords::LATLON) << endl;
 
 	return 0;
 }

@@ -29,7 +29,7 @@ int main(void) {
 	Coords point("CH1903", "");
 	point.setXY(559500., 221500., 1050.);
 	grid1.gridify(point); //computes the point position (i,j) in the grid
-	std::cout << "Position " << point.printLatLon() << " is point (" << point.getGridI() << "," << point.getGridJ() << ") in the grid with elevation=" << grid1.grid2D(point.getGridI(), point.getGridJ()) << "\n";
+	std::cout << "Position " << point.toString(Coords::LATLON) << " is point (" << point.getGridI() << "," << point.getGridJ() << ") in the grid with elevation=" << grid1.grid2D(point.getGridI(), point.getGridJ()) << "\n";
 
 	//now let's make a grid subset: from point (2,2) and size 5x5
 	Grid2DObject subgrid(grid1, 2, 2, 5, 5);

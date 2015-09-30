@@ -113,6 +113,12 @@ namespace IOUtils {
 	* @return user name
 	*/
 	std::string getLogName();
+	
+	/**
+	* @brief Retrieve the name of the computer running the binary
+	* @return host name
+	*/
+	std::string getHostName();
 
 	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
