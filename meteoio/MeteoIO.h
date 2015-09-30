@@ -33,6 +33,7 @@
 #include <meteoio/dataClasses/Array2D.h>
 #include <meteoio/dataClasses/Array3D.h>
 #include <meteoio/dataClasses/Array4D.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/DEMObject.h>

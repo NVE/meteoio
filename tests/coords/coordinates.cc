@@ -40,7 +40,7 @@ int main() {
 	//A nice finishing touch: we print nicely formatted lat/lon
 	cout << "Pretty printing\n";
 	stringstream ss;
-	ss << point1.printLatLon();
+	ss << CoordsAlgorithms::printLatLon(point1.getLat(), point1.getLon());
 	if(ss.str() != string("(46°50'43.428675\" , 9°52'12.021795\")")) {
 		cerr << "Pretty printing failed: " << ss.str() << "\n";
 		exit(1);
@@ -87,7 +87,7 @@ int main() {
 
 	cout << "Pretty printing of negative latitudes\n";
 	stringstream ss2;
-	ss2 << point1.printLatLon();
+	ss2 << point1.toString(Coords::LATLON);
 	if(ss2.str() != string("(-83°38'14.343220\" , 135°0'0.000000\")")) {
 		cerr << "Pretty printing failed: " << ss2.str() << "\n";
 		exit(1);
