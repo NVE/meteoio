@@ -78,6 +78,16 @@ const std::string& MeteoGrids::getParameterName(const size_t& parindex)
 	return paramname[parindex];
 }
 
+size_t MeteoGrids::getParameterIndex(const std::string& parname)
+{
+	for (size_t ii=0; ii<MeteoGrids::nrOfParameters; ii++) {
+		if (paramname[ii] == parname)
+			return ii;
+	}
+
+	return IOUtils::npos; //parameter not a part of MeteoGrids
+}
+
 /************************************************************
  * static section                                           *
  ************************************************************/
@@ -139,7 +149,7 @@ const std::string& MeteoData::getParameterName(const size_t& parindex)
 
 const std::string& MeteoData::getNameForParameter(const size_t& parindex) const
 {
-	if (parindex >= nrOfAllParameters)
+	if (parindex >= MeteoData::nrOfAllParameters)
 		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
 
 	return param_name[parindex];
@@ -205,7 +215,7 @@ void MeteoData::reset()
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
 */
 void MeteoData::standardizeNodata(const double& plugin_nodata) {
-	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+	for (size_t ii=0; ii<MeteoData::nrOfAllParameters; ii++) {
 		//loop through all meteo params and check whether they're nodata values
 		if (data[ii] <= plugin_nodata)
 			data[ii] = IOUtils::nodata;

@@ -82,6 +82,7 @@ class MeteoGrids {
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);
+		static size_t getParameterIndex(const std::string& parname);
 
 	private:
 		//static methods
