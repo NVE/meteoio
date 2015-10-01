@@ -325,7 +325,7 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
 		std::ostringstream ss;
-		ss << "Trying to cut an array of size (" << nx << "," << ny << "," << nz << ") ";
+		ss << "Trying to cut an array of size (" << i_array3D.nx << "," << i_array3D.ny << "," << i_array3D.nz << ") ";
 		ss << "to size (" << i_ncols << "," << i_nrows << "," << i_ndepth << ") ";
 		ss << "starting at (" << i_nx << "," << i_ny << "," << i_nz << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);

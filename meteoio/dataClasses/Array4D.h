@@ -267,7 +267,7 @@ template<class T> void Array4D<T>::subset(const Array4D<T>& i_array4D,
 
 	if (((i_nw+i_sizeW) > i_array4D.nw) || ((i_nx+i_sizeX) > i_array4D.nx) || ((i_ny+i_sizeY) > i_array4D.ny) || ((i_nz+i_sizeZ) > i_array4D.nz)) {
 		std::stringstream ss;
-		ss << "Trying to cut an array of size ("<< nw << "," << nx << "," << ny << "," << nz << ") ";
+		ss << "Trying to cut an array of size ("<< i_array4D.nw << "," << i_array4D.nx << "," << i_array4D.ny << "," << i_array4D.nz << ") ";
 		ss << "to size (" << i_sizeW << "," << i_sizeX << "," << i_sizeY << "," << i_sizeZ << ") ";
 		ss << "starting at ("<< i_nw << "," << i_nx << "," << i_ny << "," << i_nz << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);

@@ -248,7 +248,10 @@ void CoordsAlgorithms::trueLatLonToRotated(const double& lat_N, const double& lo
 }
 
 /**
-* @brief returns the epsg code of the current projection
+* @brief returns the epsg code matching a provided string representation
+* For example, when given "CH1903" with empty coordparam, it will return "21781"
+* @param[in] coordsystem string representation of the coordinate system
+* @param[in] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
 * @return epsg code
 */
 short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const std::string& coordparam) 
@@ -293,8 +296,10 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 }
 
 /**
-* @brief set the current projection to a given EPSG-defined projection
-* @param epsg epsg code
+* @brief Build the string representation for a given EPSG code
+* @param[in] epsg epsg code
+* @param[out] coordsystem string representation of the coordinate system
+*@param[out] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
 */
 void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, std::string& coordparam)
 {

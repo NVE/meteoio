@@ -298,7 +298,7 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const siz
 {
 	if (((i_nx+i_ncols) > i_array2D.nx) || ((i_ny+i_nrows) > i_array2D.ny)) {
 		std::stringstream ss;
-		ss << "Trying to cut an array of size (" << nx << "," << ny << ") ";
+		ss << "Trying to cut an array of size (" << i_array2D.nx << "," << i_array2D.ny << ") ";
 		ss << "to size (" << i_ncols << "," << i_nrows << ") starting at (" << i_nx << "," << i_ny << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
