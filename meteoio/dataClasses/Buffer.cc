@@ -45,6 +45,7 @@ bool MeteoBuffer::get(const Date& date, METEO_SET &vecMeteo) const
 bool MeteoBuffer::get(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo) const
 {
 	vecMeteo.clear();
+	vecMeteo.reserve(ts_buffer.size());
 
 	if (empty() || (date_start < ts_start) || (date_end > ts_end)) //data is NOT fully in cache
 		return false;

@@ -135,14 +135,20 @@ const std::string& MeteoData::getNameForParameter(const size_t& parindex) const
 	if (parindex >= MeteoData::nrOfAllParameters)
 		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
 
-	return param_name[parindex];
+	if (parindex<MeteoData::nrOfParameters) return MeteoData::s_default_paramname[parindex];
+	return extra_param_name[parindex-MeteoData::nrOfParameters];
 }
 
 bool MeteoData::param_exists(const std::string& i_paramname) const
 {
-	const size_t current_size = param_name.size();
+	for (size_t ii = 0; ii<MeteoData::nrOfParameters; ii++) {
+		if (s_default_paramname[ii] == i_paramname)
+			return true;
+	}
+	
+	const size_t current_size = extra_param_name.size();
 	for (size_t ii = 0; ii<current_size; ii++) {
-		if (param_name[ii] == i_paramname)
+		if (extra_param_name[ii] == i_paramname)
 			return true;
 	}
 
@@ -157,7 +163,7 @@ size_t MeteoData::addParameter(const std::string& i_paramname)
 		return current_index; //do nothing, because parameter is already present
 
 	//add parameter
-	param_name.push_back(i_paramname);
+	extra_param_name.push_back(i_paramname);
 	data.push_back(IOUtils::nodata);
 
 	//Increase nrOfAllParameters
@@ -172,15 +178,15 @@ size_t MeteoData::getNrOfParameters() const
 }
 
 MeteoData::MeteoData()
-         : date(0.0, 0.), meta(), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(0.0, 0.), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
 MeteoData::MeteoData(const Date& date_in)
-         : date(date_in), meta(), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(date_in), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
 MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
-         : date(date_in), meta(meta_in), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
 void MeteoData::setDate(const Date& in_date)
@@ -198,7 +204,7 @@ void MeteoData::reset()
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
 */
 void MeteoData::standardizeNodata(const double& plugin_nodata) {
-	for (size_t ii=0; ii<MeteoData::nrOfAllParameters; ii++) {
+	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		//loop through all meteo params and check whether they're nodata values
 		if (data[ii] <= plugin_nodata)
 			data[ii] = IOUtils::nodata;
@@ -280,8 +286,14 @@ const double& MeteoData::operator()(const std::string& parname) const
 
 size_t MeteoData::getParameterIndex(const std::string& parname) const
 {
-	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		if (param_name[ii] == parname)
+	for (size_t ii = 0; ii<MeteoData::nrOfParameters; ii++) {
+		if (s_default_paramname[ii] == parname)
+			return ii;
+	}
+	
+	const size_t current_size = extra_param_name.size();
+	for (size_t ii=0; ii<current_size; ii++) {
+		if (extra_param_name[ii] == parname)
 			return ii;
 	}
 
@@ -307,12 +319,12 @@ const std::string MeteoData::toString() const {
 std::iostream& operator<<(std::iostream& os, const MeteoData& data) {
 	os << data.date;
 	os << data.meta;
-	const size_t s_vector = data.param_name.size();
+	const size_t s_vector = data.extra_param_name.size();
 	os.write(reinterpret_cast<const char*>(&s_vector), sizeof(size_t));
 	for (size_t ii=0; ii<s_vector; ii++) {
-		const size_t s_string = data.param_name[ii].size();
+		const size_t s_string = data.extra_param_name[ii].size();
 		os.write(reinterpret_cast<const char*>(&s_string), sizeof(size_t));
-		os.write(reinterpret_cast<const char*>(&data.param_name[ii][0]), s_string*sizeof(data.param_name[ii][0]));
+		os.write(reinterpret_cast<const char*>(&data.extra_param_name[ii][0]), s_string*sizeof(data.extra_param_name[ii][0]));
 	}
 
 	const size_t s_data = data.data.size();
@@ -329,12 +341,12 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 	is >> data.meta;
 	size_t s_vector;
 	is.read(reinterpret_cast<char*>(&s_vector), sizeof(size_t));
-	data.param_name.resize(s_vector);
+	data.extra_param_name.resize(s_vector);
 	for (size_t ii=0; ii<s_vector; ii++) {
 		size_t s_string;
 		is.read(reinterpret_cast<char*>(&s_string), sizeof(size_t));
-		data.param_name[ii].resize(s_string);
-		is.read(reinterpret_cast<char*>(&data.param_name[ii][0]), s_string*sizeof(data.param_name[ii][0]));
+		data.extra_param_name[ii].resize(s_string);
+		is.read(reinterpret_cast<char*>(&data.extra_param_name[ii][0]), s_string*sizeof(data.extra_param_name[ii][0]));
 	}
 
 	size_t s_data;
@@ -434,7 +446,7 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//extra parameters only in meteo2 -> add them
 	if (nrExtra1==0) {
 		for (size_t ii=0; ii<nrExtra2; ii++) {
-			const size_t new_idx = addParameter( meteo2.param_name[nrOfParameters+ii] );
+			const size_t new_idx = addParameter( meteo2.extra_param_name[nrOfParameters+ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}
 		return;
@@ -444,10 +456,10 @@ void MeteoData::merge(const MeteoData& meteo2)
 	std::vector<bool> meteo2_flags(nrExtra2, false); //to keep track of which elements have been copied
 	//merge the extra field of the current meteodata
 	for (size_t ii=0; ii<nrExtra1; ii++) {
-		const std::string curr_name = param_name[nrOfParameters+ii];
+		const std::string curr_name = extra_param_name[nrOfParameters+ii];
 		//look for this parameter in meteo2
 		for (size_t jj=0; jj<nrExtra2; jj++) {
-			if (meteo2.param_name[nrOfParameters+jj]==curr_name ) {
+			if (meteo2.extra_param_name[nrOfParameters+jj]==curr_name ) {
 				meteo2_flags[jj] = true;
 				if (data[nrOfParameters+ii]==IOUtils::nodata) data[nrOfParameters+ii]=meteo2.data[nrOfParameters+jj];
 				break;
@@ -457,7 +469,7 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//merge the extra fields of meteo2 that were NOT in the current meteodata
 	for (size_t ii=0; ii<nrExtra2; ii++) {
 		if (meteo2_flags[ii]==false) {
-			const size_t new_idx = addParameter( meteo2.param_name[nrOfParameters+ii] );
+			const size_t new_idx = addParameter( meteo2.extra_param_name[nrOfParameters+ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}
 	}

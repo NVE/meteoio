@@ -265,7 +265,7 @@ class MeteoData {
 		static bool initStaticData();///<initialize the static map meteoparamname
 
 		//private data members, please keep the order consistent with declaration lists and logic!
-		std::vector<std::string> param_name;
+		std::vector<std::string> extra_param_name;
 		std::vector<double> data;
 		size_t nrOfAllParameters;
 		bool resampled; ///<set this to true if MeteoData is result of resampling
