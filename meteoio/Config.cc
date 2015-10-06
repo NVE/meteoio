@@ -206,7 +206,7 @@ void Config::parseFile(const std::string& filename)
 	}
 
 	std::reverse(import_after.begin(), import_after.end());
-	while(!import_after.empty()) {
+	while (!import_after.empty()) {
 		const string file_name = import_after.back();
 		addFile(file_name);
 		import_after.pop_back();

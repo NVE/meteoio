@@ -318,7 +318,7 @@ const std::string TimeSeriesManager::toString() const {
 	os << dataGenerator.toString();
 
 	os << "RawBuffer:\n" << raw_buffer.toString();
-	os << "Filteredcache:\n" << raw_buffer.toString();
+	os << "Filteredcache:\n" << filtered_cache.toString();
 
 	//display point_cache
 	size_t count=0;

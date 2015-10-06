@@ -337,8 +337,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	size_t current_index = 0; //index to vec_data
 	double previous_ts = IOUtils::nodata;
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
-		vecMeteo.push_back(md);
-		MeteoData& tmp_md = vecMeteo.back();
+		MeteoData tmp_md(md);
 
 		if (timestamp_present)
 			IOUtils::convertString(tmp_md.date, timestamps[ii], current_timezone);
@@ -390,6 +389,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 		}
 
 		previous_ts = tmp_md.date.getJulian();
+		vecMeteo.push_back(tmp_md);
 	}
 }
 

@@ -207,7 +207,7 @@ class IOManager {
 		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 		/**
-		 * @brief Clear the point cache. All resampled values are dismissed, will need to be recalculated.
+		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
 		 */
 		void clear_cache();
 

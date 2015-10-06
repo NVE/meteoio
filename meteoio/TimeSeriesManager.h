@@ -135,7 +135,7 @@ class TimeSeriesManager {
 		 * @brief Clear the point cache. All resampled values are dismissed, will need to be recalculated.
 		 */
 		void clear_cache();
-
+		
 	private:
 		void setDfltBufferProperties();
 		void fill_filtered_cache();

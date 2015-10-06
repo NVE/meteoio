@@ -255,7 +255,7 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 		iss >> std::skipws >> tmp_string;
 
 		if (!tmp_string.empty()) {
-			vec_string.push_back(tmp_string);
+			vec_string.push_back( tmp_string );
 		}
 		tmp_string.clear();
 	}

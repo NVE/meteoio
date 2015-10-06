@@ -38,9 +38,7 @@ namespace mio {
 class AnetzData{
 	public:
 		AnetzData()
-		: nrOfAnetzStations(3), nrOfCoefficients(3), coeffs(3, IOUtils::nodata), anetzstations(3, "")
-		{
-		}
+		: nrOfAnetzStations(3), nrOfCoefficients(3), coeffs(3, IOUtils::nodata), anetzstations(3, "") {}
 
 		AnetzData(const size_t& nr_anetz,
 		          const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3,
