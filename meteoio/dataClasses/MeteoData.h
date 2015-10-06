@@ -232,7 +232,7 @@ class MeteoData {
 		 * @param meteo1 reference MeteoData, highest priority
 		 * @param meteo2 extra MeteoData to merge, lowest priority
 		 */
-		static MeteoData merge(const MeteoData& meteo1, const MeteoData& meteo2);
+		static MeteoData merge(MeteoData meteo1, const MeteoData& meteo2);
 
 		/**
 		 * @brief Simple merge strategy.
@@ -259,8 +259,7 @@ class MeteoData {
 
 	private:
 		//static methods
-		static std::map<size_t, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
-		static std::vector<std::string> s_default_paramname;
+		static std::vector<std::string> s_default_paramname; ///<Associate a name with meteo parameters in Parameters
 		static const double epsilon; ///<for comparing fields
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname

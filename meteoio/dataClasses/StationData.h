@@ -107,7 +107,7 @@ class StationData {
 		* @param sd2 second StationData to merge, lowest priority
 		* @return new StationData object
 		*/
-		static StationData merge(const StationData& sd1, const StationData& sd2);
+		static StationData merge(StationData sd1, const StationData& sd2);
 
 		/**
 		* @brief Simple merge strategy.

@@ -93,29 +93,12 @@ size_t MeteoGrids::getParameterIndex(const std::string& parname)
  ************************************************************/
 const double MeteoData::epsilon = 1e-5;
 const size_t MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
-map<size_t, string> MeteoData::static_meteoparamname;
 std::vector<std::string> MeteoData::s_default_paramname;
 const bool MeteoData::__init = MeteoData::initStaticData();
 
 bool MeteoData::initStaticData()
 {
-	//Associate unsigned int value and a string representation of a meteo parameter
-	static_meteoparamname[P]      = "P";
-	static_meteoparamname[TA]     = "TA";
-	static_meteoparamname[RH]     = "RH";
-	static_meteoparamname[TSG]    = "TSG";
-	static_meteoparamname[TSS]    = "TSS";
-	static_meteoparamname[HS]     = "HS";
-	static_meteoparamname[VW]     = "VW";
-	static_meteoparamname[DW]     = "DW";
-	static_meteoparamname[VW_MAX] = "VW_MAX";
-	static_meteoparamname[RSWR]   = "RSWR";
-	static_meteoparamname[ISWR]   = "ISWR";
-	static_meteoparamname[ILWR]   = "ILWR";
-	static_meteoparamname[TAU_CLD]= "TAU_CLD";
-	static_meteoparamname[PSUM]    = "PSUM";
-	static_meteoparamname[PSUM_PH]    = "PSUM_PH";
-
+	//Since the parameters enum starts at 0, this is enough to associate an index with its name
 	s_default_paramname.push_back("P");
 	s_default_paramname.push_back("TA");
 	s_default_paramname.push_back("RH");
@@ -140,7 +123,7 @@ const std::string& MeteoData::getParameterName(const size_t& parindex)
 	if (parindex >= MeteoData::nrOfParameters)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
 
-	return MeteoData::static_meteoparamname[parindex];
+	return MeteoData::s_default_paramname[parindex];
 }
 
 /************************************************************
@@ -415,11 +398,10 @@ void MeteoData::merge(std::vector<MeteoData>& vec)
 	vec.swap( vecResult );
 }
 
-MeteoData MeteoData::merge(const MeteoData& meteo1, const MeteoData& meteo2)
+MeteoData MeteoData::merge(MeteoData meteo1, const MeteoData& meteo2)
 {
-	MeteoData tmp(meteo1);
-	tmp.merge(meteo2);
-	return tmp;
+	meteo1.merge(meteo2);
+	return meteo1;
 }
 
 void MeteoData::merge(const MeteoData& meteo2)
