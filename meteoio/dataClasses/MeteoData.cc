@@ -294,7 +294,7 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 	const size_t current_size = extra_param_name.size();
 	for (size_t ii=0; ii<current_size; ii++) {
 		if (extra_param_name[ii] == parname)
-			return ii;
+			return ii+MeteoData::nrOfParameters;
 	}
 
 	return IOUtils::npos; //parameter not a part of MeteoData
@@ -306,7 +306,7 @@ const std::string MeteoData::toString() const {
 	os << meta.toString();
 	os << date.toString(Date::FULL) << "\n";
 
-	for (size_t ii=0; ii<getNrOfParameters(); ii++) {
+	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		const double& value = operator()(ii);
 		if (value != IOUtils::nodata)
 			os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
