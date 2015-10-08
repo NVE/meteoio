@@ -19,9 +19,10 @@
 #include <cstring>
 #include <ctype.h>
 #include <algorithm>
-#include <unistd.h>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#include <winsock.h>
+#else
+    #include <unistd.h>
 #endif
 
 #include <meteoio/IOUtils.h>
@@ -222,7 +223,7 @@ std::string getLogName() {
 
 std::string getHostName() {
 	const size_t len = 4096;
-	
+
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 		TCHAR infoBuf[len];
 		DWORD bufCharCount = len;
