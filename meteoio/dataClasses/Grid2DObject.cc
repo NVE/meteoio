@@ -287,7 +287,7 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		i=0;
 		status=false;
 	}
-	if (i>(signed)getNx()) {
+	if (i>=(signed)getNx()) {
 		i=(signed)getNx();
 		status=false;
 	}
@@ -295,7 +295,7 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		j=0;
 		status=false;
 	}
-	if (j>(signed)getNy()) {
+	if (j>=(signed)getNy()) {
 		j=(signed)getNy();
 		status=false;
 	}

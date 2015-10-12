@@ -300,7 +300,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 		i=0;
 		status=false;
 	}
-	if (i>(signed)grid3D.getNx()) {
+	if (i>=(signed)grid3D.getNx()) {
 		i=(signed)grid3D.getNx();
 		status=false;
 	}
@@ -308,7 +308,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 		j=0;
 		status=false;
 	}
-	if (j>(signed)grid3D.getNy()) {
+	if (j>=(signed)grid3D.getNy()) {
 		j=(signed)grid3D.getNy();
 		status=false;
 	}
@@ -316,7 +316,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 		k=0;
 		status=false;
 	}
-	if (k>(signed)grid3D.getNz()) {
+	if (k>=(signed)grid3D.getNz()) {
 		k=(signed)grid3D.getNz();
 		status=false;
 	}
