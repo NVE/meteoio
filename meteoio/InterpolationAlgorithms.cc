@@ -953,20 +953,18 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}
-	if (IOUtils::fileExists(filename)) {
-		return 1.0;
-	} else {
-		return 0.0;
-	}
+	
+	return (IOUtils::fileExists(filename))? 1. : 0.;
 }
 
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	info.clear();
-	info.str(filename);
+	info.clear(); info.str("");
 	gridsmanager.read2DGrid(grid, filename);
 	if (!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
+	} else {
+		info << filename;
 	}
 }
 
