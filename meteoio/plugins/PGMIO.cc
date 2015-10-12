@@ -84,10 +84,10 @@ PGMIO::~PGMIO() throw() {
 size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename) {
 	std::string line;
 
-	while(!fin.eof()) {
+	while (!fin.eof()) {
 		getline(fin, line);
 		IOUtils::trim(line);
-		if(!line.empty() && line.at(0)!='#') {
+		if (!line.empty() && line.at(0)!='#') {
 			return IOUtils::readLineToVec(line, vecString);
 		}
 	}
@@ -120,17 +120,17 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	//Go through file, save key value pairs
 	try {
 		//read header: magic value
-		if(getNextHeader(tmpvec, full_name)!=1) {
+		if (getNextHeader(tmpvec, full_name)!=1) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		//read header: image width and height
-		if(getNextHeader(tmpvec, full_name)!=2) {
+		if (getNextHeader(tmpvec, full_name)!=2) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(ncols, tmpvec[0]);
 		IOUtils::convertString(nrows, tmpvec[1]);
 		//read header: number of greys
-		if(getNextHeader(tmpvec, full_name)!=1) {
+		if (getNextHeader(tmpvec, full_name)!=1) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(nr_colors, tmpvec[0]);
@@ -166,7 +166,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
 				}
 
-				if(tmp_val==plugin_nodata) {
+				if (tmp_val==plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out(ll, kk) = IOUtils::nodata;
 				} else {
@@ -276,11 +276,11 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << nr_colors << "\n";
 
 		//writing the data
-		if(grid_in.getNy()>0) {
+		if (grid_in.getNy()>0) {
 			for (size_t kk=grid_in.getNy()-1; kk < grid_in.getNy(); kk--) {
 				for (size_t ll=0; ll < grid_in.getNx(); ll++) {
 					const double value = grid_in(ll, kk);
-					if(value!=IOUtils::nodata)
+					if (value!=IOUtils::nodata)
 						fout << static_cast<unsigned int>( floor((grid_in(ll, kk)-min_value)*scaling)+1 ) << " ";
 					else
 						fout << "0" << " ";

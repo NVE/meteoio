@@ -96,7 +96,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
 
-	if(!virtual_stations && !downscaling) { //this is the usual case
+	if (!virtual_stations && !downscaling) { //this is the usual case
 		tsmanager.getMeteoData(i_date, vecMeteo);
 	} else {
 		if (virtual_stations)

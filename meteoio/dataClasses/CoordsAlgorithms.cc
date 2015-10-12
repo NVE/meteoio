@@ -87,14 +87,14 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 	}
 
 	decimal = fabs(d);
-	if(m!=IOUtils::nodata) {
+	if (m!=IOUtils::nodata) {
 		decimal += m/60.;
 	}
-	if(s!=IOUtils::nodata) {
+	if (s!=IOUtils::nodata) {
 		decimal += s/3600.;
 	}
 
-	if(d<0.) return (-decimal);
+	if (d<0.) return (-decimal);
 	else return decimal;
 }
 
@@ -115,7 +115,7 @@ void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double&lat, d
 	char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 	char lon_str[len]="";
 
-	if(coordinates.size()>=len) {
+	if (coordinates.size()>=len) {
 		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
 	}
 
@@ -143,7 +143,7 @@ std::string CoordsAlgorithms::decimal_to_dms(const double& decimal) {
 	const int m = (int)floor( (abs_dec - (double)d)*60. );
 	const double s = 3600.*(abs_dec - (double)d) - 60.*(double)m;
 
-	if(decimal<0.)
+	if (decimal<0.)
 		dms << "-";
 	dms << d << "°" << m << "'" << std::fixed << std::setprecision(6) << s << "\"";
 	return dms.str();
@@ -197,7 +197,7 @@ double CoordsAlgorithms::lon_degree_lenght(const double& latitude) {
 */
 void CoordsAlgorithms::rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true)
 {
-	if(lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_rot==IOUtils::nodata || lon_rot==IOUtils::nodata) {
+	if (lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_rot==IOUtils::nodata || lon_rot==IOUtils::nodata) {
 		lat_true = IOUtils::nodata;
 		lon_true = IOUtils::nodata;
 		return;
@@ -229,7 +229,7 @@ void CoordsAlgorithms::rotatedToTrueLatLon(const double& lat_N, const double& lo
 */
 void CoordsAlgorithms::trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot)
 {
-	if(lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_true==IOUtils::nodata || lon_true==IOUtils::nodata) {
+	if (lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_true==IOUtils::nodata || lon_true==IOUtils::nodata) {
 		lat_rot = IOUtils::nodata;
 		lon_rot = IOUtils::nodata;
 		return;
@@ -256,14 +256,14 @@ void CoordsAlgorithms::trueLatLonToRotated(const double& lat_N, const double& lo
 */
 short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const std::string& coordparam) 
 {
-	if(coordsystem=="CH1903") return 21781;
-	if(coordsystem=="CH1903+") return 2056;
-	if(coordsystem=="UTM") {
+	if (coordsystem=="CH1903") return 21781;
+	if (coordsystem=="CH1903+") return 2056;
+	if (coordsystem=="UTM") {
 		//UTM Zone information
 		short int zoneNumber;
 		char zoneLetter;
 		parseUTMZone(coordparam, zoneLetter, zoneNumber);
-		if(zoneLetter >= 'N') {
+		if (zoneLetter >= 'N') {
 			//northern hemisphere. We KNOW it will fit in a short int
 			return (static_cast<short int>(32600+zoneNumber));
 		} else {
@@ -271,9 +271,9 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 			return (static_cast<short int>(32700+zoneNumber));
 		}
 	}
-	if(coordsystem=="UPS") {
+	if (coordsystem=="UPS") {
 		//UPS Zone
-		if(coordparam == "S") {
+		if (coordparam == "S") {
 			//southern hemisphere
 			return (32761);
 		} else {
@@ -281,9 +281,9 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 			return (32661);
 		}
 	}
-	if(coordsystem=="PROJ4") {
+	if (coordsystem=="PROJ4") {
 		const int tmp = atoi(coordparam.c_str());
-		if(tmp<0 || tmp>32767) {
+		if (tmp<0 || tmp>32767) {
 			std::ostringstream ss;
 			ss << "Invalid EPSG code argument: " << tmp << ". It should be between 0 and 32767! (please check EPSG registry)";
 			throw InvalidArgumentException(ss.str(), AT);
@@ -306,7 +306,7 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 	coordsystem.clear();
 	coordparam.clear();
 	//TODO: get rid of the zone letter. This is not part of the standard and redundant (and messy)
-	if(epsg<0 || epsg>32767) {
+	if (epsg<0 || epsg>32767) {
 		std::ostringstream ss;
 		ss << "Invalid epsg code " << epsg << " (it should be between 0 and 32767)!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -316,11 +316,11 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		coordsystem.assign("CH1903");
 		return;
 	}
-	if(epsg==2056) {
+	if (epsg==2056) {
 		coordsystem.assign("CH1903+");
 		return;
 	}
-	if((epsg>=32601) && (epsg<=32660)) {
+	if ((epsg>=32601) && (epsg<=32660)) {
 		//northern hemisphere
 		coordsystem.assign("UTM");
 		const int zoneNumber = epsg-32600;
@@ -329,7 +329,7 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		coordparam=osstream.str();
 		return;
 	}
-	if((epsg>=32701) && (epsg<=32760)) {
+	if ((epsg>=32701) && (epsg<=32760)) {
 		//southern hemisphere
 		coordsystem.assign("UTM");
 		const int zoneNumber = epsg-32700;
@@ -338,7 +338,7 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		coordparam=osstream.str();
 		return;
 	}
-	if((epsg==32761 || epsg==32661)) {
+	if ((epsg==32761 || epsg==32661)) {
 		coordsystem.assign("UPS");
 		coordparam = (epsg==32761)? "S" : "N";
 		return;
@@ -434,42 +434,42 @@ int CoordsAlgorithms::getUTMZone(const double& i_latitude, const double& i_longi
 	int ZoneNumber = int((i_longitude + 180.)/6.) + 1;
 
 	// Special zones for Scandinavia
-	if( i_latitude >= 72.0 && i_latitude < 84.0 ) {
-		if(      i_longitude >= 0.0  && i_longitude <  9.0 ) ZoneNumber = 31;
-		else if( i_longitude >= 9.0  && i_longitude < 21.0 ) ZoneNumber = 33;
-		else if( i_longitude >= 21.0 && i_longitude < 33.0 ) ZoneNumber = 35;
-		else if( i_longitude >= 33.0 && i_longitude < 42.0 ) ZoneNumber = 37;
+	if ( i_latitude >= 72.0 && i_latitude < 84.0 ) {
+		if (      i_longitude >= 0.0  && i_longitude <  9.0 ) ZoneNumber = 31;
+		else if ( i_longitude >= 9.0  && i_longitude < 21.0 ) ZoneNumber = 33;
+		else if ( i_longitude >= 21.0 && i_longitude < 33.0 ) ZoneNumber = 35;
+		else if ( i_longitude >= 33.0 && i_longitude < 42.0 ) ZoneNumber = 37;
 	 }
-	if( i_latitude >= 56.0 && i_latitude < 64.0 && i_longitude >= 3.0 && i_longitude < 12.0 ) {
+	if ( i_latitude >= 56.0 && i_latitude < 64.0 && i_longitude >= 3.0 && i_longitude < 12.0 ) {
 		ZoneNumber = 32;
 	}
 
 	//getting zone letter
 	char zoneLetter='Z';
 	if     ((0 >= i_longitude) && (i_latitude >  84)) zoneLetter = 'Y';
-	else if((0 <  i_longitude) && (i_latitude >  84)) zoneLetter = 'Z';
-	else if((84 >= i_latitude) && (i_latitude >= 72)) zoneLetter = 'X';
-	else if((72 > i_latitude) && (i_latitude >= 64)) zoneLetter = 'W';
-	else if((64 > i_latitude) && (i_latitude >= 56)) zoneLetter = 'V';
-	else if((56 > i_latitude) && (i_latitude >= 48)) zoneLetter = 'U';
-	else if((48 > i_latitude) && (i_latitude >= 40)) zoneLetter = 'T';
-	else if((40 > i_latitude) && (i_latitude >= 32)) zoneLetter = 'S';
-	else if((32 > i_latitude) && (i_latitude >= 24)) zoneLetter = 'R';
-	else if((24 > i_latitude) && (i_latitude >= 16)) zoneLetter = 'Q';
-	else if((16 > i_latitude) && (i_latitude >= 8)) zoneLetter = 'P';
-	else if(( 8 > i_latitude) && (i_latitude >= 0)) zoneLetter = 'N'; //first zone of Northern hemisphere
-	else if(( 0 > i_latitude) && (i_latitude >= -8)) zoneLetter = 'M'; //first zone of Southern hemisphere
-	else if((-8 > i_latitude) && (i_latitude >= -16)) zoneLetter = 'L';
-	else if((-16 > i_latitude) && (i_latitude >= -24)) zoneLetter = 'K';
-	else if((-24 > i_latitude) && (i_latitude >= -32)) zoneLetter = 'J';
-	else if((-32 > i_latitude) && (i_latitude >= -40)) zoneLetter = 'H';
-	else if((-40 > i_latitude) && (i_latitude >= -48)) zoneLetter = 'G';
-	else if((-48 > i_latitude) && (i_latitude >= -56)) zoneLetter = 'F';
-	else if((-56 > i_latitude) && (i_latitude >= -64)) zoneLetter = 'E';
-	else if((-64 > i_latitude) && (i_latitude >= -72)) zoneLetter = 'D';
-	else if((-72 > i_latitude) && (i_latitude >= -80)) zoneLetter = 'C';
-	else if((0 >=  i_longitude) && (i_latitude <= -80)) zoneLetter = 'A';
-	else if((0 <   i_longitude) && (i_latitude <= -80)) zoneLetter = 'B';
+	else if ((0 <  i_longitude) && (i_latitude >  84)) zoneLetter = 'Z';
+	else if ((84 >= i_latitude) && (i_latitude >= 72)) zoneLetter = 'X';
+	else if ((72 > i_latitude) && (i_latitude >= 64)) zoneLetter = 'W';
+	else if ((64 > i_latitude) && (i_latitude >= 56)) zoneLetter = 'V';
+	else if ((56 > i_latitude) && (i_latitude >= 48)) zoneLetter = 'U';
+	else if ((48 > i_latitude) && (i_latitude >= 40)) zoneLetter = 'T';
+	else if ((40 > i_latitude) && (i_latitude >= 32)) zoneLetter = 'S';
+	else if ((32 > i_latitude) && (i_latitude >= 24)) zoneLetter = 'R';
+	else if ((24 > i_latitude) && (i_latitude >= 16)) zoneLetter = 'Q';
+	else if ((16 > i_latitude) && (i_latitude >= 8)) zoneLetter = 'P';
+	else if (( 8 > i_latitude) && (i_latitude >= 0)) zoneLetter = 'N'; //first zone of Northern hemisphere
+	else if (( 0 > i_latitude) && (i_latitude >= -8)) zoneLetter = 'M'; //first zone of Southern hemisphere
+	else if ((-8 > i_latitude) && (i_latitude >= -16)) zoneLetter = 'L';
+	else if ((-16 > i_latitude) && (i_latitude >= -24)) zoneLetter = 'K';
+	else if ((-24 > i_latitude) && (i_latitude >= -32)) zoneLetter = 'J';
+	else if ((-32 > i_latitude) && (i_latitude >= -40)) zoneLetter = 'H';
+	else if ((-40 > i_latitude) && (i_latitude >= -48)) zoneLetter = 'G';
+	else if ((-48 > i_latitude) && (i_latitude >= -56)) zoneLetter = 'F';
+	else if ((-56 > i_latitude) && (i_latitude >= -64)) zoneLetter = 'E';
+	else if ((-64 > i_latitude) && (i_latitude >= -72)) zoneLetter = 'D';
+	else if ((-72 > i_latitude) && (i_latitude >= -80)) zoneLetter = 'C';
+	else if ((0 >=  i_longitude) && (i_latitude <= -80)) zoneLetter = 'A';
+	else if ((0 <   i_longitude) && (i_latitude <= -80)) zoneLetter = 'B';
 
 	std::ostringstream zone;
 	zone << ZoneNumber << zoneLetter;
@@ -508,7 +508,7 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 	short int in_zoneNumber;
 	char in_zoneLetter;
 	parseUTMZone(coordparam, in_zoneLetter, in_zoneNumber);
-	if(in_zoneNumber!=zoneNumber) {
+	if (in_zoneNumber!=zoneNumber) {
 		std::cerr << "[W] requested UTM zone is not appropriate for the given coordinates. Normally, It should be zone ";
 		std::cerr << zoneNumber << "\n";
 		zoneNumber = in_zoneNumber;
@@ -539,7 +539,7 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 	north_out = K1 + K2*p*p + K3*p*p*p*p;
 	east_out = K4*p + K5*p*p*p + 500000.0;
 
-	if(Lat < 0)
+	if (Lat < 0)
 		north_out += 10000000.0; //offset for southern hemisphere
 }
 
@@ -572,7 +572,7 @@ void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::
 	//set reference parameters: central meridian of the zone, true northing and easting
 	//please note that the special zones still use the reference meridian as given by their zone number (ie: even if it might not be central anymore)
 	const int long0 = ((int)zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in "middle" of zone as required for the projection meridian (might not be the middle for special zones)
-	if(zoneLetter<='M') {
+	if (zoneLetter<='M') {
 		north_in -= 10000000.0; //offset used for southern hemisphere
 	}
 	east_in -= 500000.0; //longitude offset: x coordinate is relative to central meridian
@@ -634,9 +634,9 @@ void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in,
 	const double tan_Zz = pow( (1.+e*sin(lat_in*Cst::to_rad))/(1.-e*sin(lat_in*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_in*Cst::to_rad/2.);
 	const double R = k0*C0*tan_Zz;
 
-	if(coordparam=="N") {
+	if (coordparam=="N") {
 		north_out = FN - R*cos(long_in*Cst::to_rad);
-	} else if(coordparam=="S") {
+	} else if (coordparam=="S") {
 		north_out = FN + R*cos(long_in*Cst::to_rad);
 	} else {
 		throw InvalidFormatException("Invalid UPS zone: "+coordparam+". It should be either N or S.",AT);
@@ -686,9 +686,9 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 
 	//computing latitude
 	double R;
-	if(Delta_N==0.) {
+	if (Delta_N==0.) {
 		R = fabs(Delta_E);
-	} else if(Delta_E==0.) {
+	} else if (Delta_E==0.) {
 		R = fabs(Delta_N);
 	} else {
 		R = (Delta_N>Delta_E)? fabs( Delta_N / cos(long_out*Cst::to_rad)) : fabs( Delta_E / sin(long_out*Cst::to_rad) );
@@ -705,7 +705,7 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 	lat_out = chi + A*sin(2.*chi) + B*sin(4.*chi) + C*sin(6.*chi) + D*sin(8.*chi);
 	lat_out *= Cst::to_deg;
 
-	if(!northern_hemisphere) lat_out *=-1.;
+	if (!northern_hemisphere) lat_out *=-1.;
 }
 
 void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber)
@@ -714,11 +714,11 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
 	}
-	if(zoneNumber<1 || zoneNumber>60) {
+	if (zoneNumber<1 || zoneNumber>60) {
 		throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (zone should be between 1 and 60, zone letter in [C-M, N-X])",AT);
 	}
 	zoneLetter = (char)toupper(zoneLetter); //just in case... (sorry for the pun!)
-	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
+	if (zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
 			//Special zones for the poles: we should NOT use UTM in these regions!
 			throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (trying to use UTM in polar regions)",AT);
 	}
@@ -751,7 +751,7 @@ void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_i
 	}
 
 	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
-	if(p!=0) {
+	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
 		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
@@ -797,7 +797,7 @@ void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north
 	}
 
 	const int p = pj_transform(pj_src, pj_latlong, 1, 1, &x, &y, NULL );
-	if(p!=0) {
+	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
 		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
@@ -831,7 +831,7 @@ void CoordsAlgorithms::cosineInverse(const double& lat_ref, const double& lon_re
 	const double lat_ref_rad = lat_ref*Cst::to_rad;
 	const double bearing_rad = bearing*Cst::to_rad;
 
-	if(IOUtils::checkEpsilonEquality(distance, 0., .01)) {
+	if (IOUtils::checkEpsilonEquality(distance, 0., .01)) {
 		//distance is too small, it could create numerical problems
 		lat = lat_ref;
 		lon = lon_ref;
@@ -860,7 +860,7 @@ void CoordsAlgorithms::cosineInverse(const double& lat_ref, const double& lon_re
 */
 double CoordsAlgorithms::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
-	if(lat1==lat2 && lon1==lon2) {
+	if (lat1==lat2 && lon1==lon2) {
 		//distance is zero, it creates numerical problems -> skip calculation
 		alpha = 0.;
 		return 0.;
@@ -908,12 +908,12 @@ double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1
 	int n=0;
 	do {
 		sin_sigma = sqrt( Optim::pow2(cos(U2)*sin(lambda)) + Optim::pow2(cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda)) );
-		if(sin_sigma==0.) return 0.; //co-incident points
+		if (sin_sigma==0.) return 0.; //co-incident points
 		cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
 		sigma = atan2(sin_sigma,cos_sigma);
 		const double sin_alpha = cos(U1)*cos(U2)*sin(lambda) / sin_sigma;
 		cos_alpha2 = 1. - Optim::pow2(sin_alpha);
-		if(lat1==0. && lat2==0.) {
+		if (lat1==0. && lat2==0.) {
 			cos_2sigma_m = 0.;
 		} else {
 			cos_2sigma_m = cos_sigma - 2.*sin(U1)*sin(U2)/cos_alpha2;
@@ -926,7 +926,7 @@ double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1
 		n++;
 	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
 
-	if(n>n_max) {
+	if (n>n_max) {
 		throw IOException("Distance calculation not converging", AT);
 	}
 

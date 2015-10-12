@@ -35,7 +35,7 @@ double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
 	const double T2 = T*T;
 	const double ea = lwr / (Cst::stefan_boltzmann * (T2*T2));
 
-	if(ea > 1.0)
+	if (ea > 1.0)
 		return 1.0;
 	return ea;
 }
@@ -184,7 +184,7 @@ double Atmosphere::windLogProfile(const double& v_ref, const double& z_ref, cons
 */
 double Atmosphere::windChill(const double& TA, const double& VW)
 {
-	if(TA>(273.15+10.) || VW<5.) return TA; //not applicable in this case
+	if (TA>(273.15+10.) || VW<5.) return TA; //not applicable in this case
 
 	const double t = IOUtils::K_TO_C(TA); //in Celsius
 	const double v = VW*3.6; //in km/h
@@ -205,7 +205,7 @@ double Atmosphere::windChill(const double& TA, const double& VW)
 */
 double Atmosphere::heatIndex(const double& TA, const double& RH)
 {
-	if(TA<(273.15+26.7) || RH<0.4) return TA; //not applicable in this case
+	if (TA<(273.15+26.7) || RH<0.4) return TA; //not applicable in this case
 
 	const double t = IOUtils::K_TO_C(TA); //in Celsius
 	const double t2 = t*t;
@@ -291,7 +291,7 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 	const double exponent = 1./7.;
 	const double ea = 1.24 * pow( (e0_mBar / TA), exponent);
 
-	if(ea>1.0) return 1.;
+	if (ea>1.0) return 1.;
 	return ea;
 }
 
@@ -325,7 +325,7 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
 	const double ea = ilwr_dilley/ilwr_blkbody;
 
-	if(ea>1.0) return 1.;
+	if (ea>1.0) return 1.;
 	return ea;
 }
 
@@ -360,7 +360,7 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
 
-	if(ea>1.0) return 1.;
+	if (ea>1.0) return 1.;
 	return ea;
 }
 
@@ -416,7 +416,7 @@ double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.754 + 0.0044 * (Tdp-Cst::t_water_triple_pt);
 
-	if(ea>1.0) return 1.;
+	if (ea>1.0) return 1.;
 	return ea;
 }
 
@@ -445,7 +445,7 @@ double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
 	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
 
-	if(ea>1.0) return 1.;
+	if (ea>1.0) return 1.;
 	return ea;
 }
 
@@ -479,7 +479,7 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 	const double a3 = 0.18;
 
 	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
-	if(ea > 1.0)
+	if (ea > 1.0)
 		return 1.0;
 	return ea;
 }
@@ -546,9 +546,9 @@ double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const dou
 double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
 	const double b1 = 0.75, b2 = 3.4;
 
-	if(solarIndex>1.) return 0.;
+	if (solarIndex>1.) return 0.;
 	const double cloudiness = pow((1.-solarIndex)/b1, 1./b2);
-	if(cloudiness>1.) return 1.;
+	if (cloudiness>1.) return 1.;
 	return cloudiness;
 }
 
@@ -571,13 +571,13 @@ double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
 double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness)
 {
 	double clf;
-	if(cloudiness==IOUtils::nodata) {
-		if(iswr_meas<=0. || iswr_clear_sky<=0.)
+	if (cloudiness==IOUtils::nodata) {
+		if (iswr_meas<=0. || iswr_clear_sky<=0.)
 			return IOUtils::nodata;
 		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
-		if(clf<0.) clf=0.;
+		if (clf<0.) clf=0.;
 	} else {
-		if(cloudiness<0. || cloudiness>1.)
+		if (cloudiness<0. || cloudiness>1.)
 			return IOUtils::nodata;
 		clf = cloudiness;
 	}
@@ -615,7 +615,7 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
                                  const double& julian, const double& TZ,
                                  const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
 {
-	if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
 		return IOUtils::nodata;
 	}
 
@@ -623,8 +623,8 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 	int year, month, day;
 	date.getDate(year, month, day);
 
-	if(cloudiness==IOUtils::nodata) {
-		if(ISWR==IOUtils::nodata) return IOUtils::nodata;
+	if (cloudiness==IOUtils::nodata) {
+		if (ISWR==IOUtils::nodata) return IOUtils::nodata;
 
 		SunObject Sun(lat, lon, altitude, julian, TZ);
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
@@ -653,12 +653,12 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness)
 {
 	double c;
-	if(cloudiness!=IOUtils::nodata) {
-		if(cloudiness<0. || cloudiness>1.)
+	if (cloudiness!=IOUtils::nodata) {
+		if (cloudiness<0. || cloudiness>1.)
 			return IOUtils::nodata;
 		c = cloudiness;
 	} else {
-		if(iswr_meas<=0. || iswr_clear_sky<=0.)
+		if (iswr_meas<=0. || iswr_clear_sky<=0.)
 			return IOUtils::nodata;
 		c = Kasten_cloudiness(iswr_meas/iswr_clear_sky);
 	}
@@ -694,12 +694,12 @@ double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const dou
                                  const double& julian, const double& TZ,
                                  const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
 {
-	if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
 		return IOUtils::nodata;
 	}
 
-	if(cloudiness==IOUtils::nodata) {
-		if(ISWR==IOUtils::nodata) return IOUtils::nodata;
+	if (cloudiness==IOUtils::nodata) {
+		if (ISWR==IOUtils::nodata) return IOUtils::nodata;
 
 		SunObject Sun(lat, lon, altitude, julian, TZ);
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
@@ -734,14 +734,14 @@ double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const
 	const double iswr_thresh = 5.; //any iswr less than this is not considered as valid for Crawford
 	const double ND=IOUtils::nodata; //since we will do lots of comparisons with it...
 
-	if(RH!=ND && TA!=ND && cloudiness!=ND) {
+	if (RH!=ND && TA!=ND && cloudiness!=ND) {
 		return Omstedt_ilwr(RH, TA, cloudiness);
 	}
-	if(lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
+	if (lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
 		const double ilwr_p = Unsworth_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
-		if(ilwr_p!=ND) return ilwr_p; //it might have been that we could not compute (for low solar angles)
+		if (ilwr_p!=ND) return ilwr_p; //it might have been that we could not compute (for low solar angles)
 	}
-	if(RH!=ND && TA!=ND) {
+	if (RH!=ND && TA!=ND) {
 		return Brutsaert_ilwr(RH, TA);
 	}
 
@@ -848,7 +848,7 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	Rhw = E / Es;
 
 	Rh = (di / (di + dw) * Rhi + dw / (di + dw) * Rhw);
-	if(Rh > 1.) {
+	if (Rh > 1.) {
 		return 1.;
 	} else {
 		return Rh;
@@ -868,7 +868,7 @@ double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, c
 	const double dryAir_density = stdDryAirDensity(altitude, TA);
 	const double RH = qi/(1.-qi) * dryAir_density/SatVaporDensity;
 
-	if(RH>1.) return 1.;
+	if (RH>1.) return 1.;
 	else return RH;
 }
 

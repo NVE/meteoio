@@ -204,14 +204,14 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		const bool hasQI = read2DGrid_internal(grid_out, filename, MeteoGrids::QI, date);
 		const bool hasTA = read2DGrid_internal(ta, filename, MeteoGrids::TA, date);
 		if (hasQI && hasDEM && hasTA) {
-			for(size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
+			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
 				grid_out(ii) = Atmosphere::specToRelHumidity(dem(ii), ta(ii), grid_out(ii));
 			return;
 		}
 		
 		const bool hasTD = read2DGrid_internal(grid_out, filename, MeteoGrids::TD, date);
 		if (hasTA && hasTD) {
-			for(size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
+			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
 				grid_out(ii) = Atmosphere::DewPointtoRh(grid_out(ii), ta(ii), false);
 			return;
 		}
@@ -277,7 +277,7 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 				dem_out.set(p, IOUtils::nodata);
 				const double k = Cst::gravity / (Cst::dry_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
 				const double k_inv = 1./k;
-				for(size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++) {
+				for (size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++) {
 					const double K = pow(p(ii)/p_sea(ii), k_inv);
 					dem_out(ii) = ta(ii)*Cst::earth_R0*(1.-K) / (Cst::dry_adiabatique_lapse_rate * Cst::earth_R0 - ta(ii)*(1.-K));
 				}
@@ -378,7 +378,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
 	size_t time_index = IOUtils::npos, lat_index = IOUtils::npos, lon_index = IOUtils::npos;
-	for(size_t ii=0; ii<dimname.size(); ii++) {
+	for (size_t ii=0; ii<dimname.size(); ii++) {
 		const string name=dimname[ii];
 		if (name=="latitude" || name=="lat")
 			lat_index = ii;

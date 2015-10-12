@@ -42,7 +42,7 @@ namespace Optim {
 	* @return rounded number cast as int
 	*/
 	inline long int round(const double& x) {
-		if(x>=0.) return static_cast<long int>( x+.5 );
+		if (x>=0.) return static_cast<long int>( x+.5 );
 		else return static_cast<long int>( x-.5 );
 	}
 
@@ -169,7 +169,7 @@ namespace Optim {
 	* @return a^b
 	*/
 	inline double fastPow(double a, double b) {
-		if(b>0.) {
+		if (b>0.) {
 			return fastPowInternal(a,b);
 		} else {
 			const double tmp = fastPowInternal(a,-b);

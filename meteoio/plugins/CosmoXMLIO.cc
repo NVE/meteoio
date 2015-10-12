@@ -147,39 +147,39 @@ void CosmoXMLIO::init(const Config& cfg)
 	const std::string meteofile = cfg.get("METEOFILE", "INPUT", IOUtils::nothrow);
 	cfg.getValue("METEO_PREFIX", "INPUT", meteo_prefix, IOUtils::nothrow);
 	cfg.getValue("METEO_EXT", "INPUT", meteo_ext, IOUtils::nothrow);
-	if( IOUtils::strToUpper(meteo_ext)=="NONE" ) meteo_ext="";
+	if ( IOUtils::strToUpper(meteo_ext)=="NONE" ) meteo_ext="";
 
 	//input encoding forcing
 	string tmp;
 	cfg.getValue("XML_ENCODING", "INPUT", tmp, IOUtils::nothrow);
-	if(!tmp.empty()) {
-		if(tmp=="UTF-8") in_encoding=XML_CHAR_ENCODING_UTF8;
-		else if(tmp=="UTF-16-LE") in_encoding=XML_CHAR_ENCODING_UTF16LE;
-		else if(tmp=="UTF-16-BE") in_encoding=XML_CHAR_ENCODING_UTF16BE;
-		else if(tmp=="UCS-4-LE") in_encoding=XML_CHAR_ENCODING_UCS4LE;
-		else if(tmp=="UCS-4-BE") in_encoding=XML_CHAR_ENCODING_UCS4BE;
-		else if(tmp=="EBCDIC") in_encoding=XML_CHAR_ENCODING_EBCDIC;
-		else if(tmp=="UCS-4-2143") in_encoding=XML_CHAR_ENCODING_UCS4_2143;
-		else if(tmp=="UCS-4-3412") in_encoding=XML_CHAR_ENCODING_UCS4_3412;
-		else if(tmp=="UCS-2") in_encoding=XML_CHAR_ENCODING_UCS2;
-		else if(tmp=="ISO-8859-1") in_encoding=XML_CHAR_ENCODING_8859_1;
-		else if(tmp=="ISO-8859-2") in_encoding=XML_CHAR_ENCODING_8859_2;
-		else if(tmp=="ISO-8859-3") in_encoding=XML_CHAR_ENCODING_8859_3;
-		else if(tmp=="ISO-8859-4") in_encoding=XML_CHAR_ENCODING_8859_4;
-		else if(tmp=="ISO-8859-5") in_encoding=XML_CHAR_ENCODING_8859_5;
-		else if(tmp=="ISO-8859-6") in_encoding=XML_CHAR_ENCODING_8859_6;
-		else if(tmp=="ISO-8859-7") in_encoding=XML_CHAR_ENCODING_8859_7;
-		else if(tmp=="ISO-8859-8") in_encoding=XML_CHAR_ENCODING_8859_8;
-		else if(tmp=="ISO-8859-9") in_encoding=XML_CHAR_ENCODING_8859_9;
-		else if(tmp=="ISO-2022-JP") in_encoding=XML_CHAR_ENCODING_2022_JP;
-		else if(tmp=="SHIFT-JIS") in_encoding=XML_CHAR_ENCODING_SHIFT_JIS;
-		else if(tmp=="EUC-JP") in_encoding=XML_CHAR_ENCODING_EUC_JP;
-		else if(tmp=="ASCII") in_encoding=XML_CHAR_ENCODING_ASCII;
+	if (!tmp.empty()) {
+		if (tmp=="UTF-8") in_encoding=XML_CHAR_ENCODING_UTF8;
+		else if (tmp=="UTF-16-LE") in_encoding=XML_CHAR_ENCODING_UTF16LE;
+		else if (tmp=="UTF-16-BE") in_encoding=XML_CHAR_ENCODING_UTF16BE;
+		else if (tmp=="UCS-4-LE") in_encoding=XML_CHAR_ENCODING_UCS4LE;
+		else if (tmp=="UCS-4-BE") in_encoding=XML_CHAR_ENCODING_UCS4BE;
+		else if (tmp=="EBCDIC") in_encoding=XML_CHAR_ENCODING_EBCDIC;
+		else if (tmp=="UCS-4-2143") in_encoding=XML_CHAR_ENCODING_UCS4_2143;
+		else if (tmp=="UCS-4-3412") in_encoding=XML_CHAR_ENCODING_UCS4_3412;
+		else if (tmp=="UCS-2") in_encoding=XML_CHAR_ENCODING_UCS2;
+		else if (tmp=="ISO-8859-1") in_encoding=XML_CHAR_ENCODING_8859_1;
+		else if (tmp=="ISO-8859-2") in_encoding=XML_CHAR_ENCODING_8859_2;
+		else if (tmp=="ISO-8859-3") in_encoding=XML_CHAR_ENCODING_8859_3;
+		else if (tmp=="ISO-8859-4") in_encoding=XML_CHAR_ENCODING_8859_4;
+		else if (tmp=="ISO-8859-5") in_encoding=XML_CHAR_ENCODING_8859_5;
+		else if (tmp=="ISO-8859-6") in_encoding=XML_CHAR_ENCODING_8859_6;
+		else if (tmp=="ISO-8859-7") in_encoding=XML_CHAR_ENCODING_8859_7;
+		else if (tmp=="ISO-8859-8") in_encoding=XML_CHAR_ENCODING_8859_8;
+		else if (tmp=="ISO-8859-9") in_encoding=XML_CHAR_ENCODING_8859_9;
+		else if (tmp=="ISO-2022-JP") in_encoding=XML_CHAR_ENCODING_2022_JP;
+		else if (tmp=="SHIFT-JIS") in_encoding=XML_CHAR_ENCODING_SHIFT_JIS;
+		else if (tmp=="EUC-JP") in_encoding=XML_CHAR_ENCODING_EUC_JP;
+		else if (tmp=="ASCII") in_encoding=XML_CHAR_ENCODING_ASCII;
 		else
 			throw InvalidArgumentException("Encoding \""+tmp+"\" is not supported!", AT);
 	}
 
-	if(!meteofile.empty()) {
+	if (!meteofile.empty()) {
 		const string file_and_path = meteopath + "/" + meteofile;
 		const std::pair<Date,std::string> tmp_pair(Date(), file_and_path);
 		cache_meteo_files.push_back( tmp_pair );
@@ -189,7 +189,7 @@ void CosmoXMLIO::init(const Config& cfg)
 }
 
 CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
-	if(this != &source) {
+	if (this != &source) {
 		cache_meteo_files = source.cache_meteo_files;
 		xml_stations_id = source.xml_stations_id;
 		input_id = source.input_id;
@@ -221,10 +221,10 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 	while ((it != dirlist.end())) {
 		const std::string& filename = *it;
 		const std::string::size_type prefix_pos = (prefix_len==0)? 0 : filename.find_first_of(meteo_prefix);
-		if(prefix_pos==string::npos) continue;
+		if (prefix_pos==string::npos) continue;
 
 		const size_t start_pos = prefix_pos+prefix_len;
-		if(start_pos>=filename.size()) continue;
+		if (start_pos>=filename.size()) continue;
 
 		const std::string::size_type date_pos = filename.find_first_of("0123456789", start_pos);
 		Date date;
@@ -238,7 +238,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 
 void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 {
-	if(in_doc!=NULL) return; //the file has already been read
+	if (in_doc!=NULL) return; //the file has already been read
 
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
@@ -272,11 +272,11 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 
 void CosmoXMLIO::closeIn_XML() throw()
 {
-	if(in_xpathCtx!=NULL) {
+	if (in_xpathCtx!=NULL) {
 		xmlXPathFreeContext(in_xpathCtx);
 		in_xpathCtx = NULL;
 	}
-	if(in_doc!=NULL) {
+	if (in_doc!=NULL) {
 		xmlFreeDoc(in_doc);
 		in_doc = NULL;
 	}
@@ -344,19 +344,19 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 			if (cur_node->children->type == XML_TEXT_NODE) {
 				const std::string value( (const char*)(cur_node->children->content) );
 
-				if(field=="identifier") xml_id = value;
-				//else if(field=="station_abbreviation") sd.stationID = value;
-				else if(field=="station_name") sd.stationName = value;
-				else if(field=="missing_value_code") IOUtils::convertString(plugin_nodata, value);
+				if (field=="identifier") xml_id = value;
+				//else if (field=="station_abbreviation") sd.stationID = value;
+				else if (field=="station_name") sd.stationName = value;
+				else if (field=="missing_value_code") IOUtils::convertString(plugin_nodata, value);
 
-				if(use_model_loc) {
-					if(field=="station_height") IOUtils::convertString(altitude, value);
-					else if(field=="station_latitude") IOUtils::convertString(latitude, value);
-					else if(field=="station_longitude") IOUtils::convertString(longitude, value);
+				if (use_model_loc) {
+					if (field=="station_height") IOUtils::convertString(altitude, value);
+					else if (field=="station_latitude") IOUtils::convertString(latitude, value);
+					else if (field=="station_longitude") IOUtils::convertString(longitude, value);
 				} else {
-					if(field=="model_station_height") IOUtils::convertString(altitude, value);
-					else if(field=="model_station_latitude") IOUtils::convertString(latitude, value);
-					else if(field=="model_station_longitude") IOUtils::convertString(longitude, value);
+					if (field=="model_station_height") IOUtils::convertString(altitude, value);
+					else if (field=="model_station_latitude") IOUtils::convertString(latitude, value);
+					else if (field=="model_station_longitude") IOUtils::convertString(longitude, value);
 				}
 			}
 		}
@@ -364,12 +364,12 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 
 	sd.stationID = station_id;
 
-	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
+	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
 		throw NoAvailableDataException("Some station location information is missing for station \""+station_id+"\"", AT);
 	sd.position.setProj(coordin, coordinparam);
 	sd.position.setLatLon(latitude, longitude, altitude);
 
-	if(xml_id.empty())
+	if (xml_id.empty())
 		throw NoAvailableDataException("XML station id missing for station \""+station_id+"\"", AT);
 	xml_stations_id[station_id] = xml_id;
 
@@ -390,38 +390,38 @@ CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStar
 
 			if (cur_node->children->type == XML_TEXT_NODE) {
 				const std::string value( (const char*)(cur_node->children->content) );
-				if(field=="reference_ts") {
+				if (field=="reference_ts") {
 					IOUtils::convertString(md.date, value, in_tz);
-					if(md.date<dateStart) return read_continue;
-					if(md.date>dateEnd) return read_stop;
+					if (md.date<dateStart) return read_continue;
+					if (md.date>dateEnd) return read_stop;
 				} else {
 					double tmp;
 					IOUtils::convertString(tmp, value);
 					tmp = IOUtils::standardizeNodata(tmp, plugin_nodata);
 
 					//for now, we hard-code the fields mapping
-					if(field=="108005") md(MeteoData::TA) = tmp;
-					else if(field=="108014") md(MeteoData::RH) = tmp/100.;
-					else if(field=="108015") md(MeteoData::VW) = tmp;
-					else if(field=="108017") md(MeteoData::DW) = tmp;
-					else if(field=="108018") md(MeteoData::VW_MAX) = tmp;
-					else if(field=="108023") md(MeteoData::PSUM) = tmp;
-					else if(field=="108060") md(MeteoData::HS) = tmp/100.;
-					else if(field=="108062") md(MeteoData::TSS) = tmp;
-					else if(field=="108064") iswr_diff = tmp;
-					else if(field=="108065") iswr_dir = tmp;
-					else if(field=="108066") md(MeteoData::RSWR) = tmp;
-					else if(field=="108067") md(MeteoData::ILWR) = tmp; //108068=olwr
+					if (field=="108005") md(MeteoData::TA) = tmp;
+					else if (field=="108014") md(MeteoData::RH) = tmp/100.;
+					else if (field=="108015") md(MeteoData::VW) = tmp;
+					else if (field=="108017") md(MeteoData::DW) = tmp;
+					else if (field=="108018") md(MeteoData::VW_MAX) = tmp;
+					else if (field=="108023") md(MeteoData::PSUM) = tmp;
+					else if (field=="108060") md(MeteoData::HS) = tmp/100.;
+					else if (field=="108062") md(MeteoData::TSS) = tmp;
+					else if (field=="108064") iswr_diff = tmp;
+					else if (field=="108065") iswr_dir = tmp;
+					else if (field=="108066") md(MeteoData::RSWR) = tmp;
+					else if (field=="108067") md(MeteoData::ILWR) = tmp; //108068=olwr
 				}
 			}
 		}
 	}
 
-	if(iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
+	if (iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
 		md(MeteoData::ISWR) = iswr_diff+iswr_dir;
 
 	//because of the Kalman filter applied on VW, sometimes VW_MAX<VW
-	if(md(MeteoData::VW)!=IOUtils::nodata && md(MeteoData::VW_MAX)!=IOUtils::nodata && md(MeteoData::VW_MAX)<md(MeteoData::VW))
+	if (md(MeteoData::VW)!=IOUtils::nodata && md(MeteoData::VW_MAX)!=IOUtils::nodata && md(MeteoData::VW_MAX)<md(MeteoData::VW))
 		md(MeteoData::VW_MAX) = md(MeteoData::VW);
 
 	return read_ok;
@@ -458,9 +458,9 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 	openIn_XML(meteofile);
 
 	//read all the stations' metadata
-	for(size_t ii=0; ii<input_id.size(); ii++) {
+	for (size_t ii=0; ii<input_id.size(); ii++) {
 		StationData sd;
-		if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
+		if (!parseStationData(input_id[ii], in_xpathCtx, sd)) {
 			closeIn_XML();
 			throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 		}
@@ -517,7 +517,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		std::vector<StationData> vecStation;
 		for (size_t ii=0; ii<input_id.size(); ii++) {
 			StationData sd;
-			if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
+			if (!parseStationData(input_id[ii], in_xpathCtx, sd)) {
 				closeIn_XML();
 				throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 			}

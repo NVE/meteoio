@@ -219,7 +219,7 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
 
 			if (ncols > 1) {
-				for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+				for (vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
 					IOUtils::toUpper(*it);
 				}
 
@@ -373,7 +373,7 @@ void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 bool PSQLIO::replace(std::string& str, const std::string& from, const std::string& to)
 {
     const size_t start_pos = str.find(from);
-    if(start_pos == std::string::npos)
+    if (start_pos == std::string::npos)
         return false;
     str.replace(start_pos, from.length(), to);
     return true;

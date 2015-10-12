@@ -503,7 +503,7 @@ bool GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 	const string url = endpoint + url_query;
 
 	if (curl) {
-		if(CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
+		if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
@@ -515,7 +515,7 @@ bool GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 		curl_easy_cleanup(curl);
 	}
 
-	if(code!=CURLE_OK) {
+	if (code!=CURLE_OK) {
 		if (gsn_debug)
 			std::cout << "****\nRequest: " << url_query << "\n****\n";
 		std::cout << "[E] " << curl_easy_strerror(code) << "\t";

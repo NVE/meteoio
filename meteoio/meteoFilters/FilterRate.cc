@@ -57,7 +57,7 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 
 		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time+1e-12)*24.*3600.); //per seconds
 
-		if( local_rate>max_rate_of_change || local_rate<min_rate_of_change ) {
+		if ( local_rate>max_rate_of_change || local_rate<min_rate_of_change ) {
 			curr_value = IOUtils::nodata;
 		} else {
 			last_good = ii;
@@ -73,7 +73,7 @@ void FilterRate::parse_args(const std::vector<std::string>& vec_args) {
 	if (nb_args == 2) {
 		min_rate_of_change = filter_args[0];
 		max_rate_of_change = filter_args[1];
-	} else if(nb_args == 1) {
+	} else if (nb_args == 1) {
 		min_rate_of_change = -filter_args[0];
 		max_rate_of_change = filter_args[0];
 	} else

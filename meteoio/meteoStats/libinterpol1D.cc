@@ -336,7 +336,7 @@ double Interpol1D::weightedMean(const double& d1, const double& d2, const double
 double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight)
 {
 	const size_t nPts = vecData.size();
-	if(nPts != weight.size()) {
+	if (nPts != weight.size()) {
 		std::ostringstream ss;
 		ss << "Computing weighted mean of a vector of size " << nPts;
 		ss << " with vector of weights of size " << weight.size();
@@ -346,14 +346,14 @@ double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::v
 	double sum = 0., count = 0.;
 	for (size_t ii=0; ii<nPts; ii++){
 		const double value = vecData[ii];
-		if(value!=IOUtils::nodata) {
+		if (value!=IOUtils::nodata) {
 			const double w = weight[ii];
 			sum += value*w;
 			count += w;
 		}
 	}
 
-	if(count>0.)
+	if (count>0.)
 		return (sum/count);
 	else
 		return IOUtils::nodata;
@@ -367,13 +367,13 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 	double sum = 0.0;
 	for (size_t ii=0; ii<nPts; ii++){
 		const double value = vecData[ii];
-		if(value!=IOUtils::nodata) {
+		if (value!=IOUtils::nodata) {
 			sum += value;
 			count++;
 		}
 	}
 
-	if(count>0)
+	if (count>0)
 		return (sum/(double)count);
 	else
 		return IOUtils::nodata;
@@ -406,13 +406,13 @@ double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& kee
 {
 //This uses a sorting algorithm for getting middle element
 //as much more efficient than full sorting (O(n) compared to O(n log(n))
-	if(keep_nodata) {
+	if (keep_nodata) {
 		if (vecData.empty()) return IOUtils::nodata;
 
 		vector<double> vecTemp;
-		for(size_t i=0; i<vecData.size(); i++) {
+		for (size_t i=0; i<vecData.size(); i++) {
 			const double& value=vecData[i];
-			if(value!=IOUtils::nodata)
+			if (value!=IOUtils::nodata)
 				vecTemp.push_back(value);
 		}
 
@@ -427,13 +427,13 @@ double Interpol1D::getMedianAverageDeviation(std::vector<double> vecData, const 
 	if (vecData.empty()) return IOUtils::nodata;
 
 	const double median = Interpol1D::getMedian(vecData, keep_nodata);
-	if(median==IOUtils::nodata)
+	if (median==IOUtils::nodata)
 		return IOUtils::nodata;
 
 	//Calculate vector of deviations and write each value back into the vecData
-	for(size_t ii=0; ii<vecData.size(); ii++){
+	for (size_t ii=0; ii<vecData.size(); ii++){
 		double& value = vecData[ii];
-		if(value!=IOUtils::nodata)
+		if (value!=IOUtils::nodata)
 			value = std::abs(value - median);
 	}
 
@@ -451,21 +451,21 @@ double Interpol1D::variance(const std::vector<double>& X)
 	size_t count=0;
 	double sum=0.;
 
-	for(size_t i=0; i<n; i++) {
+	for (size_t i=0; i<n; i++) {
 		const double value = X[i];
-		if(value!=IOUtils::nodata) {
+		if (value!=IOUtils::nodata) {
 			sum += value;
 			count++;
 		}
 	}
 
-	if(count<=1) return IOUtils::nodata;
+	if (count<=1) return IOUtils::nodata;
 
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
-	for(size_t i=0; i<n; i++) {
+	for (size_t i=0; i<n; i++) {
 		const double value = X[i];
-		if(value!=IOUtils::nodata) {
+		if (value!=IOUtils::nodata) {
 			const double delta = value - mean;
 			sum2 += delta*delta;
 			sum3 += delta;
@@ -482,24 +482,24 @@ double Interpol1D::std_dev(const std::vector<double>& X) {
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
 {//this is a simple but still compensated covariance computation (see the notes on the variance)
 	const size_t Xsize = X.size();
-	if(Xsize!=Y.size())
+	if (Xsize!=Y.size())
 		throw IOException("Vectors should have the same size for covariance!", AT);
-	if(Xsize==0) return IOUtils::nodata;
+	if (Xsize==0) return IOUtils::nodata;
 
 	const double X_mean = Interpol1D::arithmeticMean(X);
 	const double Y_mean = Interpol1D::arithmeticMean(Y);
-	if(X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata)
+	if (X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata)
 		return IOUtils::nodata;
 
 	size_t count=0;
 	double sum=0.;
-	for(size_t i=0; i<Xsize; i++) {
-		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
+	for (size_t i=0; i<Xsize; i++) {
+		if (X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
 			sum += (X[i] - X_mean) * (Y[i] - Y_mean);
 			count++;
 		}
 	}
-	if(count<=1) return IOUtils::nodata;
+	if (count<=1) return IOUtils::nodata;
 	return sum/((double)count-1.);
 }
 
@@ -512,7 +512,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 * @return distance of the point to the line
 */
 double Interpol1D::pt_line_distance(const double& x, const double& y, const double& a, const double& c) {
-	if(a==0.) return abs(y-c); //horizontal line
+	if (a==0.) return abs(y-c); //horizontal line
 
 	//for ax+by+c=0; for us, b=-1
 	const double b = -1.;
@@ -533,29 +533,29 @@ double Interpol1D::pt_line_distance(const double& x, const double& y, const doub
 */
 void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg, const bool& fixed_rate)
 {
-	if(fixed_rate) {
+	if (fixed_rate) {
 		LinRegressionFixedRate(X, Y, a, b, r, mesg);
 		return;
 	}
 
 	//check arguments
 	const size_t n = X.size();
-	if(n<2)
+	if (n<2)
 		throw NoAvailableDataException("Trying to calculate linear regression with too few data points", AT);
-	if(n!=Y.size())
+	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
 	//computing x_avg and y_avg
 	double x_avg=0., y_avg=0.;
 	size_t count=0;
 	for (size_t ii=0; ii<n; ii++) {
-		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+		if (X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
 			x_avg += X[ii];
 			y_avg += Y[ii];
 			count++;
 		}
 	}
-	if(count<2)
+	if (count<2)
 		throw NoAvailableDataException("Trying to calculate linear regression with too few valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
@@ -563,7 +563,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	//computing sx, sy, sxy
 	double sx=0., sy=0., sxy=0.;
 	for (size_t ii=0; ii<n; ii++) {
-		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+		if (X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
 			sx += (X[ii]-x_avg) * (X[ii]-x_avg);
 			sy += (Y[ii]-y_avg) * (Y[ii]-y_avg);
 			sxy += (X[ii]-x_avg) * (Y[ii]-y_avg);
@@ -572,7 +572,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//computing the regression line
 	const double epsilon = 1e-6;
-	if(sx <= abs(x_avg)*epsilon) { //sx and sy are always positive
+	if (sx <= abs(x_avg)*epsilon) { //sx and sy are always positive
 		//all points have same X -> we return a constant value that is the average
 		a = 0.;
 		b = y_avg;
@@ -582,7 +582,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	}
 	a = sxy / sx;
 	b = y_avg - a*x_avg;
-	if(sy==0) {
+	if (sy==0) {
 		//horizontal line: all y's are equals
 		r = 1.;
 	} else {
@@ -604,22 +604,22 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg)
 {	//check arguments
 	const size_t n = X.size();
-	if(n==0)
+	if (n==0)
 		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
-	if(n!=Y.size())
+	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
 	//computing x_avg and y_avg
 	int count=0;
 	double x_avg=0, y_avg=0;
 	for (size_t ii=0; ii<n; ii++) {
-		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+		if (X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
 			x_avg += X[ii];
 			y_avg += Y[ii];
 			count++;
 		}
 	}
-	if(count==0)
+	if (count==0)
 		throw NoAvailableDataException("Trying to calculate linear regression with no valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
@@ -629,12 +629,12 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 
 	double TSS=0, SSR=0; //Total Sum of Squares and Sum of Squared Residuals
 	for (size_t ii=0; ii<n; ii++) {
-		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+		if (X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
 			SSR += Optim::pow2( Y[ii] - (a*X[ii]+b) );
 			TSS += Optim::pow2( Y[ii] );
 		}
 	}
-	if(TSS!=0) {
+	if (TSS!=0) {
 		r = 1. - SSR/TSS;
 	} else {
 		r = 1.; //when all Y[i]=0 we automatically pick up the best possible fit. But r does not mean anything...
@@ -665,20 +665,20 @@ void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::
 	std::ostringstream ss;
 
 	LinRegression(in_X, in_Y, A, B, R, mesg, fixed_rate);
-	if(R>=r_thres) return;
+	if (R>=r_thres) return;
 	ss << mesg;
 
 	std::vector<double> X(in_X), Y(in_Y);
 	size_t nb_valid_pts = nb_pts;
 
-	while(R<r_thres && nb_valid_pts>min_pts) {
+	while (R<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
 		size_t index_bad=0;
 		double max_dist = -1.;
 		for (size_t ii=0; ii<nb_pts; ii++) {
-			if(Y[ii]==IOUtils::nodata) continue;
+			if (Y[ii]==IOUtils::nodata) continue;
 			const double dist = pt_line_distance(X[ii], Y[ii], A, B);
-			if(dist>max_dist) {
+			if (dist>max_dist) {
 				max_dist = dist;
 				index_bad = ii;
 			}
@@ -709,11 +709,11 @@ void Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::ve
 {
 	//build segments
 	std::vector<double> X1, Y1, X2, Y2;
-	for(size_t ii=0; ii<in_X.size(); ii++) {
-		if(in_X[ii]<bilin_inflection) { //first segment
+	for (size_t ii=0; ii<in_X.size(); ii++) {
+		if (in_X[ii]<bilin_inflection) { //first segment
 			X1.push_back( in_X[ii] );
 			Y1.push_back( in_Y.at(ii) );
-		} else if(in_X[ii]>bilin_inflection) { //second segment
+		} else if (in_X[ii]>bilin_inflection) { //second segment
 			X2.push_back( in_X[ii] );
 			Y2.push_back( in_Y.at(ii) );
 		} else { //point belongs to both segments
@@ -752,7 +752,7 @@ void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<d
 {
 	std::vector<double> x( X.size() );
 
-	for(size_t i=0; i<X.size(); i++) {
+	for (size_t i=0; i<X.size(); i++) {
 		const double val = X[i];
 		x[i] = (val!=IOUtils::nodata)? log(val) : IOUtils::nodata;
 	}
@@ -774,7 +774,7 @@ void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<d
 {
 	std::vector<double> y( Y.size() );
 
-	for(size_t i=0; i<Y.size(); i++) {
+	for (size_t i=0; i<Y.size(); i++) {
 		const double val = Y[i];
 		y[i] = (val!=IOUtils::nodata)? log(val) : IOUtils::nodata;
 	}

@@ -53,14 +53,14 @@ void SunObject::setDate(const double& i_julian, const double& TZ)
 {
 	const double i_julian_gmt = i_julian - TZ/24.;
 
-	if(i_julian_gmt!=julian_gmt) { //invalidate all fields if receiving a new date
+	if (i_julian_gmt!=julian_gmt) { //invalidate all fields if receiving a new date
 		position.reset();
 		julian_gmt = i_julian_gmt;
 		beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
 	}
 
 	//if the date was new or if the previous date had not lead to an update -> update now
-	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata &&
+	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata &&
 	  (beam_toa==IOUtils::nodata || beam_direct==IOUtils::nodata || beam_diffuse==IOUtils::nodata)) {
 		update();
 	}
@@ -73,7 +73,7 @@ void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, c
 	longitude = i_longitude;
 	altitude = i_altitude;
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	if(julian_gmt!=IOUtils::nodata) {
+	if (julian_gmt!=IOUtils::nodata) {
 		update();
 	}
 }
@@ -117,13 +117,13 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
                                  const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
                                  double& R_toa, double& R_direct, double& R_diffuse) const
 {
-	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || ground_albedo==IOUtils::nodata) {
+	if (ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || ground_albedo==IOUtils::nodata) {
 		R_toa = IOUtils::nodata;
 		R_direct = IOUtils::nodata;
 		R_diffuse = IOUtils::nodata;
 		return;
 	}
-	if(sun_elevation<0.) { //the Sun is below the horizon, our formulas don't apply
+	if (sun_elevation<0.) { //the Sun is below the horizon, our formulas don't apply
 		R_toa = 0.;
 		R_direct = 0.;
 		R_diffuse = 0.;
@@ -239,7 +239,7 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
 	const double Idm = (Idr + Ida + R_direct) * ground_albedo * alb_sky / (1. - ground_albedo * alb_sky);
 	R_diffuse = (Idr + Ida + Idm)*cos_zenith; //Iqbal always "project" diffuse radiation on the horizontal
 
-	if( sun_elevation < elevation_threshold ) {
+	if ( sun_elevation < elevation_threshold ) {
 		//if the Sun is too low on the horizon, we put all the radiation as diffuse
 		//the splitting calculation that might take place later on will reflect this
 		//instead point radiation, it becomes the radiation of a horizontal sky above the domain
@@ -288,7 +288,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
 
-	if( elevation < elevation_threshold ) {
+	if ( elevation < elevation_threshold ) {
 		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
 		// this is a clear sky day when almost all the radiation should be diffuse
 		// no matter how the sky is
@@ -300,16 +300,16 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 
 		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
 		// splitting according to a combination of Reindl et al.(1990)'s models (Mt-model and Mt&Psolar->elev-model):
-		if( Mt >= 0.78 ) { // Mt in [0.78;1] -> clear day
+		if ( Mt >= 0.78 ) { // Mt in [0.78;1] -> clear day
 			 splitting_coef = clear_sky;
 		} else {
-			if( Mt <= 0.3 ) { // Mt in [0;0.3] -> overcast
+			if ( Mt <= 0.3 ) { // Mt in [0;0.3] -> overcast
 				splitting_coef = 1.02 - 0.248*Mt;
-				if(splitting_coef>1.) splitting_coef=1.;
+				if (splitting_coef>1.) splitting_coef=1.;
 			} else {           // Mt in ]0.3;0.78[ -> cloudy
 				splitting_coef = 1.4 - 1.749*Mt + 0.177*sin(elevation*Cst::to_rad);
-				if(splitting_coef>0.97) splitting_coef = 0.97;
-				if(splitting_coef<clear_sky) splitting_coef = clear_sky;
+				if (splitting_coef>0.97) splitting_coef = 0.97;
+				if (splitting_coef<clear_sky) splitting_coef = clear_sky;
 			}
 		}
 	}

@@ -164,13 +164,13 @@ double MeteoBuffer::getAvgSamplingRate() const
 	const size_t nr_stations = ts_buffer.size();
 	double sum = 0;
 	for (size_t ii=0; ii<nr_stations; ii++){ //loop over all stations
-		if(!ts_buffer[ii].empty()) {
+		if (!ts_buffer[ii].empty()) {
 			const std::vector<MeteoData>& curr_station = ts_buffer[ii];
 			const double days = curr_station.back().date.getJulian() - curr_station.front().date.getJulian();
 
 			//add the average sampling rate for this station
 			const size_t nr_data_pts = ts_buffer[ii].size();
-			if(days>0.) sum += (double)(nr_data_pts-1) / days; //the interval story: 2 points define 1 interval!
+			if (days>0.) sum += (double)(nr_data_pts-1) / days; //the interval story: 2 points define 1 interval!
 		}
 	}
 	if (sum > 0.){
@@ -209,7 +209,7 @@ const std::string MeteoBuffer::toString() const
 	os << "<MeteoBuffer>\n";
 
 	os << "Buffer content (" << ts_buffer.size() << " stations)\n";
-	for(size_t ii=0; ii<ts_buffer.size(); ii++) {
+	for (size_t ii=0; ii<ts_buffer.size(); ii++) {
 		if (!ts_buffer[ii].empty()){
 			os << std::setw(10) << ts_buffer[ii].front().meta.stationID << " = "
 			   << ts_buffer[ii].front().date.toString(Date::ISO) << " - "
@@ -300,7 +300,7 @@ void GridBuffer::push(const DEMObject& grid, const std::string& grid_hash)
 {
 	if (max_grids==0) return;
 
-	if(IndexBufferedDEMs.size() >= max_grids) { //we need to remove the oldest grid
+	if (IndexBufferedDEMs.size() >= max_grids) { //we need to remove the oldest grid
 		const string tmp_hash = IndexBufferedDEMs.front();
 		mapBufferedDEMs.erase( mapBufferedDEMs.find( tmp_hash ) );
 		//swap followed by pop_back is faster than erase()
@@ -315,7 +315,7 @@ void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, co
 {
 	if (max_grids==0) return;
 
-	if(IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
+	if (IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
 		const string tmp_hash = IndexBufferedGrids.front();
 		mapBufferedGrids.erase( mapBufferedGrids.find( tmp_hash ) );
 		mapBufferedInfos.erase( mapBufferedInfos.find( tmp_hash ) );

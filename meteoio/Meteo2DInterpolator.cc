@@ -296,7 +296,7 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 
 void Meteo2DInterpolator::initVirtualStations()
 {
-	if(!cfg.keyExists("DEM", "Input"))
+	if (!cfg.keyExists("DEM", "Input"))
 		throw NoAvailableDataException("In order to use virtual stations, please provide a DEM!", AT);
 	DEMObject dem;
 	gridsmanager.readDEM(dem);
@@ -307,16 +307,16 @@ void Meteo2DInterpolator::initVirtualStations()
 
 	std::vector<std::string> vecStation;
 	cfg.getValues("Vstation", "INPUT", vecStation);
-	for(size_t ii=0; ii<vecStation.size(); ii++) {
+	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
 		Coords tmp(coordin, coordinparam, vecStation[ii]);
-		if(!tmp.isNodata())
+		if (!tmp.isNodata())
 			v_coords.push_back( tmp );
 	}
 
 	//create stations' metadata
-	for(size_t ii=0; ii<v_coords.size(); ii++) {
-		if(!dem.gridify(v_coords[ii])) {
+	for (size_t ii=0; ii<v_coords.size(); ii++) {
+		if (!dem.gridify(v_coords[ii])) {
 			ostringstream ss;
 			ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
 			throw NoAvailableDataException(ss.str(), AT);

@@ -225,7 +225,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	for (size_t ii=0; ii<fields.size(); ii++){
 		const string& key = fields[ii];
 
-		if(md.param_exists(key)) {
+		if (md.param_exists(key)) {
 			indexes.push_back(md.getParameterIndex(key));
 			continue;
 		}
@@ -462,7 +462,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		vector<string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
 		double timezone = IOUtils::nodata; //time zone of the data
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
-		if(out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
+		if (out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
@@ -484,7 +484,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					}
 				} else {
 					double julian;
-					if(out_dflt_TZ!=IOUtils::nodata) {
+					if (out_dflt_TZ!=IOUtils::nodata) {
 						Date tmp_date(vecMeteo[ii][jj].date);
 						tmp_date.setTimeZone(out_dflt_TZ);
 						julian = tmp_date.getJulian();
@@ -697,7 +697,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 		const Coords& p2 = vecMeteo[ii].meta.position;
 		if (p1 != p2) {
 			//we don't mind if p1==nodata or p2==nodata
-			if(p1.isNodata()==false && p2.isNodata()==false) return false;
+			if (p1.isNodata()==false && p2.isNodata()==false) return false;
 		}
 	}
 

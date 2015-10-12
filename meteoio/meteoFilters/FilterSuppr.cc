@@ -46,7 +46,7 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 
 		srand( static_cast<unsigned int>(time(NULL)) );
 		size_t ii=1;
-		while(ii<nrRemove) {
+		while (ii<nrRemove) {
 			const size_t idx = rand() % set_size;
 			if (ivec[idx](param)!=IOUtils::nodata && ovec[idx](param)==IOUtils::nodata) continue; //the point was already removed
 			

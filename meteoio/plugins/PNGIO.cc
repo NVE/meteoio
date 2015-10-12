@@ -127,7 +127,7 @@ PNGIO::PNGIO(const Config& cfgreader)
 }
 
 PNGIO& PNGIO::operator=(const PNGIO& source) {
-	if(this != &source) {
+	if (this != &source) {
 		fp = NULL;
 		autoscale = source.autoscale;
 		has_legend = source.has_legend;
@@ -160,37 +160,37 @@ void PNGIO::setOptions()
 	//get size specifications
 	std::string min_size, max_size;
 	cfg.getValue("PNG_MIN_SIZE", "Output", min_size, IOUtils::nothrow);
-	if(!min_size.empty()) parse_size(min_size, min_w, min_h);
+	if (!min_size.empty()) parse_size(min_size, min_w, min_h);
 	cfg.getValue("PNG_MAX_SIZE", "Output", max_size, IOUtils::nothrow);
-	if(!max_size.empty()) parse_size(max_size, max_w, max_h);
+	if (!max_size.empty()) parse_size(max_size, max_w, max_h);
 
 	cfg.getValue("PNG_AUTOSCALE", "Output", autoscale, IOUtils::nothrow);
 	cfg.getValue("PNG_LEGEND", "Output", has_legend, IOUtils::nothrow);
 	cfg.getValue("PNG_SCALING", "Output", scaling, IOUtils::nothrow);
 	cfg.getValue("PNG_WORLD_FILE", "Output", has_world_file, IOUtils::nothrow);
 
-	if(has_legend) { //we need to save room for the legend
-		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
-		if(max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
+	if (has_legend) { //we need to save room for the legend
+		if (min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
+		if (max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
 	}
 
 	cfg.getValue("PNG_INDEXED", "Output", indexed_png, IOUtils::nothrow);
 	cfg.getValue("PNG_SPEED_OPTIMIZE", "Output", optimize_for_speed, IOUtils::nothrow);
 	unsigned int tmp=IOUtils::unodata;
 	cfg.getValue("PNG_NR_LEVELS", "Output", tmp, IOUtils::nothrow);
-	if(tmp!=IOUtils::unodata && (tmp>255 || tmp<5)) {
+	if (tmp!=IOUtils::unodata && (tmp>255 || tmp<5)) {
 		throw InvalidFormatException("PNG_NR_LEVELS must be between 5 and 255!", AT);
 	}
-	if(tmp!=IOUtils::unodata) nr_levels=static_cast<unsigned char>(tmp);
+	if (tmp!=IOUtils::unodata) nr_levels=static_cast<unsigned char>(tmp);
 }
 
 void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& height)
 {
 	char rest[32] = "";
 	unsigned int w,h;
-	if(sscanf(size_spec.c_str(), "%u %u%31s", &w, &h, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%u*%u%31s", &w, &h, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%ux%u%31s", &w, &h, rest) < 2) {
+	if (sscanf(size_spec.c_str(), "%u %u%31s", &w, &h, rest) < 2)
+	if (sscanf(size_spec.c_str(), "%u*%u%31s", &w, &h, rest) < 2)
+	if (sscanf(size_spec.c_str(), "%ux%u%31s", &w, &h, rest) < 2) {
 		std::ostringstream ss;
 		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
 		throw InvalidFormatException(ss.str(), AT);
@@ -210,38 +210,38 @@ void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& heig
 
 double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
 {
-	if(grid_w==0 || grid_h==0) {
+	if (grid_w==0 || grid_h==0) {
 		return 1.;
 	}
 
 	double min_factor = IOUtils::nodata;
-	if(min_w!=IOUtils::unodata) { //min_w & min_w are read together
+	if (min_w!=IOUtils::unodata) { //min_w & min_w are read together
 		const double min_w_factor = (double)min_w / (double)grid_w;
 		const double min_h_factor = (double)min_h / (double)grid_h;
 		min_factor = std::max(min_w_factor, min_h_factor);
 	}
 
 	double max_factor = IOUtils::nodata;
-	if(max_w!=IOUtils::unodata) { //max_w & max_h are read together
+	if (max_w!=IOUtils::unodata) { //max_w & max_h are read together
 		const double max_w_factor = (double)max_w / (double)grid_w;
 		const double max_h_factor = (double)max_h / (double)grid_h;
 		max_factor = std::min(max_w_factor, max_h_factor);
 	}
 
-	if(min_factor==IOUtils::nodata && max_factor==IOUtils::nodata)
+	if (min_factor==IOUtils::nodata && max_factor==IOUtils::nodata)
 		return 1.; //no user given specification
-	if(min_factor!=IOUtils::nodata && max_factor!=IOUtils::nodata)
+	if (min_factor!=IOUtils::nodata && max_factor!=IOUtils::nodata)
 		return (min_factor+max_factor)/2.; //both min & max -> average
 
 	//only one size specification provided -> return its matching factor
-	if(min_factor!=IOUtils::nodata)
+	if (min_factor!=IOUtils::nodata)
 		return min_factor;
 	else
 		return max_factor;
 }
 
 PNGIO::~PNGIO() throw() {
-	if(fp!=NULL) fclose(fp); fp=NULL;
+	if (fp!=NULL) fclose(fp); fp=NULL;
 }
 
 void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -304,9 +304,9 @@ void PNGIO::readPOI(std::vector<Coords>&)
 Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 { //scale input image
 	const double factor = getScaleFactor(grid_in.getNx(), grid_in.getNy());
-	if(scaling=="nearest")
+	if (scaling=="nearest")
 		return ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
-	else if(scaling=="bilinear")
+	else if (scaling=="bilinear")
 		return ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
 	else {
 		ostringstream ss;
@@ -354,14 +354,14 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	png_init_io(png_ptr, fp);
 
-	if(optimize_for_speed) png_set_compression_level(png_ptr, Z_BEST_SPEED);
+	if (optimize_for_speed) png_set_compression_level(png_ptr, Z_BEST_SPEED);
 	else png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
 
 	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB|PNG_FILTER_UP); //any other filter is costly and brings close to nothing...
-	if(indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
+	if (indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
-	if(indexed_png) {
+	if (indexed_png) {
 		png_set_IHDR(png_ptr, info_ptr, width, height,
 			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -384,7 +384,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
-	if(has_legend) {
+	if (has_legend) {
 		const legend leg(static_cast<unsigned int>(nrows), min, max);
 		legend_array = leg.getLegend();
 		const size_t nx = legend_array.getNx();
@@ -402,7 +402,7 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
 	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
-	if(row==NULL) {
+	if (row==NULL) {
 		fclose(fp); fp=NULL;
 		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 		free(png_ptr);
@@ -410,16 +410,16 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 	}
 
 	// Write image data
-	if(indexed_png) {
-		for(size_t y=nrows ; y-- > 0; ) {
+	if (indexed_png) {
+		for (size_t y=nrows ; y-- > 0; ) {
 			size_t x=0;
-			for(; x<ncols ; x++) {
+			for (; x<ncols ; x++) {
 				const size_t i=x*channels;
 				unsigned char index;
 				gradient.getColor(grid(x,y), index);
 				row[i]=static_cast<png_byte>(index);
 			}
-			for(; x<full_width; x++) {
+			for (; x<full_width; x++) {
 				const size_t i=x*channels;
 				unsigned char index;
 				gradient.getColor(legend_array(x-ncols,y), index);
@@ -428,25 +428,25 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 			png_write_row(png_ptr, row);
 		}
 	} else {
-		for(size_t y=nrows ; y -- > 0; ) {
+		for (size_t y=nrows ; y -- > 0; ) {
 			size_t x=0;
-			for(; x<ncols ; x++) {
+			for (; x<ncols ; x++) {
 				const size_t i=x*channels;
 				unsigned char r,g,b;
 				bool a;
 				gradient.getColor(grid(x,y), r,g,b,a);
-				if(a==true) {
+				if (a==true) {
 					row[i]=static_cast<png_byte>(transparent_grey); row[i+1]=static_cast<png_byte>(transparent_grey); row[i+2]=static_cast<png_byte>(transparent_grey);
 				} else {
 					row[i]=static_cast<png_byte>(r); row[i+1]=static_cast<png_byte>(g); row[i+2]=static_cast<png_byte>(b);
 				}
 			}
-			for(; x<full_width; x++) {
+			for (; x<full_width; x++) {
 				const size_t i=x*channels;
 				unsigned char r,g,b;
 				bool a;
 				gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
-				if(a==true) {
+				if (a==true) {
 					row[i]=static_cast<png_byte>(transparent_grey); row[i+1]=static_cast<png_byte>(transparent_grey); row[i+2]=static_cast<png_byte>(transparent_grey);
 				} else {
 					row[i]=static_cast<png_byte>(r); row[i+1]=static_cast<png_byte>(g); row[i+2]=static_cast<png_byte>(b);
@@ -466,7 +466,7 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 	size_t nr_colors;
 	gradient.getPalette(pal, nr_colors);
 	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
-	for(size_t ii=0; ii<nr_colors; ii++) {
+	for (size_t ii=0; ii<nr_colors; ii++) {
 		const size_t interlace = ii*3; //colors from Gradient interlaced
 		palette[ii].red = static_cast<png_byte>(pal[interlace]);
 		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
@@ -478,7 +478,7 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if(indexed_png && palette!=NULL) free(palette);
+	if (indexed_png && palette!=NULL) free(palette);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp); fp=NULL;
 	free(info_ptr);
@@ -496,20 +496,20 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
-	if(ncols==0 || nrows==0) return;
+	if (ncols==0 || nrows==0) return;
 
 	const double min = grid.grid2D.getMin();
 	const double max = grid.grid2D.getMax();
 
 	Gradient gradient(Gradient::heat, min, max, autoscale);
-	if(indexed_png) gradient.setNrOfLevels(nr_levels);
+	if (indexed_png) gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
-	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
-	if(has_world_file) writeWorldFile(grid, full_name);
+	if (indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
+	if (has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding generic title
@@ -525,7 +525,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	std::string filename;
-	if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
+	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
 		filename = grid2dpath + "/" + MeteoGrids::getParameterName(parameter) + ".png";
 	else {
 		std::string date_str = date.toString(Date::ISO);
@@ -541,68 +541,68 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
-	if(ncols==0 || nrows==0) return;
+	if (ncols==0 || nrows==0) return;
 
 	double min = grid.grid2D.getMin();
 	double max = grid.grid2D.getMax();
 
 	Gradient gradient;
-	if(parameter==MeteoGrids::DEM) {
-		if(!autoscale) {
+	if (parameter==MeteoGrids::DEM) {
+		if (!autoscale) {
 			min = 0.; //we want a 3000 snow line with a full scale legend
 			max = 3500.;
 			gradient.set(Gradient::terrain, min, max, autoscale); //max used as snow line reference
 		} else
 			gradient.set(Gradient::terrain, min, max, autoscale);
-	} else if(parameter==MeteoGrids::SLOPE) {
+	} else if (parameter==MeteoGrids::SLOPE) {
 		gradient.set(Gradient::slope, min, max, autoscale);
-	} else if(parameter==MeteoGrids::SHADE) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::SHADE) {
+		if (!autoscale) {
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::blktowhite, min, max, autoscale);
-	} else if(parameter==MeteoGrids::AZI) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::AZI) {
+		if (!autoscale) {
 			min = 0.;
 			max = 360.;
 		}
 		gradient.set(Gradient::azi, min, max, autoscale);
-	} else if(parameter==MeteoGrids::DW) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::DW) {
+		if (!autoscale) {
 			min = 0.;
 			max = 360.;
 		}
 		gradient.set(Gradient::azi, min, max, autoscale);
-	} else if(parameter==MeteoGrids::HS) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::HS) {
+		if (!autoscale) {
 			min = 0.; max = 2.5;
 		}
 		gradient.set(Gradient::blue, min, max, autoscale);
-	} else if(parameter==MeteoGrids::TA) {
+	} else if (parameter==MeteoGrids::TA) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
-		if(!autoscale) {
+		if (!autoscale) {
 			min = -15.; max = 15.;
 		} else {
 			min -= Cst::t_water_freezing_pt;
 			max -= Cst::t_water_freezing_pt;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
-	} else if(parameter==MeteoGrids::TSS) {
+	} else if (parameter==MeteoGrids::TSS) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
-		if(!autoscale) {
+		if (!autoscale) {
 			min = -20.; max = 5.;
 		} else {
 			min -= Cst::t_water_freezing_pt;
 			max -= Cst::t_water_freezing_pt;
 		}
 		gradient.set(Gradient::freeze, min, max, autoscale);
-	} else if(parameter==MeteoGrids::RH) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::RH) {
+		if (!autoscale) {
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
-	} else if(parameter==MeteoGrids::P) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::P) {
+		if (!autoscale) {
 			//lowest and highest pressures ever recorded on Earth: 87000 and 108570
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
@@ -612,28 +612,28 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			const double delta = (delta1>delta2)?delta1:delta2;
 			gradient.set(Gradient::bluewhitered, Cst::std_press-delta, Cst::std_press+delta, autoscale);
 		}
-	} else if(parameter==MeteoGrids::ALB) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::ALB) {
+		if (!autoscale) {
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::blktowhite, min, max, autoscale);
-	} else if(parameter==MeteoGrids::TAU_CLD) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::TAU_CLD) {
+		if (!autoscale) {
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::blktowhite, min, max, autoscale);
-	} else if(parameter==MeteoGrids::ISWR) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::ISWR) {
+		if (!autoscale) {
 			min = 0.; max = 800.;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
-	} else if(parameter==MeteoGrids::ILWR) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::ILWR) {
+		if (!autoscale) {
 			min = 200.; max = 500.;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
-	} else if(parameter==MeteoGrids::SWE) {
-		if(!autoscale) {
+	} else if (parameter==MeteoGrids::SWE) {
+		if (!autoscale) {
 			min = 0.; max = 250.;
 		}
 		gradient.set(Gradient::blue_pink, min, max, autoscale);
@@ -646,8 +646,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
-	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
-	if(has_world_file) writeWorldFile(grid, filename);
+	if (indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
+	if (has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding title
@@ -731,7 +731,7 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 	ss.str(""); ss << fixed << setprecision(7) << UR.getLon();
 	metadata_text.push_back(ss.str());
 
-	if(lat<0.) {
+	if (lat<0.) {
 		metadata_key.push_back("LatitudeRef");
 		metadata_text.push_back("S");
 		metadata_key.push_back("GPSLatitude");
@@ -742,7 +742,7 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 		metadata_key.push_back("GPSLatitude");
 		metadata_text.push_back(decimal_to_dms(lat));
 	}
-	if(lon<0.) {
+	if (lon<0.) {
 		metadata_key.push_back("LongitudeRef");
 		metadata_text.push_back("W");
 		metadata_key.push_back("GPSLongitude");
@@ -763,7 +763,7 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	char **key = (char**)calloc(sizeof(char)*max_len, nr);
 	char **text = (char**)calloc(sizeof(char)*max_len, nr);
 
-	for(size_t ii=0; ii<nr; ii++) {
+	for (size_t ii=0; ii<nr; ii++) {
 		key[ii] = (char *)calloc(sizeof(char), max_len);
 		text[ii] = (char *)calloc(sizeof(char), max_len);
 		strncpy(key[ii], metadata_key[ii].c_str(), max_len-1); //in case the '\0' was not counted by maxlen
@@ -777,7 +777,7 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	png_write_info(png_ptr, info_ptr);
 
 	free(info_text);
-	for(size_t ii=0; ii<nr; ii++) {
+	for (size_t ii=0; ii<nr; ii++) {
 		free(key[ii]);
 		free(text[ii]);
 	}

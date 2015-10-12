@@ -147,7 +147,7 @@ std::iostream& operator>>(std::iostream& is, Config& cfg) {
 	cfg.properties.clear();
 	size_t s_map;
 	is.read(reinterpret_cast<char*>(&s_map), sizeof(size_t));
-	for(size_t ii=0; ii<s_map; ii++) {
+	for (size_t ii=0; ii<s_map; ii++) {
 		size_t s_key, s_value;
 		is.read(reinterpret_cast<char*>(&s_key), sizeof(size_t));
 		string key;
@@ -196,7 +196,7 @@ void Config::parseFile(const std::string& filename)
 			std::string line;
 			getline(fin, line, eoln); //read complete line
 			parseLine(linenr++, import_after, accept_import_before, line, section);
-		} while(!fin.eof());
+		} while (!fin.eof());
 		fin.close();
 	} catch(const std::exception&){
 		if (fin.is_open()) {//close fin if open

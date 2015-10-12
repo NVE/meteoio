@@ -98,8 +98,8 @@ std::string getExtension(const std::string& filename)
 {
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
 	const size_t startpos = filename.find_last_of('.');
-	if( startpos==std::string::npos ) return std::string();
-	if( start_basename!=std::string::npos && startpos<start_basename ) return std::string();
+	if ( startpos==std::string::npos ) return std::string();
+	if ( start_basename!=std::string::npos && startpos<start_basename ) return std::string();
 
 	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t endpos = filename.find_last_not_of(whitespaces); // Find the first character position from reverse af
@@ -253,14 +253,14 @@ bool fileExists(const std::string& filename)
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
 	DIR *dp = opendir(path.c_str());
-	if(dp == NULL) {
+	if (dp == NULL) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
 	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
 		const std::string tmp(dirp->d_name);
-		if( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
+		if ( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
 			if (pattern.empty()) {
 				dirlist.push_back(tmp);
 			} else {
@@ -312,7 +312,7 @@ void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
 {
 	std::string dummy;
 	for (size_t ii=0; ii<nbLines; ii++) {
-		if(!getline(fin, dummy, eoln)) {
+		if (!getline(fin, dummy, eoln)) {
 			throw InvalidFormatException("Premature EOF while skipping lines", AT);
 		}
 	}
@@ -325,14 +325,14 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 	const file_index elem(i_date, i_pos);
 
 	//check if we can simply append the new index
-	if(vecIndex.empty() || elem>vecIndex.back()) {
+	if (vecIndex.empty() || elem>vecIndex.back()) {
 		vecIndex.push_back(elem);
 		return;
 	}
 
 	//look for the proper position for insertion of the new index
 	const std::vector< struct file_index >::iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), elem);
-	if(it>vecIndex.begin() && (it-1)->date!=elem.date) { //check that we don't try to insert a duplicate
+	if (it>vecIndex.begin() && (it-1)->date!=elem.date) { //check that we don't try to insert a duplicate
 		vecIndex.insert(it, elem); //insertion is at the proper place -> remains ordered
 		return;
 	}
@@ -354,7 +354,7 @@ void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
 std::streampos FileIndexer::getIndex(const Date& i_date) const
 {
 	const size_t foundIdx = binarySearch(i_date);
-	if(foundIdx==static_cast<size_t>(-1)) return static_cast<std::streampos>(-1);
+	if (foundIdx==static_cast<size_t>(-1)) return static_cast<std::streampos>(-1);
 	else return vecIndex[foundIdx].pos;
 }
 
@@ -373,14 +373,14 @@ std::streampos FileIndexer::getIndex(const double& i_date) const
 
 size_t FileIndexer::binarySearch(const Date& soughtdate) const
 {//perform binary search, return the first element that is GREATER than the provided value
-	if(vecIndex.empty()) return static_cast<size_t>(-1);
-	if(soughtdate<vecIndex.front().date) return static_cast<size_t>(-1);
-	if(soughtdate>=vecIndex.back().date) return vecIndex.size()-1;
+	if (vecIndex.empty()) return static_cast<size_t>(-1);
+	if (soughtdate<vecIndex.front().date) return static_cast<size_t>(-1);
+	if (soughtdate>=vecIndex.back().date) return vecIndex.size()-1;
 
 	const file_index elem(soughtdate, 0);
 	//returns the first element that is GREATER than the provided value
 	const std::vector< struct file_index >::const_iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), elem);
-	if(it>vecIndex.begin()) return it-vecIndex.begin()-1;
+	if (it>vecIndex.begin()) return it-vecIndex.begin()-1;
 	else return static_cast<size_t>(-1);
 }
 
@@ -388,7 +388,7 @@ const std::string FileIndexer::toString() const
 {
 	std::ostringstream os;
 	os << "<FileIndexer>\n";
-	for(size_t ii=0; ii<vecIndex.size(); ii++)
+	for (size_t ii=0; ii<vecIndex.size(); ii++)
 		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << vecIndex[ii].pos << std::dec << "\n";
 	os << "</FileIndexer>\n";
 	return os.str();

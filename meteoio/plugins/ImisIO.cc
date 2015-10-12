@@ -201,10 +201,7 @@ ImisIO::ImisIO(const Config& cfgreader)
 	getDBParameters();
 }
 
-ImisIO::~ImisIO() throw()
-{
-	cleanup();
-}
+ImisIO::~ImisIO() throw() {}
 
 void ImisIO::read2DGrid(Grid2DObject&, const std::string&)
 {
@@ -370,7 +367,8 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 }
 
 /**
- * @brief This function breaks up the station name into two components (a string and a number e.g. KLO2 -> "KLO","2")
+ * @brief This function breaks up the station name into two components (a string and a number e.g. KLO2 -> "KLO","2"). For 
+ * Enet stations (such as *WFJ), the numeric part is asusmed to be 1 (ie: the automatic station).
  * @param stationID The full name of the station (e.g. "KLO2")
  * @param stName      The string part of the name  (e.g. "KLO")
  * @param stNumber    The integer part of the name (e.g. "2")
@@ -379,10 +377,10 @@ void ImisIO::parseStationID(const std::string& stationID, std::string& stat_abk,
 {
 	stat_abk = stationID.substr(0, stationID.length()-1); //The station name: e.g. KLO
 	stao_nr = stationID.substr(stationID.length()-1, 1); //The station number: e.g. 2
-	if(!std::isdigit(stao_nr[0])) {
+	if (!std::isdigit(stao_nr[0])) {
 		//the station is one of these non-imis stations that don't contain a number...
 		stat_abk = stationID;
-		stao_nr = "0";
+		stao_nr = "1";
 	}
 }
 
@@ -395,7 +393,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 	vecStationID.clear();
 	cfg.getValues("STATION", "INPUT", vecStationID);
 
-	if(vecStationID.empty()) {
+	if (vecStationID.empty()) {
 		cerr << "\tNo stations specified for IMISIO... is this what you want?\n";
 	}
 }
@@ -470,7 +468,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			}
 		}
 
-		if(use_psum_snowpack) {
+		if (use_psum_snowpack) {
 			for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
 				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 			}
@@ -671,11 +669,11 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
-				if(use_imis_psum==false) {
+				if (use_imis_psum==false) {
 					tmpmd(MeteoData::PSUM) = IOUtils::nodata;
 				} else {
 					double& psum = tmpmd(MeteoData::PSUM);
-					if(psum!=IOUtils::nodata) {
+					if (psum!=IOUtils::nodata) {
 						psum /= 2.; //half hour accumulated value for IMIS stations only
 					}
 				}
@@ -956,9 +954,9 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 	}
 
 	const size_t nr_metadata = vecMetaData.size();
-	if(nr_metadata==0)
+	if (nr_metadata==0)
 			throw NoAvailableDataException("Station " + stat_abk+stao_nr + " not found in the database", AT);
-	if(nr_metadata<4)
+	if (nr_metadata<4)
 			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
 	return nr_metadata;
 }
@@ -1036,7 +1034,7 @@ void ImisIO::convertSnowTemperature(MeteoData& meteo, const std::string& paramet
 {
 	if (meteo.param_exists(parameter)) {
 		const size_t idx = meteo.getParameterIndex(parameter);
-		if(meteo(idx)!=IOUtils::nodata)
+		if (meteo(idx)!=IOUtils::nodata)
 			meteo(idx) += Cst::t_water_freezing_pt; //C_TO_K
 	}
 }
@@ -1045,7 +1043,7 @@ void ImisIO::convertSensorDepth(MeteoData& meteo, const std::string& parameter)
 {
 	if (meteo.param_exists(parameter)) {
 		const size_t idx = meteo.getParameterIndex(parameter);
-		if(meteo(idx)!=IOUtils::nodata)
+		if (meteo(idx)!=IOUtils::nodata)
 			meteo(idx) /= 100.; // centimetre to metre
 	}
 }
@@ -1079,10 +1077,6 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	convertSensorDepth(meteo, "HTS1");
 	convertSensorDepth(meteo, "HTS2");
 	convertSensorDepth(meteo, "HTS3");
-}
-
-void ImisIO::cleanup() throw()
-{
 }
 
 } //namespace

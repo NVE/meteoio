@@ -41,9 +41,9 @@ void FilterMeanAvg::process(const unsigned int& param, const std::vector<MeteoDa
 		double& value = ovec[ii](param);
 
 		size_t start, end;
-		if( get_window_specs(ii, ivec, start, end) ) {
+		if ( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_avg(ivec, param, start, end);
-		} else if(!is_soft) value = IOUtils::nodata;
+		} else if (!is_soft) value = IOUtils::nodata;
 	}
 }
 

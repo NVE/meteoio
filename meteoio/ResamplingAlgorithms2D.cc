@@ -140,7 +140,7 @@ void ResamplingAlgorithms2D::NearestNeighbour(Array2D<double> &o_grid, const Arr
 
 double ResamplingAlgorithms2D::bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y)
 {
-	if(org_jj>=(org_ny-1) || org_ii>=(org_nx-1)) return i_grid(org_ii, org_jj);
+	if (org_jj>=(org_ny-1) || org_ii>=(org_nx-1)) return i_grid(org_ii, org_jj);
 
 	const double f_0_0 = i_grid(org_ii, org_jj);
 	const double f_1_0 = i_grid(org_ii+1, org_jj);
@@ -149,37 +149,37 @@ double ResamplingAlgorithms2D::bilinear_pixel(const Array2D<double> &i_grid, con
 
 	double avg_value = 0.;
 	unsigned int avg_count = 0;
-	if(f_0_0!=IOUtils::nodata) {
+	if (f_0_0!=IOUtils::nodata) {
 		avg_value += f_0_0;
 		avg_count++;
 	}
-	if(f_1_0!=IOUtils::nodata) {
+	if (f_1_0!=IOUtils::nodata) {
 		avg_value += f_1_0;
 		avg_count++;
 	}
-	if(f_0_1!=IOUtils::nodata) {
+	if (f_0_1!=IOUtils::nodata) {
 		avg_value += f_0_1;
 		avg_count++;
 	}
-	if(f_1_1!=IOUtils::nodata) {
+	if (f_1_1!=IOUtils::nodata) {
 		avg_value += f_1_1;
 		avg_count++;
 	}
 
-	if(avg_count==4) return f_0_0 * (1.-x)*(1.-y) + f_1_0 * x*(1.-y) + f_0_1 * (1.-x)*y + f_1_1 *x*y;
+	if (avg_count==4) return f_0_0 * (1.-x)*(1.-y) + f_1_0 * x*(1.-y) + f_0_1 * (1.-x)*y + f_1_1 *x*y;
 
 	//special cases: less than two neighbours or three neighbours
-	if(avg_count<=2) return IOUtils::nodata;
+	if (avg_count<=2) return IOUtils::nodata;
 
 	double value = 0.;
 	const double avg = avg_value/(double)avg_count;
-	if(f_0_0!=IOUtils::nodata) value += f_0_0 * (1.-x)*(1.-y);
+	if (f_0_0!=IOUtils::nodata) value += f_0_0 * (1.-x)*(1.-y);
 	else value += avg * (1.-x)*(1.-y);
-	if(f_1_0!=IOUtils::nodata) value += f_1_0 * x*(1.-y);
+	if (f_1_0!=IOUtils::nodata) value += f_1_0 * x*(1.-y);
 	else value += avg * x*(1.-y);
-	if(f_0_1!=IOUtils::nodata) value += f_0_1 * (1.-x)*y;
+	if (f_0_1!=IOUtils::nodata) value += f_0_1 * (1.-x)*y;
 	else value += avg * (1.-x)*y;
-	if(f_1_1!=IOUtils::nodata) value += f_1_1 *x*y;
+	if (f_1_1!=IOUtils::nodata) value += f_1_1 *x*y;
 	else value += avg *x*y;
 
 	return value;
@@ -209,10 +209,10 @@ void ResamplingAlgorithms2D::Bilinear(Array2D<double> &o_grid, const Array2D<dou
 
 double ResamplingAlgorithms2D::BSpline_weight(const double &x) {
 	double R = 0.;
-	if((x+2.)>0.) R += Optim::pow3(x+2.);
-	if((x+1.)>0.) R += -4.*Optim::pow3(x+1.);
-	if((x)>0.) R += 6.*Optim::pow3(x);
-	if((x-1.)>0.) R += -4.*Optim::pow3(x-1.);
+	if ((x+2.)>0.) R += Optim::pow3(x+2.);
+	if ((x+1.)>0.) R += -4.*Optim::pow3(x+1.);
+	if ((x)>0.) R += 6.*Optim::pow3(x);
+	if ((x-1.)>0.) R += -4.*Optim::pow3(x-1.);
 
 	return 1./6.*R;
 }
@@ -236,8 +236,8 @@ void ResamplingAlgorithms2D::cubicBSpline(Array2D<double> &o_grid, const Array2D
 
 			double F = 0., max=-std::numeric_limits<double>::max(), min=std::numeric_limits<double>::max();
 			unsigned int avg_count = 0;
-			for(short n=-1; n<=2; n++) {
-				for(short m=-1; m<=2; m++) {
+			for (short n=-1; n<=2; n++) {
+				for (short m=-1; m<=2; m++) {
 					if (((signed)org_ii+m)<0 || ((signed)org_ii+m)>=(signed)org_nx || ((signed)org_jj+n)<0 || ((signed)org_jj+n)>=(signed)org_ny) continue;
 					const double pixel = i_grid(org_ii+m, org_jj+n);
 					if (pixel!=IOUtils::nodata) {

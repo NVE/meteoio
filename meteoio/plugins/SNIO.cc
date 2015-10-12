@@ -414,7 +414,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//The following lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = vecIndex.at(ii).getIndex(dateStart);
-			if(current_fpointer!=(streampos)-1) fin.seekg(current_fpointer);
+			if (current_fpointer!=(streampos)-1) fin.seekg(current_fpointer);
 
 			while (!fin.eof()) {
 				const streampos tmp_fpointer = fin.tellg();
@@ -432,10 +432,10 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 					}
 					current_fpointer = tmp_fpointer; //save file pointer
-					if( (linenr % streampos_every_n_lines)==0 && (current_fpointer != ((ifstream::pos_type)-1)))
+					if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != ((ifstream::pos_type)-1)))
 						vecIndex.at(ii).setIndex(md.date, current_fpointer);
 
-					if(md.date>dateEnd) break;
+					if (md.date>dateEnd) break;
 				} else if (ncols == 1){
 					if (tmpvec.at(0) == "END") {
 						break; //reached end of MeteoData
@@ -516,7 +516,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	double& ea = tmpdata[ii++];
 	if ((ea <= 1) && (ea != plugin_nodata)){
 		if ((md(MeteoData::TA) != plugin_nodata) && (md(MeteoData::RH) != plugin_nodata)) {
-			if(ea==0.)
+			if (ea==0.)
 				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)));
 			else
 				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
@@ -573,11 +573,11 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		ss << number_of_solutes << " solutes";
 
 		size_t nb_fields = nr_meteoData + number_meas_temperatures + number_of_solutes;
-		if(vw_drift) {
+		if (vw_drift) {
 			ss << " + 1 VW_DRIFT";
 			nb_fields++;
 		}
-		if(rho_hn) {
+		if (rho_hn) {
 			ss << " + 1 RHO_HN";
 			nb_fields++;
 		}
@@ -594,13 +594,13 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	string outpath;
 	cfg.getValue("METEOPATH", "Output", outpath);
 
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (!vecMeteo[ii].empty()) {
 			std::string station_id = vecMeteo[ii].front().meta.getStationID();
 			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name = outpath + "/" + station_id + ".inp";
 			if (!IOUtils::validFileAndPath(output_name)) throw InvalidFileNameException(output_name,AT);
-			if( !IOUtils::fileExists(output_name) ) {
+			if ( !IOUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
 				writeStationHeader(vecMeteo[ii], station_id);
 			} else {
@@ -624,7 +624,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 	unsigned int Dirichlet_failure_count = 0;
 	unsigned int optional_failure_count = 0;
 
-	for(size_t jj=0; jj<vecmd.size(); jj++) {
+	for (size_t jj=0; jj<vecmd.size(); jj++) {
 		int YYYY, MM, DD, HH, MI;
 		Date tmp_date(vecmd[jj].date);
 		tmp_date.setTimeZone(out_tz);
@@ -653,57 +653,57 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		fout.width(6);
 
 		//TA, RH, VW, DW
-		if(ta==IOUtils::nodata) {
+		if (ta==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(6) << setprecision(0) << ta << " ";
 		} else
 			fout << setw(6) << setprecision(2) << IOUtils::K_TO_C(ta) << " ";
-		if(rh==IOUtils::nodata) {
+		if (rh==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(5) << setprecision(0) << rh << " ";
 		} else
 			fout << setw(5) << setprecision(1) << rh * 100. << " ";
-		if(vw==IOUtils::nodata) {
+		if (vw==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(4) << setprecision(0) << vw << " ";
 		} else {
 			fout << setw(4) << setprecision(1) << vw << " ";
 		}
-		if(dw==IOUtils::nodata)
+		if (dw==IOUtils::nodata)
 			failure_count++;
 		fout << setw(4) << setprecision(0) << dw << " ";
 
 		//ISWR, RSWR
-		if(iswr==IOUtils::nodata && rswr==IOUtils::nodata) {
+		if (iswr==IOUtils::nodata && rswr==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(6) << setprecision(0) << iswr << " " << setprecision(0) << rswr << " ";
 		} else {
-			if(iswr==IOUtils::nodata)
+			if (iswr==IOUtils::nodata)
 				fout << setw(6) << setprecision(1) << "0.0" << " ";
 			else
 				fout << setw(6) << setprecision(1) << iswr << " ";
-			if(rswr==IOUtils::nodata)
+			if (rswr==IOUtils::nodata)
 				fout << setw(6) << setprecision(1) << "0.0" << " ";
 			else
 				fout << setw(6) << setprecision(1) << rswr << " ";
 		}
 
 		//LWR
-		if(ilwr==IOUtils::nodata) {
-			if(tss==IOUtils::nodata) failure_count++; //if we have tss, we can compute the local ilwr
+		if (ilwr==IOUtils::nodata) {
+			if (tss==IOUtils::nodata) failure_count++; //if we have tss, we can compute the local ilwr
 			fout << setw(5) << setprecision(1) << "0.0" << " ";
 		} else {
 			fout << setw(5) << setprecision(1) << ilwr << " ";
 		}
 
 		//TSS, TSG (only required for Dirichlet)
-		if(tss==IOUtils::nodata) {
+		if (tss==IOUtils::nodata) {
 			Dirichlet_failure_count++;
 			fout << setw(7) << setprecision(1) << "0.0" << " ";
 		} else {
 			fout << setw(7) << setprecision(2) << IOUtils::K_TO_C(tss) << " ";
 		}
-		if(tsg==IOUtils::nodata) {
+		if (tsg==IOUtils::nodata) {
 			Dirichlet_failure_count++;
 			fout << setw(6) << setprecision(1) << "0.0" << " ";
 		} else {
@@ -711,15 +711,15 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		}
 
 		//PSUM, HS
-		if(psum==IOUtils::nodata && hs==IOUtils::nodata) {
+		if (psum==IOUtils::nodata && hs==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(7) << setprecision(2) << psum << " " << setw(6) << setprecision(3) << hs << " ";
 		} else {
-			if(psum==IOUtils::nodata)
+			if (psum==IOUtils::nodata)
 				fout << setw(7) << setprecision(1) << "0.0" << " ";
 			else
 				fout << setw(7) << setprecision(4) << psum << " ";
-			if(hs==IOUtils::nodata)
+			if (hs==IOUtils::nodata)
 				fout << setw(6) << setprecision(1) << "0.0";
 			else
 				fout << setw(6) << setprecision(3) << hs;

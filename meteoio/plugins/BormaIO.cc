@@ -252,7 +252,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 	//parser.set_validate(); //provide DTD to check syntax
 	parser.set_substitute_entities(); //We just want the text to be resolved/unescaped automatically.
 	parser.parse_file(filename);
-	if(parser) {
+	if (parser) {
 		//Walk the tree: ROOT NODE
 		xmlpp::Node* pNode = parser.get_document()->get_root_node(); //deleted by DomParser.
 
@@ -360,7 +360,7 @@ xmlpp::Node* BormaIO::xmlGetNode(xmlpp::Node* parentNode, const std::string& nod
 
 	xmlpp::Node::NodeList list = parentNode->get_children();
 
-	for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
+	for (xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
 		xmlpp::Node* tmpNode2= (xmlGetNode(*iter, nodename));
 		if (tmpNode2!=NULL) {
 			return tmpNode2;
@@ -383,7 +383,7 @@ Date BormaIO::stringToDate(const std::string& instr) const
 
 	Date date_out;
 	//some Y2K support
-	if(year<pivot_year)
+	if (year<pivot_year)
 		IOUtils::convertString(date_out, "20"+instr.substr(0,10) , in_tz);
 	else
 		IOUtils::convertString(date_out, "19"+instr.substr(0,10) , in_tz);

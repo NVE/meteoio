@@ -168,7 +168,7 @@ void ALPUG::readMetaData()
 
 			const string line_id = vecLine[0];
 
-			for(size_t ii=0; ii<nr_ids; ++ii) {
+			for (size_t ii=0; ii<nr_ids; ++ii) {
 				if (line_id==vecIDs[ii]) { //station ID found in the input list
 					if (foundID[ii])
 						throw InvalidFormatException("Error: station "+line_id+" appears multiple times in metafile \'"+metafile+"\'", AT);
@@ -304,7 +304,7 @@ bool ALPUG::parseLine(const std::string& filename, const size_t& nr_of_data_fiel
 //since ALPUG files seem to often contain duplicate lines, just skip them
 bool ALPUG::isDuplicate(const std::string& line)
 {
-	for(size_t ii=0; ii<LinesBuffer.size(); ++ii) {
+	for (size_t ii=0; ii<LinesBuffer.size(); ++ii) {
 		if (line==LinesBuffer[ii]) return true;
 	}
 

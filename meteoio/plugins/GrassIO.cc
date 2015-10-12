@@ -110,7 +110,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		if ((_nx==0) || (_ny==0)) {
 			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
 		}
-		if((_nx<0) || (_ny<0)) {
+		if ((_nx<0) || (_ny<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
 		}
 		ncols = (size_t)_nx;
@@ -143,7 +143,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 					}
 				}
 
-				if(tmp_val <= plugin_nodata) {
+				if (tmp_val <= plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out(ll, kk) = IOUtils::nodata;
 				} else {
@@ -243,7 +243,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << "rows:"  << grid_in.getNy() << "\n";
 		fout << "cols:"  << grid_in.getNx() << "\n";
 
-		if(grid_in.getNy()>0) {
+		if (grid_in.getNy()>0) {
 			for (size_t kk=grid_in.getNy()-1; kk < grid_in.getNy(); kk--) {
 				size_t ll = 0;
 				for (ll=0; ll < (grid_in.getNx()-1); ll++){

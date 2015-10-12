@@ -235,7 +235,7 @@ bool MeteoData::operator==(const MeteoData& in) const
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		//const double epsilon_rel = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * std::numeric_limits<double>::epsilon(); // Hack not working...
 		//const double epsilon_rel = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * 0.0000001; // Hack not working with 0 == 0 ....
-		if( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) ){
+		if ( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) ){
 			return false;
 		}
 	}
@@ -365,7 +365,7 @@ void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>
 
 	if (simple_merge || vec1.empty()) {
 		vec1.reserve( vec1.size()+vec2.size() );
-		for(size_t ii=0; ii<vec2.size(); ii++) vec1.push_back( vec2[ii] );
+		for (size_t ii=0; ii<vec2.size(); ii++) vec1.push_back( vec2[ii] );
 	} else {
 		for (size_t ii=0; ii<vec2.size(); ii++) merge(vec1, vec2[ii]);
 	}
@@ -394,7 +394,7 @@ void MeteoData::merge(std::vector<MeteoData>& vec)
 	
 	std::vector<MeteoData> vecResult;
 	std::vector<size_t> mergeIdx(nElems);
-	for(size_t ii=0; ii<nElems; ii++) mergeIdx[ii] = ii;
+	for (size_t ii=0; ii<nElems; ii++) mergeIdx[ii] = ii;
 	
 	for (size_t ii=0; ii<nElems; ii++) {
 		if (mergeIdx[ii]==IOUtils::npos) continue; //this element has already been merged, skip

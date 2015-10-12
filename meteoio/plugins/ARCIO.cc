@@ -140,10 +140,10 @@ void ARCIO::getGridPaths() {
 
 	grid2d_ext_in = ".asc";
 	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, IOUtils::nothrow);
-	if(grid2d_ext_in=="none") grid2d_ext_in.clear();
+	if (grid2d_ext_in=="none") grid2d_ext_in.clear();
 	grid2d_ext_out = ".asc";
 	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, IOUtils::nothrow);
-	if(grid2d_ext_out=="none") grid2d_ext_out.clear();
+	if (grid2d_ext_out=="none") grid2d_ext_out.clear();
 }
 
 ARCIO::~ARCIO() throw()
@@ -203,7 +203,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		if ((i_ncols==0) || (i_nrows==0)) {
 			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + full_name, AT);
 		}
-		if((i_ncols<0) || (i_nrows<0)) {
+		if ((i_ncols<0) || (i_nrows<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + full_name, AT);
 		}
 		ncols = (size_t)i_ncols;
@@ -220,7 +220,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		//Read one line after the other and parse values into Grid2DObject
 		for (size_t kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln);
-			if(line.empty()) { //so we can tolerate empty lines
+			if (line.empty()) { //so we can tolerate empty lines
 				kk++; //to keep the same kk at the next iteration
 				nr_empty++;
 				continue;
@@ -265,7 +265,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 			ext="swr";
 		else if (parameter==MeteoGrids::ILWR)
 			ext="lwr";
-		else if(parameter==MeteoGrids::DEM)
+		else if (parameter==MeteoGrids::DEM)
 			ext="asc";
 		else {
 			ext = MeteoGrids::getParameterName(parameter);
@@ -355,7 +355,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << "\n";
 		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
-		if(nrows>0) {
+		if (nrows>0) {
 			for (size_t kk=nrows; kk-->0; ) {
 				for (size_t ll=0; ll < ncols; ll++){
 					fout << grid_in(ll, kk) << " ";
@@ -375,7 +375,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	//the path will be added by write2DGrid
-	if(a3d_view_out) {
+	if (a3d_view_out) {
 		// the A3D grid viewer looks for the following extensions:
 		//sdp, tss, swr, lwr, swe, alb, wet
 		string ext;
@@ -385,7 +385,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			ext="swr";
 		else if (parameter==MeteoGrids::ILWR)
 			ext="lwr";
-		else if(parameter==MeteoGrids::DEM)
+		else if (parameter==MeteoGrids::DEM)
 			ext="asc";
 		else {
 			ext = MeteoGrids::getParameterName(parameter);
@@ -395,7 +395,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
 		write2DGrid(grid_in, dateStr+"."+ext );
 	} else {
-		if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
+		if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
 			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		} else {
 			std::string date_str = date.toString(Date::ISO);

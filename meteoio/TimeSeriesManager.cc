@@ -62,24 +62,24 @@ void TimeSeriesManager::setDfltBufferProperties()
 	}
 
 	//if buff_before>chunk_size, we will have a problem (ie: we won't ever read the whole data we need)
-	if(buff_before>chunk_size) chunk_size = buff_before;
+	if (buff_before>chunk_size) chunk_size = buff_before;
 	//BUG: if we do this, we still have the meteo1d window in the way
 	//-> we end up not reading enough data and rebuffering...
 }
 
 void TimeSeriesManager::setMinBufferRequirements(const double& i_chunk_size, const double& i_buff_before)
 {
-	if(i_buff_before!=IOUtils::nodata) {
+	if (i_buff_before!=IOUtils::nodata) {
 		const Duration app_buff_before(i_buff_before, 0);
-		if(app_buff_before>buff_before) buff_before = app_buff_before;
+		if (app_buff_before>buff_before) buff_before = app_buff_before;
 	}
-	if(i_chunk_size!=IOUtils::nodata) {
+	if (i_chunk_size!=IOUtils::nodata) {
 		const Duration app_chunk_size(i_chunk_size, 0);
-		if(app_chunk_size>chunk_size) chunk_size = app_chunk_size;
+		if (app_chunk_size>chunk_size) chunk_size = app_chunk_size;
 	}
 
 	//if buff_before>chunk_size, we will have a problem (ie: we won't ever read the whole data we need)
-	if(buff_before>chunk_size) chunk_size = buff_before;
+	if (buff_before>chunk_size) chunk_size = buff_before;
 }
 
 void TimeSeriesManager::setProcessingLevel(const unsigned int& i_level)
@@ -327,28 +327,28 @@ const std::string TimeSeriesManager::toString() const {
 	std::map<Date, std::vector<MeteoData> >::const_iterator iter = point_cache.begin();
 	for (; iter != point_cache.end(); ++iter) {
 		const size_t nb_stations = iter->second.size();
-		if(nb_stations>max_stations) max_stations=nb_stations;
-		if(nb_stations<min_stations) min_stations=nb_stations;
+		if (nb_stations>max_stations) max_stations=nb_stations;
+		if (nb_stations<min_stations) min_stations=nb_stations;
 		count++;
 	}
 
-	if(count==0) {
+	if (count==0) {
 		os << "Resampled cache is empty\n";
 	}
-	if(count==1) {
+	if (count==1) {
 		os << "Resampled cache content (";
-		if(max_stations==min_stations)
+		if (max_stations==min_stations)
 			os << min_stations;
 		else
 			os << min_stations << " to " << max_stations;
 		os << " station(s))\n";
 		os << std::setw(22) << point_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
 	}
-	if(count>1) {
+	if (count>1) {
 		const double avg_sampling = ( (point_cache.rbegin()->first.getJulian()) - (point_cache.begin()->first.getJulian()) ) / (double)(count-1);
 
 		os << "Resampled cache content (";
-		if(max_stations==min_stations)
+		if (max_stations==min_stations)
 			os << min_stations;
 		else
 			os << min_stations << " to " << max_stations;

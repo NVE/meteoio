@@ -69,7 +69,7 @@ ARPSIO::ARPSIO(const Config& cfgreader)
 }
 
 ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
-	if(this != &source) {
+	if (this != &source) {
 		fin = NULL;
 		filename = source.filename;
 		coordin = source.coordin;
@@ -103,7 +103,7 @@ void ARPSIO::setOptions()
 
 	//default value has been set in constructor
 	cfg.getValue("GRID2DEXT", "Input", ext, IOUtils::nothrow);
-	if(ext=="none") ext.clear();
+	if (ext=="none") ext.clear();
 }
 
 ARPSIO::~ARPSIO() throw()
@@ -118,7 +118,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	openGridFile(_filename);
 
 	const unsigned int layer=2;
-	if(is_true_arps)
+	if (is_true_arps)
 		readGridLayer("zp coordinat", layer, grid_out);
 	else
 		readGridLayer("zp_coordinat", layer, grid_out);
@@ -135,15 +135,15 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	openGridFile(name);
 
 	//Radiation parameters
-	if(parameter==MeteoGrids::ISWR) readGridLayer("radsw", 2, grid_out);
-	if(parameter==MeteoGrids::RSWR) {
+	if (parameter==MeteoGrids::ISWR) readGridLayer("radsw", 2, grid_out);
+	if (parameter==MeteoGrids::RSWR) {
 		Grid2DObject net;
 		readGridLayer("radsw", 2, grid_out);
 		readGridLayer("radswnet", 2, net);
 		grid_out.grid2D -= net.grid2D;
 	}
-	if(parameter==MeteoGrids::ILWR) readGridLayer("radlwin", 2, grid_out);
-	if(parameter==MeteoGrids::ALB) {
+	if (parameter==MeteoGrids::ILWR) readGridLayer("radlwin", 2, grid_out);
+	if (parameter==MeteoGrids::ALB) {
 		Grid2DObject rswr, iswr;
 		readGridLayer("radsw", 2, iswr);
 		readGridLayer("radswnet", 2, grid_out); //net radiation
@@ -152,34 +152,34 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	}
 
 	//Wind grids
-	if(parameter==MeteoGrids::U) readGridLayer("u", 2, grid_out);
-	if(parameter==MeteoGrids::V) readGridLayer("v", 2, grid_out);
-	if(parameter==MeteoGrids::W) readGridLayer("w", 2, grid_out);
-	if(parameter==MeteoGrids::VW) {
+	if (parameter==MeteoGrids::U) readGridLayer("u", 2, grid_out);
+	if (parameter==MeteoGrids::V) readGridLayer("v", 2, grid_out);
+	if (parameter==MeteoGrids::W) readGridLayer("w", 2, grid_out);
+	if (parameter==MeteoGrids::VW) {
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
-			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
+		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = sqrt( Optim::pow2(grid_out(ii,jj)) + Optim::pow2(V(ii,jj)) );
 			}
 		}
 	}
-	if(parameter==MeteoGrids::DW) {
+	if (parameter==MeteoGrids::DW) {
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
-			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
+		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
 			}
 		}
 	}
 
 	//Basic meteo parameters
-	if(parameter==MeteoGrids::P) readGridLayer("p", 2, grid_out);
-	if(parameter==MeteoGrids::TSG) readGridLayer("tsoil", 2, grid_out); //or is it tss for us?
-	/*if(parameter==MeteoGrids::RH) {
+	if (parameter==MeteoGrids::P) readGridLayer("p", 2, grid_out);
+	if (parameter==MeteoGrids::TSG) readGridLayer("tsoil", 2, grid_out); //or is it tss for us?
+	/*if (parameter==MeteoGrids::RH) {
 		//const double epsilon = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
 		readGridLayer("qv", 2, grid_out); //water vapor mixing ratio
 		//Atmosphere::waterSaturationPressure(T);
@@ -188,24 +188,24 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	}*/
 
 	//Hydrological parameters
-	if(parameter==MeteoGrids::HS) readGridLayer("snowdpth", 2, grid_out);
-	if(parameter==MeteoGrids::PSUM) {
+	if (parameter==MeteoGrids::HS) readGridLayer("snowdpth", 2, grid_out);
+	if (parameter==MeteoGrids::PSUM) {
 		readGridLayer("prcrate1", 2, grid_out); //in kg/m^2/s
 		grid_out.grid2D *= 3600.; //we need kg/m^2/h
 	}
 
 	//DEM
 	std::string dem_marker="zp coordinat";
-	if(!is_true_arps) dem_marker="zp_coordinat";
-	if(parameter==MeteoGrids::DEM) readGridLayer(dem_marker, 2, grid_out);
-	if(parameter==MeteoGrids::SLOPE) {
+	if (!is_true_arps) dem_marker="zp_coordinat";
+	if (parameter==MeteoGrids::DEM) readGridLayer(dem_marker, 2, grid_out);
+	if (parameter==MeteoGrids::SLOPE) {
 		DEMObject dem;
 		dem.setUpdatePpt(DEMObject::SLOPE);
 		readGridLayer(dem_marker, 2, dem);
 		dem.update();
 		grid_out.set(dem.cellsize, dem.llcorner, dem.slope);
 	}
-	if(parameter==MeteoGrids::AZI) {
+	if (parameter==MeteoGrids::AZI) {
 		DEMObject dem;
 		dem.setUpdatePpt(DEMObject::SLOPE);
 		readGridLayer(dem_marker, 2, dem);
@@ -213,7 +213,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		grid_out.set(dem.cellsize, dem.llcorner, dem.azi);
 	}
 
-	if(grid_out.empty()) {
+	if (grid_out.empty()) {
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << name << "\"";
@@ -240,7 +240,7 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 		for (size_t iy = 0; iy < dimy; iy++) {
 			for (size_t iz = 0; iz < dimz; iz++) {
 				double tmp;
-				if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
+				if (fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 					grid_out.grid3D(ix,iy,iz) = tmp;
 				} else {
 					cleanup();
@@ -259,7 +259,7 @@ void ARPSIO::readDEM(DEMObject& dem_out)
 	std::string _filename;
 	cfg.getValue("DEMFILE", "Input", _filename);
 	openGridFile(_filename);
-	if(is_true_arps) {
+	if (is_true_arps) {
 		readGridLayer(std::string("zp coordinat"), 2 ,dem_out);
 	} else {
 		readGridLayer(std::string("zp_coordinat"), 2 ,dem_out);
@@ -324,7 +324,7 @@ void ARPSIO::initializeGRIDARPS()
 	//go to read the sizes
 	moveToMarker("nnx");
 	//finish reading the line and move to the next one
-	if(fscanf(fin,"%*[^\n]")!=0) {
+	if (fscanf(fin,"%*[^\n]")!=0) {
 		cleanup();
 		throw InvalidFormatException("Error in file format of file "+filename, AT);
 	}
@@ -350,7 +350,7 @@ void ARPSIO::initializeGRIDARPS()
 		throw InvalidFormatException("Can not read first two y coordinates from file "+filename, AT);
 	}
 	const double cellsize_y = v2 - v1;
-	if(cellsize_x!=cellsize_y) {
+	if (cellsize_x!=cellsize_y) {
 		cleanup();
 		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
 	}
@@ -387,7 +387,7 @@ void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
 		throw InvalidFormatException("Can not read first two y coordinates from file "+filename, AT);
 	}
 	const double cellsize_y = v2 - v1;
-	if(cellsize_x!=cellsize_y) {
+	if (cellsize_x!=cellsize_y) {
 		cleanup();
 		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
 	}
@@ -397,7 +397,7 @@ void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
 	while (fscanf(fin,"%lg",&v1)==1) {
 		zcoord.push_back( v1 );
 	}
-	if(zcoord.size()!=dimz) {
+	if (zcoord.size()!=dimz) {
 		ostringstream ss;
 		ss << "Expected " << dimz << " z coordinates in file \""+filename+"\", found " << zcoord.size();
 		cleanup();
@@ -411,7 +411,7 @@ void ARPSIO::openGridFile(const std::string& in_filename)
 	filename = in_filename;
 
 	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
-	if((fin=fopen(filename.c_str(),"r")) == NULL) {
+	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
 		cleanup();
 		throw FileAccessException("Can not open file "+filename, AT);
 	}
@@ -420,7 +420,7 @@ void ARPSIO::openGridFile(const std::string& in_filename)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	for (int j=0; j<5; j++) {
 		//the first easy difference in the structure happens at line 5
-		if(fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
+		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
 			cleanup();
 			throw InvalidFormatException("Fail to read header lines of file "+filename, AT);
 		}
@@ -464,7 +464,7 @@ void ARPSIO::cleanup() throw()
 */
 void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid)
 {
-	if(layer<1 || layer>dimz) {
+	if (layer<1 || layer>dimz) {
 		cleanup();
 		ostringstream tmp;
 		tmp << "Layer " << layer << " does not exist in ARPS file " << filename << " (nr layers=" << dimz << ")";
@@ -480,11 +480,11 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	moveToMarker(parameter);
 
 	// move to the begining of the layer of interest
-	if(layer>1) {
+	if (layer>1) {
 		double tmp;
 		const size_t jmax=dimx*dimy*(layer-1);
 		for (size_t j = 0; j < jmax; j++)
-			if(fscanf(fin," %16lf%*[\n]",&tmp)==EOF) {
+			if (fscanf(fin," %16lf%*[\n]",&tmp)==EOF) {
 				cleanup();
 				throw InvalidFormatException("Fail to skip data layers in file "+filename, AT);
 			}
@@ -494,7 +494,7 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	for (size_t iy = 0; iy < dimy; iy++) {
 		for (size_t ix = 0; ix < dimx; ix++) {
 			double tmp;
-			if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
+			if (fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 				grid(ix,iy) = tmp;
 			} else {
 				cleanup();
@@ -511,12 +511,12 @@ void ARPSIO::moveToMarker(const std::string& marker)
 	do {
 		nb_elems=fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
 	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0 && nb_elems!=0);
-	if(feof(fin)) {
+	if (feof(fin)) {
 		cleanup();
 		const std::string message = "End of file "+filename+" should NOT have been reached when looking for "+marker;
 		throw InvalidFormatException(message, AT);
 	}
-	if(nb_elems==0) {
+	if (nb_elems==0) {
 		cleanup();
 		const std::string message = "Matching failure in file "+filename+" when looking for "+marker;
 		throw InvalidFormatException(message, AT);

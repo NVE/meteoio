@@ -265,7 +265,7 @@ class Config {
 			const std::string new_section( IOUtils::strToUpper(section) );
 			const size_t nr_keys = findKeys(vecKeys, keystart, new_section);
 
-			for(size_t ii=0; ii<nr_keys; ++ii) {
+			for (size_t ii=0; ii<nr_keys; ++ii) {
 				const std::string full_key = new_section + "::" + vecKeys[ii];
 				T tmp;
 				try {

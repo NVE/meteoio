@@ -65,7 +65,7 @@ std::string GeneratorAlgorithm::getAlgo() const {
 
 void GeneratorAlgorithm::parse_args(const std::vector<std::string>& vecArgs)
 {
-	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
 }
@@ -75,7 +75,7 @@ void GeneratorAlgorithm::parse_args(const std::vector<std::string>& vecArgs)
 void ConstGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
-	if(vecArgs.size()==1) {
+	if (vecArgs.size()==1) {
 		IOUtils::convertString(constant, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
@@ -85,7 +85,7 @@ void ConstGenerator::parse_args(const std::vector<std::string>& vecArgs)
 bool ConstGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata)
+	if (value == IOUtils::nodata)
 		value = constant;
 
 	return true; //all missing values could be filled
@@ -93,9 +93,9 @@ bool ConstGenerator::generate(const size_t& param, MeteoData& md)
 
 bool ConstGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		generate(param, vecMeteo[ii]);
 	}
 
@@ -105,10 +105,10 @@ bool ConstGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 void SinGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
-	if(vecArgs.size()==4) {
+	if (vecArgs.size()==4) {
 		const string type_str=IOUtils::strToUpper(vecArgs[0]);
-		if( type_str=="YEARLY" ) type='y';
-		else if( type_str=="DAILY" ) type='d';
+		if ( type_str=="YEARLY" ) type='y';
+		else if ( type_str=="DAILY" ) type='d';
 		else
 			throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+algo+" generator", AT);
 
@@ -126,11 +126,11 @@ void SinGenerator::parse_args(const std::vector<std::string>& vecArgs)
 bool SinGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		double t; //also, the minimum must occur at 0 if phase=0
-		if(type=='y') {
+		if (type=='y') {
 			t = (static_cast<double>(md.date.getJulianDayNumber()) - phase*365.25) / 366.25 - .25;
-		} else if(type=='d') {
+		} else if (type=='d') {
 			const double julian = md.date.getJulian();
 			t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!
 		} else {
@@ -148,9 +148,9 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 
 bool SinGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		generate(param, vecMeteo[ii]);
 	}
 
@@ -161,9 +161,9 @@ bool SinGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMete
 bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		const double altitude = md.meta.position.getAltitude();
-		if(altitude==IOUtils::nodata) return false;
+		if (altitude==IOUtils::nodata) return false;
 		value = Atmosphere::stdAirPressure(altitude);
 	}
 
@@ -172,14 +172,14 @@ bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 
 bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
-	if(altitude==IOUtils::nodata) return false;
+	if (altitude==IOUtils::nodata) return false;
 
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
-		if(value == IOUtils::nodata)
+		if (value == IOUtils::nodata)
 			value = Atmosphere::stdAirPressure(altitude);
 	}
 
@@ -190,7 +190,7 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 bool RhGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		const double TA = md(MeteoData::TA);
 		if (TA==IOUtils::nodata) //nothing else we can do here
 			return false;
@@ -218,14 +218,14 @@ bool RhGenerator::generate(const size_t& param, MeteoData& md)
 
 bool RhGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
 
 	bool all_filled = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
-		if(value == IOUtils::nodata) {
+		if (value == IOUtils::nodata) {
 			const double TA = vecMeteo[ii](MeteoData::TA);
 			if (TA==IOUtils::nodata) { //nothing else we can do here
 				all_filled=false;
@@ -261,7 +261,7 @@ const double TsGenerator::snow_thresh = .1; //if snow height greater than this t
 bool TsGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		const double olwr = md("OLWR");
 		if (olwr==IOUtils::nodata) //nothing else we can do here
 			return false;
@@ -280,10 +280,10 @@ bool TsGenerator::generate(const size_t& param, MeteoData& md)
 
 bool TsGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	bool status = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (!generate(param, vecMeteo[ii]))
 			status = false;
 	}
@@ -299,7 +299,7 @@ const double IswrAlbedoGenerator::snow_thresh = .1; //if snow height greater tha
 bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		const double HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR), ISWR=md(MeteoData::ISWR);
 
 		double albedo = .5;
@@ -324,10 +324,10 @@ bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md)
 
 bool IswrAlbedoGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	bool status = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (!generate(param, vecMeteo[ii]))
 			status = false;
 	}
@@ -339,7 +339,7 @@ bool IswrAlbedoGenerator::generate(const size_t& param, std::vector<MeteoData>& 
 void ClearSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
-	if(vecArgs.size()==1) {
+	if (vecArgs.size()==1) {
 		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
 
 		if (user_algo=="BRUTSAERT") model = BRUTSAERT;
@@ -381,12 +381,12 @@ bool ClearSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 
 bool ClearSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	bool all_filled = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		const bool status = generate(param, vecMeteo[ii]);
-		if(status==false) all_filled=false;
+		if (status==false) all_filled=false;
 	}
 
 	return all_filled;
@@ -528,12 +528,12 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 
 bool AllSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	bool all_filled = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		const bool status = generate(param, vecMeteo[ii]);
-		if(status==false) all_filled=false;
+		if (status==false) all_filled=false;
 	}
 
 	return all_filled;
@@ -546,7 +546,7 @@ const double AllSkySWGenerator::snow_thresh = .1; //if snow height greater than 
 void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
-	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
 }
@@ -554,26 +554,26 @@ void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value == IOUtils::nodata) {
+	if (value == IOUtils::nodata) {
 		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS), TAU_CLD=md(MeteoData::TAU_CLD);
 		double TA=md(MeteoData::TA), RH=md(MeteoData::RH), ILWR=md(MeteoData::ILWR);
 
 		const double lat = md.meta.position.getLat();
 		const double lon = md.meta.position.getLon();
 		const double alt = md.meta.position.getAltitude();
-		if(lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
+		if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
 
 		double albedo = .5;
-		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
-			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+		if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-		} else if(ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
+		} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
 			albedo = RSWR / ISWR;
-			if(albedo>=1.) albedo=0.99;
-			if(albedo<=0.) albedo=0.01;
+			if (albedo>=1.) albedo=0.99;
+			if (albedo<=0.) albedo=0.01;
 		}
 
-		if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
 			//set TA & RH so the reduced precipitable water will get an average value
 			TA=274.98;
 			RH=0.666;
@@ -585,14 +585,14 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 		const double solarIndex = (TAU_CLD!=IOUtils::nodata)? TAU_CLD : (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
 
 		const double P=md(MeteoData::P);
-		if(P==IOUtils::nodata)
+		if (P==IOUtils::nodata)
 			sun.calculateRadiation(TA, RH, albedo);
 		else
 			sun.calculateRadiation(TA, RH, P, albedo);
 
 		double toa, direct, diffuse;
 		sun.getHorizontalRadiation(toa, direct, diffuse);
-		if(param!=MeteoData::RSWR)
+		if (param!=MeteoData::RSWR)
 			value = (direct+diffuse)*solarIndex; //ISWR
 		else
 			value = (direct+diffuse)*albedo*solarIndex; //RSWR
@@ -603,32 +603,32 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 
 bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	const double lat = vecMeteo.front().meta.position.getLat();
 	const double lon = vecMeteo.front().meta.position.getLon();
 	const double alt = vecMeteo.front().meta.position.getAltitude();
-	if(lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
+	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
 	sun.setLatLon(lat, lon, alt);
 
 	bool all_filled = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
-		if(value == IOUtils::nodata) {
+		if (value == IOUtils::nodata) {
 			const double ISWR=vecMeteo[ii](MeteoData::ISWR), RSWR=vecMeteo[ii](MeteoData::RSWR), HS=vecMeteo[ii](MeteoData::HS);
 			double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), ILWR=vecMeteo[ii](MeteoData::ILWR);
 
 			double albedo = .5;
-			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
-				if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+			if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+				if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-			} else if(ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
+			} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
 				albedo = RSWR / ISWR;
-				if(albedo>=1.) albedo=0.99;
-				if(albedo<=0.) albedo=0.01;
+				if (albedo>=1.) albedo=0.99;
+				if (albedo<=0.) albedo=0.01;
 			}
 
-			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+			if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
 				//set TA & RH so the reduced precipitable water will get an average value
 				TA=274.98;
 				RH=0.666;
@@ -639,14 +639,14 @@ bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			const double solarIndex = (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
 
 			const double P=vecMeteo[ii](MeteoData::P);
-			if(P==IOUtils::nodata)
+			if (P==IOUtils::nodata)
 				sun.calculateRadiation(TA, RH, albedo);
 			else
 				sun.calculateRadiation(TA, RH, P, albedo);
 
 			double toa, direct, diffuse;
 			sun.getHorizontalRadiation(toa, direct, diffuse);
-			if(param!=MeteoData::RSWR)
+			if (param!=MeteoData::RSWR)
 				value = (direct+diffuse)*solarIndex; //ISWR
 			else
 				value = (direct+diffuse)*albedo*solarIndex; //RSWR
@@ -664,8 +664,8 @@ double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, cons
 	const double ilwr_clear = Atmosphere::blkBody_Radiation(1., ta);
 
 	double cloudiness = (ilwr/ilwr_clear - epsilon_clear) / (.84 * (1.-epsilon_clear));
-	if(cloudiness>1.) cloudiness=1.;
-	if(cloudiness<0.) cloudiness=0.;
+	if (cloudiness>1.) cloudiness=1.;
+	if (cloudiness<0.) cloudiness=0.;
 
 	const double b1 = 0.75, b2 = 3.4;
 	const double karsten_Si = 1. - (b1 * pow(cloudiness, b2));
@@ -675,7 +675,7 @@ double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, cons
 
 void ESOLIPGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
-	if(vecArgs.size()>0) { //incorrect arguments, throw an exception
+	if (vecArgs.size()>0) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
 }
@@ -709,7 +709,7 @@ bool ESOLIPGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 	bool all_filled = (last_good>0)? false : true;
 	for (size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
 		const double HS_curr = vecMeteo[ii](MeteoData::HS);
-		if(HS_curr==IOUtils::nodata) continue;
+		if (HS_curr==IOUtils::nodata) continue;
 
 		const size_t start_idx = last_good+1;
 		const double HS_prev = vecMeteo[last_good](MeteoData::HS);

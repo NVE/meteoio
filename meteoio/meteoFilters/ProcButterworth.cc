@@ -35,7 +35,7 @@ void ProcButterworth::process(const unsigned int& param, const std::vector<Meteo
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
-	if(ivec.size()<2 || cutoff==0.) return;
+	if (ivec.size()<2 || cutoff==0.) return;
 
 	const double days = ivec.back().date.getJulian() - ivec.front().date.getJulian();
 	const size_t nr_data_pts = ivec.size();
@@ -50,8 +50,8 @@ void ProcButterworth::process(const unsigned int& param, const std::vector<Meteo
 		//propagate in X and Y
 		X[2] = X[1]; X[1] = X[0]; X[0] = raw_val;
 		Y[2] = Y[1]; Y[1] = Y[0]; Y[0] = raw_val; //Y[0] will be overwritten but in case of nodata we still propagate a value
-		if(X[2]==IOUtils::nodata || X[1]==IOUtils::nodata || X[0]==IOUtils::nodata) continue;
-		if(Y[2]==IOUtils::nodata || Y[1]==IOUtils::nodata) continue;
+		if (X[2]==IOUtils::nodata || X[1]==IOUtils::nodata || X[0]==IOUtils::nodata) continue;
+		if (Y[2]==IOUtils::nodata || Y[1]==IOUtils::nodata) continue;
 
 		Y[0] = A[0]*X[0] + A[1]*X[1] + A[2]*X[2] - ( B[1]*Y[1] + B[2]*Y[2] );
 		ovec[ii](param) = Y[0];

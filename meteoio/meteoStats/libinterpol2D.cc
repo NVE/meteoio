@@ -357,7 +357,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 	//make sure dem has the curvature that we need
 	const bool recomputeDEM = i_dem.curvature.empty();
 	DEMObject *intern_dem = NULL;
-	if(recomputeDEM) {
+	if (recomputeDEM) {
 		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Computing it...\n";
 		intern_dem = new DEMObject(i_dem);
 		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
@@ -568,7 +568,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 */
 void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
-	if(!grid.isSameGeolocalization(dem)) {
+	if (!grid.isSameGeolocalization(dem)) {
 		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);
 	}
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
@@ -583,10 +583,10 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 			const double curvature = dem.curvature(i, j);
 			double val = grid.grid2D(i, j);
 
-			if(ta.grid2D(i, j)<=Cst::t_water_freezing_pt) {
+			if (ta.grid2D(i, j)<=Cst::t_water_freezing_pt) {
 				//we only modify the grid of precipitations if air temperature
 				//at this point is below or at freezing
-				if(slope==IOUtils::nodata || curvature==IOUtils::nodata) {
+				if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
 					val = IOUtils::nodata;
 				} else if (slope>60.) {
 					//No snow precipitation happens for these slopes
@@ -596,7 +596,7 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 					val *= (60.-slope)/20.;
 				} //else: unchanged
 
-				if(val!=IOUtils::nodata && dem_range_curvature!=0.) {
+				if (val!=IOUtils::nodata && dem_range_curvature!=0.) {
 					//cf Huss
 					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
 				}

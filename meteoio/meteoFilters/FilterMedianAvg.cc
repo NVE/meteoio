@@ -41,9 +41,9 @@ void FilterMedianAvg::process(const unsigned int& param, const std::vector<Meteo
 		double& value = ovec[ii](param);
 
 		size_t start, end;
-		if( get_window_specs(ii, ivec, start, end) ) {
+		if ( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_median(ivec, param, start, end);
-		} else if(!is_soft) value = IOUtils::nodata;
+		} else if (!is_soft) value = IOUtils::nodata;
 	}
 }
 
@@ -51,7 +51,7 @@ double FilterMedianAvg::calc_median(const std::vector<MeteoData>& ivec, const un
 {
 	vector<double> vecTemp;
 	vecTemp.reserve( end-start+1 );
-	for(size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
+	for (size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
 		const double& value = ivec[ii](param);
 		if (value != IOUtils::nodata)
 			vecTemp.push_back(value);

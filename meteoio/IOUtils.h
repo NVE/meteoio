@@ -215,7 +215,7 @@ namespace IOUtils {
 		}
 		const std::string& value = it->second;
 
-		if(!convertString<T>(t, value, std::dec) && options!=IOUtils::nothrow) {
+		if (!convertString<T>(t, value, std::dec) && options!=IOUtils::nothrow) {
 			std::cerr << "[E] When reading \"" << key << "\" = \"" << t << "\"\n";
 			throw ConversionFailedException(value, AT);
 		}
@@ -250,7 +250,7 @@ namespace IOUtils {
 		const size_t counter = readLineToVec(value, vecUnconvertedValues);
 		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
-			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec) && options!=IOUtils::nothrow){
+			if (!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec) && options!=IOUtils::nothrow){
 				std::cerr << "[E] When reading \"" << key << "\" = \"" << myvar << "\"\n";
 				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
 			}
@@ -266,7 +266,7 @@ namespace IOUtils {
 	* @return checked/converted value
 	*/
 	template <class T> T standardizeNodata(const T& value, const double& plugin_nodata) {
-		if(value==plugin_nodata) return static_cast<T> (nodata);
+		if (value==plugin_nodata) return static_cast<T> (nodata);
 		else return value;
 	}
 

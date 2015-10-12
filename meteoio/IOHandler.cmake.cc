@@ -276,7 +276,7 @@ IOHandler::~IOHandler() throw()
 }
 
 IOHandler& IOHandler::operator=(const IOHandler& source) {
-	if(this != &source) {
+	if (this != &source) {
 		mapPlugins = source.mapPlugins;
 		excluded_params = source.excluded_params;
 		kept_params = source.kept_params;
@@ -417,7 +417,7 @@ void IOHandler::create_exclude_map()
 				const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ' ');
 
 				if (ncols > 1) {
-					for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+					for (vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
 						IOUtils::toUpper(*it);
 					}
 
@@ -443,7 +443,7 @@ void IOHandler::create_exclude_map()
 		std::vector<std::string> vecString;
 		cfg.getValue(exclude_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
-		for(vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper(*it);
 		}
 
@@ -480,7 +480,7 @@ void IOHandler::create_keep_map()
 				const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ' ');
 
 				if (ncols > 1) {
-					for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+					for (vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
 						IOUtils::toUpper(*it);
 					}
 
@@ -506,7 +506,7 @@ void IOHandler::create_keep_map()
 		std::vector<std::string> vecString;
 		cfg.getValue(keep_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
-		for(vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper(*it);
 		}
 

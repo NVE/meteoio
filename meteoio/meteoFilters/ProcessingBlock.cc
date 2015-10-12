@@ -283,13 +283,13 @@ const std::string ProcessingProperties::toString() const
 	const size_t p_after = points_after;
 
 	os << "{";
-	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
-	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
-	if(stage==ProcessingProperties::first)
+	if (h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
+	if (p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
+	if (stage==ProcessingProperties::first)
 		os << "p¹";
-	if(stage==ProcessingProperties::second)
+	if (stage==ProcessingProperties::second)
 		os << "p²";
-	if(stage==ProcessingProperties::both)
+	if (stage==ProcessingProperties::both)
 		os << "p½";
 	os << "}";
 	return os.str();

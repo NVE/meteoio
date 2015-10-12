@@ -37,7 +37,7 @@ FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args, const std
 void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                             std::vector<MeteoData>& ovec)
 {
-	if(param!=MeteoData::VW && param!=MeteoData::DW) {
+	if (param!=MeteoData::VW && param!=MeteoData::DW) {
 		ostringstream ss;
 		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
@@ -49,9 +49,9 @@ void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoDa
 		double& value = ovec[ii](param);
 
 		size_t start, end;
-		if( get_window_specs(ii, ivec, start, end) ) {
+		if ( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_avg(ivec, param, start, end);
-		} if(!is_soft) value = IOUtils::nodata;
+		} if (!is_soft) value = IOUtils::nodata;
 	}
 }
 
@@ -63,19 +63,19 @@ double FilterWindAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigne
 	for (size_t ii=start; ii<=end; ii++) {
 		const double VW = ivec[ii](MeteoData::VW);
 		const double DW = ivec[ii](MeteoData::DW);
-		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
+		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
 			ve += VW * sin(DW*Cst::to_rad);
 			vn += VW * cos(DW*Cst::to_rad);
 			count++;
 		}
 	}
 
-	if(count==0) return IOUtils::nodata;
+	if (count==0) return IOUtils::nodata;
 
 	ve /= static_cast<double>(count);
 	vn /= static_cast<double>(count);
 
-	if(param==MeteoData::VW) {
+	if (param==MeteoData::VW) {
 		const double meanspeed = sqrt(ve*ve + vn*vn);
 		return meanspeed;
 	} else {

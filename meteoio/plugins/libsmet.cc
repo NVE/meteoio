@@ -150,7 +150,7 @@ void SMETCommon::trim(std::string& str)
 	const size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	// if all spaces or empty return an empty string
-	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
+	if (( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
 		str.clear();
 	} else {
 		str.erase(endpos+1); //right trim
@@ -171,7 +171,7 @@ bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string&
 	}
 
 
-	if(pos != std::string::npos) { //ignore in_lines that are empty or without '='
+	if (pos != std::string::npos) { //ignore in_lines that are empty or without '='
 		std::string key = in_line.substr(0, pos);
 		std::string value = in_line.substr(pos + 1);
 
@@ -479,7 +479,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 		throw SMETException("No timestamp present when writing file \""+filename+"\", use write(const vector<double>& data)", SMET_AT);
 
 	const size_t nr_of_data_fields = nr_of_fields - 1;
-	if(nr_of_fields<=1) { //avoid division by zero in the next block
+	if (nr_of_fields<=1) { //avoid division by zero in the next block
 		cerr << "[W] Attempting to write a dataset that contains no fields to file \"" + filename + "\"!\n";
 		return;
 	}
@@ -962,7 +962,7 @@ void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bo
 	    && (version != "1.0") && (version != SMETCommon::smet_version))
 		throw SMETException("Unsupported file format version for file " + filename, SMET_AT);
 
-	if(version=="0.9" || version=="0.95" || version=="0.99" || version=="1.0") {
+	if (version=="0.9" || version=="0.95" || version=="0.99" || version=="1.0") {
 		cerr << "[W] SMET specification 1.1 changes the priorities of units_multiplier and units_offset. "
 			<< "Please check/update your files and bring them to 1.1!!" << endl;
 	}
@@ -1031,10 +1031,10 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 			fpointer = indexer.getIndex(julian_start);
 		}
 
-		if(fpointer!=static_cast<streampos>(-1))
+		if (fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
-			if(data_start_fpointer!=static_cast<streampos>(-1))
+			if (data_start_fpointer!=static_cast<streampos>(-1))
 				fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
 			else { //the data section was itself empty (not even containg \n)
 				cleanup(fin);
@@ -1079,10 +1079,10 @@ void SMETReader::read(std::vector<double>& vec_data)
 		if (julian_interval && julian_present){
 			fpointer = indexer.getIndex(julian_start);
 		}
-		if(fpointer!=static_cast<streampos>(-1))
+		if (fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
-			if(data_start_fpointer!=static_cast<streampos>(-1))
+			if (data_start_fpointer!=static_cast<streampos>(-1))
 				fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
 			else { //the data section was itself empty (not even containg \n)
 				cleanup(fin);
@@ -1129,7 +1129,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				size_t shift = 0;
 				if (julian_interval && julian_present){
 					const double current_julian = SMETCommon::convert_to_double(tmp_vec[julian_field]);
-					if( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
+					if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
 						indexer.setIndex(current_julian, tmp_fpointer);
 					if (current_julian < julian_start)
 						continue; //skip lines that don't hold the dates we're interested in
@@ -1139,7 +1139,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 				if (timestamp_interval && timestamp_present){
 					const string& current_timestamp = tmp_vec[timestamp_field];
-					if( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != static_cast<streampos>(-1)) )
+					if ( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != static_cast<streampos>(-1)) )
 						indexer.setIndex(current_timestamp, tmp_fpointer);
 					if (current_timestamp < timestamp_start)
 						continue; //skip lines that don't hold the dates we're interested in
@@ -1211,7 +1211,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 		}
 
 		if (julian_present && julian_interval){
-			if( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != static_cast<streampos>(-1)) )
+			if ( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != static_cast<streampos>(-1)) )
 				indexer.setIndex(julian, tmp_fpointer);
 			if ((julian < julian_start) || (julian > julian_end)){
 				for (size_t ii=0; ii<nr_of_fields; ii++){

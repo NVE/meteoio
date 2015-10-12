@@ -137,7 +137,7 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	 * StationData sd(point1, id, name);
 	 *
 	 * //then, we loop over all the available timestamps and fill the MeteoData
-	 * for(size_t step=0; step<nr_steps; step++) {
+	 * for (size_t step=0; step<nr_steps; step++) {
 	* //we read the date and put it in a Date object:
 	* Date date(julian, TZ_in); 						//from julian date and input timezone
 	* 

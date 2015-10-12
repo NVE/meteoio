@@ -73,7 +73,7 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
                                                       const size_t& pos, const Date& curr_date)
 {
 	const size_t end = pos+1;
-	if(end>=vecM.size()) return IOUtils::nodata; //reaching the end of the input vector
+	if (end>=vecM.size()) return IOUtils::nodata; //reaching the end of the input vector
 
 	const double valend = vecM[end](paramindex);
 	if (valend == IOUtils::nodata) return IOUtils::nodata;

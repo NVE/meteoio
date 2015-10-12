@@ -96,8 +96,6 @@ class ImisIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void cleanup() throw();
-
 		void openDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void getDBParameters();

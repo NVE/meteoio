@@ -160,7 +160,7 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 	const unsigned int column_no = mysql_num_fields(res);
 	std::string tmp_str;
 	MYSQL_ROW row;
-	while( ( row = mysql_fetch_row(res) ) != NULL ) {
+	while ( ( row = mysql_fetch_row(res) ) != NULL ) {
 		for (unsigned int ii=0; ii<column_no; ii++) {
 			IOUtils::convertString(tmp_str, row[ii]);
 			vecMetaData.push_back(tmp_str);
@@ -170,9 +170,9 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 	mysql_close(conn);
 
 	const size_t nr_metadata = vecMetaData.size();
-	if(nr_metadata==0)
+	if (nr_metadata==0)
 		throw NoAvailableDataException("Station " + stat_abk+stao_nr + " not found in the database", AT);
-	if(nr_metadata<4)
+	if (nr_metadata<4)
 		throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
 }
 
@@ -180,7 +180,7 @@ void SASEIO::parseStationID(const std::string& stationID, std::string& stat_abk,
 {
 	stat_abk = stationID.substr(0, stationID.length()-1); //The station name: e.g. KLO
 	stao_nr = stationID.substr(stationID.length()-1, 1); //The station number: e.g. 2
-	if(!std::isdigit(stao_nr[0])) {
+	if (!std::isdigit(stao_nr[0])) {
 		//the station is one of these non-imis stations that don't contain a number...
 		stat_abk = stationID;
 		stao_nr = "0";
@@ -363,11 +363,11 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	MYSQL_RES *res2 = mysql_use_result(conn2);
 	const unsigned int column_no2 = mysql_num_fields(res2);
 	MYSQL_ROW row2;
-	while( ( row2= mysql_fetch_row(res2) ) != NULL ) {
+	while ( ( row2= mysql_fetch_row(res2) ) != NULL ) {
 		vector<string> vecData;
 		for (unsigned int ii=0; ii<column_no2; ii++) {
 			std::string row_02;
-				if(!row2[ii]){
+				if (!row2[ii]){
 					IOUtils::convertString(row_02,"-999.0");// HARD CODED :(
 				}else{
 					IOUtils::convertString(row_02, row2[ii]);

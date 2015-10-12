@@ -134,7 +134,7 @@ void trim(std::string& str)
 	const size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	// if all spaces or empty return an empty string
-	if(startpos!=std::string::npos && endpos!=std::string::npos) {
+	if (startpos!=std::string::npos && endpos!=std::string::npos) {
 		str.erase(endpos+1); //right trim
 		str.erase(0, startpos); //left trim
 	} else {
@@ -167,16 +167,16 @@ bool isNumeric(std::string str, const unsigned int& nBase)
 	trim(str); //delete trailing and leading whitespaces and tabs
 	std::istringstream iss(str);
 
-	if( nBase == 10 ) {
+	if ( nBase == 10 ) {
 		double tmp;
 		iss >> tmp;
-	} else if( nBase == 8 || nBase == 16 ) {
+	} else if ( nBase == 8 || nBase == 16 ) {
 		int tmp;
 		iss >> ( ( nBase == 8 ) ? std::oct : std::hex ) >> tmp;
 	} else
 		return false;
 
-	if( !iss ) //the conversion failed
+	if ( !iss ) //the conversion failed
 		return false;
 
 	return ( iss.rdbuf()->in_avail() == 0 ); //true if nothing was left after conversion
@@ -186,7 +186,7 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 {
 	const size_t pos = ((delimiter==" ") || (delimiter=="\t"))? in_line.find_first_of(" \t", 0) : in_line.find(delimiter); //first occurence of delimiter
 
-	if(pos != std::string::npos) { //ignore in_lines that are empty or without '='
+	if (pos != std::string::npos) { //ignore in_lines that are empty or without '='
 		key = in_line.substr(0, pos);
 		value = in_line.substr(pos + 1);
 
@@ -211,13 +211,13 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 std::string getLogName() {
 	char *tmp;
 
-	if((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
-		if((tmp=getenv("LOGNAME"))==NULL) { //Unix
+	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
+		if ((tmp=getenv("LOGNAME"))==NULL) { //Unix
 			tmp=getenv("USER"); //Windows & Unix
 		}
 	}
 
-	if(tmp==NULL) return std::string("N/A");
+	if (tmp==NULL) return std::string("N/A");
 	return std::string(tmp);
 }
 
@@ -227,7 +227,7 @@ std::string getHostName() {
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 		TCHAR infoBuf[len];
 		DWORD bufCharCount = len;
-		if( !GetComputerName( infoBuf, &bufCharCount ) )
+		if ( !GetComputerName( infoBuf, &bufCharCount ) )
 			return std::string("N/A");
 
 		return std::string(infoBuf);
@@ -257,8 +257,8 @@ void readKeyValueHeader(std::map<std::string,std::string>& headermap,
 			std::string key, value;
 			linenr++;
 			const bool result = readKeyValuePair(line, delimiter, key, value);
-			if(result) {
-				if(!keep_case) headermap[ strToLower(key) ] = value;
+			if (result) {
+				if (!keep_case) headermap[ strToLower(key) ] = value;
 				else headermap[key] = value;
 			} else { //  means if ((key == "") || (value==""))
 				std::ostringstream out;
@@ -373,7 +373,7 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 	if (f == std::dec) {
 		//First check if string is empty
 		const char* start = str.c_str();
-		while(*start && isspace(*start)) start++;
+		while (*start && isspace(*start)) start++;
 		if (*start == '\0' || *start == '#' || *start == ';') { // line empty or comment
 			t = static_cast<double> (nodata);
 			return true;
@@ -386,7 +386,7 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 		if (*end == '\0') { //conversion successful
 			return true;
 		} else { // conversion might have worked, let's check what is left
-			while((*end != '\0') && isspace(*end)) end++;
+			while ((*end != '\0') && isspace(*end)) end++;
 
 			if (*end == '\0' || *end == '#' || *end == ';') { // we allow the number to be followed by a comment
 				return true;
@@ -465,7 +465,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
@@ -473,7 +473,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
@@ -481,7 +481,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, static_cast<unsigned>(0), tz);
 		return true;
 
@@ -489,7 +489,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, static_cast<unsigned>(0), tz);
 		return true;
 
@@ -497,7 +497,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate(year, month, day, static_cast<unsigned>(0), static_cast<unsigned>(0), static_cast<unsigned>(0), tz);
 		return true;
 
@@ -505,7 +505,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		std::string timezone_iso(rest);
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
-		if(tz==nodata) return false;
+		if (tz==nodata) return false;
 		t.setDate( (static_cast<double>(hour))/24. + (static_cast<double>(minute))/24./60. , tz);
 		return true;
 
@@ -532,7 +532,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 			minute=0;
 		else {
 			if (date_len>=12) {
-				if( convertString(minute,date.substr(10,2))==false ) return false;
+				if ( convertString(minute,date.substr(10,2))==false ) return false;
 			} else
 				return false;
 			if (date_len==12)
@@ -552,7 +552,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 			size_t tz_end = s.find_first_not_of("0123456789:", date_end+1);
 			if (tz_end==npos) tz_end = in_len;
 			const std::string timezone_iso = s.substr(tz_beg, tz_end-tz_beg);
-			if(!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
+			if (!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
 		}
 
 		t.setDate( year, month, day, hour, minute, second, tz );
@@ -652,7 +652,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 
 void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t &wk, size_t& startx, size_t& nx)
 {
-	if(nbworkers>dimx) {
+	if (nbworkers>dimx) {
 		std::ostringstream ss;
 		ss << "Can not split " << dimx << " columns in " << nbworkers << " bands!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -661,7 +661,7 @@ void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size
 	const size_t nx_avg = dimx / nbworkers;
 	const size_t remainder = dimx % nbworkers;
 
-	if(wk<=remainder) { //distribute remainder, 1 extra column per worker, on first workers
+	if (wk<=remainder) { //distribute remainder, 1 extra column per worker, on first workers
 		nx = nx_avg+1;
 		startx = (wk-1)*nx;
 	} else { //all remainder has been distributed, we now attribute a normal number of columns

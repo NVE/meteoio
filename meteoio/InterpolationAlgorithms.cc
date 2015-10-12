@@ -126,12 +126,12 @@ std::string InterpolationAlgorithm::getInfo() const
 {
 	std::ostringstream os;
 	os << algo << ", " << nrOfMeasurments;
-	if(nrOfMeasurments==1)
+	if (nrOfMeasurments==1)
 		os << " station";
 	else
 		os << " stations";
 	const std::string tmp( info.str() );
-	if(!tmp.empty()) {
+	if (!tmp.empty()) {
 		os << ", " << tmp;
 	}
 	return os.str();
@@ -159,17 +159,17 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 	} else if (vecArgs.size() == 2) {
 		std::string extraArg;
 		IOUtils::convertString(extraArg, vecArgs[1]);
-		if(extraArg=="soft") { //soft
+		if (extraArg=="soft") { //soft
 			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 			status = trend.fit();
-			if(!status) {
+			if (!status) {
 				double lapse_rate;
 				IOUtils::convertString(lapse_rate, vecArgs[0]);
 				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 				trend.setLapseRate(lapse_rate);
 				status = trend.fit();
 			}
-		} else if(extraArg=="frac") {
+		} else if (extraArg=="frac") {
 			double lapse_rate;
 			IOUtils::convertString(lapse_rate, vecArgs[0]);
 			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
@@ -184,23 +184,23 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
-	if(!status)
+	if (!status)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
 }
 
 
 void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt, const double& max_alt)
 {
-	if(vecDat.size() != vecAltitudes.size()) {
+	if (vecDat.size() != vecAltitudes.size()) {
 		std::ostringstream ss;
 		ss << "Number of station data (" << vecDat.size() << ") and number of elevations (" << vecAltitudes.size() << ") don't match!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	for(size_t ii=0; ii<vecAltitudes.size(); ii++) {
+	for (size_t ii=0; ii<vecAltitudes.size(); ii++) {
 		const double altitude = std::min( std::max(vecAltitudes[ii], min_alt), max_alt );
 		double &val = vecDat[ii];
-		if(val!=IOUtils::nodata)
+		if (val!=IOUtils::nodata)
 			val -= trend( altitude );
 	}
 }
@@ -209,17 +209,17 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 {
 	const size_t nxy = grid.getNx()*grid.getNy();
 	const size_t dem_nxy = dem.grid2D.getNx()*dem.grid2D.getNy();
-	if(nxy != dem_nxy) {
+	if (nxy != dem_nxy) {
 		std::ostringstream ss;
 		ss << "Dem size (" << dem.grid2D.getNx() << "," << dem.grid2D.getNy() << ") and";
 		ss << "grid size (" << grid.getNx() << "," << grid.getNy() << ") don't match!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	for(size_t ii=0; ii<nxy; ii++) {
+	for (size_t ii=0; ii<nxy; ii++) {
 		const double altitude = std::min( std::max(dem(ii), min_alt), max_alt );
 		double &val = grid(ii);
-		if(val!=IOUtils::nodata)
+		if (val!=IOUtils::nodata)
 			val += trend.f( altitude );
 	}
 }
@@ -492,7 +492,7 @@ double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parame
 
 	if (nrOfMeasurments==0)
 		return 0.0;
-	if( (nrOfMeasurments<vecDataRH.size()/2) || ( nrOfMeasurments<2 ) )
+	if ( (nrOfMeasurments<vecDataRH.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
@@ -533,7 +533,7 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	for (size_t jj=0; jj<grid.getNy(); jj++) {
 		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			double &value = grid(ii,jj);
-			if(value!=IOUtils::nodata)
+			if (value!=IOUtils::nodata)
 				value = Atmosphere::DewPointtoRh(value, ta(ii,jj), 1);
 		}
 	}
@@ -625,7 +625,7 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData
 		return 0.9;
 	}
 
-	if( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
+	if ( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
@@ -791,7 +791,7 @@ bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& vecMeteo, 
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			const double VW = vecMeteo[ii](MeteoData::VW);
 			const double DW = vecMeteo[ii](MeteoData::DW);
-			if(VW!=IOUtils::nodata && DW!=IOUtils::nodata)
+			if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
 				return true; //at least one station is enough
 		}
 	} else {
@@ -862,7 +862,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		const double VW = vecMeteo[ii](MeteoData::VW);
 		const double DW = vecMeteo[ii](MeteoData::DW);
-		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
+		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
 			ve += VW * sin(DW*Cst::to_rad);
 			vn += VW * cos(DW*Cst::to_rad);
 			count++;
@@ -953,7 +953,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}
-	if(IOUtils::fileExists(filename)) {
+	if (IOUtils::fileExists(filename)) {
 		return 1.0;
 	} else {
 		return 0.0;
@@ -965,7 +965,7 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear();
 	info.str(filename);
 	gridsmanager.read2DGrid(grid, filename);
-	if(!grid.isSameGeolocalization(dem)) {
+	if (!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
 	}
 }
@@ -1077,7 +1077,7 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//HACK: correction for precipitation sum over the whole domain
 	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
 	const double new_mean = grid.grid2D.getMean();
-	if(new_mean!=0.) grid *= orig_mean/new_mean;
+	if (new_mean!=0.) grid *= orig_mean/new_mean;
 	
 	//Interpol2D::SteepSlopeRedistribution(dem, ta, grid);
 	//Interpol2D::CurvatureCorrection(dem, ta, grid);
@@ -1090,13 +1090,13 @@ void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> 
 	distData.clear();
 	variData.clear();
 
-	for(size_t j=0; j<nrOfMeasurments; j++) {
+	for (size_t j=0; j<nrOfMeasurments; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 		const double val1 = vecData[j];
 
-		for(size_t i=0; i<j; i++) {
+		for (size_t i=0; i<j; i++) {
 			//compute distance between stations
 			const Coords& st2 = vecMeta[i].position;
 			const double val2 = vecData[i];
@@ -1137,7 +1137,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 	}
 
 	//fill time series
-	for(; d1<=date; d1+=Tstep) {
+	for (; d1<=date; d1+=Tstep) {
 		tsmanager.getMeteoData(d1, Meteo);
 		if (Meteo.size()!=nrStations) {
 			std::ostringstream ss;
@@ -1149,7 +1149,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 		if (detrend_data) { //detrend data
 			//find trend
 			std::vector<double> vecDat;
-			for(size_t ii=0; ii<nrStations; ii++)
+			for (size_t ii=0; ii<nrStations; ii++)
 				vecDat.push_back( Meteo[ii](param) );
 
 			Fit1D trend;
@@ -1159,15 +1159,15 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 				throw InvalidArgumentException("Could not fit variogram model to the data", AT);
 
 			//detrend the data
-			for(size_t ii=0; ii<nrStations; ii++) {
+			for (size_t ii=0; ii<nrStations; ii++) {
 				double val = Meteo[ii](param);
-				if(val!=IOUtils::nodata)
+				if (val!=IOUtils::nodata)
 					val -= trend( vecAltitudes[ii] );
 
 				vecVecData.at(ii).push_back( val );
 			}
 		} else { //do not detrend data
-			for(size_t ii=0; ii<nrStations; ii++)
+			for (size_t ii=0; ii<nrStations; ii++)
 				vecVecData.at(ii).push_back( Meteo[ii](param) );
 		}
 	}
@@ -1188,12 +1188,12 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 
 	//for each station, compute distance to other stations and
 	// variance of ( Y(current) - Y(other station) )
-	for(size_t j=0; j<nrStations; j++) {
+	for (size_t j=0; j<nrStations; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 
-		for(size_t i=0; i<j; i++) { //compare with the other stations
+		for (size_t i=0; i<j; i++) { //compare with the other stations
 			//compute distance between stations
 			const Coords& st2 = vecMeta[i].position;
 			const double DX = x1-st2.getEasting();
@@ -1222,13 +1222,13 @@ bool OrdinaryKrigingAlgorithm::computeVariogram(const bool& /*detrend_data*/)
 	//getDataForVariogram(distData, variData, detrend_data);
 
 	std::vector<string> vario_types( vecArgs );
-	if(vario_types.empty()) vario_types.push_back("LINVARIO");
+	if (vario_types.empty()) vario_types.push_back("LINVARIO");
 
 	size_t args_index=0;
 	do {
 		const string vario_model = IOUtils::strToUpper( vario_types[args_index] );
 		const bool status = variogram.setModel(vario_model, distData, variData);
-		if(status) {
+		if (status) {
 			info << " - " << vario_model;
 			return true;
 		}
@@ -1245,8 +1245,8 @@ double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const Mete
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if(nrOfMeasurments==0) return 0.;
-	if(nrOfMeasurments>=7) return 0.9;
+	if (nrOfMeasurments==0) return 0.;
+	if (nrOfMeasurments>=7) return 0.9;
 	return 0.1;
 }
 
@@ -1256,7 +1256,7 @@ void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gri
 
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
-	if(!computeVariogram(false)) //only refresh once a month, or once a week, etc
+	if (!computeVariogram(false)) //only refresh once a month, or once a week, etc
 		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
@@ -1273,12 +1273,12 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecData, false);
-	if(!trend.fit())
+	if (!trend.fit())
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 
-	if(!computeVariogram(true)) //only refresh once a month, or once a week, etc
+	if (!computeVariogram(true)) //only refresh once a month, or once a week, etc
 		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 

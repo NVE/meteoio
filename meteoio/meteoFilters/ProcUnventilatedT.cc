@@ -81,7 +81,7 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 		}
 
 		if (hs!=IOUtils::nodata && iswr==IOUtils::nodata && rswr!=IOUtils::nodata) {
-			if(hs>snow_thresh) iswr = snow_albedo*rswr;
+			if (hs>snow_thresh) iswr = snow_albedo*rswr;
 			else iswr = soil_albedo*rswr;
 		}
 
@@ -89,7 +89,7 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 			continue;
 
 		if (hs!=IOUtils::nodata) { //try to get snow height in order to adjust the albedo
-			if(hs>snow_thresh) albedo = snow_albedo;
+			if (hs>snow_thresh) albedo = snow_albedo;
 			else albedo = soil_albedo;
 		}
 
