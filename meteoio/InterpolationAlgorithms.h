@@ -476,17 +476,25 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 /**
  * @class USERInterpolation
  * @brief Reads user provided gridded data on the disk.
- * The grids are all in a directory that is given as the algorithm's argument. The files must be named
- * according to the following schema:
- * - {numeric date}_{capitalized meteo parameter}.asc, for example 200812011500_TA.asc
- * - Default_{capitalized meteo parameter}.asc for the grid to use when no measurements exist (which prevents
- * retrieving the date for the interpolation)
+ * The grids are all in the GRID2DPATH directory given in the [Input] section or in one of 
+ * its sub-directories that is given as the algorithm's argument (optional). By default, the file extension is assumed to 
+ * be ".asc" but it is possible to provide as second argument another file extension (then it is mandatory to 
+ * also provide a sub-directory argument in first position).
+ * The files must be named according to the following schema: <b>{numeric date}_{capitalized meteo parameter}.{ext}</b>, for example 200812011500_TA.asc
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
  * @code
- * TA::algorithms = USER
- * TA::user = ./meteo_grids
+ * TA::algorithms = USER	# read grids from GRID2DPATH using the GRID2D plugin
+ * 
+ * VW::algorithms = USER	# read grids from GRID2DPATH/wind
+ * VW::user       = wind
+ * 
+ * HNW::algorithms = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
+ * HNW::user       = precip .dat
  * @endcode
  *
+ * If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup 
+ * and provide a fallback. Therefore, it is not necessary to provide grids for all time steps but one can focuss on only the relevant and interesting
+ * time steps.
  */
 class USERInterpolation : public InterpolationAlgorithm {
 	public:

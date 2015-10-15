@@ -934,11 +934,13 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 std::string USERInterpolation::getGridFileName() const
 {
 	//HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
-	if (vecArgs.size() != 1){
-		throw InvalidArgumentException("Please provide the path to the grids for the "+algo+" interpolation algorithm", AT);
+	const size_t nrArgs = vecArgs.size();
+	if (nrArgs > 2){
+		throw InvalidArgumentException("Too many arguments for the "+algo+" interpolation algorithm", AT);
 	}
-	const std::string ext(".asc");
-	const std::string gridname =  vecArgs[0] + "/" + date.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + ext;
+	const std::string prefix = (nrArgs==1)? vecArgs[0] + "/" : "";
+	const std::string ext = (nrArgs==2)? vecArgs[1] : ".asc";
+	const std::string gridname =  prefix + date.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + ext;
 
 	return gridname;
 }
@@ -962,9 +964,9 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 	gridsmanager.read2DGrid(grid, filename);
 	if (!grid.isSameGeolocalization(dem)) {
-		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
+		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {
-		info << filename;
+		info << IOUtils::getFilename(filename);
 	}
 }
 
