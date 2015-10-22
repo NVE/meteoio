@@ -473,6 +473,23 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		static const double dmax;
 };
 
+class WinstralListonAlgorithm : public InterpolationAlgorithm {
+	public:
+		WinstralListonAlgorithm(Meteo2DInterpolator& i_mi,
+		                  const std::vector<std::string>& i_vecArgs,
+		                  const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+		static bool windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
+		static void getSynopticWind(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, double& VW, double& DW);
+
+		std::string base_algo, ref_station;
+		bool inputIsAllZeroes;
+		static const double dmax;
+};
+
 /**
  * @class USERInterpolation
  * @brief Reads user provided gridded data on the disk.

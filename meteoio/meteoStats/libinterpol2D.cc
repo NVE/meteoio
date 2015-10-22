@@ -749,6 +749,38 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	}
 }
 
+void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const Grid2DObject& DW, Grid2DObject& grid)
+{
+	if (!DW.isSameGeolocalization(dem)){
+		throw IOException("Requested grid DW doesn't match the geolocalization of the DEM", AT);
+	}
+	
+	grid.set(dem, IOUtils::nodata);
+
+	const double dmin = 0.;
+	const double bearing_inc = 5.;
+	const double bearing_width = 30.;
+
+	const size_t ncols = dem.getNx(), nrows = dem.getNy();
+	for (size_t jj = 0; jj<nrows; jj++) {
+		for (size_t ii = 0; ii<ncols; ii++) {
+			if (dem(ii,jj)==IOUtils::nodata) continue;
+			const double in_bearing = DW(ii,jj);
+			double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
+			double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
+			if (bearing1>bearing2) std::swap(bearing1, bearing2);
+			double sum = 0.;
+			unsigned short count=0;
+			for (double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
+				sum += atan( getTanMaxSlope(dem, dmin, dmax, bearing, ii, jj) );
+				count++;
+			}
+
+			grid(ii,jj) = (count>0)? sum/(double)count : IOUtils::nodata;
+		}
+	}
+}
+
 /**
 * @brief Alter a precipitation field with the Winstral Sx exposure coefficient
 * This implements the wind exposure coefficient (Sx) for one bearing as in
@@ -772,6 +804,11 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	//compute wind exposure factor
 	Grid2DObject Sx;
 	WinstralSX(dem, dmax, in_bearing, Sx);
+	
+	//don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
+	}
 
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
@@ -780,7 +817,6 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 
 	//erosion: fully eroded at min_sx
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
@@ -802,7 +838,56 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
+		const double sx = Sx(ii);
+		if (sx==IOUtils::nodata) continue;
+		double &val = grid(ii);
+		if (sx>0.) {
+			const double deposited = ratio * sx/max_sx;
+			val += deposited;
+		}
+	}
+}
+
+void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
+{
+	const double vw_thresh = 5.; //m/s
+	//compute wind exposure factor
+	Grid2DObject Sx;
+	WinstralSX(dem, dmax, DW, Sx);
+	
+	//don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
+	}
+
+	//get the scaling parameters
+	const double min_sx = Sx.grid2D.getMin(); //negative
+	const double max_sx = Sx.grid2D.getMax(); //positive
+	double sum_erosion=0., sum_deposition=0.;
+
+	//erosion: fully eroded at min_sx
+	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		const double sx = Sx(ii);
+		if (sx==IOUtils::nodata || VW(ii)<vw_thresh) continue; //low wind speed pixels don't contribute to erosion
+		double &val = grid(ii);
+		if (sx<0.) {
+			const double eroded = val * sx/min_sx;
+			sum_erosion += eroded;
+			val -= eroded;
+		}
+		else { //at this point, we can only compute the sum of deposition
+			const double deposited = sx/max_sx;
+			sum_deposition += deposited;
+		}
+	}
+	
+	//no cells can take the eroded mass or no cells even got freezing temperatures
+	if (sum_deposition==0 || sum_erosion==0) return;
+	
+	//deposition: garantee mass balance conservation
+	//-> we now have the proper scaling factor so we can deposit in individual cells
+	const double ratio = sum_erosion/sum_deposition;
+	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
