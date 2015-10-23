@@ -186,11 +186,11 @@ Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, 
 bool Grid2DObject::gridify(std::vector<Coords>& vec_points, const bool& keep_invalid) const 
 {
 	bool status=true;
-
 	std::vector<Coords>::iterator v_Itr = vec_points.begin();
 	while ( v_Itr != vec_points.end() ) {
 		if ( gridify(*v_Itr)==false ) {
 			if (!keep_invalid) v_Itr = vec_points.erase(v_Itr);
+			else ++v_Itr;
 			status=false;
 		} else {
 			++v_Itr;
