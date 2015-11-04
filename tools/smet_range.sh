@@ -17,7 +17,7 @@ else
 	INPUT_DIR=$1
 	param=$2
 fi
-files=`ls ${INPUT_DIR}/*.smet`
+files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
 
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
