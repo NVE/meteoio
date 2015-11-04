@@ -21,13 +21,13 @@ files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
 
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
-		NAME=`basename ${SMET} .smet`
-		ALT=`head -15 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
-		JULIAN=`head -15 ${SMET} | grep fields | grep julian`
-		ISO=`head -15 ${SMET} | grep fields | grep timestamp`
-		start=`head -20 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
-		end=`tail -5 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
-		nr_lines=`wc -l ${SMET} | cut -d' ' -f1`
+		NAME=`basename "${SMET}" .smet`
+		ALT=`head -15 "${SMET}" | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
+		JULIAN=`head -15 "${SMET}" | grep fields | grep julian`
+		ISO=`head -15 "${SMET}" | grep fields | grep timestamp`
+		start=`head -20 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
+		end=`tail -5 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
+		nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
 		
 		echo "${start} ${end} ${nr_lines}" | awk '
 				function getISO(ts){
