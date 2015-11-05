@@ -54,6 +54,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("PSUM_S");
 	paramname.push_back("TSG");
 	paramname.push_back("TSS");
+	paramname.push_back("TSOIL");
 	paramname.push_back("P");
 	paramname.push_back("P_SEA");
 	paramname.push_back("U");

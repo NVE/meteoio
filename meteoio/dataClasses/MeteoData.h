@@ -66,6 +66,7 @@ class MeteoGrids {
 				PSUM_S, ///< Water equivalent of solid precipitation
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
+				TSOIL, ///< Temperature within the soil, at a given depth
 				P, ///< Air pressure
 				P_SEA, ///< Sea level air pressure
 				U, ///< East component of wind
