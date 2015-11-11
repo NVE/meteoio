@@ -596,6 +596,15 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			max -= Cst::t_water_freezing_pt;
 		}
 		gradient.set(Gradient::freeze, min, max, autoscale);
+	} else if (parameter==MeteoGrids::TSOIL) {
+		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
+		if (!autoscale) {
+			min = -5.; max = 5.;
+		} else {
+			min -= Cst::t_water_freezing_pt;
+			max -= Cst::t_water_freezing_pt;
+		}
+		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::RH) {
 		if (!autoscale) {
 			min = 0.; max = 1.;
