@@ -22,6 +22,7 @@
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/MathOptim.h>
 
 namespace mio {
 
@@ -149,8 +150,8 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
 	// relative optical air mass Young (1994), see http://en.wikipedia.org/wiki/Airmass
 	//const double mr = 1. / (cos_zenith + 0.50572 * pow( 96.07995-zenith , -1.6364 )); //pbl: this should use apparent zenith angle, and we only get true zenith angle here...
 	// relative optical air mass, Young, A. T. 1994. Air mass and refraction. Applied Optics. 33:1108–1110.
-	const double mr = ( 1.002432*cos_zenith*cos_zenith + 0.148386*cos_zenith + 0.0096467) /
-	                  ( cos_zenith*cos_zenith*cos_zenith + 0.149864*cos_zenith*cos_zenith
+	const double mr = ( 1.002432*Optim::pow2(cos_zenith) + 0.148386*cos_zenith + 0.0096467) /
+	                  ( Optim::pow3(cos_zenith) + 0.149864*Optim::pow2(cos_zenith)
 	                  + 0.0102963*cos_zenith +0.000303978);
 
 	// actual air mass: because mr is applicable for standard pressure
@@ -168,7 +169,7 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
 	// broadband transmittance by ozone (Iqbal (1983), p.189)
 	const double u3 = olt * mr; // ozone relative optical path length
 	const double alpha_oz = 0.1611 * u3 * pow(1. + 139.48 * u3, -0.3035) -
-	                        0.002715 * u3 / ( 1. + 0.044  * u3 + 0.0003 * u3 * u3); //ozone absorbance
+	                        0.002715 * u3 / ( 1. + 0.044  * u3 + 0.0003 * Optim::pow2(u3) ); //ozone absorbance
 	const double tauoz = 1. - alpha_oz;
 
 	// broadband transmittance by uniformly mixed gases (Iqbal (1983), p.189)

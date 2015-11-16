@@ -285,9 +285,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 		try {
 			openDBConnection(env, conn);
-
 			readStationMetaData(conn); //reads all the station meta data into the vecStationMetaData (member vector)
-
 			closeDBConnection(env, conn);
 		} catch (const exception& e){
 			closeDBConnection(env, conn);
@@ -307,7 +305,6 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 	vector<string> vecStationID;
 	readStationIDs(vecStationID);
 
-
 	Statement *stmt = conn->createStatement();
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
@@ -320,11 +317,10 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
 		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
 		const string drift_stationID = drift_stat_abk + drift_stao_nr;
-		if (!drift_stationID.empty()) {
+		if (!drift_stationID.empty())
 			mapDriftStation[vecStationID[ii]] = drift_stationID;
-		} else {
-			throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
-		}
+		else
+			std::cerr << "[W] No drift station for station " << stat_abk << stao_nr << "\n";
 
 		// Retrieve the station meta data - this only needs to be done once per instance
 		vector<string> stationMetaData;
