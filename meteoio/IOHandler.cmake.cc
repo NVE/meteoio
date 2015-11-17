@@ -17,6 +17,7 @@
 */
 
 #include <meteoio/IOUtils.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/IOHandler.h>
 
 #cmakedefine PLUGIN_ALPUG
@@ -138,7 +139,7 @@ namespace mio {
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  *
- * @section data_manipulations Data generators & exclusion
+ * @section data_manipulations Raw data editing
  * @subsection data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
@@ -160,7 +161,7 @@ namespace mio {
  *
  * @code
  * WFJ2::EXCLUDE = HS PSUM                       ;inline declaration of parameters exclusion
- * KLO3::KEEP = TA RH VW DW                     ;inline declaration of parameters to keep
+ * KLO3::KEEP = TA RH VW DW                      ;inline declaration of parameters to keep
  *
  * EXCLUDE_FILE = ../input/meteo/excludes.csv    ;parameters exclusions defined in a separate file
  * KEEP_FILE = ../input/meteo/keeps.csv          ;parameters to keep defined in a separate file
@@ -172,6 +173,25 @@ namespace mio {
  * KLO3 HS PSUM
  * @endcode
  *
+ * @subsection data_merging Data merging
+ * It is possible to merge different data sets together, based on a common station name. This is enabled with the key \em MERGE_BY_NAME in the [Input] section.
+ * If set to \em true, all stations that have the same station name will be merged together, in the order they have been declared/read by the plugin
+ * (ie the first station that has a value for a given parameter has priority). This is useful, for example, to provide measurements from different 
+ * stations that actually share the same measurement location or to build "composite" station from multiple real stations.
+ * @code
+ * STATION1 = *WFJ
+ * STATION2 = WFJ2
+ * STATION3 = WFJ3
+ * 
+ * *WFJ::KEEP = ILWR PSUM
+ * WFJ2::EXCLUDE = PSUM ILWR RSWR
+ * WFJ1::KEEP = ISWR VW DW
+ * 
+ * MERGE_BY_NAME = true
+ * @endcode
+ * In the above example, if the same station name would have been given to "*WFJ", "WFJ2" and "WFJ1", then a composite station with station ID
+ * "*WFJ" (ie the first one of the list) would be built with ILWR and PSUM coming from the original *WFJ station, every fields of WFJ2 excepted PSUM, ILWR and ISWR
+ * and only ISWR, VW, DW from WFJ1 <b>when</b> WFJ2 does not have them.
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
@@ -257,13 +277,16 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
-             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready)
+             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), 
+             excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), mergeByName(aio.mergeByName)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
-           : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), copy_parameter(), copy_name(), enable_copying(false), excludes_ready(false), keeps_ready(false)
+           : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), copy_parameter(), copy_name(), 
+           enable_copying(false), excludes_ready(false), keeps_ready(false), mergeByName(false)
 {
 	parse_copy_config();
+	cfg.getValue("MERGE_BY_NAME", "Input", mergeByName, IOUtils::nothrow);
 }
 
 IOHandler::~IOHandler() throw()
@@ -285,6 +308,7 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 		enable_copying = source.enable_copying;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
+		mergeByName = source.mergeByName;
 	}
 	return *this;
 }
@@ -318,6 +342,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
+	if (mergeByName) merge_by_name(vecStation);
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -335,6 +360,8 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (!keeps_ready) create_keep_map();
 	keep_params(vecMeteo);
 
+	if (mergeByName) merge_by_name(vecMeteo);
+	
 	copy_parameters(stationindex, vecMeteo);
 }
 
@@ -385,6 +412,42 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
 			}
 			previous_date = current_date;
+		}
+	}
+}
+
+//merge stations that have identical names
+void IOHandler::merge_by_name(STATIONS_SET& vecStation) const
+{
+	const size_t idxMiddle = Optim::ceil( static_cast<double>(vecStation.size()) / 2. );
+	for (size_t ii=0; (ii<=idxMiddle) && (ii<vecStation.size()); ii++) {
+		for (size_t jj=ii+1; jj<vecStation.size(); jj++) {
+			if (vecStation[ii].stationName==vecStation[jj].stationName) {
+				vecStation[ii].merge( vecStation[jj] );
+				std::swap( vecStation[jj], vecStation.back() );
+				vecStation.pop_back();
+				jj--; //we need to re-compare the current station since it has been swapped
+			}
+		}
+	}
+}
+
+//in this implementation, we consider that the station name does NOT change over time
+void IOHandler::merge_by_name(std::vector<METEO_SET>& vecVecMeteo) const
+{
+	const size_t idxMiddle = Optim::ceil( static_cast<double>(vecVecMeteo.size()) / 2. );
+	for (size_t ii=0; (ii<=idxMiddle) && (ii<vecVecMeteo.size()); ii++) {
+		if (vecVecMeteo[ii].empty())  continue;
+		
+		for (size_t jj=ii+1; jj<vecVecMeteo.size(); jj++) {
+			if (vecVecMeteo[jj].empty()) continue;
+			
+			if (vecVecMeteo[ii][0].meta.stationName==vecVecMeteo[jj][0].meta.stationName) {
+				MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]);
+				std::swap( vecVecMeteo[jj], vecVecMeteo.back() );
+				vecVecMeteo.pop_back();
+				jj--; //we need to re-compare the current station since it has been swapped
+			}
 		}
 	}
 }
@@ -668,6 +731,9 @@ const std::string IOHandler::toString() const
 		}
 		os << "</excluded_params>\n";
 	}
+	
+	if (mergeByName)
+		os << "Merge stations by stationName\n";
 
 	os << "</IOHandler>\n";
 	return os.str();

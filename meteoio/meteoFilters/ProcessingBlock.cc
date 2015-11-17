@@ -51,6 +51,7 @@ namespace mio {
 /**
  * @page processing Processing overview
  * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage.
+ * @note it is possible to remove some parameters on a per-station basis, even before entering the filters. See in section \ref data_manipulations "Raw data editing".
  *
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.

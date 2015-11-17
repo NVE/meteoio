@@ -73,13 +73,15 @@ class IOHandler : public IOInterface {
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
+		void merge_by_name(std::vector<METEO_SET>& vecVecMeteo) const;
+		void merge_by_name(STATIONS_SET& vecStation) const;
 
 		const Config& cfg;
 		std::map<std::string, IOInterface*> mapPlugins;
 		std::map< std::string, std::set<std::string> > excluded_params;
 		std::map< std::string, std::set<std::string> > kept_params;
 		std::vector<std::string> copy_parameter, copy_name;
-		bool enable_copying, excludes_ready, keeps_ready;
+		bool enable_copying, excludes_ready, keeps_ready, mergeByName;
 };
 
 } //namespace

@@ -47,6 +47,8 @@ namespace mio {
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
  * off and let the spatial interpolations algorithms adjust to the amount of measured data.
+ * @note it is also possible to make a copy of a given parameter under a different name. This is explained in section 
+ * \ref data_manipulations "Raw data editing".
  *
  * @section generators_section Data generators section
  * The data generators are defined per meteorological parameter. They are applied to all stations

@@ -360,6 +360,25 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 	return is;
 }
 
+void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2)
+{
+	if (vec1.empty() || vec2.empty()) return;
+	if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
+	if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
+	
+	size_t idx2 = 0;
+	for (size_t ii=0; ii<vec1.size(); ii++) {
+		while ((vec1[ii].date>vec2[idx2].date) && (idx2<vec2.size()))
+			idx2++;
+		
+		if (idx2==vec2.size()) return; //no more chances of common timestamps
+		
+		if (vec1[ii].date==vec2[idx2].date) {//we found a common timestamp
+			vec1[ii].merge( vec2[idx2] );
+		}
+	}
+}
+
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge)
 {
 	if (vec2.empty()) return;

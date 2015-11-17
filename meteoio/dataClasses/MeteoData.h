@@ -182,6 +182,17 @@ class MeteoData {
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const;
+		
+		/**
+		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
+		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
+		 * filled by the matching field from the MeteoData objects given in the second vector (if the
+		 * same timestamp exist).
+		 * @note Only timestamps common to both data sets will be merged!
+		 * @param vec1 reference vector, highest priority
+		 * @param vec2 extra vector to merge, lowest priority
+		 */
+		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
