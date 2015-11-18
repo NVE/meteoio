@@ -69,19 +69,21 @@ class IOHandler : public IOInterface {
 		void parse_copy_config();
 		void create_exclude_map();
 		void create_keep_map();
+		void create_merge_map();
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
-		void merge_by_name(std::vector<METEO_SET>& vecVecMeteo) const;
-		void merge_by_name(STATIONS_SET& vecStation) const;
+		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
+		void merge_stations(STATIONS_SET& vecStation) const;
 
 		const Config& cfg;
 		std::map<std::string, IOInterface*> mapPlugins;
 		std::map< std::string, std::set<std::string> > excluded_params;
 		std::map< std::string, std::set<std::string> > kept_params;
-		std::vector<std::string> copy_parameter, copy_name;
-		bool enable_copying, excludes_ready, keeps_ready, mergeByName;
+		std::map< std::string, std::vector<std::string> > merge_commands;
+		std::vector<std::string> merged_stations, copy_parameter, copy_name;
+		bool enable_copying, excludes_ready, keeps_ready, merge_ready;
 };
 
 } //namespace
