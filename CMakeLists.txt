@@ -5,7 +5,7 @@ PROJECT(meteoio)
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
 SET(VERSION_MINOR 5 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+SET(VERSION_PATCH 1 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
