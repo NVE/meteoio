@@ -497,7 +497,7 @@ class WinstralListonAlgorithm : public InterpolationAlgorithm {
  * its sub-directories that is given as the algorithm's argument (optional). By default, the file extension is assumed to 
  * be ".asc" but it is possible to provide as second argument another file extension (then it is mandatory to 
  * also provide a sub-directory argument in first position).
- * The files must be named according to the following schema: <b>{numeric date}_{capitalized meteo parameter}.{ext}</b>, for example 200812011500_TA.asc
+ * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
  * @code
  * TA::algorithms = USER	# read grids from GRID2DPATH using the GRID2D plugin
