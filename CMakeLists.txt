@@ -38,7 +38,7 @@ IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	ENDIF(GUI_EXCEPTIONS)
 ELSE()
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
-	SET(WARNINGS "-Wall -Wno-long-long")
+	SET(WARNINGS "-Wall -Wno-long-long  -Wswitch")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded
 	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
 	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
@@ -81,7 +81,7 @@ ELSE()
 		SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
 		SET(EXTRA "${EXTRA} -fcolor-diagnostics") #-fapple-pragma-pack does not seems necessary; -ftrapv should be replaced by sanitize=integer
 		SET(OPTIM "${OPTIM} -flto")
-		SET(WARNINGS "${WARNINGS} -Weverything -Wno-date-time -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables") #obviously, we should try to fix the warnings!
+		SET(WARNINGS "${WARNINGS} -Weverything -Wno-date-time -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...
 		SET(DEEP_WARNINGS "${DEEP_WARNINGS} -Rpass=.*")
 		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
 			IF (LEAKS_CHECK)

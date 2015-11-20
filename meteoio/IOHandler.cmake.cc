@@ -434,7 +434,7 @@ void IOHandler::create_merge_map()
 		const size_t found = merge_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( merge_keys[ii].substr(0,found) );
+		const string station( IOUtils::strToUpper(merge_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(merge_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+merge_keys[ii]+"\"", AT);
@@ -464,7 +464,7 @@ void IOHandler::create_merge_map()
 void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 {
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const string toStationID = vecStation[ii].stationID;
+		const string toStationID = IOUtils::strToUpper(vecStation[ii].stationID);
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
@@ -476,7 +476,8 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 			const string fromStationID( merge_from[idx] );
 			
 			for (size_t jj=0; jj<vecStation.size(); jj++) {
-				if (vecStation[jj].stationID==fromStationID) vecStation[ii].merge( vecStation[jj] );
+				const string curr_station = IOUtils::strToUpper(vecStation[jj].stationID);
+				if (curr_station==fromStationID) vecStation[ii].merge( vecStation[jj] );
 			}
 		}
 	}
@@ -498,8 +499,8 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
 		if (vecVecMeteo[ii].empty())  continue;
-		
-		const string toStationID = vecVecMeteo[ii][0].meta.stationID;
+		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
+
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
@@ -509,10 +510,10 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 		const vector<string> &merge_from( it->second );
 		for (size_t idx=0; idx<merge_from.size(); ++idx) {
 			const string fromStationID( merge_from[idx] );
-			
 			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) {
 				if (vecVecMeteo[jj].empty()) continue;
-				if (vecVecMeteo[jj][0].meta.stationID==fromStationID) 
+				const string curr_station = IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID);
+				if (curr_station==fromStationID)
 					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]);
 			}
 		}
@@ -520,7 +521,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
-		const string toStationID = vecVecMeteo[ii][0].meta.stationID;
+		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
 		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), toStationID);
 		if ( it!=merged_stations.end() ) {
 			std::swap( vecVecMeteo[ii], vecVecMeteo.back() );
@@ -580,7 +581,7 @@ void IOHandler::create_exclude_map()
 		const size_t found = exclude_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( exclude_keys[ii].substr(0,found) );
+		const string station( IOUtils::strToUpper(exclude_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(exclude_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
@@ -643,7 +644,7 @@ void IOHandler::create_keep_map()
 		const size_t found = keep_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( keep_keys[ii].substr(0,found) );
+		const string station( IOUtils::strToUpper(keep_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(keep_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
@@ -665,7 +666,7 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
-		const string stationID = vecVecMeteo[station][0].meta.stationID;
+		const string stationID = IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID);
 		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
 		if (it == excluded_params.end()) continue;
 
@@ -692,7 +693,7 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
 		
-		const string stationID = vecVecMeteo[station][0].meta.stationID;
+		const string stationID = IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID);
 		const map< string, set<string> >::const_iterator it = kept_params.find(stationID);
 		if (it == kept_params.end()) continue;
 

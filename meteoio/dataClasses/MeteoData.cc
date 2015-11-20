@@ -466,7 +466,7 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//extra parameters only in meteo2 -> add them
 	if (nrExtra1==0) {
 		for (size_t ii=0; ii<nrExtra2; ii++) {
-			const size_t new_idx = addParameter( meteo2.extra_param_name[nrOfParameters+ii] );
+			const size_t new_idx = addParameter( meteo2.extra_param_name[ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}
 		return;
@@ -476,10 +476,10 @@ void MeteoData::merge(const MeteoData& meteo2)
 	std::vector<bool> meteo2_flags(nrExtra2, false); //to keep track of which elements have been copied
 	//merge the extra field of the current meteodata
 	for (size_t ii=0; ii<nrExtra1; ii++) {
-		const std::string curr_name = extra_param_name[nrOfParameters+ii];
+		const std::string curr_name = extra_param_name[ii];
 		//look for this parameter in meteo2
 		for (size_t jj=0; jj<nrExtra2; jj++) {
-			if (meteo2.extra_param_name[nrOfParameters+jj]==curr_name ) {
+			if (meteo2.extra_param_name[jj]==curr_name ) {
 				meteo2_flags[jj] = true;
 				if (data[nrOfParameters+ii]==IOUtils::nodata) data[nrOfParameters+ii]=meteo2.data[nrOfParameters+jj];
 				break;
@@ -489,7 +489,7 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//merge the extra fields of meteo2 that were NOT in the current meteodata
 	for (size_t ii=0; ii<nrExtra2; ii++) {
 		if (meteo2_flags[ii]==false) {
-			const size_t new_idx = addParameter( meteo2.extra_param_name[nrOfParameters+ii] );
+			const size_t new_idx = addParameter( meteo2.extra_param_name[ii] );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
 		}
 	}
