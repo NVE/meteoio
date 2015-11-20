@@ -203,17 +203,17 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		data = &raw_buffer.getBuffer();
 	}
 
-	if ((IOUtils::resampled & processing_level) != IOUtils::resampled) { //no resampling required
-		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
-			const size_t index = IOUtils::seek(i_date, (*data)[ii], true); //needs to be an exact match
-			if (index != IOUtils::npos)
-				vecMeteo.push_back((*data)[ii][index]); //Insert station into vecMeteo
-		}
-	} else { //resampling required
+	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
 		MeteoData md;
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
 			if (success) vecMeteo.push_back(md);
+		}
+	} else { //no resampling required
+		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
+			const size_t index = IOUtils::seek(i_date, (*data)[ii], true); //needs to be an exact match
+			if (index != IOUtils::npos)
+				vecMeteo.push_back((*data)[ii][index]); //Insert station into vecMeteo
 		}
 	}
 

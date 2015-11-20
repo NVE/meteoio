@@ -497,7 +497,7 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 //in this implementation, we consider that the station name does NOT change over time
 void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 {
-	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
 		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
 
@@ -508,9 +508,9 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
 		const vector<string> &merge_from( it->second );
-		for (size_t idx=0; idx<merge_from.size(); ++idx) {
+		for (size_t idx=0; idx<merge_from.size(); ++idx) { //loop over the stations to merge to the "toStation"
 			const string fromStationID( merge_from[idx] );
-			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) {
+			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) { //loop over the available stations in the current dataset
 				if (vecVecMeteo[jj].empty()) continue;
 				const string curr_station = IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID);
 				if (curr_station==fromStationID)

@@ -363,19 +363,27 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2)
 {
 	if (vec1.empty() || vec2.empty()) return;
+	
+	//if some new fields need to be created, do it on the front element
+	//so they can be found by other modules by testing the front element
+	const size_t nrExtra2 = vec2.front().nrOfAllParameters - nrOfParameters;
+	for (size_t ii=0; ii<nrExtra2; ii++) {
+		const string extra_name = vec2.front().extra_param_name[ii];
+		if (vec1.front().getParameterIndex(extra_name)==IOUtils::npos)
+			vec1.front().addParameter( extra_name );
+	}
+	
+	//optimizations for special cases
 	if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
 	if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
 	
+	//general case: merge one timestamp at a time
 	size_t idx2 = 0;
-	for (size_t ii=0; ii<vec1.size(); ii++) {
-		while ((vec1[ii].date>vec2[idx2].date) && (idx2<vec2.size()))
-			idx2++;
+	for (size_t ii=0; ii<vec1.size(); ii++) { //loop over the timestamps
+		while ((vec1[ii].date>vec2[idx2].date) && (idx2<vec2.size())) idx2++;
 		
 		if (idx2==vec2.size()) return; //no more chances of common timestamps
-		
-		if (vec1[ii].date==vec2[idx2].date) {//we found a common timestamp
-			vec1[ii].merge( vec2[idx2] );
-		}
+		if (vec1[ii].date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
 	}
 }
 
@@ -456,41 +464,16 @@ void MeteoData::merge(const MeteoData& meteo2)
 		if (data[ii]==IOUtils::nodata) data[ii]=meteo2.data[ii];
 	}
 
-	//merge extra parameters
-	const size_t nrExtra1 = nrOfAllParameters - nrOfParameters;
+	//for each meteo2 extra parameter, check if a matching parameter exist
 	const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
-
-	//no extra parameters to add -> return
-	if (nrExtra2==0) return;
-
-	//extra parameters only in meteo2 -> add them
-	if (nrExtra1==0) {
-		for (size_t ii=0; ii<nrExtra2; ii++) {
-			const size_t new_idx = addParameter( meteo2.extra_param_name[ii] );
-			data[new_idx] = meteo2.data[nrOfParameters+ii];
-		}
-		return;
-	}
-
-	//extra parameters in both the current meteodata and meteo2 -> tedious merge...
-	std::vector<bool> meteo2_flags(nrExtra2, false); //to keep track of which elements have been copied
-	//merge the extra field of the current meteodata
-	for (size_t ii=0; ii<nrExtra1; ii++) {
-		const std::string curr_name = extra_param_name[ii];
-		//look for this parameter in meteo2
-		for (size_t jj=0; jj<nrExtra2; jj++) {
-			if (meteo2.extra_param_name[jj]==curr_name ) {
-				meteo2_flags[jj] = true;
-				if (data[nrOfParameters+ii]==IOUtils::nodata) data[nrOfParameters+ii]=meteo2.data[nrOfParameters+jj];
-				break;
-			}
-		}
-	}
-	//merge the extra fields of meteo2 that were NOT in the current meteodata
 	for (size_t ii=0; ii<nrExtra2; ii++) {
-		if (meteo2_flags[ii]==false) {
-			const size_t new_idx = addParameter( meteo2.extra_param_name[ii] );
+		const string extra_name = meteo2.extra_param_name[ii];
+		const size_t extra_param_idx = getParameterIndex(extra_name);
+		if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+			const size_t new_idx = addParameter( extra_name );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
+		} else if (data[extra_param_idx]==IOUtils::nodata) {
+			data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
 		}
 	}
 }
