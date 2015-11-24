@@ -312,7 +312,7 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
- * except for Crawfor that provides its own parametrization.
+ * except for Crawford that provides its own parametrization.
  * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available if such ratio
  * is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
