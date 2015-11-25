@@ -353,17 +353,16 @@ void Config::write(const std::string& filename) const
 {
 	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
 	std::ofstream fout(filename.c_str(), ios::out);
-	if (fout.fail())
-		throw FileAccessException(filename, AT);
+	if (fout.fail()) throw FileAccessException(filename, AT);
 
 	try {
 		string current_section;
 		unsigned int sectioncount = 0;
-		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it){
+		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const string key_full = it->first;
 			const string section = extract_section(key_full);
 
-			if (current_section != section){
+			if (current_section != section) {
 				current_section = section;
 				if (sectioncount != 0)
 					fout << endl;

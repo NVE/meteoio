@@ -262,8 +262,7 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 //this is actually an object factory
 IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
 {
-	std::string op_src;
-	cfg.getValue(cfgkey, cfgsection, op_src);
+	const std::string op_src = cfg.get(cfgkey, cfgsection);
 
 	if (mapPlugins.find(op_src) == mapPlugins.end()) {
 		IOInterface *ioPtr = getPlugin(op_src);
@@ -463,6 +462,8 @@ void IOHandler::create_merge_map()
 //merge stations that have identical names
 void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 {
+	if (merge_commands.empty()) return;
+	
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		const string toStationID = IOUtils::strToUpper(vecStation[ii].stationID);
 		//we do not support "chain merge": station A merging station B and station C merging station A
@@ -497,6 +498,8 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 //in this implementation, we consider that the station name does NOT change over time
 void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 {
+	if (merge_commands.empty()) return;
+	
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
 		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
@@ -521,6 +524,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
+		if (vecVecMeteo[ii].empty())  continue;
 		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
 		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), toStationID);
 		if ( it!=merged_stations.end() ) {
@@ -534,8 +538,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 void IOHandler::create_exclude_map()
 {
 	excludes_ready = true;
-	string exclude_file;
-	cfg.getValue("EXCLUDE_FILE", "Input", exclude_file, IOUtils::nothrow);
+	const string exclude_file = cfg.get("EXCLUDE_FILE", "Input", IOUtils::nothrow);
 
 	if (!exclude_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
@@ -597,8 +600,7 @@ void IOHandler::create_exclude_map()
 void IOHandler::create_keep_map()
 {
 	keeps_ready = true;
-	string keep_file;
-	cfg.getValue("KEEP_FILE", "Input", keep_file, IOUtils::nothrow);
+	const string keep_file = cfg.get("KEEP_FILE", "Input", IOUtils::nothrow);
 
 	if (!keep_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
@@ -728,8 +730,7 @@ void IOHandler::parse_copy_config()
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const string name_of_copy = copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") );
-		string initial_name;
-		cfg.getValue(copy_keys[ii], "Input", initial_name);
+		const string initial_name = cfg.get(copy_keys[ii], "Input");
 		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
 			copy_parameter.push_back(initial_name);
 			copy_name.push_back(name_of_copy);

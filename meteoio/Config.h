@@ -273,7 +273,7 @@ class Config {
 				} catch(const std::exception&){
 					throw UnknownValueException("[E] Error in "+sourcename+" reading key "+full_key, AT);
 				}
-				vecT.push_back(tmp);
+				vecT.push_back( tmp );
 			}
 		}
 

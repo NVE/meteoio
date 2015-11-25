@@ -310,12 +310,14 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		// Retrieve the station IDs - this only needs to be done once per instance
 		string stat_abk, stao_nr, station_name;
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
-		vector<string> stnIDs;
+		
+		//Retrieve the drift station - this only needs to be done once per instance
+		vector<string> stnDrift;
 		string drift_stat_abk, drift_stao_nr;
-		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, stmt);
-		IOUtils::convertString(station_name, stnIDs.at(0));
-		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
-		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
+		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnDrift, stmt);
+		IOUtils::convertString(station_name, stnDrift.at(0));
+		IOUtils::convertString(drift_stat_abk, stnDrift.at(1));
+		IOUtils::convertString(drift_stao_nr, stnDrift.at(2));
 		const string drift_stationID = drift_stat_abk + drift_stao_nr;
 		if (!drift_stationID.empty())
 			mapDriftStation[vecStationID[ii]] = drift_stationID;
@@ -357,7 +359,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		}
 		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
-		vecStationMetaData.push_back(StationData(myCoord, vecStationID[ii], station_name));
+		vecStationMetaData.push_back( StationData(myCoord, vecStationID[ii], station_name) );
 	}
 	conn->terminateStatement(stmt);
 }

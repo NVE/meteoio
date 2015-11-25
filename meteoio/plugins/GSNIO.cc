@@ -36,28 +36,13 @@ namespace mio {
  * This plugin reads meteorological data from GSN (Global Sensor Network, see <a href="http://sourceforge.net/apps/trac/gsn/"> GSN home page</a>)
  * via the RESTful web service. To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
  * @subsection gsn_fields Field mapping
- * The following GSN fields are read from GSN and mapped to MeteoData attributes:
- * <center><table border="0">
- * <tr><td>
- * <table border="1">
- * <tr><th>GSN attribute</th><th>MeteoData field</th></tr>
- * <tr><td>RELATIVE_HUMIDITY or AIR_HUMID</td><td>MeteoData::RH</td></tr>
- * <tr><td>AIR_TEMPERATURE or AIR_TEMP</td><td>MeteoData::TA</td></tr>
- * <tr><td>WIND_DIRECTION</td><td>MeteoData::DW</td></tr>
- * <tr><td>WIND_SPEED_MAX</td><td>MeteoData::VW_MAX</td></tr>
- * <tr><td>WIND_SPEED_SCALAR_AV or WIND_SPEED</td><td>MeteoData::VW</td></tr>
- * <tr><td>INCOMING_SHORTWAVE_RADIATION</td><td>MeteoData::ISWR</td></tr>
- * <tr><td>INCOMING_LONGWAVE_RADIATION</td><td>MeteoData::ILWR</td></tr>
- * <tr><td>OUTGOING_SHORTWAVE_RADIATION</td><td>MeteoData::RSWR</td></tr>
- * <tr><td>OUTGOING_LONGWAVE_RADIATION</td><td>equivalent MeteoData::TSS</td></tr>
- * <tr><td>SNOW_HEIGHT</td><td>MeteoData::HS</td></tr>
- * <tr><td>RAIN_METER</td><td>MeteoData::PSUM</td></tr>
- * <tr><td>SURFACE_TEMP</td><td>MeteoData::TSS</td></tr>
- * <tr><td>SOLAR_RAD</td><td>MeteoData::ISWR</td></tr>
- * </table></td></tr>
- * </table></center>
- * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does
- * not use the above names will not be properly supported (fields will not be missing but might appear under a different name)!
+ * Since a lot of virtual sensors in GSN rely on parameters named with fully free text, it is necessary to map some possible names to one of MeteoIO's 
+ * standard parameters. Although this plugin tries to cover as many cases as possible, it is still possible that some names would fail to be 
+ * mapped to a standard parameter. In such as case, the full GSN name will be used. This means that although the data will be properly read, 
+ * it will probably not be usable by a numerical model. Several solutions could then be applied:
+ *     + rename the parameter in GSN in line with the names that are already recognized by this plugin;
+ *     + run a small test (for example with the example "meteo_reading") in order to identify the names that are not recognized, then
+ * configure MeteoIO to copy these parameter into a standard name (see \ref data_manipulations "raw data editing").
  *
  * @section gsn_units Units
  * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known,
@@ -73,19 +58,17 @@ namespace mio {
  *
  * @section gsn_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - GSN_URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] and/or [Output] sections
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] and/or [Output] sections
+ * - GSN_URL: The URL of the RESTful web service e.g. http://montblanc.slf.ch:22001/rest
  * - GSN_USER: The username to access the service (optional)
  * - GSN_PASS: The password to authenticate the USER (optional)
- * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
+ * - STATION#: station code for the given station, e. g. la_fouly_1034 (case sensitive!)
  * - GSN_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - GSN_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
- * This may result in a long download.
+ * This may result in a very long download.
  *
  * @code
  * METEO	= GSN
@@ -189,7 +172,10 @@ void GSNIO::buildStation(const std::string& id, const std::string& name, const d
 {
 	Coords current_coord(coordin, coordinparam);
 	current_coord.setLatLon(lat, lon, alt);
-	sd.setStationData(current_coord, id, name);
+	if (id.empty()) 
+		sd.setStationData(current_coord, name, name);
+	else
+		sd.setStationData(current_coord, id, name);
 
 	if (slope_angle != IOUtils::nodata) {
 		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
@@ -350,21 +336,22 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			index.push_back(MeteoData::VW_MAX);
 		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED" || field_name == "WIND_SPEED_MEAN") {
 			index.push_back(MeteoData::VW);
-		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD" || field_name == "SW_RADIATION_INCOMING") {
+		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "INCOMING_SW_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD" || field_name == "SW_RADIATION_INCOMING") {
 			index.push_back(MeteoData::ISWR);
-		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR" || field_name == "LW_RADIATION_INCOMING") {
+		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "INCOMING_LW_RADIATION" || field_name == "ILWR" || field_name == "LW_RADIATION_INCOMING") {
 			index.push_back(MeteoData::ILWR);
 		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION" || field_name == "RSWR") {
 			index.push_back(MeteoData::RSWR);
-		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR" || field_name == "LW_RADIATION_OUTGOING") { //is used to calculate TSS
-			md.addParameter("OLWR");
-			index.push_back(md.getParameterIndex("OLWR"));
+		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR" || field_name == "LW_RADIATION_OUTGOING") {
+			index.push_back( md.addParameter("OLWR") );
 		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1") {
 			index.push_back(MeteoData::HS);
 		} else if (field_name == "RAIN_METER" || field_name == "PINT" || field_name == "PRECIPITATION") {
 			index.push_back(MeteoData::PSUM);
-		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS" || field_name == "SNOW_SURFACE_TEMPERATURE") {
+		} else if (field_name == "SURFACE_TEMP" || field_name == "SURFACE_TEMPERATURE" || field_name == "TSS" || field_name == "SNOW_SURFACE_TEMPERATURE") {
 			index.push_back(MeteoData::TSS);
+		} else if (field_name == "SOIL_TEMP_0CM" || field_name == "SOIL_TEMP" || field_name == "SOIL_TEMPERATURE" || field_name == "TSG") {
+			index.push_back(MeteoData::TSG);
 		} else if (field_name == "ATM_PRESSURE" || field_name == "P") {
 			index.push_back(MeteoData::P);
 		} else if (field_name == "TIMESTAMP") {
