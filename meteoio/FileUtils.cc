@@ -44,15 +44,15 @@ void copy_file(const std::string& src, const std::string& dest)
 {
 	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
 
-	if (!IOUtils::fileExists(src)) throw FileNotFoundException(src, AT);
+	if (!IOUtils::fileExists(src)) throw NotFoundException(src, AT);
 	std::ifstream fin(src.c_str(), std::ios::binary);
-	if (fin.fail()) throw FileAccessException(src, AT);
+	if (fin.fail()) throw AccessException(src, AT);
 
-	if (!IOUtils::validFileAndPath(dest)) throw InvalidFileNameException(dest, AT);
+	if (!IOUtils::validFileAndPath(dest)) throw InvalidNameException(dest, AT);
 	std::ofstream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
-		throw FileAccessException(dest, AT);
+		throw AccessException(dest, AT);
 	}
 
 	fout << fin.rdbuf();
@@ -196,14 +196,14 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 1)) {
 		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
-		throw FileAccessException("Error opening directory " + path, AT);
+		throw AccessException("Error opening directory " + path, AT);
 	}
 
 	const std::string inpath = path+"\\\\*";
 	WIN32_FIND_DATA ffd;
 	const HANDLE hFind = FindFirstFileA(inpath.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
-		throw FileAccessException("Error opening directory " + path, AT);
+		throw AccessException("Error opening directory " + path, AT);
 	}
 
 	do {
@@ -221,7 +221,7 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 
 	const DWORD dwError = GetLastError();
 	if (dwError != ERROR_NO_MORE_FILES) {
-		throw FileAccessException("Error listing files in directory " + path, AT);
+		throw AccessException("Error listing files in directory " + path, AT);
 	}
 
 	FindClose(hFind);
@@ -254,7 +254,7 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 {
 	DIR *dp = opendir(path.c_str());
 	if (dp == NULL) {
-		throw FileAccessException("Error opening directory " + path, AT);
+		throw AccessException("Error opening directory " + path, AT);
 	}
 
 	struct dirent *dirp;

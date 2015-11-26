@@ -198,7 +198,7 @@ void CNRMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& file
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	ncpp::get_variable(ncid, varname, varid);
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
@@ -289,7 +289,7 @@ void CNRMIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	const string file_and_path = path + "/" + filename;
 
 	int ncid;
-	if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
 	ncpp::close_file(file_and_path, ncid);
@@ -353,7 +353,7 @@ void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 	const string file_and_path = path + "/" + filename;
 
 	int ncid;
-	if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 
 	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);
@@ -936,7 +936,7 @@ void CNRMIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string
 
 		ncpp::start_definitions(filename, ncid);
 	} else {
-		if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+		if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 		ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
 

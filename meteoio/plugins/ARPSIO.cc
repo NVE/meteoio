@@ -217,7 +217,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << name << "\"";
-		throw NoAvailableDataException(ss.str(), AT);
+		throw NoDataException(ss.str(), AT);
 	}
 
 	rewind(fin);
@@ -410,10 +410,10 @@ void ARPSIO::openGridFile(const std::string& in_filename)
 	unsigned int v1;
 	filename = in_filename;
 
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
 		cleanup();
-		throw FileAccessException("Can not open file "+filename, AT);
+		throw AccessException("Can not open file "+filename, AT);
 	}
 
 	//identify if the file is an original arps file or a file modified by ARPSGRID

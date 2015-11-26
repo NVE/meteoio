@@ -953,7 +953,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 
 	const size_t nr_metadata = vecMetaData.size();
 	if (nr_metadata==0)
-			throw NoAvailableDataException("Station " + stat_abk+stao_nr + " not found in the database", AT);
+			throw NoDataException("Station " + stat_abk+stao_nr + " not found in the database", AT);
 	if (nr_metadata<4)
 			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
 	return nr_metadata;

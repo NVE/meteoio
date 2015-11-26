@@ -79,13 +79,13 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
-	if (!IOUtils::fileExists(filename)) throw FileNotFoundException(filename, AT);
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw AccessException(filename, AT);
 	}
 
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -222,10 +222,10 @@ void GrassIO::readPOI(std::vector<Coords>&)
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	if (!IOUtils::validFileAndPath(name)) throw InvalidFileNameException(name, AT);
+	if (!IOUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
 	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {
-		throw FileAccessException(name, AT);
+		throw AccessException(name, AT);
 	}
 
 	Coords llcorner=grid_in.llcorner;

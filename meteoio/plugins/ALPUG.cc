@@ -134,13 +134,13 @@ void ALPUG::readMetaData()
 
 	const string filename = cfg.get("METAFILE", "Input");
 	const string metafile = inpath + "/" + filename;
-	if (!IOUtils::fileExists(metafile)) throw FileAccessException(metafile, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(metafile)) throw AccessException(metafile, AT); //prevent invalid filenames
 	errno = 0;
 	std::ifstream fin(metafile.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
 		ss << "File \'" << metafile << "\' could not be opened. Possible reason: " << strerror(errno) << "\n";
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	try {
@@ -202,7 +202,7 @@ void ALPUG::readMetaData()
 		}
 	}
 	if (!msg.empty())
-		throw NoAvailableDataException(msg+" do(es) not have metadata in \'"+metafile+"\'", AT);
+		throw NoDataException(msg+" do(es) not have metadata in \'"+metafile+"\'", AT);
 }
 
 void ALPUG::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
@@ -330,7 +330,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 	list<string> dirlist = IOUtils::readDirectory( inpath, station_id+dflt_extension );
 	if (dirlist.empty()) {
 		const std::string msg = "No data file found for station "+station_id+" in \'"+inpath+"\'"+". Files should be named as {YY}{station_id}"+dflt_extension+" with {YY} the last two digits of the year.";
-		throw NoAvailableDataException(msg, AT);
+		throw NoDataException(msg, AT);
 	}
 
 	for (int year=start_year; year<=end_year; ++year) {
@@ -341,11 +341,11 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 			continue;
 
 		const string file_and_path = inpath + "/" + filename;
-		if (!IOUtils::fileExists(file_and_path)) throw FileAccessException(file_and_path, AT); //prevent invalid filenames
+		if (!IOUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
 		errno = 0;
 		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 		if (fin.fail())
-			throw FileAccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
+			throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
 
 		const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
 		const size_t nr_of_data_fields = vecFields.size();

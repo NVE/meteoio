@@ -546,9 +546,9 @@ void IOHandler::create_exclude_map()
 		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
 		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
 
-		if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
-		if (fin.fail()) throw FileAccessException(filename, AT);
+		if (fin.fail()) throw AccessException(filename, AT);
 
 		try {
 			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -608,9 +608,9 @@ void IOHandler::create_keep_map()
 		const std::string path = IOUtils::getPath(prefix+keep_file, true);  //clean & resolve path
 		const std::string filename = path + "/" + IOUtils::getFilename(keep_file);
 
-		if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
-		if (fin.fail()) throw FileAccessException(filename, AT);
+		if (fin.fail()) throw AccessException(filename, AT);
 
 		try {
 			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file

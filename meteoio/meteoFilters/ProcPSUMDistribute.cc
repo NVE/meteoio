@@ -55,7 +55,7 @@ void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<Me
 					std::ostringstream ss;
 					ss << "Redistribution of precipitation before reaccumulation failed: precipitation value required ";
 					ss << "in the " << startDate.toString(Date::ISO) << " - " << endDate.toString(Date::ISO) << " interval!\n";
-					throw NoAvailableDataException(ss.str(), AT);
+					throw NoDataException(ss.str(), AT);
 				}
 			}
 			continue;

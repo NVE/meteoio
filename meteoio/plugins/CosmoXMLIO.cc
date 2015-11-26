@@ -243,7 +243,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
 
-	if (!IOUtils::fileExists(in_meteofile)) throw FileAccessException(in_meteofile, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(in_meteofile)) throw AccessException(in_meteofile, AT); //prevent invalid filenames
 	
 	if (in_encoding==XML_CHAR_ENCODING_NONE) {
 		in_doc = xmlParseFile(in_meteofile.c_str());
@@ -255,7 +255,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	}
 
 	if (in_doc == NULL) {
-		throw FileNotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
+		throw NotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
 	}
 
 	if (in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
@@ -327,7 +327,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	const xmlNodeSetPtr &metadata = xpathObj->nodesetval;
 	const int nr_metadata = (metadata) ? metadata->nodeNr : 0;
 	if (nr_metadata==0)
-		throw NoAvailableDataException("No metadata found for station \""+station_id+"\"", AT);
+		throw NoDataException("No metadata found for station \""+station_id+"\"", AT);
 	if (nr_metadata>1)
 		throw InvalidFormatException("Multiple definition of metadata for station \""+station_id+"\"", AT);
 
@@ -365,12 +365,12 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	sd.stationID = station_id;
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
-		throw NoAvailableDataException("Some station location information is missing for station \""+station_id+"\"", AT);
+		throw NoDataException("Some station location information is missing for station \""+station_id+"\"", AT);
 	sd.position.setProj(coordin, coordinparam);
 	sd.position.setLatLon(latitude, longitude, altitude);
 
 	if (xml_id.empty())
-		throw NoAvailableDataException("XML station id missing for station \""+station_id+"\"", AT);
+		throw NoDataException("XML station id missing for station \""+station_id+"\"", AT);
 	xml_stations_id[station_id] = xml_id;
 
 	xmlXPathFreeObject(xpathObj);
@@ -481,7 +481,7 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 	const xmlNodeSetPtr &data = xpathObj->nodesetval;
 	const int nr_data = (data) ? data->nodeNr : 0;
 	if (nr_data==0)
-		throw NoAvailableDataException("No data found for station \""+station_id+"\"", AT);
+		throw NoDataException("No data found for station \""+station_id+"\"", AT);
 
 	//loop over all data for this station_id
 	for (int ii=0; ii<nr_data; ii++) {

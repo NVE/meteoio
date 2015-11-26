@@ -297,7 +297,7 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 void Meteo2DInterpolator::initVirtualStations()
 {
 	if (!cfg.keyExists("DEM", "Input"))
-		throw NoAvailableDataException("In order to use virtual stations, please provide a DEM!", AT);
+		throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
 	DEMObject dem;
 	gridsmanager.readDEM(dem);
 
@@ -319,7 +319,7 @@ void Meteo2DInterpolator::initVirtualStations()
 		if (!dem.gridify(v_coords[ii])) {
 			ostringstream ss;
 			ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
-			throw NoAvailableDataException(ss.str(), AT);
+			throw NoDataException(ss.str(), AT);
 		}
 
 		const size_t i = v_coords[ii].getGridI(), j = v_coords[ii].getGridJ();

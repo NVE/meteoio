@@ -318,13 +318,13 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height)
 {
 	// Open file for writing (binary mode)
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	// Initialize write structure
@@ -681,10 +681,10 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 	world_ref.setProj(coordout, coordoutparam);
 	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
 
-	if (!IOUtils::validFileAndPath(world_file)) throw InvalidFileNameException(world_file, AT);
+	if (!IOUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
 	std::ofstream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) {
-		throw FileAccessException(world_file, AT);
+		throw AccessException(world_file, AT);
 	}
 
 	try {
@@ -696,7 +696,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 		fout << std::setprecision(12) << world_ref.getNorthing() << "\n";
 	} catch(...) {
 		fout.close();
-		throw FileAccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
+		throw AccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
 	}
 
 	fout.close();

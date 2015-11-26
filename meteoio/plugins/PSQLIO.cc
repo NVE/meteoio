@@ -203,9 +203,9 @@ void PSQLIO::getParameters(const Config& cfg)
 
 void PSQLIO::create_shadow_map(const std::string& exclude_file)
 {
-	if (!IOUtils::fileExists(exclude_file)) throw FileAccessException(exclude_file, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(exclude_file)) throw AccessException(exclude_file, AT); //prevent invalid filenames
 	std::ifstream fin(exclude_file.c_str(), std::ifstream::in);
-	if (fin.fail()) throw FileAccessException(exclude_file, AT);
+	if (fin.fail()) throw AccessException(exclude_file, AT);
 
 	try {
 		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file

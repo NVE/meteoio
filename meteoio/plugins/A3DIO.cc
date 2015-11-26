@@ -137,7 +137,7 @@ void A3DIO::readStationData(const Date& timestamp, std::vector<StationData>& vec
 
 	//read 1D station and add it to vecStation
 	if (!IOUtils::fileExists(meteo1d)) {
-		throw FileNotFoundException(meteo1d, AT);
+		throw NotFoundException(meteo1d, AT);
 	}
 	StationData sd;
 	read1DStation(sd);
@@ -196,10 +196,10 @@ void A3DIO::read1DStation(StationData& sd)
 	double xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::fileExists(meteo1d)) throw FileAccessException(meteo1d, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(meteo1d)) throw AccessException(meteo1d, AT); //prevent invalid filenames
 	std::ifstream fin(meteo1d.c_str(), std::ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(meteo1d, AT);
+		throw AccessException(meteo1d, AT);
 	}
 
 	//read and parse the header
@@ -242,13 +242,13 @@ void A3DIO::read1DStation(StationData& sd)
 void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (!IOUtils::fileExists(meteo1d)) {
-		throw FileNotFoundException(meteo1d, AT);
+		throw NotFoundException(meteo1d, AT);
 	}
 
-	if (!IOUtils::fileExists(meteo1d)) throw FileAccessException(meteo1d, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(meteo1d)) throw AccessException(meteo1d, AT); //prevent invalid filenames
 	std::ifstream fin(meteo1d.c_str(), std::ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(meteo1d,AT);
+		throw AccessException(meteo1d,AT);
 	}
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -371,7 +371,7 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc),
-	//otherwise throw FileNotFoundException
+	//otherwise throw NotFoundException
 	const Date startDate(vecMeteo[0].front().date.getJulian(), in_tz, false); //so that the correct filenames for the TZ will be constructed
 	const Date endDate(vecMeteo[0].back().date.getJulian(), in_tz, false);
 
@@ -475,7 +475,7 @@ void A3DIO::constructMeteo2DFilenames(const Date& startDate, const Date& endDate
 
 	for (size_t ii=0; ii<filenames.size(); ii++) {
 		if (!IOUtils::fileExists(filenames[ii])) {
-			throw FileNotFoundException(filenames[ii], AT);
+			throw NotFoundException(filenames[ii], AT);
 		}
 	}
 }
@@ -489,9 +489,9 @@ size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std:
 	for (size_t ii=0; ii<filenames.size(); ii++) {
 		const std::string filename = filenames[ii];
 
-		if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
-		if (fin.fail()) throw FileAccessException(filename, AT);
+		if (fin.fail()) throw AccessException(filename, AT);
 
 		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
@@ -517,10 +517,10 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
                             std::map<std::string,size_t>& hashStations,
                             std::vector< std::vector<MeteoData> >& vecM, size_t& bufferindex)
 {
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	std::ifstream fin(filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw AccessException(filename, AT);
 	}
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -612,10 +612,10 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,size_t>& hashStations,
                               std::vector<StationData>& vecS)
 {
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	std::ifstream fin(filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw AccessException(filename, AT);
 	}
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -681,9 +681,9 @@ void A3DIO::readPOI(std::vector<Coords>& pts)
 	std::string filename;
 	cfg.getValue("POIFILE", "Input", filename);
 
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	std::ifstream fin(filename.c_str(), std::ifstream::in);
-	if (fin.fail()) throw FileAccessException(filename,AT);
+	if (fin.fail()) throw AccessException(filename,AT);
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
@@ -724,10 +724,10 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 		const size_t size = data[ii].size();
 		if (size>0) {
 			const std::string filename = tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt";
-			if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+			if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if (!file) {
-				throw FileAccessException("[E] Can not open file "+filename, AT);
+				throw AccessException("[E] Can not open file "+filename, AT);
 			}
 
 			file << "Name = " << data[ii][0].meta.getStationID() << endl;
@@ -816,10 +816,10 @@ void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
 	out << year;
 
 	const std::string filename = fileprefix+out.str()+".txt";
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	file.open(filename.c_str(), ios::out | ios::trunc);
 	if (!file) {
-		throw FileAccessException("Can not create file "+filename, AT);
+		throw AccessException("Can not create file "+filename, AT);
 	}
 	writeHeader(file, data, label);
 }

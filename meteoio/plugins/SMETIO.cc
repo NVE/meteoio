@@ -167,7 +167,7 @@ void SMETIO::parseInputOutputSection()
 			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
 			if (!IOUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
-				throw InvalidFileNameException(file_and_path, AT);
+				throw InvalidNameException(file_and_path, AT);
 			vecFiles.push_back(file_and_path);
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
@@ -419,7 +419,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		const string& filename = vecFiles.at(ii); //filename of current station
 
 		if (!IOUtils::fileExists(filename))
-			throw FileNotFoundException(filename, AT);
+			throw NotFoundException(filename, AT);
 
 		smet::SMETReader& myreader = vec_smet_reader.at(ii);
 		myreader.convert_to_MKSA(true); // we want converted values for MeteoIO
@@ -454,7 +454,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		const string filename = outpath + "/" + sd.stationID + ".smet";
 		if (!IOUtils::validFileAndPath(filename)) //Check whether filename is valid
-			throw InvalidFileNameException(filename, AT);
+			throw InvalidNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
@@ -708,7 +708,7 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 {
 	const std::string filename = cfg.get("POIFILE", "Input");
 	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
+		throw NotFoundException(filename, AT);
 	}
 
 	smet::SMETReader myreader(filename);

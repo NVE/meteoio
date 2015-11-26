@@ -175,13 +175,13 @@ void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
-	if (!IOUtils::fileExists(filename)) throw FileNotFoundException(filename, AT);
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
+	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
 	//Open file
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw AccessException(filename, AT);
 	}
 
 	std::string section( defaultSection );
@@ -351,9 +351,9 @@ std::string Config::clean_import_path(const std::string& in_path) const
 
 void Config::write(const std::string& filename) const
 {
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename,AT);
+	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	std::ofstream fout(filename.c_str(), ios::out);
-	if (fout.fail()) throw FileAccessException(filename, AT);
+	if (fout.fail()) throw AccessException(filename, AT);
 
 	try {
 		string current_section;

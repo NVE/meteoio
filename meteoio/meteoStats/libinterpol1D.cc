@@ -65,9 +65,9 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	const size_t Xsize = X.size();
 	const size_t Qsize = quartiles.size();
 	if (Xsize == 0)
-		throw NoAvailableDataException("Trying to calculate quantiles with no data points", AT);
+		throw NoDataException("Trying to calculate quantiles with no data points", AT);
 	if (Qsize == 0)
-		throw NoAvailableDataException("No quantiles specified", AT);
+		throw NoDataException("No quantiles specified", AT);
 
 	//in order to properly escape nodata points, we need to copy in a temporary vector
 	vector<double> vecTemp;
@@ -541,7 +541,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	//check arguments
 	const size_t n = X.size();
 	if (n<2)
-		throw NoAvailableDataException("Trying to calculate linear regression with too few data points", AT);
+		throw NoDataException("Trying to calculate linear regression with too few data points", AT);
 	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
@@ -556,7 +556,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		}
 	}
 	if (count<2)
-		throw NoAvailableDataException("Trying to calculate linear regression with too few valid data points", AT);
+		throw NoDataException("Trying to calculate linear regression with too few valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
 
@@ -605,7 +605,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 {	//check arguments
 	const size_t n = X.size();
 	if (n==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
+		throw NoDataException("Trying to calculate linear regression with no data points", AT);
 	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
@@ -620,7 +620,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 		}
 	}
 	if (count==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no valid data points", AT);
+		throw NoDataException("Trying to calculate linear regression with no valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
 

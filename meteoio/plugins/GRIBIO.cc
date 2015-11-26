@@ -435,13 +435,13 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
 	const std::string filename = grid2dpath_in+"/"+i_name;
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	grib_handle* h=NULL;
@@ -464,13 +464,13 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 
 void GRIBIO::indexFile(const std::string& filename)
 {
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	int err=0;
@@ -516,7 +516,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 
 	if (read2DGrid_indexed(32.2, 105, 10, date, VW)) { //FF_10M
 		if (!read2DGrid_indexed(31.2, 105, 10, date, DW)) //DD_10M
-			throw NoAvailableDataException("Can not read wind direction in file \""+filename+"\"", AT);
+			throw NoDataException("Can not read wind direction in file \""+filename+"\"", AT);
 	} else {
 		Grid2DObject U,V;
 		read2DGrid_indexed(33.2, 105, 10, date, U); //U_10M, also in 110, 10 as U
@@ -647,7 +647,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
-		throw NoAvailableDataException(ss.str(), AT);
+		throw NoDataException(ss.str(), AT);
 	}
 
 	//correcting wind speeds
