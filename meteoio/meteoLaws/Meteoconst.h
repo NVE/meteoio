@@ -20,6 +20,17 @@
 
 #include <cfloat>
 
+/**
+ * @brief _VERSION is given as a compilation flag to tell us what is the version number \n
+ * Please only use MIO_VERSION in the code
+ */
+#ifndef MIO_VERSION
+	//here below, the double-expansion stringification macro trick...
+	#define STR1(x) #x
+	#define STR2(x) STR1(x)
+	#define MIO_VERSION STR2( _VERSION )
+#endif
+
 namespace mio {
 
 namespace Cst {

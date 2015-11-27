@@ -52,7 +52,7 @@ double round(const double& x) {
 
 std::string getLibVersion() {
 	std::ostringstream ss;
-	ss << _VERSION << " compiled on " << __DATE__ << " " << __TIME__;
+	ss << MIO_VERSION << " compiled on " << __DATE__ << " " << __TIME__;
 	return ss.str();
 }
 
