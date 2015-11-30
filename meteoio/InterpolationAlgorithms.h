@@ -93,6 +93,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
+ * - ALS_SCALING: scaling from Airborn Laser Scan data (see ALS_Interpolation)
  *
  * @section interpol2D_trends Altitudinal trends
  * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps
@@ -524,6 +525,32 @@ class USERInterpolation : public InterpolationAlgorithm {
 	private:
 		std::string getGridFileName() const;
 		std::string filename;
+};
+
+/**
+ * @class ALS_Interpolation
+ * @brief Scale and distribute the precipitation according to Airborn Laser Scans (ALS) grids.
+ * This needs two arguments: first the base method to fill the grid (for example, idw_lapse) and
+ * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
+ * 
+ * @code
+ * PSUM::algorithms = ALS_SCALING
+ * PSUM::als_scaling = idw_lapse als_20150213.asc
+ * @endcode
+ */
+class ALS_Interpolation : public InterpolationAlgorithm {
+	public:
+		ALS_Interpolation(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), base_algo(), inputIsAllZeroes(false) {nrOfMeasurments=0;}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+		Grid2DObject ALS_scan;
+		std::string filename, base_algo;
+		bool inputIsAllZeroes;
 };
 
 /**

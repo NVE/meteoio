@@ -65,6 +65,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "USER"){// read user provided grid
 		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+	} else if (algoname == "ALS_SCALING"){// scale from ALS grid
+		return new ALS_Interpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "PPHASE"){// precipitation phase parametrization
 		return new PPHASEInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "PSUM_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
@@ -1079,6 +1081,83 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	} else {
 		info << IOUtils::getFilename(filename);
 	}
+}
+
+
+void ALS_Interpolation::initGrid(const DEMObject& dem, Grid2DObject& grid)
+{
+	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
+	vector<string> vecArgs2;
+	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
+	algorithm->getQualityRating(date, param);
+	algorithm->calculate(dem, grid);
+	info << algorithm->getInfo();
+}
+
+double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+{
+	date = i_date;
+	param = in_param;
+	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
+
+	if (nrOfMeasurments==0) return 0.;
+	if (inputIsAllZeroes) return 1.;
+	
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==2) {
+		base_algo = IOUtils::strToUpper( vecArgs[0] );
+		filename = vecArgs[1];
+	} else if (nr_args!=2)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+
+	if (!IOUtils::validFileAndPath(filename)) {
+		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
+		return 0.0;
+	}
+	
+	return (IOUtils::fileExists(filename))? 1. : 0.;
+}
+
+void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
+{
+	info.clear(); info.str("");
+	
+	//if all data points are zero, simply fill the grid with zeroes
+	if (inputIsAllZeroes) {
+		Interpol2D::constant(0., dem, grid);
+		return;
+	}
+	
+	if (ALS_scan.empty()) { //read the ALS scan if necessary
+		gridsmanager.read2DGrid(ALS_scan, filename);
+		const double als_mean = ALS_scan.grid2D.getMean();
+		if (als_mean==0.)
+			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul mean for the '"+algo+"' method!", AT);
+		ALS_scan *= 1./als_mean; //rescale the ALS grid so each cell is between 0 and 1
+	}
+	
+	//check that the ALS scan matches the provided DEM
+	if (!ALS_scan.isSameGeolocalization(dem)) {
+		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
+	} else {
+		info << IOUtils::getFilename(filename);
+	}
+	
+	initGrid(dem, grid);
+	
+	//Take the spatial distribution from the ALS and rescale to "base_algo"
+	const double grid_mean = grid.grid2D.getMean();
+	Grid2DObject tmp_grid( ALS_scan );
+	tmp_grid *= grid_mean;
+	
+	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
+	const size_t nxy = grid.getNx()*grid.getNy();
+	for (size_t jj=0; jj<nxy; jj++) {
+			if (tmp_grid(jj)!=IOUtils::nodata)
+				grid(jj) = tmp_grid(jj);
+		}
 }
 
 
