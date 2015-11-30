@@ -60,16 +60,17 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * An example of such section is given below:
  * @code
  * [Interpolations2D]
- * TA::algorithms = IDW_LAPSE CST_LAPSE
- * TA::cst_lapse = -0.008
+ * TA::algorithms = IDW_LAPSE AVG_LAPSE
+ * TA::avg_lapse = -0.008
  *
- * RH::algorithms = RH IDW_LAPSE CST_LAPSE CST
+ * RH::algorithms = RH IDW_LAPSE AVG_LAPSE AVG
  *
- * PSUM::algorithms = PSUM_SNOW IDW_LAPSE CST_LAPSE CST
- * PSUM::psum_snow = cst_lapse
- * PSUM::cst_lapse = 0.0005 frac
+ * PSUM::algorithms = PSUM_SNOW IDW_LAPSE AVG_LAPSE AVG CST
+ * PSUM::psum_snow = avg_lapse
+ * PSUM::avg_lapse = 0.0005 frac
+ * PSUM::cst        = 0
  *
- * VW::algorithms = IDW_LAPSE CST_LAPSE
+ * VW::algorithms = IDW_LAPSE AVG_LAPSE
  *
  * P::algorithms = STD_PRESS
  * @endcode
@@ -79,7 +80,8 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - NONE: returns a nodata filled grid (see NoneAlgorithm)
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
  * - CST: constant value in each cell (see ConstAlgorithm)
- * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
+ * - AVG: average of the measurements in each cell (see AvgAlgorithm)
+ * - AVG_LAPSE: constant value reprojected to the elevation of the cell (see AvgLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
  * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
@@ -211,30 +213,6 @@ class NoneAlgorithm : public InterpolationAlgorithm {
 };
 
 /**
- * @class ConstAlgorithm
- * @brief Constant filling interpolation algorithm.
- * Fill the grid with the average of the inputs for this parameter.
- * Optionally, it is also possible to provide the constant that should be used if no measurements
- * are avaiblable.
- * @code
- * PSUM::algorithms = CST
- * PSUM::cst        = 0.
- * @endcode
- */
-class ConstAlgorithm : public InterpolationAlgorithm {
-	public:
-		ConstAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.), user_provided(false) {}
-		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
-		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
-	private:
-		double user_cst;
-		bool user_provided;
-};
-
-/**
  * @class StandardPressureAlgorithm
  * @brief Standard atmospheric pressure interpolation algorithm.
  * Fill the grid with the standard atmosphere's pressure, depending on the local elevation.
@@ -250,21 +228,64 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 };
 
 /**
- * @class ConstLapseRateAlgorithm
- * @brief Constant filling with elevation lapse rate interpolation algorithm.
+ * @class ConstAlgorithm
+ * @brief Constant filling interpolation algorithm.
+ * Fill the grid with a user provided constant.
+ * @code
+ * PSUM::algorithms = CST
+ * PSUM::cst        = 0.
+ * @endcode
+ */
+class ConstAlgorithm : public InterpolationAlgorithm {
+	public:
+		ConstAlgorithm(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		double user_cst;
+};
+
+/**
+ * @class AvgAlgorithm
+ * @brief Average filling interpolation algorithm.
+ * Fill the grid with the average of the inputs for this parameter.
+ * @code
+ * PSUM::algorithms = AVG
+ * @endcode
+ */
+class AvgAlgorithm : public InterpolationAlgorithm {
+	public:
+		AvgAlgorithm(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+};
+
+/**
+ * @class AvgLapseRateAlgorithm
+ * @brief Average filling with elevation lapse rate interpolation algorithm.
  * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it
  * differently, the following operations are performed: detrending - averaging - re-trending.
  * The lapse rate is either calculated from the data
- * (if no extra argument is provided), or given by the user-provided the optional argument <i>"cst_lapse"</i>.
+ * (if no extra argument is provided), or given by the user-provided the optional argument <i>"avg_lapse"</i>.
  * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
  * unsuccessful, then user provided lapse rate is used as a fallback. If the optional user given lapse rate is
  * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
  * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
  * the fractional lapse from the data is made.
+ * @code
+ * PSUM::algorithms = AVG_LAPSE
+ * PSUM::avg_lapse   = soft 0.05 frac
+ * @endcode
  */
-class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
+class AvgLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:
-		ConstLapseRateAlgorithm(Meteo2DInterpolator& i_mi,
+		AvgLapseRateAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
 			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
@@ -358,7 +379,7 @@ class RHAlgorithm : public InterpolationAlgorithm {
 /**
  * @class ILWRAlgorithm
  * @brief Incoming Long Wave Radiation interpolation algorithm.
- * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using CST_LAPSE or IDW_LAPSE with
+ * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using AVG_LAPSE or IDW_LAPSE with
  * a fixed lapse rate and reconverted to ILWR.
  *
  * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for
@@ -435,7 +456,7 @@ class RyanAlgorithm : public InterpolationAlgorithm {
  *
  * This method must therefore first use another algorithm to generate an initial precipitation field,
  * and then modifies this field accordingly. By default, this base method is "idw_lapse" and switches to
- * "cst" if only one station can provide the precipitation at a given time step.
+ * "avg" if only one station can provide the precipitation at a given time step.
  *
  * Then it requires a synoptic wind direction that can be provided by different means:
  *  - without any extra argument, the stations are located in the DEM and their wind shading (or exposure)
@@ -533,7 +554,7 @@ class USERInterpolation : public InterpolationAlgorithm {
  * This needs two arguments: first the base method to fill the grid (for example, idw_lapse) and
  * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
  * If there are some time steps when only one station provides the necessary parameter, the base method will
- * automatically switch to "CST".
+ * automatically switch to "AVG".
  * 
  * @code
  * PSUM::algorithms = ALS_SCALING
@@ -603,8 +624,8 @@ class PPHASEInterpolation : public InterpolationAlgorithm {
  * An example using this algorithm, initializing the grid with a constant lapse rate fill using +0.05% precipitation increase per meter of elevation, is given below:
  * @code
  * PSUM::algorithms = PSUM_SNOW
- * PSUM::psum_snow = cst_lapse
- * PSUM::cst_lapse = 0.0005 frac
+ * PSUM::psum_snow = avg_lapse
+ * PSUM::avg_lapse = 0.0005 frac
  * @endcode
  *
  * @author Florian Kobierska, Jan Magnusson and Mathias Bavay

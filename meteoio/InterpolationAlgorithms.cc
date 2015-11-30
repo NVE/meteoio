@@ -35,12 +35,14 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 
 	if (algoname == "NONE"){// return a nodata grid
 		return new NoneAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "CST"){// constant fill
-		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "STD_PRESS"){// standard air pressure interpolation
 		return new StandardPressureAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "CST_LAPSE"){// constant fill with an elevation lapse rate
-		return new ConstLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+	} else if (algoname == "CST"){// constant fill
+		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+	} else if (algoname == "AVG"){// average fill
+		return new AvgAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+	} else if (algoname == "AVG_LAPSE"){// average fill with an elevation lapse rate
+		return new AvgLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW"){// Inverse Distance Weighting fill
 		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
@@ -317,19 +319,27 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+	
+	const size_t nr_args = vecArgs.size();
+	if (nr_args!=1)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	
+	IOUtils::convertString(user_cst, vecArgs[0]);
+	return 0.01;
+}
 
-	if (nrOfMeasurments == 0) {
-		const size_t nr_args = vecArgs.size();
+void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
+	Interpol2D::constant(user_cst, dem, grid);
+}
 
-		if (nr_args>1)
-			throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-		if (nr_args==1) {
-			IOUtils::convertString(user_cst, vecArgs[0]);
-			user_provided = true;
-			return 0.01;
-		} else
-			return 0.0;
-	} else if (nrOfMeasurments == 1) {
+
+double AvgAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+{
+	date = i_date;
+	param = in_param;
+	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+
+	if (nrOfMeasurments == 1) {
 		return 0.8;
 	} else if (nrOfMeasurments > 1) {
 		return 0.2;
@@ -338,15 +348,12 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	return 0.0;
 }
 
-void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
-	if (!user_provided)
-		Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
-	else
-		Interpol2D::constant(user_cst, dem, grid);
+void AvgAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
+	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 }
 
 
-double ConstLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
@@ -369,7 +376,7 @@ double ConstLapseRateAlgorithm::getQualityRating(const Date& i_date, const Meteo
 	return 0.2;
 }
 
-void ConstLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
+void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 	vector<double> vecAltitudes;
@@ -766,7 +773,7 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 		return 0.0;
 
 	if (nrOfMeasurments==1 && ref_station.empty()) { //ie: still using default base_algo
-		base_algo = "CST";
+		base_algo = "AVG";
 	}
 
 	//check that the necessary wind data is available
@@ -967,7 +974,7 @@ double WinstralListonAlgorithm::getQualityRating(const Date& i_date, const Meteo
 	if (nrOfMeasurments==0) return 0.0;
 
 	if (nrOfMeasurments==1 && ref_station.empty()) { //ie: still using default base_algo
-		base_algo = "CST";
+		base_algo = "AVG";
 	}
 
 	//check that the necessary wind data is available
@@ -1112,7 +1119,7 @@ double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::
 	
 	const size_t nr_args = vecArgs.size();
 	if (nr_args==2) {
-		base_algo = (nrOfMeasurments>1)? IOUtils::strToUpper( vecArgs[0] ) : "CST";
+		base_algo = (nrOfMeasurments>1)? IOUtils::strToUpper( vecArgs[0] ) : "AVG";
 		filename = vecArgs[1];
 	} else if (nr_args!=2)
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
