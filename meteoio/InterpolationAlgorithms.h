@@ -122,9 +122,9 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * 	DEMObject dem;
  * 	io.readDEM(dem);
  *
- *	//performing spatial interpolations
+ * 	//performing spatial interpolations
  * 	Grid2DObject param;
- *	io.interpolate(date, dem, MeteoData::TA, param);
+ * 	io.interpolate(date, dem, MeteoData::TA, param);
  *
  * @endcode
  *
