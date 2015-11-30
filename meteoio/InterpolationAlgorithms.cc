@@ -1063,13 +1063,18 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 	date = i_date;
 	param = in_param;
 	filename = getGridFileName();
+	
+	if (grid2d_path.empty()) {
+		const Config cfg( gridsmanager.getConfig() );
+		cfg.getValue("GRID2DPATH", "Input", grid2d_path);
+	}
 
-	if (!IOUtils::validFileAndPath(filename)) {
-		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
+	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
+		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
 	
-	return (IOUtils::fileExists(filename))? 1. : 0.;
+	return (IOUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
 
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
@@ -1107,17 +1112,22 @@ double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::
 	
 	const size_t nr_args = vecArgs.size();
 	if (nr_args==2) {
-		base_algo = IOUtils::strToUpper( vecArgs[0] );
+		base_algo = (nrOfMeasurments>1)? IOUtils::strToUpper( vecArgs[0] ) : "CST";
 		filename = vecArgs[1];
 	} else if (nr_args!=2)
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	
+	if (grid2d_path.empty()) {
+		const Config cfg( gridsmanager.getConfig() );
+		cfg.getValue("GRID2DPATH", "Input", grid2d_path);
+	}
 
-	if (!IOUtils::validFileAndPath(filename)) {
-		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
+	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
+		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
 	
-	return (IOUtils::fileExists(filename))? 1. : 0.;
+	return (IOUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
 
 void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
@@ -1142,7 +1152,7 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (!ALS_scan.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {
-		info << IOUtils::getFilename(filename);
+		info << IOUtils::getFilename(filename) << " - ";
 	}
 	
 	initGrid(dem, grid);

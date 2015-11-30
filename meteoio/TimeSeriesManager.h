@@ -136,6 +136,13 @@ class TimeSeriesManager {
 		 */
 		void clear_cache();
 		
+		/**
+		 * @brief Returns a copy of the internal Config object.
+		 * This is convenient to clone an iomanager
+		 * @return new Config object as a copy of the internal Config
+		 */
+		const Config getConfig() const {return cfg;}
+		
 	private:
 		void setDfltBufferProperties();
 		void fill_filtered_cache();

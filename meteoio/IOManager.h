@@ -192,7 +192,7 @@ class IOManager {
 		 * This is convenient to clone an iomanager
 		 * @return new Config object as a copy of the internal Config
 		 */
-		const Config getConfig() const;
+		const Config getConfig() const {return cfg;}
 
 		const std::string toString() const;
 

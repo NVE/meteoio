@@ -519,12 +519,12 @@ class USERInterpolation : public InterpolationAlgorithm {
 		USERInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename() {nrOfMeasurments=0;}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename(), grid2d_path() {nrOfMeasurments=0;}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::string getGridFileName() const;
-		std::string filename;
+		std::string filename, grid2d_path;
 };
 
 /**
@@ -532,6 +532,8 @@ class USERInterpolation : public InterpolationAlgorithm {
  * @brief Scale and distribute the precipitation according to Airborn Laser Scans (ALS) grids.
  * This needs two arguments: first the base method to fill the grid (for example, idw_lapse) and
  * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
+ * If there are some time steps when only one station provides the necessary parameter, the base method will
+ * automatically switch to "CST".
  * 
  * @code
  * PSUM::algorithms = ALS_SCALING
@@ -543,13 +545,13 @@ class ALS_Interpolation : public InterpolationAlgorithm {
 		ALS_Interpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), base_algo(), inputIsAllZeroes(false) {nrOfMeasurments=0;}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), grid2d_path(), base_algo(), inputIsAllZeroes(false) {nrOfMeasurments=0;}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
 		Grid2DObject ALS_scan;
-		std::string filename, base_algo;
+		std::string filename, grid2d_path, base_algo;
 		bool inputIsAllZeroes;
 };
 
