@@ -84,7 +84,7 @@ void Meteo2DInterpolator::setAlgorithms()
 size_t Meteo2DInterpolator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
-	cfg.findKeys(vec_keys, std::string(), "Interpolations2D");
+	cfg.findKeys(vec_keys, "::algorithms", "Interpolations2D", true);
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
@@ -217,8 +217,7 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const s
 	if (vecKeys.size() > 1)
 		throw IOException("Multiple definitions of " + parname + "::algorithms in config file", AT);;
 
-	if (vecKeys.empty())
-		return 0;
+	if (vecKeys.empty()) return 0;
 
 	cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
 	return vecAlgorithms.size();

@@ -672,32 +672,20 @@ void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size
 
 double unitsPrefix(const char& prefix)
 {
-	if (prefix == 'f') {
-		return 1e-15;
-	} else if (prefix == 'p') {
-		return 1e-12;
-	} else if (prefix == 'n') {
-		return 1e-9;
-	} else if (prefix == 'u') {
-		return 1e-6;
-	} else if (prefix == 'm') {
-		return 1e-3;
-	} else if (prefix == 'c') {
-		return 1e-2;
-	} else if (prefix == 'd') {
-		return 1e-1;
-	} else if (prefix == 'h') {
-		return 1e2;
-	} else if (prefix == 'k') {
-		return 1e3;
-	} else if (prefix == 'M') {
-		return 1e6;
-	} else if (prefix == 'G') {
-		return 1e9;
-	} else if (prefix == 'T') {
-		return 1e12;
-	} else if (prefix == 'P') {
-		return 1e15;
+	switch(prefix) {
+		case 'f' : return 1e-15;
+		case 'p' : return 1e-12;
+		case 'n' : return 1e-9;
+		case 'u' : return 1e-6;
+		case 'm' : return 1e-3;
+		case 'c' : return 1e-2;
+		case 'd' : return 1e-1;
+		case 'h' : return 1e2;
+		case 'k' : return 1e3;
+		case 'M' : return 1e6;
+		case 'G' : return 1e9;
+		case 'T' : return 1e12;
+		case 'P' : return 1e15;
 	}
 
 	const std::string prefix_str( 1, prefix );
