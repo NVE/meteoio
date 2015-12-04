@@ -328,9 +328,21 @@ namespace mio {
  *
  * To implement a new processing element, the following steps are necessary:
  *
- * -# Implementing the element, as a derived class of ProcessingBlock or FilterBlock or WindowedFilter, by creating
- *    two files: the header file and its implementation file, in the meteoFilters subdirectory of the source code.
- *    The class will contain two public methods: a constructor and a "process" method and at least one private method,
+ * -# Create a derived class of ProcessingBlock or FilterBlock or WindowedFilter in the meteoFilters subdirectory of the source code.
+ *      You can copy and rename the template files "template.cc" and "template.h" that are in the  "meteoFilters" subdirectory. 
+ *      Please do not forget to rename all occurences of "TEMPLATE" in these files! Keep the <b>process</b> method as it is for now.
+ * -# Add the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other filters
+ * -# Add the filter in the processing loop, in meteoFilters/ProcessingBlock.cc in the BlockFactory::getBlock()
+ * method by adding three lines similar to:
+ *    @code
+ *     else if (blockname == "MIN_MAX"){
+ *     		return new FilterMinMax(vec_args, blockname);
+ * 	}
+ *    @endcode
+ *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
+ * -# Include the filter's header file in meteoFilters/ProcessingBlocks.cc
+ * -# Try to compile and run your filter on a test data set (for example with the "meteo_reading" example)
+ * -# Then really implement your filter. Its class contains two public methods: a constructor and a "process" method and at least one private method,
  *    "parse_args" to read the arguments from a provided vector of strings.
  *    -# The <b>constructor</b> takes a vector of strings containing the element's arguments and a constant string (that contains
  *    the block name, for example for printing in an error message from which filter/block it comes). The constructor
@@ -350,17 +362,6 @@ namespace mio {
  *    @code
  *    parse_args(std::vector<std::string> vec_args)
  *    @endcode
- * -# Adding the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other
- *    filters
- * -# Adding the filter in the processing loop, in meteoFilters/ProcessingBlock.cc in the BlockFactory::getBlock()
- * method by adding three lines similar to:
- *    @code
- *     else if (blockname == "MIN_MAX"){
- *     		return new FilterMinMax(vec_args, blockname);
- * 	}
- *    @endcode
- *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
- * -# Including the filter's header file in meteoFilters/ProcessingBlocks.cc
  *
  * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteoFilters subdirectory),
  * the class FilterMax can be used as an example of implementation of a basic filter that will check whether a
