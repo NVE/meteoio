@@ -367,8 +367,8 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoDa
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed
 	} else if (nrOfMeasurments == 2){
-		//in any case, we can do at least as good as IDW_LAPSE
-		return 0.71;
+		// as good as IDW_LAPSE
+		return 0.7;
 	} else if (nrOfMeasurments>2){
 		return 0.2;
 	}
@@ -422,8 +422,7 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if (nrOfMeasurments == 0)
-		return 0.0;
+	if (nrOfMeasurments == 0) return 0.0;
 
 	return 0.7;
 }

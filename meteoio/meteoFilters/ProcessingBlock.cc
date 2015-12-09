@@ -189,9 +189,9 @@ void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_na
 }
 
 bool ProcessingBlock::is_soft(std::vector<std::string>& vec_args) {
-	if (!vec_args.empty()){
-		if (vec_args.front() == "soft"){
-			vec_args.erase(vec_args.begin());
+	for (size_t ii=0; ii<vec_args.size(); ++ii) {
+		if (IOUtils::strToUpper( vec_args[ii] ) == "SOFT") {
+			vec_args.erase( vec_args.begin() + ii );
 			return true;
 		}
 	}
