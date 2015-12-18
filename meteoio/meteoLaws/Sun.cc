@@ -29,30 +29,31 @@ namespace mio {
 const double SunObject::elevation_dftlThreshold = 5.; //in degrees
 
 SunObject::SunObject(SunObject::position_algo /*alg*/)
-           : position(), julian_gmt(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
+           : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
 {
 }
 
 SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude)
-           : position(), julian_gmt(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
+           : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
 {
 }
 
-SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& TZ)
-           : position(), julian_gmt(i_julian - TZ/24.), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
+SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& i_TZ)
+           : position(), julian_gmt(i_julian - i_TZ*1./24.), TZ(i_TZ), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
 {
 	update();
 }
 
-void SunObject::setDate(const double& i_julian, const double& TZ)
+void SunObject::setDate(const double& i_julian, const double& i_TZ)
 {
-	const double i_julian_gmt = i_julian - TZ/24.;
+	const double i_julian_gmt = i_julian - i_TZ*1./24.;
+	TZ = i_TZ;
 
 	if (i_julian_gmt!=julian_gmt) { //invalidate all fields if receiving a new date
 		position.reset();
@@ -74,7 +75,7 @@ void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, c
 	longitude = i_longitude;
 	altitude = i_altitude;
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	if (julian_gmt!=IOUtils::nodata) {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata) {
 		update();
 	}
 }
@@ -89,8 +90,8 @@ double SunObject::getElevationThresh() const {
 	return elevation_threshold;
 }
 
-double SunObject::getJulian(const double& TZ) const {
-	return (julian_gmt+TZ/24.);
+double SunObject::getJulian(const double& o_TZ) const {
+	return (julian_gmt+o_TZ*1./24.);
 }
 
 void SunObject::calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& mean_albedo) {
@@ -110,7 +111,7 @@ void SunObject::calculateRadiation(const double& ta, const double& rh, const dou
 }
 
 void SunObject::update() {
-	position.setAll(latitude, longitude, julian_gmt);
+	position.setAll(latitude, longitude, julian_gmt+TZ*1./24., TZ);
 }
 
 //see http://www.meteoexploration.com/products/solarcalc.php for a validation calculator
@@ -315,7 +316,43 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 		}
 	}
 
-	return (splitting_coef); // should be <=1.1; diff/toa should be <=0.8
+	return splitting_coef; // should be <=1.1; diff/toa should be <=0.8
+}
+
+/**
+ * @brief Evaluate the splitting coefficient between direct and diffuse components of the
+ * incoming short wave radiation. Splitting is based on "clearness of the sky", ie. the ratio of
+ * measured incoming global radiation to top of the atmosphere radiation toa_h.
+ * This is based on Boland, John, Lynne Scott, and Mark Luther, <i>"Modelling the diffuse fraction 
+ * of global solar radiation on a horizontal surface"</i>, Environmetrics <b>12.2</b>, 2001, pp103-116.
+ * @param iswr_modeled modelled radiation, it should be horizontal Top Of Atmosphere Radiation (W/m²)
+ * @param iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
+ * @param t solar time of day, ie solar time between 0 and 24
+ * @return splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)
+ */
+double SunObject::getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const
+{
+	double splitting_coef;
+	double azimuth, elevation;
+	position.getHorizontalCoordinates(azimuth, elevation);
+
+	if ( elevation < elevation_threshold ) {
+		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
+		// this is a clear sky day when almost all the radiation should be diffuse
+		// no matter how the sky is
+		splitting_coef = 1.0;
+	} else {
+		// clear sky index (ratio global measured to top of atmosphere radiation)
+		const double kt = iswr_measured / iswr_modeled; // should be <=1.2, aka clearness index Kt
+		const double beta_0 = -8.769;
+		const double beta_1 = 7.325;
+		const double beta_2 = 0.377;
+		const double c = -0.039;
+		
+		splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) );
+	}
+
+	return splitting_coef;
 }
 
 double SunObject::getSplitting(const double& iswr_measured) const
@@ -332,7 +369,7 @@ const std::string SunObject::toString() const
 	os << "<SunObject>\n";
 	os << position.toString();
 	os << std::fixed << std::setprecision(4);
-	os << "Julian (gmt)\t" << julian_gmt << "\n";
+	os << "Julian (gmt)\t" << julian_gmt << " (TZ=" << std::setprecision(2) << TZ << std::setprecision(4) << ")\n";
 	os << "Lat/Long/Alt\t" << std::setw(7) << latitude << "° " << std::setw(7) << longitude << "° " << std::setprecision(0) << std::setw(4) << altitude << "\n";
 	os << "Elev. thresh.\t" << std::setprecision(1) << elevation_threshold << "°\n";
 

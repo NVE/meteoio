@@ -587,8 +587,8 @@ class ALS_Interpolation : public InterpolationAlgorithm {
  * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
  * @code
- * PSUM::algorithms = PPHASE
- * PSUM::pphase = THRESH 274.35
+ * PSUM_PH::algorithms = PPHASE
+ * PSUM_PH::pphase = THRESH 274.35
  * @endcode
  */
 class PPHASEInterpolation : public InterpolationAlgorithm {

@@ -42,10 +42,10 @@ class SunObject {
 
 		SunObject(const position_algo alg=MEEUS);
 		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude);
-		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& TZ=0.);
+		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& i_TZ=0.);
 
 		//local julian date and timezone
-		void setDate(const double& i_julian, const double& TZ=0.);
+		void setDate(const double& i_julian, const double& i_TZ=0.);
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
 
@@ -56,13 +56,14 @@ class SunObject {
 		void getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const;
 		double getElevationThresh() const;
 
+		double getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const;
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
 
 		//SunTrajectory position;
 		SunMeeus position;
 
-		double getJulian(const double& TZ) const;
+		double getJulian(const double& o_TZ) const;
 
 		const std::string toString() const;
 	private:
@@ -75,7 +76,7 @@ class SunObject {
 		                 double& R_direct, double& R_diffuse) const;
 
 	private:
-		double julian_gmt;
+		double julian_gmt, TZ;
 		double latitude, longitude, altitude;
 		double elevation_threshold;
 		double beam_toa, beam_direct, beam_diffuse;
