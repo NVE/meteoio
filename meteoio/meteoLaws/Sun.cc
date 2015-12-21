@@ -332,6 +332,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
  */
 double SunObject::getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const
 {
+	const double clear_sky = 0.147;
 	double splitting_coef;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
@@ -349,10 +350,11 @@ double SunObject::getSplittingBoland(const double& iswr_modeled, const double& i
 		const double beta_2 = 0.377;
 		const double c = -0.039;
 		
-		splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) );
+		splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) ); //complex fit
+		//splitting_coef = 1. / (1 + exp(7.997*(kt-0.586))); //simple fit
 	}
 
-	return splitting_coef;
+	return std::min(1., std::max(clear_sky, splitting_coef));
 }
 
 double SunObject::getSplitting(const double& iswr_measured) const
