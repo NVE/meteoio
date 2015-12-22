@@ -554,7 +554,8 @@ class USERInterpolation : public InterpolationAlgorithm {
  * This needs two arguments: first the base method to fill the grid (for example, idw_lapse) and
  * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
  * If there are some time steps when only one station provides the necessary parameter, the base method will
- * automatically switch to "AVG".
+ * automatically switch to "AVG". A third (optional) argument can be provided that is the air temperature
+ * threshold (in K) below which such redistribution occurs. 
  * 
  * @code
  * PSUM::algorithms = ALS_SCALING
@@ -565,14 +566,14 @@ class ALS_Interpolation : public InterpolationAlgorithm {
 	public:
 		ALS_Interpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), grid2d_path(), base_algo(), inputIsAllZeroes(false) {nrOfMeasurments=0;}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
 		Grid2DObject ALS_scan;
-		std::string filename, grid2d_path, base_algo;
+		std::string filename, grid2d_path, base_algo, base_algo_user;
+		double ta_thresh; ///< the air temperature must be below a given threshold for the scaling to be applied
 		bool inputIsAllZeroes;
 };
 
@@ -587,8 +588,8 @@ class ALS_Interpolation : public InterpolationAlgorithm {
  * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
  * @code
- * PSUM_PH::algorithms = PPHASE
- * PSUM_PH::pphase = THRESH 274.35
+ * PSUM::algorithms = PPHASE
+ * PSUM::pphase = THRESH 274.35
  * @endcode
  */
 class PPHASEInterpolation : public InterpolationAlgorithm {

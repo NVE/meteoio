@@ -184,10 +184,10 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 			status = trend.fit();
 			if (lapse_rate*avgData==0.) trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
 		} else {
-			throw InvalidArgumentException("Unknown argument \""+extraArg+"\" supplied for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+			throw InvalidArgumentException("Unknown argument \""+extraArg+"\" supplied for the "+algo+" algorithm", AT);
 		}
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
 	if (!status)
@@ -322,7 +322,7 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	
 	const size_t nr_args = vecArgs.size();
 	if (nr_args!=1)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	
 	IOUtils::convertString(user_cst, vecArgs[0]);
 	return 0.01;
@@ -367,8 +367,8 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoDa
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed
 	} else if (nrOfMeasurments == 2){
-		// as good as IDW_LAPSE
-		return 0.7;
+		//in any case, we can do at least as good as IDW_LAPSE
+		return 0.71;
 	} else if (nrOfMeasurments>2){
 		return 0.2;
 	}
@@ -382,7 +382,7 @@ void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
-		throw IOException("Not enough altitudes for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Fit1D trend;
 	getTrend(vecAltitudes, vecData, trend);
@@ -422,7 +422,8 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if (nrOfMeasurments == 0) return 0.0;
+	if (nrOfMeasurments == 0)
+		return 0.0;
 
 	return 0.7;
 }
@@ -433,7 +434,7 @@ void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
-		throw IOException("Not enough altitudes for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Fit1D trend;
 	getTrend(vecAltitudes, vecData, trend);
@@ -451,7 +452,7 @@ LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const 
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
 		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+algo+" algorithm", AT);
 	}
 }
 
@@ -471,7 +472,7 @@ void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 	if (nrOfMeasurments == 0)
-		throw IOException("Interpolation FAILED for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid);
 	info << "using nearest " << nrOfNeighbors << " neighbors";
@@ -514,7 +515,7 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
-		throw IOException("Not enough altitudes for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
@@ -582,7 +583,7 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
-		throw IOException("Not enough altitudes for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
@@ -1055,7 +1056,7 @@ std::string USERInterpolation::getGridFileName() const
 	//HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
 	const size_t nrArgs = vecArgs.size();
 	if (nrArgs > 2){
-		throw InvalidArgumentException("Too many arguments for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Too many arguments for the "+algo+" interpolation algorithm", AT);
 	}
 	const std::string prefix = (nrArgs==1)? vecArgs[0] + "/" : "";
 	const std::string ext = (nrArgs==2)? vecArgs[1] : ".asc";
@@ -1076,7 +1077,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 	}
 
 	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
-		cerr << "[E] Invalid grid filename for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm: " << grid2d_path+"/"+filename << "\n";
+		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
 	
@@ -1088,9 +1089,42 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 	gridsmanager.read2DGrid(grid, filename);
 	if (!grid.isSameGeolocalization(dem)) {
-		throw InvalidArgumentException("[E] In the "+algo+" algorithm, trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
+		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {
 		info << IOUtils::getFilename(filename);
+	}
+}
+
+ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+		  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), 
+		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), inputIsAllZeroes(false) 
+{
+	const Config cfg( gridsmanager.getConfig() );
+	cfg.getValue("GRID2DPATH", "Input", grid2d_path);
+	
+	const size_t nr_args = vecArgs.size();
+	if (nr_args<2 || nr_args>3)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+
+	for (size_t ii=0; ii<nr_args; ii++) {
+		if (IOUtils::isNumeric(vecArgs[ii])) {
+			if (ta_thresh!=IOUtils::nodata)
+				throw InvalidArgumentException("Only one threshold temperature can be provided to the "+algo+" algorithm", AT);
+			IOUtils::convertString(ta_thresh, vecArgs[ii]);
+		} else {
+			if (base_algo_user.empty())
+				base_algo_user = IOUtils::strToUpper( vecArgs[ii] );
+			else if (filename.empty())
+				filename = vecArgs[ii];
+			else 
+				throw InvalidArgumentException("Wrong arguments for the "+algo+" algorithm: ta_thresh, base_algo and filename are required", AT);
+		}
+	}
+
+	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
+		throw InvalidNameException("[E] Invalid grid filename for "+algo+" interpolation algorithm: "+grid2d_path+"/"+filename, AT);
 	}
 }
 
@@ -1116,22 +1150,7 @@ double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::
 	if (nrOfMeasurments==0) return 0.;
 	if (inputIsAllZeroes) return 1.;
 	
-	const size_t nr_args = vecArgs.size();
-	if (nr_args==2) {
-		base_algo = (nrOfMeasurments>1)? IOUtils::strToUpper( vecArgs[0] ) : "AVG";
-		filename = vecArgs[1];
-	} else if (nr_args!=2)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm" AT);
-	
-	if (grid2d_path.empty()) {
-		const Config cfg( gridsmanager.getConfig() );
-		cfg.getValue("GRID2DPATH", "Input", grid2d_path);
-	}
-
-	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
-		cerr << "[E] Invalid grid filename for "+MeteoData::getParameterName(param)+"::"+algo+" algorithm: " << grid2d_path+"/"+filename << "\n";
-		return 0.0;
-	}
+	base_algo = (nrOfMeasurments>1)? base_algo_user : "AVG";
 	
 	return (IOUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
@@ -1150,13 +1169,13 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 		gridsmanager.read2DGrid(ALS_scan, filename);
 		const double als_mean = ALS_scan.grid2D.getMean();
 		if (als_mean==0.)
-			throw InvalidArgumentException("[E] In the "+algo+" algorithm, the scaling grid(" + filename + ") can not have a nul mean!", AT);
+			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul mean for the '"+algo+"' method!", AT);
 		ALS_scan *= 1./als_mean; //rescale the ALS grid so each cell is between 0 and 1
 	}
 	
 	//check that the ALS scan matches the provided DEM
 	if (!ALS_scan.isSameGeolocalization(dem)) {
-		throw InvalidArgumentException("[E] In the "+algo+" algorithm, trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
+		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {
 		info << IOUtils::getFilename(filename) << " - ";
 	}
@@ -1168,12 +1187,23 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	Grid2DObject tmp_grid( ALS_scan );
 	tmp_grid *= grid_mean;
 	
+	// create map of TA to differ between solid and liquid precipitation
+	Grid2DObject ta;
+	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
+	
 	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
 	const size_t nxy = grid.getNx()*grid.getNy();
-	for (size_t jj=0; jj<nxy; jj++) {
-			if (tmp_grid(jj)!=IOUtils::nodata)
+	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
+		for (size_t jj=0; jj<nxy; jj++) {
+			if (tmp_grid(jj)!=IOUtils::nodata) 
 				grid(jj) = tmp_grid(jj);
 		}
+	} else { //use local air temperature
+		for (size_t jj=0; jj<nxy; jj++) {
+			if (tmp_grid(jj)!=IOUtils::nodata && ta(jj)!=IOUtils::nodata && ta(jj) < ta_thresh)
+				grid(jj) = tmp_grid(jj);
+		}
+	}
 }
 
 
@@ -1185,17 +1215,17 @@ double PPHASEInterpolation::getQualityRating(const Date& i_date, const MeteoData
 	const size_t nArgs = vecArgs.size();
 	
 	if (nArgs<1 || IOUtils::isNumeric(vecArgs[0]))
-		throw InvalidArgumentException("Wrong arguments supplied to the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" interpolation. Please provide the method to use and its arguments!", AT);
 	
 	const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
 	if (user_algo=="THRESH") {
 		if (nArgs!=2)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+MeteoData::getParameterName(param)+"::"+algo+" interpolation for the "+user_algo+" method", AT);
+			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" interpolation for the "+user_algo+" method", AT);
 		IOUtils::convertString(fixed_thresh, vecArgs[1]);
 		model = THRESH;
 	} else if (user_algo=="RANGE") {
 		if (nArgs!=3)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+MeteoData::getParameterName(param)+"::"+algo+" interpolation for the "+user_algo+" method", AT);
+			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" interpolation for the "+user_algo+" method", AT);
 		double range_thresh1, range_thresh2;
 		IOUtils::convertString(range_thresh1, vecArgs[1]);
 		IOUtils::convertString(range_thresh2, vecArgs[2]);
@@ -1261,7 +1291,7 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (nrArgs == 1){
 		IOUtils::convertString(base_algo, vecArgs[0]);
 	} else if (nrArgs>1){ //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
@@ -1476,7 +1506,7 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
-		throw IOException("Not enough altitudes for the "+MeteoData::getParameterName(param)+"::"+algo+" algorithm", AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecData, false);
 	if (!trend.fit())
