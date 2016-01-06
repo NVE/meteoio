@@ -43,15 +43,17 @@
 #include <meteoio/meteoFilters/ProcUnshade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
-#include <meteoio/meteoFilters/ProcNoise.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
+#include <meteoio/meteoFilters/FilterFlatline.h>
+#include <meteoio/meteoFilters/FilterTimeconsistency.h>
+#include <meteoio/meteoFilters/FilterOffsetsnowdepth.h>
+#include <meteoio/meteoFilters/FilterSnowNosnow.h>
 
 namespace mio {
 /**
  * @page processing Processing overview
  * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage.
- * @note it is possible to remove some parameters on a per-station basis, even before entering the filters. See in section \ref data_manipulations "Raw data editing".
  *
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
@@ -95,10 +97,9 @@ namespace mio {
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
- * - SUPPR: delete data, see FilterSuppr
+ * - SUPPR: delete all data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
- * - NOISE: add noise to the data, see ProcNoise
  *
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -113,6 +114,8 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  *
+ * New filters by Anna-Maria Tilg: 
+ * - FLAT_LINE: checks if the data stagnates for a certain time period
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path)
@@ -159,12 +162,18 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcMult(vec_args, blockname, root_path);
 	} else if (blockname == "ADD"){
 		return new ProcAdd(vec_args, blockname, root_path);
-	} else if (blockname == "NOISE"){
-		return new ProcNoise(vec_args, blockname);
 	} else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
 		return new ProcWMASmoothing(vec_args, blockname);
+	} else if (blockname == "FLAT_LINE"){
+		return new FilterFlatline(vec_args, blockname);
+	} else if (blockname == "MAXCHANGE"){
+		return new FilterTimeconsistency(vec_args, blockname);
+	} else if (blockname == "OFFSNOW"){
+		return new FilterOffsetsnowdepth(vec_args, blockname);
+	} else if (blockname == "SNOS"){
+		return new FilterSnowNosnow(vec_args, blockname);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
@@ -189,9 +198,9 @@ void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_na
 }
 
 bool ProcessingBlock::is_soft(std::vector<std::string>& vec_args) {
-	for (size_t ii=0; ii<vec_args.size(); ++ii) {
-		if (IOUtils::strToUpper( vec_args[ii] ) == "SOFT") {
-			vec_args.erase( vec_args.begin() + ii );
+	if (!vec_args.empty()){
+		if (vec_args.front() == "soft"){
+			vec_args.erase(vec_args.begin());
 			return true;
 		}
 	}
@@ -205,9 +214,7 @@ std::string ProcessingBlock::getName() const {
 
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
 {
-	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
-	errno = 0;
-	std::ifstream fin(filename.c_str(), std::ifstream::in);
+	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
 		ss << "Filter " << filter << ": ";
@@ -284,13 +291,13 @@ const std::string ProcessingProperties::toString() const
 	const size_t p_after = points_after;
 
 	os << "{";
-	if (h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
-	if (p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
-	if (stage==ProcessingProperties::first)
+	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
+	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
+	if(stage==ProcessingProperties::first)
 		os << "p¹";
-	if (stage==ProcessingProperties::second)
+	if(stage==ProcessingProperties::second)
 		os << "p²";
-	if (stage==ProcessingProperties::both)
+	if(stage==ProcessingProperties::both)
 		os << "p½";
 	os << "}";
 	return os.str();

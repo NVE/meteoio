@@ -22,11 +22,14 @@ SET(meteoFilters_sources
 	meteoFilters/ProcUndercatch_Forland.cc
 	meteoFilters/ProcAdd.cc
 	meteoFilters/ProcMult.cc
-	meteoFilters/ProcNoise.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
 	meteoFilters/FilterBlock.cc
 	meteoFilters/WindowedFilter.cc
 	meteoFilters/ProcessingBlock.cc
 	meteoFilters/ProcessingStack.cc
+	meteoFilters/FilterFlatline.cc
+	meteoFilters/FilterTimeconsistency.cc
+	meteoFilters/FilterOffsetsnowdepth.cc
+	meteoFilters/FilterSnowNosnow.cc
 )
