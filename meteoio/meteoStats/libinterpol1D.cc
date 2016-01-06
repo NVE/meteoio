@@ -504,6 +504,27 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 }
 
 /**
+* @brief Computes the Pearson product-moment correlation coefficient
+* This should be equivalent to the default R "corr" method.
+* @param X first vector of data
+* @param Y second vector of data
+* @return correlation coefficient
+*/
+double Interpol1D::corr(const std::vector<double>& X, const std::vector<double>& Y)
+{
+	const double sigma_x = std_dev(X);
+	const double sigma_y = std_dev(Y);
+	
+	if (sigma_x==IOUtils::nodata || sigma_y==IOUtils::nodata) return IOUtils::nodata;
+	if (sigma_x==0. || sigma_y==0.) return IOUtils::nodata;
+	
+	const double cov = covariance(X, Y);
+	if (cov==IOUtils::nodata) return IOUtils::nodata;
+	
+	return ( cov / (sigma_x*sigma_y));
+}
+
+/**
 * @brief Computes the distance between a point (x,y) and a line y=ax+b
 * @param x x coordinates of the point
 * @param y y coordinates of the point
