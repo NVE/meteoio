@@ -71,8 +71,9 @@ class FilterSnowNosnow : public FilterBlock { //use this one for simple filter t
 		                     std::vector<MeteoData>& ovec);
 
 	private:
+		double getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) const;
 		void getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc) const;
-		void getDailyMinMaxMean(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean) const;
+		void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean) const;
 		double getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start) const;
 		Date getDailyStart(const Date& resampling_date) const;
 		void parse_args(std::vector<std::string> vec_args);

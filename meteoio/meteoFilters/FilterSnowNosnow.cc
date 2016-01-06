@@ -33,31 +33,11 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
-	Date prev_day;
-	double HS_daily_median, TSS_daily_median, RSWR_daily_10pc;
-	bool high_tss_day;
-	std::vector<double> tss_dat;
-	
-	//compute the TSS offset/correction
-	for (size_t ii=0; ii<ovec.size(); ii++){
-		double& value = ovec[ii](param);
-		if (value==IOUtils::nodata) continue;
-
-		const Date day_start = getDailyStart(ivec[ii].date);
-		if (day_start!=prev_day) {
-			getDailyParameters(ivec, day_start, HS_daily_median, TSS_daily_median, RSWR_daily_10pc);
-			high_tss_day = (HS_daily_median>0.3) && (TSS_daily_median>IOUtils::C_TO_K(1.)) && (RSWR_daily_10pc>350.);
-			prev_day = day_start;
-		}
-		
-		if (high_tss_day) tss_dat.push_back( ivec[ii](MeteoData::TSS) );
-	}
-	
-	const double TSS_offset = Interpol1D::getMedian(tss_dat);
+	const double TSS_offset = getTSSOffset(param, ivec);
 	
 	if (TSS_offset<IOUtils::C_TO_K(1.5)) {
 		//TODO: TSS-TSG correlation and decide if TSS or TSG is used below
-		prev_day.setDate(0.);
+		Date prev_day;
 		double TSS_daily_max, TSS_daily_min, TSS_daily_mean;
 		for (size_t ii=0; ii<ovec.size(); ii++){ //now really perform the comparison
 			double& value = ovec[ii](param);
@@ -67,7 +47,7 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 			const Date day_start = getDailyStart(ivec[ii].date);
 			if (day_start!=prev_day) {
 				ovec[ii].date.getDate(year, month, day);
-				getDailyMinMaxMean(ivec, day_start, TSS_daily_min, TSS_daily_max, TSS_daily_mean);
+				getTSSDailyPpt(ivec, day_start, TSS_daily_min, TSS_daily_max, TSS_daily_mean);
 				prev_day = day_start;
 			}
 			
@@ -84,7 +64,7 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 			}
 		}
 	} else {
-		prev_day.setDate(0.);
+		Date prev_day;
 		double TSG_daily_var;
 		for (size_t ii=0; ii<ovec.size(); ii++){ //now really perform the comparison
 			double& value = ovec[ii](param);
@@ -103,6 +83,30 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 			if (TSG>IOUtils::C_TO_K(7.) || TSG_daily_var>1.) value = 0.;
 		}
 	}
+}
+
+//compute the TSS offset/correction
+double FilterSnowNosnow::getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) const 
+{
+	Date prev_day;
+	double HS_daily_median, TSS_daily_median, RSWR_daily_10pc;
+	bool high_tss_day;
+	std::vector<double> tss_dat;
+	
+	for (size_t ii=0; ii<ivec.size(); ii++){
+		if (ivec[ii](param)==IOUtils::nodata) continue;
+
+		const Date day_start = getDailyStart(ivec[ii].date);
+		if (day_start!=prev_day) {
+			getDailyParameters(ivec, day_start, HS_daily_median, TSS_daily_median, RSWR_daily_10pc);
+			high_tss_day = (HS_daily_median>0.3) && (TSS_daily_median>IOUtils::C_TO_K(1.)) && (RSWR_daily_10pc>350.);
+			prev_day = day_start;
+		}
+		
+		if (high_tss_day) tss_dat.push_back( ivec[ii](MeteoData::TSS) );
+	}
+	
+	return Interpol1D::getMedian(tss_dat);
 }
 
 //daily values for TSS offset calc 
@@ -131,7 +135,7 @@ void FilterSnowNosnow::getDailyParameters(const std::vector<MeteoData>& ivec, co
 }
 
 //daily values for TSS correction
-void FilterSnowNosnow::getDailyMinMaxMean(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean) const
+void FilterSnowNosnow::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean) const
 {
 	const Date day_end = day_start + 1;
 	
