@@ -170,6 +170,7 @@ class Meteo2DInterpolator {
 		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
 
 		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
+		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);
 		void setAlgorithms();
 		void initVirtualStations();
 
@@ -187,8 +188,6 @@ class Meteo2DInterpolator {
 
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
-		bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
-		bool virtual_stations; ///< compute the meteo values at virtual stations
 };
 
 } //end namespace

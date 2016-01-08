@@ -26,15 +26,18 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
                     : cfg(i_cfg), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager),
                       grid_buffer(0), mapAlgorithms(),
                       v_params(), v_coords(), v_stations(), virtual_point_cache(),
-                      algorithms_ready(false), use_full_dem(false), downscaling(false), virtual_stations(false)
+                      algorithms_ready(false), use_full_dem(false)
 {
 	size_t max_grids = 10; //default number of grids to keep in buffer
 	cfg.getValue("BUFF_GRIDS", "Interpolations2D", max_grids, IOUtils::nothrow);
 	grid_buffer.setMaxGrids(max_grids);
 	
 	setAlgorithms();
+	bool virtual_stations; ///< compute the meteo values at virtual stations
 	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	if (virtual_stations) {
+	bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
+	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
+	if (virtual_stations || downscaling) {
 		initVirtualStations();
 	}
 }
@@ -273,20 +276,15 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 {
 	if (strategy==VSTATIONS) {
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (strategy==DOWNSCALING) {
-		//extract all grid points
-		return 0; //hack
 	} else if (strategy==SMART_DOWNSCALING) {
-		//for each parameter:
-		//call iomanager.read2DGrid()
-		//extract relevant points and fill vecMeteo
-		//and loop over all grids!
-		//
 		//Questions/tricks:
 		//   throw exception if grids don't match between parameters
 		//   should we recompute which points to take between each time steps? (ie more flexibility)
 		//   should the generated virtual stations data be filtered? (useful for applying corrections)
 		//          if so: have an own iomanager and use iomanager.push_meteo_data()
+		return getVirtualStationsFromGrid(i_date, vecMeteo);
+	} else if (strategy==DOWNSCALING) {
+		//extract all grid points
 		return 0; //hack
 	}
 
@@ -312,7 +310,7 @@ void Meteo2DInterpolator::initVirtualStations()
 		if (!tmp.isNodata())
 			v_coords.push_back( tmp );
 	}
-
+	
 	//create stations' metadata
 	for (size_t ii=0; ii<v_coords.size(); ii++) {
 		if (!dem.gridify(v_coords[ii])) {
@@ -383,6 +381,52 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	return vecMeteo.size();
 }
 
+size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo)
+{
+	vecMeteo.clear();
+	
+	// Check if data is available in cache
+	const map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
+	if (it != virtual_point_cache.end()){
+		vecMeteo = it->second;
+		return vecMeteo.size();
+	}
+	
+	if (v_params.empty()) { //get parameters to interpolate if not already done
+		std::vector<std::string> vecStr;
+		cfg.getValue("Virtual_parameters", "Input", vecStr);		
+		for (size_t ii=0; ii<vecStr.size(); ii++) {
+			const size_t param_idx = MeteoGrids::getParameterIndex( vecStr[ii] );
+			if (param_idx==IOUtils::npos)
+				throw InvalidArgumentException("Invalid parameter '" + vecStr[ii] + "', only standard parameters can be extracted from grids for virtual stations! ", AT);
+			v_params.push_back( param_idx );
+		}
+	}
+
+	//create stations without measurements
+	for (size_t ii=0; ii<v_stations.size(); ii++) {
+		MeteoData md(i_date, v_stations[ii]);
+		vecMeteo.push_back( md );
+	}
+	
+	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
+		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>(v_params[param]);
+		Grid2DObject grid;
+		gridsmanager.read2DGrid(grid, grid_param, i_date);
+		
+		for (size_t ii=0; ii<v_stations.size(); ii++) { //loop over all virtual stations
+			const size_t grid_i = v_stations[ii].position.getGridI(); //this should work since invalid stations have been removed in init
+			const size_t grid_j = v_stations[ii].position.getGridJ();
+			
+			//check if this is a standard MeteoData parameter
+			const  MeteoData::Parameters meteo_param = static_cast<MeteoData::Parameters>( vecMeteo[ii].getParameterIndex( MeteoGrids::getParameterName(grid_param) )); //is this name also a meteoparameter?
+			if (meteo_param!=IOUtils::npos)
+				vecMeteo[ii](meteo_param) = grid(grid_i, grid_j);
+		}
+	}
+	
+	return vecMeteo.size();
+}
 
 const std::string Meteo2DInterpolator::toString() const {
 	ostringstream os;
