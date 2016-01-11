@@ -46,7 +46,7 @@ namespace mio {
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
  * by this plugin:
  * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
- * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>;
+ * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CNRM - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>.
  *
  * @section netcdf_units Units
@@ -153,6 +153,10 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::V] = attributes("v10", "", "10 metre V wind component", "m s**-1", 10.);
 		attr[MeteoGrids::SWE] = attributes("sd", "lwe_thickness_of_surface_snow_amount", "Snow depth", "m of water equivalent", IOUtils::nodata);
 		attr[MeteoGrids::TSS] = attributes("skt", "", "Skin temperature", "K", IOUtils::nodata);
+		attr[MeteoGrids::TSG] = attributes("stl1", "surface_temperature", "Soil temperature level 1", "K", IOUtils::nodata); //this is from 0 to -7cm
+		attr[MeteoGrids::ALB] = attributes("al", "surface_albedo", "Albedo", "(0 - 1)", IOUtils::nodata);
+		attr[MeteoGrids::RSNO] = attributes("rsn", "", "Snow density", "kg m**-3", IOUtils::nodata);
+		attr[MeteoGrids::ROT] = attributes("ro", "", "Runoff", "m", IOUtils::nodata);
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
 }
@@ -217,6 +221,20 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		}
 	}
 	
+	if (parameter==MeteoGrids::RSWR) {								//RSWR
+		bool hasISWR = false;
+		try {
+			read2DGrid(grid_out, MeteoGrids::ISWR, date);
+			hasISWR = true;
+		} catch(...){}
+		Grid2DObject alb;
+		const bool hasALB = read2DGrid_internal(alb, filename, MeteoGrids::ALB);
+		if (hasALB && hasISWR) {
+			grid_out *= alb;
+			return;
+		}
+	}
+	
 	if (parameter==MeteoGrids::ISWR) {								//ISWR
 		Grid2DObject iswr_diff;
 		const bool hasISWR_DIFF = read2DGrid_internal(iswr_diff, filename, MeteoGrids::ISWR_DIFF);
@@ -249,6 +267,17 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 				if (psum!=IOUtils::nodata && psum>0)
 					grid_out(ii) = psum_l(ii) / psum;
 			}
+			return;
+		}
+	}
+	
+	if (parameter==MeteoGrids::HS) {								//HS
+		Grid2DObject rsno;
+		const bool hasRSNO = read2DGrid_internal(rsno, filename, MeteoGrids::RSNO);
+		const bool hasSWE = read2DGrid_internal(grid_out, filename, MeteoGrids::SWE);
+		if (hasRSNO && hasSWE) {
+			grid_out *= 1000.0; //convert mm=kg/m^3 into kg
+			grid_out /= rsno;
 			return;
 		}
 	}
