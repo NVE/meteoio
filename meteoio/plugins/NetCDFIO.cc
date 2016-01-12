@@ -49,9 +49,6 @@ namespace mio {
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CNRM - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>.
  *
- * @section netcdf_units Units
- *
- *
  * @section netcdf_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
@@ -80,12 +77,55 @@ namespace mio {
  * GRID2DPATH =  /data/meteo_reanalysis
  * METEO_EXT = .nc
  * NETCDF_SCHEMA = ECMWF
- * NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
+ * ;NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
  * @endcode
  *
  * @section netcdf_compilation Compilation
  * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
  * their development files in your package manager.
+ * 
+ * @section netcdf_ecmwf ECMWF Era Interim
+ * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A> 
+ * after creating an account and login in. 
+ * 
+ * It is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
+ * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ * 
+ * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR and the *mean sea level pressure* and *surface pressure*
+ * as proxies to compute the elevation. If you have the altitude in a separate file, it can be declared as DEM and there would be no need for the sea 
+ *level pressure (this would also be much more precise).
+ * 
+ * You should therefore have the following request:
+ * @code
+ * Parameter: 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, 
+ *            Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, 
+ *            Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ *      Step: 3 to 12 by 3
+ *      Type: Forecast
+ *      Time: 00:00:00, 12:00:00
+ * @endcode
+ * 
+ * With the <A HREF="https://software.ecmwf.int/wiki/display/WEBAPI/Access+ECMWF+Public+Datasets">ECMWF Python Library</A>, the request 
+ * would be for example:
+ * @code
+ * #!/usr/bin/env python
+ * from ecmwfapi import ECMWFDataServer
+ * server = ECMWFDataServer()
+ * server.retrieve({
+ *     "class": "ei",
+ *     "dataset": "interim",
+ *     "date": "2015-01-01/to/2015-07-01",
+ *     "expver": "1",
+ *     "grid": "0.75/0.75",
+ *     "levtype": "sfc",
+ *     "param": "33.128/134.128/139.128/141.128/151.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
+ *     "step": "3/6/9/12",
+ *     "stream": "oper",
+ *     "target": "CHANGEME",
+ *     "time": "00/12",
+ *     "type": "fc",
+ * })
+@endcode
  */
 
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
@@ -171,7 +211,8 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::SWE] = attributes("sd", "lwe_thickness_of_surface_snow_amount", "Snow depth", "m of water equivalent", IOUtils::nodata);
 		attr[MeteoGrids::TSS] = attributes("skt", "", "Skin temperature", "K", IOUtils::nodata);
 		attr[MeteoGrids::TSG] = attributes("stl1", "surface_temperature", "Soil temperature level 1", "K", IOUtils::nodata); //this is from 0 to -7cm
-		attr[MeteoGrids::ALB] = attributes("al", "surface_albedo", "Albedo", "(0 - 1)", IOUtils::nodata);
+		//attr[MeteoGrids::ALB] = attributes("al", "surface_albedo", "Albedo", "(0 - 1)", IOUtils::nodata);
+		attr[MeteoGrids::ALB] = attributes("fal", "", "Forecast albedo", "(0 - 1)", IOUtils::nodata);
 		attr[MeteoGrids::RSNO] = attributes("rsn", "", "Snow density", "kg m**-3", IOUtils::nodata);
 		attr[MeteoGrids::ROT] = attributes("ro", "", "Runoff", "m", IOUtils::nodata);
 	} else
