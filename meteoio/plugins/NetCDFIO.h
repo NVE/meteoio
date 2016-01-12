@@ -72,16 +72,18 @@ class NetCDFIO : public IOInterface {
 		} attributes;
 
 		void initAttributesMap(const std::string& schema, std::map<MeteoGrids::Parameters, attributes> &attr);
+		void scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<std::pair<mio::Date, mio::Date>, std::string> > &meteo_files);
 		void setTimeTransform(const std::string& schema, double &time_offset, double &time_multiplier);
 		void parseInputOutputSection();
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
-		//void read2DGrid_meta(const std::string& filename, const std::string& varname, int &ncid, int &varid, std::vector<size_t> &dimlen, size_t &time_index, size_t &lat_index, size_t &lon_index, double &missing_value,double &lat, double &lon);
+
+		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date, const std::string& filename);
 		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const MeteoGrids::Parameters& parameter, const Date& date=Date());
 		bool read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date(), const bool& isPrecip=false);
 		void write2DGrid_internal(Grid2DObject grid_in, const std::string& filename, const attributes& attr, const Date& date=Date(), const bool& isPrecip=false);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const attributes& attr, const double& nodata_out);
-		void getTimeTransform(const int& ncid, const int& varid, double &time_offset, double &time_multiplier) const;
+		void getTimeTransform(const int& ncid, double &time_offset, double &time_multiplier) const;
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 		void readWind(const std::string& filename, const Date& date);
@@ -92,6 +94,7 @@ class NetCDFIO : public IOInterface {
 		static const std::string cf_time, cf_latitude, cf_longitude, cf_altitude;
 
 		const Config cfg;
+		std::vector< std::pair<std::pair<Date,Date>, std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::map <MeteoGrids::Parameters, attributes> in_attributes, out_attributes;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ; //default time zones

@@ -211,8 +211,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 {
 	meteo_files.clear();
 
-	std::list<std::string> dirlist;
-	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
+	std::list<std::string> dirlist = 	IOUtils::readDirectory(meteopath_in, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it

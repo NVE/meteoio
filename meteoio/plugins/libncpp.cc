@@ -66,6 +66,48 @@ void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size
 		throw IOException("Could not retrieve length for dimension '" + dimname + "': " + nc_strerror(status), AT);
 }
 
+void get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name, std::string& attr_value)
+{
+	int dimid;
+	get_dimension(ncid, dimname, dimid);
+	
+	size_t attr_len;
+	int status = nc_inq_attlen (ncid, dimid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + dimname + "': " + nc_strerror(status), AT);
+
+	char* value = new char[attr_len + 1]; // +1 for trailing null
+	status = nc_get_att_text(ncid, dimid, attr_name.c_str(), value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + dimname + "': " + nc_strerror(status), AT);
+
+	value[attr_len] = '\0';
+	attr_value = string(value);
+
+	delete[] value;
+}
+
+void get_VarAttribute(const int& ncid, const std::string& varname, const std::string& attr_name, std::string& attr_value)
+{
+	int varid;
+	get_variable(ncid, varname, varid);
+	
+	size_t attr_len;
+	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+
+	char* value = new char[attr_len + 1]; // +1 for trailing null
+	status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+
+	value[attr_len] = '\0';
+	attr_value = string(value);
+
+	delete[] value;
+}
+
 void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value)
 {
 	size_t attr_len;
@@ -75,7 +117,6 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 
 	char* value = new char[attr_len + 1]; // +1 for trailing null
-
 	status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
 	if (status != NC_NOERR)
 		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
@@ -323,13 +364,34 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 	return dimlen;
 }
 
-bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max)
+bool get_dimensionMinMax(const int& ncid, const std::string& varname, double &min, double &max)
 {
 	int dimid;
 	size_t dimlen;
 
 	get_dimension(ncid, varname, dimid, dimlen);
 	
+	//check if record already exists
+	if (dimlen > 0) {
+		double *record_value = new double[dimlen];
+		read_data(ncid, varname, dimid, record_value);
+		min = record_value[0];
+		max =  record_value[dimlen-1];
+
+		delete[] record_value;
+	} else 
+		return false; // data not found
+		
+	return true;
+}
+
+bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max)
+{
+	int dimid;
+	size_t dimlen;
+
+	get_dimension(ncid, varname, dimid, dimlen);
+
 	//check if record already exists
 	if (dimlen > 0) {
 		double *record_value = new double[dimlen];
@@ -341,12 +403,36 @@ bool get_recordMinMax(const int& ncid, const std::string& varname, const int& va
 		delete[] record_value;
 	} else 
 		return false; // data not found
-		
+
 	return true;
 }
 
 // Finding a certain record variable value (e.g. timestamp) by retrieving all
 // record values and then performing a linear search
+size_t find_record(const int& ncid, const std::string& varname, const double& data)
+{
+	int dimid;
+	size_t dimlen;
+	get_dimension(ncid, varname, dimid, dimlen);
+
+	//check if record already exists
+	if (dimlen > 0) {
+		double *record_value = new double[dimlen];
+		read_data(ncid, varname, dimid, record_value);
+
+		for (size_t ii=0; ii<dimlen; ii++) {
+			if (record_value[ii] == data) {
+				delete[] record_value;
+				return ii;
+			}
+		}
+
+		delete[] record_value;
+	}
+
+	return IOUtils::npos; // data not found
+}
+
 size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
 {
 	int dimid;
