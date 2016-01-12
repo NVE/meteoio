@@ -63,6 +63,7 @@ class NetCDFIO : public IOInterface {
 			ATTRIBUTES() : var(), standard_name(), long_name(), units(), height(IOUtils::nodata) {};
 			ATTRIBUTES(const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
 			                     : var(str1), standard_name(str2), long_name(str3), units(str4), height(hgt) {};
+			std::string toString() {std::ostringstream os; os << "[" << var << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
   
 			std::string var;
 			std::string standard_name;
@@ -90,8 +91,7 @@ class NetCDFIO : public IOInterface {
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const double epsilon; //for numerical comparisons of double values
-		static const std::string cf_time, cf_latitude, cf_longitude, cf_altitude;
+		static const std::string cf_time, cf_latitude, cf_longitude;
 
 		const Config cfg;
 		std::vector< std::pair<std::pair<Date,Date>, std::string> > cache_meteo_files; //cache of meteo files in METEOPATH

@@ -63,6 +63,7 @@ namespace mio {
  * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the METEO_EXT extension, provides
  * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
  * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF); [Input] and [Output] section
+ * - NETCDF::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
  * When providing multiple files in one directory, in case of overlapping files, the file containing the newest data has priority. This is
@@ -73,11 +74,13 @@ namespace mio {
  * [Input]
  * DEM     = NETCDF
  * DEMFILE = ./input/Aster_tile.nc
+ * ;DEMVAR = height        ;this is only required if the variable name is non-standard
  * 
  * GRID2D    = NETCDF
  * GRID2DPATH =  /data/meteo_reanalysis
  * METEO_EXT = .nc
  * NETCDF_SCHEMA = ECMWF
+ * NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
  * @endcode
  *
  * @section netcdf_compilation Compilation
@@ -86,12 +89,9 @@ namespace mio {
  */
 
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
-const double NetCDFIO::epsilon = 1.0e-10; //when comparing timestamps
-
 const std::string NetCDFIO::cf_time = "time";
 const std::string NetCDFIO::cf_latitude = "latitude";
 const std::string NetCDFIO::cf_longitude = "longitude";
-const std::string NetCDFIO::cf_altitude = "z";
 
 NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), in_attributes(), out_attributes(), 
                                                     coordin(), coordinparam(), coordout(), coordoutparam(), 
@@ -176,6 +176,21 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::ROT] = attributes("ro", "", "Runoff", "m", IOUtils::nodata);
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
+	
+	vector<string> custom_attr;
+	const size_t nrOfCustoms = cfg.findKeys(custom_attr, "NETCDF::", "Input");
+	for (size_t ii=0; ii<nrOfCustoms; ++ii) {
+		const size_t found = custom_attr[ii].find_last_of(":");
+		if (found==std::string::npos || found==custom_attr[ii].length()) continue;
+
+		const string meteo_grid = custom_attr[ii].substr(found+1);
+		const string netcdf_param = cfg.get(custom_attr[ii], "Input");
+		const size_t param_index = MeteoGrids::getParameterIndex(meteo_grid);
+		if (param_index==IOUtils::npos)
+			throw InvalidArgumentException("Parameter '"+meteo_grid+"' is not a valid MeteoGrid! Please correct key '"+custom_attr[ii]+"'", AT);
+		
+		attr[ static_cast<MeteoGrids::Parameters>(param_index) ] = attributes(netcdf_param, "", "", "", IOUtils::nodata);
+	}
 }
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
@@ -544,7 +559,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 			}
 			ncpp::read_data(ncid, varname, varid, pos, dimlen[lat_index], dimlen[lon_index], grid);
 		} else {
-			const size_t pos = 1;
+			const size_t pos = 0;
 			ncpp::read_data(ncid, varname, varid, pos, dimlen[lat_index], dimlen[lon_index], grid);
 		}
 	}
@@ -712,7 +727,11 @@ void NetCDFIO::getTimeTransform(const int& ncid, double &time_offset, double &ti
 	const size_t nrWords = IOUtils::readLineToVec(time_units, vecString);
 	if (nrWords<3 || nrWords>4) throw InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
-	if (vecString[0]=="days") time_multiplier = 1.;
+	const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
+	
+	if (vecString[0]=="years") time_multiplier = equinox_year;
+	else if (vecString[0]=="months") time_multiplier = equinox_year/12.;
+	else if (vecString[0]=="days") time_multiplier = 1.;
 	else if (vecString[0]=="hours") time_multiplier = 1./24.;
 	else if (vecString[0]=="minutes") time_multiplier = 1./(24.*60.);
 	else if (vecString[0]=="seconds") time_multiplier = 1./(24.*3600);

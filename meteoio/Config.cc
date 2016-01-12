@@ -25,14 +25,10 @@ namespace mio {
 const char* Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), imported(), sourcename(), configRootDir()
-{
-	//nothing is even put in the property map, the user will have to fill it by himself
-}
+Config::Config() : properties(), imported(), sourcename(), configRootDir() {}
 
 Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(IOUtils::getPath(i_filename, true))
 {
-
 	addFile(i_filename);
 }
 
