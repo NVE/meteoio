@@ -46,7 +46,7 @@ namespace mio {
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
  * by this plugin:
  * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
- * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
+ * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CNRM - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>.
  *
  * @section netcdf_units Units
@@ -58,15 +58,26 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - DEMFILE: The filename of the file containing the DEM; [Input] section
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
- * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ * - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] section
+ * - METEO_EXT: only the files containing this pattern in their filename will be used; [Input] section
+ * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the METEO_EXT extension, provides
+ * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
  * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF); [Input] and [Output] section
  * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
+ * When providing multiple files in one directory, in case of overlapping files, the file containing the newest data has priority. This is
+ * convenient when using forecats data to automatically use the most short-term forecast.
+ * 
  * @section netcdf_example Example use
  * @code
  * [Input]
  * DEM     = NETCDF
  * DEMFILE = ./input/Aster_tile.nc
+ * 
+ * GRID2D    = NETCDF
+ * GRID2DPATH =  /data/meteo_reanalysis
+ * METEO_EXT = .nc
+ * NETCDF_SCHEMA = ECMWF
  * @endcode
  *
  * @section netcdf_compilation Compilation
@@ -420,8 +431,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 {
 	meteo_files.clear();
 
-	string meteo_ext(".nc");
-	cfg.getValue("METEO_EXT", "INPUT", meteo_ext, IOUtils::nothrow);
+	const string meteo_ext = 	cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
 	std::list<std::string> dirlist = IOUtils::readDirectory(meteopath_in, meteo_ext);
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();
@@ -517,9 +527,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 			throw InvalidArgumentException("File \'"+filename+"\' does not contain a time dimension", AT);
 	} else {
 		if (date_requested) {
-			if (in_time_offset==IOUtils::nodata || in_time_multiplier==IOUtils::nodata) {
-				getTimeTransform(ncid, in_time_offset, in_time_multiplier);
-			}
+			getTimeTransform(ncid, in_time_offset, in_time_multiplier);
 			const double timestamp = (date.getJulian() - in_time_offset) / in_time_multiplier;
 			const size_t pos = ncpp::find_record(ncid, NetCDFIO::cf_time, timestamp);
 			if (pos == IOUtils::npos) {
@@ -529,7 +537,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 					Date d_min, d_max;
 					d_min.setDate(min*in_time_multiplier + in_time_offset, in_dflt_TZ);
 					d_max.setDate(max*in_time_multiplier + in_time_offset, in_dflt_TZ);
-					throw IOException("No record for date " + date.toString(Date::ISO) + ". Records between " + d_min.toString(Date::ISO) + " and " + d_max.toString(Date::ISO), AT);
+					throw IOException("No record for date " + date.toString(Date::ISO) + ". Records between " + d_min.toString(Date::ISO) + " and " + d_max.toString(Date::ISO)+" in file '"+filename+"'", AT);
 				}
 				else 
 					throw IOException("No record for date " + date.toString(Date::ISO), AT);

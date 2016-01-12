@@ -18,8 +18,7 @@
 #ifndef __FilterOffsetsnowdepth_H__
 #define __FilterOffsetsnowdepth_H__
 
-#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
-//#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
+#include <meteoio/meteoFilters/WindowedFilter.h>
 
 #include <vector>
 #include <string>
@@ -36,12 +35,13 @@ namespace mio {
  * time period, the offset of snow depth (HS) can be determined. The offset of HS is the median of the measured HS in the 
  * certain time period. This is done for the first and last week of the year with SST higher the chosen threshold. That means 
  * that normally one offset is calculated in spring and one offset in autumn. 
- 
- the standard deviation of HS is calculated for a certain time period. Afterwards, the difference between the value and 
+ * 
+ * the standard deviation of HS is calculated for a certain time period. Afterwards, the difference between the value and 
  * the value before and the difference between the value and the following value are calculated. Then, the sum of the two 
  * differences is calculated and compared with 4 times of the standard deviation. Is the sum lower than the standard deviation, 
  * the HS value is accepted. Otherwise the HS value gets invalid. 
  * References/Literature:  Zahumensky, Igor, 2004: Guidelines on Quality Control Procedures for Data from Automatic Weather Stations, World Meteorological Organisation 
+ * 
  * Remarks:
  * - nodata values are excluded from the calculation of the standard deviation ?????? => checken  
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
@@ -61,9 +61,7 @@ namespace mio {
  * @endcode
  */
 
-//class FilterOffsetsnowdepth : public FilterBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class FilterOffsetsnowdepth : public ProcessingBlock { //use this one for data corrections
-class FilterOffsetsnowdepth : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
+class FilterOffsetsnowdepth : public WindowedFilter {
 	public:
 		FilterOffsetsnowdepth(const std::vector<std::string>& vec_args, const std::string& name);
 

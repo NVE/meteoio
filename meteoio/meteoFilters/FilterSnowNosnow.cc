@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterSnowNosnow::FilterSnowNosnow(const std::vector<std::string>& vec_args, const std::string& name)
-          : FilterBlock(name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
+          : FilterBlock(name)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first;

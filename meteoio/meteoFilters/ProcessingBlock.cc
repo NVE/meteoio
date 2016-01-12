@@ -95,6 +95,9 @@ namespace mio {
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
+ * - FLAT_LINE: reject data that changes too little (low variance), see FilterFlatline
+ * - MAXCHANGE: reject data that changes too much , see FilterTimeconsistency
+ * - SNOS: detection of grass growing under the snow height sensor, see FilterSnowNosnow
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all data, see FilterSuppr
@@ -114,8 +117,6 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  *
- * New filters by Anna-Maria Tilg: 
- * - FLAT_LINE: checks if the data stagnates for a certain time period
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path)

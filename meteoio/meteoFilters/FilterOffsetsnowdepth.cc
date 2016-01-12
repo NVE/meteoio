@@ -22,14 +22,9 @@ using namespace std;
 namespace mio {
 
 FilterOffsetsnowdepth::FilterOffsetsnowdepth(const std::vector<std::string>& vec_args, const std::string& name)
-          : WindowedFilter(name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
+          : WindowedFilter(name)
 {
 	parse_args(vec_args);
-	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
-	//or after the temporal resampling (second stage, ProcessingProperties::second) or both (ProcessingProperties::both)
-	//filters that do not depend on past data can safely use "both" (such as min/max filters) while
-	//corrections should only use "first" (such as undercatch correction) in order to avoid double-correcting the data
-	//filters relying on past data (through variance or other statistical parameters) usually should use "first"
 	properties.stage = ProcessingProperties::first;
 }
 

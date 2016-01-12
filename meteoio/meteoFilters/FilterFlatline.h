@@ -19,7 +19,6 @@
 #define __FilterFlatline_H__
 
 #include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
-//#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
 
 #include <vector>
 #include <string>
@@ -29,8 +28,6 @@ namespace mio {
 /**
  * @class FilterFlatline
  * @ingroup processing
- * @author Anna-Maria Tilg
- * @date   2015-12-04
  * @brief Searching for periods of constant values at set them invalid
  * The filter searches for time periods in which the value of the certain variable stagnates / doesn't change 
  * This is done with calculating the variance. 
@@ -38,11 +35,11 @@ namespace mio {
  * Remarks:
  * - nodata values are excluded from the mean ?????? => checken  
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
- *   - minimal number of points in window
- *   - minimal time interval spanning the window (in seconds)
+ *     - minimal number of points in window
+ *     - minimal time interval spanning the window (in seconds)
  * - only window position "center" possible
  * - keyword "soft" not allowed 
-  * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position ?????? => checken
+ * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position ?????? => checken
  * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present ?????? => checken
  *
  * @code
@@ -52,11 +49,12 @@ namespace mio {
  *          TA::filter1 = flat_line
  *          TA::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
+ * 
+ * @author Anna-Maria Tilg
+ * @date   2015-12-04
  */
 
-//class FilterFlatline : public FilterBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class FilterFlatline : public ProcessingBlock { //use this one for data corrections
-class FilterFlatline : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
+class FilterFlatline : public WindowedFilter {
 	public:
 		FilterFlatline(const std::vector<std::string>& vec_args, const std::string& name);
 

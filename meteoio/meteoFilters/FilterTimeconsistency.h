@@ -18,8 +18,7 @@
 #ifndef __FilterTimeconsistency_H__
 #define __FilterTimeconsistency_H__
 
-#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
-//#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
+#include <meteoio/meteoFilters/WindowedFilter.h>
 
 #include <vector>
 #include <string>
@@ -29,8 +28,6 @@ namespace mio {
 /**
  * @class FilterTimeconsistency
  * @ingroup processing
- * @author Anna-Maria Tilg
- * @date   2015-12-08
  * @brief Compare sum of differences between snow depth (HS) value and HS value before and HS value afterwards, respectively, 
  *  with 4 times of the standard deviation of HS in a defined time period (something like MAD)
  * First, the standard deviation of HS is calculated for a certain time period. Afterwards, the difference between the value and 
@@ -38,6 +35,7 @@ namespace mio {
  * differences is calculated and compared with 4 times of the standard deviation. Is the sum lower than the standard deviation, 
  * the HS value is accepted. Otherwise the HS value gets invalid. 
  * References/Literature:  Zahumensky, Igor, 2004: Guidelines on Quality Control Procedures for Data from Automatic Weather Stations, World Meteorological Organisation 
+ * 
  * Remarks:
  * - nodata values are excluded from the calculation of the standard deviation ?????? => checken  
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
@@ -55,11 +53,12 @@ namespace mio {
  *          TA::filter1 = time_consistency
  *          TA::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
+ * 
+ * @author Anna-Maria Tilg
+ * @date   2015-12-08
  */
 
-//class FilterTimeconsistency : public FilterBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class FilterTimeconsistency : public ProcessingBlock { //use this one for data corrections
-class FilterTimeconsistency : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
+class FilterTimeconsistency : public WindowedFilter {
 	public:
 		FilterTimeconsistency(const std::vector<std::string>& vec_args, const std::string& name);
 

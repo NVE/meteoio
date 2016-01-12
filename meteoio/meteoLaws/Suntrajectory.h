@@ -40,7 +40,7 @@ class SunTrajectory {
 		/** @brief Set the date and time
 		* if no timezone is specified, GMT is assumed
 		* @param i_julian julian date in the time zone of interest
-		* @param TZ time zone
+		* @param i_TZ time zone
 		*/
 		virtual void setDate(const double& i_julian, const double& i_TZ=0.)=0;
 		virtual void setLatLon(const double& i_latitude, const double& i_longitude)=0;
