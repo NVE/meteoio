@@ -48,6 +48,10 @@ namespace mio {
  * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CNRM - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>.
+ * 
+ * @section netcdf_compilation Compilation
+ * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
+ * their development files in your package manager.
  *
  * @section netcdf_keywords Keywords
  * This plugin uses the following keywords:
@@ -79,11 +83,23 @@ namespace mio {
  * NETCDF_SCHEMA = ECMWF
  * ;NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
  * @endcode
- *
- * @section netcdf_compilation Compilation
- * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
- * their development files in your package manager.
  * 
+ * When using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below), this would become:
+ * @code
+ * GRID2D    = NETCDF
+ * GRID2DPATH =  /data/meteo_reanalysis
+ * METEO_EXT = .nc
+ * NETCDF_SCHEMA = ECMWF
+ * 
+ * DEM = NETCDF
+ * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
+ * DEM_FROM_PRESSURE = true
+ * 
+ * Downscaling = true
+ * VSTATION1 = 46.793029 9.821343 ;this is Davos
+ * Virtual_parameters = TA RH PSUM ISWR ILWR P VW DW TSS HS RSWR TSG ;this has to fit the parameter set in the data files
+ * @endcode
+ *
  * @section netcdf_ecmwf ECMWF Era Interim
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A> 
  * after creating an account and login in. 
