@@ -74,21 +74,9 @@ namespace mio {
  * convenient when using forecats data to automatically use the most short-term forecast.
  * 
  * @section netcdf_example Example use
+ * Using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below):
  * @code
  * [Input]
- * DEM     = NETCDF
- * DEMFILE = ./input/Aster_tile.nc
- * ;DEMVAR = height        ;this is only required if the variable name is non-standard
- * 
- * GRID2D    = NETCDF
- * GRID2DPATH =  /data/meteo_reanalysis
- * METEO_EXT = .nc
- * NETCDF_SCHEMA = ECMWF
- * ;NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
- * @endcode
- * 
- * When using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below), this would become:
- * @code
  * GRID2D    = NETCDF
  * GRID2DPATH =  /data/meteo_reanalysis
  * METEO_EXT = .nc
@@ -98,9 +86,27 @@ namespace mio {
  * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
  * DEM_FROM_PRESSURE = true
  * 
+ * #The lines below have nothing to do with this plugin
  * Downscaling = true
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = TA RH PSUM ISWR ILWR P VW DW TSS HS RSWR TSG ;this has to fit the parameter set in the data files
+ * @endcode
+ * 
+ * Another example, to extract precipitation from the MeteoSwiss daily precipitation reanalysis, RhiresD
+ * @code
+ * [Input]
+ * DEM     = NETCDF
+ * DEMFILE = ./input/ch02_lonlat.nc
+ * 
+ * GRID2D    = NETCDF
+ * GRID2DPATH =  /data/meteo_reanalysis
+ * METEO_EXT = .nc
+ * NETCDF::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
+ * 
+ * #The lines below have nothing to do with this plugin
+ * Downscaling = true
+ * VSTATION1 = 46.793029 9.821343 ;this is Davos
+ * Virtual_parameters = PSUM ;this has to fit the parameter set in the data files
  * @endcode
  *
  * @section netcdf_ecmwf ECMWF Era Interim
@@ -408,6 +414,7 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 		if (read2DGrid_internal(dem_out, filename, MeteoGrids::DEM)) return; //schema naming
 		if (read2DGrid_internal(dem_out, filename, "Band1")) return; //ASTER naming
 		if (read2DGrid_internal(dem_out, filename, "z")) return; //GDAL naming
+		if (read2DGrid_internal(dem_out, filename, "height")) return; //MeteoCH naming
 		
 		//last chance: read from pressure grids
 		if (dem_altimeter) {
