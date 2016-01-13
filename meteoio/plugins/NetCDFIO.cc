@@ -186,12 +186,13 @@ void NetCDFIO::parseInputOutputSection()
 	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow);
 	
-	string in_schema = "ECMWF";
-	in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
-	initAttributesMap(in_schema, in_attributes);
-	string out_schema = "ECMWF";
-	out_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) );
-	initAttributesMap(out_schema, out_attributes);
+	const string in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
+	if (!in_schema.empty()) initAttributesMap(in_schema, in_attributes);
+	else initAttributesMap("ECMWF", in_attributes);
+	
+	const string out_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) );
+	if (!out_schema.empty()) initAttributesMap(out_schema, out_attributes);
+	else initAttributesMap("ECMWF", out_attributes);
 	
 	string in_grid2d_path;
 	cfg.getValue("GRID2DPATH", "Input", in_grid2d_path, IOUtils::nothrow);
