@@ -40,7 +40,10 @@ namespace mio {
  * <A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF software</A> was developed
  * at the <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado.
  * In order to graphicaly explore the content and structure of NetCDF files, you can use the
- * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software.
+ * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software or 
+ * <A HREF="http://meteora.ucsd.edu/~pierce/ncview_home_page.html">ncview</A>. It is also possible to run *ncdump* on a given
+ * file in order to have a look at its structure (such as *ncdump {my_netcdf_file} | more*) and specially the parameters names 
+ * (this is useful if remapping is needed, see below for in the \ref netcdf_keywords "keywords" section).
  *
  * The NetCDF format does not impose a specific set of metadata and therefore in order to easily exchange data
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used

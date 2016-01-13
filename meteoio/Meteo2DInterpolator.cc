@@ -33,9 +33,9 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 	grid_buffer.setMaxGrids(max_grids);
 	
 	setAlgorithms();
-	bool virtual_stations; ///< compute the meteo values at virtual stations
+	bool virtual_stations = false; ///< compute the meteo values at virtual stations
 	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
+	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
 	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
 	if (virtual_stations || downscaling) {
 		initVirtualStations();
