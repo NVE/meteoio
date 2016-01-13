@@ -38,7 +38,8 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
 	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
 	if (virtual_stations || downscaling) {
-		initVirtualStations();
+		initVirtualStations(downscaling); //adjust the coordinates if downscaling
+		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
 	}
 }
 
@@ -291,16 +292,21 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 	throw UnknownValueException("Unknown virtual station strategy", AT);
 }
 
-void Meteo2DInterpolator::initVirtualStations()
+/** @brief read the list of virtual stations
+ * @param adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ */
+void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 {
 	if (!cfg.keyExists("DEM", "Input"))
 		throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
 	DEMObject dem;
 	gridsmanager.readDEM(dem);
 
+
 	//get virtual stations coordinates
 	std::string coordin, coordinparam, coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	dem.llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
 
 	std::vector<std::string> vecStation;
 	cfg.getValues("Vstation", "INPUT", vecStation);
@@ -312,6 +318,8 @@ void Meteo2DInterpolator::initVirtualStations()
 	}
 	
 	//create stations' metadata
+	const double dem_easting = dem.llcorner.getEasting();
+	const double dem_northing = dem.llcorner.getNorthing();
 	for (size_t ii=0; ii<v_coords.size(); ii++) {
 		if (!dem.gridify(v_coords[ii])) {
 			ostringstream ss;
@@ -320,7 +328,14 @@ void Meteo2DInterpolator::initVirtualStations()
 		}
 
 		const size_t i = v_coords[ii].getGridI(), j = v_coords[ii].getGridJ();
-		v_coords[ii].setAltitude(dem(i,j), false);
+		if (adjust_coordinates) { //adjust coordinates to match the chosen cell
+			const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
+			const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
+			v_coords[ii].setXY(easting, northing, dem(i,j));
+			v_coords[ii].setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::nodata, true);
+		} else {
+			v_coords[ii].setAltitude(dem(i,j), false);
+		}
 
 		ostringstream name;
 		name << "Virtual_Station_" << ii+1;
@@ -329,10 +344,17 @@ void Meteo2DInterpolator::initVirtualStations()
 		StationData sd(v_coords[ii], id.str(), name.str());
 		sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 
-		v_stations.push_back( sd );
+		//remove duplicate stations, ie stations that have same easting,northing,altitude
+		bool is_duplicate = false;
+		for (size_t jj=0; jj<ii; jj++) {
+			if (v_coords[ii]==v_coords[jj]) {
+				std::cout << "[W] removing VSTATION" << ii+1 << " as a duplicate of VSTATION" << jj+1 << "\n";
+				is_duplicate = true;
+				break;
+			}
+		}
+		if (!is_duplicate) v_stations.push_back( sd );
 	}
-
-	cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo)

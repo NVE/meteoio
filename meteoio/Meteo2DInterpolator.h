@@ -172,7 +172,7 @@ class Meteo2DInterpolator {
 		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
 		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);
 		void setAlgorithms();
-		void initVirtualStations();
+		void initVirtualStations(const bool& adjust_coordinates);
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		TimeSeriesManager& tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
