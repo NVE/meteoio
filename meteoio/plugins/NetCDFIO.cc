@@ -108,7 +108,20 @@ namespace mio {
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = PSUM ;this has to fit the parameter set in the data files
  * @endcode
+ * 
+ * @section netcdf_meteoch MeteoCH RhiresD & similar products
+ * <A HREF="http://www.meteoswiss.admin.ch/home.html?tab=overview">MeteoSwiss</A> provides <A HREF="http://www.ifu.ethz.ch/hydrologie/research/research_data/proddoc.pdf">reanalysis</A> of precipitation and other meteo fields from 1961 to present over Switzerland for different time scales: daily, monthly, yearly, as well as hourly (CPC dataset). The DEM are also provided, either in lat/lon, 
+ * Swiss coordinates, rotated lat/lon, ... These data sets must be requested from MeteoSwiss and are available with a specific license for reasearch. 
  *
+ * Unfortunatelly, the naming of the parameters and dimensions within the files is not standard nor consistent. In order to handle the parameters names, 
+ * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
+ * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TS_REFERENCE"), 
+ * use first the <A HREF="http://linux.die.net/man/1/ncrename">ncrename</A> tool that is part of the 
+ * <A HREF="http://nco.sourceforge.net/">NCO utilities</A> to rename both the dimension (-d) and the variable (-v): 
+ * @code
+ * ncrename -d TS_REFERENCE,time -v TS_REFERENCE,time {my_netcdf_file}
+ * @endcode
+ * 
  * @section netcdf_ecmwf ECMWF Era Interim
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A> 
  * after creating an account and login in. 
