@@ -34,6 +34,7 @@
 #include <meteoio/meteoFilters/FilterUnheatedPSUM.h>
 #include <meteoio/meteoFilters/FilterTukey.h>
 #include <meteoio/meteoFilters/FilterMAD.h>
+#include <meteoio/meteoFilters/ProcAggregate.h>
 #include <meteoio/meteoFilters/ProcButterworth.h>
 #include <meteoio/meteoFilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Forland.h>
@@ -108,6 +109,7 @@ namespace mio {
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - BUTTERWORTH: low pass butterworth filter, see ProcButterworth
+ * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
@@ -129,6 +131,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMax(vec_args, blockname);
 	} else if (blockname == "MIN_MAX"){
 		return new FilterMinMax(vec_args, blockname);
+	} else if (blockname == "AGGREGATE"){
+		return new ProcAggregate(vec_args, blockname);
 	} else if (blockname == "MEAN_AVG"){
 		return new FilterMeanAvg(vec_args, blockname);
 	} else if (blockname == "MEDIAN_AVG"){
