@@ -41,6 +41,7 @@
 #include <meteoio/meteoFilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <meteoio/meteoFilters/ProcUnventilatedT.h>
+#include <meteoio/meteoFilters/ProcShade.h>
 #include <meteoio/meteoFilters/ProcUnshade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
@@ -161,6 +162,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcPSUMDistribute(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
+	} else if (blockname == "SHADE"){
+		return new ProcShade(vec_args, blockname, root_path);
 	} else if (blockname == "UNSHADE"){
 		return new ProcUnshade(vec_args, blockname);
 	} else if (blockname == "MULT"){
