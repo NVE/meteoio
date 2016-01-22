@@ -119,6 +119,7 @@ namespace mio {
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
+ * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
  *
  */
 

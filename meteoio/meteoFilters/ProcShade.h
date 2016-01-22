@@ -29,9 +29,22 @@ namespace mio {
  * @class  ProcShade
  * @ingroup processing
  * @author Mathias Bavay
- * @date   2012-02-06
- * @brief 
+ * @date   2016-01-22
+ * @brief Apply a shading mask to the Incoming or Reflected Short Wave Radiation
+ * A shading mask (that will be linearly interpolated between the provided points) must be provided in a separate file,
+ * simply containing the horizon elevation (in deg.) as a function of azimuth (in deg.):
  * @code
+ * 0	5
+ * 15	25
+ * 45	12
+ * 180	30
+ * 270	20
+ * @endcode
+ * 
+ * Then the filter is declared with the file name containing the horizon mask as argument:
+ * @code
+ * ISWR::filter1 = SHADE
+ * ISWR::arg1    = ../input/iswr_mask.dat
  * @endcode
  *
  */

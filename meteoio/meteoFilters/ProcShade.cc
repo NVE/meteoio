@@ -95,7 +95,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 			it->second.calculateRadiation(TA, RH, albedo);
 			const double Md = it->second.getSplitting(ISWR);
 			
-			tmp *= Md; //only keep the diffuse radiation
+			tmp *= Md; //only keep the diffuse radiation, either on RSWR or ISWR
 		}
 	}
 	
@@ -185,6 +185,7 @@ void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 	const size_t nrArgs = vec_args.size();
 	if (nrArgs==0) {
 		//compute from DEM
+		throw InvalidArgumentException("Shading from DEM not implemented yet in filter " + getName(), AT);
 	} else if (nrArgs==1) {
 		//if this is a relative path, prefix the path with the current path
 		const std::string in_filename = vec_args[0];
