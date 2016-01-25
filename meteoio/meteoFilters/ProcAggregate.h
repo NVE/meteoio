@@ -37,15 +37,15 @@ namespace mio {
  *    + wind_avg: Wind vector averaging. CURRENTLY, THIS FILTER DOES NOT WORK PROPERLY (the first parameter is correctly calculated but the second one uses the modified output of the first one and therefore is WRONG).
  * 
  * Remarks:
- * - nodata values are excluded from the median
+ * - nodata values are excluded from the aggregation
  * - Two other arguments are expected (both have to be fullfilled for the filter to start operating):
  *   - minimal number of points in window
  *   - minimal time interval spanning the window (in seconds)
  * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
- * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+ * - the keyword "soft" maybe added (this is highly recommended), if the window position is allowed to be adjusted to the data present
  * @code
  *          VW::filter3 = AGGREGATE
- *          VW::arg3    = MEAN left 1 1800 ;(1800 seconds time span for the left leaning window)
+ *          VW::arg3    = MEAN soft left 4 14400 ;(14400 seconds time span for the left leaning window)
  * @endcode
  */
 

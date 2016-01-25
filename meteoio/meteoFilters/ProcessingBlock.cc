@@ -26,9 +26,6 @@
 #include <meteoio/meteoFilters/FilterMin.h>
 #include <meteoio/meteoFilters/FilterMax.h>
 #include <meteoio/meteoFilters/FilterMinMax.h>
-#include <meteoio/meteoFilters/FilterMeanAvg.h>
-#include <meteoio/meteoFilters/FilterMedianAvg.h>
-#include <meteoio/meteoFilters/FilterWindAvg.h>
 #include <meteoio/meteoFilters/FilterStdDev.h>
 #include <meteoio/meteoFilters/FilterRate.h>
 #include <meteoio/meteoFilters/FilterUnheatedPSUM.h>
@@ -111,9 +108,6 @@ namespace mio {
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - BUTTERWORTH: low pass butterworth filter, see ProcButterworth
  * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
- * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
- * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
- * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
@@ -135,12 +129,6 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMinMax(vec_args, blockname);
 	} else if (blockname == "AGGREGATE"){
 		return new ProcAggregate(vec_args, blockname);
-	} else if (blockname == "MEAN_AVG"){
-		return new FilterMeanAvg(vec_args, blockname);
-	} else if (blockname == "MEDIAN_AVG"){
-		return new FilterMedianAvg(vec_args, blockname);
-	} else if (blockname == "WIND_AVG"){
-		return new FilterWindAvg(vec_args, blockname);
 	} else if (blockname == "STD_DEV"){
 		return new FilterStdDev(vec_args, blockname);
 	} else if (blockname == "RATE"){

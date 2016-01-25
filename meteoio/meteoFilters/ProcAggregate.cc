@@ -40,45 +40,27 @@ void ProcAggregate::process(const unsigned int& param, const std::vector<MeteoDa
 {
 	ovec = ivec;
 	
-	if (type==min_agg) {
-		for (size_t ii=0; ii<ovec.size(); ii++){ //for every element in ivec, get a window
-			double& value = ovec[ii](param);
-			size_t start, end;
-			if ( get_window_specs(ii, ivec, start, end) ) {
-				value = calc_min(ivec, param, start, end);
-			} else if (!is_soft) value = IOUtils::nodata;
-		}
-	} else if (type==max_agg) {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& value = ovec[ii](param);
-			size_t start, end;
-			if ( get_window_specs(ii, ivec, start, end) ) {
-				value = calc_max(ivec, param, start, end);
-			} else if (!is_soft) value = IOUtils::nodata;
-		}
-	} else if (type==mean_agg) {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& value = ovec[ii](param);
-			size_t start, end;
-			if ( get_window_specs(ii, ivec, start, end) ) {
-				value = calc_mean(ivec, param, start, end);
-			} else if (!is_soft) value = IOUtils::nodata;
-		}
-	} else if (type==median_agg) {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& value = ovec[ii](param);
-			size_t start, end;
-			if ( get_window_specs(ii, ivec, start, end) ) {
-				value = calc_median(ivec, param, start, end);
-			} else if (!is_soft) value = IOUtils::nodata;
-		}
-	} else if (type==wind_avg_agg) {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& value = ovec[ii](param);
-			size_t start, end;
-			if ( get_window_specs(ii, ivec, start, end) ) {
-				value = calc_wind_avg(ivec, param, start, end);
-			} else if (!is_soft) value = IOUtils::nodata;
+	for (size_t ii=0; ii<ovec.size(); ii++){ //for every element in ivec, get a window
+		double& value = ovec[ii](param);
+		size_t start, end;
+		if ( get_window_specs(ii, ivec, start, end) ) {
+			switch (type) {
+				case min_agg:
+					value = calc_min(ivec, param, start, end); break;
+				case max_agg:
+					value = calc_max(ivec, param, start, end); break;
+				case mean_agg:
+					value = calc_mean(ivec, param, start, end); break;
+				case median_agg:
+					value = calc_median(ivec, param, start, end); break;
+				case wind_avg_agg:
+					value = calc_wind_avg(ivec, param, start, end); break;
+				default:
+					throw UnknownValueException("Unknown aggregation algorithm selected!", AT);
+			}
+		} else {
+			std::cout << "Could not get window for " << ovec[ii].date.toString(Date::ISO) << "\n";
+			if (!is_soft) value = IOUtils::nodata;
 		}
 	}
 }
@@ -90,7 +72,7 @@ double ProcAggregate::calc_min(const std::vector<MeteoData>& ivec, const unsigne
 		const double& value = ivec[ii](param);
 		if (value!=IOUtils::nodata && value<min) min = value;
 	}
-
+	
 	if (min == Cst::dbl_max) return IOUtils::nodata;
 	return min;
 }
@@ -167,8 +149,6 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 
 void ProcAggregate::parse_args(std::vector<std::string> vec_args)
 {
-	vector<double> filter_args;
-	
 	if (vec_args.empty())
 		throw InvalidArgumentException("Invalid number of arguments for filter " + getName(), AT);
 	
@@ -182,15 +162,13 @@ void ProcAggregate::parse_args(std::vector<std::string> vec_args)
 		throw InvalidArgumentException("Unknown type '"+str_type+"' for filter " + getName(), AT);
 	vec_args.erase( vec_args.begin() );
 
-	if (vec_args.size() > 2){
+	if (vec_args.size() > 2)
 		is_soft = ProcessingBlock::is_soft(vec_args);
-	}
-
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
 
+	vector<double> filter_args;
 	convert_args(2, 2, vec_args, filter_args);
-
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
 		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
