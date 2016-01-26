@@ -100,8 +100,8 @@ class DEMObject : public Grid2DObject {
 		void getPointsBetween(const int& ix1, const int& iy1, const int& ix2, const int& iy2, std::vector<GRID_POINT_2D>& vec_points);
 		void getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points);
 		void getPointsBetween(const Coords& point, const double& bearing, std::vector<GRID_POINT_2D>& vec_points);
-		double getHorizon(const Coords& point, const double& bearing);
-		void getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon);
+		double getHorizon(const Coords& point, const double& bearing) const;
+		void getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const;
 
 		DEMObject& operator=(const Grid2DObject&); ///<Assignement operator
 		DEMObject& operator=(const double& value); ///<Assignement operator
@@ -150,6 +150,7 @@ class DEMObject : public Grid2DObject {
 		void getNeighbours(const size_t i, const size_t j, double A[4][4]);
 		double safeGet(const int i, const int j);
 
+		double max_shade_distance; ///< maximum distance to look for when computing a horizon
 		int update_flag;
 		slope_type dflt_algorithm;
 		size_t slope_failures; ///<contains the number of points that have an elevation but no slope

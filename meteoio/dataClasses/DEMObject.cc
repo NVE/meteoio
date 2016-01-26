@@ -42,7 +42,7 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -63,7 +63,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -84,7 +84,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -107,7 +107,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -137,7 +137,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const size_t& i_nx, const size_t& i
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	if ((i_ncols==0) || (i_nrows==0)) {
@@ -305,6 +305,10 @@ void DEMObject::updateAllMinMax() {
 
 	min_altitude = grid2D.getMin();
 	max_altitude = grid2D.getMax();
+	
+	const double sun_elev_thresh = 5.;
+	if (min_altitude!=IOUtils::nodata && max_altitude!=IOUtils::nodata) 
+		max_shade_distance = (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad);
 }
 
 /**
@@ -639,38 +643,51 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
 }
 
 /**
-* @brief Returns the horizon from a given point looking toward a given bearing
+* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
 * @param point the origin point
 * @param bearing direction given by a compass bearing
-* @return angle above the horizontal (in deg)
+* @return tangente of angle above the horizontal (in deg)
 *
 */
-double DEMObject::getHorizon(const Coords& point, const double& bearing) {
-
-	std::vector<Grid2DObject::GRID_POINT_2D> vec_points;
-	getPointsBetween(point, bearing, vec_points);
-
+double DEMObject::getHorizon(const Coords& point, const double& bearing) const
+{
+	if (max_shade_distance==IOUtils::nodata) 
+		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
+	
 	//Starting point
-	const int ix0 = (int)point.getGridI();
-	const int iy0 = (int)point.getGridJ();
-	const double height0 = grid2D(ix0,iy0);
+	const int ix1 = (int)point.getGridI();
+	const int iy1 = (int)point.getGridJ();
+	const double cell_alt = grid2D(ix1, iy1);
+	double horizon_tan_angle = 0.;
+	const double sin_alpha = sin(bearing*Cst::to_rad);
+	const double cos_alpha = cos(bearing*Cst::to_rad);
+	const int dimx = (signed)grid2D.getNx();
+	const int dimy = (signed)grid2D.getNy();
+	
+	if (ix1==0 || ix1==dimx-1 || iy1==0 || iy1==dimy-1) return 0.; //a border cell is not shadded
 
-	//going through every point and looking for the highest tangent (which is also the highest angle)
-	double max_tangent = 0.;
-	for (size_t ii=0; ii < vec_points.size(); ii++) {
-		const int ix = (int)vec_points[ii].ix;
-		const int iy = (int)vec_points[ii].iy;
-		const double delta_height = grid2D(ix, iy) - height0;
-		const double x_distance = (double)(ix - ix0) * cellsize;
-		const double y_distance = (double)(iy - iy0) * cellsize;
-		const double distance = sqrt(x_distance * x_distance + y_distance * y_distance);
-		const double tangent = (delta_height / distance);
+	size_t nb_cells = 1;
+	bool horizon_found = false;
+	while (!horizon_found) {
+		nb_cells++;
+		const int ix2 = (int)ix1 + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
+		const int iy2 = (int)iy1 + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
 
-		if (tangent > max_tangent) max_tangent = tangent;
+		if (ix2<=0 || ix2>=dimx-1 || iy2<=0 || iy2>=dimy-1) break; //we are out of the dem
+
+		const double new_altitude = grid2D(ix2, iy2);
+		if (new_altitude==mio::IOUtils::nodata) break; //we stop at nodata cells
+
+		const double DeltaH = new_altitude - cell_alt;
+		const double distance = sqrt( (double)( (ix2-ix1)*(ix2-ix1) + (iy2-iy1)*(iy2-iy1)) ) * cellsize;
+		const double tan_angle = DeltaH/distance;
+		if (tan_angle>horizon_tan_angle) horizon_tan_angle = tan_angle;
+
+		if (distance>max_shade_distance) horizon_found=true; //maximum lookup distance reached
 	}
 
-	//returning the angle matching the highest tangent
-	return ( atan(max_tangent)*Cst::to_deg );
+	//returning the highest tangent
+	return horizon_tan_angle;
 }
 
 /**
@@ -680,11 +697,11 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 * @param horizon vector of heights above a given angle
 *
 */
-void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon)
+void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const
 {
 	for (double bearing=0.0; bearing <360.; bearing += increment) {
-		const double alpha = getHorizon(point, bearing * Cst::PI/180.);
-		horizon.push_back(alpha);
+		const double alpha = getHorizon(point, bearing);
+		horizon.push_back( make_pair(bearing, tan(alpha)*Cst::to_deg) );
 	}
 }
 
