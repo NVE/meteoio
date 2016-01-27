@@ -700,8 +700,8 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) const
 void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const
 {
 	for (double bearing=0.0; bearing <360.; bearing += increment) {
-		const double alpha = getHorizon(point, bearing);
-		horizon.push_back( make_pair(bearing, tan(alpha)*Cst::to_deg) );
+		const double tan_alpha = getHorizon(point, bearing);
+		horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
 	}
 }
 

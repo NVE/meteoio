@@ -253,7 +253,7 @@ bool MeteoData::operator!=(const MeteoData& in) const
 double& MeteoData::operator()(const size_t& parindex)
 {
 #ifndef NOSAFECHECKS
-	if (parindex >= nrOfAllParameters)//getNrOfParameters())
+	if (parindex >= nrOfAllParameters)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
 #endif
 	return data[parindex];
@@ -262,7 +262,7 @@ double& MeteoData::operator()(const size_t& parindex)
 const double& MeteoData::operator()(const size_t& parindex) const
 {
 #ifndef NOSAFECHECKS
-	if (parindex >= nrOfAllParameters)//getNrOfParameters())
+	if (parindex >= nrOfAllParameters)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
 #endif
 	return data[parindex];
@@ -365,13 +365,15 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 {
 	if (vec1.empty() || vec2.empty()) return;
 	
-	//if some new fields need to be created, do it on the front element
-	//so they can be found by other modules by testing the front element
+	//add any extra parameter as found in the first element of vec2
 	const size_t nrExtra2 = vec2.front().nrOfAllParameters - nrOfParameters;
 	for (size_t ii=0; ii<nrExtra2; ii++) {
 		const string extra_name = vec2.front().extra_param_name[ii];
-		if (vec1.front().getParameterIndex(extra_name)==IOUtils::npos)
-			vec1.front().addParameter( extra_name );
+		if (vec1.front().getParameterIndex(extra_name)==IOUtils::npos) {
+			for (size_t jj=0; jj<vec1.size(); jj++) {
+				vec1[jj].addParameter( extra_name );
+			}
+		}
 	}
 	
 	//optimizations for special cases

@@ -117,7 +117,7 @@ namespace mio {
  *
  */
 
-ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path)
+ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg)
 {
 	if (blockname == "SUPPR"){
 		return new FilterSuppr(vec_args, blockname);
@@ -152,13 +152,13 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
 	} else if (blockname == "SHADE"){
-		return new ProcShade(vec_args, blockname, root_path);
+		return new ProcShade(vec_args, blockname, cfg);
 	} else if (blockname == "UNSHADE"){
 		return new ProcUnshade(vec_args, blockname);
 	} else if (blockname == "MULT"){
-		return new ProcMult(vec_args, blockname, root_path);
+		return new ProcMult(vec_args, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "ADD"){
-		return new ProcAdd(vec_args, blockname, root_path);
+		return new ProcAdd(vec_args, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){

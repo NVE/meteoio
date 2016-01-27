@@ -20,6 +20,8 @@
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <meteoio/meteoLaws/Sun.h>
+#include <meteoio/Config.h>
+#include <meteoio/dataClasses/DEMObject.h>
 #include <vector>
 #include <string>
 
@@ -47,11 +49,14 @@ namespace mio {
  * ISWR::arg1    = ../input/iswr_mask.dat
  * @endcode
  *
+ * If no arguments are provided, then it will compute the mask from the Digital Elevation Model. In such as case, 
+ * a DEM must be declared in the [Input] section and must contain the stations of interest. Please make sure that the extend of the
+ * DEM is appropriate to correctly compute the shading effects!
  */
 
 class ProcShade : public ProcessingBlock {
 	public:
-		ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path);
+		ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -62,9 +67,10 @@ class ProcShade : public ProcessingBlock {
 		void parse_args(const std::vector<std::string>& vec_args);
 		double getMaskElevation(const double& azimuth) const;
 
+		const Config &cfg;
+		DEMObject dem;
 		std::map<std::string, SunObject> Suns;
 		std::vector< std::pair<double,double> > mask;
-		std::string root_path;
 		
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
 };

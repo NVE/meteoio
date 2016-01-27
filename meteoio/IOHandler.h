@@ -70,10 +70,11 @@ class IOHandler : public IOInterface {
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
+		
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
+		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
-		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
 		void merge_stations(STATIONS_SET& vecStation) const;
 

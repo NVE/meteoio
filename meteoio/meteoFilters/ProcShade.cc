@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include <meteoio/meteoFilters/ProcShade.h>
+#include <meteoio/IOHandler.h>
 #include <meteoio/FileUtils.h>
 
 using namespace std;
@@ -39,8 +40,8 @@ const double ProcShade::soil_albedo = .23; //grass
 const double ProcShade::snow_albedo = .85; //snow
 const double ProcShade::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-ProcShade::ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path)
-        : ProcessingBlock(name), Suns(), mask(), root_path(i_root_path)
+ProcShade::ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg)
+        : ProcessingBlock(name), cfg(i_cfg), dem(), Suns(), mask()
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -60,6 +61,14 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		const SunObject tmp(position.getLat(), position.getLon(), position.getAltitude());
 		Suns[ stationHash ] = tmp;
 		it = Suns.find( stationHash );
+	}
+	
+	//compute the mask from DEM if a DEM is available
+	if (mask.empty()) {
+		Coords position( ovec[0].meta.position );
+		if (!dem.gridify(position))
+			throw NoDataException("In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' is not included in the DEM", AT);
+		dem.getHorizon(position, 10., mask);
 	}
 	
 	for (size_t ii=0; ii<ovec.size(); ii++){
@@ -183,10 +192,11 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 {
 	const size_t nrArgs = vec_args.size();
-	if (nrArgs==0) {
-		//compute from DEM
-		throw InvalidArgumentException("Shading from DEM not implemented yet in filter " + getName(), AT);
+	if (nrArgs==0) { //compute from DEM
+		IOHandler io(cfg);
+		io.readDEM(dem);
 	} else if (nrArgs==1) {
+		const std::string root_path( cfg.getConfigRootDir() );
 		//if this is a relative path, prefix the path with the current path
 		const std::string in_filename = vec_args[0];
 		const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";

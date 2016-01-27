@@ -19,6 +19,7 @@
 #define PROCESSINGBLOCK_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/Config.h>
 #include <vector>
 #include <string>
 #include <set>
@@ -86,7 +87,7 @@ class ProcessingBlock {
 
 class BlockFactory {
 	public:
-		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path);
+		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg);
 };
 
 } //end namespace

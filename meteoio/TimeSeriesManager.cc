@@ -204,8 +204,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 
 	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
-		MeteoData md;
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
+			MeteoData md;
 			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
 			if (success) vecMeteo.push_back(md);
 		}
