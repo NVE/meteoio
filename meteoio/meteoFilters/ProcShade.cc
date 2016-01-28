@@ -36,6 +36,7 @@ struct sort_pred {
 	}
 };
 
+const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 const double ProcShade::soil_albedo = .23; //grass
 const double ProcShade::snow_albedo = .85; //snow
 const double ProcShade::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
@@ -80,16 +81,19 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		}
 	}
 	
-	for (size_t ii=0; ii<ovec.size(); ii++){
+	double Md_prev = IOUtils::nodata;
+	double julian_prev = 0.;
+	for (size_t ii=0; ii<ovec.size(); ii++) { //now correct all timesteps
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
+		if (tmp<diffuse_thresh) continue; //only diffuse radiation, there is nothing to correct
 		
 		it->second.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
 		double sun_azi, sun_elev;
 		it->second.position.getHorizontalCoordinates(sun_azi, sun_elev);
 		
 		const double mask_elev = getMaskElevation(mask->second, sun_azi);
-		if (mask_elev>0 && mask_elev>sun_elev) { //in the shade
+		if (mask_elev>0 && mask_elev>sun_elev) { //the point is in the shade
 			const double TA=ovec[ii](MeteoData::TA), RH=ovec[ii](MeteoData::RH), HS=ovec[ii](MeteoData::HS), RSWR=ovec[ii](MeteoData::RSWR);
 			double ISWR=ovec[ii](MeteoData::ISWR);
 
@@ -98,25 +102,28 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 				if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
-				if (ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+				if (ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata))
 					ISWR = RSWR / albedo;
-				}
 			} else {
 				albedo = RSWR / ISWR;
 				if (albedo>=1.) albedo=0.99;
 				if (albedo<=0.) albedo=0.01;
 			}
 
-			if (ISWR==IOUtils::nodata || TA==IOUtils::nodata || RH==IOUtils::nodata) 
-				continue; //no way to get ISWR and/or potential radiation //HACK use previous valid Md
-
-			it->second.calculateRadiation(TA, RH, albedo);
-			const double Md = it->second.getSplitting(ISWR);
+			const bool has_potRad = (ISWR!=IOUtils::nodata && TA!=IOUtils::nodata && RH!=IOUtils::nodata);
+			if (has_potRad) 
+				it->second.calculateRadiation(TA, RH, albedo);
+			else 
+				if (ovec[ii].date.getJulian(true) - julian_prev > 1.) continue; //no way to get ISWR and/or potential radiation, previous Md is too old
 			
+			const double Md = (has_potRad)? it->second.getSplitting(ISWR) : Md_prev; //fallback: use previous valid value
 			tmp *= Md; //only keep the diffuse radiation, either on RSWR or ISWR
+			if (has_potRad) {
+				Md_prev = Md;
+				julian_prev = ovec[ii].date.getJulian(true);
+			}
 		}
 	}
-	
 }
 
 //linear interpolation between the available points

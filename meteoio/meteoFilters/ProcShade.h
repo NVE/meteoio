@@ -74,7 +74,7 @@ class ProcShade : public ProcessingBlock {
 		std::map<std::string, SunObject> Suns;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		
-		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
+		static const double diffuse_thresh, soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
 };
 
 } //end namespace
