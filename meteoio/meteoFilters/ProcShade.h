@@ -30,11 +30,13 @@ namespace mio {
 /**
  * @class  ProcShade
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2016-01-22
  * @brief Apply a shading mask to the Incoming or Reflected Short Wave Radiation
- * A shading mask (that will be linearly interpolated between the provided points) must be provided in a separate file,
- * simply containing the horizon elevation (in deg.) as a function of azimuth (in deg.):
+ * A shading mask that is either computed from the DEM or read from a separate file will be applied to the radiation
+ * and combined with the radiation splitting model in order to properly compute the shading effects on the measurement point. 
+ * This mask will be linearly interpolated between the provided points in order to be applied to the true sun position.
+ * 
+ * When providing thge shading mask in a separate file, the same mask will be applied to all stations. It simply need to 
+ * contain the horizon elevation (in deg.) as a function of azimuth (in deg.):
  * @code
  * 0	5
  * 15	25
@@ -50,8 +52,8 @@ namespace mio {
  * @endcode
  *
  * If no arguments are provided, then it will compute the mask from the Digital Elevation Model. In such as case, 
- * a DEM must be declared in the [Input] section and must contain the stations of interest. Please make sure that the extend of the
- * DEM is appropriate to correctly compute the shading effects!
+ * a DEM must be declared in the [Input] section and must contain the stations of interest as a mask will be computed for
+ * each station. Please make sure that the extend of the DEM is appropriate to correctly compute the shading effects!
  */
 
 class ProcShade : public ProcessingBlock {
@@ -65,12 +67,12 @@ class ProcShade : public ProcessingBlock {
 		static void readMask(const std::string& filter, const std::string& filename, std::vector< std::pair<double,double> > &o_mask);
 		
 		void parse_args(const std::vector<std::string>& vec_args);
-		double getMaskElevation(const double& azimuth) const;
+		double getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const;
 
 		const Config &cfg;
 		DEMObject dem;
 		std::map<std::string, SunObject> Suns;
-		std::vector< std::pair<double,double> > mask;
+		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
 };

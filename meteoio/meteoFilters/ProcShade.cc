@@ -41,7 +41,7 @@ const double ProcShade::snow_albedo = .85; //snow
 const double ProcShade::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 ProcShade::ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg)
-        : ProcessingBlock(name), cfg(i_cfg), dem(), Suns(), mask()
+        : ProcessingBlock(name), cfg(i_cfg), dem(), Suns(), masks()
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -53,9 +53,10 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ovec.size()==0) return;
 	
-	//check if the station already has an associated SunObject
 	const string stationHash = ovec[0].meta.getHash();
-	map< string, SunObject >::iterator it = Suns.find( stationHash );
+	
+	//check if the station already has an associated SunObject
+	std::map< std::string, SunObject >::iterator it = Suns.find( stationHash );
 	if (it==Suns.end()) {
 		const Coords position( ovec[0].meta.position );
 		const SunObject tmp(position.getLat(), position.getLon(), position.getAltitude());
@@ -63,12 +64,20 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		it = Suns.find( stationHash );
 	}
 	
-	//compute the mask from DEM if a DEM is available
-	if (mask.empty()) {
-		Coords position( ovec[0].meta.position );
-		if (!dem.gridify(position))
-			throw NoDataException("In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' is not included in the DEM", AT);
-		dem.getHorizon(position, 10., mask);
+	//check if the station already has an associated mask, first as wildcard then by station hash
+	std::map< std::string , std::vector< std::pair<double,double> > >::iterator mask = masks.find( "*" );
+	if (mask==masks.end()) {
+		//now look for our specific station hash
+		mask = masks.find( stationHash );
+		if (mask==masks.end()) {
+			Coords position( ovec[0].meta.position );
+			if (!dem.gridify(position))
+				throw NoDataException("In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' is not included in the DEM", AT);
+			std::vector< std::pair<double,double> > tmp_mask;
+			dem.getHorizon(position, 10., tmp_mask);
+			masks[ stationHash ] = tmp_mask;
+			mask = masks.find( stationHash);
+		}
 	}
 	
 	for (size_t ii=0; ii<ovec.size(); ii++){
@@ -79,7 +88,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		double sun_azi, sun_elev;
 		it->second.position.getHorizontalCoordinates(sun_azi, sun_elev);
 		
-		const double mask_elev = getMaskElevation(sun_azi);
+		const double mask_elev = getMaskElevation(mask->second, sun_azi);
 		if (mask_elev>0 && mask_elev>sun_elev) { //in the shade
 			const double TA=ovec[ii](MeteoData::TA), RH=ovec[ii](MeteoData::RH), HS=ovec[ii](MeteoData::HS), RSWR=ovec[ii](MeteoData::RSWR);
 			double ISWR=ovec[ii](MeteoData::ISWR);
@@ -111,7 +120,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 //linear interpolation between the available points
-double ProcShade::getMaskElevation(const double& azimuth) const
+double ProcShade::getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const
 {
 	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(mask.begin(), mask.end(), make_pair(azimuth, 0.), sort_pred()); //first element that is > azimuth
 	
@@ -202,7 +211,9 @@ void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 		const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 		const std::string path = IOUtils::getPath(prefix+in_filename, true);  //clean & resolve path
 		const std::string filename = path + "/" + IOUtils::getFilename(in_filename);
+		std::vector< std::pair<double,double> > mask;
 		readMask(getName(), filename, mask);
+		masks["*"] = mask; //this mask is valid for ALL stations
 	} else
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
