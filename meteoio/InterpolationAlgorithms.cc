@@ -1167,42 +1167,70 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (ALS_scan.empty()) { //read the ALS scan if necessary
 		gridsmanager.read2DGrid(ALS_scan, filename);
 		const double als_mean = ALS_scan.grid2D.getMean();
-		if (als_mean==0.)
-			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul mean for the '"+algo+"' method!", AT);
+		if (als_mean==0. || als_mean==IOUtils::nodata)
+			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul or nodata mean for the '"+algo+"' method!", AT);
 		ALS_scan *= 1./als_mean; //rescale the ALS grid so each cell is between 0 and 1
 	}
 	
 	//check that the ALS scan matches the provided DEM
-	if (!ALS_scan.isSameGeolocalization(dem)) {
+	if (!ALS_scan.isSameGeolocalization(dem))
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
-	} else {
+	else
 		info << IOUtils::getFilename(filename) << " - ";
-	}
 	
 	initGrid(dem, grid);
-	
-	//Take the spatial distribution from the ALS and rescale to "base_algo"
-	const double grid_mean = grid.grid2D.getMean();
-	Grid2DObject tmp_grid( ALS_scan );
-	tmp_grid *= grid_mean;
+	const size_t nxy = grid.getNx()*grid.getNy();
 	
 	// create map of TA to differ between solid and liquid precipitation
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 	
-	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
-	const size_t nxy = grid.getNx()*grid.getNy();
+	//Take the spatial distribution from the ALS and rescale to "base_algo"
+	double grid_sum = 0.;
+	size_t count = 0;
 	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
 		for (size_t jj=0; jj<nxy; jj++) {
-			if (tmp_grid(jj)!=IOUtils::nodata) 
-				grid(jj) = tmp_grid(jj);
+			const double val = grid(jj);
+			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
+			if (val!=IOUtils::nodata && has_Scan ) {
+				grid_sum += val;
+				count++;
+			}
 		}
 	} else { //use local air temperature
 		for (size_t jj=0; jj<nxy; jj++) {
-			if (tmp_grid(jj)!=IOUtils::nodata && ta(jj)!=IOUtils::nodata && ta(jj) < ta_thresh)
-				grid(jj) = tmp_grid(jj);
+			const double val = grid(jj);
+			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
+			const bool has_TA = (ta(jj)!=IOUtils::nodata);
+			if (val!=IOUtils::nodata && has_Scan && has_TA && ta(jj) < ta_thresh) {
+				grid_sum += val;
+				count++;
+			}
 		}
 	}
+
+	if (count==0) return; //no overlap between ALS, TA and initial grid
+	Grid2DObject tmp_grid( ALS_scan );
+	tmp_grid *= (grid_sum / static_cast<double>( count )); //rescale to grid mean
+	
+	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
+	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
+		for (size_t jj=0; jj<nxy; jj++) {
+			double &val = grid(jj);
+			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
+			if (val!=IOUtils::nodata && has_Scan) 
+				val = tmp_grid(jj);
+		}
+	} else { //use local air temperature
+		for (size_t jj=0; jj<nxy; jj++) {
+			double &val = grid(jj);
+			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
+			const bool has_TA = (ta(jj)!=IOUtils::nodata);
+			if (val!=IOUtils::nodata && has_Scan && has_TA && ta(jj) < ta_thresh)
+				val = tmp_grid(jj);
+		}
+	}
+	
 }
 
 
