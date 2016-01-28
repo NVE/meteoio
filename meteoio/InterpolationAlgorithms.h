@@ -573,7 +573,7 @@ class ALS_Interpolation : public InterpolationAlgorithm {
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
 		Grid2DObject ALS_scan;
 		std::string filename, grid2d_path, base_algo, base_algo_user;
-		double ta_thresh; ///< the air temperature must be below a given threshold for the scaling to be applied
+		double ta_thresh, als_mean; ///< the air temperature must be below a given threshold for the scaling to be applied
 		bool inputIsAllZeroes;
 };
 

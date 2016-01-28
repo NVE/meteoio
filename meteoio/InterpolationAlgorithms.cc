@@ -1098,7 +1098,7 @@ ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
 		  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(), 
-		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), inputIsAllZeroes(false) 
+		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), als_mean(IOUtils::nodata), inputIsAllZeroes(false) 
 {
 	const Config cfg( gridsmanager.getConfig() );
 	cfg.getValue("GRID2DPATH", "Input", grid2d_path);
@@ -1166,10 +1166,11 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	
 	if (ALS_scan.empty()) { //read the ALS scan if necessary
 		gridsmanager.read2DGrid(ALS_scan, filename);
-		const double als_mean = ALS_scan.grid2D.getMean();
-		if (als_mean==0. || als_mean==IOUtils::nodata)
-			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul or nodata mean for the '"+algo+"' method!", AT);
-		ALS_scan *= 1./als_mean; //rescale the ALS grid so each cell is between 0 and 1
+		if (ta_thresh==IOUtils::nodata) {
+			als_mean = ALS_scan.grid2D.getMean();
+			if (als_mean==0. || als_mean==IOUtils::nodata)
+				throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul or nodata mean for the '"+algo+"' method!", AT);
+		}
 	}
 	
 	//check that the ALS scan matches the provided DEM
@@ -1185,33 +1186,40 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 	
-	//Take the spatial distribution from the ALS and rescale to "base_algo"
-	double grid_sum = 0.;
-	size_t count = 0;
+	//Compute scaling factors: psum_mean and als_mean according to the pixels selection criteria
+	double psum_mean = 0.;
 	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
+		double psum_sum = 0.;
+		size_t count = 0;
 		for (size_t jj=0; jj<nxy; jj++) {
 			const double val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan ) {
-				grid_sum += val;
+				psum_sum += val;
 				count++;
 			}
 		}
+		if (count==0) return; //no overlap between ALS, TA and initial grid
+		psum_mean = psum_sum / static_cast<double>( count );
 	} else { //use local air temperature
+		double psum_sum = 0., als_sum = 0.;
+		size_t count = 0;
 		for (size_t jj=0; jj<nxy; jj++) {
 			const double val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			const bool has_TA = (ta(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan && has_TA && ta(jj) < ta_thresh) {
-				grid_sum += val;
+				psum_sum += val;
+				als_sum += ALS_scan(jj);
 				count++;
 			}
 		}
+		if (count==0) return; //no overlap between ALS, TA and initial grid
+		psum_mean = psum_sum / static_cast<double>( count );
+		als_mean = als_sum / static_cast<double>( count );
+		if (als_mean==0.)
+			throw InvalidArgumentException("[E] the scaling grid(" + filename + ") can not have a nul mean for the '"+algo+"' method!", AT);
 	}
-
-	if (count==0) return; //no overlap between ALS, TA and initial grid
-	Grid2DObject tmp_grid( ALS_scan );
-	tmp_grid *= (grid_sum / static_cast<double>( count )); //rescale to grid mean
 	
 	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
 	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
@@ -1219,7 +1227,7 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 			double &val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan) 
-				val = tmp_grid(jj);
+				val = ALS_scan(jj) * ( psum_mean / als_mean );
 		}
 	} else { //use local air temperature
 		for (size_t jj=0; jj<nxy; jj++) {
@@ -1227,10 +1235,9 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			const bool has_TA = (ta(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan && has_TA && ta(jj) < ta_thresh)
-				val = tmp_grid(jj);
+				val = ALS_scan(jj) * ( psum_mean / als_mean );
 		}
 	}
-	
 }
 
 
