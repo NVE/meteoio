@@ -346,16 +346,10 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const size_
 }
 
 template<class T> Array2D<T>::Array2D(const size_t& anx, const size_t& any, const T& init) :
-                  vecData(anx*any, init), nx(anx), ny(any), keep_nodata(true)
-{
-	//resize(anx,any,init);
-}
+                  vecData(anx*any, init), nx(anx), ny(any), keep_nodata(true) {}
 
 template<class T> Array2D<T>::Array2D(const size_t& anx, const size_t& any) :
-                  vecData(anx*any), nx(anx), ny(any), keep_nodata(true)
-{
-	//resize(anx,any);
-}
+                  vecData(anx*any), nx(anx), ny(any), keep_nodata(true) {}
 
 template<class T> void Array2D<T>::setKeepNodata(const bool i_keep_nodata) {
 	keep_nodata = i_keep_nodata;
