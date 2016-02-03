@@ -416,7 +416,10 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
 			if (current_date<=previous_date) {
 				const StationData& station = vecVecMeteo[stat_idx][ii].meta;
-				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
+				if (current_date==previous_date)
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
+				else
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO), AT);
 			}
 			previous_date = current_date;
 		}

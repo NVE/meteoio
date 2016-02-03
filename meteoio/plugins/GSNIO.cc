@@ -160,7 +160,7 @@ void GSNIO::readStationData(const Date& date, std::vector<StationData>& vecStati
 
 	const size_t nrStations = vecStationName.size();
 	vector<MeteoData> vecMeteo;
-	for (size_t ii=0; ii<nrStations; ii++){ //loop through stations
+	for (size_t ii=0; ii<nrStations; ii++) { //loop through stations
 		vecMeteo.clear();
 		readData(date, date, vecMeteo, ii);
 		vecStation.push_back( vecMeteo[0].meta );
@@ -304,8 +304,11 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 		do { //parse data section, the first line should already be buffered
 			if (line.empty() || (line[0] == '#') || !isdigit(line[0])) continue; //skip empty lines
-			parse_streamElement(line, index, vecMeteo, tmpmeteo);
+			parse_streamElement(line, index, tmpmeteo);
+			vecMeteo.push_back( tmpmeteo );
 		} while (getline(ss, line));
+		if (vecMeteo.empty()) //ie the data section was empty
+			vecMeteo.push_back( tmpmeteo );
 	} else {
 		if (gsn_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";
@@ -388,7 +391,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	}
 }
 
-void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const
+void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, MeteoData& tmpmeteo) const
 {
 	static vector<string> data;
 	static double timestamp;
@@ -408,13 +411,10 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 		if (value.empty()) continue; //skip empty values
 
 		const size_t idx = index[valid_idx++];
-		if (value != GSNIO::null_string){
-			IOUtils::convertString(tmpmeteo(idx), value);
-		}
+		if (value != GSNIO::null_string) IOUtils::convertString(tmpmeteo(idx), value);
 	}
 
 	convertUnits(tmpmeteo);
-	vecMeteo.push_back( tmpmeteo );
 }
 
 void GSNIO::readAssimilationData(const Date&, Grid2DObject&)

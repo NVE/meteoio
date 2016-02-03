@@ -73,8 +73,7 @@ class GSNIO : public IOInterface {
 		bool parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index);
-		void parse_streamElement(const std::string& line, const std::vector<size_t>& index,
-		                         std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const;
+		void parse_streamElement(const std::string& line, const std::vector<size_t>& index, MeteoData& tmpmeteo) const;
 
 		void initGSNConnection();
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
