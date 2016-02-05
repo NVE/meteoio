@@ -29,37 +29,41 @@ namespace mio {
 /**
  * @class FilterSnowNosnow
  * @ingroup processing
- * @author Anna-Maria Tilg and Mathias Bavay
- * @date   2015-12-16
  * @brief This filter is used to distinguish if snow (HS) is on the ground or not, because the 
  * ultrasonic sensor cannot distinguish between snow or vegetation/grass on the ground. 
  * The filter is based on total snow depth (HS), snow surface temperature (TSS), ground surface temperature (TSG)
  * and reflected shortwave radiation (RSWR). 
  * Different steps to do: 
- * #step 1#: calculate possible offset of TSS (raison: at some stations in some springs the TSS increases 
+ *    -# calculate possible offset of TSS (raison: at some stations in some springs the TSS increases 
  * although snow is still on the ground) 
- * #step 2#: calculate correlation of TSS and TSG in spring (normally both temperatures increase at the same 
+ *    -# calculate correlation of TSS and TSG in spring (normally both temperatures increase at the same 
  * time in spring which results in a high correlation; low correlation if TSS and TSG increase not parallel 
  * which leads in connection with a high offset of TSS to the assumption, that TSS is false) 
- * #step 3a#: if TSS has a low offset and the correlation between TSS and TSG is high, the algorithm 
+ *    -# if TSS has a low offset and the correlation between TSS and TSG is high, the algorithm 
  * analyses based on the daily Max/Min/Mean of TSS if snow is on the ground or not 
- * #step 3b#: if no TSS is available or the offset of TSS is high/correlation of TSS and TSG is low, the 
+ *    -# if no TSS is available or the offset of TSS is high/correlation of TSS and TSG is low, the 
  * algorithm analyses based on the variance of TSG and the value of TSG if snow is on the ground or 
- * not. 
+ * not.
+ * 
  * References/Literature: Tilg, A.-M., Marty C. and G. Klein, 2015: An automatic algorithm for validating snow 
- * depth measurements of IMIS stations. Swiss Geoscience Meeting 2015    
- * Remarks:
+ * depth measurements of IMIS stations. Swiss Geoscience Meeting 2015
+ * 
+ * \note
  * - one of the used criteria is currently only valid for mid-northern latitudes;
  * - nodata values are excluded ?????? => checken  
  * - Two arguments expected (both have to be fulfilled for the filter to start operating):
- *   - minimal number of points in window
- *   - minimal time interval spanning the window (in seconds)
+ *     - minimal number of points in window
+ *     - minimal time interval spanning the window (in seconds)
  * - only window position "center" possible
  * - keyword "soft" not allowed 
+ * 
  *
  * @code
- * HS::filter1	= FilterSnowNosnow
+ * HS::filter1	= SNOS
  * @endcode
+ * 
+ * @author Anna-Maria Tilg and Mathias Bavay
+ * @date   2015-12-16
  */
 
 class FilterSnowNosnow : public FilterBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
@@ -72,14 +76,14 @@ class FilterSnowNosnow : public FilterBlock { //use this one for simple filter t
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec);
-		void filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec);
+		bool filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec);
+		bool filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec);
 		void parse_args(std::vector<std::string> vec_args);
 		
 		static double getTssTsgCorrelation(const std::vector<MeteoData>& ovec, const size_t& firstWarmDay_idx);
 		static void findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx);
 		static double getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec);
-		static void getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc);
+		static bool getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc);
 		static void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean);
 		static double getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start);
 		static Date getDailyStart(const Date& resampling_date);

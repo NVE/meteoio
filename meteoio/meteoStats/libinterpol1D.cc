@@ -29,7 +29,7 @@ namespace mio {
 
 double Interpol1D::min_element(const std::vector<double>& X)
 {
-	double Xmin=Cst::dbl_max;
+	double Xmin = Cst::dbl_max;
 	for (size_t ii=0; ii<X.size(); ii++) {
 		if (X[ii]==IOUtils::nodata) continue;
 		if (X[ii]<Xmin) Xmin=X[ii];
@@ -41,7 +41,7 @@ double Interpol1D::min_element(const std::vector<double>& X)
 
 double Interpol1D::max_element(const std::vector<double>& X)
 {
-	double Xmax=-Cst::dbl_max;
+	double Xmax = -Cst::dbl_max;
 	for (size_t ii=0; ii<X.size(); ii++) {
 		if (X[ii]==IOUtils::nodata) continue;
 		if (X[ii]>Xmax) Xmax=X[ii];
@@ -72,18 +72,15 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	//in order to properly escape nodata points, we need to copy in a temporary vector
 	vector<double> vecTemp;
 	for (size_t i=0; i<Xsize; i++) {
-		const double& value=X[i];
-		if (value!=IOUtils::nodata)
-			vecTemp.push_back(value);
+		const double value=X[i];
+		if (value!=IOUtils::nodata) vecTemp.push_back(value);
 	}
 
 	//we will store results in a new vector
 	std::vector<double> vecResults(Qsize, IOUtils::nodata);
 
 	const size_t vecSize = vecTemp.size();
-	if (vecSize == 0) {
-		return vecResults; //ie: nodata values
-	}
+	if (vecSize == 0) return vecResults; //ie: nodata values
 	if (vecSize == 1) {
 		std::fill(vecResults.begin(), vecResults.end(), vecTemp[0]);
 		return vecResults;
@@ -290,8 +287,7 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 
 	std::vector< std::pair<double,double> > new_vec;
 	for (size_t i=0; i<Xsize; i++) {
-		if ( !keep_nodata && (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) )
-			continue;
+		if ( !keep_nodata && (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) ) continue;
 		const std::pair<double,double> tmp(X[i],Y[i]);
 		new_vec.push_back( tmp );
 	}
@@ -411,7 +407,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& kee
 
 		vector<double> vecTemp;
 		for (size_t i=0; i<vecData.size(); i++) {
-			const double& value=vecData[i];
+			const double value = vecData[i];
 			if (value!=IOUtils::nodata)
 				vecTemp.push_back(value);
 		}
@@ -443,10 +439,16 @@ double Interpol1D::getMedianAverageDeviation(std::vector<double> vecData, const 
 	return mad;
 }
 
+/**
+ * @brief Compute the variance of a vector of data
+ * It is computed using a compensated variance algorithm,
+ * (see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
+ * in order to be more robust to small variations around the mean.
+ * @param X vector of data
+ * @return variance or IOUtils::nodata
+ */
 double Interpol1D::variance(const std::vector<double>& X)
-{//The variance is computed using a compensated variance algorithm,
-//(see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
-//in order to be more robust to small variations around the mean.
+{
 	const size_t n = X.size();
 	size_t count=0;
 	double sum=0.;
@@ -488,8 +490,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 
 	const double X_mean = Interpol1D::arithmeticMean(X);
 	const double Y_mean = Interpol1D::arithmeticMean(Y);
-	if (X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata)
-		return IOUtils::nodata;
+	if (X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata) return IOUtils::nodata;
 
 	size_t count=0;
 	double sum=0.;
