@@ -39,21 +39,29 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 	
 	//find first tag of the Spring when min(TSS)>1C for 24 hours
 	size_t tssWarmDay_idx, tsgWarmDay_idx;
-	findFirstWarmDay(ovec, tssWarmDay_idx, tsgWarmDay_idx); //HACK: how to handle NO warm days?
-	const Date warmDayTSS( ovec[tssWarmDay_idx].date );
-	const Date warmDayTSG( ovec[tsgWarmDay_idx].date );
+	findFirstWarmDay(ovec, tssWarmDay_idx, tsgWarmDay_idx);
+	const Date warmDayTSS = (tssWarmDay_idx!=IOUtils::npos)? ovec[tssWarmDay_idx].date : Date(0.); //ie disable the check if not found
+	const Date warmDayTSG = (tsgWarmDay_idx!=IOUtils::npos)? ovec[tsgWarmDay_idx].date : ovec.back().date; //ie disable the check if not found
 	
 	//find correlation between TSS and TSG for the 7 days after the firstWarmDay
 	const double tss_tsg_correlation = getTssTsgCorrelation(ovec, tssWarmDay_idx);
+	const bool has_correlation = (tss_tsg_correlation!=IOUtils::nodata);
 	
 	//now perform the filtering, one point after another
-	for (size_t ii=0; ii<ovec.size(); ii++){
-		const bool has_TSS = (ovec[ii](MeteoData::TSS)!=IOUtils::nodata);
+	for (size_t ii=0; ii<ovec.size(); ii++) {
+		const Date curr_date( ovec[ii].date );
+		const Date day_start = getDailyStart( curr_date );
+		if (day_start!=prev_day) {
+			int year, day;
+			ovec[ii].date.getDate(year, month, day);
+			getTSSDailyPpt(ovec, day_start, TSS_daily_min, TSS_daily_max, TSS_daily_mean);
+			prev_day = day_start;
+		}
+		
+		const bool has_TSS = (TSS_daily_min!=IOUtils::nodata); //for TSS, only daily values are required
 		const bool has_TSG = (ovec[ii](MeteoData::TSG)!=IOUtils::nodata);
 		if (has_TSS && has_TSG) {
-			const bool has_correlation = (tss_tsg_correlation!=IOUtils::nodata);
 			if (has_correlation) {
-				const Date curr_date( ovec[ii].date );
 				if (curr_date>warmDayTSG || curr_date<warmDayTSS || warmDayTSG<warmDayTSS) {
 					filterOnTss(param, ii, 0., ovec);
 				} else {
@@ -76,13 +84,13 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 	}
 }
 
-bool FilterSnowNosnow::filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec)
+void FilterSnowNosnow::filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec)
 {
 	double& value = ovec[ii](param);
-	if (value==IOUtils::nodata) return false;
+	if (value==IOUtils::nodata) return;
 	
 	const double TSG = ovec[ii](MeteoData::TSG);
-	if (TSG==IOUtils::nodata) return false;
+	if (TSG==IOUtils::nodata) return;
 	
 	//compute TSG daily variance
 	const Date day_start = getDailyStart(ovec[ii].date);
@@ -92,22 +100,13 @@ bool FilterSnowNosnow::filterOnTsg(const unsigned int& param, const size_t& ii, 
 	}
 	
 	if (TSG>IOUtils::C_TO_K(7.) || TSG_daily_var>1.) value = 0.;
-	return true;
 }
 
-bool FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec)
+void FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec)
 {
 	double& value = ovec[ii](param);
-	if (value==IOUtils::nodata) return false;
-	
-	const Date day_start = getDailyStart(ovec[ii].date);
-	if (day_start!=prev_day) {
-		int year, day;
-		ovec[ii].date.getDate(year, month, day);
-		getTSSDailyPpt(ovec, day_start, TSS_daily_min, TSS_daily_max, TSS_daily_mean);
-		prev_day = day_start;
-	}
-	if (TSS_daily_min==IOUtils::nodata) return false; //either we have all three or we have none
+	if (value==IOUtils::nodata) return;
+	if (TSS_daily_min==IOUtils::nodata) return;
 	
 	//HACK: this is location dependant...
 	if (month>=7 && month<=12) { //early snow season
@@ -123,7 +122,6 @@ bool FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, 
 	} else { //late snow season
 		if ((TSS_daily_mean+tss_offset)>IOUtils::C_TO_K(0.) && (TSS_daily_max+tss_offset)>=IOUtils::C_TO_K(5.)) value = 0.;
 	}
-	return true;
 }
 
 double FilterSnowNosnow::getTssTsgCorrelation(const std::vector<MeteoData>& ovec, const size_t& firstWarmDay_idx)
@@ -153,7 +151,7 @@ void FilterSnowNosnow::findFirstWarmDay(const std::vector<MeteoData>& ovec, size
 		const Date current = ovec[ii].date;
 		int year, month, day;
 		current.getDate(year, month, day);
-		if (month>=9) continue;
+		if (month>=9) continue; //HACK: this is location dependant...
 			
 		double TSS_min = Cst::dbl_max;
 		double TSG_min = Cst::dbl_max;
