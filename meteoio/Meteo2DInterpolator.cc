@@ -441,9 +441,9 @@ size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO
 			const size_t grid_j = v_stations[ii].position.getGridJ();
 			
 			//check if this is a standard MeteoData parameter
-			const  MeteoData::Parameters meteo_param = static_cast<MeteoData::Parameters>( vecMeteo[ii].getParameterIndex( MeteoGrids::getParameterName(grid_param) )); //is this name also a meteoparameter?
+			const  size_t meteo_param = vecMeteo[ii].getParameterIndex( MeteoGrids::getParameterName(grid_param) ); //is this name also a meteoparameter?
 			if (meteo_param!=IOUtils::npos)
-				vecMeteo[ii](meteo_param) = grid(grid_i, grid_j);
+				vecMeteo[ii]( static_cast<MeteoData::Parameters>(meteo_param) ) = grid(grid_i, grid_j);
 		}
 	}
 	
