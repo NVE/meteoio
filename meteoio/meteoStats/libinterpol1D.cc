@@ -478,7 +478,9 @@ double Interpol1D::variance(const std::vector<double>& X)
 }
 
 double Interpol1D::std_dev(const std::vector<double>& X) {
-	return sqrt(variance(X));
+	const double var = variance(X);
+	if (var==IOUtils::nodata) return IOUtils::nodata;
+	return sqrt(var);
 }
 
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
