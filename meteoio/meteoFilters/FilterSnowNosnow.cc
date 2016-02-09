@@ -53,7 +53,7 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 		const Date day_start = getDailyStart( curr_date );
 		if (day_start!=prev_day) {
 			int year, day;
-			ovec[ii].date.getDate(year, month, day);
+			curr_date.getDate(year, month, day);
 			getTSSDailyPpt(ovec, day_start, TSS_daily_min, TSS_daily_max, TSS_daily_mean);
 			prev_day = day_start;
 		}
@@ -108,19 +108,22 @@ void FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, 
 	if (value==IOUtils::nodata) return;
 	if (TSS_daily_min==IOUtils::nodata) return;
 	
+	if ((TSS_daily_mean+tss_offset)>IOUtils::C_TO_K(0.) && (TSS_daily_max+tss_offset)>=IOUtils::C_TO_K(5.)) {
+		value = 0.;
+		return;
+	}
+	
 	//HACK: this is location dependant...
 	if (month>=7 && month<=12) { //early snow season
 		if ((TSS_daily_min+tss_offset)>=IOUtils::C_TO_K(2.)) {
 			value = 0.;
 		} else {
-			if ((TSS_daily_min+tss_offset)>=IOUtils::C_TO_K(0.)) {
-				if (value<0.4) value = 0.;
-			} else {
-				if ((TSS_daily_max+tss_offset)>=IOUtils::C_TO_K(2.)) value = 0.;
+			if ((TSS_daily_min+tss_offset)>=IOUtils::C_TO_K(0.) && value<0.4) {
+				value = 0.;
+			} else if ((TSS_daily_min+tss_offset)<IOUtils::C_TO_K(0.) && (TSS_daily_max+tss_offset)>=IOUtils::C_TO_K(2.)) {
+				value = 0.;
 			}
 		}
-	} else { //late snow season
-		if ((TSS_daily_mean+tss_offset)>IOUtils::C_TO_K(0.) && (TSS_daily_max+tss_offset)>=IOUtils::C_TO_K(5.)) value = 0.;
 	}
 }
 

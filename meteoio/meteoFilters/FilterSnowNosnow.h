@@ -45,8 +45,8 @@ namespace mio {
  * algorithm analyses based on the variance of TSG and the value of TSG if snow is on the ground or 
  * not.
  * 
- * References/Literature: Tilg, A.-M., Marty C. and G. Klein, 2015: An automatic algorithm for validating snow 
- * depth measurements of IMIS stations. Swiss Geoscience Meeting 2015
+ * References/Literature: Tilg, A.-M., Marty C. and G. Klein, <i>"An automatic algorithm for validating snow 
+ * depth measurements of IMIS stations"</i>, 2015. Swiss Geoscience Meeting 2015
  * 
  * \note
  * - two of the used criterias are currently only valid for mid-northern latitudes (months when the season might start);

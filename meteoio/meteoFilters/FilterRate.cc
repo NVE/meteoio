@@ -71,8 +71,10 @@ void FilterRate::parse_args(const std::vector<std::string>& vec_args) {
 
 	const size_t nb_args = filter_args.size();
 	if (nb_args == 2) {
-		min_rate_of_change = filter_args[0];
-		max_rate_of_change = filter_args[1];
+		const double arg1 = filter_args[0];
+		const double arg2 = filter_args[1];
+		min_rate_of_change = std::min(arg1, arg2);
+		max_rate_of_change = std::max(arg1, arg2);
 	} else if (nb_args == 1) {
 		min_rate_of_change = -filter_args[0];
 		max_rate_of_change = filter_args[0];
