@@ -156,7 +156,6 @@ class Grid2DObject {
 		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
 		* range of values. Each cluster comes with an 'id' that replaces the values of the points.
 		*
-		*
 		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a cluster
 		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1
 		* @return true if clusturization was succesfull

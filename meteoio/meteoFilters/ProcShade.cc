@@ -72,8 +72,10 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		mask = masks.find( stationHash );
 		if (mask==masks.end()) {
 			Coords position( ovec[0].meta.position );
-			if (!dem.gridify(position))
-				throw NoDataException("In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' is not included in the DEM", AT);
+			if (!dem.gridify(position)) {
+				const string msg = "In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' "+position.toString(Coords::LATLON)+" is not included in the DEM "+dem.llcorner.toString(Coords::LATLON);
+				throw NoDataException(msg, AT);
+			}
 			std::vector< std::pair<double,double> > tmp_mask;
 			dem.getHorizon(position, 10., tmp_mask);
 			masks[ stationHash ] = tmp_mask;

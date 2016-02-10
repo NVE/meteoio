@@ -468,28 +468,34 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 	if (merge_commands.empty()) return;
 	
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const string toStationID = IOUtils::strToUpper(vecStation[ii].stationID);
+		const string toStationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
 		const map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
-		const vector<string> &merge_from( it->second );
-		for (size_t idx=0; idx<merge_from.size() ; ++idx) {
-			const string fromStationID( merge_from[idx] );
+		const std::vector<std::string> &merge_from( it->second );
+		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
+			const string fromStationID( *it_set );
 			
+			bool found = false;
 			for (size_t jj=0; jj<vecStation.size(); jj++) {
-				const string curr_station = IOUtils::strToUpper(vecStation[jj].stationID);
-				if (curr_station==fromStationID) vecStation[ii].merge( vecStation[jj] );
+				const string curr_station( IOUtils::strToUpper(vecStation[jj].stationID) );
+				if (curr_station==fromStationID) {
+					vecStation[ii].merge( vecStation[jj] );
+					found = true;
+				}
 			}
+			if (!found)
+				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'", AT);
 		}
 	}
 	
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const string toStationID = vecStation[ii].stationID;
-		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), toStationID);
+		const string stationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
+		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
 		if ( it!=merged_stations.end() ) {
 			std::swap( vecStation[ii], vecStation.back() );
 			vecStation.pop_back();
@@ -505,31 +511,36 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
-		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
-
+		const string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
 		const map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
-		const vector<string> &merge_from( it->second );
-		for (size_t idx=0; idx<merge_from.size(); ++idx) { //loop over the stations to merge to the "toStation"
-			const string fromStationID( merge_from[idx] );
+		const std::vector<std::string> &merge_from( it->second );
+		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
+			const string fromStationID( *it_set );
+			
+			bool found = false;
 			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) { //loop over the available stations in the current dataset
 				if (vecVecMeteo[jj].empty()) continue;
-				const string curr_station = IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID);
-				if (curr_station==fromStationID)
+				const string curr_station( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
+				if (curr_station==fromStationID) {
 					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]);
+					found = true;
+				}
 			}
+			if (!found)
+				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'", AT);
 		}
 	}
 	
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
 		if (vecVecMeteo[ii].empty())  continue;
-		const string toStationID = IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID);
-		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), toStationID);
+		const string stationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
 		if ( it!=merged_stations.end() ) {
 			std::swap( vecVecMeteo[ii], vecVecMeteo.back() );
 			vecVecMeteo.pop_back();
@@ -671,16 +682,15 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
-		const string stationID = IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID);
+		const string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
 		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
 		if (it == excluded_params.end()) continue;
 
 		const set<string> excluded = it->second;
 
 		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) { //loop over the timesteps
-			std::set<std::string>::const_iterator it_set;
-			for (it_set=excluded.begin(); it_set != excluded.end(); ++it_set) {
-				const string param = *it_set;
+			for (std::set<std::string>::const_iterator it_set=excluded.begin(); it_set != excluded.end(); ++it_set) {
+				const string param( *it_set );
 				if (vecVecMeteo[station][ii].param_exists(param))
 					vecVecMeteo[station][ii](param) = IOUtils::nodata;
 			}
@@ -698,7 +708,7 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
 		
-		const string stationID = IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID);
+		const string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
 		const map< string, set<string> >::const_iterator it = kept_params.find(stationID);
 		if (it == kept_params.end()) continue;
 
@@ -709,9 +719,8 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 			MeteoData md( md_ref );
 			md.reset(); //delete all meteo fields
 			
-			std::set<std::string>::const_iterator it_set;
-			for (it_set=kept.begin(); it_set != kept.end(); ++it_set) { //loop over the parameters to keep
-				const string param = *it_set;
+			for (std::set<std::string>::const_iterator it_set=kept.begin(); it_set != kept.end(); ++it_set) { //loop over the parameters to keep
+				const string param( *it_set);
 				if (!md.param_exists(param)) continue;
 				 md(param) = md_ref(param);
 			}
