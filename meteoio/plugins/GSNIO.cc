@@ -294,6 +294,8 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 				throw NotFoundException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
 			if (ss.str().find("doesn't have access to the sensor") != std::string::npos) 
 				throw AccessException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
+			if (ss.str().find("There is no user with the provided") != std::string::npos)
+				throw AccessException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
 			if (gsn_debug) {
 				std::cout << "****\nRequest: " << request << "\n";
 				std::cout << "Reply: " << ss.str() << "\n****\n";
