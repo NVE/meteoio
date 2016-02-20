@@ -68,7 +68,7 @@ namespace mio {
  * - GSN_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
- * This may result in a very long download.
+ * This may result in a very, very long download.
  *
  * @code
  * METEO	= GSN
@@ -167,15 +167,13 @@ void GSNIO::readStationData(const Date& date, std::vector<StationData>& vecStati
 	}
 }
 
-void GSNIO::buildStation(const std::string& id, const std::string& name, const double& lat, const double& lon,
+void GSNIO::buildStation(const std::string& vs_name, const std::string& full_name, const double& lat, const double& lon,
                          const double& alt, const double& slope_angle, const double& slope_azi, StationData &sd) const
 {
 	Coords current_coord(coordin, coordinparam);
 	current_coord.setLatLon(lat, lon, alt);
-	if (id.empty()) 
-		sd.setStationData(current_coord, name, name);
-	else
-		sd.setStationData(current_coord, id, name);
+	const string name = (!full_name.empty())? full_name : vs_name;
+	sd.setStationData(current_coord, vs_name, full_name);
 
 	if (slope_angle != IOUtils::nodata) {
 		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
@@ -198,7 +196,7 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 	const string fields_str("# fields:");
 	const string units_str("# units:");
 
-	string name, id, azi;
+	string full_name, vs_name, azi;
 	double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
 	unsigned int valid = 0;
 
@@ -212,17 +210,17 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 		if (isdigit(line[0])) {
 		//if (line.empty() || (line[0] != '#')) { //reached end of metadata
 			if (valid == 15) { // Last station was valid: store StationData
-				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+				buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
 				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
 			}
 			return false; //no more stations left to read
 		}
 
 		if (!line.compare(0, vsname_str.size(), vsname_str)) { //sensor name
-			name = line.substr(vsname_str.size());
-			IOUtils::trim(name);
+			vs_name = line.substr(vsname_str.size());
+			IOUtils::trim(vs_name);
 			if (valid == 15) { // Last station was valid: store StationData
-				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+				buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
 				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
 				return true; //more stations left to read
 			}
@@ -237,8 +235,8 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 			IOUtils::convertString(lon, line.substr(longitude_str.size()));
 			valid |= 8;
 		} else if (!line.compare(0, name_str.size(), name_str)) { // optional: full name
-			name = line.substr(name_str.size());
-			IOUtils::trim(name);
+			full_name = line.substr(name_str.size());
+			IOUtils::trim(full_name);
 		} else if (!line.compare(0, slope_str.size(), slope_str)) { //optional: slope
 			IOUtils::convertString(slope_angle, line.substr(slope_str.size()));
 		} else if (!line.compare(0, exposition_str.size(), exposition_str)) { //optional: exposition
@@ -256,7 +254,7 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 	}
 
 	if (valid == 15) { // Last station was valid: store StationData
-		buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+		buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
 		return true;
 	} else
 		return false; //no more metadata to read
@@ -290,12 +288,15 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
 		if (units.empty() || fields.empty()) {
-			if (ss.str().find("doesn't exist in GSN!") != std::string::npos) 
-				throw NotFoundException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
-			if (ss.str().find("doesn't have access to the sensor") != std::string::npos) 
-				throw AccessException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
+			//when printing out a GSN error message, the # and ' ' have to be stripped from the begining -> substr(2)
+			if (ss.str().find("doesn't exist in GSN!") != std::string::npos)
+				throw NotFoundException(ss.str().substr(2), AT);
+			if (ss.str().find("doesn't have access to the sensor") != std::string::npos)
+				throw AccessException(ss.str().substr(2), AT);
 			if (ss.str().find("There is no user with the provided") != std::string::npos)
-				throw AccessException(ss.str().substr(2), AT); //strip the # and ' ' from the begining
+				throw AccessException(ss.str().substr(2), AT);
+			if (ss.str().find("The query consumed too many server resources!") != std::string::npos)
+				throw IOException(ss.str().substr(2), AT);
 			if (gsn_debug) {
 				std::cout << "****\nRequest: " << request << "\n";
 				std::cout << "Reply: " << ss.str() << "\n****\n";

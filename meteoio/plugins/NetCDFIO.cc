@@ -207,9 +207,11 @@ void NetCDFIO::parseInputOutputSection()
 	if (!out_schema.empty()) initAttributesMap(out_schema, out_attributes);
 	else initAttributesMap("ECMWF", out_attributes);
 	
-	string in_grid2d_path;
-	cfg.getValue("GRID2DPATH", "Input", in_grid2d_path, IOUtils::nothrow);
-	if (!in_grid2d_path.empty()) scanMeteoPath(in_grid2d_path,  cache_meteo_files);
+	const std::string in_meteo = cfg.get("METEO", "Input", IOUtils::nothrow);
+	if (in_meteo == "NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		const string in_grid2d_path = cfg.get("GRID2DPATH", "Input", IOUtils::nothrow);
+		if (!in_grid2d_path.empty()) scanMeteoPath(in_grid2d_path,  cache_meteo_files);
+	}
 }
 
 void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids::Parameters, attributes> &attr)

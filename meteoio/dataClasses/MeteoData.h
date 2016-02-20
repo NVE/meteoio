@@ -90,7 +90,7 @@ class MeteoGrids {
 		//static methods
 		static std::vector<std::string> paramname;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
+		static bool initStaticData();///<initialize the static vector paramname
 };
 
 /**
@@ -275,7 +275,7 @@ class MeteoData {
 		static std::vector<std::string> s_default_paramname; ///<Associate a name with meteo parameters in Parameters
 		static const double epsilon; ///<for comparing fields
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
+		static bool initStaticData();///<initialize the static vector s_default_paramname
 
 		//private data members, please keep the order consistent with declaration lists and logic!
 		std::vector<std::string> extra_param_name;
