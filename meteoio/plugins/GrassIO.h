@@ -25,9 +25,6 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
 
 namespace mio {
 
@@ -44,7 +41,6 @@ class GrassIO : public IOInterface {
 		GrassIO(const std::string& configfile);
 		GrassIO(const GrassIO&);
 		GrassIO(const Config&);
-		~GrassIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -66,11 +62,7 @@ class GrassIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void cleanup() throw();
-
 		const Config cfg;
-		std::ifstream fin; //Input file streams
-		std::ofstream fout;//Output file streams
 		static const double plugin_nodata;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

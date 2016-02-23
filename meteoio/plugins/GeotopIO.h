@@ -25,8 +25,6 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
 
 namespace mio {
 
@@ -43,7 +41,6 @@ class GeotopIO : public IOInterface {
 		GeotopIO(const std::string& configfile);
 		GeotopIO(const GeotopIO&);
 		GeotopIO(const Config&);
-		~GeotopIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -72,15 +69,12 @@ class GeotopIO : public IOInterface {
 		                     std::vector<size_t>& indices, MeteoData& md);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
-		void cleanup() throw();
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
 		void parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec);
 
 		const Config cfg;
 		double in_tz, out_tz;
 		size_t nr_of_stations;
-		std::ifstream fin; //Input file streams
-		std::ofstream fout; //Output file streams
 		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
 		std::vector<mio::StationData> vecStation;
 		std::map<std::string, size_t> mapColumnNames;

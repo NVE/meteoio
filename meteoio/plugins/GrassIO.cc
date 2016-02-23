@@ -17,6 +17,10 @@
 */
 #include "GrassIO.h"
 
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+
 using namespace std;
 
 namespace mio {
@@ -42,30 +46,15 @@ namespace mio {
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 GrassIO::GrassIO(const std::string& configfile)
-        : cfg(configfile), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 GrassIO::GrassIO(const Config& cfgreader)
-        : cfg(cfgreader), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-}
-
-GrassIO::~GrassIO() throw()
-{
-	cleanup();
-}
-
-void GrassIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 }
 
 void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
@@ -82,7 +71,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
-	fin.clear();
+	std::ifstream fin;
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
 		throw AccessException(filename, AT);
@@ -152,10 +141,10 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			}
 		}
 	} catch(const std::exception&) {
-		cleanup();
+		fin.close();
 		throw;
 	}
-	cleanup();
+	fin.close();
 }
 
 void GrassIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
@@ -223,6 +212,7 @@ void GrassIO::readPOI(std::vector<Coords>&)
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	if (!IOUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
+	std::ofstream fout;
 	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {
 		throw AccessException(name, AT);
@@ -265,11 +255,11 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		}
 	} catch(const std::exception& e) {
 		cerr << "[E] " << AT << ": " << e.what() << std::endl;
-		cleanup();
+		fout.close();
 		throw;
 	}
 
-	cleanup();
+	fout.close();
 }
 
 void GrassIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
