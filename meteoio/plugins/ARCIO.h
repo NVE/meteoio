@@ -25,8 +25,6 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
 
 namespace mio {
 
@@ -44,7 +42,6 @@ class ARCIO : public IOInterface {
 		ARCIO(const std::string& configfile);
 		ARCIO(const ARCIO&);
 		ARCIO(const Config&);
-		~ARCIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -65,12 +62,9 @@ class ARCIO : public IOInterface {
 
 	private:
 		void getGridPaths();
-		void cleanup() throw();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
 		const Config cfg;
 
-		std::ifstream fin; //Input file streams
-		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string grid2dpath_in, grid2dpath_out;
 		std::string grid2d_ext_in, grid2d_ext_out; //file extension

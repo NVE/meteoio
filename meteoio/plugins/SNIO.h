@@ -25,8 +25,6 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
 
 namespace mio {
 
@@ -43,7 +41,6 @@ class SNIO : public IOInterface {
 		SNIO(const std::string& configfile);
 		SNIO(const SNIO&);
 		SNIO(const Config& cfgreader);
-		~SNIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -66,8 +63,7 @@ class SNIO : public IOInterface {
 
 	private:
 		std::string file_pos(const std::string& filename, const size_t& linenr);
-		void writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string& station_name);
-		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name);
+		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name, std::ofstream& fout);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );
@@ -77,14 +73,11 @@ class SNIO : public IOInterface {
 		void readMetaData();
 		std::string getStationID(const std::string& filename);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
-		void cleanup() throw();
 
 		const Config cfg;
 		std::vector<StationData> vecAllStations;
 		std::vector<std::string> vecFilenames;
 		std::vector< IOUtils::FileIndexer > vecIndex;
-		std::ifstream fin; //Input file streams
-		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_tz, out_tz;
 		static const char* dflt_extension;

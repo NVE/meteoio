@@ -50,7 +50,7 @@ const double PGMIO::plugin_nodata = 0.; //plugin specific nodata value. It can a
 PGMIO::PGMIO(const std::string& configfile)
        : cfg(configfile),
          coordin(), coordinparam(), coordout(), coordoutparam(),
-         fin(), fout(), grid2dpath_in(), grid2dpath_out()
+         grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getGridPaths();
@@ -59,7 +59,7 @@ PGMIO::PGMIO(const std::string& configfile)
 PGMIO::PGMIO(const Config& cfgreader)
        : cfg(cfgreader),
          coordin(), coordinparam(), coordout(), coordoutparam(),
-         fin(), fout(), grid2dpath_in(), grid2dpath_out()
+         grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getGridPaths();
@@ -67,23 +67,17 @@ PGMIO::PGMIO(const Config& cfgreader)
 
 void PGMIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
-	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
-	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
+	string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	if (grid_in == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	tmp.clear();
-	cfg.getValue("GRID2D", "Output", tmp, IOUtils::nothrow);
-	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
+	string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
+	if (grid_out == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 }
 
-PGMIO::~PGMIO() throw() {
-
-}
-
-size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename) {
+size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename, std::ifstream& fin) 
+{
 	std::string line;
-
 	while (!fin.eof()) {
 		getline(fin, line);
 		IOUtils::trim(line);
@@ -106,8 +100,8 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	if (!IOUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
-	fin.clear();
 	errno = 0;
+	std::ifstream fin;
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
@@ -120,17 +114,17 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	//Go through file, save key value pairs
 	try {
 		//read header: magic value
-		if (getNextHeader(tmpvec, full_name)!=1) {
+		if (getNextHeader(tmpvec, full_name, fin)!=1) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		//read header: image width and height
-		if (getNextHeader(tmpvec, full_name)!=2) {
+		if (getNextHeader(tmpvec, full_name, fin)!=2) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(ncols, tmpvec[0]);
 		IOUtils::convertString(nrows, tmpvec[1]);
 		//read header: number of greys
-		if (getNextHeader(tmpvec, full_name)!=1) {
+		if (getNextHeader(tmpvec, full_name, fin)!=1) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(nr_colors, tmpvec[0]);
@@ -176,10 +170,10 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		}
 	} catch(const std::exception&) {
 		cerr << "[E] error when reading PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
-		cleanup();
+		fin.close();
 		throw;
 	}
-	cleanup();
+	fin.close();
 }
 
 void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
@@ -245,6 +239,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	const unsigned int nr_colors = 256;
 	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	errno = 0;
+	std::ofstream fout;
 	fout.open(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -290,11 +285,11 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		}
 	} catch(...) {
 		cerr << "[E] error when writing PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
-		cleanup();
+		fout.close();
 		throw;
 	}
 
-	cleanup();
+	fout.close();
 }
 
 void PGMIO::write2DGrid(const Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -303,16 +298,6 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_out, const MeteoGrids::Paramete
 	std::string date_str = date.toString(Date::ISO);
 	std::replace( date_str.begin(), date_str.end(), ':', '.');
 	write2DGrid(grid_out, date_str+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
-}
-
-void PGMIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 }
 
 } //namespace

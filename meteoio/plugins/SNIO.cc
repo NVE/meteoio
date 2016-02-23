@@ -18,6 +18,9 @@
 #include <meteoio/plugins/SNIO.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
+#include <sstream>
+#include <iostream>
+
 using namespace std;
 
 namespace mio {
@@ -121,7 +124,7 @@ const char* SNIO::dflt_extension = ".inp";
 
 SNIO::SNIO(const std::string& configfile)
       : cfg(configfile),
-        vecAllStations(), vecFilenames(), vecIndex(), fin(), fout(),
+        vecAllStations(), vecFilenames(), vecIndex(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
         number_meas_temperatures(0), number_of_solutes (0), vw_drift(false), rho_hn(false),
@@ -132,8 +135,7 @@ SNIO::SNIO(const std::string& configfile)
 	cfg.getValue("TIME_ZONE","Output",out_tz,IOUtils::nothrow);
 	cfg.getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
 	cfg.getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
-	if (!iswr_inp || !rswr_inp)
-		nr_meteoData = min_nr_meteoData - 1;
+	if (!iswr_inp || !rswr_inp) nr_meteoData = min_nr_meteoData - 1;
 	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, IOUtils::nothrow);
 	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, IOUtils::nothrow);
 	cfg.getValue("VW_DRIFT", "Input", vw_drift, IOUtils::nothrow);
@@ -142,7 +144,7 @@ SNIO::SNIO(const std::string& configfile)
 
 SNIO::SNIO(const Config& cfgreader)
       : cfg(cfgreader),
-        vecAllStations(), vecFilenames(), vecIndex(), fin(), fout(),
+        vecAllStations(), vecFilenames(), vecIndex(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
         number_meas_temperatures(0), number_of_solutes (0), vw_drift(false), rho_hn(false),
@@ -153,27 +155,11 @@ SNIO::SNIO(const Config& cfgreader)
 	cfg.getValue("TIME_ZONE","Output",out_tz,IOUtils::nothrow);
 	cfg.getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
 	cfg.getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
-	if (!iswr_inp || !rswr_inp)
-		nr_meteoData = min_nr_meteoData - 1;
+	if (!iswr_inp || !rswr_inp) nr_meteoData = min_nr_meteoData - 1;
 	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, IOUtils::nothrow);
 	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, IOUtils::nothrow);
 	cfg.getValue("VW_DRIFT", "Input", vw_drift, IOUtils::nothrow);
 	cfg.getValue("RHO_HN", "Input", rho_hn, IOUtils::nothrow);
-}
-
-SNIO::~SNIO() throw()
-{
-	cleanup();
-}
-
-void SNIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 }
 
 std::string SNIO::file_pos(const std::string& filename, const size_t& linenr) {
@@ -226,7 +212,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 	if (!IOUtils::validFileAndPath(metafile)) throw InvalidNameException("\"" + metafile + "\" is not a valid file name. Please check your METAFILE key!", AT);
 	if (!IOUtils::fileExists(metafile)) throw NotFoundException( "File \"" + metafile + "\" does not exist. Please check your METAFILE key!", AT);
 
-	fin.clear();
+	std::ifstream fin;
 	fin.open (metafile.c_str(), std::ifstream::in);
 	if (fin.fail())
 		throw AccessException(metafile, AT);
@@ -249,17 +235,17 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 			} else if (ncols == 6) { //valid line, e.g. "MST96 Weissfluhjoch:StudyPlot_MST 2540 9.81 46.831 1.00"
 				if (tmpvec.at(0) == stationID) {
 					parseMetaDataLine(tmpvec, sd);
-					cleanup();
+					fin.close();
 					return true;
 				}
 			} else {
 				throw InvalidFormatException(file_pos(metafile, linenr) + " each line must have 6 columns", AT);
 			}
 		}
-		cleanup();
+		fin.close();
 		return false;
 	} catch(const std::exception&){
-		cleanup();
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 }
@@ -273,7 +259,7 @@ std::string SNIO::getStationID(const std::string& filename)
 	if ( !IOUtils::validFileAndPath(filename) ) throw InvalidNameException(filename, AT);
 	if ( !IOUtils::fileExists(filename) ) throw NotFoundException(filename, AT);
 
-	fin.clear();
+	std::ifstream fin;
 	fin.open (filename.c_str(), std::ifstream::in);
 
 	if (fin.fail())
@@ -302,11 +288,11 @@ std::string SNIO::getStationID(const std::string& filename)
 			throw InvalidFormatException(filename + ": first line in invalid format", AT);
 		}
 	} catch (...) {
-		cleanup();
+		fin.close();
 		throw;
 	}
 
-	cleanup();
+	fin.close();
 	return station_id;
 }
 
@@ -390,7 +376,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if ( !IOUtils::validFileAndPath(file_with_path) ) throw InvalidNameException(file_with_path, AT);
 		if ( !IOUtils::fileExists(file_with_path) ) throw NotFoundException(file_with_path, AT);
 
-		fin.clear();
+		std::ifstream fin;
 		fin.open (file_with_path.c_str(), std::ifstream::in);
 
 		if (fin.fail())
@@ -453,10 +439,10 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			if (current_fpointer != ((ifstream::pos_type)-1))
 				vecIndex.at(ii).setIndex(dateEnd, current_fpointer);
 		} catch (const std::exception&){
-			cleanup();
+			fin.close();
 			throw;
 		}
-		cleanup();
+		fin.close();
 	}
 }
 
@@ -600,25 +586,20 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name = outpath + "/" + station_id + ".inp";
 			if (!IOUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
+			std::ofstream fout;
 			if ( !IOUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
-				writeStationHeader(vecMeteo[ii], station_id);
+				fout << "MTO <" << station_id << "> " << vecMeteo[ii].size() << "\n";
 			} else {
 				fout.open(output_name.c_str());
 			}
-			writeStationMeteo(vecMeteo[ii], output_name);
+			writeStationMeteo(vecMeteo[ii], output_name, fout);
 			fout.close();
 		}
 	}
 }
 
-void SNIO::writeStationHeader(const std::vector<MeteoData>& vecmd, const std::string& station_id)
-{
-	//writing the (very basic) metadata
-	fout << "MTO <" << station_id << "> " << vecmd.size() << "\n";
-}
-
-void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name)
+void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name, std::ofstream& fout)
 { //write out the data for 1 station
 	unsigned int failure_count = 0;
 	unsigned int Dirichlet_failure_count = 0;

@@ -20,6 +20,8 @@
 #include <string.h>
 #include <algorithm>
 #include <limits>
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -102,7 +104,7 @@ namespace mio {
 
 ARCIO::ARCIO(const std::string& configfile)
        : cfg(configfile),
-         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
+         coordin(), coordinparam(), coordout(), coordoutparam(),
          grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
          a3d_view_in(false), a3d_view_out(false)
 {
@@ -116,7 +118,7 @@ ARCIO::ARCIO(const std::string& configfile)
 
 ARCIO::ARCIO(const Config& cfgreader)
        : cfg(cfgreader),
-         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
+         coordin(), coordinparam(), coordout(), coordoutparam(),
          grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
          a3d_view_in(false), a3d_view_out(false)
 {
@@ -130,12 +132,11 @@ ARCIO::ARCIO(const Config& cfgreader)
 
 void ARCIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
-	string tmp = cfg.get("GRID2D", "Input", IOUtils::nothrow);
-	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
+	const string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	if (grid_in == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	tmp.clear();
-	cfg.getValue("GRID2D", "Output", tmp, IOUtils::nothrow);
-	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
+	const string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
+	if (grid_out == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 
 	grid2d_ext_in = ".asc";
@@ -144,21 +145,6 @@ void ARCIO::getGridPaths() {
 	grid2d_ext_out = ".asc";
 	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, IOUtils::nothrow);
 	if (grid2d_ext_out=="none") grid2d_ext_out.clear();
-}
-
-ARCIO::~ARCIO() throw()
-{
-	cleanup();
-}
-
-void ARCIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 }
 
 void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
@@ -173,7 +159,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	if (!IOUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
-	fin.clear();
+	std::ifstream fin;
 	errno = 0;
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
@@ -241,12 +227,12 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			}
 		}
 	} catch(const std::exception& e) {
-		cleanup();
+		fin.close();
 		std::ostringstream msg;
 		msg << "[E] Error when reading ARC grid \"" << full_name << "\" : " << e.what();
 		throw InvalidFormatException(msg.str(), AT);
 	}
-	cleanup();
+	fin.close();
 }
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
@@ -332,6 +318,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	const std::string full_name = grid2dpath_out+"/"+name;
 	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
 	errno = 0;
+	std::ofstream fout;
 	fout.open(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -365,11 +352,11 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		}
 	} catch(...) {
 		cerr << "[E] error when writing ARC grid \"" << full_name << "\" " << AT << ": "<< endl;
-		cleanup();
+		fout.close();
 		throw;
 	}
 
-	cleanup();
+	fout.close();
 }
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)

@@ -44,7 +44,6 @@ class PGMIO : public IOInterface {
 		PGMIO(const std::string& configfile);
 		PGMIO(const PGMIO&);
 		PGMIO(const Config& cfgreader);
-		~PGMIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -69,15 +68,12 @@ class PGMIO : public IOInterface {
 
 	private:
 		void getGridPaths();
-		void cleanup() throw();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
-		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
+		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename, std::ifstream& fin);
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-		std::ifstream fin; //Input file streams
-		std::ofstream fout;//Output file streams
 		std::string grid2dpath_in, grid2dpath_out;
 };
 
