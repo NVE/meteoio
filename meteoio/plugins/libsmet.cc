@@ -264,28 +264,11 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 }
 
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type, const bool& in_gzip)
-           : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(), fout(),
+           : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), gzip(in_gzip),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false)
-{
-
-}
-
-SMETWriter::~SMETWriter()
-{
-	cleanup();
-}
-
-void SMETWriter::cleanup() throw()
-{
-	//clear ios flags
-	fout << resetiosflags(ios_base::fixed | ios_base::left);
-
-	if (fout.is_open()) //close fout if open
-		fout.close();
-}
+             timestamp_present(false), julian_present(false), file_is_binary(false) {}
 
 void SMETWriter::set_header_value(const std::string& key, const double& value)
 {
@@ -303,8 +286,7 @@ void SMETWriter::set_header_value(const std::string& key, const double& value)
 		}
 
 		set_header_value(key, ss.str());
-	} else {
-		//It's a non-standard header value
+	} else { //It's a non-standard header value
 		ostringstream ss;
 		ss << value; //for nodata
 		set_header_value(key, ss.str());
@@ -428,15 +410,6 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 	return true;
 }
 
-void SMETWriter::write_signature()
-{
-	fout << "SMET " << SMETCommon::smet_version << " ";
-	if (smet_type == ASCII)
-		fout << "ASCII" << "\n";
-	else
-		fout << "BINARY" << "\n";
-}
-
 bool SMETWriter::valid_header()
 {
 	if (mandatory_header_keys.size() != 3)
@@ -461,6 +434,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
+	
+	ofstream fout;
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -468,25 +443,30 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
-	write_header(); //Write the header info, always in ASCII format
+	write_header(fout); //Write the header info, always in ASCII format
 
 	if (nr_of_fields == 0){
-		cleanup();
+		fout.close();
 		return;
 	}
 
-	if (!timestamp_present)
+	if (!timestamp_present) {
+		fout.close();
 		throw SMETException("No timestamp present when writing file \""+filename+"\", use write(const vector<double>& data)", SMET_AT);
+	}
 
 	const size_t nr_of_data_fields = nr_of_fields - 1;
 	if (nr_of_fields<=1) { //avoid division by zero in the next block
 		cerr << "[W] Attempting to write a dataset that contains no fields to file \"" + filename + "\"!\n";
+		fout.close();
 		return;
 	}
 
 	const size_t nr_of_lines = data.size() / (nr_of_fields-1);
-	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0))
+	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0)) {
+		fout.close();
 		throw SMETException("Inconsistency between the number of timestamp and number of data points detected for file \""+filename+"\", recheck your data", SMET_AT);
+	}
 
 	std::vector<double> current_data(nr_of_fields-1);
 	check_formatting();
@@ -496,19 +476,21 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 			const size_t offset = ii*(nr_of_fields-1);
 			if (!data.empty())
 				copy(data.begin()+offset, data.begin()+offset+nr_of_data_fields, current_data.begin());
-			write_data_line_ascii(vec_timestamp[ii], current_data);
+			write_data_line_ascii(vec_timestamp[ii], current_data, fout);
 		}
 	} else {
+		fout.close();
 		throw SMETException("Cannot write binary file \""+filename+"\" with a timestamp, use julian instead", SMET_AT);
 	}
 
-	cleanup();
+	fout.close();
 }
 
 void SMETWriter::write(const std::vector<double>& data)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
+	std::ofstream fout;
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -516,16 +498,18 @@ void SMETWriter::write(const std::vector<double>& data)
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
-	write_header(); //Write the header info, always in ASCII format
+	write_header(fout); //Write the header info, always in ASCII format
 
 	if (nr_of_fields == 0){
-		cleanup();
+		fout.close();
 		return;
 	}
 
 	const size_t nr_of_lines = data.size() / nr_of_fields;
-	if ((data.size() % nr_of_fields) != 0)
+	if ((data.size() % nr_of_fields) != 0) {
+		fout.close();
 		throw SMETException("Inconsistency between data and header fields detected in file \""+filename+"\", recheck your data", SMET_AT);
+	}
 
 	std::vector<double> current_data(nr_of_fields);
 	check_formatting();
@@ -534,27 +518,32 @@ void SMETWriter::write(const std::vector<double>& data)
 		for (size_t ii=0; ii<nr_of_lines; ii++){
 			if (!data.empty())
 				copy(data.begin()+ii*nr_of_fields, data.begin()+ii*nr_of_fields+nr_of_fields, current_data.begin());
-			write_data_line_ascii("0000-01-01T00:00", current_data); //dummy time
+			write_data_line_ascii("0000-01-01T00:00", current_data, fout); //dummy time
 		}
 	} else {
 		for (size_t ii=0; ii<nr_of_lines; ii++){
 			if (!data.empty())
 				copy(data.begin()+ii*nr_of_fields, data.begin()+ii*nr_of_fields+nr_of_fields, current_data.begin());
-			write_data_line_binary(current_data);
+			write_data_line_binary(current_data, fout);
 		}
 
 		file_is_binary = false;
 	}
 
-	cleanup();
+	fout.close();
 }
 
-void SMETWriter::write_header()
+void SMETWriter::write_header(std::ofstream& fout)
 {
-	if (!valid_header())
+	if (!valid_header()) {
+		fout.close();
 		throw SMETException("The header data you supplied is not valid, file \""+filename+"\" cannot be written", SMET_AT);
+	}
 
-	write_signature();
+	//write signature
+	fout << "SMET " << SMETCommon::smet_version << " ";
+	if (smet_type == ASCII) fout << "ASCII" << "\n";
+	else fout << "BINARY" << "\n";
 
 	fout << "[HEADER]" << "\n";
 	fout << "station_id       = " << header["station_id"] << "\n";
@@ -617,7 +606,7 @@ void SMETWriter::write_header()
 	fout << "[DATA]" << endl;
 }
 
-void SMETWriter::write_data_line_binary(const std::vector<double>& data)
+void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::ofstream& fout)
 {
 	const char eoln = '\n';
 
@@ -647,7 +636,7 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data)
 	fout.write((char*)&eoln, sizeof(char));
 }
 
-void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data)
+void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout)
 {
 	fout.fill(' ');
 	fout << right;

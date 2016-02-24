@@ -263,7 +263,6 @@ class SMETWriter {
 		 * @param[in] in_gzip  Whether the file should be zipped or not (default: false)
 		 */
 		SMETWriter(const std::string& in_fname, const SMETType& in_type=ASCII, const bool& in_gzip=false);
-		~SMETWriter();
 
 		/**
 		 * @brief Set a key, value pair in the SMET header (both strings)
@@ -313,11 +312,9 @@ class SMETWriter {
 		void set_width(const std::vector<int>& vec_width);
 
 	private:
-		void cleanup() throw();
-		void write_header(); //only writes when all necessary header values are set
-		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data);
-		void write_data_line_binary(const std::vector<double>& data);
-		void write_signature();
+		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
+		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
+		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
 		bool check_fields(const std::string& key, const std::string& value);
 		void check_formatting();
 		bool valid_header_pair(const std::string& key, const std::string& value);
@@ -327,7 +324,6 @@ class SMETWriter {
 		std::vector<int> ascii_precision, ascii_width;
 		std::map< std::string, std::string > header;
 		std::set<std::string> mandatory_header_keys;
-		std::ofstream fout; //Output file streams
 
 		std::string filename;
 		std::string nodata_string;
