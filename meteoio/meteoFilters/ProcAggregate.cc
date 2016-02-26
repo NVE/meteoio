@@ -59,7 +59,6 @@ void ProcAggregate::process(const unsigned int& param, const std::vector<MeteoDa
 					throw UnknownValueException("Unknown aggregation algorithm selected!", AT);
 			}
 		} else {
-			std::cout << "Could not get window for " << ovec[ii].date.toString(Date::ISO) << "\n";
 			if (!is_soft) value = IOUtils::nodata;
 		}
 	}

@@ -48,7 +48,6 @@ class ARPSIO : public IOInterface {
 		ARPSIO(const std::string& configfile);
 		ARPSIO(const ARPSIO&);
 		ARPSIO(const Config& cfgreader);
-		~ARPSIO() throw();
 
 		ARPSIO& operator=(const ARPSIO&); ///<Assignement operator, required because of pointer member
 
@@ -71,23 +70,19 @@ class ARPSIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
-		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name); //HACK
+		void read3DGrid(Grid3DObject& grid_out, const std::string& parameter="");
 
 	private:
 		void setOptions();
-		void cleanup() throw();
-		void initializeGRIDARPS();
-		void initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH]);
-		void openGridFile(const std::string& in_filename);
-		void readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
-		void moveToMarker(const std::string& marker);
+		void initializeGRIDARPS(FILE* &fin, const std::string& filename);
+		void initializeTrueARPS(FILE* &fin, const std::string& filename, const char curr_line[ARPS_MAX_LINE_LENGTH]);
+		void openGridFile(FILE* &fin, const std::string& filename);
+		void readGridLayer(FILE* &fin, const std::string& filename, const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
+		void moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker);
 
 		const Config cfg;
-		//std::ifstream fin; //Input file streams
-		FILE *fin;
-		std::string filename;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const char* default_ext;
+		static const std::string default_ext;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string grid2dpath_in; //where are input grids stored
 		std::string ext; //file extension
