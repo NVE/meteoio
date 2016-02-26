@@ -184,7 +184,8 @@ void GSNIO::buildStation(const std::string& vs_name, const std::string& full_nam
 	}
 }
 
-bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const
+//this method is called on each station in order to parse the header and set the metadata
+void GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const
 {
 	const string vsname_str("# vs_name:");
 	const string altitude_str("# altitude:");
@@ -196,44 +197,32 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 	const string fields_str("# fields:");
 	const string units_str("# units:");
 
+	fields.clear();
+	units.clear();
 	string full_name, vs_name, azi;
-	double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
-	unsigned int valid = 0;
+	double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
 
 	string line;
 	std::streamoff streampos = ss.tellg();
 	while (getline(ss, line)) {
-		if (line.empty() || ((line[0] != '#') && !isdigit(line[0])) ) {
+		if (line.empty() || ((line[0] != '#') && !isdigit(line[0])) ) 
 			continue;
-		}
 
-		if (isdigit(line[0])) {
-		//if (line.empty() || (line[0] != '#')) { //reached end of metadata
-			if (valid == 15) { // Last station was valid: store StationData
-				buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
-				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
-			}
-			return false; //no more stations left to read
+		if (isdigit(line[0])) { //reached end of metadata
+			buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
+			ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
+			return; //no more metadata
 		}
 
 		if (!line.compare(0, vsname_str.size(), vsname_str)) { //sensor name
 			vs_name = line.substr(vsname_str.size());
 			IOUtils::trim(vs_name);
-			if (valid == 15) { // Last station was valid: store StationData
-				buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
-				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
-				return true; //more stations left to read
-			}
-			valid |= 1;
 		} else if (!line.compare(0, altitude_str.size(), altitude_str)) { //altitude
 			IOUtils::convertString(alt, line.substr(altitude_str.size()));
-			valid |= 2;
 		} else if (!line.compare(0, latitude_str.size(), latitude_str)) { //latitude
 			IOUtils::convertString(lat, line.substr(latitude_str.size()));
-			valid |= 4;
 		} else if (!line.compare(0, longitude_str.size(), longitude_str)) { //longitude
 			IOUtils::convertString(lon, line.substr(longitude_str.size()));
-			valid |= 8;
 		} else if (!line.compare(0, name_str.size(), name_str)) { // optional: full name
 			full_name = line.substr(name_str.size());
 			IOUtils::trim(full_name);
@@ -249,15 +238,14 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 		} else if (!line.compare(0, fields_str.size(), fields_str)) { //field
 			fields = line.substr(fields_str.size());
 		} else if (!line.compare(0, units_str.size(), units_str)) { //units
-			units = line.substr(units_str.size()) + " "; // the extra space is important if no units are specified
+			units = line.substr(units_str.size()) + " "; //important when no units have been declared
 		}
 	}
 
-	if (valid == 15) { // Last station was valid: store StationData
-		buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
-		return true;
-	} else
-		return false; //no more metadata to read
+	//This should not have happened, try to save whatever we can. Error returned by GSN will be handled afterward
+	fields.clear(); //to make sure to trigger the parsing of GSN error messages
+	buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
+	ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
 }
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
