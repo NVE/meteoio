@@ -29,7 +29,14 @@ namespace mio {
 /**
  * @page arps ARPSIO
  * @section arps_format Format
- * This is for reading grid data in the ARPS grid format (it transparently supports both true ARPS ascii grids and grids modified by the ARPSGRID utility). DEM reading works well while reading meteo parameters might be a rough ride (since ARPS files do not always contain a consistent set of meteo fields).
+ * This is for reading grid data in the ARPS grid format (it transparently supports both true ARPS ascii grids and 
+ * grids modified by the ARPSGRID utility). DEM reading works well while reading meteo parameters might be a rough ride 
+ * (since ARPS files do not always contain a consistent set of meteo fields).
+ * 
+ * It is possible to manually extract a whole section, for a given variable with the following script, in order to ease debugging:
+ * @code
+ * awk '/^ [a-z]/{isVar=0} /^ radsw/{isVar=1;next} {if(isVar) print $0}' {arps_file}
+ * @endcode
  *
  * @section arps_units Units
  * All units are assumed to be MKSA.
@@ -95,30 +102,64 @@ void ARPSIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	}
 
-	cfg.getValue("ARPS_XCOORD", "Input", xcoord, IOUtils::dothrow);
-	cfg.getValue("ARPS_YCOORD", "Input", ycoord, IOUtils::dothrow);
+	cfg.getValue("ARPS_XCOORD", "Input", xcoord, IOUtils::nothrow);
+	cfg.getValue("ARPS_YCOORD", "Input", ycoord, IOUtils::nothrow);
 
 	//default value has been set in constructor
 	cfg.getValue("GRID2DEXT", "Input", ext, IOUtils::nothrow);
 	if (ext=="none") ext.clear();
 }
 
-void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
+void ARPSIO::listFields(const std::string& i_name)
 {
-	const std::string filename = grid2dpath_in +"/" + i_name;
-
+	const size_t pos = i_name.find_last_of(":");//a specific parameter can be provided as {filename}:{parameter}
+	const std::string filename = (pos!=IOUtils::npos)? grid2dpath_in +"/" + i_name.substr(0, pos) : grid2dpath_in +"/" + i_name;
+	
 	FILE *fin;
 	openGridFile(fin, filename);
-
-	const unsigned int layer=2;
-	if (is_true_arps)
-		readGridLayer(fin, filename, "zp coordinat", layer, grid_out);
-	else
-		readGridLayer(fin, filename, "zp_coordinat", layer, grid_out);
-
+	const std::string dem_marker = (is_true_arps)? "zp coordinat" : "zp_coordinat";
+	moveToMarker(fin, filename, dem_marker);
+	
+	char dummy[ARPS_MAX_LINE_LENGTH];
+	int nb_elems = 0;
+	do {
+		nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		if (dummy[0]>='A' && dummy[0]<='z') { //white spaces have been skipped above
+			std::string tmp( dummy );
+			IOUtils::trim(tmp);
+			std::cout << "Found '" << tmp << "'\n";
+		}
+	} while (!feof(fin) && nb_elems!=0);
+	
 	fclose(fin);
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+}
+
+void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
+{
+	const size_t pos = i_name.find_last_of(":");//a specific parameter can be provided as {filename}:{parameter}
+	const std::string filename = (pos!=IOUtils::npos)? grid2dpath_in +"/" + i_name.substr(0, pos) : grid2dpath_in +"/" + i_name;
+	if (pos==IOUtils::npos) { //TODO: read by default the first data grid that is found?
+		listFields(i_name);
+		throw InvalidArgumentException("Please provide the parameter that has to be read!", AT);
+	}
+	
+	const std::string param_str = (pos!=IOUtils::npos)?  i_name.substr(pos+1) : "";
+	const size_t param = MeteoGrids::getParameterIndex( param_str );
+	if (param==IOUtils::npos) {
+		throw InvalidArgumentException("Invalid MeteoGrids Parameter requested: '"+param_str+"'", AT);
+		throw InvalidArgumentException("Invalid MeteoGrids Parameter requested: '"+param_str+"'", AT);
+	}
+	
+	FILE *fin;
+	openGridFile(fin, filename);
+	read2DGrid_internal(fin, filename, grid_out, static_cast<MeteoGrids::Parameters>(param));
+	if (grid_out.empty()) {
+		ostringstream ss;
+		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(param) << " ";
+		ss << " in file \"" << filename << "\"";
+		throw NoDataException(ss.str(), AT);
+	}
+	fclose(fin);
 }
 
 void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -128,20 +169,36 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	const std::string filename = grid2dpath_in + "/" + date_str + ext;
 	FILE *fin;
 	openGridFile(fin, filename);
+	read2DGrid_internal(fin, filename, grid_out, parameter);
+	if (grid_out.empty()) {
+		ostringstream ss;
+		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
+		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
+		throw NoDataException(ss.str(), AT);
+	}
 
+	fclose(fin);
+}
+
+void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter)
+{
+	//extra variables: 
+	//kmh / kmv: horiz./vert. turbulent mixing coeff. m^2/s
+	//tke: turbulent kinetic energy. (m/s)^2
+	
 	//Radiation parameters
-	if (parameter==MeteoGrids::ISWR) readGridLayer(fin, filename, "radsw", 2, grid_out);
+	if (parameter==MeteoGrids::ISWR) readGridLayer(fin, filename, "radsw", 1, grid_out);
 	if (parameter==MeteoGrids::RSWR) {
 		Grid2DObject net;
-		readGridLayer(fin, filename, "radsw", 2, grid_out);
-		readGridLayer(fin, filename, "radswnet", 2, net);
+		readGridLayer(fin, filename, "radsw", 1, grid_out);
+		readGridLayer(fin, filename, "radswnet", 1, net);
 		grid_out.grid2D -= net.grid2D;
 	}
-	if (parameter==MeteoGrids::ILWR) readGridLayer(fin, filename, "radlwin", 2, grid_out);
+	if (parameter==MeteoGrids::ILWR) readGridLayer(fin, filename, "radlwin", 1, grid_out);
 	if (parameter==MeteoGrids::ALB) {
 		Grid2DObject rswr, iswr;
-		readGridLayer(fin, filename, "radsw", 2, iswr);
-		readGridLayer(fin, filename, "radswnet", 2, grid_out); //net radiation
+		readGridLayer(fin, filename, "radsw", 1, iswr);
+		readGridLayer(fin, filename, "radswnet", 1, grid_out); //net radiation
 		rswr.grid2D = iswr.grid2D - grid_out.grid2D;
 		grid_out.grid2D = iswr.grid2D/rswr.grid2D;
 	}
@@ -173,63 +230,67 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 
 	//Basic meteo parameters
 	if (parameter==MeteoGrids::P) readGridLayer(fin, filename, "p", 2, grid_out);
-	if (parameter==MeteoGrids::TSG) readGridLayer(fin, filename, "tsoil", 2, grid_out); //or is it tss for us?
+	if (parameter==MeteoGrids::TSG) readGridLayer(fin, filename, "tsoil", 1, grid_out); //or is it tss for us?
 	/*if (parameter==MeteoGrids::RH) {
 		//const double epsilon = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
 		readGridLayer(filename, "qv", 2, grid_out); //water vapor mixing ratio
 		//Atmosphere::waterSaturationPressure(T);
 		//HACK: compute relative humidity out of it!
-		//through potential temperature -> local temperature?
+		//through potential temperature "pt" -> local temperature?
 	}*/
 
 	//Hydrological parameters
-	if (parameter==MeteoGrids::HS) readGridLayer(fin, filename, "snowdpth", 2, grid_out);
+	if (parameter==MeteoGrids::HS) readGridLayer(fin, filename, "snowdpth", 1, grid_out);
 	if (parameter==MeteoGrids::PSUM) {
-		readGridLayer(fin, filename, "prcrate1", 2, grid_out); //in kg/m^2/s
+		readGridLayer(fin, filename, "prcrate1", 1, grid_out); //in kg/m^2/s
 		grid_out.grid2D *= 3600.; //we need kg/m^2/h
 	}
 
 	//DEM
-	std::string dem_marker="zp coordinat";
-	if (!is_true_arps) dem_marker="zp_coordinat";
-	if (parameter==MeteoGrids::DEM) readGridLayer(fin, filename, dem_marker, 2, grid_out);
+	const std::string dem_marker = (is_true_arps)? "zp coordinat" : "zp_coordinat";
+	if (parameter==MeteoGrids::DEM) readGridLayer(fin, filename, dem_marker, 1, grid_out);
 	if (parameter==MeteoGrids::SLOPE) {
 		DEMObject dem;
 		dem.setUpdatePpt(DEMObject::SLOPE);
-		readGridLayer(fin, filename, dem_marker, 2, dem);
+		readGridLayer(fin, filename, dem_marker, 1, dem);
 		dem.update();
 		grid_out.set(dem.cellsize, dem.llcorner, dem.slope);
 	}
 	if (parameter==MeteoGrids::AZI) {
 		DEMObject dem;
 		dem.setUpdatePpt(DEMObject::SLOPE);
-		readGridLayer(fin, filename, dem_marker, 2, dem);
+		readGridLayer(fin, filename, dem_marker, 1, dem);
 		dem.update();
 		grid_out.set(dem.cellsize, dem.llcorner, dem.azi);
 	}
 
-	if (grid_out.empty()) {
-		ostringstream ss;
-		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
-		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
-		throw NoDataException(ss.str(), AT);
-	}
-
-	//rewind(fin);
-	fclose(fin);
+	rewind(fin);
 }
 
 void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 {
-	const std::string filename = grid2dpath_in + "/" + i_name;
+	const size_t pos = i_name.find_last_of(":");//a specific parameter can be provided as {filename}:{parameter}
+	const std::string filename = (pos!=IOUtils::npos)? grid2dpath_in +"/" + i_name.substr(0, pos) : grid2dpath_in +"/" + i_name;
+	if (pos==IOUtils::npos) { //TODO: read by default the first data grid that is found?
+		listFields(i_name);
+		throw InvalidArgumentException("Please provide the parameter that has to be read!", AT);
+	}
+	
+	std::string parameter = (pos!=IOUtils::npos)?  i_name.substr(pos+1) : "";
+	if (parameter=="DEM") { //this is called damage control... this is so ugly...
+		parameter = (is_true_arps)? "zp coordinat" : "zp_coordinat";
+	}
+	
 	FILE *fin;
 	openGridFile(fin, filename);
 
 	//resize the grid just in case
-	grid_out.grid3D.resize(dimx, dimy, dimz);
+	Coords llcorner(coordin, coordinparam);
+	llcorner.setXY(xcoord, ycoord, IOUtils::nodata);
+	grid_out.set(dimx, dimy, dimz, cellsize, llcorner);
+	grid_out.z = zcoord;
 
 	// Read until the parameter is found
-	std::string parameter; //HACK
 	moveToMarker(fin, filename, parameter);
 
 	//read the data we are interested in
@@ -248,8 +309,6 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 	}
 
 	fclose(fin);
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void ARPSIO::readDEM(DEMObject& dem_out)
@@ -257,11 +316,7 @@ void ARPSIO::readDEM(DEMObject& dem_out)
 	const std::string filename = cfg.get("DEMFILE", "Input");
 	FILE *fin;
 	openGridFile(fin, filename);
-	if (is_true_arps) {
-		readGridLayer(fin, filename, std::string("zp coordinat"), 2 ,dem_out);
-	} else {
-		readGridLayer(fin, filename, std::string("zp_coordinat"), 2 ,dem_out);
-	}
+	read2DGrid_internal(fin, filename, dem_out, MeteoGrids::DEM);
 	fclose(fin);
 }
 
@@ -416,13 +471,14 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 
 	//identify if the file is an original arps file or a file modified by ARPSGRID
 	char dummy[ARPS_MAX_LINE_LENGTH];
-	for (int j=0; j<5; j++) {
+	for (unsigned char j=0; j<5; j++) {
 		//the first easy difference in the structure happens at line 5
 		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
 			fclose(fin);
 			throw InvalidFormatException("Fail to read header lines of file "+filename, AT);
 		}
 	}
+	zcoord.clear(); //reset the zcoord
 	if (sscanf(dummy," nx = %u, ny = ", &v1)<1) {
 		//this is an ASCII file modified by ARPSGRID
 		is_true_arps=false;
@@ -431,6 +487,9 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 		//this is a true ARPS file
 		initializeTrueARPS(fin, filename, dummy);
 	}
+	//set xcoord, ycoord to a default value if not set by the user
+	if (xcoord==IOUtils::nodata) xcoord = -cellsize;
+	if (ycoord==IOUtils::nodata) ycoord = -cellsize;
 
 	//come back to the begining of the file
 	rewind(fin);
@@ -468,22 +527,26 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 	if (layer>1) {
 		double tmp;
 		const size_t jmax=dimx*dimy*(layer-1);
-		for (size_t j = 0; j < jmax; j++)
+		for (size_t j = 0; j < jmax; j++) {
 			if (fscanf(fin," %16lf%*[\n]",&tmp)==EOF) {
 				fclose(fin);
 				throw InvalidFormatException("Fail to skip data layers in file "+filename, AT);
 			}
+		}
 	}
 
 	//read the data we are interested in
 	for (size_t iy = 0; iy < dimy; iy++) {
 		for (size_t ix = 0; ix < dimx; ix++) {
 			double tmp;
-			if (fscanf(fin," %16lf%*[\n]",&tmp)==1) {
+			const int readPts = fscanf(fin," %16lf%*[\n]",&tmp);
+			if (readPts==1) {
 				grid(ix,iy) = tmp;
 			} else {
+				char dummy[ARPS_MAX_LINE_LENGTH];
+				fscanf(fin,"%s",dummy);
 				fclose(fin);
-				throw InvalidFormatException("Fail to read data layer in file "+filename, AT);
+				throw InvalidFormatException("Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"', instead read: '"+string(dummy)+"'", AT);
 			}
 		}
 	}
@@ -492,17 +555,20 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 void ARPSIO::moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker)
 {
 	char dummy[ARPS_MAX_LINE_LENGTH];
-	int nb_elems=0;
+	int nb_elems = 0;
 	do {
-		nb_elems=fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
-	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0 && nb_elems!=0);
+		nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		if (dummy[0]>='A' && dummy[0]<='z') { //this is a "marker" line
+			if (strncmp(dummy,marker.c_str(), marker.size()) == 0) return;
+		}
+	} while (!feof(fin) && nb_elems!=0);
 	
 	if (feof(fin)) {
 		fclose(fin);
 		const std::string message = "End of file "+filename+" should NOT have been reached when looking for "+marker;
 		throw InvalidFormatException(message, AT);
 	}
-	if (nb_elems==0) {
+	if (nb_elems==0) { //there was a line that did not match the format
 		fclose(fin);
 		const std::string message = "Matching failure in file "+filename+" when looking for "+marker;
 		throw InvalidFormatException(message, AT);

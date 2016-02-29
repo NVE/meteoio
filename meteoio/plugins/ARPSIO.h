@@ -74,6 +74,8 @@ class ARPSIO : public IOInterface {
 
 	private:
 		void setOptions();
+		void listFields(const std::string& filename);
+		void read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter);
 		void initializeGRIDARPS(FILE* &fin, const std::string& filename);
 		void initializeTrueARPS(FILE* &fin, const std::string& filename, const char curr_line[ARPS_MAX_LINE_LENGTH]);
 		void openGridFile(FILE* &fin, const std::string& filename);
