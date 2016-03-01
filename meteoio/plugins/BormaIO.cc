@@ -99,7 +99,6 @@ void BormaIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 
 void BormaIO::readStationData(const Date&, std::vector<StationData>&)
 {
-	//HACK: this method MUST be implemented for BufferedIOHandler to properly work
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }

@@ -27,7 +27,7 @@ FilterMAD::FilterMAD(const std::vector<std::string>& vec_args, const std::string
 {
 	parse_args(vec_args);
 
-	//This is safe, but maybe too imprecise: //HACK: does not account for centering!
+	//This is safe, but maybe too imprecise
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
 	properties.points_before = min_data_points;

@@ -134,7 +134,7 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z)
 {
 	const double S = iswr_dir + iswr_diff;
-	//const double a=1, b=1, c=1; //HACK: get real values!
+	//const double a=1, b=1, c=1; // get real values!
 	//const double h = a * pow(S, b) * pow(cos_Z, c);
 	const double h = 0.315; //personnal communication from S. Amburn
 	const double emissivity = 0.575 * pow(RH*waterSaturationPressure(TA), 1./7.);

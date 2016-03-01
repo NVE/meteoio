@@ -60,7 +60,6 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 */
 void Meteo2DInterpolator::setAlgorithms()
 {
-//HACK set callback to internal iomanager for virtual stations and downsampling!
 	set<string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
@@ -358,7 +357,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo)
-{ //HACK use own private iomanager and do caching in its private one
+{
 	vecMeteo.clear();
 
 	// Check if data is available in cache

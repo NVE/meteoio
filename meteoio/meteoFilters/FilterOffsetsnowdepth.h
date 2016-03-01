@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _FilterOffsetsnowdepth_H_
-#define _FilterOffsetsnowdepth_H_
+#ifndef FilterOffsetsnowdepth_H
+#define FilterOffsetsnowdepth_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
 

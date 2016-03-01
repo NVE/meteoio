@@ -97,7 +97,7 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
  * @param indexP2 index of point after the current position (IOUtils::npos if none could be found)
  */
 void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& window_size, size_t& indexP1, size_t& indexP2) //HACK
+                                              const double& window_size, size_t& indexP1, size_t& indexP2)
 {
 	indexP1=IOUtils::npos;
 	indexP2=IOUtils::npos;

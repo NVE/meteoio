@@ -827,7 +827,7 @@ void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
 int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
                             const unsigned int& parindex, const std::string& fileprefix,
                             const std::string& label)
-{//HACK: we assume that all stations have data that is time synchronized...
+{
 	const size_t sta_nr = data.size();
 	if (sta_nr==0) return EXIT_FAILURE;
 	const size_t nb_timesteps = data[0].size();

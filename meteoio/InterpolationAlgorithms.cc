@@ -921,7 +921,6 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		return;
 	}
 
-	//HACK: also get Synoptic_VW and use a threshold to trigger snow transport?
 	double synoptic_bearing = user_synoptic_bearing;
 	if (synoptic_bearing==IOUtils::nodata) {
 		if (!ref_station.empty())
@@ -1052,7 +1051,6 @@ void WinstralListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid
 
 std::string USERInterpolation::getGridFileName() const
 {
-	//HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
 	const size_t nrArgs = vecArgs.size();
 	if (nrArgs > 2){
 		throw InvalidArgumentException("Too many arguments for the "+algo+" interpolation algorithm", AT);

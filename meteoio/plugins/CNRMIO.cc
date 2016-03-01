@@ -1008,8 +1008,8 @@ std::string CNRMIO::get_varname(const MeteoGrids::Parameters& parameter)
 	else if (parameter == MeteoGrids::PSUM) varname = cnrm_psum; //HACK this should add snowf!
 	else if (parameter == MeteoGrids::SLOPE) varname = cnrm_slope;
 	else if (parameter == MeteoGrids::AZI) varname = cnrm_aspect;
-	//HACK: iswr=dir+diff
-	//HACK: U, V from vw, dw
+	//TODO: iswr=dir+diff
+	//TODO: U, V from vw, dw
 
 	return varname;
 }
