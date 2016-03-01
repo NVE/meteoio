@@ -145,10 +145,8 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	
 	const std::string param_str = (pos!=IOUtils::npos)?  i_name.substr(pos+1) : "";
 	const size_t param = MeteoGrids::getParameterIndex( param_str );
-	if (param==IOUtils::npos) {
+	if (param==IOUtils::npos)
 		throw InvalidArgumentException("Invalid MeteoGrids Parameter requested: '"+param_str+"'", AT);
-		throw InvalidArgumentException("Invalid MeteoGrids Parameter requested: '"+param_str+"'", AT);
-	}
 	
 	FILE *fin;
 	openGridFile(fin, filename);
@@ -544,7 +542,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 				grid(ix,iy) = tmp;
 			} else {
 				char dummy[ARPS_MAX_LINE_LENGTH];
-				fscanf(fin,"%s",dummy);
+				(void)fscanf(fin,"%s",dummy);
 				fclose(fin);
 				throw InvalidFormatException("Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"', instead read: '"+string(dummy)+"'", AT);
 			}

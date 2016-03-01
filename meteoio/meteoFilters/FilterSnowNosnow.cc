@@ -180,7 +180,7 @@ double FilterSnowNosnow::getTSSOffset(const unsigned int& param, const std::vect
 {
 	Date prev_day;
 	double HS_daily_median, TSS_daily_median, RSWR_daily_10pc;
-	bool high_tss_day;
+	bool high_tss_day = false;
 	std::vector<double> tss_dat;
 	
 	for (size_t ii=0; ii<ivec.size(); ii++){

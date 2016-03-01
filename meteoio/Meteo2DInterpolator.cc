@@ -332,7 +332,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 			const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
 			const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
 			v_coords[ii].setXY(easting, northing, dem(i,j));
-			v_coords[ii].setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::nodata, true);
+			v_coords[ii].setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 		} else {
 			v_coords[ii].setAltitude(dem(i,j), false);
 		}

@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FilterSnowNosnow_H__
-#define __FilterSnowNosnow_H__
+#ifndef _FilterSnowNosnow_H_
+#define _FilterSnowNosnow_H_
 
 //#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 #include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others

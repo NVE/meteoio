@@ -22,7 +22,7 @@
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#include <winsock.h>
 #else
-    #include <unistd.h>
+	#include <unistd.h>
 #endif
 
 #include <meteoio/IOUtils.h>

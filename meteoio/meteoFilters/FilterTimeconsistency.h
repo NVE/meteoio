@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FilterTimeconsistency_H__
-#define __FilterTimeconsistency_H__
+#ifndef _FilterTimeconsistency_H_
+#define _FilterTimeconsistency_H_
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
 
