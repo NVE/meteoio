@@ -679,7 +679,7 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) const
 		if (new_altitude==mio::IOUtils::nodata) break; //we stop at nodata cells
 
 		const double DeltaH = new_altitude - cell_alt;
-		const double distance = sqrt( (double)( (ix2-ix1)*(ix2-ix1) + (iy2-iy1)*(iy2-iy1)) ) * cellsize;
+		const double distance = sqrt( (double)( Optim::pow2(ix2-ix1) + Optim::pow2(iy2-iy1)) ) * cellsize;
 		const double tan_angle = DeltaH/distance;
 		if (tan_angle>horizon_tan_angle) horizon_tan_angle = tan_angle;
 
@@ -1057,6 +1057,20 @@ double DEMObject::safeGet(const int i, const int j)
 	}
 
 	return grid2D((unsigned)i, (unsigned)j);
+}
+
+const std::string DEMObject::toString() const {
+	std::ostringstream os;
+	os << "<DEMObject>\n";
+	os << llcorner.toString();
+	os << grid2D.getNx() << " x " << grid2D.getNy() << " @ " << cellsize << "m\t[ " << min_altitude << " - " << max_altitude << " ]\n";
+	//os << grid2D.toString();
+	os << "Slope: " << slope.getNx() << " x " << slope.getNy() << "\t[ " << min_slope << " - " << max_slope << " ]\n";
+	os << "Azi: " << azi.getNx() << " x " << azi.getNy() << "\n";
+	os << "Curvature: " << curvature.getNx() << " x " << curvature.getNy()<< "\t[ " << min_curvature << " - " << max_curvature << " ]\n";
+	os << "Nx: " << Nx.getNx() << " x " << Nx.getNy() << " , Ny: " << Ny.getNx() << " x " << Ny.getNy() << " , Nz: " << Nz.getNx() << " x " << Nz.getNy() << "\n";
+	os << "</DEMObject>\n";
+	return os.str();
 }
 
 std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {

@@ -38,7 +38,7 @@ namespace Cst {
 	const double gravity = 9.80665; // (m s-2)
 	const double std_press = 101325.; // (Pa) at sea level
 	const double std_temp = 288.15; // (K) at sea level
-	const double dry_adiabatique_lapse_rate = 0.0065; // (K/m)
+	const double mean_adiabatique_lapse_rate = 0.0065; // (K/m)
 
 	const double gaz_constant_dry_air = 287.058; // (J kg-1 K-1)
 	const double gaz_constant_water_vapor = 461.9; // (J kg-1 K-1)

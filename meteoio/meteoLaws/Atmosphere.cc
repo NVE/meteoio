@@ -63,8 +63,8 @@ double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
 * @return standard pressure (Pa)
 */
 double Atmosphere::stdAirPressure(const double& altitude) {
-	const double expo = Cst::gravity / (Cst::dry_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
-	const double p = Cst::std_press * pow( 1. - ( (Cst::dry_adiabatique_lapse_rate * Cst::earth_R0 * altitude) / (Cst::std_temp * (Cst::earth_R0 + altitude)) ), expo );
+	const double expo = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+	const double p = Cst::std_press * pow( 1. - ( (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 * altitude) / (Cst::std_temp * (Cst::earth_R0 + altitude)) ), expo );
 	return p;
 }
 

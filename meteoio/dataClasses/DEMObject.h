@@ -129,6 +129,7 @@ class DEMObject : public Grid2DObject {
 		bool operator==(const DEMObject& in) const; ///<Operator that tests for equality
 		bool operator!=(const DEMObject& in) const; ///<Operator that tests for inequality
 
+		const std::string toString() const;
 		friend std::iostream& operator<<(std::iostream& os, const DEMObject& dem);
 		friend std::iostream& operator>>(std::iostream& is, DEMObject& dem);
 

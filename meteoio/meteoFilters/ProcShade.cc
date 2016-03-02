@@ -52,7 +52,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
-	if (ovec.size()==0) return;
+	if (ovec.empty()) return;
 	
 	const string stationHash = ovec[0].meta.getHash();
 	
@@ -71,13 +71,8 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		//now look for our specific station hash
 		mask = masks.find( stationHash );
 		if (mask==masks.end()) {
-			Coords position( ovec[0].meta.position );
-			if (!dem.gridify(position)) {
-				const string msg = "In filter '"+block_name+"', station '"+ovec[0].meta.stationID+"' "+position.toString(Coords::LATLON)+" is not included in the DEM "+dem.llcorner.toString(Coords::LATLON);
-				throw NoDataException(msg, AT);
-			}
 			std::vector< std::pair<double,double> > tmp_mask;
-			dem.getHorizon(position, 10., tmp_mask);
+			computeMask(dem, ovec[0].meta, tmp_mask);
 			masks[ stationHash ] = tmp_mask;
 			mask = masks.find( stationHash);
 		}
@@ -207,11 +202,30 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 	std::sort(o_mask.begin(), o_mask.end(), sort_pred());
 }
 
+void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::vector< std::pair<double,double> > &o_mask, const bool& dump_mask)
+{
+	o_mask.clear();
+	Coords position( sd.position );
+	if (!i_dem.gridify(position)) {
+		const string msg = "In filter 'SHADE', station '"+sd.stationID+"' "+position.toString(Coords::LATLON)+" is not included in the DEM "+i_dem.llcorner.toString(Coords::LATLON);
+		throw NoDataException(msg, AT);
+	}
+	
+	i_dem.getHorizon(position, 10., o_mask); //by 10deg increments
+	if (dump_mask) {
+		std::cout << "Horizon mask for station '" << sd.stationID << "'\n";
+		for (size_t ii=0; ii<o_mask.size(); ii++)
+			std::cout << o_mask[ii].first << " " << o_mask[ii].second << "\n";
+		std::cout << "\n";
+	}
+}
+
 void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 {
 	const size_t nrArgs = vec_args.size();
 	if (nrArgs==0) { //compute from DEM
 		IOHandler io(cfg);
+		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
 		io.readDEM(dem);
 	} else if (nrArgs==1) {
 		const std::string root_path( cfg.getConfigRootDir() );

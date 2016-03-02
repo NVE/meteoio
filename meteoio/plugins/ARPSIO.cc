@@ -542,9 +542,12 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 				grid(ix,iy) = tmp;
 			} else {
 				char dummy[ARPS_MAX_LINE_LENGTH];
-				(void)fscanf(fin,"%s",dummy);
+				const int status = fscanf(fin,"%s",dummy);
 				fclose(fin);
-				throw InvalidFormatException("Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"', instead read: '"+string(dummy)+"'", AT);
+				string msg = "Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"'";
+				if (status>0) msg += ", instead read: '"+string(dummy)+"'";
+				
+				throw InvalidFormatException(msg, AT);
 			}
 		}
 	}
@@ -553,24 +556,19 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 void ARPSIO::moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker)
 {
 	char dummy[ARPS_MAX_LINE_LENGTH];
-	int nb_elems = 0;
 	do {
-		nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		const int nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		if (nb_elems==0) {
+			fclose(fin);
+			throw InvalidFormatException("Matching failure in file "+filename+" when looking for "+marker, AT);
+		}
 		if (dummy[0]>='A' && dummy[0]<='z') { //this is a "marker" line
 			if (strncmp(dummy,marker.c_str(), marker.size()) == 0) return;
 		}
-	} while (!feof(fin) && nb_elems!=0);
+	} while (!feof(fin));
 	
-	if (feof(fin)) {
-		fclose(fin);
-		const std::string message = "End of file "+filename+" should NOT have been reached when looking for "+marker;
-		throw InvalidFormatException(message, AT);
-	}
-	if (nb_elems==0) { //there was a line that did not match the format
-		fclose(fin);
-		const std::string message = "Matching failure in file "+filename+" when looking for "+marker;
-		throw InvalidFormatException(message, AT);
-	}
+	fclose(fin);
+	throw InvalidFormatException("End of file "+filename+" should NOT have been reached when looking for "+marker, AT);
 }
 
 } //namespace

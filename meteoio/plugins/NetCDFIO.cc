@@ -439,11 +439,11 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 			read2DGrid_internal(p, filename, MeteoGrids::P) && 
 			read2DGrid_internal(ta, filename, MeteoGrids::TA)) {
 				dem_out.set(p, IOUtils::nodata);
-				const double k = Cst::gravity / (Cst::dry_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+				const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
 				const double k_inv = 1./k;
 				for (size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++) {
 					const double K = pow(p(ii)/p_sea(ii), k_inv);
-					dem_out(ii) = ta(ii)*Cst::earth_R0*(1.-K) / (Cst::dry_adiabatique_lapse_rate * Cst::earth_R0 - ta(ii)*(1.-K));
+					dem_out(ii) = ta(ii)*Cst::earth_R0*(1.-K) / (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 - ta(ii)*(1.-K));
 				}
 				return;
 			}
