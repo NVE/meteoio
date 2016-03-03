@@ -80,8 +80,6 @@ SASEIO::SASEIO(const Config& cfgreader)
 	readConfig();
 }
 
-SASEIO::~SASEIO() throw() {}
-
 void SASEIO::readConfig()
 {
 	cfg.getValue("SASE_HOST", "Input", mysqlhost);
@@ -185,36 +183,6 @@ void SASEIO::parseStationID(const std::string& stationID, std::string& stat_abk,
 		stat_abk = stationID;
 		stao_nr = "0";
 	}
-}
-
-void SASEIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void SASEIO::readStationData(const Date&, std::vector<StationData>& vecStation)
@@ -386,31 +354,5 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	mysql_close(conn2);
 	return fullStation;
 }
-
-void SASEIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SASEIO::cleanup() throw() {}
 
 } //namespace

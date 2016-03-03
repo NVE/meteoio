@@ -201,63 +201,6 @@ ImisIO::ImisIO(const Config& cfgreader)
 	getDBParameters();
 }
 
-ImisIO::~ImisIO() throw() {}
-
-void ImisIO::read2DGrid(Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::readDEM(DEMObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::readLanduse(Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::readAssimilationData(const Date&, Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::write2DGrid(const Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                            const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void ImisIO::openDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	env  = Environment::createEnvironment();// static OCCI function

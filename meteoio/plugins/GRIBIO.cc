@@ -698,24 +698,6 @@ void GRIBIO::readDEM(DEMObject& dem_out)
 	}
 }
 
-void GRIBIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void GRIBIO::scanMeteoPath()
 {
 	std::list<std::string> dirlist;
@@ -1039,31 +1021,6 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	}
 
 	free(values); free(values2);
-}
-
-void GRIBIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void GRIBIO::cleanup() throw()

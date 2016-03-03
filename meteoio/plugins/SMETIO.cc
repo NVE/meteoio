@@ -93,41 +93,6 @@ SMETIO::SMETIO(const Config& cfgreader)
 	parseInputOutputSection();
 }
 
-SMETIO::~SMETIO() throw()
-{
-
-}
-
-void SMETIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SMETIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SMETIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SMETIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//HACK: It should support coordinates in the data, ie: it should use the given date! (and TZ)
 	vecStation.clear();
@@ -756,18 +721,6 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 	} else {
 		throw InvalidFormatException("File \""+filename+"\" does not contain expected location information in DATA section!", AT);
 	}
-}
-
-void SMETIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SMETIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 } //namespace

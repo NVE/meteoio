@@ -46,6 +46,7 @@ SET(meteoio_sources
 	DataGenerator.cc
 	GeneratorAlgorithms.cc
 	plugins/libsmet.cc
+	IOInterface.cc
 	${plugins_sources}
 	${meteoLaws_sources}
 	${meteoStats_sources}

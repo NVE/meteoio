@@ -288,31 +288,6 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	read2DGrid_internal(da_out, filepath+"/"+dateStr+".sca");
 }
 
-void ARCIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARCIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
-                          const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARCIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name = grid2dpath_out+"/"+name;

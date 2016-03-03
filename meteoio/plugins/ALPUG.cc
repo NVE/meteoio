@@ -205,36 +205,6 @@ void ALPUG::readMetaData()
 		throw NoDataException(msg+" do(es) not have metadata in \'"+metafile+"\'", AT);
 }
 
-void ALPUG::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void ALPUG::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation = vecMeta;
@@ -390,31 +360,6 @@ void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readMetoFile(ii, dateStart, dateEnd, vecM);
 		vecMeteo.push_back( vecM );
 	}
-}
-
-void ALPUG::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ALPUG::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 } //namespace

@@ -168,36 +168,6 @@ std::string SNIO::file_pos(const std::string& filename, const size_t& linenr) {
 	return ss2.str();
 }
 
-void SNIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*filename*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	//the meta data cannot change for the stations in dependence of time
@@ -771,25 +741,6 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		        " Dirichlet boundary condition data, and " << optional_failure_count <<
 		        " optional data found missing when writing " << file_name << "\n";
 	}
-}
-
-
-void SNIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void SNIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void SNIO::convertUnits(MeteoData& meteo)

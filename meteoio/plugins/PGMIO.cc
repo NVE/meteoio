@@ -194,45 +194,6 @@ void PGMIO::readDEM(DEMObject& dem_out)
 	read2DGrid_internal(dem_out, filename);
 }
 
-void PGMIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PGMIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PGMIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PGMIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                          std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                          const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PGMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                           const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PGMIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name = grid2dpath_out+"/"+name;

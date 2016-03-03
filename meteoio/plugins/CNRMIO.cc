@@ -156,8 +156,6 @@ CNRMIO::CNRMIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinpara
 	parseInputOutputSection();
 }
 
-CNRMIO::~CNRMIO() throw() {}
-
 void CNRMIO::parseInputOutputSection()
 {
 	//default timezones
@@ -263,18 +261,6 @@ void CNRMIO::readDEM(DEMObject& dem_out)
 	const string filename = cfg.get("DEMFILE", "Input");
 	const string varname = cfg.get("DEMVAR", "Input");
 	read2DGrid_internal(dem_out, filename, varname);
-}
-
-void CNRMIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CNRMIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void CNRMIO::readStationData(const Date&, std::vector<StationData>& vecStation)
@@ -851,12 +837,6 @@ void CNRMIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMete
 	double* timestep = new double[1];
 	*timestep = interval;
 	map_data_1D[cnrm_timestep] = timestep;
-}
-
-void CNRMIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void CNRMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)

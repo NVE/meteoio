@@ -189,8 +189,6 @@ NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(
 	parseInputOutputSection();
 }
 
-NetCDFIO::~NetCDFIO() throw() {}
-
 void NetCDFIO::parseInputOutputSection()
 {
 	//default timezones
@@ -451,42 +449,6 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 		
 		throw InvalidArgumentException("The variable containing the DEM could not be found. Please specify it using the DEMVAR key.", AT);
 	}
-}
-
-void NetCDFIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void NetCDFIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void NetCDFIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void NetCDFIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&, const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void NetCDFIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)

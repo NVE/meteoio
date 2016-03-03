@@ -123,37 +123,6 @@ void GSNIO::initGSNConnection() {
 	cfg.getValue("GSN_DEBUG", "INPUT", gsn_debug, IOUtils::nothrow);
 }
 
-void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::readDEM(DEMObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::readLanduse(Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                           const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void GSNIO::readStationData(const Date& date, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
@@ -406,30 +375,6 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	}
 
 	convertUnits(tmpmeteo);
-}
-
-void GSNIO::readAssimilationData(const Date&, Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::write2DGrid(const Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GSNIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void GSNIO::convertUnits(MeteoData& meteo) const

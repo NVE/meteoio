@@ -66,43 +66,6 @@ BormaIO::BormaIO(const Config& cfgreader)
 	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
 }
 
-void BormaIO::read2DGrid(Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readDEM(DEMObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readLanduse(Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                             const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                             std::vector< std::vector<MeteoData> >& vecMeteo,
                             const size_t& stationindex)
@@ -398,30 +361,6 @@ bool BormaIO::validFilename(const std::string& tmp) const
 	}
 
 	return true;
-}
-
-void BormaIO::readAssimilationData(const Date&, Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::write2DGrid(const Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void BormaIO::convertUnits(MeteoData& meteo)

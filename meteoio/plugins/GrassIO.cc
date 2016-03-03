@@ -147,13 +147,6 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	fin.close();
 }
 
-void GrassIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-
 void GrassIO::readDEM(DEMObject& dem_out)
 {
 	string filename;
@@ -181,32 +174,6 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh << setw(2) <<  mm <<".sca";
 
 	read2DGrid(da_out, ss.str());
-}
-
-void GrassIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
-                            const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                             const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
@@ -260,12 +227,6 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	}
 
 	fout.close();
-}
-
-void GrassIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 } //namespace

@@ -73,28 +73,6 @@ GeotopIO::GeotopIO(const Config& cfgreader)
 	cfg.getValue("TIME_ZONE", "Output", out_tz, IOUtils::nothrow);
 }
 
-void GeotopIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::readDEM(DEMObject&) {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::readLanduse(Grid2DObject&) {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
 	mapParam["Iprec"] = MeteoData::PSUM;
 	mapParam["WindSp"] = MeteoData::VW;
@@ -532,28 +510,6 @@ std::string GeotopIO::getValueForKey(const std::string& line)
 	}
 
 	return std::string();
-}
-
-void GeotopIO::readAssimilationData(const Date&, Grid2DObject&) {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::readPOI(std::vector<Coords>&) {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GeotopIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void GeotopIO::convertUnitsBack(MeteoData& meteo) {

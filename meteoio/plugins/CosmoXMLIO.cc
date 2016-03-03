@@ -282,36 +282,6 @@ void CosmoXMLIO::closeIn_XML() throw()
 	xmlCleanupParser();
 }
 
-void CosmoXMLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
 {
 	//match something like "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col[@id='station_abbreviation' and text()='ATT']/.."
@@ -555,31 +525,6 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		file_idx++;
 	} while (file_idx<nr_files && nextDate<=dateEnd);
-}
-
-void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                                const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 } //namespace

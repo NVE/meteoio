@@ -240,65 +240,10 @@ double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
 		return max_factor;
 }
 
-PNGIO::~PNGIO() throw() {
-	if (fp!=NULL) fclose(fp); fp=NULL;
-}
-
-void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
+PNGIO::~PNGIO() throw() 
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters& , const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                             const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	if (fp!=NULL) fclose(fp); 
+	fp=NULL;
 }
 
 Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)

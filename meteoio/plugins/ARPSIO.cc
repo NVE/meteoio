@@ -318,57 +318,6 @@ void ARPSIO::readDEM(DEMObject& dem_out)
 	fclose(fin);
 }
 
-void ARPSIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                           std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                           const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                            const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void ARPSIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void ARPSIO::initializeGRIDARPS(FILE* &fin, const std::string& filename)
 {
 	double v1, v2;

@@ -152,8 +152,6 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
       return *this;
 }
 
-PSQLIO::~PSQLIO() throw() {}
-
 void PSQLIO::getParameters(const Config& cfg)
 {
 	in_port = "5432"; //The default PostgreSQL port
@@ -233,36 +231,6 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 	}
 
 	fin.close();
-}
-
-void PSQLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input)
@@ -372,11 +340,11 @@ void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 bool PSQLIO::replace(std::string& str, const std::string& from, const std::string& to)
 {
-    const size_t start_pos = str.find(from);
-    if (start_pos == std::string::npos)
-        return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
+	const size_t start_pos = str.find(from);
+	if (start_pos == std::string::npos)
+		return false;
+	str.replace(start_pos, from.length(), to);
+	return true;
 }
 
 void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
@@ -779,24 +747,6 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		//cout << "EXEC: " << query << endl;
 		sql_exec(query, false);
 	}
-}
-
-void PSQLIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PSQLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void PSQLIO::convertUnitsBack(MeteoData& meteo)
