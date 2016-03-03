@@ -49,7 +49,8 @@ namespace mio {
  * - ARPS_XCOORD: x coordinate of the lower left corner of the grids; [Input] section
  * - ARPS_YCOORD: y coordinate of the lower left corner of the grids; [Input] section
  * - GRID2DPATH: path to the input directory where to find the arps files to be read as grids; [Input] section
- * - GRID2DEXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
+ * - GRID3DPATH: path to the input directory where to find the arps 3D files to be read as grids; [Input] section
+ * - ARPS_EXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
@@ -58,7 +59,7 @@ const std::string ARPSIO::default_ext=".asc"; //filename extension
 ARPSIO::ARPSIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
+          grid2dpath_in(), grid3dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -68,7 +69,7 @@ ARPSIO::ARPSIO(const std::string& configfile)
 ARPSIO::ARPSIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
+          grid2dpath_in(), grid3dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -82,6 +83,7 @@ ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
 		coordout = source.coordout;
 		coordoutparam = source.coordoutparam;
 		grid2dpath_in = source. grid2dpath_in;
+		grid3dpath_in = source.grid3dpath_in;
 		ext = source.ext;
 		dimx = source.dimx;
 		dimy = source.dimy;
@@ -101,12 +103,17 @@ void ARPSIO::setOptions()
 	if (grid_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	}
+	
+	const string grid3d_in = cfg.get("GRID3D", "Input", IOUtils::nothrow);
+	if (grid3d_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID3DPATH", "Input", grid3dpath_in);
+	}
 
 	cfg.getValue("ARPS_XCOORD", "Input", xcoord, IOUtils::nothrow);
 	cfg.getValue("ARPS_YCOORD", "Input", ycoord, IOUtils::nothrow);
 
 	//default value has been set in constructor
-	cfg.getValue("GRID2DEXT", "Input", ext, IOUtils::nothrow);
+	cfg.getValue("ARPS_EXT", "Input", ext, IOUtils::nothrow);
 	if (ext=="none") ext.clear();
 }
 
@@ -268,7 +275,7 @@ void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2D
 void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 {
 	const size_t pos = i_name.find_last_of(":");//a specific parameter can be provided as {filename}:{parameter}
-	const std::string filename = (pos!=IOUtils::npos)? grid2dpath_in +"/" + i_name.substr(0, pos) : grid2dpath_in +"/" + i_name;
+	const std::string filename = (pos!=IOUtils::npos)? grid3dpath_in +"/" + i_name.substr(0, pos) : grid3dpath_in +"/" + i_name;
 	if (pos==IOUtils::npos) { //TODO: read by default the first data grid that is found?
 		listFields(i_name);
 		throw InvalidArgumentException("Please provide the parameter that has to be read!", AT);

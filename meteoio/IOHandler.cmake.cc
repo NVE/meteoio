@@ -329,6 +329,18 @@ void IOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters&
 	plugin->read2DGrid(grid_out, parameter, date);
 }
 
+void IOHandler::read3DGrid(Grid3DObject& grid_out, const std::string& i_filename)
+{
+	IOInterface *plugin = getPlugin("GRID3D", "Input");
+	plugin->read3DGrid(grid_out, i_filename);
+}
+
+void IOHandler::read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	IOInterface *plugin = getPlugin("GRID3D", "Input");
+	plugin->read3DGrid(grid_out, parameter, date);
+}
+
 void IOHandler::readDEM(DEMObject& dem_out)
 {
 	IOInterface *plugin = getPlugin("DEM", "Input");
@@ -400,6 +412,18 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Param
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Output");
 	plugin->write2DGrid(grid_in, parameter, date);
+}
+
+void IOHandler::write3DGrid(const Grid3DObject& grid_out, const std::string& options)
+{
+	IOInterface *plugin = getPlugin("GRID3D", "Output");
+	plugin->write3DGrid(grid_out, options);
+}
+
+void IOHandler::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	IOInterface *plugin = getPlugin("GRID3D", "Output");
+	plugin->write3DGrid(grid_out, parameter, date);
 }
 
 /**

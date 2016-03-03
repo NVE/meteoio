@@ -45,6 +45,9 @@ class IOHandler : public IOInterface {
 		//methods defined in the IOInterface class
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
+		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
@@ -60,6 +63,8 @@ class IOHandler : public IOInterface {
 		virtual void readPOI(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options);
+		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		const std::string toString() const;
 
