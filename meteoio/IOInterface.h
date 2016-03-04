@@ -266,7 +266,7 @@ class IOInterface {
 		* @param grid_out (Grid3DObject) The grid to write
 		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
 		*/
-		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options);
+		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
 		
 		/**
 		* @brief Write a Grid3DObject comtaining a known meteorological parameter

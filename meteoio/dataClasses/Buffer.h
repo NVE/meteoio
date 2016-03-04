@@ -124,6 +124,7 @@ class MeteoBuffer {
  * @author Mathias Bavay
  * @date   2015-02-06
 */
+//TODO: make it a template so it can buffer dems, 2D, 3D grids
 class GridBuffer {
 	public:
 		GridBuffer(const size_t& in_max_grids);

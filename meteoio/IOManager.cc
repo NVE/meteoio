@@ -150,6 +150,16 @@ void IOManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& p
 	gridsmanager.read2DGrid(grid2D, parameter, date);
 }
 
+void IOManager::read3DGrid(Grid3DObject& grid3D, const std::string& filename)
+{
+	gridsmanager.read3DGrid(grid3D, filename);
+}
+
+void IOManager::read3DGrid(Grid3DObject& grid3D, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	gridsmanager.read3DGrid(grid3D, parameter, date);
+}
+
 void IOManager::readDEM(DEMObject& grid2D)
 {
 	gridsmanager.readDEM(grid2D);
@@ -178,6 +188,16 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
 void IOManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	gridsmanager.write2DGrid(grid2D, parameter, date);
+}
+
+void IOManager::write3DGrid(const Grid3DObject& grid3D, const std::string& name)
+{
+	gridsmanager.write3DGrid(grid3D, name);
+}
+
+void IOManager::write3DGrid(const Grid3DObject& grid3D, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	gridsmanager.write3DGrid(grid3D, parameter, date);
 }
 
 const std::string IOManager::toString() const {
