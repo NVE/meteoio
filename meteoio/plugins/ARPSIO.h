@@ -67,7 +67,8 @@ class ARPSIO : public IOInterface {
 		void initializeTrueARPS(FILE* &fin, const std::string& filename, const char curr_line[ARPS_MAX_LINE_LENGTH]);
 		void openGridFile(FILE* &fin, const std::string& filename);
 		void readGridLayer(FILE* &fin, const std::string& filename, const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
-		void moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker);
+		static void moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker);
+		void skipLayers(FILE* &fin, const std::string& filename, const unsigned int& layers) const;
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
