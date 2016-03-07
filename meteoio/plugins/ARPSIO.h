@@ -68,7 +68,7 @@ class ARPSIO : public IOInterface {
 		void openGridFile(FILE* &fin, const std::string& filename);
 		void readGridLayer(FILE* &fin, const std::string& filename, const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		static void moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker);
-		void skipLayers(FILE* &fin, const std::string& filename, const unsigned int& layers) const;
+		void skipToLayer(FILE* &fin, const std::string& filename, const unsigned int& layers) const;
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

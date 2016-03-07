@@ -33,8 +33,10 @@ namespace mio {
  * grids modified by the ARPSGRID utility). DEM reading works well while reading meteo parameters might be a rough ride 
  * (since ARPS files do not always contain a consistent set of meteo fields).
  * 
- * It is possible to manually extract a whole section, for a given variable with the following script, in order to ease debugging:
+ * It is possible to manually print the list of available variables as well as extract a whole section, for a given variable 
+ * with the following one line scripts, in order to ease debugging:
  * @code
+ * awk '/^ [a-z]/{print $0}'  {arps_file}
  * awk '/^ [a-z]/{isVar=0} /^ radsw/{isVar=1;next} {if(isVar) print $0}' {arps_file}
  * @endcode
  *
@@ -298,8 +300,6 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 	// Read until the parameter is found
 	moveToMarker(fin, filename, parameter);
 	
-	skipLayers(fin, filename, 1); //for now, consider that all 3D fields have a purely numeric first layer
-
 	//read the data we are interested in
 	for (size_t ix = 0; ix < dimx; ix++) {
 		for (size_t iy = 0; iy < dimy; iy++) {
@@ -453,9 +453,9 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
  * be skipped.
  * @param fin         file pointer
  * @param filename  file name to use for error messages
- * @param layer     Index of the layer to skip (1 to dimz)
+ * @param layer     Index of the layer to skip to (1 to dimz)
 */
-void ARPSIO::skipLayers(FILE* &fin, const std::string& filename, const unsigned int& layers) const
+void ARPSIO::skipToLayer(FILE* &fin, const std::string& filename, const unsigned int& layers) const
 {
 	if (layers>1) {
 		double tmp;
@@ -498,7 +498,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 	moveToMarker(fin, filename, parameter);
 
 	// move to the begining of the layer of interest
-	skipLayers(fin, filename, layer);
+	skipToLayer(fin, filename, layer);
 
 	//read the data we are interested in
 	for (size_t iy = 0; iy < dimy; iy++) {
