@@ -205,7 +205,7 @@ void NetCDFIO::parseInputOutputSection()
 	if (!out_schema.empty()) initAttributesMap(out_schema, out_attributes);
 	else initAttributesMap("ECMWF", out_attributes);
 	
-	const std::string in_meteo = cfg.get("METEO", "Input", IOUtils::nothrow);
+	const std::string in_meteo = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (in_meteo == "NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		const string in_grid2d_path = cfg.get("GRID2DPATH", "Input", IOUtils::nothrow);
 		if (!in_grid2d_path.empty()) scanMeteoPath(in_grid2d_path,  cache_meteo_files);
@@ -491,7 +491,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 {
 	meteo_files.clear();
 
-	const string meteo_ext = 	cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
+	const string meteo_ext = cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
 	std::list<std::string> dirlist = IOUtils::readDirectory(meteopath_in, meteo_ext);
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();

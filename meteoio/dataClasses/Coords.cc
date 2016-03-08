@@ -503,7 +503,14 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 * @param[in] in_altitude altitude to set
 * @param[in] in_update should the easting/northing be updated? (default=true)
 */
-void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) {
+void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
+{
+	if (fabs(in_latitude)>90. || fabs(in_longitude)>360.) {
+		std::ostringstream ss;
+		ss << "(" << in_latitude << "," << in_longitude << ")";
+		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);
+	}
+	
 	latitude = in_latitude;
 	longitude = in_longitude;
 	if (in_altitude!=IOUtils::nodata) {
