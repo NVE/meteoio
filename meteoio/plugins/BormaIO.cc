@@ -15,7 +15,13 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "BormaIO.h"
+#include <meteoio/plugins/BormaIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/IOExceptions.h>
+
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -152,7 +158,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
                          std::vector< std::vector<MeteoData> >& vecMeteo,
-                         const unsigned int& stationnr)
+                         const size_t& stationnr)
 {
 	std::vector<std::string> vecFiles;
 	std::vector<Date> vecDate;

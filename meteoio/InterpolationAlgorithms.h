@@ -555,7 +555,7 @@ class USERInterpolation : public InterpolationAlgorithm {
  * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
  * If there are some time steps when only one station provides the necessary parameter, the base method will
  * automatically switch to "AVG". A third (optional) argument can be provided that is the air temperature
- * threshold (in K) below which such redistribution occurs. 
+ * threshold (in K) below which such redistribution occurs (so liquid precipitation is not redistributed). 
  * 
  * @code
  * PSUM::algorithms = ALS_SCALING

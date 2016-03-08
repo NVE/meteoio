@@ -24,8 +24,6 @@
 #include <meteoio/MathOptim.h> //math optimizations
 #include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
-#include <meteoio/IOManager.h> //HACK HACK HACK
-
 using namespace std;
 
 namespace mio {
@@ -809,7 +807,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
-
+	
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
@@ -846,6 +844,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 			val += deposited;
 		}
 	}
+	
 }
 
 void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
@@ -859,7 +858,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
-
+	
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
@@ -868,7 +867,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	//erosion: fully eroded at min_sx
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
 		const double sx = Sx(ii);
-		if (sx==IOUtils::nodata || VW(ii)<vw_thresh) continue; //low wind speed pixels don't contribute to erosion
+		if (sx==IOUtils::nodata || (sx<0 && VW(ii)<vw_thresh)) continue; //low wind speed pixels don't contribute to erosion
 		double &val = grid(ii);
 		if (sx<0.) {
 			const double eroded = val * sx/min_sx;
@@ -896,6 +895,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 			val += deposited;
 		}
 	}
+	
 }
 
 /**

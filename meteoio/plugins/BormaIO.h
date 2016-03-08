@@ -20,15 +20,10 @@
 
 #include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
-#include <meteoio/Date.h>
+#include <meteoio/dataClasses/Date.h>
 
 #include <libxml++/libxml++.h>
 #include <string>
-#include <sstream>
-#include <iostream>
 
 namespace mio {
 
@@ -68,7 +63,7 @@ class BormaIO : public IOInterface {
 		void readStationNames(void);
 		bool bufferData(const Date& dateStart, const Date& dateEnd,
 		                std::vector< std::vector<MeteoData> >& vecMeteo,
-		                const unsigned int& stationnr);
+		                const size_t& stationnr);
 
 		std::vector<std::string> vecStationName;
 		const Config cfg;
