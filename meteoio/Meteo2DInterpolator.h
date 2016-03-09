@@ -185,6 +185,8 @@ class Meteo2DInterpolator {
 		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
 		std::map<Date, METEO_SET > virtual_point_cache;  ///< stores already resampled virtual data points
+		
+		unsigned int vstations_refresh_rate; ///< how often to refresh the spatial interpolations for virtual stations? (in seconds)
 
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations

@@ -132,6 +132,8 @@ class Date {
 		int getJulianDayNumber(const bool& gmt=false) const;
 		bool isLeapYear() const;
 
+		static unsigned int mod(const double& julian, const unsigned int& seconds);
+		static unsigned int mod(const Date& indate, const unsigned int& seconds);
 		static double rnd(const double& julian, const unsigned int& precision, const RND& type=CLOSEST);
 		void rnd(const unsigned int& precision, const RND& type=CLOSEST);
 		static const Date rnd(const Date& indate, const unsigned int& precision, const RND& type=CLOSEST);

@@ -301,9 +301,9 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 	moveToMarker(fin, filename, parameter);
 	
 	//read the data we are interested in
-	for (size_t ix = 0; ix < dimx; ix++) {
+	for (size_t iz = 0; iz < dimz; iz++) {
 		for (size_t iy = 0; iy < dimy; iy++) {
-			for (size_t iz = 0; iz < dimz; iz++) {
+			for (size_t ix = 0; ix < dimx; ix++) {
 				double tmp;
 				if (fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 					grid_out.grid3D(ix,iy,iz) = tmp;

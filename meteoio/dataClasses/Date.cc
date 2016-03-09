@@ -762,6 +762,31 @@ bool Date::isLeapYear() const {
 }
 
 /**
+ * @brief Modulus of a julian date by a given number of seconds.
+ * This returns the modulus (in seconds) of a given date by the given number of seconds.
+ * @param[in] julian input date
+ * @param[in] seconds period (in seconds)
+ * @return modulus in seconds
+ */
+unsigned int Date::mod(const double& julian, const unsigned int& seconds)
+{
+	const long int julian_rnd =static_cast<long int>(  rnd(julian*3600.*24., 1) );
+	return static_cast<unsigned int>( julian_rnd % static_cast<long int>(seconds) );
+}
+
+/**
+ * @brief Modulus of a date by a given number of seconds.
+ * This returns the modulus (in seconds) of a given date by the given number of seconds.
+ * @param[in] julian input date
+ * @param[in] seconds period (in seconds)
+ * @return modulus in seconds
+ */
+unsigned int Date::mod(const Date& indate, const unsigned int& seconds)
+{
+	return mod(indate.getJulian(), seconds);
+}
+
+/**
  * @brief Round a julian date to a given precision.
  * If you want to round a local date, do NOT provide it as gmt julian but as local julian,
  * otherwise things like rounding to the next day would be shifted by TimeZone.
