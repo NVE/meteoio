@@ -307,14 +307,14 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	if (indexed_png) {
-		png_set_IHDR(png_ptr, info_ptr, width, height,
+		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
 		png_byte trans = 0; //by convention, the gradient define it as color 0
 		png_set_tRNS(png_ptr, info_ptr, &trans, 1, 0);
 	} else {
-		png_set_IHDR(png_ptr, info_ptr, width, height,
+		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
@@ -721,9 +721,11 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 		key[ii] = (char *)calloc(sizeof(char), max_len);
 		text[ii] = (char *)calloc(sizeof(char), max_len);
 		strncpy(key[ii], metadata_key[ii].c_str(), max_len-1); //in case the '\0' was not counted by maxlen
+		key[ii][max_len-1] = '\0'; //make sure it is null terminated
 		strncpy(text[ii], metadata_text[ii].c_str(), max_len-1);
-		info_text[ii].key = key[ii]+'\0'; //strncpy does not always '\0' terminate
-		info_text[ii].text = text[ii]+'\0';
+		text[ii][max_len-1] = '\0'; //make sure it is null terminated
+		info_text[ii].key = key[ii];
+		info_text[ii].text = text[ii];
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
 	}
 
