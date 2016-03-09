@@ -54,8 +54,7 @@ namespace mio {
  * -# End User documentation
  *    -# \subpage general "General concepts"
  *    -# \subpage configuration "Configuration file"
- *    -# \subpage plugins "Available plugins" and usage
- *    -# \subpage coords "Available coordinate systems" and usage
+ *    -# \subpage data_sources "Data input and sources"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage generators "Available data generators" and usage

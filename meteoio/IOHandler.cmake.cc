@@ -93,10 +93,13 @@ using namespace std;
 
 namespace mio {
  /**
- * @page plugins Plugins overview
- * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are  only compiled if requested when configuring the compilation with cmake.
- * A plugin can therefore fail to run if it has not been compiled.
+ * @page data_sources Data input overview
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they 
+ * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are  only compiled if requested when configuring the 
+ * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  *
+ * Please have a look at the support for \subpage coords "coordinate systems".
+ * 
  * @section available_categories Data sources categories
  * Several data sources categories have been defined that can be provided by a different plugin. Each data source category is defined by a specific key in the configuration file (usually, io.ini):
  * - METEO, for meteorological time series
@@ -114,7 +117,7 @@ namespace mio {
  * Moreover, a given plugin might only support a given category for read or write (for example, PNG: there is no easy and safe way to interpret a given color as a given numeric value without knowing its color scale, so reading a png has been disabled).
  * Finally, the plugins usually don't implement all these categories (for example, ArcGIS file format only describes 2D grids, so the ARC plugin will only deal with 2D grids), so please check what a given plugin implements before connecting it to a specific data source category.
  *
- * @section available_plugins Available plugins
+ * @subsection available_plugins Available plugins
  * So far the following plugins have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * <center><table border="1">
  * <tr><th>Plugin keyword</th><th>Provides</th><th>Description</th><th>Extra requirements</th></tr>
@@ -194,6 +197,12 @@ namespace mio {
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
  * station can be merged into multiple other stations.
+ * 
+ * @section virtual_stations_section Virtual stations
+ * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
+ * This is handled as "virtual stations" since the data will seem to originate from points where no station is present. This is described in the 
+ * \subpage virtual_stations "virtual stations" page.
+ * 
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const

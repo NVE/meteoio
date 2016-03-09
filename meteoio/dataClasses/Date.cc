@@ -777,7 +777,7 @@ unsigned int Date::mod(const double& julian, const unsigned int& seconds)
 /**
  * @brief Modulus of a date by a given number of seconds.
  * This returns the modulus (in seconds) of a given date by the given number of seconds.
- * @param[in] julian input date
+ * @param[in] indate input date
  * @param[in] seconds period (in seconds)
  * @return modulus in seconds
  */

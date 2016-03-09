@@ -22,6 +22,58 @@ using namespace std;
 
 namespace mio {
 
+/**
+ * @page virtual_stations Virtual stations handling
+ * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
+ * This is handled as "virtual stations" since the data **will seem to originate from these virtual stations points** where no station is present. 
+ * 
+ * *Virtual stations are currently in a "beta" stage and their implementation might significantly change in the future.*
+ *
+ * @section virtual_stations_from_interpolation From spatial interpolations
+ * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
+ * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points. This behavior is configured
+ * by the following keys (in the [Input] section):
+ *    + VIRTUAL_STATIONS set to *true*;
+ *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
+ *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
+ *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds (otherwise, only IOUtils::nodata will be returned);
+ *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTAL);
+ * 
+ * Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
+ * 
+ * @code
+ * DEM = ARC
+ * DEMFILE = ./input/surface-grids/davos.asc
+ *
+ * #here, the real data as measured by some stations 
+ * METEO		= IMIS
+ * DBNAME		= sdbo
+ * DBUSER		= xxx
+ * DBPASS		= xxx
+ * STATION1	= *WFJ
+ * STATION2	= STB2
+ * STATION3	= WFJ2
+ * STATION4	= *DAV
+ * 
+ * #here the locations where the data will be generated. The caller will only see these stations!
+ * Virtual_stations = true
+ * VSTATION1 = 46.793029 9.821343
+ * VSTATION2 = 46.793031 9.831572
+ * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
+ * VSTATIONS_REFRESH_RATE = 21600
+ * @endcode
+ * 
+* @section virtual_stations_from_grids From gridded data
+* The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
+* the [Input] section). The following keys control this downscaling process:
+*    + DOWNSCALING set to *true*;
+*    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
+*    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations; 
+* 
+* Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
+ * 
+ */
+
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
                     : cfg(i_cfg), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager),
                       grid_buffer(0), mapAlgorithms(),
@@ -37,6 +89,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
 	if (virtual_stations) {
 		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
+		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
 	}
 	
 	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
@@ -46,7 +99,6 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 		
 	if (virtual_stations || downscaling) {
 		initVirtualStations(downscaling); //adjust the coordinates if downscaling
-		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
 	}
 }
 
