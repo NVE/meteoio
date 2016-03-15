@@ -19,6 +19,7 @@
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 
@@ -181,7 +182,7 @@ bool FitLeastSquare::computeFit() {
 	//building infoString
 	ostringstream ss;
 	ss << "Computed regression with " << regname << " model ";
-	ss << "- Sum of square residuals = " << R2 << " , max_delta = " << max_delta << " ";
+	ss << "- Sum of square residuals = " << std::setprecision(2) << R2 << " , max_delta = " << max_delta << " ";
 	ss << "- " << iter << " iterations";
 	infoString = ss.str();
 

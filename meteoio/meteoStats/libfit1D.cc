@@ -20,6 +20,7 @@
 #include <meteoio/MathOptim.h>
 #include <cmath>
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
@@ -141,13 +142,13 @@ bool SimpleLinear::fit()
 
 	if (fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::LinRegression(X, Y, a, b, r, mesg);
-		ss << mesg << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
 	} else {
 		a = fixed_lapse_rate;
 		if (a!=0.) {
 			Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
 			ss << mesg << "Computed regression with " << regname << " model ";
-			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
 		} else {
 			a=0.;
 			b=0.;
@@ -173,13 +174,13 @@ bool NoisyLinear::fit()
 
 	if (fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
-		ss << mesg  << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg  << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
 	} else {
 		a = fixed_lapse_rate;
 		if (a!=0.) {
 			Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
 			ss << mesg  << "Computed regression with " << regname << " model ";
-			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
 		} else {
 			a=0.;
 			b=0.;
