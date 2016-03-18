@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/MathOptim.h>
+#include <meteoio/ResamplingAlgorithms2D.h>
 #include <cmath>
 
 using namespace std;
@@ -328,6 +330,17 @@ void Grid2DObject::set(const Grid2DObject& i_grid, const double& init)
 {
 	setValues(i_grid.cellsize, i_grid.llcorner);
 	grid2D.resize(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init);
+}
+
+void Grid2DObject::rescale(const double& i_cellsize)
+{
+	if (grid2D.getNx()==0 || grid2D.getNy()==0)
+		throw InvalidArgumentException("Can not rescale an empty grid!", AT);
+	
+	const double factor_x = cellsize / i_cellsize;
+	const double factor_y = cellsize / i_cellsize;
+	grid2D = ResamplingAlgorithms2D::BilinearResampling(grid2D, factor_x, factor_y);
+	cellsize = i_cellsize;
 }
 
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {

@@ -126,6 +126,12 @@ class Grid2DObject {
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
 		void set(const Grid2DObject& i_grid, const double& init);
+		
+		/**
+		* @brief Rescale (bilinear resampling) the grid to match the given cell size.
+		* @param i_cellsize new value for cellsize
+		*/
+		void rescale(const double& i_cellsize);
 
 		void size(size_t& o_ncols, size_t& o_nrows) const;
 		size_t getNx() const;

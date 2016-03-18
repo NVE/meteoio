@@ -154,7 +154,7 @@ namespace mio {
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
  *
  * @subsection data_exclusion Data exclusion
- * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID
+ * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard) 
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
  * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
  * to exclude for the station (the path to the file can be a relative path and will be properly resolved).
@@ -175,13 +175,21 @@ namespace mio {
  * WFJ2 TA RH
  * KLO3 HS PSUM
  * @endcode
+ * 
+ * Another example relying on wildcards (the kept/excluded parameters lists are additive):
+ * @code
+ * *::KEEP = TA RH                               ;all stations will keep TA and RH and reject the other parameters
+ * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
+ *
+ * @endcode
  *
  * @subsection data_merging Data merging
  * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any 
  * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the 
  * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP 
  * commands to fine tune how the composite station(s) is/are built). 
- * Please note that the order of declaration defines the priority (ie the first station that has a value for a given parameter has priority).
+ * Please note that the order of declaration defines the priority (ie the first station that has a value for a given parameter has priority). Please also
+ * note that only common timestamps will be merged! (ie if the stations have different sampling rates, it might end up that no merge gets performed)
  * 
  * @code
  * STATION1 = *WFJ
@@ -386,7 +394,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	
 	if (!keeps_ready) create_keep_map();
 	keep_params(vecMeteo);
-
+	
 	if (!merge_ready) create_merge_map(); 
 	merge_stations(vecMeteo);
 	
@@ -479,7 +487,6 @@ void IOHandler::create_merge_map()
 			const std::vector<std::string>::const_iterator vec_it = find (merged_stations.begin(), merged_stations.end(), *it);
 			if (vec_it==merged_stations.end()) merged_stations.push_back( *it ); //this station will be merged into another one
 		}
-
 		merge_commands[ station ] = vecString;
 	}
 	
@@ -613,7 +620,7 @@ void IOHandler::create_exclude_map()
 						IOUtils::toUpper(*it);
 					}
 
-					const set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
+					const std::set<std::string> tmpset(tmpvec.begin()+1, tmpvec.end());
 					excluded_params[ tmpvec[0] ] = tmpset;
 				}
 			}
@@ -631,7 +638,7 @@ void IOHandler::create_exclude_map()
 		const size_t found = exclude_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( IOUtils::strToUpper(exclude_keys[ii].substr(0,found)) );
+		const std::string station( IOUtils::strToUpper(exclude_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(exclude_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
@@ -639,8 +646,22 @@ void IOHandler::create_exclude_map()
 			IOUtils::toUpper(*it);
 		}
 
-		const set<string> tmpset(vecString.begin(), vecString.end());
+		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
 		excluded_params[ station ] = tmpset;
+	}
+	
+	//Handle "*" wildcard: add the params to all other declared stations
+	map< string, set<string> >::const_iterator it_station = excluded_params.find("*");
+	if (it_station!=excluded_params.end()) {
+		const std::set<std::string> wildcard( excluded_params["*"] );
+		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
+			std::set<std::string> params( it_station->second );
+			
+			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
+			
+			excluded_params[ it_station->first ] = params;
+		}
 	}
 }
 
@@ -693,7 +714,7 @@ void IOHandler::create_keep_map()
 		const size_t found = keep_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( IOUtils::strToUpper(keep_keys[ii].substr(0,found)) );
+		const std::string station( IOUtils::strToUpper(keep_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(keep_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
@@ -701,8 +722,22 @@ void IOHandler::create_keep_map()
 			IOUtils::toUpper(*it);
 		}
 
-		const set<string> tmpset(vecString.begin(), vecString.end());
+		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
 		kept_params[ station ] = tmpset;
+	}
+	
+	//Handle "*" wildcard: add the params to all other declared stations
+	map< string, set<string> >::const_iterator it_station = kept_params.find("*");
+	if (it_station!=kept_params.end()) {
+		const std::set<std::string> wildcard( kept_params["*"] );
+		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
+			std::set<std::string> params( it_station->second );
+			
+			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
+			
+			kept_params[ it_station->first ] = params;
+		}
 	}
 }
 
@@ -715,9 +750,12 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
-		const string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
-		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
-		if (it == excluded_params.end()) continue;
+		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
+		map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
+		if (it == excluded_params.end()) {
+			it = excluded_params.find("*"); //fallback: is there a wildcard like "*::KEEP"?
+			if (it == excluded_params.end()) continue;
+		}
 
 		const set<string> excluded = it->second;
 
@@ -741,9 +779,12 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
 		
-		const string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
-		const map< string, set<string> >::const_iterator it = kept_params.find(stationID);
-		if (it == kept_params.end()) continue;
+		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
+		map< string, set<string> >::const_iterator it = kept_params.find(stationID);
+		if (it == kept_params.end()) {
+			it = kept_params.find("*"); //fallback: is there a wildcard like "*::KEEP"?
+			if (it == kept_params.end()) continue;
+		}
 
 		const set<string> kept = it->second;
 		
