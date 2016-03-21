@@ -591,6 +591,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 0.; max = 250.;
 		}
 		gradient.set(Gradient::blue_pink, min, max, autoscale);
+	} else if (parameter==MeteoGrids::PSUM_PH) {
+		min = 0.; max = 1.;
+		gradient.set(Gradient::bluewhitered, min, max, autoscale);
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
