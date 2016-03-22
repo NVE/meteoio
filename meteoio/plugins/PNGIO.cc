@@ -170,8 +170,8 @@ void PNGIO::setOptions()
 	cfg.getValue("PNG_WORLD_FILE", "Output", has_world_file, IOUtils::nothrow);
 
 	if (has_legend) { //we need to save room for the legend
-		if (min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
-		if (max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
+		if (min_w!=IOUtils::unodata) min_w -= Legend::getLegendWidth();
+		if (max_w!=IOUtils::unodata) max_w -= Legend::getLegendWidth();
 	}
 
 	cfg.getValue("PNG_INDEXED", "Output", indexed_png, IOUtils::nothrow);
@@ -330,8 +330,8 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
 	if (has_legend) {
-		const legend leg(static_cast<unsigned int>(nrows), min, max);
-		legend_array = leg.getLegend();
+		const Legend legend(static_cast<unsigned int>(nrows), min, max);
+		legend_array = legend.getLegend();
 		const size_t nx = legend_array.getNx();
 		return (ncols+nx);
 	} else {
