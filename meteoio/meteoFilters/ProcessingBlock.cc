@@ -99,7 +99,7 @@ namespace mio {
  * - SNOS: detection of grass growing under the snow height sensor, see FilterSnowNosnow
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
- * - SUPPR: delete all data, see FilterSuppr
+ * - SUPPR: delete all or some data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
  *
@@ -120,7 +120,7 @@ namespace mio {
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg)
 {
 	if (blockname == "SUPPR"){
-		return new FilterSuppr(vec_args, blockname);
+		return new FilterSuppr(vec_args, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "MIN"){
 		return new FilterMin(vec_args, blockname);
 	} else if (blockname == "MAX"){
@@ -225,7 +225,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 	const size_t maxIndex = corrections.size();
 	const size_t minIndex = (c_type=='h')? 0 : 1;
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	try {
 		size_t index, lcount=0;

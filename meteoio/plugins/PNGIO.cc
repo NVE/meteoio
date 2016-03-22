@@ -264,6 +264,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 {
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
