@@ -48,18 +48,18 @@ class PNGIO : public IOInterface {
 
 	private:
 		void setOptions();
-		void parse_size(const std::string& size_spec, size_t& width, size_t& height);
-		double getScaleFactor(const size_t& grid_w, const size_t& grid_h);
+		static void parse_size(const std::string& size_spec, size_t& width, size_t& height);
+		double getScaleFactor(const size_t& grid_w, const size_t& grid_h) const;
+		Grid2DObject scaleGrid(const Grid2DObject& grid_in) const;
+		size_t setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array) const;
+		static void setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
 		void createMetadata(const Grid2DObject& grid);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
-		Grid2DObject scaleGrid(const Grid2DObject& grid_in);
 		void setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height);
-		void writeWorldFile(const Grid2DObject& grid_in, const std::string& filename);
-		size_t setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array);
+		void writeWorldFile(const Grid2DObject& grid_in, const std::string& filename) const;
 		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const size_t &full_width, const png_structp &png_ptr, png_infop& info_ptr);
-		void setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
 		void closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
-		std::string decimal_to_dms(const double& decimal);
+		static std::string decimal_to_dms(const double& decimal);
 
 		const Config cfg;
 		FILE *fp; //since passing fp always fail...

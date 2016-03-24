@@ -149,6 +149,12 @@ PNGIO& PNGIO::operator=(const PNGIO& source) {
 	return *this;
 }
 
+PNGIO::~PNGIO() throw() 
+{
+	if (fp!=NULL) fclose(fp); 
+	fp=NULL;
+}
+
 void PNGIO::setOptions()
 {
 	//default values have been set by the constructors
@@ -196,19 +202,17 @@ void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& heig
 		throw InvalidFormatException(ss.str(), AT);
 	}
 
-	width = static_cast<size_t>(w);
-	height = static_cast<size_t>(h);
+	width = static_cast<size_t>( w );
+	height = static_cast<size_t>( h );
 
 	std::string tmp(rest);
 	IOUtils::trim(tmp);
 	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-		std::ostringstream ss;
-		ss << "Invalid PNGIO size specification \"" << size_spec << "\"";
-		throw InvalidFormatException(ss.str(), AT);
+		throw InvalidFormatException("Invalid PNGIO size specification \"" + size_spec + "\"", AT);
 	}
 }
 
-double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
+double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h) const
 {
 	if (grid_w==0 || grid_h==0) {
 		return 1.;
@@ -240,13 +244,7 @@ double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
 		return max_factor;
 }
 
-PNGIO::~PNGIO() throw() 
-{
-	if (fp!=NULL) fclose(fp); 
-	fp=NULL;
-}
-
-Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
+Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in) const
 { //scale input image
 	const double factor = getScaleFactor(grid_in.getNx(), grid_in.getNy());
 	if (scaling=="nearest")
@@ -328,7 +326,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
 }
 
-size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
+size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array) const
 {
 	if (has_legend) {
 		const Legend legend(static_cast<unsigned int>(nrows), min, max);
@@ -338,6 +336,21 @@ size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &
 	} else {
 		return ncols;
 	}
+}
+
+void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
+{
+	std::vector<unsigned char> pal;
+	size_t nr_colors;
+	gradient.getPalette(pal, nr_colors);
+	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
+	for (size_t ii=0; ii<nr_colors; ii++) {
+		const size_t interlace = ii*3; //colors from Gradient interlaced
+		palette[ii].red = static_cast<png_byte>(pal[interlace]);
+		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
+		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
+	}
+	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
 }
 
 void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& legend_array, const Gradient& gradient, const size_t& full_width, const png_structp& png_ptr, png_infop& info_ptr)
@@ -404,21 +417,6 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 
 	png_write_flush(png_ptr);
 	png_free(png_ptr, row);
-}
-
-void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
-{
-	std::vector<unsigned char> pal;
-	size_t nr_colors;
-	gradient.getPalette(pal, nr_colors);
-	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
-	for (size_t ii=0; ii<nr_colors; ii++) {
-		const size_t interlace = ii*3; //colors from Gradient interlaced
-		palette[ii].red = static_cast<png_byte>(pal[interlace]);
-		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
-		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
-	}
-	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
 }
 
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
@@ -622,7 +620,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	closePNG(png_ptr, info_ptr, palette);
 }
 
-void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
+void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename) const
 {
 	const string world_file = IOUtils::removeExtension(filename)+".pnw";
 	const double cellsize = grid_in.cellsize;
@@ -632,9 +630,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 
 	if (!IOUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
 	std::ofstream fout(world_file.c_str(), ios::out);
-	if (fout.fail()) {
-		throw AccessException(world_file, AT);
-	}
+	if (fout.fail()) throw AccessException(world_file, AT);
 
 	try {
 		fout << std::setprecision(12) << cellsize << "\n";
