@@ -117,7 +117,7 @@ const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	Config cfg(configfile);
@@ -126,7 +126,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	init(cfg);
@@ -195,6 +195,7 @@ CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
 		input_id = source.input_id;
 		plugin_nodata = source.plugin_nodata;
 		in_doc = NULL;
+		in_ctxt = NULL;
 		in_xpathCtx = NULL;
 		coordin = source.coordin;
 		coordinparam = source.coordinparam;
@@ -247,10 +248,10 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	if (in_encoding==XML_CHAR_ENCODING_NONE) {
 		in_doc = xmlParseFile(in_meteofile.c_str());
 	} else {
-		xmlParserCtxtPtr ctxt = xmlCreateFileParserCtxt( in_meteofile.c_str() );
-		xmlSwitchEncoding( ctxt, in_encoding);
-		xmlParseDocument( ctxt);
-		in_doc = ctxt->myDoc;
+		in_ctxt = xmlCreateFileParserCtxt( in_meteofile.c_str() );
+		xmlSwitchEncoding( in_ctxt, in_encoding);
+		xmlParseDocument( in_ctxt);
+		in_doc = in_ctxt->myDoc;
 	}
 
 	if (in_doc == NULL) {
@@ -278,6 +279,10 @@ void CosmoXMLIO::closeIn_XML() throw()
 	if (in_doc!=NULL) {
 		xmlFreeDoc(in_doc);
 		in_doc = NULL;
+	}
+	if (in_ctxt!=NULL) {
+		xmlFreeParserCtxt(in_ctxt);
+		in_ctxt = NULL;
 	}
 	xmlCleanupParser();
 }
@@ -338,8 +343,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	sd.position.setProj(coordin, coordinparam);
 	sd.position.setLatLon(latitude, longitude, altitude);
 
-	if (xml_id.empty())
-		throw NoDataException("XML station id missing for station \""+station_id+"\"", AT);
+	if (xml_id.empty()) throw NoDataException("XML station id missing for station \""+station_id+"\"", AT);
 	xml_stations_id[station_id] = xml_id;
 
 	xmlXPathFreeObject(xpathObj);
@@ -422,7 +426,7 @@ size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
-
+	
 	const std::string meteofile( cache_meteo_files[ getFileIdx(station_date) ].second );
 	openIn_XML(meteofile);
 
@@ -473,7 +477,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	const size_t nr_files = cache_meteo_files.size();
 	size_t file_idx = getFileIdx(dateStart);
 	Date nextDate;
-
+	
 	do {
 		//since files contain overlapping data, we will only read the non-overlapping part
 		//ie from start to the start date of the next file

@@ -75,6 +75,7 @@ class CosmoXMLIO : public IOInterface {
 		bool use_model_loc; //for each station, use the model location instead of the true station location (default=true)
 
 		xmlDocPtr in_doc;
+		xmlParserCtxtPtr in_ctxt; //in case we had to use an alternate method for opening the file
 		xmlXPathContextPtr in_xpathCtx;
 		xmlCharEncoding in_encoding;
 
