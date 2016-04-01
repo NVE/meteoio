@@ -111,7 +111,6 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 void SMETIO::parseInputOutputSection()
 {
 	//default timezones
-	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE","Input",in_dflt_TZ,IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE","Output",out_dflt_TZ,IOUtils::nothrow);
 

@@ -411,7 +411,7 @@ size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 	} else {
 		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
 			if (start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
-				return idx--;
+				return --idx;
 			}
 		}
 

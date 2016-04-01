@@ -1,0 +1,337 @@
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#include "OshdIO.h"
+#include <matio.h>
+
+using namespace std;
+
+namespace mio {
+/**
+ * @page oshd OshdIO
+ * This plugin reads the meteorological forecast data downscaled for each of the Swiss meteorological networks IMIS/ANETZ stations
+ * as preprocessed by the <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A> 
+ * of the <A HREF="www.wsl.ch">WSL</A>. The data is written as Matlab 
+ * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per meteorological parameter and per timestep, 
+ * available on an access-controlled server after each new <A HREF="www.cosmo-model.org/">COSMO</A> run. It therefore requires a third party 
+ * library to read this file format: the Open Source <A HREF="https://sourceforge.net/projects/matio/">MatIO</A> library. This can be installed directly from
+ * the default repositories under Linux or installed by downloading the proper package for Windows or OsX.
+ * 
+ * @section oshd_data_structure Data structure
+ * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}run{run time}.mat</i> with the following possible values:
+ *     + *parameter* is one of idif, idir, ilwr, pair, prec, rhum, tair, tswe, wcor, wdir, wind;
+ *     + *timestep* is written as purely numeric ISO with minute resolution;
+ *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1;
+ *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
+ * 
+ * The files have the following internal data structure (represented as "name {data type}"):
+ * @verbatim
+      stat {1x1 struct}
+        ├── time {1x1 array of doubles}
+        ├── data {1x623 array of doubles}
+        ├── acro {1x623 array of arrays of char}
+        ├── dunit {array of char}
+        ├── type {array of char}
+        └── name {array of char}
+  @endverbatim
+ * 
+ * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file.
+ * 
+ * @section oshd_units Units
+ *
+ * @section oshd_keywords Keywords
+ * This plugin uses the following keywords:
+ * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
+ * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+ * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
+ * - etc
+ */
+
+/**********************************************************************************
+ * Here we define some wrappers around libmatio. These are not declared as class methods in
+ * order to avoid having to expose matio.h when including OshdIO.h
+ **********************************************************************************/
+void listFields(matvar_t *matvar)
+{
+	const unsigned int nrFields = Mat_VarGetNumberOfFields(matvar);
+	char * const *fields = Mat_VarGetStructFieldnames(matvar);
+	for (unsigned int ii=0; ii<nrFields; ii++) printf("field[%d] = %s\n", ii, fields[ii]);
+}
+
+void printStructure(matvar_t *matvar)
+{
+	//Mat_VarPrint(field, 0);
+	printf("name=%s class_type=%d data_type=%d rank=%d", matvar->name, matvar->class_type, matvar->data_type, matvar->rank);
+	for (int ii=0; ii<matvar->rank; ii++) printf("\tdims[%d]=%d", ii, (int)matvar->dims[ii]);
+	printf("\n");
+}
+
+std::string readString(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
+{
+	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+	if (matvar==NULL) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (Mat_VarReadDataAll(matfp, field)) 
+		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->class_type!=MAT_C_CHAR) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type string", AT);
+	
+	const std::string tmp( static_cast<char*>(field->data) );
+	return tmp;
+}
+
+void readStringVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar, std::vector<std::string> &vecString)
+{
+	vecString.clear();
+	
+	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+	if (matvar==NULL) 	throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (Mat_VarReadDataAll(matfp, field)) 
+		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	if (field->class_type!=MAT_C_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell type", AT);
+	if (field->data_type!=MAT_T_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell array data type", AT);
+	
+	matvar_t *cell = Mat_VarGetCell(matvar, 0);
+	if (cell==NULL) throw InvalidFormatException("could not read data in field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	const size_t nrows = field->dims[0];
+	const size_t ncols = field->dims[1];
+	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	vecString.resize( ncols );
+	for (size_t ii=0; ii<ncols; ii++) {
+		cell = Mat_VarGetCell(field, static_cast<int>(ii));
+		if (cell->rank!=2) throw InvalidFormatException("invalid cell rank in file '"+filename+"'", AT);
+		if (cell->class_type!=MAT_C_CHAR) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type string", AT);
+		vecString[ii] = static_cast<char*>(cell->data);
+	}
+}
+
+void readDoubleVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar, std::vector<double> &vecData)
+{
+	vecData.clear();
+	
+	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+	if (matvar==NULL) 	throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (Mat_VarReadDataAll(matfp, field)) 
+		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a double type", AT);
+	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	const size_t nrows = field->dims[0];
+	const size_t ncols = field->dims[1];
+	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
+	
+	const double* matData = static_cast<double*>( field->data );	
+	vecData.resize( ncols );
+	for (size_t ii=0; ii<ncols; ii++) {
+		vecData[ii] = matData[ii];
+	}
+}
+
+/**********************************************************************************
+ * Now really implementing the OshdIO class
+ **********************************************************************************/
+const char* OshdIO::meteo_ext = ".mat";
+const double OshdIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
+
+OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), vecIDs(), params_map(), vecIdx(), in_meteopath()
+{
+	parseInputOutputSection();
+}
+
+OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), vecIDs(), params_map(), vecIdx(), in_meteopath()
+{
+	parseInputOutputSection();
+}
+
+void OshdIO::parseInputOutputSection()
+{
+	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValues("STATION", "INPUT", vecIDs);
+	cfg.getValue("METEOPATH", "Input", in_meteopath);
+	scanMeteoPath(in_meteopath, cache_meteo_files);
+	
+	//fill the params mapping vector
+	params_map.push_back( std::make_pair( MeteoData::TA, "tair") );
+	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
+	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
+	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") );
+	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwr") );
+	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") );
+	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
+}
+
+void OshdIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
+{
+	meteo_files.clear();
+
+	std::list<std::string> dirlist = 	IOUtils::readDirectory(meteopath_in, meteo_ext);
+	dirlist.sort();
+
+	//Check date in every filename and cache it
+	std::list<std::string>::const_iterator it = dirlist.begin();
+	while ((it != dirlist.end())) {
+		const std::string filename( *it );
+		const std::string::size_type date_pos = filename.find_first_of("0123456789", 0);
+		if (date_pos==string::npos) continue;
+		Date date;
+		IOUtils::convertString(date, filename.substr(date_pos,12), in_dflt_TZ);
+		//const std::pair<Date,std::string> tmp(date, meteopath_in+"/"+filename);
+		const std::pair<Date,std::string> tmp(date, filename.substr(date_pos));
+
+		meteo_files.push_back(tmp);
+		it++;
+	}
+}
+
+size_t OshdIO::getFileIdx(const Date& start_date) const
+{
+	if (cache_meteo_files.empty())
+		throw InvalidArgumentException("No input files found or configured!", AT);
+
+	//find which file we should open
+	if (cache_meteo_files.size()==1) {
+		return 0;
+	} else {
+		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
+			if (start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
+				return --idx;
+			}
+		}
+
+		//not found, we take the closest timestamp we have
+		if (start_date<cache_meteo_files.front().first)
+			return 0;
+		else
+			return cache_meteo_files.size()-1;
+	}
+}
+
+void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& /*vecStation*/)
+{
+	
+}
+
+void OshdIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
+                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+                             const size_t&)
+{
+	const Date station_date(2016, 3, 29, 4, 0, in_dflt_TZ);
+	
+	for (size_t ii=0; ii<params_map.size(); ii++) {
+		const MeteoData::Parameters param( params_map[ii].first );
+		const std::string prefix(params_map[ii].second  );
+		const std::string filename = in_meteopath + "/" + prefix + "_" + cache_meteo_files[ getFileIdx(station_date) ].second;
+		std::vector<double> vecData;
+		readFromFile(filename, param, station_date, vecData);
+	}
+}
+
+void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData)
+{
+	const size_t nrIDs = vecIDs.size();
+	vecData.resize( nrIDs, IOUtils::nodata );
+	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
+	if ( NULL == matfp ) throw AccessException(filename, AT);
+
+	//open the file and read some metadata
+	matvar_t *matvar = Mat_VarReadInfo(matfp, "stat");
+	if (matvar==NULL) throw NotFoundException("structure 'stat' not found in file'"+filename+"'", AT);
+	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
+	const std::string units( readString(filename, "dunit", matfp, matvar) );
+	const std::string type( readString(filename, "type", matfp, matvar) );
+	checkFieldType(param, type);
+	std::cout << "For type " << type << " units='" << units << "'\n";
+
+	//check that the timestep is as expected
+	std::vector<double> vecTime;
+	readDoubleVector(filename, "time", matfp, matvar, vecTime);
+	if (vecTime.size()!=1) throw InvalidFormatException("one and only one time step must be present in the 'time' vector", AT);
+	Date timestep;
+	timestep.setMatlabDate( vecTime[0], in_dflt_TZ );
+	if (in_timestep!=timestep) throw InvalidArgumentException("the in-file timestep and the filename time step don't match for for '"+filename+"'", AT);
+	
+	//check that each station is still at the same index, build the index cache if necessary
+	std::vector<std::string> vecAcro;
+	readStringVector(filename, "acro", matfp, matvar, vecAcro);
+	if (vecIdx.empty()) buildVecIdx(vecAcro);
+	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
+		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
+			throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+filename+"'", AT);
+	}
+	
+	//extract the data for the selected stations
+	std::vector<double> vecRaw;
+	readDoubleVector(filename, "data", matfp, matvar, vecRaw);
+	if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+filename+"'", AT);
+	for (size_t ii=0; ii<nrIDs; ii++)
+		vecData[ii] = convertUnits( vecRaw[ vecIdx[ii] ], units);
+	
+	Mat_VarFree(matvar);
+	Mat_Close(matfp);
+}
+
+void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::string& type)
+{
+	if (param==MeteoData::TA && type=="TA") return;
+	if (param==MeteoData::RH && type=="RH") return;
+	if (param==MeteoData::PSUM && type=="PREC") return;
+	if (param==MeteoData::VW && type=="WS") return;
+	if (param==MeteoData::DW && type=="WD") return;
+	if (param==MeteoData::ILWR && type=="LWR") return;
+	if (param==MeteoData::ISWR && type=="SWR") return;
+	if (param==MeteoData::P && type=="other") return;
+	
+	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
+}
+
+double OshdIO::convertUnits(const double& val, const std::string& units)
+{
+	if (units=="%") return val/100.;
+	if (units=="cm") return val/100.;
+	/*else 
+		throw IOException("Unknown units '"+units+"'", AT);*/
+	
+	return val;
+}
+
+void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
+{
+	const size_t nrIDs = vecIDs.size();
+	if (nrIDs==0)
+		throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
+	vecIdx.resize( nrIDs );
+	
+	for (size_t ii=0; ii<nrIDs; ii++) {
+		const std::string stationID( vecIDs[ii] );
+		bool found = false;
+		for (size_t jj=0; jj<vecAcro.size(); jj++) {
+			if (stationID==vecAcro[jj]) {
+				vecIdx[ii] = jj;
+				found = true;
+				break;
+			}
+		}
+		if (!found) 
+			throw NotFoundException("station ID '"+stationID+"' could not be found in the provided data", AT);
+	}
+}
+
+} //namespace

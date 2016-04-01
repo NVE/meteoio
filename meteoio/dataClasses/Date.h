@@ -103,7 +103,7 @@ class Date {
 		void setRFC868Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
 		void setExcelDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
-		void setMatlabDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
+		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
 		void setUndef(const bool& flag);
 
 		bool isUndef() const;
