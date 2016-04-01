@@ -249,8 +249,8 @@ void TimeSeriesManager::fill_filtered_cache()
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered){
 		filtered_cache.clear(); //HACK until we get true ringbuffers, to prevent eating up all memory
 		meteoprocessor.process(raw_buffer.getBuffer(), filtered_cache.getBuffer());
-		filtered_cache.setBufferStart(raw_buffer.getBufferStart()); //HACK
-		filtered_cache.setBufferEnd(raw_buffer.getBufferEnd()); //HACK
+		filtered_cache.setBufferStart( raw_buffer.getBufferStart() );
+		filtered_cache.setBufferEnd( raw_buffer.getBufferEnd() );
 	}
 }
 

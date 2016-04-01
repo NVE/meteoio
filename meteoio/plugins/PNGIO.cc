@@ -262,14 +262,10 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 {
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
-	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
-	if (fp == NULL) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw AccessException(ss.str(), AT);
-	}
+	if (fp == NULL)
+		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(strerror(errno)), AT);
 
 	// Initialize write structure
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -468,14 +464,10 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::string filename;
-	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
-		filename = grid2dpath + "/" + MeteoGrids::getParameterName(parameter) + ".png";
-	else {
-		std::string date_str = date.toString(Date::ISO);
-		std::replace( date_str.begin(), date_str.end(), ':', '.');
-		filename = grid2dpath + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + ".png";
-	}
+	const bool isNormalParam = (parameter!=MeteoGrids::DEM && parameter!=MeteoGrids::SLOPE && parameter!=MeteoGrids::AZI);
+	std::string date_str = (isNormalParam)? date.toString(Date::ISO)+"_" : "";
+	std::replace( date_str.begin(), date_str.end(), ':', '.');
+	const std::string filename = grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png";
 
 	fp=NULL;
 	png_color *palette=NULL;

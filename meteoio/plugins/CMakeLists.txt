@@ -62,6 +62,13 @@ IF(PLUGIN_IMISIO)
 	SET(plugins_sources ${plugins_sources} plugins/ImisIO.cc)
 ENDIF(PLUGIN_IMISIO)
 
+IF(PLUGIN_OSHDIO)
+	FIND_PACKAGE(Matio REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${Matio_INCLUDE_DIR})
+	SET(plugin_libs ${plugin_libs} ${Matio_LIBRARY})
+	SET(plugins_sources ${plugins_sources} plugins/OshdIO.cc)
+ENDIF(PLUGIN_OSHDIO)
+
 IF(PLUGIN_PGMIO)
 	SET(plugins_sources ${plugins_sources} plugins/PGMIO.cc)
 ENDIF(PLUGIN_PGMIO)

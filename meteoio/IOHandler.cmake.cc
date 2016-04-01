@@ -30,6 +30,7 @@
 #cmakedefine PLUGIN_SNIO
 #cmakedefine PLUGIN_PGMIO
 #cmakedefine PLUGIN_IMISIO
+#cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_GRIBIO
 #cmakedefine PLUGIN_PNGIO
 #cmakedefine PLUGIN_BORMAIO
@@ -63,6 +64,10 @@
 
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
+#endif
+
+#ifdef PLUGIN_OSHDIO
+#include <meteoio/plugins/OshdIO.h>
 #endif
 
 #ifdef PLUGIN_GRIBIO
@@ -244,6 +249,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_IMISIO
 	if (plugin_name == "IMIS") return new ImisIO(cfg);
+#endif
+#ifdef PLUGIN_OSHDIO
+	if (plugin_name == "OSHD") return new OshdIO(cfg);
 #endif
 #ifdef PLUGIN_GRIBIO
 	if (plugin_name == "GRIB") return new GRIBIO(cfg);
