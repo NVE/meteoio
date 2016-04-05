@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "OshdIO.h"
+#include <meteoio/meteoLaws/Meteoconst.h>
 #include <matio.h>
 
 using namespace std;
@@ -229,36 +230,78 @@ void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& /*v
 	
 }
 
-void OshdIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+                             std::vector< std::vector<MeteoData> >& vecMeteo,
                              const size_t&)
 {
-	const Date station_date(2016, 3, 29, 4, 0, in_dflt_TZ);
+	const size_t nrIDs = vecIDs.size();
+	vecMeteo.clear();
 	
-	for (size_t ii=0; ii<params_map.size(); ii++) {
-		const MeteoData::Parameters param( params_map[ii].first );
-		const std::string prefix(params_map[ii].second  );
-		const std::string filename = in_meteopath + "/" + prefix + "_" + cache_meteo_files[ getFileIdx(station_date) ].second;
+	const size_t nr_files = cache_meteo_files.size();
+	size_t file_idx = getFileIdx( dateStart );
+	Date station_date( cache_meteo_files[file_idx].first );
+	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
+	
+	vecMeteo.resize( nrIDs );
+	do {
+		//create empty MeteoData for the current timestep
+		for (size_t jj=0; jj<nrIDs; jj++) {
+			const StationData sd(Coords(), vecIDs[jj],  vecIDs[jj]); //HACK
+			const MeteoData md( station_date, sd );
+			vecMeteo[jj].push_back( md );
+		}
+		
+		//read the data and fill vecMeteo
+		const std::string file_suffix( cache_meteo_files[ file_idx ].second );
 		std::vector<double> vecData;
-		readFromFile(filename, param, station_date, vecData);
-	}
+		for (size_t ii=0; ii<params_map.size(); ii++) {
+			const MeteoData::Parameters param( params_map[ii].first );
+			const std::string prefix(params_map[ii].second  );
+			const std::string filename = in_meteopath + "/" + prefix + "_" + file_suffix;
+			vecData.resize( nrIDs, IOUtils::nodata );
+			readFromFile(filename, param, station_date, vecData);
+			
+			for (size_t jj=0; jj<nrIDs; jj++)
+				vecMeteo[jj].back()( param ) =  vecData[jj];
+		}
+		
+		readSWRad(station_date, file_suffix, nrIDs, vecMeteo); //the short wave radiation is a little different...
+		
+		file_idx++;
+		station_date = ((file_idx)<nr_files)? cache_meteo_files[file_idx].first : dateEnd+1.;
+	} while (file_idx<nr_files && station_date<=dateEnd);
+	
+}
+
+void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo)
+{
+	std::vector<double> vecDir;
+	vecDir.resize( nrIDs, IOUtils::nodata );
+	const std::string filename_dir = in_meteopath + "/" + "idir" + "_" + file_suffix;
+	readFromFile(filename_dir, MeteoData::ISWR, station_date, vecDir);
+	
+	std::vector<double> vecDiff;
+	vecDiff.resize( nrIDs, IOUtils::nodata );
+	const std::string filename_diff = in_meteopath + "/" + "idif" + "_" + file_suffix;
+	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
+	
+	for (size_t jj=0; jj<nrIDs; jj++)
+		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
 }
 
 void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData)
 {
 	const size_t nrIDs = vecIDs.size();
-	vecData.resize( nrIDs, IOUtils::nodata );
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(filename, AT);
 
 	//open the file and read some metadata
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "stat");
-	if (matvar==NULL) throw NotFoundException("structure 'stat' not found in file'"+filename+"'", AT);
+	if (matvar==NULL) throw NotFoundException("structure 'stat' not found in file '"+filename+"'", AT);
 	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
 	const std::string units( readString(filename, "dunit", matfp, matvar) );
 	const std::string type( readString(filename, "type", matfp, matvar) );
 	checkFieldType(param, type);
-	std::cout << "For type " << type << " units='" << units << "'\n";
 
 	//check that the timestep is as expected
 	std::vector<double> vecTime;
@@ -282,7 +325,7 @@ void OshdIO::readFromFile(const std::string& filename, const MeteoData::Paramete
 	readDoubleVector(filename, "data", matfp, matvar, vecRaw);
 	if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+filename+"'", AT);
 	for (size_t ii=0; ii<nrIDs; ii++)
-		vecData[ii] = convertUnits( vecRaw[ vecIdx[ii] ], units);
+		vecData[ii] = convertUnits( vecRaw[ vecIdx[ii] ], units, param);
 	
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
@@ -302,12 +345,21 @@ void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::strin
 	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
 }
 
-double OshdIO::convertUnits(const double& val, const std::string& units)
+double OshdIO::convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param)
 {
 	if (units=="%") return val/100.;
 	if (units=="cm") return val/100.;
-	/*else 
-		throw IOException("Unknown units '"+units+"'", AT);*/
+	if (units=="°C") return val-Cst::t_water_freezing_pt;
+	if (units.empty()) return val;
+	if (units=="Pa") return val;
+	if (units=="mm") {
+		if (param==MeteoData::PSUM) return val;
+		else return val/1000.;
+	}
+	if (units=="W/m2") return val;
+	if (units=="m/s") return val;
+	else 
+		throw IOException("Unknown units '"+units+"'", AT);
 	
 	return val;
 }

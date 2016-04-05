@@ -55,13 +55,14 @@ class OshdIO : public IOInterface {
 		} file_ppt;*/
 		
 		void parseInputOutputSection();
+		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData);
 		void buildVecIdx(const std::vector<std::string>& vecAcro);
 		
 		size_t getFileIdx(const Date& start_date) const;
 		static void scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files);
 		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
-		static double convertUnits(const double& val, const std::string& units);
+		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param);
 		
 		const Config cfg;
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
