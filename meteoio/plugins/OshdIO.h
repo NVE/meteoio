@@ -46,18 +46,11 @@ class OshdIO : public IOInterface {
 		                           const size_t& stationindex=IOUtils::npos);
 
 	private:
-		/*typedef struct FILE_PPT {
-			FILE_PPT() : name(), params() {};
-			FILE_PPT(const std::string& i_name, const std::vector<MeteoData::Parameters>& i_params) : name(i_name), params(i_params) {};
-			
-			std::string name;
-			std::vector<MeteoData::Parameters> params;
-		} file_ppt;*/
-		
 		void parseInputOutputSection();
-		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData);
+		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const;
 		void buildVecIdx(const std::vector<std::string>& vecAcro);
+		void fillStationMeta();
 		
 		size_t getFileIdx(const Date& start_date) const;
 		static void scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files);
@@ -66,15 +59,16 @@ class OshdIO : public IOInterface {
 		
 		const Config cfg;
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
+		std::vector<StationData> vecMeta;
 		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
 		std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files
 		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro' vector
-		std::string in_meteopath;
+		std::string in_meteopath, in_metafile;
+		//std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		
 		static const char* meteo_ext; //for the file naming scheme
 		static const double in_dflt_TZ;     //default time zones
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		//std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 } //namespace

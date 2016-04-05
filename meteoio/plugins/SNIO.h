@@ -51,7 +51,7 @@ class SNIO : public IOInterface {
 		                            const std::string& name="");
 
 	private:
-		std::string file_pos(const std::string& filename, const size_t& linenr);
+		static std::string file_pos(const std::string& filename, const size_t& linenr);
 		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name, std::ofstream& fout);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);

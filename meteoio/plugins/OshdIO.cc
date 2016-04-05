@@ -18,6 +18,7 @@
 #include "OshdIO.h"
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <matio.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -50,16 +51,36 @@ namespace mio {
         └── name {array of char}
   @endverbatim
  * 
- * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file.
- * 
- * @section oshd_units Units
+ * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file, given as *METAFILE* key (see below). This file
+ * must have the following structure (the *x* and *y* coordinates being the CH1903 easting and northing, respectively): 
+ * @verbatim
+      statlist {1x1 struct}
+        ├── acro {1x623 array of arrays of char}
+        ├── name {1x623 array of arrays of char}
+        ├── x {1x623 array of doubles}
+        ├── y {1x623 array of doubles}
+        └── z {1x623 array of doubles}
+  @endverbatim
+ *
  *
  * @section oshd_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+ * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
  * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
- * - etc
+ * - METAFILE: file within METEOPATH containing the stations' IDs, names and location; [Input] section
+ *
+ * @section oshd_example Example use
+ * @code
+ * [Input]
+ * METEO = OSHD
+ * METEOPATH = /local/LATEST_03h_RUN
+ * METAFILE  = STAT_LIST.mat
+ * STATION1  = ATT2
+ * STATION2  = WFJ2
+ * @endcode
+ *
  */
 
 /**********************************************************************************
@@ -152,12 +173,14 @@ const char* OshdIO::meteo_ext = ".mat";
 const double OshdIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
 
-OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), vecIDs(), params_map(), vecIdx(), in_meteopath()
+OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), vecMeta(), vecIDs(), params_map(), vecIdx(), 
+               in_meteopath(), in_metafile()
 {
 	parseInputOutputSection();
 }
 
-OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), vecIDs(), params_map(), vecIdx(), in_meteopath()
+OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), vecMeta(), vecIDs(), params_map(), vecIdx(), 
+               in_meteopath(), in_metafile()
 {
 	parseInputOutputSection();
 }
@@ -165,6 +188,8 @@ OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), v
 void OshdIO::parseInputOutputSection()
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValue("METAFILE", "INPUT", in_metafile);
+	
 	cfg.getValues("STATION", "INPUT", vecIDs);
 	cfg.getValue("METEOPATH", "Input", in_meteopath);
 	scanMeteoPath(in_meteopath, cache_meteo_files);
@@ -182,23 +207,30 @@ void OshdIO::parseInputOutputSection()
 void OshdIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
 {
 	meteo_files.clear();
+	std::list<std::string> dirlist = IOUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> prefix_list;
 
-	std::list<std::string> dirlist = 	IOUtils::readDirectory(meteopath_in, meteo_ext);
-	dirlist.sort();
-
-	//Check date in every filename and cache it
-	std::list<std::string>::const_iterator it = dirlist.begin();
+	//make sure each timestamp only appears once, ie remove duplicates
+	std::list<std::string>::iterator it = dirlist.begin();
 	while ((it != dirlist.end())) {
 		const std::string filename( *it );
 		const std::string::size_type date_pos = filename.find_first_of("0123456789", 0);
-		if (date_pos==string::npos) continue;
-		Date date;
-		IOUtils::convertString(date, filename.substr(date_pos,12), in_dflt_TZ);
-		//const std::pair<Date,std::string> tmp(date, meteopath_in+"/"+filename);
-		const std::pair<Date,std::string> tmp(date, filename.substr(date_pos));
-
-		meteo_files.push_back(tmp);
+		if (date_pos!=string::npos) 
+			prefix_list.push_back( filename.substr(date_pos) );
 		it++;
+	}
+	
+	prefix_list.sort();
+	prefix_list.unique();
+	
+	//Convert date in every filename and cache it
+	std::list<std::string>::const_iterator it_prefix = prefix_list.begin();
+	while ((it_prefix != prefix_list.end())) {
+		const std::string filename( *it_prefix );
+		Date date;
+		IOUtils::convertString(date, filename.substr(0,12), in_dflt_TZ);
+		meteo_files.push_back( std::make_pair(date, filename) );
+		it_prefix++;
 	}
 }
 
@@ -225,9 +257,11 @@ size_t OshdIO::getFileIdx(const Date& start_date) const
 	}
 }
 
-void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& /*vecStation*/)
+void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
 {
-	
+	vecStation.clear();
+	if (vecMeta.empty()) fillStationMeta();
+	vecStation = vecMeta;
 }
 
 void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -242,12 +276,12 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	Date station_date( cache_meteo_files[file_idx].first );
 	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
 	
+	if (vecMeta.empty()) fillStationMeta(); //this also fills vecIdx
 	vecMeteo.resize( nrIDs );
 	do {
 		//create empty MeteoData for the current timestep
 		for (size_t jj=0; jj<nrIDs; jj++) {
-			const StationData sd(Coords(), vecIDs[jj],  vecIDs[jj]); //HACK
-			const MeteoData md( station_date, sd );
+			const MeteoData md( station_date, vecMeta[jj] );
 			vecMeteo[jj].push_back( md );
 		}
 		
@@ -273,7 +307,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	
 }
 
-void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo)
+void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
 	std::vector<double> vecDir;
 	vecDir.resize( nrIDs, IOUtils::nodata );
@@ -289,7 +323,7 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
 }
 
-void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData)
+void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const
 {
 	const size_t nrIDs = vecIDs.size();
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
@@ -314,7 +348,6 @@ void OshdIO::readFromFile(const std::string& filename, const MeteoData::Paramete
 	//check that each station is still at the same index, build the index cache if necessary
 	std::vector<std::string> vecAcro;
 	readStringVector(filename, "acro", matfp, matvar, vecAcro);
-	if (vecIdx.empty()) buildVecIdx(vecAcro);
 	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
 		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
 			throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+filename+"'", AT);
@@ -364,12 +397,46 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 	return val;
 }
 
+void OshdIO::fillStationMeta()
+{
+	vecMeta.resize( vecIDs.size() );
+	const std::string filename( in_meteopath+"/"+in_metafile );
+	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
+	if ( NULL == matfp ) throw AccessException(filename, AT);
+
+	matvar_t *matvar = Mat_VarReadInfo(matfp, "statlist");
+	if (matvar==NULL) throw NotFoundException("structure 'statlist' not found in file '"+filename+"'", AT);
+	
+	std::vector<std::string> vecAcro;
+	readStringVector(filename, "acro", matfp, matvar, vecAcro);
+	
+	std::vector<std::string> vecNames;
+	readStringVector(filename, "name", matfp, matvar, vecNames);
+	
+	std::vector<double> easting, northing, altitude;
+	readDoubleVector(filename, "x", matfp, matvar, easting);
+	readDoubleVector(filename, "y", matfp, matvar, northing);
+	readDoubleVector(filename, "z", matfp, matvar, altitude);
+	
+	Mat_VarFree(matvar);
+	Mat_Close(matfp);
+	
+	buildVecIdx(vecAcro);
+	for (size_t ii=0; ii<vecIdx.size(); ii++) {
+		Coords position("CH1903", "");
+		const size_t idx = vecIdx[ii];
+		position.setXY(easting[idx], northing[idx], altitude[idx]);
+		const StationData sd(position, vecAcro[idx], vecNames[idx]);
+		vecMeta[ii] = sd;
+	}
+}
+
 void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
 {
 	const size_t nrIDs = vecIDs.size();
 	if (nrIDs==0)
 		throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
-	vecIdx.resize( nrIDs );
+	vecIdx.resize( nrIDs, 0 );
 	
 	for (size_t ii=0; ii<nrIDs; ii++) {
 		const std::string stationID( vecIDs[ii] );
