@@ -382,7 +382,8 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 {
 	if (units=="%") return val/100.;
 	if (units=="cm") return val/100.;
-	if (units=="°C") return val-Cst::t_water_freezing_pt;
+	if (units=="°C") return val+Cst::t_water_freezing_pt;
+	if (units=="°") return val;
 	if (units.empty()) return val;
 	if (units=="Pa") return val;
 	if (units=="mm") {
