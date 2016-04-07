@@ -34,10 +34,7 @@ namespace mio {
 double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
 	const double T2 = T*T;
 	const double ea = lwr / (Cst::stefan_boltzmann * (T2*T2));
-
-	if (ea > 1.0)
-		return 1.0;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -122,7 +119,8 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 /**
 * @brief Black Globe Temperature.
 * This is an estimation of the black globe temperature based on physical modeling as in
-* V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011.
+* V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the 
+* Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011.
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)
 * @param VW wind velocity (m/s)
@@ -290,9 +288,7 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 	const double e0_mBar = 0.01 * e0;
 	const double exponent = 1./7.;
 	const double ea = 1.24 * pow( (e0_mBar / TA), exponent);
-
-	if (ea>1.0) return 1.;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -324,9 +320,7 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
 	const double ilwr_dilley = Dilley_ilwr(RH, TA);
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
 	const double ea = ilwr_dilley/ilwr_blkbody;
-
-	if (ea>1.0) return 1.;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -359,9 +353,7 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
-
-	if (ea>1.0) return 1.;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -415,9 +407,7 @@ double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
 double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.754 + 0.0044 * (Tdp-Cst::t_water_triple_pt);
-
-	if (ea>1.0) return 1.;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -444,9 +434,7 @@ double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
 double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
 	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
-
-	if (ea>1.0) return 1.;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -479,9 +467,7 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 	const double a3 = 0.18;
 
 	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
-	if (ea > 1.0)
-		return 1.0;
-	return ea;
+	return std::min(ea, 1.);
 }
 
 /**
@@ -548,8 +534,7 @@ double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
 
 	if (solarIndex>1.) return 0.;
 	const double cloudiness = pow((1.-solarIndex)/b1, 1./b2);
-	if (cloudiness>1.) return 1.;
-	return cloudiness;
+	return std::min(cloudiness, 1.);
 }
 
 /**
@@ -763,8 +748,6 @@ double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
 	const double Tfreeze = 0.;                          //freezing temperature
 	const double Tnucl = -16.0;                         //nucleation temperature
-	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
-	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
 
 	//in order to avoid getting NaN if RH=0
 	RH += 0.0001;
@@ -791,6 +774,8 @@ double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 	E = RH * Es;
 	Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
 
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
 	return IOUtils::C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
 }
 
@@ -807,35 +792,25 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	//TA, TD are in Kelvins, RH is returned between 0 and 1
 	TA = IOUtils::K_TO_C(TA);
 	TD = IOUtils::K_TO_C(TD);
-	double Es, E, Rhi, Rhw, Rh;                         //saturation and current water vapro pressure
 	const double Aw = 611.21, Bw = 17.502, Cw = 240.97; //parameters for water
 	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
 	const double Tfreeze = 0.;                          //freezing temperature
 	const double Tnucl = -16.0;                         //nucleation temperature
-	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
-	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
+	double Es, E, Rhi, Rhw;                         //saturation and current water vapro pressure
 
 	if (TA >= Tfreeze || force_water==true) {
 		//above freezing point, water
 		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
 		E  = Aw * exp( (Bw * TD) / (Cw + TD) );
 		Rhw = (E / Es);
-		if (Rhw > 1.) {
-			return 1.;
-		} else {
-			return Rhw;
-		}
+		return std::min(Rhw, 1.);
 	}
 	if (TA < Tnucl) {
 		//below nucleation, ice
 		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
 		E  = Ai * exp( (Bi * TD) / (Ci + TD) );
 		Rhi = (E / Es);
-		if (Rhi > 1.) {
-			return 1.;
-		} else {
-			return Rhi;
-		}
+		return std::min(Rhi, 1.);
 	}
 
 	//no clear state, we do a smooth interpolation between water and ice
@@ -847,12 +822,10 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	E  = Aw * exp( (Bw * TD) / (Cw + TD) );
 	Rhw = E / Es;
 
-	Rh = (di / (di + dw) * Rhi + dw / (di + dw) * Rhw);
-	if (Rh > 1.) {
-		return 1.;
-	} else {
-		return Rh;
-	}
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
+	const double Rh = (di / (di + dw) * Rhi + dw / (di + dw) * Rhw);
+	return std::min(Rh, 1.);
 }
 
 /**
@@ -868,8 +841,7 @@ double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, c
 	const double dryAir_density = stdDryAirDensity(altitude, TA);
 	const double RH = qi/(1.-qi) * dryAir_density/SatVaporDensity;
 
-	if (RH>1.) return 1.;
-	else return RH;
+	return std::min(RH, 1.);
 }
 
 /**

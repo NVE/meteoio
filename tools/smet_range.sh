@@ -1,21 +1,23 @@
 #!/bin/sh
 #prints min/max/mean for a given parameter in all smet files
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
 	me=`basename $0`
 	printf "Usage: \n"
-	printf "\t$me time\n\t\t to show the time range for all SMET files in the current directory\n"
-	printf "\t$me TA\n\t\t to show the range on the TA parameter for all SMET files in the current directory\n"
-	printf "\t$me ../input/meteo TA\n\t\t to show the range on the TA paremeter for all SMET files in ../input/meteo\n"
+	printf "\t$me . time\n\t\t to show the time range for all SMET files in the current directory\n"
+	printf "\t$me ../input/meteo TA\n\t\t to show the range of the TA parameter for all SMET files in ../input/meteo\n"
+	printf "\t$me ../input/meteo RH 2008-05-01 2008-09-30\n\t\t to show the range of the RH parameter for all SMET files in ../input/meteo between the two given dates\n"
 	exit 0
 fi
 
-if [ $# -lt 2 ]; then
-	INPUT_DIR="."
-	param=$1
+INPUT_DIR=$1
+param=$2
+if [ $# -lt 4 ]; then
+	START_DATE="0"
+	END_DATE="0"
 else
-	INPUT_DIR=$1
-	param=$2
+	START_DATE=$3
+	END_DATE=$4
 fi
 files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
 
@@ -75,6 +77,8 @@ for SMET in ${files}; do
 
 	awk '
 	BEGIN {
+		start_date="'"${START_DATE}"'"
+		end_date="'"${END_DATE}"'"
 		param="'"${param}"'"
 		if (param=="HNW") param="PSUM"
 		nodata='"${NODATA}"'+0
@@ -102,6 +106,10 @@ for SMET in ${files}; do
 		next
 	}
 	$0 !~ /^[a-zA-Z\[]/ {
+		if (start_date!="0") {
+			if ($1<start_date) next
+			if ($1>end_date) exit 0
+		}
 		val=$(f)+0
 		if (val==nodata) next
 		if (val>max) max = val
@@ -111,7 +119,10 @@ for SMET in ${files}; do
 		count++
 	}
 	END {
-		if (f==-1 || count==0) exit 0
+		if (f==-1 || count==0) {
+			printf("\n")
+			exit 0
+		}
 		mean /= count
 		
 		if (param=="TA" || param=="TSG" || param=="TSS" || param=="TD") {
