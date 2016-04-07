@@ -62,8 +62,9 @@ class OshdIO : public IOInterface {
 		std::vector<StationData> vecMeta;
 		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
 		std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files
-		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro' vector
+		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
 		std::string in_meteopath, in_metafile;
+		bool debug; ///< write out extra information to help understand what is being read
 		//std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		
 		static const char* meteo_ext; //for the file naming scheme
