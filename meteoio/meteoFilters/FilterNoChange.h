@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,10 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef NO_CHANGE_H
-#define NO_CHANGE_H
+#ifndef FILTERNOCHANGE_H
+#define FILTERNOCHANGE_H
 
-#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
+#include <meteoio/meteoFilters/WindowedFilter.h>
 
 #include <vector>
 #include <string>
@@ -26,7 +26,7 @@
 namespace mio {
 
 /**
- * @class No_Change
+ * @class FilterNoChange
  * @ingroup processing
  * @brief This filter removes periods showing insufficient changes. 
  * It searches for time periods in which the value of the certain variable doesn't change by looking at the variance. 
@@ -49,9 +49,9 @@ namespace mio {
  * @date   2015-12-04
  */
 
-class No_Change : public WindowedFilter {
+class FilterNoChange : public WindowedFilter {
 	public:
-		No_Change(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterNoChange(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

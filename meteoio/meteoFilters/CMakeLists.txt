@@ -27,7 +27,7 @@ SET(meteoFilters_sources
 	meteoFilters/WindowedFilter.cc
 	meteoFilters/ProcessingBlock.cc
 	meteoFilters/ProcessingStack.cc
-	meteoFilters/FilterFlatline.cc
+	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterOffsetsnowdepth.cc
 	meteoFilters/FilterSnowNosnow.cc

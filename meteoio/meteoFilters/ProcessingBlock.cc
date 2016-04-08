@@ -44,7 +44,7 @@
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
-#include <meteoio/meteoFilters/FilterFlatline.h>
+#include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterOffsetsnowdepth.h>
 #include <meteoio/meteoFilters/FilterSnowNosnow.h>
@@ -94,7 +94,7 @@ namespace mio {
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
- * - FLAT_LINE: reject data that changes too little (low variance), see FilterFlatline
+ * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - MAXCHANGE: reject data that changes too much , see FilterTimeconsistency
  * - SNOS: detection of grass growing under the snow height sensor, see FilterSnowNosnow
  *
@@ -164,7 +164,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "WMA_SMOOTHING"){
 		return new ProcWMASmoothing(vec_args, blockname);
 	} else if (blockname == "NO_CHANGE"){
-		return new No_Change(vec_args, blockname);
+		return new FilterNoChange(vec_args, blockname);
 	} else if (blockname == "MAXCHANGE"){
 		return new FilterTimeconsistency(vec_args, blockname);
 	} else if (blockname == "OFFSNOW"){

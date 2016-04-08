@@ -15,14 +15,14 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoFilters/FilterFlatline.h>
+#include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 
 using namespace std;
 
 namespace mio {
 
-No_Change::No_Change(const std::vector<std::string>& vec_args, const std::string& name)
+FilterNoChange::FilterNoChange(const std::vector<std::string>& vec_args, const std::string& name)
           : WindowedFilter(name)
 {
 	parse_args(vec_args);
@@ -35,7 +35,7 @@ No_Change::No_Change(const std::vector<std::string>& vec_args, const std::string
 	
 }
 
-void No_Change::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void FilterNoChange::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
@@ -54,7 +54,7 @@ void No_Change::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
-void No_Change::parse_args(std::vector<std::string> vec_args)
+void FilterNoChange::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
 
