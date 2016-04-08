@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef FilterFlatline_H
-#define FilterFlatline_H
+#ifndef NO_CHANGE_H
+#define NO_CHANGE_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 
@@ -26,27 +26,22 @@
 namespace mio {
 
 /**
- * @class FilterFlatline
+ * @class No_Change
  * @ingroup processing
- * @brief Searching for periods of constant values at set them invalid
- * The filter searches for time periods in which the value of the certain variable stagnates / doesn't change 
- * This is done with calculating the variance. 
- * References/Literature:  
- * Remarks:
- * - nodata values are excluded from the mean ?????? => checken  
- * - Two arguments expected (both have to be fullfilled for the filter to start operating):
- *     - minimal number of points in window
- *     - minimal time interval spanning the window (in seconds)
- * - only window position "center" possible
- * - keyword "soft" not allowed 
- * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position ?????? => checken
- * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present ?????? => checken
- *
+ * @brief This filter removes periods showing insufficient changes. 
+ * It searches for time periods in which the value of the certain variable doesn't change by looking at the variance. 
+ * It expects the following arguments, in order to define the data window where the variance will be computed: 
+ * - the optional keyword "soft"
+ * - the optional window centering option (left, center or right)
+ * - the minimal number of points in window
+ * - the minimal time interval spanning the window (in seconds)
+ * 
+ * For example:
  * @code
- * Valid examples for the io.ini file:
- *          HS::filter1 = flat_line
+ *          HS::filter1 = NO_CHANGE
  *          HS::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
- *          TA::filter1 = flat_line
+ * 
+ *          TA::filter1 = NO_CHANGE
  *          TA::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  * 
@@ -54,9 +49,9 @@ namespace mio {
  * @date   2015-12-04
  */
 
-class FilterFlatline : public WindowedFilter {
+class No_Change : public WindowedFilter {
 	public:
-		FilterFlatline(const std::vector<std::string>& vec_args, const std::string& name);
+		No_Change(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-FilterFlatline::FilterFlatline(const std::vector<std::string>& vec_args, const std::string& name)
+No_Change::No_Change(const std::vector<std::string>& vec_args, const std::string& name)
           : WindowedFilter(name)
 {
 	parse_args(vec_args);
@@ -35,7 +35,7 @@ FilterFlatline::FilterFlatline(const std::vector<std::string>& vec_args, const s
 	
 }
 
-void FilterFlatline::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void No_Change::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
@@ -54,7 +54,7 @@ void FilterFlatline::process(const unsigned int& param, const std::vector<MeteoD
 }
 
 
-void FilterFlatline::parse_args(std::vector<std::string> vec_args)
+void No_Change::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
 

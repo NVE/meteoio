@@ -163,8 +163,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
 		return new ProcWMASmoothing(vec_args, blockname);
-	} else if (blockname == "FLAT_LINE"){
-		return new FilterFlatline(vec_args, blockname);
+	} else if (blockname == "NO_CHANGE"){
+		return new No_Change(vec_args, blockname);
 	} else if (blockname == "MAXCHANGE"){
 		return new FilterTimeconsistency(vec_args, blockname);
 	} else if (blockname == "OFFSNOW"){
