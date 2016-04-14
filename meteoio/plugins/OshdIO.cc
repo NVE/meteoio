@@ -74,7 +74,8 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
  * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
- * - METAFILE: file within METEOPATH containing the stations' IDs, names and location; [Input] section
+ * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
+ provided or within the provided path)
  * - OSHD_DEBUG: write out extra information to better show what is in the files
  *
  * @section oshd_example Example use
@@ -82,7 +83,7 @@ namespace mio {
  * [Input]
  * METEO = OSHD
  * METEOPATH = /local/LATEST_03h_RUN
- * METAFILE  = STAT_LIST.mat
+ * METAFILE  = STAT_LIST.mat ;another possibility could be /local/metadata/STAT_LIST.mat
  * STATION1  = ATT2
  * STATION2  = WFJ2
  * @endcode
@@ -196,11 +197,15 @@ void OshdIO::parseInputOutputSection()
 {
 	cfg.getValue("OSHD_DEBUG", "INPUT", debug, IOUtils::nothrow);
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("METAFILE", "INPUT", in_metafile);
 	
 	cfg.getValues("STATION", "INPUT", vecIDs);
 	cfg.getValue("METEOPATH", "Input", in_meteopath);
 	scanMeteoPath(in_meteopath, cache_meteo_files);
+	
+	cfg.getValue("METAFILE", "INPUT", in_metafile);
+	if (IOUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
+		in_metafile = in_meteopath + "/" + in_metafile;
+	}
 	
 	//fill the params mapping vector
 	params_map.push_back( std::make_pair( MeteoData::TA, "tair") );
@@ -410,23 +415,22 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 void OshdIO::fillStationMeta()
 {
 	vecMeta.resize( vecIDs.size(), StationData() );
-	const std::string filename( in_meteopath+"/"+in_metafile );
-	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
-	if ( NULL == matfp ) throw AccessException(filename, AT);
+	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
+	if ( NULL == matfp ) throw AccessException(in_metafile, AT);
 
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "statlist");
-	if (matvar==NULL) throw NotFoundException("structure 'statlist' not found in file '"+filename+"'", AT);
+	if (matvar==NULL) throw NotFoundException("structure 'statlist' not found in file '"+in_metafile+"'", AT);
 	
 	std::vector<std::string> vecAcro;
-	readStringVector(filename, "acro", matfp, matvar, vecAcro);
+	readStringVector(in_metafile, "acro", matfp, matvar, vecAcro);
 	
 	std::vector<std::string> vecNames;
-	readStringVector(filename, "name", matfp, matvar, vecNames);
+	readStringVector(in_metafile, "name", matfp, matvar, vecNames);
 	
 	std::vector<double> easting, northing, altitude;
-	readDoubleVector(filename, "x", matfp, matvar, easting);
-	readDoubleVector(filename, "y", matfp, matvar, northing);
-	readDoubleVector(filename, "z", matfp, matvar, altitude);
+	readDoubleVector(in_metafile, "x", matfp, matvar, easting);
+	readDoubleVector(in_metafile, "y", matfp, matvar, northing);
+	readDoubleVector(in_metafile, "z", matfp, matvar, altitude);
 	
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
