@@ -492,7 +492,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 	meteo_files.clear();
 
 	const string meteo_ext = cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
-	std::list<std::string> dirlist = IOUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();
 
@@ -501,7 +501,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 	while ((it != dirlist.end())) {
 		const std::string& filename = meteopath_in + "/" + *it;
 		
-		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		int ncid;
 		ncpp::open_file(filename, NC_NOWRITE, ncid);
 		getTimeTransform(ncid, in_time_offset, in_time_multiplier); //always re-read offset and multiplier, it might be different for each file
@@ -546,7 +546,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
-	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	if (!ncpp::check_variable(ncid, varname)) return false;
 	ncpp::get_variable(ncid, varname, varid);
@@ -681,7 +681,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 	int ncid, did_lat, did_lon, did_time, vid_lat, vid_lon, vid_var, vid_time;
 	bool create_dimensions(false), create_variable(false), create_time(false);
 
-	if ( IOUtils::fileExists(filename) ) {
+	if ( FileUtils::fileExists(filename) ) {
 		ncpp::open_file(filename, NC_WRITE, ncid);
 
 		//check of lat/lon are defined and consistent
@@ -722,7 +722,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 
 		ncpp::start_definitions(filename, ncid);
 	} else {
-		if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+		if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 		ncpp::create_file(filename, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
 		create_variable = create_dimensions = true;

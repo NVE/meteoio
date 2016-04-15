@@ -87,9 +87,9 @@ void ProcMult::parse_args(const std::vector<std::string>& vec_args)
 
 		//if this is a relative path, prefix the path with the current path
 		const std::string in_filename = vec_args[1];
-		const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path = IOUtils::getPath(prefix+in_filename, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(in_filename);
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+		const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
+		const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
 		ProcessingBlock::readCorrections(getName(), filename, type, 1., vecFactors);
 	} else
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);

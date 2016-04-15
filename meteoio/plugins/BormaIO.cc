@@ -114,7 +114,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 	cfg.getValue("METEOPATH", "Input", xmlpath);
 	vecFiles.clear();
-	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + dflt_extension);
+	FileUtils::readDirectory(xmlpath, dirlist, "_" + stationname + dflt_extension);
 	dirlist.sort();
 
 	//Check date in every filename
@@ -191,7 +191,7 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
                                  std::string& filename_out, Date& date_out)
 {
 	std::list<std::string> dirlist = std::list<std::string>();
-	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
+	FileUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
 	dirlist.sort();
 
 	//Check date in every filename

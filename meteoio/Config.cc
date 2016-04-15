@@ -27,7 +27,7 @@ const char* Config::defaultSection = "GENERAL";
 //Constructors
 Config::Config() : properties(), imported(), sourcename(), configRootDir() {}
 
-Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(IOUtils::getPath(i_filename, true))
+Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
 {
 	addFile(i_filename);
 }
@@ -40,14 +40,14 @@ ConfigProxy Config::get(const std::string& key, const std::string& section, cons
 //Populating the property map
 void Config::addFile(const std::string& i_filename)
 {
-	if (configRootDir.empty()) configRootDir = IOUtils::getPath(i_filename, true);
+	if (configRootDir.empty()) configRootDir = FileUtils::getPath(i_filename, true);
 	sourcename = i_filename;
 	parseFile(i_filename);
 }
 
 void Config::addCmdLine(const std::string& cmd_line)
 {
-	if (configRootDir.empty()) configRootDir = IOUtils::getPath(IOUtils::getCWD(), true); //resolve symlinks, etc
+	if (configRootDir.empty()) configRootDir = FileUtils::getPath(FileUtils::getCWD(), true); //resolve symlinks, etc
 	sourcename = std::string("Command line");
 	parseCmdLine(cmd_line);
 }
@@ -171,8 +171,8 @@ void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
 	//Open file
 	fin.open (filename.c_str(), ifstream::in);
@@ -181,7 +181,7 @@ void Config::parseFile(const std::string& filename)
 	}
 
 	std::string section( defaultSection );
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 0;
 	std::vector<std::string> import_after; //files to import after the current one
 	bool accept_import_before = true;
@@ -338,16 +338,16 @@ std::string Config::extract_section(std::string key) const
 std::string Config::clean_import_path(const std::string& in_path) const
 {
 	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = ( IOUtils::isAbsolutePath(in_path) )? "" : IOUtils::getPath(sourcename, true)+"/";
-	const std::string path = IOUtils::getPath(prefix+in_path, true);  //clean & resolve path
-	const std::string filename = IOUtils::getFilename(in_path);
+	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
+	const std::string path = FileUtils::getPath(prefix+in_path, true);  //clean & resolve path
+	const std::string filename = FileUtils::getFilename(in_path);
 
 	return path + "/" + filename;
 }
 
 void Config::write(const std::string& filename) const
 {
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	std::ofstream fout(filename.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(filename, AT);
 

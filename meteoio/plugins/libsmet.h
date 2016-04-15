@@ -228,7 +228,7 @@ class SMETReader {
 		std::vector<double> vec_multiplier;          //a multiplier for every column, except timestamp
 		std::vector<std::string> vec_fieldnames;     //holds the column names, except for timestamp column
 		std::map< std::string, std::string > header; //holds the header
-		mio::IOUtils::FileIndexer indexer; //in order to save file pointers
+		mio::FileUtils::FileIndexer indexer; //in order to save file pointers
 
 		std::string filename;
 		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval

@@ -212,7 +212,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 {
 	meteo_files.clear();
 
-	std::list<std::string> dirlist = 	IOUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> dirlist = 	FileUtils::readDirectory(meteopath_in, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it
@@ -243,7 +243,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
 
-	if (!IOUtils::fileExists(in_meteofile)) throw AccessException(in_meteofile, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(in_meteofile)) throw AccessException(in_meteofile, AT); //prevent invalid filenames
 	
 	if (in_encoding==XML_CHAR_ENCODING_NONE) {
 		in_doc = xmlParseFile(in_meteofile.c_str());

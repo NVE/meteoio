@@ -97,8 +97,8 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	std::vector<std::string> tmpvec;
 	std::string line;
 
-	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
-	if (!IOUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
+	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
+	if (!FileUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
 	errno = 0;
 	std::ifstream fin;
@@ -109,7 +109,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		throw AccessException(ss.str(), AT);
 	}
 
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
@@ -198,7 +198,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name = grid2dpath_out+"/"+name;
 	const unsigned int nr_colors = 256;
-	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
+	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	errno = 0;
 	std::ofstream fout;
 	fout.open(full_name.c_str(), ios::out);

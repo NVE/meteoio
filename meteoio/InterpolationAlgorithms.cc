@@ -1073,12 +1073,12 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 		cfg.getValue("GRID2DPATH", "Input", grid2d_path);
 	}
 
-	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
+	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
 	
-	return (IOUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
+	return (FileUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
 
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
@@ -1088,7 +1088,7 @@ void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {
-		info << IOUtils::getFilename(filename);
+		info << FileUtils::getFilename(filename);
 	}
 }
 
@@ -1120,7 +1120,7 @@ ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
 		}
 	}
 
-	if (!IOUtils::validFileAndPath(grid2d_path+"/"+filename)) {
+	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		throw InvalidNameException("[E] Invalid grid filename for "+algo+" interpolation algorithm: "+grid2d_path+"/"+filename, AT);
 	}
 }
@@ -1149,7 +1149,7 @@ double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::
 	
 	base_algo = (nrOfMeasurments>1)? base_algo_user : "AVG";
 	
-	return (IOUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
+	return (FileUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
 
 void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
@@ -1175,7 +1175,7 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (!ALS_scan.isSameGeolocalization(dem))
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	else
-		info << IOUtils::getFilename(filename) << " - ";
+		info << FileUtils::getFilename(filename) << " - ";
 	
 	initGrid(dem, grid);
 	const size_t nxy = grid.getNx()*grid.getNy();

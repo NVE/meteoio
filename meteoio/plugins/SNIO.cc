@@ -179,8 +179,8 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationID, StationData& sd)
 {
-	if (!IOUtils::validFileAndPath(metafile)) throw InvalidNameException("\"" + metafile + "\" is not a valid file name. Please check your METAFILE key!", AT);
-	if (!IOUtils::fileExists(metafile)) throw NotFoundException( "File \"" + metafile + "\" does not exist. Please check your METAFILE key!", AT);
+	if (!FileUtils::validFileAndPath(metafile)) throw InvalidNameException("\"" + metafile + "\" is not a valid file name. Please check your METAFILE key!", AT);
+	if (!FileUtils::fileExists(metafile)) throw NotFoundException( "File \"" + metafile + "\" does not exist. Please check your METAFILE key!", AT);
 
 	std::ifstream fin;
 	fin.open (metafile.c_str(), std::ifstream::in);
@@ -189,7 +189,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 
 	try {
 		string line;
-		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 		size_t linenr = 0;
 		vector<string> tmpvec;
@@ -226,8 +226,8 @@ std::string SNIO::getStationID(const std::string& filename)
 	 * This function will return the station name as retrieved from
 	 * the first line of a SNIO formatted meteo file
 	 */
-	if ( !IOUtils::validFileAndPath(filename) ) throw InvalidNameException(filename, AT);
-	if ( !IOUtils::fileExists(filename) ) throw NotFoundException(filename, AT);
+	if ( !FileUtils::validFileAndPath(filename) ) throw InvalidNameException(filename, AT);
+	if ( !FileUtils::fileExists(filename) ) throw NotFoundException(filename, AT);
 
 	std::ifstream fin;
 	fin.open (filename.c_str(), std::ifstream::in);
@@ -237,7 +237,7 @@ std::string SNIO::getStationID(const std::string& filename)
 	if (fin.eof())
 		throw InvalidNameException(filename + ": Empty file", AT);
 
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	string station_id;
 	try {
@@ -299,11 +299,11 @@ void SNIO::readMetaData()
 
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 		const string filename = vecFilenames[ii];
-		const string extension = IOUtils::getExtension(filename);
+		const string extension = FileUtils::getExtension(filename);
 		const std::string file_and_path = (extension!="")? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 		const string station_id = getStationID(file_and_path);
 
-		if (!IOUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
+		if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 			throw InvalidNameException(file_and_path, AT);
 
 		StationData sd(Coords(), station_id);
@@ -343,8 +343,8 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
 		const std::string file_with_path = vecFilenames[ii];
 
-		if ( !IOUtils::validFileAndPath(file_with_path) ) throw InvalidNameException(file_with_path, AT);
-		if ( !IOUtils::fileExists(file_with_path) ) throw NotFoundException(file_with_path, AT);
+		if ( !FileUtils::validFileAndPath(file_with_path) ) throw InvalidNameException(file_with_path, AT);
+		if ( !FileUtils::fileExists(file_with_path) ) throw NotFoundException(file_with_path, AT);
 
 		std::ifstream fin;
 		fin.open (file_with_path.c_str(), std::ifstream::in);
@@ -354,7 +354,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if (fin.eof())
 			throw InvalidNameException(file_with_path + ": Empty file", AT);
 
-		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 		try {
 			string line;
@@ -555,9 +555,9 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 			std::string station_id = vecMeteo[ii].front().meta.getStationID();
 			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name = outpath + "/" + station_id + ".inp";
-			if (!IOUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
+			if (!FileUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
 			std::ofstream fout;
-			if ( !IOUtils::fileExists(output_name) ) {
+			if ( !FileUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
 				fout << "MTO <" << station_id << "> " << vecMeteo[ii].size() << "\n";
 			} else {

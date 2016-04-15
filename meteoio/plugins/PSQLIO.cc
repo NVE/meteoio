@@ -187,11 +187,11 @@ void PSQLIO::getParameters(const Config& cfg)
 	IOUtils::readLineToVec(stations, vecFixedStationID, ',');
 
 	const string exclude_file = cfg.get("EXCLUDE", "Input", IOUtils::nothrow);
-	if (!exclude_file.empty() && IOUtils::fileExists(exclude_file)) {
+	if (!exclude_file.empty() && FileUtils::fileExists(exclude_file)) {
 		//if this is a relative path, prefix the path with the current path
-		const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
+		const std::string prefix = ( FileUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = FileUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + FileUtils::getFilename(exclude_file);
 
 		create_shadow_map(exclude_file);
 	}
@@ -201,12 +201,12 @@ void PSQLIO::getParameters(const Config& cfg)
 
 void PSQLIO::create_shadow_map(const std::string& exclude_file)
 {
-	if (!IOUtils::fileExists(exclude_file)) throw AccessException(exclude_file, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(exclude_file)) throw AccessException(exclude_file, AT); //prevent invalid filenames
 	std::ifstream fin(exclude_file.c_str(), std::ifstream::in);
 	if (fin.fail()) throw AccessException(exclude_file, AT);
 
 	try {
-		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 		vector<string> tmpvec;
 		string line;

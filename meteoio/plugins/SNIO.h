@@ -66,7 +66,7 @@ class SNIO : public IOInterface {
 		const Config cfg;
 		std::vector<StationData> vecAllStations;
 		std::vector<std::string> vecFilenames;
-		std::vector< IOUtils::FileIndexer > vecIndex;
+		std::vector< FileUtils::FileIndexer > vecIndex;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_tz, out_tz;
 		static const char* dflt_extension;

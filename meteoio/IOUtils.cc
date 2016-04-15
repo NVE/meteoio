@@ -250,7 +250,7 @@ void readKeyValueHeader(std::map<std::string,std::string>& headermap,
 	std::string line;
 
 	//make a test for end of line encoding:
-	const char eol = getEoln(fin);
+	const char eol = FileUtils::getEoln(fin);
 
 	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {

@@ -26,7 +26,7 @@
 #include <meteoio/dataClasses/Date.h>
 
 namespace mio {
-namespace IOUtils {
+namespace FileUtils {
 
 	/**
 	 * @brief Copies a files from one location to another
@@ -166,7 +166,7 @@ namespace IOUtils {
 			std::vector< struct file_index > vecIndex;
 	};
 
-} //end namespace IOUtils
+} //end namespace FileUtils
 } //end namespace mio
 
 #endif

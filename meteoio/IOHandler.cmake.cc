@@ -605,16 +605,16 @@ void IOHandler::create_exclude_map()
 
 	if (!exclude_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
-		const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
+		const std::string prefix = ( FileUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = FileUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + FileUtils::getFilename(exclude_file);
 
-		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw AccessException(filename, AT);
 
 		try {
-			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+			const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 			vector<string> tmpvec;
 			string line;
@@ -681,16 +681,16 @@ void IOHandler::create_keep_map()
 
 	if (!keep_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
-		const std::string prefix = ( IOUtils::isAbsolutePath(keep_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = IOUtils::getPath(prefix+keep_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(keep_file);
+		const std::string prefix = ( FileUtils::isAbsolutePath(keep_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = FileUtils::getPath(prefix+keep_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + FileUtils::getFilename(keep_file);
 
-		if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw AccessException(filename, AT);
 
 		try {
-			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+			const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 			vector<string> tmpvec;
 			string line;

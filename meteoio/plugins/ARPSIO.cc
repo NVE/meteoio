@@ -415,7 +415,7 @@ void ARPSIO::initializeTrueARPS(FILE* &fin, const std::string& filename, const c
 
 void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 {
-	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
 		fclose(fin);
 		throw AccessException("Can not open file "+filename, AT);

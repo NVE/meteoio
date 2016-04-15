@@ -203,12 +203,12 @@ void OshdIO::parseInputOutputSection()
 	scanMeteoPath(in_meteopath, cache_meteo_files);
 	
 	cfg.getValue("METAFILE", "INPUT", in_metafile);
-	if (IOUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
+	if (FileUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
 		in_metafile = in_meteopath + "/" + in_metafile;
 	}
 	
 	//fill the params mapping vector
-	params_map.push_back( std::make_pair( MeteoData::TA, "tair") );
+	params_map.push_back( std::make_pair(MeteoData::TA, "tair") );
 	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
 	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
 	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") );
@@ -220,7 +220,7 @@ void OshdIO::parseInputOutputSection()
 void OshdIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
 {
 	meteo_files.clear();
-	std::list<std::string> dirlist = IOUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
 	std::list<std::string> prefix_list;
 
 	//make sure each timestamp only appears once, ie remove duplicates

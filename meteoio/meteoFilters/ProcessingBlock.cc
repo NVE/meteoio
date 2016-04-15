@@ -225,7 +225,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 	const size_t maxIndex = corrections.size();
 	const size_t minIndex = (c_type=='h')? 0 : 1;
 
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	try {
 		size_t index, lcount=0;

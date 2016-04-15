@@ -127,10 +127,10 @@ void SMETIO::parseInputOutputSection()
 
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 			const string filename = vecFilenames[ii];
-			const string extension = IOUtils::getExtension(filename);
+			const string extension = FileUtils::getExtension(filename);
 			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
-			if (!IOUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
+			if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 				throw InvalidNameException(file_and_path, AT);
 			vecFiles.push_back(file_and_path);
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
@@ -382,7 +382,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (size_t ii=startindex; ii<endindex; ii++){
 		const string& filename = vecFiles.at(ii); //filename of current station
 
-		if (!IOUtils::fileExists(filename))
+		if (!FileUtils::fileExists(filename))
 			throw NotFoundException(filename, AT);
 
 		smet::SMETReader& myreader = vec_smet_reader.at(ii);
@@ -417,7 +417,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		}
 
 		const string filename = outpath + "/" + sd.stationID + ".smet";
-		if (!IOUtils::validFileAndPath(filename)) //Check whether filename is valid
+		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use
@@ -671,7 +671,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 void SMETIO::readPOI(std::vector<Coords>& pts)
 {
 	const std::string filename = cfg.get("POIFILE", "Input");
-	if (!IOUtils::fileExists(filename)) {
+	if (!FileUtils::fileExists(filename)) {
 		throw NotFoundException(filename, AT);
 	}
 

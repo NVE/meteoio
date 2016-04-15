@@ -72,8 +72,8 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 
 void FilterSuppr::fillSuppr_dates(const std::string& filename)
 {
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
-	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 	
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
@@ -82,7 +82,7 @@ void FilterSuppr::fillSuppr_dates(const std::string& filename)
 		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	
 	try {
 		size_t lcount=0;
@@ -133,9 +133,9 @@ void FilterSuppr::parse_args(std::vector<std::string> vec_args)
 				throw InvalidArgumentException("Wrong range for filter " + getName() + ", it should be between 0 and 1", AT);
 		} else {
 			const std::string in_filename( vec_args[0] );
-			const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-			const std::string path = IOUtils::getPath(prefix+in_filename, true);  //clean & resolve path
-			const std::string filename = path + "/" + IOUtils::getFilename(in_filename);
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
+			const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
 		
 			fillSuppr_dates(filename);
 		}

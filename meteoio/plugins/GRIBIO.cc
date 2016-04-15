@@ -435,7 +435,7 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
 	const std::string filename = grid2dpath_in+"/"+i_name;
-	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
@@ -464,7 +464,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 
 void GRIBIO::indexFile(const std::string& filename)
 {
-	if (!IOUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
@@ -701,7 +701,7 @@ void GRIBIO::readDEM(DEMObject& dem_out)
 void GRIBIO::scanMeteoPath()
 {
 	std::list<std::string> dirlist;
-	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
+	FileUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it

@@ -68,8 +68,8 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
-	if (!IOUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
 	std::ifstream fin;
 	fin.open (filename.c_str(), ifstream::in);
@@ -77,11 +77,11 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		throw AccessException(filename, AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
-		IOUtils::readKeyValueHeader(header, fin, 6, ":");
+		FileUtils::readKeyValueHeader(header, fin, 6, ":");
 		IOUtils::getValueForKey(header, "cols",  _nx);
 		IOUtils::getValueForKey(header, "rows",  _ny);
 		IOUtils::getValueForKey(header, "north", north);
@@ -178,7 +178,7 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	if (!IOUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
+	if (!FileUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
 	std::ofstream fout;
 	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {

@@ -159,7 +159,7 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 		throw AccessException(ss.str(), AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	try {
 		size_t lcount=0;
@@ -231,9 +231,9 @@ void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 		const std::string root_path( cfg.getConfigRootDir() );
 		//if this is a relative path, prefix the path with the current path
 		const std::string in_filename = vec_args[0];
-		const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path = IOUtils::getPath(prefix+in_filename, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(in_filename);
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+		const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
+		const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
 		std::vector< std::pair<double,double> > mask;
 		readMask(getName(), filename, mask);
 		masks["*"] = mask; //this mask is valid for ALL stations

@@ -261,7 +261,7 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in) const
 void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height)
 {
 	// Open file for writing (binary mode)
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL)
@@ -614,13 +614,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename) const
 {
-	const string world_file = IOUtils::removeExtension(filename)+".pnw";
+	const string world_file = FileUtils::removeExtension(filename)+".pnw";
 	const double cellsize = grid_in.cellsize;
 	Coords world_ref = grid_in.llcorner;
 	world_ref.setProj(coordout, coordoutparam);
 	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
 
-	if (!IOUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
+	if (!FileUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
 	std::ofstream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(world_file, AT);
 

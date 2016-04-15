@@ -38,17 +38,17 @@
 #include <meteoio/IOUtils.h>
 
 namespace mio {
-namespace IOUtils {
+namespace FileUtils {
 
 void copy_file(const std::string& src, const std::string& dest)
 {
 	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
 
-	if (!IOUtils::fileExists(src)) throw NotFoundException(src, AT);
+	if (!fileExists(src)) throw NotFoundException(src, AT);
 	std::ifstream fin(src.c_str(), std::ios::binary);
 	if (fin.fail()) throw AccessException(src, AT);
 
-	if (!IOUtils::validFileAndPath(dest)) throw InvalidNameException(dest, AT);
+	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
 	std::ofstream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
@@ -341,7 +341,7 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
 {
 	Date tmpdate;
-	convertString(tmpdate, i_date, 0.);
+	IOUtils::convertString(tmpdate, i_date, 0.);
 	setIndex(tmpdate, i_pos);
 }
 
@@ -361,7 +361,7 @@ std::streampos FileIndexer::getIndex(const Date& i_date) const
 std::streampos FileIndexer::getIndex(const std::string& i_date) const
 {
 	Date tmpdate;
-	convertString(tmpdate, i_date, 0.);
+	IOUtils::convertString(tmpdate, i_date, 0.);
 	return getIndex(tmpdate);
 }
 
@@ -394,5 +394,5 @@ const std::string FileIndexer::toString() const
 	return os.str();
 }
 
-} //end namespace IOUtils
+} //end namespace FileUtils
 } //end namespace mio

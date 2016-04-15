@@ -156,8 +156,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
-	if (!IOUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
+	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
+	if (!FileUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
 	std::ifstream fin;
 	errno = 0;
@@ -168,11 +168,11 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		throw AccessException(ss.str(), AT);
 	}
 
-	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
-		IOUtils::readKeyValueHeader(header, fin, 6, " ");
+		FileUtils::readKeyValueHeader(header, fin, 6, " ");
 		IOUtils::getValueForKey(header, "ncols", i_ncols);
 		IOUtils::getValueForKey(header, "nrows", i_nrows);
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
@@ -291,7 +291,7 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name = grid2dpath_out+"/"+name;
-	if (!IOUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
+	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
 	errno = 0;
 	std::ofstream fout;
 	fout.open(full_name.c_str(), ios::out);
