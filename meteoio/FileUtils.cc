@@ -318,6 +318,35 @@ void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
 	}
 }
 
+void readKeyValueHeader(std::map<std::string,std::string>& headermap,
+                        std::istream& fin, const size_t& linecount,
+                        const std::string& delimiter, const bool& keep_case)
+{
+	size_t linenr = 0;
+	std::string line;
+
+	//make a test for end of line encoding:
+	const char eol = FileUtils::getEoln(fin);
+
+	for (size_t ii=0; ii< linecount; ii++){
+		if (std::getline(fin, line, eol)) {
+			std::string key, value;
+			linenr++;
+			const bool result = IOUtils::readKeyValuePair(line, delimiter, key, value);
+			if (result) {
+				if (!keep_case) headermap[ IOUtils::strToLower(key) ] = value;
+				else headermap[key] = value;
+			} else { //  means if ((key == "") || (value==""))
+				std::ostringstream out;
+				out << "Invalid key value pair in line: " << linenr << " of header";
+				throw IOException(out.str(), AT);
+			}
+		} else {
+			throw InvalidFormatException("Premature EOF while reading Header", AT);
+		}
+	}
+}
+
 
 //below, the file indexer implementation
 void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
