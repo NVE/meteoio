@@ -696,7 +696,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();
-	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
@@ -1003,7 +1003,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 
 	ifstream fin;
 	fin.clear();
-	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
@@ -1054,7 +1054,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 	ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
 
 	ifstream fin;
-	if (!SMETCommon::fileExists(filename)) throw SMETException(filename, AT); //prevent invalid filenames
+	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
