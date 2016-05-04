@@ -73,6 +73,7 @@ class Atmosphere {
 		static double Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
 		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
+		static double Kasten_clearness(const double& cloudiness);
 		static double Kasten_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,

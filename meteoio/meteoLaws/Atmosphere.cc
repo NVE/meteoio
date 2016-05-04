@@ -17,6 +17,7 @@
 */
 
 #include <assert.h>
+#include <sstream>
 #include <cmath>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
@@ -521,13 +522,33 @@ double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const dou
 }
 
 /**
+ * @brief Evaluate the solar clearness index for a given cloudiness. 
+ * This uses the formula from Kasten and Czeplak -- <i>"Solar and terrestrial radiation
+ * dependent on the amount and type of cloud"</i>, Sol. Energy, <b>24</b>, 1980, pp 177-189.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param cloudiness in okta, between 0 and 1
+ * @return solar clearness index
+*/
+double Atmosphere::Kasten_clearness(const double& cloudiness) {
+	const double b1 = 0.75, b2 = 3.4;
+	if (cloudiness<0. || cloudiness>1.) {
+		std::ostringstream ss;
+		ss << "Invalid cloudiness value: " << cloudiness << " (it should be between 0 and 1)";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	const double clearness = 1. - b1*pow(cloudiness, b2);
+	return clearness;
+}
+
+/**
  * @brief Evaluate the cloudiness from a given solar index.
  * This uses the formula from Kasten and Czeplak -- <i>"Solar and terrestrial radiation
  * dependent on the amount and type of cloud"</i>, Sol. Energy, <b>24</b>, 1980, pp 177-189.
  * The solar index is defined as measured radiation / clear sky radiation, values
  * outside of [0;1] will be truncated to [0;1].
  * @param solarIndex solar index
- * @return cloudiness (between 0 and 1)
+ * @return cloudiness (in okta, between 0 and 1)
 */
 double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
 	const double b1 = 0.75, b2 = 3.4;

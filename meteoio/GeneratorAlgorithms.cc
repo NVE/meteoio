@@ -40,6 +40,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new StandardPressureGenerator(vecArgs, i_algoname);
 	} else if (algoname == "RELHUM"){
 		return new RhGenerator(vecArgs, i_algoname);
+	} else if (algoname == "TAU_CLD"){
+		return new TauCLDGenerator(vecArgs, i_algoname);
 	} else if (algoname == "TS_OLWR"){
 		return new TsGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ISWR_ALBEDO"){
@@ -251,6 +253,36 @@ bool RhGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo
 	}
 
 	return all_filled;
+}
+
+
+bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if (value == IOUtils::nodata) {
+		if (md.param_exists("CLD")) {
+		const double cld = md("CLD");
+			if (cld==IOUtils::nodata) return false;
+			value = Atmosphere::Kasten_clearness( cld );
+		}
+
+		if (value==IOUtils::nodata) return false;
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool TauCLDGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if (vecMeteo.empty()) return true;
+
+	bool status = true;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (!generate(param, vecMeteo[ii]))
+			status = false;
+	}
+
+	return status;
 }
 
 

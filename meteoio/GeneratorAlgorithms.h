@@ -218,6 +218,24 @@ class RhGenerator : public GeneratorAlgorithm {
 };
 
 /**
+ * @class TauCLDGenerator
+ * @brief Atmospheric transmissivity generator.
+ * Generate the atmospheric transmissivity (or clearness index) from other parameters.
+ * Right now, it only looks for a "CLD" parameter that should be the cloud cover / cloudiness (in okta but brought back between
+ * 0 and 1) and converts it into a clearness index. 
+ * @code
+ * TAU_CLD::generators = TAU_CLD
+ * @endcode
+ */
+class TauCLDGenerator : public GeneratorAlgorithm {
+	public:
+		TauCLDGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+};
+
+/**
  * @class TsGenerator
  * @brief Surface temperature generator.
  * Generate the surface temperature from the outgoing long wave (OLWR).
