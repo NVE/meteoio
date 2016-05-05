@@ -39,6 +39,8 @@
 
 namespace mio {
 namespace FileUtils {
+//we don't want to expose this function to the user, so we keep it local
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern="", const bool& isRecursive=false);
 
 void copy_file(const std::string& src, const std::string& dest)
 {
@@ -162,10 +164,17 @@ bool isAbsolutePath(const std::string& in_path)
 #endif
 }
 
-std::list<std::string> readDirectory(const std::string& path, const std::string& pattern)
+void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
+{
+	const std::string sub_path( "." );
+	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
+}
+
+std::list<std::string> readDirectory(const std::string& path, const std::string& pattern, const bool& isRecursive)
 {
 	std::list<std::string> dirlist;
-	readDirectory(path, dirlist, pattern);
+	const std::string sub_path( "." );
+	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
 	return dirlist;
 }
 
@@ -191,7 +200,7 @@ bool fileExists(const std::string& filename)
 	return true;
 }
 
-void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 1)) {
@@ -213,7 +222,7 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 			const std::string filename(ffd.cFileName);
 			const size_t pos = filename.find(pattern);
 				if (pos!=std::string::npos) {
-					dirlist.push_back(filename);
+					dirlist.push_back( filename );
 				}
 		}
 	}
@@ -250,23 +259,41 @@ bool fileExists(const std::string& filename)
 		return false; //exclude char device, block device, sockets, etc
 }
 
-void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+//sub_path contains the relative path that should prefix the found file names (this is only useful for recursive search)
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	DIR *dp = opendir(path.c_str());
-	if (dp == NULL) {
+	if (dp == NULL) 
 		throw AccessException("Error opening directory " + path, AT);
-	}
 
 	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
 		const std::string tmp(dirp->d_name);
-		if ( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
+		const std::string full_path = path+"/"+tmp;
+		if ( tmp.compare(".")==0 || tmp.compare("..")==0 ) 
+			continue; //skip "." and ".."
+		
+		if (!isRecursive) {
 			if (pattern.empty()) {
-				dirlist.push_back(tmp);
+				dirlist.push_back( tmp );
 			} else {
 				const size_t pos = tmp.find(pattern);
-				if (pos!=std::string::npos) {
-					dirlist.push_back(tmp);
+				if (pos!=std::string::npos) dirlist.push_back( tmp );
+			}
+		} else {
+			struct stat statbuf;
+			if (stat(full_path.c_str(), &statbuf) == -1) 
+				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT); //this should 
+			
+			if (S_ISDIR(statbuf.st_mode)) { //recurse on sub-directory
+				readDirectoryPrivate(full_path, sub_path+"/"+tmp, dirlist, pattern, isRecursive);
+			} else {
+				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files
+				if (pattern.empty()) {
+					dirlist.push_back( sub_path+"/"+tmp );
+				} else {
+					const size_t pos = tmp.find(pattern);
+					if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+tmp );
 				}
 			}
 		}

@@ -35,18 +35,20 @@ namespace FileUtils {
 	 * @param dest The filename of the file to copy to (will be created or overwritten)
 	 */
 	void copy_file(const std::string& src, const std::string& dest);
-
+	
 	/**
 	* @brief Build a list of file in a given directory.
 	* The matching is very primitive: it only looks for the substring "pattern" in the file names.
-	* If this substrings exists, the file matches.
+	* If this substrings exists, the file matches. In the case of recursive search, the filenames will be
+	* prefixed by their relative path based on the provided path.
 	* @param path directory containing the files
 	* @param dirlist list of matching file names
 	* @param pattern optional pattern that must be part of the file names
+	* @param isRecursive should the search recurse through sub-directories? (default: false)
 	*/
-	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");
+	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="", const bool& isRecursive=false);
 
-	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="");
+	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
 
 	bool validFileAndPath(const std::string& filename);
 
