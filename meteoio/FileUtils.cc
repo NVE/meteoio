@@ -211,27 +211,37 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 	const std::string inpath = path+"\\\\*";
 	WIN32_FIND_DATA ffd;
 	const HANDLE hFind = FindFirstFileA(inpath.c_str(), &ffd);
-	if (INVALID_HANDLE_VALUE == hFind) {
+	if (INVALID_HANDLE_VALUE == hFind)
 		throw AccessException("Error opening directory " + path, AT);
-	}
 
 	do {
-		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			//this is a directory -> do nothing
+		const std::string filename(ffd.cFileName);
+		const std::string full_path = path+"/"+filename;
+		
+		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
+			continue; //skip "." and ".."
+		
+		if (!isRecursive) {
+			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				//this is a directory -> do nothing
+			} else {
+				const size_t pos = filename.find(pattern);
+				if (pos!=std::string::npos) dirlist.push_back( filename );
+			}
 		} else {
-			const std::string filename(ffd.cFileName);
-			const size_t pos = filename.find(pattern);
-				if (pos!=std::string::npos) {
-					dirlist.push_back( filename );
-				}
+			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
+			} else {
+				const size_t pos = filename.find(pattern);
+				if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
+			}
 		}
 	}
 	while (FindNextFile(hFind, &ffd) != 0);
 
 	const DWORD dwError = GetLastError();
-	if (dwError != ERROR_NO_MORE_FILES) {
+	if (dwError != ERROR_NO_MORE_FILES)
 		throw AccessException("Error listing files in directory " + path, AT);
-	}
 
 	FindClose(hFind);
 }
@@ -268,17 +278,17 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 
 	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
-		const std::string tmp(dirp->d_name);
-		const std::string full_path = path+"/"+tmp;
-		if ( tmp.compare(".")==0 || tmp.compare("..")==0 ) 
+		const std::string filename(dirp->d_name);
+		const std::string full_path = path+"/"+filename;
+		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
 			continue; //skip "." and ".."
 		
 		if (!isRecursive) {
 			if (pattern.empty()) {
-				dirlist.push_back( tmp );
+				dirlist.push_back( filename );
 			} else {
-				const size_t pos = tmp.find(pattern);
-				if (pos!=std::string::npos) dirlist.push_back( tmp );
+				const size_t pos = filename.find( pattern );
+				if (pos!=std::string::npos) dirlist.push_back( filename );
 			}
 		} else {
 			struct stat statbuf;
@@ -286,14 +296,14 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT); //this should 
 			
 			if (S_ISDIR(statbuf.st_mode)) { //recurse on sub-directory
-				readDirectoryPrivate(full_path, sub_path+"/"+tmp, dirlist, pattern, isRecursive);
+				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
 			} else {
 				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files
 				if (pattern.empty()) {
-					dirlist.push_back( sub_path+"/"+tmp );
+					dirlist.push_back( sub_path+"/"+filename );
 				} else {
-					const size_t pos = tmp.find(pattern);
-					if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+tmp );
+					const size_t pos = filename.find(pattern);
+					if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
 				}
 			}
 		}
