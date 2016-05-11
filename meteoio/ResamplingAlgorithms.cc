@@ -41,6 +41,8 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new NearestNeighbour(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "ACCUMULATE") {
 		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "SOLAR") {
+		return new Solar(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "DAILY_SOLAR") {
 		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "DAILY_AVG") {
@@ -237,8 +239,7 @@ NoResampling::NoResampling(const std::string& i_algoname, const std::string& i_p
 std::string NoResampling::toString() const
 {
 	ostringstream ss;
-	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
-	ss << "[ ]";
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo << "[ ]";
 	return ss.str();
 }
 
@@ -567,6 +568,111 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 
 
 /**********************************************************************************/
+const double Solar::soil_albedo = .23; //grass
+const double Solar::snow_albedo = .85; //snow
+const double Solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
+Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
+{
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==0) return;
+	if (nr_args==1) {
+		if (vecArgs[0]=="extrapolate")
+			extrapolate=true;
+		else {
+			IOUtils::convertString(window_size, vecArgs[0]);
+			window_size /= 86400.; //user uses seconds, internally julian day is used
+		}
+	} else if (nr_args==2) {
+		IOUtils::convertString(window_size, vecArgs[0]);
+		window_size /= 86400.; //user uses seconds, internally julian day is used
+		if (vecArgs[1]=="extrapolate")
+			extrapolate=true;
+		else
+			throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
+	} else {
+		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	}
+}
+
+std::string Solar::toString() const
+{
+	ostringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo << "[ ]";
+	return ss.str();
+}
+
+double Solar::getPotentialH(const MeteoData& md) const
+{
+	const double lat = md.meta.position.getLat();
+	const double lon = md.meta.position.getLon();
+	const double alt = md.meta.position.getAltitude();
+	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return IOUtils::nodata;
+	SunObject sun(lat, lon, alt);
+	
+	const double HS = md(MeteoData::HS);
+	const double P = (md(MeteoData::P)!=IOUtils::nodata)? md(MeteoData::P) : Atmosphere::stdAirPressure(alt);
+	double albedo = 0.5;
+	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+	//if we don't have TA and RH, set them so the reduced precipitable water will get an average value
+	double TA = md(MeteoData::TA);
+	double RH = md(MeteoData::RH);
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		TA = 274.98;
+		RH = 0.666;
+	}
+	sun.setDate(md.date.getJulian(), md.date.getTimeZone());
+	sun.calculateRadiation(TA, RH, P, albedo);
+	double toa, direct, diffuse;
+	sun.getHorizontalRadiation(toa, direct, diffuse);
+	const double global_h = direct+diffuse;
+	
+	return global_h;
+}
+
+void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+                           const std::vector<MeteoData>& vecM, MeteoData& md)
+{
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
+
+	if (paramindex!=MeteoData::ISWR && paramindex!=MeteoData::RSWR)
+		throw IOException("This method only applies to short wave radiation! (either ISWR or RSWR)", AT);
+
+	
+	const Date resampling_date = md.date;
+	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
+	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
+	
+	if (!extrapolate && (!foundP1 || !foundP2)) return;
+	
+	const double pot1 = (foundP1)? getPotentialH( vecM[indexP1] ) : IOUtils::nodata;
+	const double pot2 = (foundP2)? getPotentialH( vecM[indexP2] ) : IOUtils::nodata;
+	const double pot_pt = getPotentialH( md );
+	if (pot_pt==IOUtils::nodata) return;
+	
+	const double loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
+	const double loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
+
+	double loss = 1.;
+	if (loss1!=IOUtils::nodata && loss2!=IOUtils::nodata) {
+		const double weight = (resampling_date.getJulian() - vecM[indexP1].date.getJulian()) / (vecM[indexP2].date.getJulian() - vecM[indexP1].date.getJulian());
+		loss = Interpol1D::weightedMean(loss1, loss2, weight);
+	} else if (loss1==IOUtils::nodata && loss2!=IOUtils::nodata){
+		loss = loss2;
+	} else if (loss2==IOUtils::nodata && loss1!=IOUtils::nodata) {
+		loss=loss1;
+	}
+	
+	md(paramindex) = loss * pot_pt;
+	md.setResampled(true);
+}
+
+
+/**********************************************************************************/
 const double Daily_solar::soil_albedo = .23; //grass
 const double Daily_solar::snow_albedo = .85; //snow
 const double Daily_solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
@@ -584,7 +690,7 @@ Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_par
 std::string Daily_solar::toString() const
 {
 	ostringstream ss;
-	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo << "[ ]";
 	return ss.str();
 }
 

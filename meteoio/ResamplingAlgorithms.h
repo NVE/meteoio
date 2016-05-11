@@ -72,6 +72,7 @@ namespace mio {
  * - nearest:  nearest neighbor data resampling, see NearestNeighbour
  * - linear: linear data resampling, see LinearResampling
  * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
+ * - solar: resample solar radiation by interpolating an atmospheric loss factor, see Solar
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
  */
@@ -223,6 +224,35 @@ class Accumulate : public ResamplingAlgorithms {
 
 		double accumulate_period; //internally, in julian days
 		bool strict;
+};
+
+/**
+ * @brief Interpolate solar radiation.
+ * The available solar radiation data is compared to the potential radiation, leading to atmospheric loss
+ * factors. At the point that has to be interpolated, the loss factor is linearly interpolated and
+ * applied to the potential radiation. When extrapolating the data as well as at the start/end of the day (ie
+ * when only one measured value is available), the available value is kept and applied (thus this behaves as
+ * a nearest neighbour on the atmospheric loss factor).
+ * 
+ * When using this algorithm for RSWR, an albedo is required. A default value of 0.5 is used. If the snow 
+ * height is available and greater than a 10cm threshold, a snow albedo is used. Below this threshold, 
+ * a soil albedo is used.
+ * @code
+ * ISWR::resample   = solar
+ * @endcode
+ */
+class Solar : public ResamplingAlgorithms {
+	public:
+		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+
+		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
+		std::string toString() const;
+	private:
+		double getPotentialH(const MeteoData& md) const;
+		
+		bool extrapolate;
+		static const double soil_albedo, snow_albedo, snow_thresh;
 };
 
 /**
