@@ -573,7 +573,7 @@ const double Solar::snow_albedo = .85; //snow
 const double Solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
-            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), pt1(), pt2(), extrapolate(false)
 {
 	const size_t nr_args = vecArgs.size();
 	if (nr_args==0) return;
@@ -611,8 +611,8 @@ double Solar::getPotentialH(const MeteoData& md) const
 	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return IOUtils::nodata;
 	SunObject sun(lat, lon, alt);
 	
-	const double HS = md(MeteoData::HS);
 	const double P = (md(MeteoData::P)!=IOUtils::nodata)? md(MeteoData::P) : Atmosphere::stdAirPressure(alt);
+	const double HS = md(MeteoData::HS);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
@@ -623,6 +623,7 @@ double Solar::getPotentialH(const MeteoData& md) const
 		TA = 274.98;
 		RH = 0.666;
 	}
+	
 	sun.setDate(md.date.getJulian(), md.date.getTimeZone());
 	sun.calculateRadiation(TA, RH, P, albedo);
 	double toa, direct, diffuse;
@@ -630,6 +631,29 @@ double Solar::getPotentialH(const MeteoData& md) const
 	const double global_h = direct+diffuse;
 	
 	return global_h;
+}
+
+bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
+                           const std::vector<MeteoData>& vecM, const Date& resampling_date)
+{
+	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
+	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
+	
+	if (!extrapolate && (!foundP1 || !foundP2)) return false;
+	
+	if (vecM[indexP1].date==pt2.first) { //if the new start point is the old end point
+		pt1 = pt2;
+	} else {
+		const double pot1 = (foundP1)? getPotentialH( vecM[indexP1] ) : IOUtils::nodata;
+		const double tmp_loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
+		pt1 = std::make_pair(vecM[indexP1].date, tmp_loss1);
+	}
+	
+	const double pot2 = (foundP2)? getPotentialH( vecM[indexP2] ) : IOUtils::nodata;
+	const double tmp_loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
+	pt2 = std::make_pair(vecM[indexP2].date, tmp_loss2);
+	return true;
 }
 
 void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
@@ -641,25 +665,20 @@ void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/
 	if (paramindex!=MeteoData::ISWR && paramindex!=MeteoData::RSWR)
 		throw IOException("This method only applies to short wave radiation! (either ISWR or RSWR)", AT);
 
-	
 	const Date resampling_date = md.date;
-	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
-	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
-	
-	if (!extrapolate && (!foundP1 || !foundP2)) return;
-	
-	const double pot1 = (foundP1)? getPotentialH( vecM[indexP1] ) : IOUtils::nodata;
-	const double pot2 = (foundP2)? getPotentialH( vecM[indexP2] ) : IOUtils::nodata;
 	const double pot_pt = getPotentialH( md );
 	if (pot_pt==IOUtils::nodata) return;
 	
-	const double loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
-	const double loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
+	if ((pt1.first.isUndef() || pt2.first.isUndef()) || (resampling_date<pt1.first || resampling_date>pt2.first)) {
+		const bool status = computeLossFactor(index, paramindex, vecM, resampling_date);
+		if (!status) return;
+	}
 
+	const double jul1 = pt1.first.getJulian(), jul2 = pt2.first.getJulian();
+	const double loss1 = pt1.second, loss2 = pt2.second;
 	double loss = 1.;
 	if (loss1!=IOUtils::nodata && loss2!=IOUtils::nodata) {
-		const double weight = (resampling_date.getJulian() - vecM[indexP1].date.getJulian()) / (vecM[indexP2].date.getJulian() - vecM[indexP1].date.getJulian());
+		const double weight = (resampling_date.getJulian() - jul1) / (jul2 - jul1);
 		loss = Interpol1D::weightedMean(loss1, loss2, weight);
 	} else if (loss1==IOUtils::nodata && loss2!=IOUtils::nodata){
 		loss = loss2;

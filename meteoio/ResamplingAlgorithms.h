@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <list>
 
 #ifdef _MSC_VER
 	#pragma warning(disable:4512) //we don't need any = operator!
@@ -250,7 +251,10 @@ class Solar : public ResamplingAlgorithms {
 		std::string toString() const;
 	private:
 		double getPotentialH(const MeteoData& md) const;
+		bool computeLossFactor(const size_t& index, const size_t& paramindex,
+		                                           const std::vector<MeteoData>& vecM, const Date& resampling_date);
 		
+		std::pair<Date, double> pt1, pt2;
 		bool extrapolate;
 		static const double soil_albedo, snow_albedo, snow_thresh;
 };
