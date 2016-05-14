@@ -603,7 +603,7 @@ std::string Solar::toString() const
 	return ss.str();
 }
 
-double Solar::getPotentialH(const MeteoData& md) const
+double Solar::getPotentialH(const MeteoData& md)
 {
 	const double lat = md.meta.position.getLat();
 	const double lon = md.meta.position.getLon();
@@ -634,7 +634,7 @@ double Solar::getPotentialH(const MeteoData& md) const
 }
 
 bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
-                           const std::vector<MeteoData>& vecM, const Date& resampling_date, std::pair<Date, double> &pt1, std::pair<Date, double> &pt2)
+                           const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts)
 {
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
@@ -642,29 +642,31 @@ bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
 	
 	if (!extrapolate && (!foundP1 || !foundP2)) return false;
 	
-	if (vecM[indexP1].date==pt2.first) { //if the new start point is the old end point
-		pt1 = pt2;
+	const double jul1 = vecM[indexP1].date.getJulian();
+	if (jul1==pts.jul2) { //if the new start point is the old end point
+		pts.jul1 = pts.jul2;
+		pts.loss1 = pts.loss2;
 	} else {
 		const double pot1 = (foundP1)? getPotentialH( vecM[indexP1] ) : IOUtils::nodata;
-		const double tmp_loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
-		pt1 = std::make_pair(vecM[indexP1].date, tmp_loss1);
+		pts.loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
+		pts.jul1 = jul1;
 	}
 	
 	const double pot2 = (foundP2)? getPotentialH( vecM[indexP2] ) : IOUtils::nodata;
-	const double tmp_loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
-	pt2 = std::make_pair(vecM[indexP2].date, tmp_loss2);
+	pts.loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
+	pts.jul2 = vecM[indexP2].date.getJulian();
 	return true;
 }
 
-double Solar::interpolateLossFactor(const Date& resampling_date, const Date& d1, const double& loss1, const Date& d2, const double& loss2)
+double Solar::interpolateLossFactor(const double& resampling_jul, const Points &pts)
 {
-	if (loss1!=IOUtils::nodata && loss2!=IOUtils::nodata) {
-		const double weight = (resampling_date.getJulian() - d1.getJulian()) / (d2.getJulian() - d1.getJulian());
-		return Interpol1D::weightedMean(loss1, loss2, weight);
-	} else if (loss1==IOUtils::nodata && loss2!=IOUtils::nodata){
-		return loss2;
-	} else if (loss2==IOUtils::nodata && loss1!=IOUtils::nodata) {
-		return loss1;
+	if (pts.loss1!=IOUtils::nodata && pts.loss2!=IOUtils::nodata) {
+		const double weight = (resampling_jul - pts.jul1) / (pts.jul2 - pts.jul1);
+		return Interpol1D::weightedMean(pts.loss1, pts.loss2, weight);
+	} else if (pts.loss1==IOUtils::nodata && pts.loss2!=IOUtils::nodata){
+		return pts.loss2;
+	} else if (pts.loss2==IOUtils::nodata && pts.loss1!=IOUtils::nodata) {
+		return pts.loss1;
 	}
 	
 	return 1.;
@@ -679,29 +681,18 @@ void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/
 	if (paramindex!=MeteoData::ISWR && paramindex!=MeteoData::RSWR)
 		throw IOException("This method only applies to short wave radiation! (either ISWR or RSWR)", AT);
 
-	const Date resampling_date = md.date;
 	const double pot_pt = getPotentialH( md );
 	if (pot_pt==IOUtils::nodata) return;
 	
-	double loss;
-	const std::string stat_hash( vecM[0].meta.getHash() );
-	const std::map< std::string, std::pair< std::pair<Date, double>, std::pair<Date, double> > >::iterator it = cache_losses.find( stat_hash );
-	if (it==cache_losses.end()) { //not found
-		std::pair<Date, double> pt1, pt2;
-		const bool status = computeLossFactor(index, paramindex, vecM, resampling_date, pt1, pt2);
+	const double resampling_jul = md.date.getJulian();
+	Points pts( cache_losses[ vecM[0].meta.getHash() ] );
+	if (pts.jul1==0. || (resampling_jul<pts.jul1 || resampling_jul>pts.jul2)) {
+		const bool status = computeLossFactor(index, paramindex, vecM, md.date, pts);
 		if (!status) return;
-		cache_losses[ stat_hash ] = make_pair(pt1, pt2);
-		loss = interpolateLossFactor(resampling_date, pt1.first, pt1.second, pt2.first, pt2.second);
-	} else {
-		std::pair<Date, double> &pt1 = it->second.first;
-		std::pair<Date, double> &pt2 = it->second.second;
-		if (resampling_date<pt1.first || resampling_date>pt2.first) {
-			const bool status = computeLossFactor(index, paramindex, vecM, resampling_date, pt1, pt2);
-			if (!status) return;
-		}
-		loss = interpolateLossFactor(resampling_date, pt1.first, pt1.second, pt2.first, pt2.second);
+		cache_losses[ vecM[0].meta.getHash() ] = pts;
 	}
 	
+	const double loss = interpolateLossFactor(resampling_jul, pts);
 	md(paramindex) = loss * pot_pt;
 	md.setResampled(true);
 }

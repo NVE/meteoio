@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <list>
 
 #ifdef _MSC_VER
 	#pragma warning(disable:4512) //we don't need any = operator!
@@ -250,12 +249,17 @@ class Solar : public ResamplingAlgorithms {
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
-		double getPotentialH(const MeteoData& md) const;
-		bool computeLossFactor(const size_t& index, const size_t& paramindex,
-		           const std::vector<MeteoData>& vecM, const Date& resampling_date, std::pair<Date, double> &pt1, std::pair<Date, double> &pt2);
-		static double interpolateLossFactor(const Date& resampling_date, const Date& d1, const double& loss1, const Date& d2, const double& loss2);
+		typedef struct POINTS {
+			POINTS(): jul1(0.), loss1(IOUtils::nodata), jul2(0), loss2(IOUtils::nodata) {};
+			double jul1, loss1, jul2, loss2;
+		} Points;
 		
-		std::map< std::string, std::pair< std::pair<Date, double>, std::pair<Date, double> > > cache_losses;
+		static double getPotentialH(const MeteoData& md);
+		bool computeLossFactor(const size_t& index, const size_t& paramindex,
+		           const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts);
+		static double interpolateLossFactor(const double& resampling_jul, const Points &pts);
+		
+		std::map< std::string, Points > cache_losses;
 		bool extrapolate;
 		static const double soil_albedo, snow_albedo, snow_thresh;
 };
