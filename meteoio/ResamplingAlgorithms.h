@@ -252,9 +252,10 @@ class Solar : public ResamplingAlgorithms {
 	private:
 		double getPotentialH(const MeteoData& md) const;
 		bool computeLossFactor(const size_t& index, const size_t& paramindex,
-		                                           const std::vector<MeteoData>& vecM, const Date& resampling_date);
+		           const std::vector<MeteoData>& vecM, const Date& resampling_date, std::pair<Date, double> &pt1, std::pair<Date, double> &pt2);
+		static double interpolateLossFactor(const Date& resampling_date, const Date& d1, const double& loss1, const Date& d2, const double& loss2);
 		
-		std::pair<Date, double> pt1, pt2;
+		std::map< std::string, std::pair< std::pair<Date, double>, std::pair<Date, double> > > cache_losses;
 		bool extrapolate;
 		static const double soil_albedo, snow_albedo, snow_thresh;
 };

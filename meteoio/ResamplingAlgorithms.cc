@@ -573,7 +573,7 @@ const double Solar::snow_albedo = .85; //snow
 const double Solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
-            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), pt1(), pt2(), extrapolate(false)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), cache_losses(), extrapolate(false)
 {
 	const size_t nr_args = vecArgs.size();
 	if (nr_args==0) return;
@@ -634,7 +634,7 @@ double Solar::getPotentialH(const MeteoData& md) const
 }
 
 bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
-                           const std::vector<MeteoData>& vecM, const Date& resampling_date)
+                           const std::vector<MeteoData>& vecM, const Date& resampling_date, std::pair<Date, double> &pt1, std::pair<Date, double> &pt2)
 {
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
@@ -656,6 +656,20 @@ bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
 	return true;
 }
 
+double Solar::interpolateLossFactor(const Date& resampling_date, const Date& d1, const double& loss1, const Date& d2, const double& loss2)
+{
+	if (loss1!=IOUtils::nodata && loss2!=IOUtils::nodata) {
+		const double weight = (resampling_date.getJulian() - d1.getJulian()) / (d2.getJulian() - d1.getJulian());
+		return Interpol1D::weightedMean(loss1, loss2, weight);
+	} else if (loss1==IOUtils::nodata && loss2!=IOUtils::nodata){
+		return loss2;
+	} else if (loss2==IOUtils::nodata && loss1!=IOUtils::nodata) {
+		return loss1;
+	}
+	
+	return 1.;
+}
+
 void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
@@ -669,21 +683,23 @@ void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/
 	const double pot_pt = getPotentialH( md );
 	if (pot_pt==IOUtils::nodata) return;
 	
-	if ((pt1.first.isUndef() || pt2.first.isUndef()) || (resampling_date<pt1.first || resampling_date>pt2.first)) {
-		const bool status = computeLossFactor(index, paramindex, vecM, resampling_date);
+	double loss;
+	const std::string stat_hash( vecM[0].meta.getHash() );
+	const std::map< std::string, std::pair< std::pair<Date, double>, std::pair<Date, double> > >::iterator it = cache_losses.find( stat_hash );
+	if (it==cache_losses.end()) { //not found
+		std::pair<Date, double> pt1, pt2;
+		const bool status = computeLossFactor(index, paramindex, vecM, resampling_date, pt1, pt2);
 		if (!status) return;
-	}
-
-	const double jul1 = pt1.first.getJulian(), jul2 = pt2.first.getJulian();
-	const double loss1 = pt1.second, loss2 = pt2.second;
-	double loss = 1.;
-	if (loss1!=IOUtils::nodata && loss2!=IOUtils::nodata) {
-		const double weight = (resampling_date.getJulian() - jul1) / (jul2 - jul1);
-		loss = Interpol1D::weightedMean(loss1, loss2, weight);
-	} else if (loss1==IOUtils::nodata && loss2!=IOUtils::nodata){
-		loss = loss2;
-	} else if (loss2==IOUtils::nodata && loss1!=IOUtils::nodata) {
-		loss=loss1;
+		cache_losses[ stat_hash ] = make_pair(pt1, pt2);
+		loss = interpolateLossFactor(resampling_date, pt1.first, pt1.second, pt2.first, pt2.second);
+	} else {
+		std::pair<Date, double> &pt1 = it->second.first;
+		std::pair<Date, double> &pt2 = it->second.second;
+		if (resampling_date<pt1.first || resampling_date>pt2.first) {
+			const bool status = computeLossFactor(index, paramindex, vecM, resampling_date, pt1, pt2);
+			if (!status) return;
+		}
+		loss = interpolateLossFactor(resampling_date, pt1.first, pt1.second, pt2.first, pt2.second);
 	}
 	
 	md(paramindex) = loss * pot_pt;
