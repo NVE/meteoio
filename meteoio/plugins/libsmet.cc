@@ -936,7 +936,7 @@ void SMETReader::read_header(std::ifstream& fin)
 	SMETCommon::toUpper(line);
 
 	if (line != "[DATA]")
-		throw SMETException("Section " + line + " in "+ filename + " invalid, expected [DATA]", SMET_AT);
+		throw SMETException("In '"+filename+"', expected [DATA] but found: "+line, SMET_AT);
 
 	data_start_fpointer = fin.tellg();
 }

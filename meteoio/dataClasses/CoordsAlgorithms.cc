@@ -87,12 +87,11 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 	}
 
 	decimal = fabs(d);
-	if (m!=IOUtils::nodata) {
+	if (m!=IOUtils::nodata)
 		decimal += m/60.;
-	}
-	if (s!=IOUtils::nodata) {
+	
+	if (s!=IOUtils::nodata)
 		decimal += s/3600.;
-	}
 
 	if (d<0.) return (-decimal);
 	else return decimal;
@@ -109,15 +108,14 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 * @param[out] lat parsed latitude
 * @param[out] lon parsed longitude
 */
-void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double&lat, double& lon)
+void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double &lat, double &lon)
 {
 	const size_t len=64;
 	char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 	char lon_str[len]="";
 
-	if (coordinates.size()>=len) {
+	if (coordinates.size()>=len)
 		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
-	}
 
 	if     ((sscanf(coordinates.c_str(), "%[0-9.,°d'\"-] %[0-9.,°d'\"-]", lat_str, lon_str) < 2) &&
 		(sscanf(coordinates.c_str(), "%[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]", lat_str, lon_str) < 2) &&
@@ -521,7 +519,7 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 
 	//calculating first the coefficients of the series, then the Meridional Arc M itself
 	const double n = (a-b)/(a+b);
-	const double n2=n*n, n3=n*n*n, n4=n*n*n*n, n5=n*n*n*n*n, n6=n*n*n*n*n*n;
+	const double n2=n*n, n3=n*n*n, n4=n2*n2, n5=n2*n3, n6=n3*n3;
 	const double A = a           * (1. - n + 5./4.*(n2 - n3) + 81./64.*(n4 - n5));
 	const double B = (3./2.*a)   * (n - n2 + 7./8.*(n3 - n4) + 55./64.*(n5 - n6));
 	const double C = (15./16.*a) * (n2 - n3 + 3./4.*(n4 - n5));
@@ -593,18 +591,19 @@ void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::
 	const double R1 = a*(1.-e2) / pow((1.-e2*Optim::pow2(sin(fp))), 1.5);
 	const double N1 = a / sqrt(1.-e2*Optim::pow2(sin(fp)));
 	const double D = east_in / (N1*k0);
+	const double D2=D*D, D3=D*D*D;
 
 	//calculating the coefficients of the series for latitude and longitude
 	const double Q1 = N1*tan(fp)/R1;
-	const double Q2 = 0.5*D*D;
-	const double Q3 = (5. + 3.*T1 + 10.*C1 - 4.*C1*C1 - 9.*eP2) * 1./24.*D*D*D*D;
-	const double Q4 = (61. + 90.*T1 + 298.*C1 + 45.*T1*T1 - 3.*C1*C1 - 252.*eP2) * 1./720.*D*D*D*D*D*D;
-	//const double Q4extra = (1385. + 3633.*T1 + 4095.*T1*T1 + 1575.*T1*T1*T1) * 1./40320.*D*D*D*D*D*D*D*D;
+	const double Q2 = 0.5*D2;
+	const double Q3 = (5. + 3.*T1 + 10.*C1 - 4.*C1*C1 - 9.*eP2) * 1./24.*D2*D2;
+	const double Q4 = (61. + 90.*T1 + 298.*C1 + 45.*T1*T1 - 3.*C1*C1 - 252.*eP2) * 1./720.*D3*D3;
+	//const double Q4extra = (1385. + 3633.*T1 + 4095.*T1*T1 + 1575.*T1*T1*T1) * 1./40320.*D3*D3*D2;
 
 	const double Q5 = D;
-	const double Q6 = (1. + 2.*T1 + C1) * 1./6.*D*D*D;
-	const double Q7 = (5. - 2.*C1 + 28.*T1 - 3.*C1*C1 + 8.*eP2 + 24.*T1*T1) * 1./120.*D*D*D*D*D;
-	//const double Q7extra = (61. + 662.*T1 + 1320.*T1*T1 +720.*T1*T1*T1) * 1./5040.*D*D*D*D*D*D*D;
+	const double Q6 = (1. + 2.*T1 + C1) * 1./6.*D3;
+	const double Q7 = (5. - 2.*C1 + 28.*T1 - 3.*C1*C1 + 8.*eP2 + 24.*T1*T1) * 1./120.*D2*D3;
+	//const double Q7extra = (61. + 662.*T1 + 1320.*T1*T1 +720.*T1*T1*T1) * 1./5040.*D3*D3*D;
 
 	lat_out = (fp - Q1 * (Q2 - Q3 + Q4 /*+Q4extra*/))*Cst::to_deg;
 	long_out = (double)long0 + ((Q5 - Q6 + Q7 /*-Q7extra*/)/cos(fp))*Cst::to_deg;
@@ -693,15 +692,15 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 	} else {
 		R = (Delta_N>Delta_E)? fabs( Delta_N / cos(long_out*Cst::to_rad)) : fabs( Delta_E / sin(long_out*Cst::to_rad) );
 	}
-	const double e = sqrt(e2);
+	const double e = sqrt(e2), e4=e2*e2;
 	const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
 	const double tan_Zz = R / (k0*C0); //isometric colatitude
 	const double chi = Cst::PI/2. - atan( tan_Zz )*2.;
 
-	const double A = e2/2. + 5.*e2*e2/24. + e2*e2*e2/12. + 13.*e2*e2*e2*e2/360.;
-	const double B = 7.*e2*e2/48. + 29.*e2*e2*e2/240. + 811.*e2*e2*e2*e2/11520.;
-	const double C = 7.*e2*e2*e2/120. + 81.*e2*e2*e2*e2/1120.;
-	const double D = 4279.*e2*e2*e2*e2/161280.;
+	const double A = e2/2. + 5.*e4/24. + e4*e2/12. + 13.*e4*e4/360.;
+	const double B = 7.*e4/48. + 29.*e4*e2/240. + 811.*e4*e4/11520.;
+	const double C = 7.*e4*e2/120. + 81.*e4*e4/1120.;
+	const double D = 4279.*e4*e4/161280.;
 	lat_out = chi + A*sin(2.*chi) + B*sin(4.*chi) + C*sin(6.*chi) + D*sin(8.*chi);
 	lat_out *= Cst::to_deg;
 
@@ -731,6 +730,8 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
 * @param[out] east_out easting coordinate (target system)
 * @param[out] north_out northing coordinate (target system)
+* 
+* \note Using libproj is currently not thread safe (see https://trac.osgeo.org/proj/wiki/ThreadSafety)
 */
 void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
