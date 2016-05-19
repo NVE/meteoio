@@ -36,7 +36,7 @@ void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<Me
 {
 	ovec = ivec;
 	const size_t nr_elems = ivec.size();
-	bool first_true_point = true; //to identify the first true data point found in the input data
+	bool first_true_point = true; //is it the first point with valid data?
 
 	size_t ii=0;
 	while (ii<nr_elems) {
@@ -46,7 +46,7 @@ void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<Me
 
 		//the proper end date is not in our vector
 		if (endIdx==IOUtils::npos || (endIdx==ii && is_soft)) {
-			fillInterval(param, ovec, ii, nr_elems-1, 0.); //fill the rest with 0
+			fillInterval(param, ovec, ii+1, nr_elems-1, 0.); //fill the rest with 0
 			ii = nr_elems;
 			continue;
 		}
@@ -59,7 +59,7 @@ void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<Me
 				ss << "in the " << startDate.toString(Date::ISO) << " - " << endDate.toString(Date::ISO) << " interval!\n";
 				throw NoDataException(ss.str(), AT);
 			}
-			fillInterval(param, ovec, ii, endIdx, 0.); //fill the interval with 0
+			fillInterval(param, ovec, ii+1, endIdx, 0.); //fill the interval with 0
 			ii = endIdx;
 			continue;
 		}
