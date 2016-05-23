@@ -71,6 +71,7 @@ namespace mio {
  * 635954 80358 2428
  * @endcode
  *
+ * @note There is an R package for handling SMET files available at https://cran.r-project.org/web/packages/RSMET
  */
 
 const char* SMETIO::dflt_extension = ".smet";

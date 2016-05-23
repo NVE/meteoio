@@ -78,7 +78,9 @@ void ConstGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if (vecArgs.size()==1) {
-		IOUtils::convertString(constant, vecArgs[0]);
+		const bool status = IOUtils::convertString(constant, vecArgs[0]);
+		if (!status)
+			throw InvalidArgumentException("Can not parse the argument of the "+algo+" generator", AT);
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
@@ -115,11 +117,13 @@ void SinGenerator::parse_args(const std::vector<std::string>& vecArgs)
 			throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+algo+" generator", AT);
 
 		double min, max;
-		IOUtils::convertString(min, vecArgs[1]);
-		IOUtils::convertString(max, vecArgs[2]);
+		const bool status1 = IOUtils::convertString(min, vecArgs[1]);
+		const bool status2 = IOUtils::convertString(max, vecArgs[2]);
 		amplitude = 0.5*(max-min); //the user provides min, max
 		offset = min+amplitude;
-		IOUtils::convertString(phase, vecArgs[3]);
+		const bool status3 = IOUtils::convertString(phase, vecArgs[3]);
+		if (!status1 || !status2 || !status3)
+			throw InvalidArgumentException("Can not parse the arguments supplied for the "+algo+" generator", AT);
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
@@ -788,14 +792,18 @@ void PPhaseGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	if (user_algo=="THRESH") {
 		if (nArgs!=2)
 			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
-		IOUtils::convertString(fixed_thresh, vecArgs[1]);
+		const bool status = IOUtils::convertString(fixed_thresh, vecArgs[1]);
+		if (!status)
+			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: can not parse provided threshold", AT);
 		model = THRESH;
 	} else if (user_algo=="RANGE") {
 		if (nArgs!=3)
 			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
 		double range_thresh1, range_thresh2;
-		IOUtils::convertString(range_thresh1, vecArgs[1]);
-		IOUtils::convertString(range_thresh2, vecArgs[2]);
+		const bool status1 = IOUtils::convertString(range_thresh1, vecArgs[1]);
+		const bool status2 = IOUtils::convertString(range_thresh2, vecArgs[2]);
+		if (!status1 || !status2)
+			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: can not parse provided thresholds", AT);
 		if (range_thresh1==range_thresh2)
 			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: the two provided threshold must be different", AT);
 		if (range_thresh1>range_thresh2) 
