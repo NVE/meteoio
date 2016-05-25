@@ -150,22 +150,24 @@ namespace mio {
  * from ecmwfapi import ECMWFDataServer
  * server = ECMWFDataServer()
  * server.retrieve({
- *     "class": "ei",
- *     "dataset": "interim",
- *     "date": "2015-01-01/to/2015-07-01",
- *     "expver": "1",
- *     "grid": "0.75/0.75",
- *     "levtype": "sfc",
- *     "param": "33.128/134.128/139.128/141.128/151.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
- *     "step": "3/6/9/12",
- *     "stream": "oper",
- *     "target": "CHANGEME",
- *     "time": "00/12",
- *     "type": "fc",
+ * "class": "ei",
+ * "dataset": "interim",
+ * "date": "2015-01-01/to/2015-01-31",
+ * "expver": "1",
+ * "grid": "0.75/0.75",
+ * "levtype": "sfc",
+ * "param": "33.128/134.128/139.128/141.128/151.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
+ * "step": "3/6/9/12",
+ * "area":"42.2/-1.5/51.7/15.7",
+ * "stream": "oper",
+ * "format":"netcdf",
+ * "target": "my-era-interim.nc",
+ * "time": "00/12",
+ * "type": "fc",
  * })
-@endcode
+ * @endcode
  */
-
+ 
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
 const std::string NetCDFIO::cf_time = "time";
 const std::string NetCDFIO::cf_latitude = "latitude";

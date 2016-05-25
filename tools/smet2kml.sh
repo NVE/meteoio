@@ -22,8 +22,8 @@ ls ${INPUT_DIR}/*.smet | xargs -i head -40 {} | awk '
 		printf("<Placemark>\n")
 		printf("<name>%s</name>\n", station_id)
 		printf("<styleUrl>#sty0</styleUrl>\n")
-		printf("<description>%s</description>\n", station_name)
-		printf("<Point><coordinates>%s, %s, 0</coordinates></Point>\n", longitude, latitude)
+		printf("<description>%s (%d)</description>\n", station_name, altitude)
+		printf("<Point><coordinates>%s, %s, %d</coordinates></Point>\n", longitude, latitude, altitude)
 		printf("</Placemark>\n")
 		#nextfile
 	}

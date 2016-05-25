@@ -454,7 +454,7 @@ double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
 /**
 * @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
 * This is according to A. Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
-* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.x
 * @param RH relative humidity (between 0 and 1)
 * @param TA air temperature (K)
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
@@ -474,7 +474,7 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 /**
 * @brief Evaluate the long wave radiation from RH, TA and cloudiness.
 * This is according to A. Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
-* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.x
 * @param RH relative humidity (between 0 and 1)
 * @param TA air temperature (K)
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
