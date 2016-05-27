@@ -15,19 +15,17 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef FilterSnowNosnow_H
-#define FilterSnowNosnow_H
+#ifndef FilterDeGrass_H
+#define FilterDeGrass_H
 
-//#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 #include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
-
 #include <vector>
 #include <string>
 
 namespace mio {
 
 /**
- * @class FilterSnowNosnow
+ * @class FilterDeGrass
  * @ingroup processing
  * @brief This filter is used to distinguish if snow (HS) is on the ground or not, because the 
  * ultrasonic sensor cannot distinguish between snow or vegetation/grass on the ground. 
@@ -48,21 +46,22 @@ namespace mio {
  * References/Literature: Tilg, A.-M., Marty C. and G. Klein, <i>"An automatic algorithm for validating snow 
  * depth measurements of IMIS stations"</i>, 2015. Swiss Geoscience Meeting 2015
  * 
- * \note
+ * Example of use:
+ * @code
+ * HS::filter1	= DETECT_GRASS
+ * @endcode
+ * 
+ *\note
  * - two of the used criterias are currently only valid for mid-northern latitudes (months when the season might start);
  * - it is probably a good idea to use a FilterRate filter after this one in order to remove some potential left-over peaks.
  *
- * @code
- * HS::filter1	= SNOS
- * @endcode
- * 
  * @author Anna-Maria Tilg and Mathias Bavay
  * @date   2015-12-16
  */
 
-class FilterSnowNosnow : public FilterBlock {
+class FilterDeGrass : public FilterBlock {
 	public:
-		FilterSnowNosnow(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterDeGrass(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

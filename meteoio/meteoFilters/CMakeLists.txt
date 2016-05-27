@@ -14,13 +14,13 @@ SET(meteoFilters_sources
 	meteoFilters/ProcButterworth.cc
 	meteoFilters/ProcUnventilatedT.cc
 	meteoFilters/ProcShade.cc
-	meteoFilters/ProcUnshade.cc
 	meteoFilters/ProcPSUMDistribute.cc
 	meteoFilters/ProcUndercatch_WMO.cc
 	meteoFilters/ProcUndercatch_Hamon.cc
 	meteoFilters/ProcUndercatch_Forland.cc
 	meteoFilters/ProcAdd.cc
 	meteoFilters/ProcMult.cc
+	meteoFilters/ProcNoise.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
 	meteoFilters/FilterBlock.cc
@@ -30,5 +30,5 @@ SET(meteoFilters_sources
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterOffsetsnowdepth.cc
-	meteoFilters/FilterSnowNosnow.cc
+	meteoFilters/FilterDeGrass.cc
 )

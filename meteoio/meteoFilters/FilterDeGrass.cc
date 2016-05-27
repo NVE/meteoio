@@ -15,14 +15,14 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoFilters/FilterSnowNosnow.h>
+#include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterSnowNosnow::FilterSnowNosnow(const std::vector<std::string>& vec_args, const std::string& name)
+FilterDeGrass::FilterDeGrass(const std::vector<std::string>& vec_args, const std::string& name)
           : FilterBlock(name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata), 
 		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), month(7)
 {
@@ -30,7 +30,7 @@ FilterSnowNosnow::FilterSnowNosnow(const std::vector<std::string>& vec_args, con
 	properties.stage = ProcessingProperties::first;
 }
 
-void FilterSnowNosnow::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
@@ -84,7 +84,7 @@ void FilterSnowNosnow::process(const unsigned int& param, const std::vector<Mete
 	}
 }
 
-void FilterSnowNosnow::filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec)
+void FilterDeGrass::filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec)
 {
 	double& value = ovec[ii](param);
 	if (value==IOUtils::nodata) return;
@@ -102,7 +102,7 @@ void FilterSnowNosnow::filterOnTsg(const unsigned int& param, const size_t& ii, 
 	if (TSG>IOUtils::C_TO_K(7.) || TSG_daily_var>1.) value = 0.;
 }
 
-void FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec)
+void FilterDeGrass::filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec)
 {
 	double& value = ovec[ii](param);
 	if (value==IOUtils::nodata) return;
@@ -127,7 +127,7 @@ void FilterSnowNosnow::filterOnTss(const unsigned int& param, const size_t& ii, 
 	}
 }
 
-double FilterSnowNosnow::getTssTsgCorrelation(const std::vector<MeteoData>& ovec, const size_t& firstWarmDay_idx)
+double FilterDeGrass::getTssTsgCorrelation(const std::vector<MeteoData>& ovec, const size_t& firstWarmDay_idx)
 {
 	std::vector<double> vecTSS, vecTSG;
 	if (firstWarmDay_idx!=IOUtils::npos) {
@@ -146,7 +146,7 @@ double FilterSnowNosnow::getTssTsgCorrelation(const std::vector<MeteoData>& ovec
 	return Interpol1D::corr(vecTSS, vecTSG);
 }
 
-void FilterSnowNosnow::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx)
+void FilterDeGrass::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx)
 {
 	tssWarmDay_idx = IOUtils::npos;
 	tsgWarmDay_idx = IOUtils::npos;
@@ -176,7 +176,7 @@ void FilterSnowNosnow::findFirstWarmDay(const std::vector<MeteoData>& ovec, size
 }
 
 //compute the TSS offset/correction
-double FilterSnowNosnow::getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) 
+double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) 
 {
 	Date prev_day;
 	double HS_daily_median, TSS_daily_median, RSWR_daily_10pc;
@@ -202,7 +202,7 @@ double FilterSnowNosnow::getTSSOffset(const unsigned int& param, const std::vect
 }
 
 //daily values for TSS offset calc 
-bool FilterSnowNosnow::getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc)
+bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc)
 {
 	const Date day_end = day_start + 1;
 	
@@ -229,7 +229,7 @@ bool FilterSnowNosnow::getDailyParameters(const std::vector<MeteoData>& ivec, co
 }
 
 //daily values for TSS-based correction
-void FilterSnowNosnow::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean)
+void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean)
 {
 	const Date day_end = day_start + 1;
 	
@@ -248,7 +248,7 @@ void FilterSnowNosnow::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const 
 }
 
 //daily values for TSG-based correction
-double FilterSnowNosnow::getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start)
+double FilterDeGrass::getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start)
 {
 	const Date day_end = day_start + 1;
 	
@@ -270,7 +270,7 @@ double FilterSnowNosnow::getDailyTSGVariance(const std::vector<MeteoData>& ivec,
  * @param resampling_date current date
  * @return start of the day or start of the day before in case of midnight
  */
-Date FilterSnowNosnow::getDailyStart(const Date& resampling_date)
+Date FilterDeGrass::getDailyStart(const Date& resampling_date)
 {
 	Date Start( resampling_date );
 	Start.rnd(24*3600, Date::DOWN);
@@ -281,7 +281,7 @@ Date FilterSnowNosnow::getDailyStart(const Date& resampling_date)
 }
 
 
-void FilterSnowNosnow::parse_args(std::vector<std::string> vec_args)
+void FilterDeGrass::parse_args(std::vector<std::string> vec_args)
 {
 	if ( !vec_args.empty() ) //ie if there are arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);

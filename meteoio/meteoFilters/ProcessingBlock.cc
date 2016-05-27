@@ -39,15 +39,15 @@
 #include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <meteoio/meteoFilters/ProcUnventilatedT.h>
 #include <meteoio/meteoFilters/ProcShade.h>
-#include <meteoio/meteoFilters/ProcUnshade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
+#include <meteoio/meteoFilters/ProcNoise.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterOffsetsnowdepth.h>
-#include <meteoio/meteoFilters/FilterSnowNosnow.h>
+#include <meteoio/meteoFilters/FilterDeGrass.h>
 
 namespace mio {
 /**
@@ -95,13 +95,14 @@ namespace mio {
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
- * - MAXCHANGE: reject data that changes too much , see FilterTimeconsistency
- * - SNOS: detection of grass growing under the snow height sensor, see FilterSnowNosnow
+ * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency
+ * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all or some data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
+ * - NOISE: add to (or multiply by) randomly distributed noise, see ProcNoise
  *
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -119,58 +120,67 @@ namespace mio {
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg)
 {
-	if (blockname == "SUPPR"){
-		return new FilterSuppr(vec_args, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
-	} else if (blockname == "MIN"){
+	//the indenting is a little weird, this is in order to show the same groups as in the documentation above
+	
+	//normal filters
+	if (blockname == "MIN"){
 		return new FilterMin(vec_args, blockname);
 	} else if (blockname == "MAX"){
 		return new FilterMax(vec_args, blockname);
 	} else if (blockname == "MIN_MAX"){
 		return new FilterMinMax(vec_args, blockname);
-	} else if (blockname == "AGGREGATE"){
-		return new ProcAggregate(vec_args, blockname);
-	} else if (blockname == "STD_DEV"){
-		return new FilterStdDev(vec_args, blockname);
 	} else if (blockname == "RATE"){
 		return new FilterRate(vec_args, blockname);
-	} else if (blockname == "TUKEY"){
-		return new FilterTukey(vec_args, blockname);
+	} else if (blockname == "STD_DEV"){
+		return new FilterStdDev(vec_args, blockname);
 	} else if (blockname == "MAD"){
 		return new FilterMAD(vec_args, blockname);
-	} else if (blockname == "BUTTERWORTH"){
-		return new ProcButterworth(vec_args, blockname);
+	} else if (blockname == "TUKEY"){
+		return new FilterTukey(vec_args, blockname);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
 		return new FilterUnheatedPSUM(vec_args, blockname);
+	} else if (blockname == "NO_CHANGE"){
+		return new FilterNoChange(vec_args, blockname);
+	} else if (blockname == "TIME_CONSISTENCY"){
+		return new FilterTimeconsistency(vec_args, blockname);
+	} else if (blockname == "OFFSNOW"){
+		return new FilterOffsetsnowdepth(vec_args, blockname);
+	} else if (blockname == "DETECT_GRASS"){
+		return new FilterDeGrass(vec_args, blockname);
+	} 
+	
+	//general data transformations
+	else if (blockname == "SUPPR"){
+		return new FilterSuppr(vec_args, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "ADD"){
+		return new ProcAdd(vec_args, blockname, cfg.getConfigRootDir());
+	} else if (blockname == "MULT"){
+		return new ProcMult(vec_args, blockname, cfg.getConfigRootDir());
+	} else if (blockname == "NOISE"){
+		return new ProcNoise(vec_args, blockname);
+	}
+	
+	//more specific data transformations
+	else if (blockname == "EXP_SMOOTHING"){
+		return new ProcExpSmoothing(vec_args, blockname);
+	} else if (blockname == "WMA_SMOOTHING"){
+		return new ProcWMASmoothing(vec_args, blockname);
+	} else if (blockname == "BUTTERWORTH"){
+		return new ProcButterworth(vec_args, blockname);
+	} else if (blockname == "AGGREGATE"){
+		return new ProcAggregate(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
 		return new ProcUndercatch_WMO(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_FORLAND"){
 		return new ProcUndercatch_Forland(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
 		return new ProcUndercatch_Hamon(vec_args, blockname);
-	} else if (blockname == "PSUM_DISTRIBUTE"){
-		return new ProcPSUMDistribute(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
+	} else if (blockname == "PSUM_DISTRIBUTE"){
+		return new ProcPSUMDistribute(vec_args, blockname);
 	} else if (blockname == "SHADE"){
 		return new ProcShade(vec_args, blockname, cfg);
-	} else if (blockname == "UNSHADE"){
-		return new ProcUnshade(vec_args, blockname);
-	} else if (blockname == "MULT"){
-		return new ProcMult(vec_args, blockname, cfg.getConfigRootDir());
-	} else if (blockname == "ADD"){
-		return new ProcAdd(vec_args, blockname, cfg.getConfigRootDir());
-	} else if (blockname == "EXP_SMOOTHING"){
-		return new ProcExpSmoothing(vec_args, blockname);
-	} else if (blockname == "WMA_SMOOTHING"){
-		return new ProcWMASmoothing(vec_args, blockname);
-	} else if (blockname == "NO_CHANGE"){
-		return new FilterNoChange(vec_args, blockname);
-	} else if (blockname == "MAXCHANGE"){
-		return new FilterTimeconsistency(vec_args, blockname);
-	} else if (blockname == "OFFSNOW"){
-		return new FilterOffsetsnowdepth(vec_args, blockname);
-	} else if (blockname == "SNOS"){
-		return new FilterSnowNosnow(vec_args, blockname);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
