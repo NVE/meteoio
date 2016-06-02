@@ -45,9 +45,20 @@ void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<Me
 		const size_t endIdx = findNextAccumulation(param, ovec, endDate, ii+1);
 
 		//the proper end date is not in our vector
-		if (endIdx==IOUtils::npos || (endIdx==ii && is_soft)) {
+		if (endIdx==IOUtils::npos) {
 			fillInterval(param, ovec, ii+1, nr_elems-1, 0.); //fill the rest with 0
-			ii = nr_elems;
+			break;
+		}
+		
+		if (endIdx==ii) { //no accumulation period found ahead of a large gap
+			if (!is_soft) {
+				std::ostringstream ss;
+				ss << "Redistribution of precipitation before reaccumulation failed: precipitation value required ";
+				ss << "in the " << startDate.toString(Date::ISO) << " - " << endDate.toString(Date::ISO) << " interval!\n";
+				throw NoDataException(ss.str(), AT);
+			}
+			ovec[endIdx](param) = 0.;
+			ii++;
 			continue;
 		}
 		
