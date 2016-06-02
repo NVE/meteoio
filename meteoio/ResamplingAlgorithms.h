@@ -250,7 +250,7 @@ class Solar : public ResamplingAlgorithms {
 		std::string toString() const;
 	private:
 		typedef struct POINTS {
-			POINTS(): jul1(0.), loss1(IOUtils::nodata), jul2(0), loss2(IOUtils::nodata) {};
+			POINTS(): jul1(0.), loss1(IOUtils::nodata), jul2(0), loss2(IOUtils::nodata) {}
 			double jul1, loss1, jul2, loss2;
 		} Points;
 		

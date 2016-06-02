@@ -85,7 +85,7 @@ class SMETIO : public IOInterface {
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 		double plugin_nodata;
 		size_t nr_stations; //number of stations to read from
-		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
+		bool outputIsAscii;//read from the Config [Output] section
 };
 
 } //namespace

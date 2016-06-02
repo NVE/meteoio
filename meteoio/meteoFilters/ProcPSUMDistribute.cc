@@ -31,6 +31,22 @@ ProcPSUMDistribute::ProcPSUMDistribute(const std::vector<std::string>& vec_args,
 	parse_args(vec_args);
 }
 
+/** 
+ * @brief Distributes a precipitation sum over the most probable preceeding time steps.
+ * This works by looking at various criterias (like relative humidity, TA-TSS, etc) and picking up
+ * the time steps that show the highest scores.
+ * About this index usage in the code below: When looking into the ovec vector, they are:
+ * \verbatim
+ ___▒_____________▒_____________▒____
+    ↑             ↑
+    ii          endIdx
+  \endverbatim
+ * The goal is that the only "hard" references we can have are the accumulated value (ie the only values != nodata) 
+ * and therefore their index are always kept (as ii and endIdx). This leads to the many "ii+1" in the code below since 
+ * the period over which the data has to be distributed starts at ii+1 and goes until endIdx (which will become the new ii for the
+ * next iteration).
+ * 
+ */
 void ProcPSUMDistribute::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                             std::vector<MeteoData>& ovec)
 {

@@ -35,15 +35,15 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, psum, ...)
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string parname = MeteoData::getParameterName(ii); //Current parameter name
-		vector<string> vecArgs;
-		const string algo_name = getInterpolationForParameter(parname, vecArgs);
+		std::vector<std::string> vecArgs;
+		const std::string algo_name = getInterpolationForParameter(parname, vecArgs);
 		mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 	}
 }
 
 Meteo1DInterpolator::~Meteo1DInterpolator()
 {
-	map< string, ResamplingAlgorithms* >::iterator it;
+	std::map< std::string, ResamplingAlgorithms* >::iterator it;
 	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it)
 		delete it->second;
 }
@@ -89,23 +89,23 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	//now, perform the resampling
 	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) {
 		const std::string parname = md.getNameForParameter(ii); //Current parameter name
-		const map< string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
+		const std::map< std::string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
 		if (it!=mapAlgorithms.end()) {
 			it->second->resample(index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
-			vector<string> vecArgs;
-			const string algo_name = getInterpolationForParameter(parname, vecArgs);
+			std::vector<std::string> vecArgs;
+			const std::string algo_name = getInterpolationForParameter(parname, vecArgs);
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
 			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
 
 		#ifdef DATA_QA
-		const map< string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
+		const std::map< std::string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
 		if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
-			const string statName = md.meta.getStationName();
-			const string statID = md.meta.getStationID();
-			const string stat = (!statID.empty())? statID : statName;
-			const string algo_name = it2->second->getAlgo();
+			const std::string statName = md.meta.getStationName();
+			const std::string statID = md.meta.getStationID();
+			const std::string stat = (!statID.empty())? statID : statName;
+			const std::string algo_name = it2->second->getAlgo();
 			cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
 		}
 		#endif

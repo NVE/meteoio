@@ -462,7 +462,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			period_read = true;
-		} else if (vecArgs[ii]=="strict" && !strict) {
+		} else if (vecArgs[ii]=="strict") {
 			if (strict) //do not set strict more than once!
 				throw InvalidArgumentException("Do not provide \"strict\" more than once for \""+i_parname+"::"+i_algoname+"\"", AT);
 			strict = true;
@@ -484,8 +484,7 @@ size_t Accumulate::findStartOfPeriod(const std::vector<MeteoData>& vecM, const s
 {
 	size_t start_idx = IOUtils::npos;
 	for (size_t idx=index; idx--> 0; ) {
-		const Date curr_date = vecM[idx].date;
-		if (curr_date <= dateStart) {
+		if ( vecM[idx].date <= dateStart) {
 			start_idx = idx;
 			break;
 		}
@@ -540,29 +539,31 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
-	if (position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
+	if (position==ResamplingAlgorithms::begin || index==0) {
+		if (!strict) md(paramindex) = 0.;
 		return;
-
+	}
+	
 	md(paramindex) = IOUtils::nodata;
+	
 	const Date resampling_date = md.date;
-
 	const Date dateStart(resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone());
 	const size_t start_idx = findStartOfPeriod(vecM, index, dateStart);
 	if (start_idx==IOUtils::npos) {//No acceptable starting point found
-		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
-		cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
+		std::cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
+		std::cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
 		return;
 	}
 
 	if ((index - start_idx) <= 1) {//easy upsampling when start & stop are in the same input time step
 		//upsampling (for example, generate 15min values from hourly data)
-		const double sum = easySampling(vecM, paramindex, index, start_idx, dateStart, resampling_date);
-		md(paramindex) = sum; //if resampling was unsuccesful, sum==IOUtils::nodata
+		const double sum = easySampling(vecM, paramindex, index, start_idx, dateStart, resampling_date); //if resampling was unsuccesful, sum==IOUtils::nodata
+		md(paramindex) = sum; 
 	} else {
 		//downsampling (for example, generate daily values from hourly data)
 		//and upsampling when resampled period falls accross a measurement timestamp
-		const double sum = complexSampling(vecM, paramindex, index, start_idx, dateStart, resampling_date);
-		md(paramindex) = sum; //if resampling was unsuccesful, sum==IOUtils::nodata
+		const double sum = complexSampling(vecM, paramindex, index, start_idx, dateStart, resampling_date); //if resampling was unsuccesful, sum==IOUtils::nodata
+		md(paramindex) = sum;
 	}
 }
 

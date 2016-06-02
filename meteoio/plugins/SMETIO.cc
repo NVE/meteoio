@@ -80,7 +80,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
 {
 	parseInputOutputSection();
 }
@@ -89,7 +89,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
 {
 	parseInputOutputSection();
 }
@@ -141,7 +141,6 @@ void SMETIO::parseInputOutputSection()
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath.clear();
 	outputIsAscii = true;
-	outputIsGzipped = false;
 
 	vector<string> vecArgs;
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
@@ -153,7 +152,7 @@ void SMETIO::parseInputOutputSection()
 	if (vecArgs.empty())
 		vecArgs.push_back("ASCII");
 
-	if (vecArgs.size() > 2)
+	if (vecArgs.size() > 1)
 		throw InvalidFormatException("Too many values for key METEOPARAM", AT);
 
 	if (vecArgs[0] == "BINARY")
@@ -162,14 +161,6 @@ void SMETIO::parseInputOutputSection()
 		outputIsAscii = true;
 	else
 		throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
-
-	if (vecArgs.size() == 2){
-		if (vecArgs[1] != "GZIP")
-			throw InvalidFormatException("The second value for key METEOPARAM may only be GZIP", AT);
-
-		outputIsGzipped = true;
-	}
-
 }
 
 void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
@@ -432,7 +423,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
 
-			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
+			smet::SMETWriter mywriter(filename, type);
 			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
 

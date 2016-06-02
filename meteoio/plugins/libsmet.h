@@ -260,9 +260,8 @@ class SMETWriter {
 		 * @brief The constructor allows to set the filename, the type and whether the file should be gzipped
 		 * @param[in] in_fname The filename of the SMET file to be written
 		 * @param[in] in_type  The type of the SMET file, i.e. smet::ASCII or smet::BINARY (default: ASCII)
-		 * @param[in] in_gzip  Whether the file should be zipped or not (default: false)
 		 */
-		SMETWriter(const std::string& in_fname, const SMETType& in_type=ASCII, const bool& in_gzip=false);
+		SMETWriter(const std::string& in_fname, const SMETType& in_type=ASCII);
 
 		/**
 		 * @brief Set a key, value pair in the SMET header (both strings)
@@ -331,7 +330,6 @@ class SMETWriter {
 		double nodata_value;
 		size_t nr_of_fields, julian_field, timestamp_field;
 		char location_wgs84, location_epsg;
-		bool gzip;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
 		bool file_is_binary;
