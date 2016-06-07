@@ -3,23 +3,25 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
-//This example takes two ISO-formatted dates on the command line
-//for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00
-//It will retrieve the data for this time interval and write it out as specified
+//This example takes two ISO-formatted dates and a sampling rate (in h) on the command line
+//for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00 1
+//It will retrieve the data for this time interval and write it out once per 1 hour as specified
 //in the io.ini configuration
 
 void real_main(int argc, char** argv) {
-	if(argc!=3) {
-		std::cout << "Invalid number of arguments! Please provide a date range!\n";
+	if(argc!=4) {
+		std::cout << "Invalid number of arguments! Please provide a date range and a sampling rate (in hours)\n";
 		exit(0);
 	}
 
 	Config cfg("io.ini");
 	Date d1, d2;
 	const double TZ = cfg.get("TIME_ZONE", "Input");
-	const double Tstep = 1./24.; //sampling rate = 1/24 day = 1 hour
-	IOUtils::convertString(d1,argv[1], TZ);
-	IOUtils::convertString(d2,argv[2], TZ);
+	double Tstep;
+	IOUtils::convertString(d1, argv[1], TZ);
+	IOUtils::convertString(d2, argv[2], TZ);
+	IOUtils::convertString(Tstep, argv[3]);
+	Tstep /= 24.; //convert to sampling rate in days
 
 	std::vector< std::vector<MeteoData> > vecMeteo;
 	IOManager io(cfg);
