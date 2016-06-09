@@ -15,8 +15,8 @@ void real_main(int argc, char** argv) {
 	}
 
 	Config cfg("io.ini");
-	Date d1, d2;
 	const double TZ = cfg.get("TIME_ZONE", "Input");
+	Date d1, d2;
 	double Tstep;
 	IOUtils::convertString(d1, argv[1], TZ);
 	IOUtils::convertString(d2, argv[2], TZ);
@@ -25,23 +25,24 @@ void real_main(int argc, char** argv) {
 
 	std::vector< std::vector<MeteoData> > vecMeteo;
 	IOManager io(cfg);
-	//io.setProcessingLevel(IOManager::raw);
 	std::cout << "Reading input data" << std::endl;
-
-	//Very basic conversion: get the whole data set at once, with its original sampling rate
-	//io.getMeteoData(d1, d2, vecMeteo);
 
 	Timer timer;
 	timer.start();
-	//More elaborate conversion: sample the data to a specific rate
-	//by looping over the time and calling readMeteoData for each timestep
+	
+	std::map<std::string, size_t> mapIDs; //over a large time range, the number of stations might change... this is the way to make it work
 	std::vector<MeteoData> Meteo; //we need some intermediate storage, for storing data sets for 1 timestep
 	io.getMeteoData(d1, Meteo); //we need to know how many stations will be available
+	
 	vecMeteo.insert(vecMeteo.begin(), Meteo.size(), std::vector<MeteoData>()); //allocation for the vectors
 	for(; d1<=d2; d1+=Tstep) { //time loop
 		io.getMeteoData(d1, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		for(size_t ii=0; ii<Meteo.size(); ii++) {
-			vecMeteo.at(ii).push_back(Meteo[ii]); //fill the data manually into the vector of vectors
+			const std::string stationID( Meteo[ii].meta.stationID );
+			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
+				mapIDs[ stationID ] = ii;
+			}
+			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
 	}
 

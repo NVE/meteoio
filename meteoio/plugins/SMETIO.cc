@@ -396,19 +396,20 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
 	//Loop through all stations
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (vecMeteo[ii].empty()) continue; //this station does not have any data in this vecMeteo
 		//1. check consistency of station data position -> write location in header or data section
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
 
-		if (sd.stationID.empty()){
+		if (sd.stationID.empty()) {
 			ostringstream ss;
 			ss << "Station" << ii+1;
 			sd.stationID = ss.str();
 		}
 
-		const string filename = outpath + "/" + sd.stationID + ".smet";
+		const string filename( outpath + "/" + sd.stationID + ".smet" );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 

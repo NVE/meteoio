@@ -340,7 +340,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 }
 
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                           std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& stationindex)
+                           std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/)
 {
 	Environment *env = NULL;
 	Connection *conn = NULL;
@@ -360,17 +360,8 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		size_t indexStart=0, indexEnd=vecStationMetaData.size();
 
 		//The following part decides whether all the stations are rebuffered or just one station
-		if (stationindex == IOUtils::npos) {
-			vecMeteo.clear();
-			vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
-		} else {
-			if (stationindex < vecMeteo.size()) {
-				indexStart = stationindex;
-				indexEnd   = stationindex+1;
-			} else {
-				throw IndexOutOfBoundsException("You tried to access a stationindex in readMeteoData that is out of bounds", AT);
-			}
-		}
+		vecMeteo.clear();
+		vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
 		if ((env == NULL) || (conn == NULL))
 			openDBConnection(env, conn);
