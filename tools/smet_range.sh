@@ -24,19 +24,21 @@ files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
 		NAME=`basename "${SMET}" .smet`
-		ALT=`head -15 "${SMET}" | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
-		JULIAN=`head -15 "${SMET}" | grep fields | grep julian`
-		ISO=`head -15 "${SMET}" | grep fields | grep timestamp`
-		start=`head -20 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
-		end=`tail -5 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
-		nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
-		
+		ALT=`head -25 "${SMET}" | grep altitude | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f3 | cut -d'.' -f1`
+		JULIAN=`head -25 "${SMET}" | grep fields | grep julian`
+		ISO=`head -25 "${SMET}" | grep fields | grep timestamp`
+		start=`head -25 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		end=`tail -5 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		header_nr_lines=`head -25 "${SMET}" | grep -n "\[DATA\]" | cut -d':' -f1`
+		full_nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
+		nr_lines=`expr ${full_nr_lines} - ${header_nr_lines}`
+
 		echo "${start} ${end} ${nr_lines}" | awk '
 				function getISO(ts){
 					return sprintf("%s", strftime("%FT%H:%m", (ts-2440587.5)*24*3600))
 				}
 				function getSec(ts){
-					gsub(/\-|\:|T/," ", ts); split(ts,d," "); 
+					gsub(/\-|\:|T/," ", ts); split(ts,d," ");
 					date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 					return mktime(date)
 				}
