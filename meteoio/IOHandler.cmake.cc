@@ -186,7 +186,6 @@ namespace mio {
  * @code
  * *::KEEP = TA RH                               ;all stations will keep TA and RH and reject the other parameters
  * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
- *
  * @endcode
  *
  * @subsection data_merging Data merging
@@ -211,6 +210,8 @@ namespace mio {
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
  * station can be merged into multiple other stations.
+ * 
+ * \note The EXCLUDE directives are processed first, then the KEEP directives and finally the MERGE directives.
  * 
  * @section virtual_stations_section Virtual stations
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.

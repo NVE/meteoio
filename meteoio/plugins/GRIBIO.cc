@@ -412,6 +412,12 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 		getDate(h, base_date, P1, P2);
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
+		// 0 -> at base_date + P1
+		// 1 -> at base_date
+		// 2 -> valid between base_date+P1 and base_date+P2
+		// 3 -> average within [base_date+P1 , base_date+P2]
+		// 4 -> accumulation from base_date+P1 to base_date+P2
+		// 5 -> difference (base_date+P2) - (base_date+P1)
 		long timeRange;
 		GRIB_CHECK(grib_get_long(h,"timeRangeIndicator", &timeRange),0);
 
@@ -424,6 +430,8 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 			    ((timeRange==2 || timeRange==3) && i_date>=base_date+P1 && i_date<=base_date+P2) ||
 			    ((timeRange==4 || timeRange==5) && i_date==base_date+P2) ) {
 				read2Dlevel(h, grid_out);
+				if (timeRange==3) grid_out *= ((P2-P1)*24.*3600.); //convert avg to sum
+				grib_handle_delete(h);
 				return true;
 			}
 		}
