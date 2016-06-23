@@ -641,7 +641,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		if (isPrecip && units=="m") grid_out *= 100.;
 		if (isPrecip) {//reset very low precip to zero
 			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
-				if (grid_out(ii)<1e-3) grid_out(ii)=0.;
+				if (grid_out(ii)<1e-3 && grid_out(ii)!=mio::IOUtils::nodata) grid_out(ii)=0.;
 		}
 	}
 
@@ -665,20 +665,8 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 	if (units=="J m**-2") grid_in *= (3600.*1.); //HACK: assuming that we do hourly outputs
 	if (isPrecip && units=="m") grid_in *= 0.01;
 	
-	//Compute data packing
-	const double data_min = grid_in.grid2D.getMin();
-	const double range = grid_in.grid2D.getMax() - data_min;
-	double add_offset = 0., scale_factor = 1.;
-	if (range!=0.) {
-		const long double type_range = 0.5* (static_cast<long double>(std::numeric_limits<int>::max()) - static_cast<long double>(std::numeric_limits<int>::min()));
-		scale_factor = static_cast<double> ( range / (type_range - 1.) ); //we reserve the max for nodata
-		add_offset = data_min + range/2.; //center the data on the central value of the type
-		grid_in -= add_offset;
-		grid_in /= scale_factor;
-	}
-	const double nodata_out = (range!=0)? std::numeric_limits<int>::max() : IOUtils::nodata;
 	ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
-	ncpp::fill_grid_data(grid_in, nodata_out, data);
+	ncpp::fill_grid_data(grid_in, IOUtils::nodata, data);
 
 	int ncid, did_lat, did_lon, did_time, vid_lat, vid_lon, vid_var, vid_time;
 	bool create_dimensions(false), create_variable(false), create_time(false);
@@ -736,17 +724,11 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 
 	if (is_record && create_variable) {
 		ncpp::add_3D_variable(ncid, attr.var, NC_INT, did_time, did_lat, did_lon, vid_var); //NC_DOUBLE or NC_INT or NC_SHORT
-		add_attributes_for_variable(ncid, vid_var, attr, nodata_out);
+		add_attributes_for_variable(ncid, vid_var, attr, IOUtils::nodata);
 	} else if (create_variable) {
 		ncpp::add_2D_variable(ncid, attr.var, NC_INT, did_lat, did_lon, vid_var); //NC_DOUBLE
-		add_attributes_for_variable(ncid, vid_var, attr, nodata_out);
+		add_attributes_for_variable(ncid, vid_var, attr, IOUtils::nodata);
 	}
-
-	if (range!=0.) {
-		ncpp::add_attribute(ncid, vid_var, "add_offset", add_offset);
-		ncpp::add_attribute(ncid, vid_var, "scale_factor", scale_factor);
-	}
-	
 	ncpp::end_definitions(filename, ncid);
 
 	if (create_dimensions) {
