@@ -1,11 +1,24 @@
 #!/bin/sh
 #extract a given column from a smet file
 
-INPUT=$1
-FIELD=$2
+if [ $# -lt 1 ]; then
+	me=`basename $0`
+	printf "Usage: \n"
+	printf "\t$me {smet_file} {parameter}\n\t\t to extract the given parameter out of the given file\n"
+	printf "\t$me {smet_file} {parameter} {aggregation}\n\t\t to extract the monthly aggregated given parameter out of the given file\n"
+	printf "\t\t\t where {aggregation} is any of (AVG, MIN, MAX)"
+	exit 0
+fi
 
+INPUT=$1
 if [ $# -eq 1 ]; then
 	head -20 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s ' \t' '\t' | xargs -i echo "Available fields: {}"
+	exit 0
+fi
+
+FIELD=$2
+if [ $# -eq 3 ]; then
+	AGG_TYPE=$3
 fi
 
 #get generic info
@@ -14,6 +27,7 @@ stat_name=`head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' 
 lat=`head -20 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 lon=`head -20 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 alt=`head -20 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+JULIAN=`head -25 "${INPUT}" | grep fields | grep julian`
 
 #create data sets metadata
 field_nr=$(head -20 ${INPUT} | grep "fields" | awk '
@@ -32,6 +46,63 @@ fi
 
 #out_name="${stat_id}_${FIELD}.dat"
 out_name="${stat_id}_${alt}.dat"
-printf "#${stat_id} - ${stat_name}\n#lat=${lat} - lon=${lon} - alt=${alt}\n" > ${out_name}
-grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}" ${INPUT} | tr -s ' ' | cut -d' ' -f1,${field_nr} >> ${out_name}
+
+awk '
+	BEGIN {
+		field="'"${field_nr}"'"
+		agg_type="'"${AGG_TYPE}"'"
+		if ("'"${JULIAN}"'"!="") isJulian=1
+		printf("#%s - %s\n", "'"${stat_id}"'", "'"${stat_name}"'")
+		printf("#lat=%s - lon=%s - alt=%s\n", "'"${lat}"'", "'"${lon}"'", "'"${alt}"'")
+	}
+	function getISO(ts){
+		return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
+	}
+	/^[0-9][0-9][0-9][0-9]/ {
+		if (agg_type=="") {
+			printf("%s %s\n", $1, $(field))
+		} else {
+			if (isJulian==0) datum=$1
+			else datum=getISO($1)
+			gsub(/\-|\:|T/," ", datum); split(datum,d," ");
+			key=sprintf("%s-%s-01", d[1], d[2])
+			
+			if (agg_type=="AVG") {
+				agg[key] += $(field)
+				count[key]++
+			} else if (agg_type=="MIN") {
+				if ($(field)<agg[key] || count[key]==0) agg[key]=$(field)
+				count[key]++
+			} else if (agg_type=="MAX") {
+				if ($(field)>agg[key] || count[key]==0) agg[key]=$(field)
+				count[key]++
+			}
+		}
+	}
+	END {
+		if (agg_type=="AVG") {
+			n = asorti(agg, data)
+			for(i=1; i<=n; i++) {
+				idx=data[i]
+				if (count[idx]>0) printf("%s %f\n", idx, agg[idx]/count[idx])
+				else printf("%s -999\n", idx)
+			}
+			#for(idx in agg) {
+			#	if (count[idx]>0) printf("%s %f\n", idx, agg[idx]/count[idx])
+			#	else printf("%s -999\n", idx)
+			#}
+		} else if (agg_type=="MIN") {
+			for(idx in agg) {
+				if (count[idx]>0) printf("%s %f\n", idx, agg[idx])
+				else printf("%s -999\n", idx)
+			}
+		} else if (agg_type=="MAX") {
+			for(idx in agg) {
+				if (count[idx]>0) printf("%s %f\n", idx, agg[idx])
+				else printf("%s -999\n", idx)
+			}
+		}
+	}
+' ${INPUT} > ${out_name}
+
 
