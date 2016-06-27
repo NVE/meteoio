@@ -12,10 +12,7 @@ fi
 
 INPUT_DIR=$1
 param=$2
-if [ $# -lt 4 ]; then
-	START_DATE="0"
-	END_DATE="0"
-else
+if [ $# -ge 4 ]; then
 	START_DATE=$3
 	END_DATE=$4
 fi
@@ -76,11 +73,24 @@ for SMET in ${files}; do
 	LON=`head -15 ${SMET} | grep longitude | tr -s ' \t' | cut -d' ' -f3`
 	ALT=`head -15 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
 	NODATA=`head -15 ${SMET} | grep nodata | tr -s ' \t' | cut -d' ' -f3`
+	JULIAN=`head -25 "${SMET}" | grep fields | grep julian`
 
 	awk '
+	function toJul(ts){
+		gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+		date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]);
+		jul=mktime(date);
+		return (jul/(24.*3600.)+2440587.5)
+	}
 	BEGIN {
-		start_date="'"${START_DATE}"'"
-		end_date="'"${END_DATE}"'"
+		if ("'"${JULIAN}"'"=="") {
+			start_date="'"${START_DATE}"'"
+			end_date="'"${END_DATE}"'"
+		} else {
+			start_date_jul=toJul("'"${START_DATE}"'")
+			end_date_jul=toJul("'"${END_DATE}"'")
+		}
+		
 		param="'"${param}"'"
 		if (param=="HNW") param="PSUM"
 		nodata='"${NODATA}"'+0
@@ -108,9 +118,13 @@ for SMET in ${files}; do
 		next
 	}
 	$0 !~ /^[a-zA-Z\[]/ {
-		if (start_date!="0") {
+		if (start_date!="") {
 			if ($1<start_date) next
 			if ($1>end_date) exit 0
+		}
+		if (start_date_jul!="") {
+			if ($1<start_date_jul) next
+			if ($1>end_date_jul) exit 0
 		}
 		val=$(f)+0
 		if (val==nodata) next
