@@ -6,7 +6,7 @@ if [ $# -lt 1 ]; then
 	printf "Usage: \n"
 	printf "\t$me {smet_file} {parameter}\n\t\t to extract the given parameter out of the given file\n"
 	printf "\t$me {smet_file} {parameter} {aggregation}\n\t\t to extract the monthly aggregated given parameter out of the given file\n"
-	printf "\t\t\t where {aggregation} is any of (AVG, MIN, MAX)"
+	printf "\t\t where {aggregation} is any of (AVG, MIN, MAX)\n"
 	exit 0
 fi
 

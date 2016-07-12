@@ -112,8 +112,8 @@ const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const xmlChar* CosmoXMLIO::xml_attribute = (const xmlChar *)"id";
 const xmlChar* CosmoXMLIO::xml_namespace = (const xmlChar *)"http://www.meteoswiss.ch/xmlns/modeltemplate/2";
 const xmlChar* CosmoXMLIO::xml_namespace_abrev = (const xmlChar*)"ns";
-const std::string CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
-const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
+const char* CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
+const char* CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
@@ -292,7 +292,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	//match something like "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col[@id='station_abbreviation' and text()='ATT']/.."
 	//the namespace "ns" has been previously defined
 	const std::string xpath_id = (imis_stations)? station_id.substr(0, station_id.find_first_of("0123456789")) : station_id;
-	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
+	const std::string xpath = std::string(StationData_xpath)+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if (xpathObj == NULL) return false;
@@ -445,7 +445,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 
 bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id, const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const
 {
-	const std::string xpath = MeteoData_xpath+"[@id='identifier' and text()='"+station_id+"']";
+	const std::string xpath = std::string(MeteoData_xpath)+"[@id='identifier' and text()='"+station_id+"']";
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if (xpathObj == NULL) return false;

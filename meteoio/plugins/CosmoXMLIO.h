@@ -83,7 +83,8 @@ class CosmoXMLIO : public IOInterface {
 		static const xmlChar* xml_attribute;
 		static const xmlChar* xml_namespace;
 		static const xmlChar* xml_namespace_abrev;
-		static const std::string StationData_xpath, MeteoData_xpath;
+		static const char* StationData_xpath;
+		static const char* MeteoData_xpath;
 
 		std::string coordin, coordinparam; //projection parameters
 };
