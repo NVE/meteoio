@@ -263,12 +263,62 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 	return vec_string.size();
 }
 
+
+////////////////////////////////////////////////////////////
+//// SMETWriter class
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false) {}
+             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false) {}
+
+//what the caller MUST provide: 
+//	* the fields header (for checks)
+//	* the ascii width and precision
+//	* nodata_value provided through set_header_value() calls
+//HACK: the multipliers and offsets are not handled yet...
+//for now, we do the most basic append: all the data after the first insertion point is deleted
+SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
+           : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
+             filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
+             location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
+             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true)
+{
+	SMETReader reader(filename);
+	smet_type = (reader.isAscii)? ASCII : BINARY;
+	nodata_string = reader.get_header_value("nodata");
+	//nodata_value = reader.nodata_value; //we trust the value provided to the constructor
+	
+	nr_of_fields = reader.nr_of_fields;
+	julian_field = reader.julian_field;
+	timestamp_field = reader.timestamp_field;
+	timestamp_present = reader.timestamp_present;
+	julian_present = reader.julian_present;
+	
+	location_wgs84 = reader.location_wgs84;
+	location_epsg = reader.location_epsg;
+	location_in_header = reader.location_in_header(WGS84) || reader.location_in_header(EPSG);
+	location_in_data_wgs84 = reader.location_in_data(WGS84);
+	location_in_data_epsg = reader.location_in_data(EPSG);
+	
+	//check that the fields match
+	std::vector<std::string> vecFields;
+	SMETCommon::readLineToVec(in_fields, vecFields);
+	if (nr_of_fields!=vecFields.size()) {
+		std::ostringstream ss;
+		ss << "Trying to write " << vecFields.size() << " fields in file '" << filename << "' that has " << nr_of_fields << " fields";
+		throw SMETException(ss.str(), AT);
+	}
+	for (size_t ii=0; ii<nr_of_fields; ii++) {
+		if (vecFields[ii] != reader.get_field_name(ii)) {
+			std::ostringstream ss;
+			ss << "Trying to write field '" << vecFields[ii] << "' at position " << ii << " in file '" << filename << "' when it should be '" << reader.get_field_name(ii);
+			throw SMETException(ss.str(), AT);
+		}
+	}
+}
 
 void SMETWriter::set_header_value(const std::string& key, const double& value)
 {
@@ -435,6 +485,10 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 	
+	/*if (append_mode) {
+
+	}*/
+	
 	ofstream fout;
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
@@ -445,7 +499,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 
 	write_header(fout); //Write the header info, always in ASCII format
 
-	if (nr_of_fields == 0){
+	if (nr_of_fields == 0) {
 		fout.close();
 		return;
 	}
@@ -471,8 +525,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	std::vector<double> current_data(nr_of_fields-1);
 	check_formatting();
 
-	if (smet_type == ASCII){
-		for (size_t ii=0; ii<nr_of_lines; ii++){
+	if (smet_type == ASCII) {
+		for (size_t ii=0; ii<nr_of_lines; ii++) {
 			const size_t offset = ii*(nr_of_fields-1);
 			if (!data.empty())
 				copy(data.begin()+offset, data.begin()+offset+nr_of_data_fields, current_data.begin());
@@ -680,6 +734,9 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 	ascii_precision = vec_precision;
 }
 
+
+////////////////////////////////////////////////////////////
+//// SMETReader class
 const size_t SMETReader::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
 
 SMETReader::SMETReader(const std::string& in_fname)

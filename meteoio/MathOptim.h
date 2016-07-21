@@ -103,6 +103,10 @@ namespace Optim {
 		return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
 	}
 
+	#ifdef __clang__
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdouble-promotion"
+	#endif
 	inline double invSqrt(const double x) {
 		const double xhalf = 0.5f*x;
 
@@ -114,6 +118,10 @@ namespace Optim {
 		u.i = SQRT_MAGIC_D - (u.i >> 1);  // gives initial guess y0
 		return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
 	}
+	#ifdef __clang__
+	#pragma clang diagnostic pop
+	#endif
+	
 	#ifdef _MSC_VER
 	#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
 	#endif

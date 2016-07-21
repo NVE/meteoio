@@ -53,7 +53,7 @@ ELSE()
 
 	IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wvector-operation-performance")
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wvector-operation-performance -Wwrite-strings")
 		IF(NOT ANDROID)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
 			IF(WIN32) #for gcc on windows
