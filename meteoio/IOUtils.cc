@@ -657,10 +657,11 @@ double unitsPrefix(const char& prefix)
 		case 'G' : return 1e9;
 		case 'T' : return 1e12;
 		case 'P' : return 1e15;
+		default: {
+			const std::string prefix_str( 1, prefix );
+			throw InvalidArgumentException("Invalid unit prefix '"+prefix_str+"'", AT);
+		}
 	}
-
-	const std::string prefix_str( 1, prefix );
-	throw IOException("Invalid unit prefix '"+prefix_str+"'", AT);
 }
 
 //currently, only the most simple ase of units are handled. Composite units

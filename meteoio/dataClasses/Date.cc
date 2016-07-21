@@ -1061,8 +1061,10 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 				else
 					return IOUtils::nodata;
 			}
+			default: {
+				return IOUtils::nodata;
+			}
 		}
-		return IOUtils::nodata;
 	} else {
 		return IOUtils::nodata;
 	}
@@ -1184,6 +1186,8 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;
 		}
+		default:
+			throw InvalidFormatException("Unsupported time format", AT);
 	}
 
 	return tmpstr.str();
