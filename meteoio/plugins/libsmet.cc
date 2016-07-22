@@ -485,9 +485,10 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 	
-	/*if (append_mode) {
-
-	}*/
+	if (append_mode) {
+		//check where to insert the new data
+		//remove everything from there on
+	}
 	
 	ofstream fout;
 	fout.open(filename.c_str(), ios::binary);

@@ -40,6 +40,7 @@ class TEMPLATE : public IOInterface {
 		TEMPLATE(const Config& cfgreader);
 		~TEMPLATE() throw();
 
+		using IOInterface::read2DGrid; //to call before overwriding the method when NOT all the polymorphic call are implemented (see http://bojolais.livejournal.com/222428.html)
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,

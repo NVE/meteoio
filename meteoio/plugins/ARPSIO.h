@@ -56,8 +56,8 @@ class ARPSIO : public IOInterface {
 
 		virtual void readDEM(DEMObject& dem_out);
 
+		using IOInterface::read3DGrid; //to call before overwriding the method
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& parameter="");
-		//virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
 		void setOptions();

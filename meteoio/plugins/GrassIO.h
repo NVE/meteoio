@@ -42,12 +42,14 @@ class GrassIO : public IOInterface {
 		GrassIO(const GrassIO&);
 		GrassIO(const Config&);
 
+		using IOInterface::read2DGrid; //to call before overwriding the method
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		
+		using IOInterface::write2DGrid; //to call before overwriding the method
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:
