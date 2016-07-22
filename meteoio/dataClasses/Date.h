@@ -77,11 +77,11 @@ class Date {
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];
 		static const double DST_shift;
-		static const float MJD_offset;
-		static const float RFC868_offset;
-		static const float Unix_offset;
-		static const float Excel_offset;
-		static const float Matlab_offset;
+		static const double MJD_offset;
+		static const double RFC868_offset;
+		static const double Unix_offset;
+		static const double Excel_offset;
+		static const double Matlab_offset;
 
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);

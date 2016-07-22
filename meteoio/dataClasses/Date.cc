@@ -47,11 +47,11 @@ namespace mio {
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
 const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const double Date::DST_shift = 1.0; //in hours
-const float Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
-const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
-const float Date::RFC868_offset = 2415020.5; ///< offset between julian date and RFC868 time (ref is 1900-01-01T00:00 GMT)
-const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
-const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
+const double Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
+const double Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
+const double Date::RFC868_offset = 2415020.5; ///< offset between julian date and RFC868 time (ref is 1900-01-01T00:00 GMT)
+const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
+const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
 const double Date::epsilon=1./(24.*3600.025); ///< minimum difference between two dates. 1 second in units of days. 3600.025 is intentional
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()

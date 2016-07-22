@@ -191,7 +191,7 @@ namespace Optim {
 	#endif
 	//see http://metamerist.com/cbrt/cbrt.htm
 	template <int n> inline float nth_rootf(float x) {
-		const bool sgn = (x<0.)? true : false;
+		const bool sgn = (x<0.f)? true : false;
 		if (sgn) x = -x;
 		const int ebits = 8;
 		const int fbits = 23;
