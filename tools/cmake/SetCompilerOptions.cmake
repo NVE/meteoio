@@ -38,16 +38,20 @@ MACRO (SET_COMPILER_OPTIONS)
 		
 	###########################################################
 	ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
-		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch")
-		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
-		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}")
-		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
-		IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
-			SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
+		SET(WARNINGS "-hlist=m -h negmsgs -h msglevel_3 -h nomessage=870") #870: accept multibyte chars
+		#SET(EXTRA_WARNINGS "-h msglevel_2")
+		SET(OPTIM "-O3 -hfp3 -h msglevel_4 -DNDEBUG -DNOSAFECHECKS")
+		IF("$ENV{CRAY_CPU_TARGET}" STREQUAL "")
+			IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
+				SET(ARCH_SAFE  "-h cpu=x86-64")
+				MESSAGE("No CRAY_CPU_TARGET set, setting it to x86-64; please consider loading the proper target module.")
+			ELSE()
+				MESSAGE("No CRAY_CPU_TARGET set; please consider loading the proper target module.")
+			ENDIF()
 		ENDIF()
-		SET(DEBUG "-g3 -O0 -D__DEBUG")
+		SET(DEBUG "-g -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
-		
+	
 	###########################################################
 	ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		#we consider that all other compilers support "-" options and silently ignore what they don't know

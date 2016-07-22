@@ -1059,11 +1059,9 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	if (!timestamp_present)
 		throw SMETException("Requesting to read timestamp when there is none present in \""+filename+"\"", SMET_AT);
 
-	ifstream fin;
-	fin.clear();
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
+	ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
