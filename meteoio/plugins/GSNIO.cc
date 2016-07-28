@@ -136,12 +136,15 @@ void GSNIO::readStationData(const Date& date, std::vector<StationData>& vecStati
 	}
 }
 
-void GSNIO::buildStation(const std::string& vs_name, const std::string& full_name, const double& lat, const double& lon,
+bool GSNIO::buildStation(const std::string& vs_name, const std::string& full_name, const double& lat, const double& lon,
                          const double& alt, const double& slope_angle, const double& slope_azi, StationData &sd) const
 {
 	Coords current_coord(coordin, coordinparam);
+	if (lat==IOUtils::nodata || lon==IOUtils::nodata) 
+		return false;
+	
 	current_coord.setLatLon(lat, lon, alt);
-	const string name = (!full_name.empty())? full_name : vs_name;
+	const std::string name = (!full_name.empty())? full_name : vs_name;
 	sd.setStationData(current_coord, vs_name, full_name);
 
 	if (slope_angle != IOUtils::nodata) {
@@ -151,10 +154,12 @@ void GSNIO::buildStation(const std::string& vs_name, const std::string& full_nam
 			sd.setSlope(slope_angle, slope_azi);
 		}
 	}
+	
+	return true;
 }
 
 //this method is called on each station in order to parse the header and set the metadata
-void GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const
+bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const
 {
 	const string vsname_str("# vs_name:");
 	const string altitude_str("# altitude:");
@@ -170,7 +175,7 @@ void GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 	units.clear();
 	string full_name, vs_name, azi;
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
-
+	
 	string line;
 	std::streamoff streampos = ss.tellg();
 	while (getline(ss, line)) {
@@ -178,9 +183,9 @@ void GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 			continue;
 
 		if (isdigit(line[0])) { //reached end of metadata
-			buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
+			const bool status = buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
 			ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
-			return; //no more metadata
+			return status; //no more metadata
 		}
 
 		if (!line.compare(0, vsname_str.size(), vsname_str)) { //sensor name
@@ -213,8 +218,9 @@ void GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 
 	//This should not have happened, try to save whatever we can. Error returned by GSN will be handled afterward
 	fields.clear(); //to make sure to trigger the parsing of GSN error messages
-	buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
+	const bool status2 = buildStation(vs_name, full_name, lat, lon, alt, slope_angle, slope_azi, sd);
 	ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
+	return status2;
 }
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -231,7 +237,7 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
 	const std::string station_id = vecStationName[stationindex];
-	const string anon_request = sensors_endpoint + "/" + station_id + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO)
+	const string anon_request = sensors_endpoint + "/" + IOUtils::strToLower( station_id ) + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO)
 	                            + "&to=" + dateEnd.toString(Date::ISO);
 	const string auth = "&username=" + userid + "&password=" + passwd;
 	const string request = (!userid.empty())? anon_request+auth : anon_request;
@@ -242,9 +248,9 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		string line, fields, units;
 
 		MeteoData tmpmeteo;
-		parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
+		const bool meta_status = parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
-		if (units.empty() || fields.empty()) {
+		if (units.empty() || fields.empty() || meta_status==false) {
 			//when printing out a GSN error message, the # and ' ' have to be stripped from the begining -> substr(2)
 			if (ss.str().find("doesn't exist in GSN!") != std::string::npos)
 				throw NotFoundException(ss.str().substr(2), AT);
@@ -256,7 +262,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 				throw IOException(ss.str().substr(2), AT);
 			if (gsn_debug) {
 				std::cout << "****\nRequest: " << request << "\n";
-				std::cout << "Reply: " << ss.str() << "\n****\n";
+				std::cout << "Reply: " << ss.str() << "\n****\nPlease check the station name!\n";
 			}
 			throw InvalidFormatException("Invalid header for station " + station_id, AT);
 		}
@@ -293,7 +299,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name( IOUtils::strToUpper(field[ii]) );
 
-		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID" || field_name == "REL_HUMIDITY" || field_name == "RELATIVE_HUMIDITY_THYGAN") {
+		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID" || field_name == "REL_HUMIDITY" || field_name == "RELATIVE_HUMIDITY_THYGAN" || field_name == "REL_HUMIDITY_THYGAN") {
 			index.push_back(MeteoData::RH);
 		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP" || field_name == "AIR_TEMP_THYGAN") {
 			index.push_back(MeteoData::TA);
@@ -301,7 +307,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			index.push_back(MeteoData::DW);
 		} else if (field_name == "WIND_SPEED_MAX" || field_name == "VW_MAX") {
 			index.push_back(MeteoData::VW_MAX);
-		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED" || field_name == "WIND_SPEED_MEAN") {
+		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED" || field_name == "WIND_SPEED_MEAN" || field_name == "WIND_SPEED_AV") {
 			index.push_back(MeteoData::VW);
 		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "INCOMING_SW_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD" || field_name == "SW_RADIATION_INCOMING") {
 			index.push_back(MeteoData::ISWR);
@@ -333,7 +339,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 
 			//For the parameters unknown to MeteoIO we can store the units qualification °C, %, etc
 			//and make it possible for the values to be converted to MKSA in the convertUnits procedure
-			string name( unit[ii] );
+			std::string name( unit[ii] );
 			IOUtils::trim(name);
 
 			if (name == "%") {

@@ -54,9 +54,9 @@ class GSNIO : public IOInterface {
 
 	private:
 		void convertUnits(MeteoData& meteo) const;
-		void buildStation(const std::string& vs_name, const std::string& full_name, const double& lat, const double& lon,
+		bool buildStation(const std::string& vs_name, const std::string& full_name, const double& lat, const double& lon,
 		                  const double& alt, const double& slope_angle, const double& slope_azi, StationData &sd) const;
-		void parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const;
+		bool parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index);
 		void parse_streamElement(const std::string& line, const std::vector<size_t>& index, MeteoData& tmpmeteo) const;
