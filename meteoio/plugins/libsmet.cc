@@ -524,18 +524,23 @@ bool SMETWriter::valid_header()
 
 void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
 {
+	if (vec_timestamp.empty() || data.empty()) return;
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 	
 	ofstream fout;
-	if (append_mode && !append_possible) {
-		//check where to insert the new data
-		SMETReader reader(filename); //NOTE: could be more efficient: we could at once read the headers and the data...
-		reader.truncate_file(vec_timestamp[0]);
-		//HACK: method to quickly go to the last line and read the last timestamp. If vec_timestamp[0]>last_ts -> no need to truncate
-		append_possible = true;
+	if (append_mode) {
+		if (!append_possible) {
+			//check where to insert the new data
+			SMETReader reader(filename);
+			const std::string last_timestamp = reader.getLastTimestamp();
+			if (last_timestamp.empty() || last_timestamp>=vec_timestamp[0])
+				reader.truncate_file(vec_timestamp[0]);
+			
+			append_possible = true;
+		}
 		fout.open(filename.c_str(), ios::binary | ofstream::app);
-	} else {
+	} else { //normal mode
 		fout.open(filename.c_str(), ios::binary);
 	}
 	
@@ -1047,7 +1052,7 @@ void SMETReader::read_header(std::ifstream& fin)
 	data_start_fpointer = fin.tellg();
 }
 
-void SMETReader::truncate_file(const std::string& date_stop)
+void SMETReader::truncate_file(const std::string& date_stop) const
 {
 	std::ifstream fin; //Input file streams
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
@@ -1080,7 +1085,7 @@ void SMETReader::truncate_file(const std::string& date_stop)
 	remove(filename_tmp.c_str()); //delete temporary file
 }
 
-void SMETReader::copy_file_header(std::ifstream& fin, std::ofstream& fout)
+void SMETReader::copy_file_header(std::ifstream& fin, std::ofstream& fout) const
 {
 	std::string line;
 	while (!fin.eof()){ //Read until end of file or break
@@ -1246,8 +1251,51 @@ void SMETReader::read(std::vector<double>& vec_data)
 	cleanup(fin);
 }
 
+std::string SMETReader::getLastTimestamp() const
+{
+	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
+	errno = 0;
+	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
+	if (fin.fail()) {
+		ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
+	
+	if (!fin.is_open())
+		throw SMETException("Please open the file before attempting to read its last line!", AT);
+	
+	fin.seekg(0, std::ifstream::end);
+	const std::streamoff length = fin.tellg();
+	const double buff_size = 1024; //a better appraoch would be to loop over this buff_size in order to accomodate very different line lengths
+	if (buff_size<length) 
+		fin.seekg(0-buff_size, fin.end);
+	else
+		return "";
+	
+	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
+	std::string line, timestamp;
+	vector<string> tmp_vec;
+	
+	getline(fin, line, eoln); //scrap the first line since it will be a partial line
+	while (!fin.eof()){ //Read until end of file or break
+		line.clear();
+		getline(fin, line, eoln);
+		SMETCommon::stripComments(line);
+		SMETCommon::trim(line);
+		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
+		
+		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
+			timestamp = tmp_vec[timestamp_field];
+		}
+	}
+	
+	fin.close();
+	return timestamp;
+}
+
 //copy fin to fout until encountering date_stop or the end of the file
-void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout)
+void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout) const
 {
 	//either ascii or binary
 	if (!isAscii) throw SMETException("Truncating binary SMET files is currently not supported", AT);
@@ -1279,8 +1327,6 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		
 		fout << line << "\n";
 	}
-	
-	cleanup(fin);
 }
 
 void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)

@@ -317,9 +317,10 @@ class SMETReader {
 		std::string get_filename() const;
 		
 	private:
-		void truncate_file(const std::string& date_stop);
-		void copy_file_header(std::ifstream& fin, std::ofstream& fout);
-		void copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout);
+		void truncate_file(const std::string& date_stop) const;
+		void copy_file_header(std::ifstream& fin, std::ofstream& fout) const;
+		void copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout) const;
+		std::string getLastTimestamp() const;
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);
 		void cleanup(std::ifstream& fin) throw();
