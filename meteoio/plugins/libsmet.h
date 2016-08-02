@@ -64,6 +64,7 @@ class SMETException : public std::exception {
 class SMETCommon {
 	public:
 		static bool validFileAndPath(const std::string& filename);
+		static void copy_file(const std::string& src, const std::string& dest);
 		static bool fileExists(const std::string& filename);
 		static double convert_to_double(const std::string& in_string);
 		static int convert_to_int(const std::string& in_string);
@@ -183,7 +184,7 @@ class SMETWriter {
 		char location_wgs84, location_epsg;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
-		bool file_is_binary, append_mode;
+		bool file_is_binary, append_mode, append_possible;
 };
 
 /**
@@ -316,6 +317,9 @@ class SMETReader {
 		std::string get_filename() const;
 		
 	private:
+		void truncate_file(const std::string& date_stop);
+		void copy_file_header(std::ifstream& fin, std::ofstream& fout);
+		void copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout);
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);
 		void cleanup(std::ifstream& fin) throw();
