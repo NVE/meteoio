@@ -109,7 +109,7 @@ class SMETWriter {
 		/**
 		 * @brief The constructor allows to append data to an existing file
 		 * @param[in] in_filename The filename of the SMET file to be written
-		 * @param[in] in_headers  The fields that should be written in order to check that we write the
+		 * @param[in] in_fields  The fields that should be written in order to check that we write the
 		 * same data at the same place.
 		 * @param[in] in_nodata Value representing nodata
 		 */

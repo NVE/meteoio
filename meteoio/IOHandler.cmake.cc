@@ -197,16 +197,17 @@ namespace mio {
  * note that only common timestamps will be merged! (ie if the stations have different sampling rates, it might end up that no merge gets performed)
  * 
  * @code
- * STATION1 = *WFJ
+ * STATION1 = STB
  * STATION2 = WFJ2
  * STATION3 = WFJ1
+ * STATION4 = DAV1
  * [...]
  * 
- * *WFJ::KEEP = ILWR PSUM
- * WFJ2::EXCLUDE = PSUM ILWR RSWR
+ * STB::EXCLUDE = ILWR PSUM
+ * WFJ2::KEEP = PSUM ILWR RSWR
  * 
- * *WFJ::MERGE = WFJ2 WFJ1
- * DRB2::MERGE = DRB1 WFJ2
+ * STB::MERGE = WFJ2 WFJ1
+ * DAV1::MERGE = WFJ2
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
  * station can be merged into multiple other stations.
@@ -561,23 +562,23 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
-		const string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		const std::string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
-		const map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
+		const std::map< std::string, std::vector<std::string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
 		const std::vector<std::string> &merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
-			const string fromStationID( *it_set );
+			const std::string fromStationID( *it_set );
 			
 			bool found = false;
 			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) { //loop over the available stations in the current dataset
 				if (vecVecMeteo[jj].empty()) continue;
-				const string curr_station( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
+				const std::string curr_station( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
 				if (curr_station==fromStationID) {
-					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]);
+					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]); //strict merge
 					found = true;
 				}
 			}
@@ -589,8 +590,8 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
 		if (vecVecMeteo[ii].empty())  continue;
-		const string stationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
-		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
+		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		const std::vector<std::string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
 		if ( it!=merged_stations.end() ) {
 			std::swap( vecVecMeteo[ii], vecVecMeteo.back() );
 			vecVecMeteo.pop_back();

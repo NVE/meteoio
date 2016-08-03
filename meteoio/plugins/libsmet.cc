@@ -984,11 +984,22 @@ void SMETReader::process_header()
 	if (obligatory_keys.size() != SMETCommon::all_mandatory_header_keys.size())
 		throw SMETException("\""+filename+"\" is not a valid SMET file, mandatory information in header is missing", SMET_AT);
 
-	if ((location_wgs84 == 7) || (location_epsg == 15) || (location_data_wgs84 == 7)
-	    || ((location_epsg == 8) && (location_data_epsg == 7))){
-		//location info present somewhere
-	} else {
-		throw SMETException("\""+filename+"\" is not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
+	const bool location_meta_present = (location_wgs84 == 7) || (location_epsg == 15) || (location_data_wgs84 == 7)
+	    || ((location_epsg == 8) && (location_data_epsg == 7));
+	if (!location_meta_present) {
+		ostringstream ss;
+		ss << "Mandatory location data is missing in file '" << filename << "'";
+		std::string missing;
+		if ((location_epsg>0 && !(location_epsg & 4)) || (location_wgs84>0 && !(location_wgs84 & 4))) //altitude meta is missing
+			missing += "altitude";
+		if (location_epsg>0 && location_epsg<8) {//epsg meta is missing
+			if (!missing.empty()) missing += ", ";
+			missing += "epsg";
+		}
+		if (!missing.empty())
+			ss << ": " << missing;
+		
+		throw SMETException(ss.str(), SMET_AT);
 	}
 
 	const size_t nr_offset = vec_offset.size();
@@ -1317,7 +1328,7 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 			const string& current_timestamp = tmp_vec[timestamp_field];
 			const size_t cmp_len = std::min(date_stop_len, current_timestamp.length());
 			
-			if (current_timestamp.compare(0, cmp_len, date_stop) > 0) break;
+			if (current_timestamp.compare(0, cmp_len, date_stop) >= 0) break;
 		} else {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
