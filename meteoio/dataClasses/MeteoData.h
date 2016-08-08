@@ -278,7 +278,9 @@ class MeteoData {
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
-		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
+		inline bool operator!=(const MeteoData& in) const {return !(*this==in);} ///<Operator that tests for inequality
+		inline bool operator<(const MeteoData& in) const {return (this->date < in.date);} ///<so vectors can be sorted by timestamps
+		inline bool operator>(const MeteoData& in) const {return (this->date > in.date);} ///<so vectors can be sorted by timestamps
 
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
