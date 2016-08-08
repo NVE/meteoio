@@ -76,7 +76,7 @@ class IOHandler : public IOInterface {
 		void create_keep_map();
 		void create_merge_map();
 		
-		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
+		static void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -89,6 +89,7 @@ class IOHandler : public IOInterface {
 		std::map< std::string, std::set<std::string> > kept_params;
 		std::map< std::string, std::vector<std::string> > merge_commands;
 		std::vector<std::string> merged_stations, copy_parameter, copy_name;
+		int merge_strategy;
 		bool enable_copying, excludes_ready, keeps_ready, merge_ready;
 };
 

@@ -17,6 +17,7 @@
 */
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/StationData.h>
+#include <meteoio/IOUtils.h>
 
 #include <cmath>
 #include <limits>
@@ -361,14 +362,30 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 	return is;
 }
 
-void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2)
+MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 {
-	if (vec1.empty() || vec2.empty()) return;
+	IOUtils::toUpper( merge_type );
+	if (merge_type=="STRICT_MERGE") return STRICT_MERGE;
+	else if (merge_type=="EXPAND_MERGE") return EXPAND_MERGE;
+	else if (merge_type=="FULL_MERGE") return FULL_MERGE;
+	else
+		throw UnknownValueException("Unknown merge type '"+merge_type+"'", AT);
+}
+
+void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy)
+{
+	if (vec2.empty()) return; //nothing to merge
 	
-	//add any extra parameter as found in the first element of vec2
+	if (strategy==STRICT_MERGE) { //optimization for STRICT_MERGE
+		if (vec1.empty()) return;
+		if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
+		if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
+	}
+	
+	//For all merge strategies: add any extra parameter as found in the first element of vec2
 	const size_t nrExtra2 = vec2.front().nrOfAllParameters - nrOfParameters;
 	for (size_t ii=0; ii<nrExtra2; ii++) {
-		const string extra_name = vec2.front().extra_param_name[ii];
+		const std::string extra_name = vec2.front().extra_param_name[ii];
 		if (vec1.front().getParameterIndex(extra_name)==IOUtils::npos) {
 			for (size_t jj=0; jj<vec1.size(); jj++) {
 				vec1[jj].addParameter( extra_name );
@@ -376,17 +393,46 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		}
 	}
 	
-	//optimizations for special cases
-	if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
-	if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
+	//filling data before vec1
+	if (strategy!=STRICT_MERGE && vec1.front().date>vec2.front().date) {
+		const Date vec1_start( vec1.front().date );
+		size_t end_idx = IOUtils::npos;
+		for(size_t ii=0; ii<vec2.size(); ii++) { //find the range of elements to add
+			if (vec2[ii].date>=vec1_start) {
+				end_idx = ii;
+				break;
+			}
+		}
+		if (end_idx!=IOUtils::npos) { //insert the found elements
+			const StationData meta_vec1( vec1.front().meta ); //This assumes that station1 is not moving!
+			vec1.insert(vec1.begin(), vec2.begin(), vec2.begin()+end_idx);
+			for(size_t ii=0; ii<end_idx; ii++) //copy metadata from station1
+				vec1[ii].meta = meta_vec1;
+		}
+	}
 	
 	//general case: merge one timestamp at a time
 	size_t idx2 = 0;
-	for (size_t ii=0; ii<vec1.size(); ii++) { //loop over the timestamps
-		while ((vec1[ii].date>vec2[idx2].date) && (idx2<vec2.size())) idx2++;
-		
-		if (idx2==vec2.size()) return; //no more chances of common timestamps
-		if (vec1[ii].date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
+	if (strategy==FULL_MERGE) {
+		throw IOException("FULL_MERGE not implemented yet...", AT);
+	} else {
+		for (size_t ii=0; ii<vec1.size(); ii++) { //loop over the timestamps
+			while ((vec1[ii].date>vec2[idx2].date) && (idx2<vec2.size())) idx2++;
+			
+			if (idx2==vec2.size()) return; //nothing left to merge
+			if (vec1[ii].date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
+		}
+	}
+
+	//filling data after vec1
+	if (strategy!=STRICT_MERGE && vec1.back().date<vec2.back().date) {
+		if (idx2!=vec2.size()) {
+			const StationData meta_vec1( vec1.back().meta ); //This assumes that station1 is not moving!
+			const size_t vec1_old_size = vec1.size();
+			vec1.insert(vec1.end(), vec2.begin()+idx2, vec2.end());
+			for(size_t ii=vec1_old_size; ii<vec1.size(); ii++) //copy metadata from station1
+				vec1[ii].meta = meta_vec1;
+		}
 	}
 }
 

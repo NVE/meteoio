@@ -19,6 +19,7 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/IOHandler.h>
+#include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 
 #cmakedefine PLUGIN_ALPUG
 #cmakedefine PLUGIN_ARCIO
@@ -210,7 +211,8 @@ namespace mio {
  * DAV1::MERGE = WFJ2
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
- * station can be merged into multiple other stations.
+ * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
+ * the [Input] section (by default it is "STRICT_MERGE", see \ref merge_type "merge type").
  * 
  * \note The EXCLUDE directives are processed first, then the KEEP directives and finally the MERGE directives.
  * 
@@ -307,16 +309,19 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params), 
              merge_commands(aio.merge_commands), merged_stations(aio.merged_stations),
-             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), 
-             excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
+             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), merge_strategy(aio.merge_strategy), 
+             enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), 
-             merge_commands(), merged_stations(), copy_parameter(), copy_name(), 
+             merge_commands(), merged_stations(), copy_parameter(), copy_name(), merge_strategy(MeteoData::STRICT_MERGE), 
              enable_copying(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
 {
 	parse_copy_config();
+	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
+	if (!merge_strategy_str.empty())
+		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
 }
 
 IOHandler::~IOHandler() throw()
@@ -337,6 +342,7 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 		merged_stations = source.merged_stations;
 		copy_parameter = source.copy_parameter;
 		copy_name = source.copy_name;
+		merge_strategy = source.merge_strategy;
 		enable_copying = source.enable_copying;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
@@ -454,10 +460,11 @@ void IOHandler::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Para
 	plugin->write3DGrid(grid_out, parameter, date);
 }
 
-/**
-* Make sure all timestamps are unique and in increasing order
+/** 
+ * @brief check that timestamps are unique and in increasing order
+ * @param[in] vecVecMeteo all the data for all the stations
 */
-void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
+void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo)
 {
 	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
 		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
@@ -578,7 +585,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 				if (vecVecMeteo[jj].empty()) continue;
 				const std::string curr_station( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
 				if (curr_station==fromStationID) {
-					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj]); //strict merge
+					MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy)); //merge timeseries for the two stations
 					found = true;
 				}
 			}

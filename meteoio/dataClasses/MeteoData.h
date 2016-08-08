@@ -20,7 +20,6 @@
 
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/StationData.h>
-#include <meteoio/IOUtils.h>
 
 #include <string>
 #include <sstream>
@@ -104,6 +103,15 @@ class MeteoGrids {
 
 class MeteoData {
 	public:
+		/// \anchor merge_type this enum lists the various MeteoData merging strategies. Keep in mind that if a station is moving (ie if its 
+		/// location might change in time) merge strategies other than STRICT_MERGE will introduce potentially invalid metadata (since the new
+		/// position can not be reconstructed).
+		typedef enum MERGE_TYPE {
+				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
+				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
+				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+		} Merge_Type;
+				 
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
 		                 P=firstparam, ///< Air pressure
@@ -191,9 +199,10 @@ class MeteoData {
 		 * same timestamp exist).
 		 * @note Only timestamps common to both data sets will be merged!
 		 * @param vec1 reference vector, highest priority
-		 * @param vec2 extra vector to merge, lowest priority
+		 * @param[in] vec2 extra vector to merge, lowest priority
+		 * @param[in] strategy how should the merge be done? (default: STRICT_MERGE)
 		 */
-		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2);
+		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -255,6 +264,13 @@ class MeteoData {
 		 * @param meteo2 extra MeteoData to merge, lowest priority
 		 */
 		void merge(const MeteoData& meteo2);
+		
+		/**
+		 * @brief Parse a string containing a merge type and return the proper enum member for it.
+		 * @param[in] merge_type
+		 * @return Merge_Type
+		 */
+		static MeteoData::Merge_Type getMergeType(std::string merge_type);
 
 		const std::string toString() const;
 		friend std::iostream& operator<<(std::iostream& os, const MeteoData& data);
