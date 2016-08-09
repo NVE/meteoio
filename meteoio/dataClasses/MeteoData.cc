@@ -440,7 +440,6 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			vec1[vec1_start+ii] = tmp[ii];
 		}
 		vec1_end = idx2;
-		//throw IOException("FULL_MERGE not implemented yet...", AT);
 	} else {
 		size_t idx2 = vec1_start;
 		for (size_t ii=vec1_start; ii<vec1.size(); ii++) { //loop over the timestamps. If some elements were inserted, vec1 now starts at vec1_start. If not, vec1_start==0

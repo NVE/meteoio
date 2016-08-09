@@ -212,7 +212,7 @@ namespace mio {
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
  * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
- * the [Input] section (by default it is "STRICT_MERGE", see \ref merge_type "merge type").
+ * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
  * 
  * \note The EXCLUDE directives are processed first, then the KEEP directives and finally the MERGE directives.
  * 

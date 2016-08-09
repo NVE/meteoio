@@ -103,9 +103,15 @@ class MeteoGrids {
 
 class MeteoData {
 	public:
-		/// \anchor merge_type this enum lists the various MeteoData merging strategies. Keep in mind that if a station is moving (ie if its 
-		/// location might change in time) merge strategies other than STRICT_MERGE will introduce potentially invalid metadata (since the new
-		/// position can not be reconstructed).
+		/** @brief Available %MeteoData merging strategies.
+		* When the two stations both have data at a given time step, only the parameters that are *not* present 
+		* in station1 will be taken from station2 (ie. station1 has priority).
+		*
+		* \image html merging_strategies.png "Merging strategies for two stations with different sampling rates"
+		* \image latex merging_strategies.eps "Merging strategies for two stations with different sampling rates" width=0.9\textwidth
+		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE 
+		* will introduce potentially invalid metadata (since the new position can not be reconstructed).
+		*/
 		typedef enum MERGE_TYPE {
 				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
