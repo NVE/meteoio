@@ -524,7 +524,6 @@ bool SMETWriter::valid_header()
 
 void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
 {
-	if (vec_timestamp.empty() || data.empty()) return;
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 	
@@ -551,8 +550,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	}
 
 	if (!append_mode) write_header(fout); //Write the header info, always in ASCII format
-
-	if (nr_of_fields == 0) {
+	
+	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
 		fout.close();
 		return;
 	}
