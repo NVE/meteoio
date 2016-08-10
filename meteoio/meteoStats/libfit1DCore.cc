@@ -64,16 +64,42 @@ FitModel& FitModel::operator =(const FitModel& source) {
 	return *this;
 }
 
+bool FitModel::checkInputs()
+{
+	nPts=X.size();
+
+	if ( nPts!=Y.size() ) {
+		ostringstream ss;
+		ss << "X vector and Y vector don't match! " << nPts << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	if (nPts<min_nb_pts) {
+		ostringstream ss;
+		ss << "Only " << nPts << " data points for " << regname << " regression model.";
+		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
+		infoString = ss.str();
+		return false;
+	}
+
+	return true;
+}
+
+
 std::string FitModel::toString() const {
 	std::ostringstream os;
 	os << "<FitModel>\n";
-	os << regname << " model with " << nParam << " (npts >= " << min_nb_pts << ")\n";
-	const double Xmin = *std::min_element(X.begin(),X.end());
-	const double Xmax = *std::max_element(X.begin(),X.end());
-	const double Ymin = *std::min_element(Y.begin(),Y.end());
-	const double Ymax = *std::max_element(Y.begin(),Y.end());
-	os << nPts << " calibration point(s) in\t";
-	os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
+	os << regname << " model with " << nParam << " parameters (nr_data_points >= " << min_nb_pts << ")\n";
+	if (!X.empty() && !Y.empty()) {
+		const double Xmin = *std::min_element(X.begin(),X.end());
+		const double Xmax = *std::max_element(X.begin(),X.end());
+		const double Ymin = *std::min_element(Y.begin(),Y.end());
+		const double Ymax = *std::max_element(Y.begin(),Y.end());
+		os << nPts << " calibration point(s) in\t";
+		os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
+	} else {
+		os << "0 calibration points provided\n";
+	}
 
 	if (!Lambda.empty()) {
 		os << "Model parameters:       \t";
@@ -108,33 +134,13 @@ void FitLeastSquare::setDefaultGuess() {
 }
 
 bool FitLeastSquare::fit() {
-	checkInputs();
+	if (!checkInputs())
+		return false;
 	return computeFit();
 }
 
 ////////////////////////////////////////////////////////////
 //// End of public methods
-
-bool FitLeastSquare::checkInputs()
-{
-	nPts=X.size();
-
-	if ( nPts!=Y.size() ) {
-		ostringstream ss;
-		ss << "X vector and Y vector don't match! " << nPts << "!=" << Y.size() << "\n";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	if (nPts<min_nb_pts) {
-		ostringstream ss;
-		ss << "Only " << nPts << " data points for " << regname << " regression model.";
-		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		infoString = ss.str();
-		return false;
-	}
-
-	return true;
-}
 
 //see http://mathworld.wolfram.com/NonlinearLeastSquaresFitting.html
 bool FitLeastSquare::computeFit() {

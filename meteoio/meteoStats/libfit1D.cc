@@ -26,12 +26,18 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
-	setModel(regType, in_X, in_Y, updatefit);
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+{
+	const bool status = setModel(regType, in_X, in_Y, updatefit);
+	if (updatefit && status==false) 
+		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
-	setModel(regType, in_X, in_Y, updatefit);
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+{
+	const bool status = setModel(regType, in_X, in_Y, updatefit);
+	if (updatefit && status==false) 
+		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
 Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) { //HACK: the pointer could not be valid anymore
@@ -102,28 +108,6 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 	Y = in_Y;
 
 	fit_ready = false;
-}
-
-bool SimpleLinear::checkInputs()
-{
-	//check input data consistency
-	nPts=X.size();
-
-	if ( nPts!=Y.size() ) {
-		ostringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	if (nPts<min_nb_pts) {
-		ostringstream ss;
-		ss << "Only " << nPts << " data points for " << regname << " regression model.";
-		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		infoString = ss.str();
-		return false;
-	}
-
-	return true;
 }
 
 double SimpleLinear::f(const double& x) const {

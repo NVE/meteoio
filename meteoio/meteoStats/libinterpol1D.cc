@@ -231,7 +231,7 @@ void Interpol1D::equalCountBin(const unsigned int k, std::vector<double> &X, std
 
 	sort(X, Y, false); //also remove nodata points
 	const size_t Xsize = X.size();
-	if (k>=Xsize) return;
+	if (k>=Xsize || Xsize==0) return;
 
 	const size_t count_per_class = Xsize/k;
 	const size_t remainder = Xsize % k;
@@ -284,6 +284,7 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+	if (Xsize==0) return;
 
 	std::vector< std::pair<double,double> > new_vec;
 	for (size_t i=0; i<Xsize; i++) {

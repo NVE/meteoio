@@ -43,7 +43,7 @@ class FitModel {
 		FitModel& operator =(const FitModel& source);
 		std::string toString() const;
 	protected:
-		virtual bool checkInputs() {return true;}
+		virtual bool checkInputs();
 
 		std::vector<double> Lambda; //parameters of the fit
 		std::vector<double> X; //X of input data set to fit
@@ -77,7 +77,6 @@ class FitLeastSquare : public FitModel {
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData
 
 	private:
-		bool checkInputs();
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;
 		double getDelta(const double& var) const;

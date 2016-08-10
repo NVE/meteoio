@@ -41,7 +41,6 @@ class SimpleLinear : public FitModel {
 		double f(const double& x) const;
 		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;}
 	protected:
-		bool checkInputs();
 		double fixed_lapse_rate;
 };
 
