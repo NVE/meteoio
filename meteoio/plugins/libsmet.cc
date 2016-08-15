@@ -1277,7 +1277,7 @@ std::string SMETReader::getLastTimestamp() const
 	
 	fin.seekg(0, std::ifstream::end);
 	const std::streamoff length = fin.tellg();
-	const double buff_size = 1024; //a better appraoch would be to loop over this buff_size in order to accomodate very different line lengths
+	const int buff_size = 1024; //a better appraoch would be to loop over this buff_size in order to accomodate very different line lengths
 	if (buff_size<length) 
 		fin.seekg(0-buff_size, fin.end);
 	else

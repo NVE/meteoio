@@ -56,11 +56,14 @@ awk '
 		printf("#lat=%s - lon=%s - alt=%s\n", "'"${lat}"'", "'"${lon}"'", "'"${alt}"'")
 	}
 	function getISO(ts){
-		return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
+		nr_secs=(ts-2440587.5)*24.*3600.
+		return sprintf("%s", strftime("%FT%H:%M:%S", int(nr_secs+0.5))) #rounding to nearest second
 	}
 	/^[0-9][0-9][0-9][0-9]/ {
 		if (agg_type=="") {
-			printf("%s %s\n", $1, $(field))
+			if (isJulian==0) datum=$1
+			else datum=getISO($1)
+			printf("%s %s\n", datum, $(field))
 		} else {
 			if (isJulian==0) datum=$1
 			else datum=getISO($1)

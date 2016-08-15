@@ -366,11 +366,11 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
  * In the cases != STRICT_MERGE, it matters if vec2 is bigger than vec1. So we define the following indices
  * in order to store the information about the insertion positions:
  * 
- * -------------|--------------[-----------------]-------------------------|-------------	vec1
- *              ↑              ↓                 ↓                         ↑
- *              ↑          vec1_start        vec1_end                      ↑
- *              ↑              ↓                 ↓                         ↑
- * -------------[--------------|-----------------|-------------------------]-------------	vec2
+ * ----------------[-----------------]----------------------------	vec1
+ *                 ↓                 ↓                         
+ *             vec1_start        vec1_end                      
+ *                 ↓                 ↓                         
+ * ------[---------|-----------------|--------------]-------------	vec2
  */
 void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy)
 {
@@ -382,34 +382,27 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
 	}
 	
-	//For all merge strategies: add any extra parameter as found in the first element of vec2
-	const size_t nrExtra2 = vec2.front().nrOfAllParameters - nrOfParameters;
-	for (size_t ii=0; ii<nrExtra2; ii++) {
-		const std::string extra_name = vec2.front().extra_param_name[ii];
-		if (vec1.front().getParameterIndex(extra_name)==IOUtils::npos) {
-			for (size_t jj=0; jj<vec1.size(); jj++) {
-				vec1[jj].addParameter( extra_name );
-			}
-		}
-	}
-	
 	size_t vec1_start = 0; //the index in vec2 that matches the original start of vec1
-	size_t vec1_end = IOUtils::npos; //the index in vec2 that matches the original end of vec1
+	size_t vec1_end = 0; //the index in vec2 that matches the original end of vec1
+	size_t vec2_end = IOUtils::npos; //index in vec1 that matches the end of vec2
 	
 	//filling data before vec1
 	if (strategy!=STRICT_MERGE && vec1.front().date>vec2.front().date) {
 		const Date start_date( vec1.front().date );
+		vec1_start = vec2.size(); //if no overlap is found, take all vec2
 		for(size_t ii=0; ii<vec2.size(); ii++) { //find the range of elements to add
 			if (vec2[ii].date>=start_date) {
 				vec1_start = ii;
 				break;
 			}
 		}
-		if (vec1_start!=IOUtils::npos) { //insert the found elements
-			const StationData meta_vec1( vec1.front().meta ); //This assumes that station1 is not moving!
-			vec1.insert(vec1.begin(), vec2.begin(), vec2.begin()+vec1_start);
-			for(size_t ii=0; ii<vec1_start; ii++) //copy metadata from station1
-				vec1[ii].meta = meta_vec1;
+		
+		MeteoData md_pattern( vec1.front() ); //This assumes that station1 is not moving!
+		md_pattern.reset(); //keep metadata and extra params
+		vec1.insert(vec1.begin(), vec1_start, md_pattern);
+		for (size_t ii=0; ii<vec1_start; ii++) {
+			vec1[ii].date = vec2[ii].date;
+			vec1[ii].merge( vec2[ii] );
 		}
 	}
 	
@@ -417,49 +410,70 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 	if (strategy==FULL_MERGE) {
 		std::vector<MeteoData> tmp;
 		tmp.reserve( vec1.size() + (vec2.size() - vec1_start)); //"worst case" scenario: all elements will be added
+		MeteoData md_pattern( vec1.front() ); //This assumes that station1 is not moving!
+		md_pattern.reset(); //keep metadata and extra params
 		
-		size_t idx2 = 0;
+		size_t idx2 = vec1_start; //all previous elements were handled before
 		size_t last_v1 = vec1_start; //last element from vec1 that will have to be invalidated
 		for(size_t ii=vec1_start; ii<vec1.size(); ii++) {
 			const Date curr_date( vec1[ii].date );
 			while ((curr_date>vec2[idx2].date) && (idx2<vec2.size())) {
-				tmp.push_back( vec2[idx2] );
-				tmp.back().meta = vec1[ii].meta; //copy last valid metadata from v1. This might not be OK if the station is moving!
+				tmp.push_back( md_pattern );
+				tmp.front().date = vec2[idx2].date;
+				tmp.front().merge( vec2[idx2] ); //so the extra params are properly handled
 				idx2++;
 			}
-			if (idx2==vec2.size()) break; //nothing left to merge
+			if (idx2==vec2.size()) { //nothing left to merge
+				vec2_end = ii;
+				break;
+			}
 			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
 			tmp.push_back( vec1[ii] );
 			last_v1 = ii;
 		}
 		const size_t new_count = last_v1 - vec1_start;
-		if (new_count<tmp.size()) {
-			vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, MeteoData());
-		}
-		for(size_t ii=0; ii<tmp.size(); ii++) {
-			vec1[vec1_start+ii] = tmp[ii];
-		}
+		if (new_count<tmp.size()) vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
+		
+		for(size_t ii=0; ii<tmp.size(); ii++) vec1[vec1_start+ii] = tmp[ii];
+		
 		vec1_end = idx2;
 	} else {
 		size_t idx2 = vec1_start;
 		for (size_t ii=vec1_start; ii<vec1.size(); ii++) { //loop over the timestamps. If some elements were inserted, vec1 now starts at vec1_start. If not, vec1_start==0
 			const Date curr_date( vec1[ii].date );
-			while ((curr_date>vec2[idx2].date) && (idx2<vec2.size())) idx2++;
+			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) idx2++;
 			
-			if (idx2==vec2.size()) return; //nothing left to merge
+			if (idx2==vec2.size()) { //nothing left to merge
+				vec2_end = ii;
+				break;
+			}
 			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
 		}
 		vec1_end = idx2;
+	}
+	
+	//vec1 is longer than vec2, so the extra parameters from vec2 must be created in the remaining elements of vec1
+	if (vec2_end!=IOUtils::npos) {
+		const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
+		for (size_t pp=0; pp<nrExtra2; pp++) {
+			const std::string extra_name = vec2.back().extra_param_name[pp];
+			if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
+				for (size_t ii=vec2_end; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
+			}
+		}
+		return;
 	}
 
 	//filling data after vec1
 	if (strategy!=STRICT_MERGE && vec1.back().date<vec2.back().date) {
 		if (vec1_end!=vec2.size()) {
-			const StationData meta_vec1( vec1.back().meta ); //This assumes that station1 is not moving!
-			const size_t vec1_old_size = vec1.size();
-			vec1.insert(vec1.end(), vec2.begin()+vec1_end, vec2.end());
-			for(size_t ii=vec1_old_size; ii<vec1.size(); ii++) //copy metadata from station1
-				vec1[ii].meta = meta_vec1;
+			MeteoData md_pattern( vec1.back() ); //This assumes that station1 is not moving!
+			md_pattern.reset(); //keep metadata and extra params
+			for (size_t ii=vec1_end; ii<vec2.size(); ii++) {
+				vec1.push_back( md_pattern );
+				vec1.back().date = vec2[ii].date;
+				vec1.back().merge( vec2[ii] );
+			}
 		}
 	}
 }
