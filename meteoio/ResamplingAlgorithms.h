@@ -67,7 +67,7 @@ namespace mio {
  * By default, WINDOW_SIZE is set to 2 days. This key has a <b>potentially large impact on run time/performance</b>.
  *
  * @section algorithms_available Available Resampling Algorithms
- * Two algorithms for the resampling are implemented:
+ * Several algorithms for the resampling are implemented:
  * - none: do not perform resampling, see NoResampling
  * - nearest:  nearest neighbor data resampling, see NearestNeighbour
  * - linear: linear data resampling, see LinearResampling
@@ -75,6 +75,9 @@ namespace mio {
  * - solar: resample solar radiation by interpolating an atmospheric loss factor, see Solar
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
+ * 
+ * By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key 
+ * to *false* in the [Interpolations1D] section.
  */
 
 /**

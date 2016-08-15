@@ -22,14 +22,16 @@ using namespace std;
 namespace mio {
 
 Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
-                     : cfg(in_cfg), window_size(86400.),
-                       mapAlgorithms()
+                     : mapAlgorithms(), cfg(in_cfg), window_size(86400.), enable_resampling(true)
 {
 	//default window_size is 2 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
 	if (window_size <= 1.)
 		throw IOException("WINDOW_SIZE not valid, it should be a duration in seconds at least greater than 1", AT);
 	window_size /= 86400.; //user uses seconds, internally julian day is used
+	
+	if (cfg.keyExists("ENABLE_RESAMPLING", "Interpolations1D"))
+		enable_resampling = cfg.get("ENABLE_RESAMPLING", "Interpolations1D");
 
 	//read the Config object to create the resampling algorithms for each
 	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, psum, ...)
@@ -61,14 +63,11 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	if (vecM.empty()) //Deal with case of the empty vector
 		return false; //nothing left to do
 
-	md = vecM.front(); //create a clone of one of the elements
-	md.reset();   //set all values to IOUtils::nodata
-	md.setDate(date);
-
 	//Find element in the vector or the next index
 	size_t index = IOUtils::seek(date, vecM, false);
 
 	//Three cases
+	bool isResampled = true;
 	ResamplingAlgorithms::ResamplingPosition elementpos = ResamplingAlgorithms::exact_match;
 	if (index == IOUtils::npos) { //nothing found append new element at the left or right
 		if (vecM.front().date > date) {
@@ -78,13 +77,25 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 			elementpos = ResamplingAlgorithms::end;
 			index = vecM.size() - 1;
 		}
-		md.setResampled(true);
-	} else if ((index != IOUtils::npos) && (vecM[index].date != date)) {
+	} else if ((index != IOUtils::npos) && (vecM[index].date != date)) { //element found nearby
 		elementpos = ResamplingAlgorithms::before;
-		md.setResampled(true);
-	} else {
-		md.setResampled(false);
+	} else { //element found at the right time
+		isResampled = false;
 	}
+	md = vecM[index]; //create a clone of the found element
+	
+	if (!enable_resampling) {
+		if (!isResampled) return true; //the element was found at the right time
+		else { //not found or wrong time: return a nodata element
+			md.reset();
+			md.setDate(date);
+			return true;
+		}
+	}
+	
+	md.reset();   //set all values to IOUtils::nodata
+	md.setDate(date);
+	md.setResampled( isResampled );
 
 	//now, perform the resampling
 	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) {
@@ -147,11 +158,15 @@ const std::string Meteo1DInterpolator::toString() const
 	ostringstream os;
 	os << "<Meteo1DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
-	os << "Resampling algorithms:\n";
-	map< string, ResamplingAlgorithms* >::const_iterator it;
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		//os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
-		os << it->second->toString() << "\n";
+	if (enable_resampling) {
+		os << "Resampling algorithms:\n";
+		map< string, ResamplingAlgorithms* >::const_iterator it;
+		for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+			//os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
+			os << it->second->toString() << "\n";
+		}
+	} else {
+		os << "Resampling disabled\n";
 	}
 	os << "</Meteo1DInterpolator>\n";
 

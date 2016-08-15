@@ -77,9 +77,10 @@ class Meteo1DInterpolator {
  	private:
 		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const;
 
+		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
 		double window_size; ///< In seconds
-		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
+		bool enable_resampling; ///< easy way to turn resampling off
 };
 } //end namespace
 
