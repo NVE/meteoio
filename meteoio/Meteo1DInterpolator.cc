@@ -85,7 +85,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	md = vecM[index]; //create a clone of the found element
 	
 	if (!enable_resampling) {
-		if (!isResampled) return true; //the element was found at the right time
+		if (isResampled==false) return true; //the element was found at the right time
 		else { //not found or wrong time: return a nodata element
 			md.reset();
 			md.setDate(date);

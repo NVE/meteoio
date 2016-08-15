@@ -161,7 +161,7 @@ class MeteoData {
 		* @brief A setter function for the measurement date
 		* @param in_date A Date object representing the time of the measurement
 		*/
-		void setDate(const Date& in_date);
+		void setDate(const Date& in_date) {date = in_date;}
 
 		/**
 		* @brief Add another variable to the MeteoData object,
@@ -182,10 +182,10 @@ class MeteoData {
 		 * @brief Resets all the meteo parameters to IOUtils::nodata
 		 *        NOTE: member vars date and resampled are not affected
 		 */
-		void reset();
+		void reset() {std::fill(data.begin(), data.end(), IOUtils::nodata);}
 
-		bool isResampled() const;
-		void setResampled(const bool&);
+		bool isResampled() const {return resampled;}
+		void setResampled(const bool& in_resampled) {resampled = in_resampled;}
 
 		void standardizeNodata(const double& plugin_nodata);
 
@@ -196,7 +196,7 @@ class MeteoData {
 
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
-		size_t getNrOfParameters() const;
+		size_t getNrOfParameters() const {return nrOfAllParameters;}
 		
 		/**
 		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.

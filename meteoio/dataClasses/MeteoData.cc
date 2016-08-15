@@ -175,11 +175,6 @@ size_t MeteoData::addParameter(const std::string& i_paramname)
 	return (nrOfAllParameters - 1);
 }
 
-size_t MeteoData::getNrOfParameters() const
-{
-	return nrOfAllParameters;
-}
-
 MeteoData::MeteoData()
          : date(0.0, 0.), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
@@ -192,36 +187,17 @@ MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
          : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
-void MeteoData::setDate(const Date& in_date)
-{
-	date = in_date;
-}
-
-void MeteoData::reset()
-{
-	std::fill(data.begin(), data.end(), IOUtils::nodata);
-}
-
 /**
 * @brief Standardize nodata values
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
 */
-void MeteoData::standardizeNodata(const double& plugin_nodata) {
+void MeteoData::standardizeNodata(const double& plugin_nodata) 
+{
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		//loop through all meteo params and check whether they're nodata values
 		if (data[ii] <= plugin_nodata)
 			data[ii] = IOUtils::nodata;
 	}
-}
-
-bool MeteoData::isResampled() const
-{
-	return resampled;
-}
-
-void MeteoData::setResampled(const bool& in_resampled)
-{
-	resampled = in_resampled;
 }
 
 bool MeteoData::operator==(const MeteoData& in) const
@@ -253,7 +229,7 @@ double& MeteoData::operator()(const size_t& parindex)
 const double& MeteoData::operator()(const size_t& parindex) const
 {
 #ifndef NOSAFECHECKS
-	if (parindex >= nrOfAllParameters)
+	if (parindex >= nrOfAllParameters) 
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
 #endif
 	return data[parindex];
@@ -298,6 +274,7 @@ const std::string MeteoData::toString() const {
 	os << "<meteo>\n";
 	os << meta.toString();
 	os << date.toString(Date::FULL) << "\n";
+	os << setw(8) << nrOfAllParameters << " parameters\n";
 
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		const double& value = operator()(ii);
@@ -375,16 +352,26 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy)
 {
 	if (vec2.empty()) return; //nothing to merge
+	if (strategy==STRICT_MERGE && vec1.empty()) return; //optimization for STRICT_MERGE
+	
+	//adding the necessary extra parameters to vec1 elements, no matter which merge strategy
+	if (!vec1.empty()) {
+		const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
+		for (size_t pp=0; pp<nrExtra2; pp++) {
+			const std::string extra_name = vec2.back().extra_param_name[pp];
+			if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
+				for (size_t ii=0; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
+			}
+		}
+	}
 	
 	if (strategy==STRICT_MERGE) { //optimization for STRICT_MERGE
-		if (vec1.empty()) return;
 		if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
 		if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
 	}
 	
 	size_t vec1_start = 0; //the index in vec2 that matches the original start of vec1
 	size_t vec1_end = 0; //the index in vec2 that matches the original end of vec1
-	size_t vec2_end = IOUtils::npos; //index in vec1 that matches the end of vec2
 	
 	//filling data before vec1
 	if (strategy!=STRICT_MERGE && vec1.front().date>vec2.front().date) {
@@ -423,10 +410,8 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 				tmp.front().merge( vec2[idx2] ); //so the extra params are properly handled
 				idx2++;
 			}
-			if (idx2==vec2.size()) { //nothing left to merge
-				vec2_end = ii;
-				break;
-			}
+			if (idx2==vec2.size())  return;//nothing left to merge
+				
 			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
 			tmp.push_back( vec1[ii] );
 			last_v1 = ii;
@@ -443,25 +428,10 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			const Date curr_date( vec1[ii].date );
 			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) idx2++;
 			
-			if (idx2==vec2.size()) { //nothing left to merge
-				vec2_end = ii;
-				break;
-			}
-			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
+			if (idx2==vec2.size()) return; //nothing left to merge
+			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] ); //merging
 		}
 		vec1_end = idx2;
-	}
-	
-	//vec1 is longer than vec2, so the extra parameters from vec2 must be created in the remaining elements of vec1
-	if (vec2_end!=IOUtils::npos) {
-		const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
-		for (size_t pp=0; pp<nrExtra2; pp++) {
-			const std::string extra_name = vec2.back().extra_param_name[pp];
-			if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
-				for (size_t ii=vec2_end; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
-			}
-		}
-		return;
 	}
 
 	//filling data after vec1

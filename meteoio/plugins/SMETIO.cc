@@ -590,27 +590,24 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 	 * that might be in use are ignored.
 	 */
 
-	size_t actual_nr_of_parameters = IOUtils::npos;
-	bool has_one_element = false;
-
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		has_one_element = true;
-		const size_t current_size = vecMeteo[ii].getNrOfParameters();
-
-		if (actual_nr_of_parameters == IOUtils::npos){
-			actual_nr_of_parameters = current_size;
-		} else if (actual_nr_of_parameters != current_size){
-			//There is an inconsistency in the fields, print out a warning and proceed
-			cerr << "[W] While writing SMET file: Inconsistency in number of meteo "
-				<< "parameters for station " << stationname << endl;
-			actual_nr_of_parameters = MeteoData::nrOfParameters;
-			break;
-		}
+	if (vecMeteo.empty()) {
+		return MeteoData::nrOfParameters;
 	}
 
-	if (!has_one_element)
-		return MeteoData::nrOfParameters;
+	const size_t actual_nr_of_parameters = vecMeteo[0].getNrOfParameters();
+	
+	for (size_t ii=1; ii<vecMeteo.size(); ii++){
+		const size_t current_size = vecMeteo[ii].getNrOfParameters();
 
+		if (actual_nr_of_parameters != current_size){
+			//There is an inconsistency in the fields, print out a warning and proceed
+			cerr << "[W] While writing SMET file: Inconsistency in number of meteo "
+				<< "parameters for station " << stationname << " at " << vecMeteo[ii].date.toString(Date::ISO) << endl;
+				std::cout << "before: " << vecMeteo[ii-1].toString() << "\nAfter: " << vecMeteo[ii].toString() << "\n";
+			return MeteoData::nrOfParameters;
+		}
+	}
+	
 	return actual_nr_of_parameters;
 }
 
