@@ -187,6 +187,11 @@ MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
          : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
+void MeteoData::reset() 
+{
+	std::fill(data.begin(), data.end(), IOUtils::nodata);
+}
+
 /**
 * @brief Standardize nodata values
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value

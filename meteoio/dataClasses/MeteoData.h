@@ -182,7 +182,7 @@ class MeteoData {
 		 * @brief Resets all the meteo parameters to IOUtils::nodata
 		 *        NOTE: member vars date and resampled are not affected
 		 */
-		void reset() {std::fill(data.begin(), data.end(), IOUtils::nodata);}
+		void reset();
 
 		bool isResampled() const {return resampled;}
 		void setResampled(const bool& in_resampled) {resampled = in_resampled;}

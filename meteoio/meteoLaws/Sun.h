@@ -18,7 +18,6 @@
 #ifndef SUN_H
 #define SUN_H
 
-#include <meteoio/IOUtils.h>
 #include <meteoio/meteoLaws/Suntrajectory.h>
 
 namespace mio {
@@ -49,25 +48,26 @@ class SunObject {
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
 
-		void calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& ground_albedo);
+		void calculateRadiation(const double& ta, const double& rh, double pressure, const double& ground_albedo);
 		void calculateRadiation(const double& ta, const double& rh, const double& mean_albedo);
 		void getBeamRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;
 		void getHorizontalRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;
 		void getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const;
-		double getElevationThresh() const;
+		double getElevationThresh() const {return elevation_threshold;}
 
 		double getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const;
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
+		double getCorrectionFactor(const double& iswr_measured, double &Md, bool &day, bool &night) const;
+		double getCorrectionFactor(const double& iswr_measured) const;
 
 		//SunTrajectory position;
 		SunMeeus position;
 
-		double getJulian(const double& o_TZ) const;
+		double getJulian(const double& o_TZ) const {return (julian_gmt+o_TZ*1./24.);}
 
 		const std::string toString() const;
 	private:
-		void update();
 		void getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
 		                      const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
 		                      double& R_toa, double& R_direct, double& R_diffuse) const;

@@ -18,8 +18,6 @@
 #ifndef SUNTAJECTORY_H
 #define SUNTAJECTORY_H
 
-#include <meteoio/IOUtils.h>
-
 namespace mio {
 
 /**

@@ -19,10 +19,12 @@
 #include <string>
 #include <iostream> //for "fixed"
 #include <iomanip> //for "setprecision"
+
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
 
 namespace mio {
 
@@ -31,23 +33,19 @@ const double SunObject::elevation_dftlThreshold = 5.; //in degrees
 SunObject::SunObject(SunObject::position_algo /*alg*/)
            : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
              elevation_threshold(elevation_dftlThreshold),
-             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
-{
-}
+             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata) {}
 
 SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude)
            : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
              elevation_threshold(elevation_dftlThreshold),
-             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
-{
-}
+             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata) {}
 
 SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& i_TZ)
            : position(), julian_gmt(i_julian - i_TZ*1./24.), TZ(i_TZ), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
 {
-	update();
+	position.setAll(latitude, longitude, julian_gmt+TZ*1./24., TZ);
 }
 
 void SunObject::setDate(const double& i_julian, const double& i_TZ)
@@ -64,19 +62,25 @@ void SunObject::setDate(const double& i_julian, const double& i_TZ)
 	//if the date was new or if the previous date had not lead to an update -> update now
 	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata &&
 	  (beam_toa==IOUtils::nodata || beam_direct==IOUtils::nodata || beam_diffuse==IOUtils::nodata)) {
-		update();
+		position.setAll(latitude, longitude, julian_gmt+TZ*1./24., TZ);
 	}
 }
 
 void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude)
 {
+	if (i_latitude==IOUtils::nodata || i_longitude==IOUtils::nodata || i_altitude==IOUtils::nodata) {
+		std::stringstream ss;
+		ss << "missing geolocalization parameters at (" << i_latitude << " , " << i_longitude << " , " << i_altitude << ")";
+		throw NoDataException(ss.str(), AT);
+	}
+	
 	position.reset();
 	latitude = i_latitude;
 	longitude = i_longitude;
 	altitude = i_altitude;
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata) {
-		update();
+		position.setAll(latitude, longitude, julian_gmt+TZ*1./24., TZ);
 	}
 }
 
@@ -86,32 +90,24 @@ void SunObject::setElevationThresh(const double& i_elevation_threshold)
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
 }
 
-double SunObject::getElevationThresh() const {
-	return elevation_threshold;
-}
-
-double SunObject::getJulian(const double& o_TZ) const {
-	return (julian_gmt+o_TZ*1./24.);
-}
-
-void SunObject::calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& mean_albedo) {
-//ta in K, rh in [0,1], pressure in Pa, altitude in m
+void SunObject::calculateRadiation(const double& ta, const double& rh, double pressure, const double& mean_albedo) 
+{	//set beam_toa, beam_direct and beam_diffuse
+	//ta in K, rh in [0,1], pressure in Pa, altitude in m
 	double azimuth, elevation, eccentricity;
 	position.getHorizontalCoordinates(azimuth, elevation, eccentricity);
+	
+	if (pressure==IOUtils::nodata) pressure = Atmosphere::stdAirPressure(altitude);
 	getBeamPotential(elevation, eccentricity, ta, rh, pressure, mean_albedo, beam_toa, beam_direct, beam_diffuse);
 }
 
-void SunObject::calculateRadiation(const double& ta, const double& rh, const double& mean_albedo) {
-//ta in K, rh in [0,1], pressure in Pa, altitude in m
+void SunObject::calculateRadiation(const double& ta, const double& rh, const double& mean_albedo) 
+{	//set beam_toa, beam_direct and beam_diffuse
+	//ta in K, rh in [0,1], pressure in Pa, altitude in m
 	double azimuth, elevation, eccentricity;
 	position.getHorizontalCoordinates(azimuth, elevation, eccentricity);
 
 	const double p = Atmosphere::stdAirPressure(altitude);
 	getBeamPotential(elevation, eccentricity, ta, rh, p, mean_albedo, beam_toa, beam_direct, beam_diffuse);
-}
-
-void SunObject::update() {
-	position.setAll(latitude, longitude, julian_gmt+TZ*1./24., TZ);
 }
 
 //see http://www.meteoexploration.com/products/solarcalc.php for a validation calculator
@@ -126,9 +122,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		return;
 	}
 	if (sun_elevation<0.) { //the Sun is below the horizon, our formulas don't apply
-		R_toa = 0.;
-		R_direct = 0.;
-		R_diffuse = 0.;
+		R_toa = R_direct = R_diffuse = 0.;
 	} else {
 		R_toa = Cst::solcon * (1.+Eccentricity_corr);
 		getClearSky(sun_elevation, R_toa, ta, rh, pressure, ground_albedo, R_direct, R_diffuse);
@@ -257,7 +251,7 @@ void SunObject::getBeamRadiation(double& R_toa, double& R_direct, double& R_diff
 	R_diffuse = beam_diffuse;
 }
 
-//diffuse remains beam_diffuse
+//diffuse remains beam_diffuse, nodatas are kept
 void SunObject::getHorizontalRadiation(double& R_toa, double& R_direct, double& R_diffuse) const
 {
 	R_toa = position.getRadiationOnHorizontal(beam_toa);
@@ -265,6 +259,7 @@ void SunObject::getHorizontalRadiation(double& R_toa, double& R_direct, double& 
 	R_diffuse = beam_diffuse;
 }
 
+//nodatas are kept
 void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const
 {
 	R_toa = position.getRadiationOnSlope(slope_azi, slope_elev, beam_toa);
@@ -286,6 +281,12 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
  */
 double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_measured) const
 {
+	if (iswr_modeled==IOUtils::nodata)
+		throw NoDataException("modelled ISWR can not be nodata, please call Sun::calculateRadiation() before!", AT);
+	
+	if (iswr_measured==IOUtils::nodata)
+		throw NoDataException("measured ISWR can not be nodata", AT);
+	
 	double splitting_coef;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
@@ -332,6 +333,12 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
  */
 double SunObject::getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const
 {
+	if (iswr_modeled==IOUtils::nodata)
+		throw NoDataException("modelled ISWR can not be nodata, please call Sun::calculateRadiation() before!", AT);
+	
+	if (iswr_measured==IOUtils::nodata)
+		throw NoDataException("measured ISWR can not be nodata", AT);
+	
 	const double clear_sky = 0.147;
 	double splitting_coef;
 	double azimuth, elevation;
@@ -362,6 +369,53 @@ double SunObject::getSplitting(const double& iswr_measured) const
 	double toa_h, direct_h, diffuse;
 	getHorizontalRadiation(toa_h, direct_h, diffuse);
 	return getSplitting(toa_h, iswr_measured);
+}
+
+/**
+ * @brief Evaluate an atmospheric losses factor.
+ * This correction factor is evaluated by comparing the global potential and the global measured radiation.
+ * @param[in] iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
+ * @return correction coefficient (between 0 and 1)
+ */
+double SunObject::getCorrectionFactor(const double& iswr_measured) const
+{
+	double Md;
+	bool day, night;
+	return getCorrectionFactor(iswr_measured, Md, day, night);
+}
+
+/**
+ * @brief Evaluate an atmospheric losses factor.
+ * This correction factor is evaluated by comparing the global potential and the global measured radiation.
+ * The booleans "day" and "night" are returned in order to allow further optimizations. At dawn or dusk, both
+ * are set to *false*.
+ * @param[in] iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
+ * @param[out] Md splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)
+ * @param[out] day is it daytime?
+ * @param[out] night ist it nightime?
+ * @return correction coefficient (between 0 and 1)
+ */
+double SunObject::getCorrectionFactor(const double& iswr_measured, double &Md, bool &day, bool &night) const
+{
+	if (iswr_measured==IOUtils::nodata)
+		throw NoDataException("measured ISWR can not be nodata", AT);
+	
+	double toa_h, direct_h, pot_diffuse;
+	getHorizontalRadiation(toa_h, direct_h, pot_diffuse);
+	Md = getSplitting(toa_h, iswr_measured);
+	const double pot_glob_h = direct_h+pot_diffuse;
+	
+	//we compare the mesured radiation to the modeled radiation, in order to guess the cloudiness.
+	//This comparison allows us to compute a global correction factor
+	if ( pot_glob_h>0. && iswr_measured>0. ) {
+		day = true;
+		night = false;
+		return std::min( iswr_measured / pot_glob_h, 1.);
+	} else {
+		day = false;
+		night = (direct_h>0. || iswr_measured>0.)? false : true; //is it dawn/dusk?
+		return 1.;
+	}
 }
 
 const std::string SunObject::toString() const

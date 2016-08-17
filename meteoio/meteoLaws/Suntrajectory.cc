@@ -25,6 +25,7 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/dataClasses/Date.h> //for printFractionalDay
 #include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
 
 namespace mio {
 
@@ -82,7 +83,7 @@ double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
 double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double& slope_elev, const double& radiation) const
 { // Project a beam radiation (ie: perpendicular to the sun beam) to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
-	if (radiation==IOUtils::nodata) return IOUtils::nodata;
+	if (radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
 
 	const double Z = (90.-SolarElevation)*Cst::to_rad;
 	const double beta = slope_elev*Cst::to_rad;
@@ -106,6 +107,8 @@ double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double&
 double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold) const
 {// Project a given horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (SolarElevation>=elev_threshold)? (90.-SolarElevation)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -120,6 +123,8 @@ double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double
 double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold)
 {// Project a horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (sun_elev>elev_threshold)? (90.-sun_elev)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -137,6 +142,8 @@ double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const doub
 double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& S_radiation)
 {// Project a slope radiation to horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (S_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double beta = slope_elev*Cst::to_rad;
 	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
@@ -152,6 +159,8 @@ double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const doub
 double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const double& H_radiation)
 { // Project a beam radiation (ie: perpendicular to the sun beam) to the horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
