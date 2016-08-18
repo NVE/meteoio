@@ -46,6 +46,7 @@ class SunObject {
 		//local julian date and timezone
 		void setDate(const double& i_julian, const double& i_TZ=0.);
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
+		void resetAltitude(const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
 
 		void calculateRadiation(const double& ta, const double& rh, double pressure, const double& ground_albedo);

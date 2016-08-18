@@ -100,6 +100,7 @@ class DEMObject : public Grid2DObject {
 		void getPointsBetween(const int& ix1, const int& iy1, const int& ix2, const int& iy2, std::vector<GRID_POINT_2D>& vec_points);
 		void getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points);
 		void getPointsBetween(const Coords& point, const double& bearing, std::vector<GRID_POINT_2D>& vec_points);
+		double getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const;
 		double getHorizon(const Coords& point, const double& bearing) const;
 		void getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const;
 

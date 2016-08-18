@@ -644,28 +644,25 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
 
 /**
 * @brief Returns the tangente of the horizon from a given point looking toward a given bearing
-* @param point the origin point
+* @param ix1 x index of the origin point
+* @param iy1 y index of the origin point
 * @param bearing direction given by a compass bearing
 * @return tangente of angle above the horizontal (in deg)
-*
 */
-double DEMObject::getHorizon(const Coords& point, const double& bearing) const
+double DEMObject::getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const
 {
 	if (max_shade_distance==IOUtils::nodata) 
 		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
 	
-	//Starting point
-	const int ix1 = (int)point.getGridI();
-	const int iy1 = (int)point.getGridJ();
+	const int dimx = (signed)grid2D.getNx();
+	const int dimy = (signed)grid2D.getNy();
+	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
+	
 	const double cell_alt = grid2D(ix1, iy1);
 	double horizon_tan_angle = 0.;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
-	const int dimx = (signed)grid2D.getNx();
-	const int dimy = (signed)grid2D.getNy();
 	
-	if (ix1==0 || ix1==dimx-1 || iy1==0 || iy1==dimy-1) return 0.; //a border cell is not shadded
-
 	size_t nb_cells = 1;
 	bool horizon_found = false;
 	while (!horizon_found) {
@@ -679,15 +676,30 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) const
 		if (new_altitude==mio::IOUtils::nodata) break; //we stop at nodata cells
 
 		const double DeltaH = new_altitude - cell_alt;
-		const double distance = sqrt( (double)( Optim::pow2(ix2-ix1) + Optim::pow2(iy2-iy1)) ) * cellsize;
+		const double distance = sqrt( (double)( Optim::pow2(ix2-(signed)ix1) + Optim::pow2(iy2-(signed)iy1)) ) * cellsize;
 		const double tan_angle = DeltaH/distance;
 		if (tan_angle>horizon_tan_angle) horizon_tan_angle = tan_angle;
 
 		if (distance>max_shade_distance) horizon_found=true; //maximum lookup distance reached
 	}
 
-	//returning the highest tangent
 	return horizon_tan_angle;
+}
+
+/**
+* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
+* @param point the origin point
+* @param bearing direction given by a compass bearing
+* @return tangente of angle above the horizontal (in deg)
+*/
+double DEMObject::getHorizon(const Coords& point, const double& bearing) const
+{
+	if (max_shade_distance==IOUtils::nodata) 
+		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
+	
+	const int ix1 = (int)point.getGridI();
+	const int iy1 = (int)point.getGridJ();
+	return getHorizon(ix1, iy1, bearing);
 }
 
 /**

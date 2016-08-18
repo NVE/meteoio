@@ -84,6 +84,16 @@ void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, c
 	}
 }
 
+void SunObject::resetAltitude(const double& i_altitude)
+{
+	if (i_altitude==IOUtils::nodata)
+		throw NoDataException("the altitude can not be nodata", AT);
+	if (altitude==i_altitude) return;
+	
+	altitude = i_altitude;
+	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
+}
+
 void SunObject::setElevationThresh(const double& i_elevation_threshold)
 {
 	elevation_threshold = i_elevation_threshold;

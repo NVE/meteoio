@@ -45,7 +45,7 @@ if [ ${field_nr} -eq 1 ]; then
 fi
 
 #out_name="${stat_id}_${FIELD}.dat"
-out_name="${stat_id}_${alt}.dat"
+#out_name="${stat_id}_${alt}.dat"
 
 awk '
 	BEGIN {
@@ -106,6 +106,6 @@ awk '
 			}
 		}
 	}
-' ${INPUT} > ${out_name}
+' ${INPUT} #> ${out_name}
 
 

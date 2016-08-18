@@ -87,6 +87,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
+ * - SWRAD: The atmospheric attenuation and splitting coefficients are evaluated and used to compute the short wave radiation with topographic shading (see SWRadInterpolation)
  * - LISTON_WIND: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see ListonWindAlgorithm)
  * - RYAN: the wind direction is interpolated using IDW and then altered depending on the local slope (see RyanAlgorithm)
  * - WINSTRAL: the solid precipitation is redistributed by wind according to (Winstral, 2002) (see WinstralAlgorithm)
@@ -639,6 +640,38 @@ class SnowPSUMInterpolation : public InterpolationAlgorithm {
   			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+};
+
+/**
+ * @class SWRadInterpolation
+ * @brief %Solar radiation interpolation with optional terrain shading. 
+ * The splitting coefficients and an atmospheric losses factors are computed at each station that provides ISWR and spatially interpolated
+ * with an Inverse Distance Weighting scheme. Then the potential radiation is computed at each pixel and scaled appropriately with the
+ * atmospheric loss factor for this pixel. When applying topographic shading (default), the local splitting coefficient is used. The global, horizontal 
+ * short wave radiation is then returned. To turn off the topographic shading, provide the "no_shading" argument.
+ * 
+ * @code
+ * ISWR::algorithms = SWRad
+ * ISWR::SWRad = no_shading
+ * @endcode
+ *
+ * @note For this method to work, you also need to define spatial interpolations algorithms for TA, RH and P (a basic STD_PRESS algorithm
+ * is usually enough)
+ * @note This algorithm is quite time consuming (specially the topographic shading) and therefore not appropriate for very large domains.
+ */
+class SWRadInterpolation : public InterpolationAlgorithm {
+	public:
+		SWRadInterpolation(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), shading(true) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		SunObject Sun;
+		std::vector<size_t> vecIdx;
+		bool shading; ///<sould we also compute the shading?
+		static const double soil_albedo, snow_albedo, snow_thresh;
 };
 
 /**
