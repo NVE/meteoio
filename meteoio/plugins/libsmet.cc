@@ -346,13 +346,13 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
 	
 	if (nr_of_fields!=vecFields.size()) {
 		std::ostringstream ss;
-		ss << "Trying to write " << vecFields.size() << " fields in file '" << filename << "' that has " << nr_of_fields << " fields";
+		ss << "Trying to append " << vecFields.size() << " fields in existing file '" << filename << "' that has " << nr_of_fields << " fields";
 		throw SMETException(ss.str(), AT);
 	}
 	for (size_t ii=0; ii<nr_of_fields; ii++) {
 		if (vecFields[ii] != reader.get_field_name(ii)) {
 			std::ostringstream ss;
-			ss << "Trying to write field '" << vecFields[ii] << "' at position " << ii << " in file '" << filename << "' when it should be '" << reader.get_field_name(ii);
+			ss << "Trying to append field '" << vecFields[ii] << "' at position " << ii << " in existing file '" << filename << "' when it should be '" << reader.get_field_name(ii);
 			throw SMETException(ss.str(), AT);
 		}
 	}

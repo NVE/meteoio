@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/ImisIO.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/meteoLaws/Atmosphere.h> //for p_sea to p_local conversion
 #include <meteoio/MathOptim.h>
 
 using namespace std;
@@ -67,9 +68,9 @@ const string ImisIO::sqlQueryStationMetaData = "SELECT stao_name, stao_x, stao_y
 
 const string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM station2.v_station_standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Sensor depths at station
 
-const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
+const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, a.ap, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
 
-const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
+const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ap, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
 
 const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into PSUM
 
@@ -748,8 +749,9 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 	IOUtils::convertString(md(MeteoData::TSS),    i_meteo.at(10), std::dec);
 	IOUtils::convertString(md(MeteoData::HS),     i_meteo.at(11), std::dec);
 	IOUtils::convertString(md(MeteoData::RSWR),   i_meteo.at(12), std::dec);
+	IOUtils::convertString(md(MeteoData::P),   i_meteo.at(13), std::dec);
 
-	unsigned int ii = 13;
+	unsigned int ii = 14;
 	if (fullStation) {
 		if (!md.param_exists("VW_DRIFT")) md.addParameter("VW_DRIFT");
 		IOUtils::convertString(md("VW_DRIFT"), i_meteo.at(ii++), std::dec);
@@ -895,7 +897,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 
 /**
  * @brief Gets data from ams.v_ams_raw which is a table of SDB and
- * retrieves the temperature sensor depths from station2.standort \n
+ * retrieves the temperature sensor depths from station2.standort.
  * Each record returned are vector of strings which are pushed back in vecMeteoData.
  * @param stat_abk :     a string key of ams.v_ams_raw
  * @param stao_nr :      a string key of ams.v_ams_raw
@@ -984,7 +986,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts RH to [0,1]
+	//converts C to Kelvin, converts RH to [0,1], HS to m and P to Pa
 	double& ta = meteo(MeteoData::TA);
 	ta = IOUtils::C_TO_K(ta);
 
@@ -1001,6 +1003,13 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	double& hs = meteo(MeteoData::HS);
 	if (hs != IOUtils::nodata)
 		hs /= 100.0;
+	
+	double& p = meteo(MeteoData::P);
+	if (p != IOUtils::nodata) {
+		p *= 100.0;
+		if (ta==IOUtils::nodata) p=IOUtils::nodata;
+		else p *= Atmosphere::stdAirPressure(meteo.meta.position.getAltitude()) / Cst::std_press;
+	}
 
 	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
 	convertSnowTemperature(meteo, "TS1");

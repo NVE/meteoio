@@ -242,7 +242,7 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 }
 
 /**
-* @brief Standard water vapor saturation
+* @brief Standard water vapor saturation pressure
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)
 */

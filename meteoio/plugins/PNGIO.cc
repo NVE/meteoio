@@ -548,7 +548,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
 	} else if (parameter==MeteoGrids::P) {
 		if (!autoscale) {
-			//lowest and highest pressures ever recorded on Earth: 87000 and 108570
+			//lowest and highest sea level pressures ever recorded on Earth: 87000 and 108570
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
 		} else {

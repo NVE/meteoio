@@ -88,7 +88,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata) {
-			o_vecData.push_back(val);
+			o_vecData.push_back( val );
 		}
 	}
 
@@ -104,8 +104,8 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
-			o_vecData.push_back(val);
-			o_vecMeta.push_back(vecMeteo[ii].meta);
+			o_vecData.push_back( val );
+			o_vecMeta.push_back( vecMeteo[ii].meta );
 		}
 	}
 
@@ -119,7 +119,7 @@ size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData
 	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
 		const double& alt = i_vecMeta[ii].position.getAltitude();
 		if (alt != IOUtils::nodata) {
-			o_vecData.push_back(alt);
+			o_vecData.push_back( alt );
 		}
 	}
 
@@ -301,11 +301,22 @@ double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const Met
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+	
+	const size_t nr_args = vecArgs.size();
+	
+	if (nr_args>1)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	if (nr_args==1) {
+		if (IOUtils::strToUpper(vecArgs[0])=="USE_RESIDUALS") {
+			use_residuals = true;
+		} else
+			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
+	}
 
 	if (param != MeteoData::P)
 		return 0.0;
 
-	if (nrOfMeasurments == 0)
+	if (nrOfMeasurments <=1 || use_residuals)
 		return 1.0;
 
 	return 0.1;
@@ -314,6 +325,35 @@ double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const Met
 void StandardPressureAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) 
 {
 	Interpol2D::stdPressure(dem, grid);
+	
+	if (nrOfMeasurments==1 || !use_residuals) { //correct the locally measured offset to std pressure
+		double offset = 0.;
+		size_t count = 0;
+		for (size_t ii=0; ii<nrOfMeasurments; ii++) {
+			const double altitude = vecMeta[ii].position.getAltitude();
+			if (altitude!=IOUtils::nodata) {
+				offset += vecData[ii] - Atmosphere::stdAirPressure( altitude );
+				count++;
+			}
+		}
+		if (count>0) {
+			offset /= static_cast<double>( count );
+			grid += offset;
+		}
+	} else if (use_residuals && nrOfMeasurments>1) { //spatially distribute the residuals
+		std::vector<double> residuals;
+		for (size_t ii=0; ii<nrOfMeasurments; ii++) {
+			const double altitude = vecMeta[ii].position.getAltitude();
+			if (altitude!=IOUtils::nodata)
+				residuals.push_back( vecData[ii] - Atmosphere::stdAirPressure( altitude ) );
+		}
+		if (residuals.empty())
+			throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+		
+		Grid2DObject offset;
+		Interpol2D::IDW(residuals, vecMeta, dem, offset);
+		grid += offset;
+	}
 }
 
 
@@ -331,7 +371,8 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	return 0.01;
 }
 
-void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
+void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) 
+{
 	Interpol2D::constant(user_cst, dem, grid);
 }
 
@@ -351,7 +392,8 @@ double AvgAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Param
 	return 0.0;
 }
 
-void AvgAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
+void AvgAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) 
+{
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 }
 
@@ -1363,10 +1405,10 @@ double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData:
 	date = i_date;
 	param = in_param;
 	
-	const size_t nrArgs = vecArgs.size();
-	if ( nrArgs>1 ) {
+	const size_t nr_args = vecArgs.size();
+	if ( nr_args>1 ) {
 		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" interpolation.", AT);
-	} else if (nrArgs==1) {
+	} else if (nr_args==1) {
 		if (IOUtils::strToUpper(vecArgs[0])=="NO_SHADING") {
 			shading = false;
 		} else
