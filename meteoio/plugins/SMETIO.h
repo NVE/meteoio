@@ -82,7 +82,7 @@ class SMETIO : public IOInterface {
 		std::vector<smet::SMETReader> vec_smet_reader;
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
 		std::string outpath;                //read from the Config [Output] section
-		double in_dflt_TZ, out_dflt_TZ;     //default time zones
+		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		size_t nr_stations; //number of stations to read from
 		bool outputIsAscii;//read from the Config [Output] section

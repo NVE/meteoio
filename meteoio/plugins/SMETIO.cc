@@ -36,7 +36,9 @@ namespace mio {
  * It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
  *
  * @section smetio_units Units
- * All units are MKSA, the only exception being the precipitations that are in mm/h or mm/{time step}. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
+ * All units are MKSA, the only exception being the precipitations that are in mm/h or mm/{time step}. It is however possible to use  multipliers and offsets 
+ * (but they must be specified in the file header). If no time zone is present, GMT is assumed (but it is nevertheless highly recommended to provide the time zone, 
+ * even when set to zero).
  *
  * @section smetio_keywords Keywords
  * This plugin uses the following keywords:
@@ -79,7 +81,7 @@ const char* SMETIO::dflt_extension = ".smet";
 SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
+          vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
 {
 	parseInputOutputSection();
@@ -88,7 +90,7 @@ SMETIO::SMETIO(const std::string& configfile)
 SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
+          vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
 {
 	parseInputOutputSection();
@@ -112,7 +114,6 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 void SMETIO::parseInputOutputSection()
 {
 	//default timezones
-	cfg.getValue("TIME_ZONE","Input",in_dflt_TZ,IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE","Output",out_dflt_TZ,IOUtils::nothrow);
 
 	// Parse the [Input] and [Output] sections within Config object cfg
@@ -283,7 +284,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	const double nodata_value = myreader.get_header_doublevalue("nodata");
 	double current_timezone = myreader.get_header_doublevalue("tz");
 	if (current_timezone == nodata_value)
-		current_timezone = in_dflt_TZ;
+		current_timezone = 0.;
 	const bool timestamp_present = myreader.contains_timestamp();
 
 	const size_t nr_of_fields = indexes.size();
@@ -511,7 +512,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
 		mywriter.set_header_value("epsg", (double)sd.position.getEPSG());
 
-		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
+		if (timezone != IOUtils::nodata)
 			mywriter.set_header_value("tz", timezone);
 	} else {
 		ss << " latitude longitude altitude";

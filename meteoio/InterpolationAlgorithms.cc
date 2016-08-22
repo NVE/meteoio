@@ -303,7 +303,6 @@ double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const Met
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 	
 	const size_t nr_args = vecArgs.size();
-	
 	if (nr_args>1)
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	if (nr_args==1) {
@@ -313,12 +312,8 @@ double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const Met
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
 	}
 
-	if (param != MeteoData::P)
-		return 0.0;
-
-	if (nrOfMeasurments <=1 || use_residuals)
-		return 1.0;
-
+	if (param != MeteoData::P) return 0.0;
+	if (nrOfMeasurments <=1 || use_residuals) return 1.0;
 	return 0.1;
 }
 
