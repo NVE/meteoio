@@ -71,13 +71,13 @@ class IOHandler : public IOInterface {
 	private:
 		IOInterface* getPlugin(const std::string& plugin_name) const;
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection);
-		void parse_copy_config();
+		void create_copy_map();
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
 		
 		static void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
-		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
+		void copy_parameters(std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -88,9 +88,10 @@ class IOHandler : public IOInterface {
 		std::map< std::string, std::set<std::string> > excluded_params;
 		std::map< std::string, std::set<std::string> > kept_params;
 		std::map< std::string, std::vector<std::string> > merge_commands;
-		std::vector<std::string> merged_stations, copy_parameter, copy_name;
+		std::map< std::string, std::string > copy_commands;
+		std::vector<std::string> merged_stations;
 		int merge_strategy;
-		bool enable_copying, excludes_ready, keeps_ready, merge_ready;
+		bool copy_ready, excludes_ready, keeps_ready, merge_ready;
 };
 
 } //namespace

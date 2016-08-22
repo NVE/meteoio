@@ -319,17 +319,16 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params), 
-             merge_commands(aio.merge_commands), merged_stations(aio.merged_stations),
-             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), merge_strategy(aio.merge_strategy), 
-             enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
+             merge_commands(aio.merge_commands), copy_commands(aio.copy_commands),
+             merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy), 
+             copy_ready(aio.copy_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), 
-             merge_commands(), merged_stations(), copy_parameter(), copy_name(), merge_strategy(MeteoData::STRICT_MERGE), 
-             enable_copying(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
+             merge_commands(), copy_commands(), merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
+             copy_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
 {
-	parse_copy_config();
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
 	if (!merge_strategy_str.empty())
 		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
@@ -351,10 +350,9 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 		kept_params = source.kept_params;
 		merge_commands = source.merge_commands;
 		merged_stations = source.merged_stations;
-		copy_parameter = source.copy_parameter;
-		copy_name = source.copy_name;
+		copy_commands = source.copy_commands;
 		merge_strategy = source.merge_strategy;
-		enable_copying = source.enable_copying;
+		copy_ready = source.copy_ready;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
 		merge_ready = source.merge_ready;
@@ -426,7 +424,8 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (!merge_ready) create_merge_map(); 
 	merge_stations(vecMeteo);
 	
-	copy_parameters(stationindex, vecMeteo);
+	if (!copy_ready) create_copy_map();
+	copy_parameters(vecMeteo);
 }
 
 void IOHandler::writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
@@ -838,20 +837,19 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 * Parse [Input] section for potential parameters that the user wants
 * duplicated (as '%%::COPY = %%')
 */
-void IOHandler::parse_copy_config()
+void IOHandler::create_copy_map()
 {
 	vector<string> copy_keys;
 	const size_t nrOfMatches = cfg.findKeys(copy_keys, "::COPY", "Input", true); //search anywhere in key
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
-		const string name_of_copy = copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") );
-		const string initial_name = cfg.get(copy_keys[ii], "Input");
-		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
-			copy_parameter.push_back(initial_name);
-			copy_name.push_back(name_of_copy);
-			enable_copying = true;
-		}
+		const string dest_param = copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") );
+		const string src_param = cfg.get(copy_keys[ii], "Input");
+		if (!dest_param.empty() && !src_param.empty())
+			copy_commands[ dest_param ] = src_param;
 	}
+	
+	copy_ready = true;
 }
 
 /**
@@ -863,41 +861,27 @@ void IOHandler::parse_copy_config()
 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
 * of the meteo parameter MeteoData::TA
 */
-void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const
+void IOHandler::copy_parameters(std::vector< METEO_SET >& vecMeteo) const
 {
-	if (!enable_copying) return; //Nothing configured
+	if (copy_commands.empty()) return; //Nothing configured
 
-	if (stationindex != IOUtils::npos && stationindex>=vecMeteo.size())
-		throw IndexOutOfBoundsException("Accessing stationindex in readMeteoData that is out of bounds", AT);
-
-	const size_t station_start = (stationindex==IOUtils::npos)? 0 : stationindex;
-	const size_t station_end = (stationindex==IOUtils::npos)? vecMeteo.size() : stationindex+1;
-	const size_t nr_of_params = copy_parameter.size();
-	vector<size_t> indices; //will hold the indices of the parameters to be copied
-
-	for (size_t ii=station_start; ii<station_end; ++ii) { //for each station
-		for (size_t jj=0; jj<vecMeteo[ii].size(); ++jj) { //for each MeteoData object of one station
-
-			if (jj==0) { //buffer the index numbers
-				for (size_t kk=0; kk<nr_of_params; ++kk) {
-					const size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
-					if (param_index == IOUtils::npos) {
-						std::ostringstream ss;
-						ss << "At " << vecMeteo[ii][jj].date.toString(Date::ISO) << ", station " << vecMeteo[ii][jj].meta.stationID;
-						ss << " has no parameter \"" << copy_parameter[kk] << "\" to copy!\n";
-						throw InvalidArgumentException(ss.str(), AT);
-					}
-
-					indices.push_back(param_index);
-				}
+	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
+		if (vecMeteo[station].empty()) continue;
+		
+		std::map< std::string, std::string >::const_iterator param = copy_commands.begin();
+		for (; param!=copy_commands.end(); ++param) {
+			const size_t src_index = vecMeteo[station].front().getParameterIndex(param->second);
+			if (src_index == IOUtils::npos) {
+				const std::string stationID( vecMeteo[station].front().meta.stationID );
+				throw InvalidArgumentException("Station "+stationID+" has no parameter '"+param->second+"' to copy", AT);
 			}
-
-			for (size_t kk=0; kk<nr_of_params; ++kk) {
-				const size_t newparam = vecMeteo[ii][jj].addParameter(copy_name[kk]);
-				vecMeteo[ii][jj](newparam) = vecMeteo[ii][jj](indices[kk]);
+			
+			const std::string dest = param->first;
+			for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) { //for each MeteoData object of one station
+				const size_t dest_index = vecMeteo[station][jj].addParameter( dest );
+				vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
 			}
 		}
-		indices.clear(); //may change for every station
 	}
 }
 
