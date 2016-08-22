@@ -215,7 +215,7 @@ namespace mio {
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to copy one parameter into a new one, as shown in \ref data_generators.
+ *             possible to perform some editing on the raw data, see \ref data_manipulations.
  *
  *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *

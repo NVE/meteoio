@@ -150,16 +150,14 @@ namespace mio {
  * </table></center>
  *
  * @section data_manipulations Raw data editing
- * @subsection data_generators Data generators
- * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
- * new_name::COPY = existing_parameter. For example:
- * @code
- * VW_avg::COPY = VW
- * @endcode
- * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
- * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
- * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
- *
+ * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
+ *     - exclude/keep certain parameters on a per station basis;
+ *     - merge stations together;
+ *     - make a copy of a certain parameter under a new parameter name for all stations.
+ * 
+ * @note Please note that the processing order is the following: the EXCLUDE directives are processed first, then the KEEP directives, then the MERGE directives and 
+ * finally the COPY directives.
+ * 
  * @subsection data_exclusion Data exclusion
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard) 
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
@@ -214,8 +212,21 @@ namespace mio {
  * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
  * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
  * 
- * \note The EXCLUDE directives are processed first, then the KEEP directives and finally the MERGE directives.
+ * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra 
+ * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size 
+ * is large enough to reach all the way to this new station (by setting General::BUFF_CHUNK_SIZE at least to the number of days from 
+ * the start of the first station to the start of the second station)
  * 
+ * @subsection data_copy Data copy
+ * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
+ * new_name::COPY = existing_parameter. For example:
+ * @code
+ * VW_avg::COPY = VW
+ * @endcode
+ * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
+ * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
+ * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
+ *
  * @section virtual_stations_section Virtual stations
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
  * This is handled as "virtual stations" since the data will seem to originate from points where no station is present. This is described in the 
