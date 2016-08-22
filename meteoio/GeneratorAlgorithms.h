@@ -221,19 +221,35 @@ class RhGenerator : public GeneratorAlgorithm {
 /**
  * @class TauCLDGenerator
  * @brief Atmospheric transmissivity generator.
- * Generate the atmospheric transmissivity (or clearness index) from other parameters.
- * Right now, it only looks for a "CLD" parameter that should be the cloud cover / cloudiness (in okta but brought back between
- * 0 and 1) and converts it into a clearness index. 
+ * Generate the atmospheric transmissivity (or clearness index) from other parameters. If a parameter 
+ * named "CLD" is available, it will be interpreted as cloud cover / cloudiness: in okta between
+ * 0 (fully clear) and 8 (fully cloudy). For synop reports, it is possible to include a value of exactly 9 (sky obstructed
+ * from view by fog, heavy precipitation...) that will be transparently reset to 8 (fully cloudy).
+ * 
+ * If no such parameter is available, the atmospheric transmissivity is calculated from the solar index 
+ * (ratio of measured iswr to potential iswr, therefore using the current location (lat, lon, altitude) and ISWR 
+ * to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980).
+ * 
  * @code
  * TAU_CLD::generators = TAU_CLD
  * @endcode
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:
+		typedef enum CLF_PARAMETRIZATION {
+			KASTEN,
+			CLF_CRAWFORD
+		} clf_parametrization;
+		
 		TauCLDGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo), last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, SunObject& sun, bool &is_night);
+	private:
+		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		
+		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
 
 /**
@@ -348,13 +364,12 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(KASTEN),
+		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN),
 		                 last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
-		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
 
 		typedef enum PARAMETRIZATION {
 			OMSTEDT,
@@ -364,15 +379,8 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		} parametrization;
 		parametrization model;
 
-		typedef enum CLF_PARAMETRIZATION {
-			KASTEN,
-			CLF_CRAWFORD
-		} clf_parametrization;
-		clf_parametrization clf_model;
-
+		TauCLDGenerator::clf_parametrization clf_model;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
-
-		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
 
 /**
