@@ -423,6 +423,20 @@ bool TsGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo
 const double IswrAlbedoGenerator::soil_albedo = .23; //grass
 const double IswrAlbedoGenerator::snow_albedo = .85; //snow
 const double IswrAlbedoGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double IswrAlbedoGenerator::rad_thresh = 10.; //any radiation less than this is simply copied
+
+void IswrAlbedoGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==1) {
+		if (IOUtils::strToUpper(vecArgs[0])== "FORCE") {
+			force = true;
+		} else
+			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied for the "+algo+" generator", AT);
+	} else if (nr_args>1) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
 
 bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md)
 {
@@ -430,16 +444,26 @@ bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md)
 	if (value == IOUtils::nodata) {
 		const double HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR), ISWR=md(MeteoData::ISWR);
 
+		if (param==MeteoData::ISWR && (RSWR!=IOUtils::nodata && RSWR<=rad_thresh)) {
+			value = RSWR;
+			return true;
+		}
+		if (param==MeteoData::RSWR && (ISWR!=IOUtils::nodata && ISWR<=rad_thresh)) {
+			value = ISWR;
+			return true;
+		}
+		
 		double albedo = .5;
 		if (HS!=IOUtils::nodata)
 			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		else if (!force) return false;
 
-		if (param==MeteoData::ISWR && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+		if (param==MeteoData::ISWR && RSWR!=IOUtils::nodata) {
 			value = RSWR / albedo;
 			return true;
 		}
 
-		if (param==MeteoData::RSWR && (ISWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+		if (param==MeteoData::RSWR && ISWR!=IOUtils::nodata) {
 			value = ISWR * albedo;
 			return true;
 		}

@@ -221,7 +221,7 @@ class RhGenerator : public GeneratorAlgorithm {
 /**
  * @class TauCLDGenerator
  * @brief Atmospheric transmissivity generator.
- * Generate the atmospheric transmissivity (or clearness index) from other parameters. If a parameter 
+ * Generate the atmospheric transmissivity (or clearness index, see \ref meteoparam) from other parameters. If a parameter 
  * named "CLD" is available, it will be interpreted as cloud cover / cloudiness: in okta between
  * 0 (fully clear) and 8 (fully cloudy). For synop reports, it is possible to include a value of exactly 9 (sky obstructed
  * from view by fog, heavy precipitation...) that will be transparently reset to 8 (fully cloudy).
@@ -282,11 +282,13 @@ class TsGenerator : public GeneratorAlgorithm {
 class IswrAlbedoGenerator : public GeneratorAlgorithm {
 	public:
 		IswrAlbedoGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo), force(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		static const double soil_albedo, snow_albedo, snow_thresh;
+		void parse_args(const std::vector<std::string>& vecArgs);
+		bool force; ///< forces to convert radiation even when no HS is present
+		static const double soil_albedo, snow_albedo, snow_thresh, rad_thresh;
 };
 
 /**

@@ -1397,6 +1397,7 @@ const double SWRadInterpolation::snow_albedo = .85; //snow
 const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
+	vecIdx.clear();
 	date = i_date;
 	param = in_param;
 	
@@ -1435,8 +1436,8 @@ double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData:
 	avg_lat /= static_cast<double>(nrOfMeasurments);
 	avg_lon /= static_cast<double>(nrOfMeasurments);
 	avg_alt /= static_cast<double>(nrOfMeasurments);
-	Sun.setLatLon(avg_lat, avg_lon, avg_alt);
-	Sun.setDate(vecMeteo[ vecIdx[0] ].date.getJulian(), vecMeteo[ vecIdx[0] ].date.getTimeZone()); //we have at least one station
+	Sun.setLatLon(avg_lat, avg_lon, avg_alt); //set the sun for the average of the stations
+	Sun.setDate(vecMeteo[ vecIdx[0] ].date.getJulian(true), vecMeteo[ vecIdx[0] ].date.getTimeZone()); //we have at least one station
 	
 	return 0.9;
 }
@@ -1501,7 +1502,7 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 				
 				//redo the splitting using the distributed splitting coefficient
 				const double global = cell_direct + cell_diffuse;
-				cell_direct = global * Md(ii,jj);
+				cell_direct = global * (1. - Md(ii,jj));
 				cell_diffuse = global * Md(ii,jj);
 
 				if ( tan_sun_elev<tan_horizon ) cell_direct = 0.;//cell is shaded

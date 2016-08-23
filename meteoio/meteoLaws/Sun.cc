@@ -29,6 +29,7 @@
 namespace mio {
 
 const double SunObject::elevation_dftlThreshold = 5.; //in degrees
+const double SunObject::rad_threshold = 4.; //if radiation is below this threshold, it is assumed to be night
 
 SunObject::SunObject(SunObject::position_algo /*alg*/)
            : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
@@ -417,13 +418,13 @@ double SunObject::getCorrectionFactor(const double& iswr_measured, double &Md, b
 	
 	//we compare the mesured radiation to the modeled radiation, in order to guess the cloudiness.
 	//This comparison allows us to compute a global correction factor
-	if ( pot_glob_h>0. && iswr_measured>0. ) {
+	if ( pot_glob_h>rad_threshold && iswr_measured>rad_threshold ) {
 		day = true;
 		night = false;
 		return std::min( iswr_measured / pot_glob_h, 1.);
 	} else {
 		day = false;
-		night = (direct_h>0. || iswr_measured>0.)? false : true; //is it dawn/dusk?
+		night = (direct_h>rad_threshold || iswr_measured>rad_threshold)? false : true; //is it dawn/dusk?
 		return 1.;
 	}
 }

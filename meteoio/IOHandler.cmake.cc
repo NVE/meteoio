@@ -151,12 +151,13 @@ namespace mio {
  *
  * @section data_manipulations Raw data editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
+ *     - rename certain parameters for all stations
  *     - exclude/keep certain parameters on a per station basis;
  *     - merge stations together;
  *     - make a copy of a certain parameter under a new parameter name for all stations.
  * 
- * @note Please note that the processing order is the following: the EXCLUDE directives are processed first, then the KEEP directives, then the MERGE directives and 
- * finally the COPY directives.
+ * @note Please note that the processing order is the following: the MOVE directives are processed first, then the EXCLUDE directives, 
+ * then the KEEP directives, then the MERGE directives and finally the COPY directives.
  * 
  * @subsection data_exclusion Data exclusion
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard) 
@@ -216,6 +217,15 @@ namespace mio {
  * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size 
  * is large enough to reach all the way to this new station (by setting General::BUFF_CHUNK_SIZE at least to the number of days from 
  * the start of the first station to the start of the second station)
+ * 
+ * @subsection data_move Data renaming
+ * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take multiple source names that will be processed in the
+ * order of declaration. The syntax is new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
+ * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
+ * @code
+ * TA::MOVE = air_temp air_temperature temperature_air
+ * @endcode
+ * This can be used to rename non-standard parameter names into standard ones.
  * 
  * @subsection data_copy Data copy
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
@@ -319,15 +329,16 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params), 
-             merge_commands(aio.merge_commands), copy_commands(aio.copy_commands),
+             merge_commands(aio.merge_commands), copy_commands(aio.copy_commands), move_commands(aio.move_commands),
              merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy), 
-             copy_ready(aio.copy_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
+             copy_ready(aio.copy_ready), move_ready(aio.move_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), 
-             merge_commands(), copy_commands(), merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
-             copy_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
+             merge_commands(), copy_commands(), move_commands(), 
+             merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
+             copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
 {
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
 	if (!merge_strategy_str.empty())
@@ -351,8 +362,10 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 		merge_commands = source.merge_commands;
 		merged_stations = source.merged_stations;
 		copy_commands = source.copy_commands;
+		move_commands = source.move_commands;
 		merge_strategy = source.merge_strategy;
 		copy_ready = source.copy_ready;
+		move_ready = source.move_ready;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
 		merge_ready = source.merge_ready;
@@ -415,6 +428,9 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	
 	checkTimestamps(vecMeteo);
 	
+	if (!move_ready) create_move_map();
+	move_params(vecMeteo);
+	
 	if (!excludes_ready) create_exclude_map();
 	exclude_params(vecMeteo);
 	
@@ -425,7 +441,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	merge_stations(vecMeteo);
 	
 	if (!copy_ready) create_copy_map();
-	copy_parameters(vecMeteo);
+	copy_params(vecMeteo);
 }
 
 void IOHandler::writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
@@ -835,6 +851,71 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 /**
 * Parse [Input] section for potential parameters that the user wants
+* renamed (as '%%::MOVE = %%')
+*/
+void IOHandler::create_move_map()
+{
+	vector<string> move_keys;
+	const size_t nrOfMatches = cfg.findKeys(move_keys, "::MOVE", "Input", true); //search anywhere in key
+
+	for (size_t ii=0; ii<nrOfMatches; ++ii) {
+		const string dest_param = move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") );
+		std::vector<std::string> vecString;
+		cfg.getValue(move_keys[ii], "Input", vecString); //multiple source can be provided
+		
+		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+move_keys[ii]+"\"", AT);
+		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+			IOUtils::toUpper(*it);
+		}
+		
+		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
+		move_commands[ dest_param ] = tmpset;
+	}
+	
+	move_ready = true;
+}
+
+/**
+* This procedure runs through the MeteoData objects in vecMeteo and according to user
+* configuration renames a certain present meteo parameter to another one, named by the
+* user in the [Input] section of the io.ini, e.g.
+* [Input]
+* TA::MOVE = air_temp air_temperature
+* means that TA will be the name of a new parameter in MeteoData with the copied value
+* of the original parameter air_temp or air_temperature
+*/
+void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
+{
+	if (move_commands.empty()) return; //Nothing configured
+
+	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
+		if (vecMeteo[station].empty()) continue;
+		
+		std::map< std::string, std::set<std::string> >::const_iterator param = move_commands.begin();
+		for (; param!=move_commands.end(); ++param) { //loop over all the MOVE commands
+			const std::string dest_param( param->first );
+			const std::set<std::string> src( param->second );
+			
+			for (std::set<std::string>::const_iterator it_set=src.begin(); it_set != src.end(); ++it_set) { //loop over the parameters to move
+				const std::string src_param( *it_set );
+				std::cout << "Moving " << src_param << " to " << dest_param << "\n";
+				
+				const size_t src_index = vecMeteo[station].front().getParameterIndex( *it_set );
+				if (src_index == IOUtils::npos) continue; //no such parameter for this station, skipping
+
+				for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {
+					const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
+					vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
+					vecMeteo[station][jj]( src_index ) = IOUtils::nodata; 
+				}
+			}
+		}
+	}
+}
+
+
+/**
+* Parse [Input] section for potential parameters that the user wants
 * duplicated (as '%%::COPY = %%')
 */
 void IOHandler::create_copy_map()
@@ -861,7 +942,7 @@ void IOHandler::create_copy_map()
 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
 * of the meteo parameter MeteoData::TA
 */
-void IOHandler::copy_parameters(std::vector< METEO_SET >& vecMeteo) const
+void IOHandler::copy_params(std::vector< METEO_SET >& vecMeteo) const
 {
 	if (copy_commands.empty()) return; //Nothing configured
 
@@ -876,7 +957,7 @@ void IOHandler::copy_parameters(std::vector< METEO_SET >& vecMeteo) const
 				throw InvalidArgumentException("Station "+stationID+" has no parameter '"+param->second+"' to copy", AT);
 			}
 			
-			const std::string dest = param->first;
+			const std::string dest( param->first );
 			for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) { //for each MeteoData object of one station
 				const size_t dest_index = vecMeteo[station][jj].addParameter( dest );
 				vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );

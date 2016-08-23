@@ -136,7 +136,7 @@ for SMET in ${files}; do
 	}
 	END {
 		if (f==-1 || count==0) {
-			printf("\n")
+			printf("  %7s - %7s  \t      %7s\t(%s)\n", "       ", " ", " ", "'"${IJ}"'")
 			exit 0
 		}
 		mean /= count

@@ -81,7 +81,7 @@ class SunObject {
 		double latitude, longitude, altitude;
 		double elevation_threshold;
 		double beam_toa, beam_direct, beam_diffuse;
-		static const double elevation_dftlThreshold;
+		static const double elevation_dftlThreshold, rad_threshold;
 };
 
 } //end namespace
