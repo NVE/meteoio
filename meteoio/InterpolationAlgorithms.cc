@@ -165,8 +165,7 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 		trend.setLapseRate(lapse_rate);
 		status = trend.fit();
 	} else if (vecArgs.size() == 2) {
-		std::string extraArg;
-		IOUtils::convertString(extraArg, vecArgs[1]);
+		const std::string extraArg( vecArgs[1]);
 		if (extraArg=="soft") { //soft
 			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 			status = trend.fit();
@@ -456,6 +455,18 @@ void IDWAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 }
 
 
+IDWLapseAlgorithm::IDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), lapse_rate_provided(false) 
+{
+	const size_t nr_args = vecArgs.size();
+	if (nr_args>2)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	if (nr_args>=1) {
+		if ( IOUtils::isNumeric(vecArgs[0])) lapse_rate_provided = true;
+	}
+}
+
 double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
@@ -463,6 +474,7 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0) return 0.0;
+	if (!lapse_rate_provided && nrOfMeasurments<2) return 0.0;
 
 	return 0.7;
 }
@@ -646,28 +658,23 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for VW or DW
-	if (in_param != MeteoData::VW && in_param != MeteoData::DW)
-		return 0.0;
-
 	date = i_date;
 	param = in_param;
-	vecData.clear(); vecMeta.clear();
+	vecMeta.clear();
 	vecDataVW.clear(); vecDataDW.clear();
 
-	nrOfMeasurments = 0;
 	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
 			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
 			vecMeta.push_back(vecMeteo[ii].meta);
-			nrOfMeasurments++;
 		}
 	}
 
-	if (nrOfMeasurments==0)
-		return 0.0;
+	nrOfMeasurments = vecMeta.size();
+	
+	if (nrOfMeasurments==0) return 0.0;
 	
 	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
 	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
@@ -706,28 +713,23 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for VW or DW
-	if (in_param != MeteoData::VW && in_param != MeteoData::DW)
-		return 0.0;
-
 	date = i_date;
 	param = in_param;
-	vecData.clear(); vecMeta.clear();
+	vecMeta.clear();
 	vecDataVW.clear(); vecDataDW.clear();
 
-	nrOfMeasurments = 0;
 	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
 			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
 			vecMeta.push_back(vecMeteo[ii].meta);
-			nrOfMeasurments++;
 		}
 	}
 
-	if (nrOfMeasurments==0)
-		return 0.0;
+	nrOfMeasurments = vecMeta.size();
+	
+	if (nrOfMeasurments==0) return 0.0;
 	
 	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
 	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
@@ -735,8 +737,7 @@ double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 		return 0.9;
 	}
 	
-	if (nrOfMeasurments<2)
-		return 0.6;
+	if (nrOfMeasurments<2) return 0.6;
 
 	return 0.9;
 }
@@ -796,20 +797,14 @@ WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vecto
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for PSUM (we could add HS later)
-	if (in_param!=MeteoData::PSUM)
-		return 0.0;
-
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
 
-	if (inputIsAllZeroes)
-		return 0.99;
+	if (inputIsAllZeroes) return 0.99;
 
-	if (nrOfMeasurments==0)
-		return 0.0;
+	if (nrOfMeasurments==0) return 0.0;
 
 	if (nrOfMeasurments==1 && ref_station.empty()) { //ie: still using default base_algo
 		base_algo = "AVG";
@@ -1092,7 +1087,7 @@ void WinstralListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid
 std::string USERInterpolation::getGridFileName() const
 {
 	const size_t nrArgs = vecArgs.size();
-	if (nrArgs > 2){
+	if (nrArgs > 2) {
 		throw InvalidArgumentException("Too many arguments for the "+algo+" interpolation algorithm", AT);
 	}
 	const std::string prefix = (nrArgs==1)? vecArgs[0] + "/" : "";
@@ -1347,8 +1342,7 @@ double SnowPSUMInterpolation::getQualityRating(const Date& i_date, const MeteoDa
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if (nrOfMeasurments == 0)
-		return 0.0;
+	if (nrOfMeasurments == 0) return 0.0;
 
 	return 0.9;
 }
@@ -1410,7 +1404,7 @@ double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData:
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
 	}
 	
-	vecIdx.clear(); vecMeta.clear(); vecMeteo.clear();
+	vecIdx.clear(); vecMeta.clear();
 	tsmanager.getMeteoData(i_date, vecMeteo);
 	
 	//fill vecIdx with the indices of the stations that can be used and set the Sun coordinates to the middle of the stations

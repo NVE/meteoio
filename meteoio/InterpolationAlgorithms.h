@@ -342,10 +342,11 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWLapseAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		bool lapse_rate_provided; ///< when giving a lapse rate, the requirements on the number of stations are relaxed
 };
 
 
