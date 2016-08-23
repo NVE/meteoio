@@ -481,6 +481,10 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		return true;
 
 	} else {
+		const size_t wrong_dash = s.find("–");
+		if (wrong_dash!=std::string::npos)
+			throw InvalidFormatException("Invalid date '"+s+"', replace the '–' character by '-'", AT);
+		
 		//try to read purely numerical date, potentially surrounded by other chars
 		//and potentially containing an ISO time zone string
 		const size_t in_len = s.length();
