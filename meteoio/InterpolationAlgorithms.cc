@@ -1397,7 +1397,6 @@ const double SWRadInterpolation::snow_albedo = .85; //snow
 const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	vecIdx.clear();
 	date = i_date;
 	param = in_param;
 	
@@ -1411,6 +1410,7 @@ double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData:
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
 	}
 	
+	vecIdx.clear(); vecMeta.clear(); vecMeteo.clear();
 	tsmanager.getMeteoData(i_date, vecMeteo);
 	
 	//fill vecIdx with the indices of the stations that can be used and set the Sun coordinates to the middle of the stations
