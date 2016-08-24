@@ -134,6 +134,7 @@ class Grid2DObject {
 		void rescale(const double& i_cellsize);
 
 		void size(size_t& o_ncols, size_t& o_nrows) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 

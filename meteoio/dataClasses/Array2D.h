@@ -144,6 +144,7 @@ template<class T> class Array2D {
 		void resize(const size_t& nx, const size_t& ny);
 		void resize(const size_t& nx, const size_t& ny, const T& init);
 		void size(size_t& nx, size_t& ny) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 
@@ -376,6 +377,10 @@ template<class T> void Array2D<T>::resize(const size_t& anx, const size_t& any, 
 template<class T> void Array2D<T>::size(size_t& anx, size_t& any) const {
 	anx=nx;
 	any=ny;
+}
+
+template<class T> size_t Array2D<T>::size() const {
+	return nx*ny;
 }
 
 template<class T> size_t Array2D<T>::getNx() const {

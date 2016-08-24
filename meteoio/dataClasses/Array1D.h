@@ -63,6 +63,7 @@ template<class T> class Array1D {
 		bool getKeepNodata();
 
 		void size(size_t& nx) const;
+		size_t size() const;
 		size_t getNx() const;
 
 		void resize(const size_t& asize);
@@ -169,6 +170,10 @@ template<class T> bool Array1D<T>::getKeepNodata() {
 
 template<class T> void Array1D<T>::size(size_t& o_nx) const {
 	o_nx = nx;
+}
+
+template<class T> size_t Array1D<T>::size() const {
+	return nx;
 }
 
 template<class T> size_t Array1D<T>::getNx() const {

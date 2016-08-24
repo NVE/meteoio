@@ -348,6 +348,10 @@ void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_nrows = getNy();
 }
 
+size_t Grid2DObject::size() const {
+	return grid2D.size();
+}
+
 size_t Grid2DObject::getNx() const {
 	return grid2D.getNx();
 }

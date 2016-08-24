@@ -360,6 +360,10 @@ void Grid3DObject::size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) con
 	o_ndepths = grid3D.getNz();
 }
 
+size_t Grid3DObject::size() const {
+	return grid3D.size();
+}
+
 size_t Grid3DObject::getNx() const {
 	return grid3D.getNx();
 }

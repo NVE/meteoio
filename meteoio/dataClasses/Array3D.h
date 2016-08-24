@@ -177,6 +177,7 @@ template<class T> class Array3D {
 		void resize(const size_t& anx, const size_t& any, const size_t& anz);
 		void resize(const size_t& anx, const size_t& any, const size_t& anz, const T& init);
 		void size(size_t& anx, size_t& any, size_t& anz) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 		size_t getNz() const;
@@ -446,6 +447,10 @@ template<class T> void Array3D<T>::size(size_t& anx, size_t& any, size_t& anz) c
 	anx=nx;
 	any=ny;
 	anz=nz;
+}
+
+template<class T> size_t Array3D<T>::size() const {
+	return nx*ny*nz;
 }
 
 template<class T> size_t Array3D<T>::getNx() const {

@@ -121,6 +121,7 @@ template<class T> class Array4D {
 		void resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz);
 		void resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz, const T& init);
 		void size(size_t& anw, size_t& anx, size_t& any, size_t& anz) const;
+		size_t size() const;
 		size_t getNw() const;
 		size_t getNx() const;
 		size_t getNy() const;
@@ -375,6 +376,10 @@ template<class T> void Array4D<T>::size(size_t& anw, size_t& anx, size_t& any, s
 	anx=nx;
 	any=ny;
 	anz=nz;
+}
+
+template<class T> size_t Array4D<T>::size() const {
+	return nw*nx*ny*nz;
 }
 
 template<class T> size_t Array4D<T>::getNw() const {
