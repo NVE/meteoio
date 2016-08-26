@@ -572,7 +572,7 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 				}
 			}
 			if (!found)
-				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'", AT);
+				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'. Consider increasing BUFF_CHUNK_SIZE!", AT);
 		}
 	}
 	

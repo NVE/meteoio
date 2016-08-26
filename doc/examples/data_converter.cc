@@ -32,15 +32,14 @@ void real_main(int argc, char** argv) {
 	
 	std::map<std::string, size_t> mapIDs; //over a large time range, the number of stations might change... this is the way to make it work
 	std::vector<MeteoData> Meteo; //we need some intermediate storage, for storing data sets for 1 timestep
-	io.getMeteoData(d1, Meteo); //we need to know how many stations will be available
 	
-	vecMeteo.insert(vecMeteo.begin(), Meteo.size(), std::vector<MeteoData>()); //allocation for the vectors
 	for(; d1<=d2; d1+=Tstep) { //time loop
 		io.getMeteoData(d1, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		for(size_t ii=0; ii<Meteo.size(); ii++) {
 			const std::string stationID( Meteo[ii].meta.stationID );
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = ii;
+				if (ii>=vecMeteo.size()) vecMeteo.push_back( std::vector<MeteoData>() ); //allocating the new station
 			}
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
