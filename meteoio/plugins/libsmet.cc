@@ -540,7 +540,11 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 		}
 		fout.open(filename.c_str(), ios::binary | ofstream::app);
 	} else { //normal mode
-		fout.open(filename.c_str(), ios::binary);
+		if (!append_possible) { //first write -> overwrite potential previous content
+			fout.open(filename.c_str(), ios::binary);
+			append_possible = true;
+		} else //after the first write: append
+			fout.open(filename.c_str(), ios::binary | ofstream::app);
 	}
 	
 	if (fout.fail()) {
