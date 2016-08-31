@@ -1439,9 +1439,6 @@ double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData:
 void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	double solarAzimuth, solarElevation;
-	Sun.position.getHorizontalCoordinates(solarAzimuth, solarElevation);
-	const double tan_sun_elev = tan(solarElevation*Cst::to_rad);
 	
 	//compute the correction factors at every station
 	std::vector<double> vecMd(nrOfMeasurments, IOUtils::nodata);
@@ -1481,6 +1478,10 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::P, p);
 	
 	//fill the final results with the proper radiation (with shading)
+	double solarAzimuth, solarElevation;
+	Sun.position.getHorizontalCoordinates(solarAzimuth, solarElevation);
+	const double tan_sun_elev = tan(solarElevation*Cst::to_rad);
+	
 	grid.set(dem, IOUtils::nodata);
 	for (size_t jj=0; jj<dem.getNy(); jj++) {
 		for (size_t ii=0; ii<dem.getNx(); ii++) {
