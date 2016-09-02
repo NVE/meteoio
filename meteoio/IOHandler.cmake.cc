@@ -25,6 +25,7 @@
 #cmakedefine PLUGIN_ARCIO
 #cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_ARPSIO
+#cmakedefine PLUGIN_CNRMIO
 #cmakedefine PLUGIN_GRASSIO
 #cmakedefine PLUGIN_GEOTOPIO
 #cmakedefine PLUGIN_SMETIO

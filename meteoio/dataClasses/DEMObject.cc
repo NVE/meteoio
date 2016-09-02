@@ -1100,6 +1100,7 @@ std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
 	os.write(reinterpret_cast<const char*>(&dem.max_slope), sizeof(dem.max_slope));
 	os.write(reinterpret_cast<const char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
+	os.write(reinterpret_cast<const char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
 	os.write(reinterpret_cast<const char*>(&dem.update_flag), sizeof(dem.update_flag));
 	os.write(reinterpret_cast<const char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	os.write(reinterpret_cast<const char*>(&dem.slope_failures), sizeof(dem.slope_failures));
@@ -1122,6 +1123,7 @@ std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
 	is.read(reinterpret_cast<char*>(&dem.max_slope), sizeof(dem.max_slope));
 	is.read(reinterpret_cast<char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
+	is.read(reinterpret_cast<char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
 	is.read(reinterpret_cast<char*>(&dem.update_flag), sizeof(dem.update_flag));
 	is.read(reinterpret_cast<char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));
