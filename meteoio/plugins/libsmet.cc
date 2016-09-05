@@ -535,25 +535,24 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 			const std::string last_timestamp = reader.getLastTimestamp();
 			if (last_timestamp.empty() || last_timestamp>=vec_timestamp[0])
 				reader.truncate_file(vec_timestamp[0]);
-			
 			append_possible = true;
 		}
 		fout.open(filename.c_str(), ios::binary | ofstream::app);
+		if (fout.fail())
+			throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
 	} else { //normal mode
 		if (!append_possible) { //first write -> overwrite potential previous content
 			fout.open(filename.c_str(), ios::binary);
-			append_possible = true;
-		} else //after the first write: append
+			if (fout.fail())
+				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
+			write_header(fout); //Write the header info, always in ASCII format
+			append_possible = true; //now all other calls to "open" will be in append mode
+		} else { //after the first write: append
 			fout.open(filename.c_str(), ios::binary | ofstream::app);
+			if (fout.fail())
+				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
+		}
 	}
-	
-	if (fout.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
-		throw SMETException(ss.str(), SMET_AT);
-	}
-
-	if (!append_mode) write_header(fout); //Write the header info, always in ASCII format
 	
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
 		fout.close();
