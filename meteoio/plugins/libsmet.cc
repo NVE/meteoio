@@ -830,8 +830,6 @@ SMETReader::SMETReader(const std::string& in_fname)
 	cleanup(fin); //closes file
 }
 
-SMETReader::~SMETReader() {}
-
 void SMETReader::cleanup(std::ifstream& fin) throw()
 {
 	if (fin.is_open()) //close fin if open

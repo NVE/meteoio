@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2012 Mountain-eering Srl, Trento/Bolzano, Italy                      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -31,6 +31,7 @@ namespace mio {
  * @class PSQLIO
  * @brief This plugin connects to a generic PostgreSQL server to retrieve its meteorological data.
  *
+ * This plugin was funded by Mountain-eering.
  * @ingroup plugins
  * @author Thomas Egger
  * @date   2014-01-28
@@ -53,7 +54,6 @@ class PSQLIO : public IOInterface {
 
 	private:
 		void getParameters(const Config& cfg);
-		void create_shadow_map(const std::string& exclude_file);
 		void open_connection(const bool& input=true);
 		PGresult* sql_exec(const std::string& sqlcommand, const bool& input=true);
 		static bool replace(std::string& str, const std::string& from, const std::string& to);
@@ -84,7 +84,6 @@ class PSQLIO : public IOInterface {
 		std::vector<StationData> vecMeta;
 		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		std::string sql_meta, sql_data;
-		std::map< std::string, std::set<std::string> > shadowed_parameters;
 
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };

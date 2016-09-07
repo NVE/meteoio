@@ -204,7 +204,7 @@ class SMETReader {
 		 * @param[in] in_fname The filename of the SMET file
 		 */
 		SMETReader(const std::string& in_fname);
-		~SMETReader();
+		~SMETReader(){}
 
 		/**
 		 * @brief Read the data in a SMET file for a given interval of time

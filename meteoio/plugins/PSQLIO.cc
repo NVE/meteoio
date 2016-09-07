@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2012 Mountain-eering Srl, Trento/Bolzano, Italy                      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -50,19 +50,6 @@ namespace mio {
  *
  *      SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date>=''DATE_START'' AND date<=''DATE_END'' ORDER BY date
  *
- * @subsection psql_exclude_file Exclude file
- * It is possible to exclude specific parameters from specific stations. This is done by listing in a CSV file for each station id, which parameters should be excluded.
- * An example of an exclude file is given below:
- * @code
- *       # Example of an exclude file, comment line
- *       ; another comment line
- *       ; the parameters to exclude are specified as comma separated values:
- *       # stationid,parameter1,parameter2
- *       1,p,RH,Iprec
- *       230,RH
- *       231,RH
- * @endcode
- *
  * @section psql_units Units
  * Units are assumed to be pure SI, except:
  *  - temperatures in &deg;C
@@ -84,7 +71,6 @@ namespace mio {
  *      - SQL_META: SQL query to use to get the stations' metadata.
  *      - SQL_DATA: SQL query to use to get the stations' data.
  * - STATIONS: comma separated list of station ids that the user is interested in; [Input] section
- * - EXCLUDE: File containing a list of parameters to exclude listed per station id (optional; [Input] section; this should now be deprecated and replaced by EXCLUDE_FILE that works for all plugins)
  *
  */
 
@@ -94,7 +80,7 @@ PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coord
                                                 in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                                 out_userid(), out_passwd(), input_configured(false), output_configured(false),
                                                 psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
-                                                vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
+                                                vecMobileStationID(), sql_meta(), sql_data()
 {
 	Config cfg(configfile);
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -105,7 +91,7 @@ PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coord
                                     in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                     out_userid(), out_passwd(), input_configured(false), output_configured(false),
                                     psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
-                                    vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
+                                    vecMobileStationID(), sql_meta(), sql_data()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters(cfg);
@@ -118,7 +104,7 @@ PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinp
                                    out_userid(in.out_userid), out_passwd(in.out_passwd), input_configured(false),
                                    output_configured(false), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta),
                                    vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
-                                   sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
+                                   sql_meta(in.sql_meta), sql_data(in.sql_data) {}
 
 PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 {
@@ -147,7 +133,6 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 	 swap(vecMobileStationID, tmp.vecMobileStationID);
 	 swap(sql_meta, tmp.sql_meta);
 	 swap(sql_data, tmp.sql_data);
-	 swap(shadowed_parameters, tmp.shadowed_parameters);
 
       return *this;
 }
@@ -186,51 +171,7 @@ void PSQLIO::getParameters(const Config& cfg)
 	cfg.getValue("STATIONS", "Input", stations, IOUtils::nothrow);
 	IOUtils::readLineToVec(stations, vecFixedStationID, ',');
 
-	const string exclude_file = cfg.get("EXCLUDE", "Input", IOUtils::nothrow);
-	if (!exclude_file.empty() && FileUtils::fileExists(exclude_file)) {
-		//if this is a relative path, prefix the path with the current path
-		const std::string prefix = ( FileUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = FileUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + FileUtils::getFilename(exclude_file);
-
-		create_shadow_map(exclude_file);
-	}
-
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
-}
-
-void PSQLIO::create_shadow_map(const std::string& exclude_file)
-{
-	if (!FileUtils::fileExists(exclude_file)) throw AccessException(exclude_file, AT); //prevent invalid filenames
-	std::ifstream fin(exclude_file.c_str(), std::ifstream::in);
-	if (fin.fail()) throw AccessException(exclude_file, AT);
-
-	try {
-		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-
-		vector<string> tmpvec;
-		string line;
-
-		while (!fin.eof()) { //Go through file
-			getline(fin, line, eoln); //read complete line meta information
-			IOUtils::stripComments(line);
-			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
-
-			if (ncols > 1) {
-				for (vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
-					IOUtils::toUpper(*it);
-				}
-
-				set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
-				shadowed_parameters[ tmpvec[0] ] = tmpset;
-			}
-		}
-	} catch (const std::exception&) {
-		fin.close();
-		throw;
-	}
-
-	fin.close();
 }
 
 void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input)
@@ -297,7 +238,7 @@ void PSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		}
 	}
 
-	string query = sql_meta + " (" + station_list + ") ORDER BY id;";
+	const string query = sql_meta + " (" + station_list + ") ORDER BY id;";
 	vector<StationData> tmp_station;
 	readMetaData(query, tmp_station);
 
@@ -398,18 +339,9 @@ void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoD
 void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index)
 {
 	const int columns = PQnfields(result);
-
-	set<string> shadowed;
-	map< string, set<string> >::iterator it = shadowed_parameters.find(md.meta.stationID);
-	if (it != shadowed_parameters.end()) shadowed = it->second;
-
+	
 	for (int ii=0; ii<columns; ii++) {
 		const string field_name( IOUtils::strToUpper(PQfname(result, ii)) );
-		const bool is_in = shadowed.find(field_name) != shadowed.end();
-		if (is_in) { // Certain parameters may be shadowed
-			index.push_back(IOUtils::npos);
-			continue;
-		}
 
 		if (field_name == "RH") {
 			index.push_back(MeteoData::RH);
