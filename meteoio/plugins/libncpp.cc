@@ -472,6 +472,16 @@ void write_record(const int& ncid, const std::string& varname, const int& varid,
 		throw IOException("Could not write data for record variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
+void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, const size_t& length, const int * const data)
+{
+	size_t start[] = {start_pos};
+	size_t count[] = {length};
+
+	const int status = nc_put_vara_int(ncid, varid, start, count, data);
+	if (status != NC_NOERR)
+		throw IOException("Could not write data for record variable '" + varname + "': " + nc_strerror(status), AT);
+}
+
 void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid)
 {
 	const int status = nc_def_dim(ncid, dimname.c_str(), length, &dimid);

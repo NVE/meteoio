@@ -51,6 +51,8 @@ namespace mio {
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  * - METEOPATH: where to find the meteofiles as refered to here below; [Input] and [Output] sections
  * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] sections
+ * - UREF: height of wind measurements (in m, default 10m); [Output] section
+ * - ZREF: height of air temperature measurements (in m, default 2m); [Output] section
  * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] sections
  * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
  *                 in the specification will be omitted; [Input] and [Output] section
@@ -88,6 +90,8 @@ const std::string CNRMIO::cnrm_longitude = "LON";
 const std::string CNRMIO::cnrm_altitude = "ZS";
 const std::string CNRMIO::cnrm_aspect = "aspect";
 const std::string CNRMIO::cnrm_slope = "slope";
+const std::string CNRMIO::cnrm_uref = "uref";
+const std::string CNRMIO::cnrm_zref = "zref";
 const std::string CNRMIO::cnrm_ta = "Tair";
 const std::string CNRMIO::cnrm_rh = "HUMREL";
 const std::string CNRMIO::cnrm_vw = "Wind";
@@ -143,14 +147,14 @@ bool CNRMIO::initStaticData()
 }
 
 CNRMIO::CNRMIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(),
-                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
+                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), uref(10.), zref(2.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
 CNRMIO::CNRMIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(),
-                                              in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
+                                              in_dflt_TZ(0.), out_dflt_TZ(0.), uref(10.), zref(2.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -165,6 +169,9 @@ void CNRMIO::parseInputOutputSection()
 
 	cfg.getValue("STRICTFORMAT", "Input", in_strict, IOUtils::nothrow);
 	cfg.getValue("STRICTFORMAT", "Output", out_strict, IOUtils::nothrow);
+	
+	cfg.getValue("UREF", "Output", uref, IOUtils::nothrow);
+	cfg.getValue("ZREF", "Output", zref, IOUtils::nothrow);
 }
 
 void CNRMIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
@@ -380,7 +387,6 @@ void CNRMIO::readData(const int& ncid, const size_t& index_start, const std::vec
 	for (map<string, size_t>::const_iterator it = map_parameters.begin(); it != map_parameters.end(); ++it) {
 		double* data = new double[number_of_stations*number_of_records];
 		const string& varname( it->first );
-
 		map_data[varname] = data;
 
 		int varid;
@@ -488,14 +494,16 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 
 	for (vector<string>::const_iterator it = parameters_present.begin(); it != parameters_present.end(); ++it) {
 		const string& name( *it );
-		//cout << "Found parameter: " << name << endl;
 
 		// Check if parameter exists in paramname, which holds strict CNRM parameters
 		const map<string, size_t>::const_iterator strict_it = paramname.find(name);
 		if (strict_it != paramname.end()) { // parameter is a part of the CNRM specification
 			size_t index = strict_it->second;
 
-			if ((name == cnrm_theorsw) || (name == cnrm_qair) || (name == cnrm_co2air) || (name == cnrm_neb)) {
+			if (name==cnrm_qair) 
+				index = meteo_data.addParameter( "SH" );
+			
+			if ((name == cnrm_theorsw) || (name == cnrm_co2air) || (name == cnrm_neb)) {
 			 	index = meteo_data.addParameter( name );
 			}
 
@@ -634,23 +642,33 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	const bool exists = FileUtils::fileExists(file_and_path);
 	if (exists) remove(file_and_path.c_str()); // NOTE: file is deleted if it exists
 
-	double* dates;
 	map<string, double*> map_data; // holds a pointer for every C array to be written
 	map_data[cnrm_latitude] = new double[number_of_stations];
 	map_data[cnrm_longitude] = new double[number_of_stations];
 	map_data[cnrm_altitude] = new double[number_of_stations];
 	map_data[cnrm_aspect] = new double[number_of_stations];
 	map_data[cnrm_slope] = new double[number_of_stations];
+	map_data[cnrm_uref] = new double[number_of_stations];
+	map_data[cnrm_zref] = new double[number_of_stations];
 
+	//compute data set start julian date
+	Date ref_date;
+	for (size_t ii=0; ii<number_of_stations; ii++) {
+		if (vecMeteo[ii].empty()) continue;
+		if (ref_date.isUndef() || ref_date < vecMeteo[ii].front().date)
+			ref_date = vecMeteo[ii].front().date;
+	}
+	ref_date.rnd(3600*24, Date::DOWN); //round to the day
+	
 	map<string, int> varid;
 	map<size_t, string> map_param_name;
-
-	get_parameters(vecMeteo, map_param_name, map_data, dates);
+	int* dates;
+	get_parameters(ref_date.getJulian(), vecMeteo, map_param_name, map_data, dates);
 
 	ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
 	create_time = create_points = create_locations = create_variables = true;
-
-	if (create_time) create_time_dimension(ncid, did_time, vid_time);
+	
+	if (create_time) create_time_dimension(ref_date, ncid, did_time, vid_time);
 	if (create_points) ncpp::add_dimension(ncid, cnrm_points, number_of_stations, did_points);
 	if (create_locations) create_meta_data(ncid, did_points, map_data, varid);
 	if (create_variables) create_parameters(ncid, did_time, did_points, number_of_records, number_of_stations, map_param_name, map_data, varid);
@@ -780,16 +798,15 @@ void CNRMIO::create_parameters(const int& ncid, const int& did_time, const int& 
 // string name, that is the CNRM name for the parameter to use in the NetCDF
 // file. Furthermore this method copies the meta data into the appropriate C
 // arrays. The timestep interval is also calculated and added to the map_data_1D
-void CNRMIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
-                              std::map<std::string, double*>& map_data_1D, double*& dates)
+void CNRMIO::get_parameters(const double& ref_julian, const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
+                              std::map<std::string, double*>& map_data_1D, int*& dates)
 {
 	const size_t number_of_records = vecMeteo[0].size();
-	dates = new double[number_of_records];
-
-	double interval = 0;
+	dates = new int [number_of_records];
+	if (number_of_records==0) return;
+	
 	for (size_t ii=0; ii<number_of_records; ii++) {
-		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate(); //HACK give number of seconds
-		if (ii == 1) interval = static_cast<double>( Optim::round((dates[ii] - dates[ii-1]) * 86400.) );
+		dates[ii] = static_cast<int>( Optim::round( (vecMeteo[0][ii].date.getJulian() - ref_julian) * 24.*3600. ) ); //in seconds since the start of simulation
 	}
 
 	const size_t nr_of_parameters = (!vecMeteo[0].empty())? vecMeteo[0][0].getNrOfParameters() : 0 ;
@@ -803,15 +820,18 @@ void CNRMIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMete
 		for (size_t jj=0; jj<vecMeteo[ii].size(); ++jj) {
 			const MeteoData& meteo_data = vecMeteo[ii][jj];
 
-			if (!IOUtils::checkEpsilonEquality(dates[jj], meteo_data.date.getModifiedJulianDate(), CNRMIO::epsilon))
+			const int local_date =  static_cast<int>( Optim::round( (meteo_data.date.getJulian() - ref_julian) * 24.*3600. ) );
+			if (!IOUtils::checkEpsilonEquality(dates[jj], local_date, CNRMIO::epsilon))
 				inconsistent = true;
 
 			if (jj == 0) {
-				map_data_1D[cnrm_latitude][ii] = meteo_data.meta.position.getLat();
-				map_data_1D[cnrm_longitude][ii] = meteo_data.meta.position.getLon();
-				map_data_1D[cnrm_altitude][ii] = meteo_data.meta.position.getAltitude();
-				map_data_1D[cnrm_slope][ii] = meteo_data.meta.getSlopeAngle();
-				map_data_1D[cnrm_aspect][ii] = meteo_data.meta.getAzimuth();
+				map_data_1D[cnrm_latitude][ii] = toNetcdfNodata( meteo_data.meta.position.getLat() );
+				map_data_1D[cnrm_longitude][ii] = toNetcdfNodata( meteo_data.meta.position.getLon() );
+				map_data_1D[cnrm_altitude][ii] = toNetcdfNodata( meteo_data.meta.position.getAltitude() );
+				map_data_1D[cnrm_slope][ii] = toNetcdfNodata( meteo_data.meta.getSlopeAngle() );
+				map_data_1D[cnrm_aspect][ii] = toNetcdfNodata( meteo_data.meta.getAzimuth() );
+				map_data_1D[cnrm_uref][ii] = uref;
+				map_data_1D[cnrm_zref][ii] = zref;
 			}
 
 			//Check which parameters are in use
@@ -833,7 +853,7 @@ void CNRMIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMete
 			map_param_name[kk] = vec_param_name[kk];
 	}
 
-
+	double interval = (number_of_records>1)? static_cast<double>(dates[1] - dates[0]) : 0; //we consider this gives us the sampling rate
 	double* timestep = new double[1];
 	*timestep = interval;
 	map_data_1D[cnrm_timestep] = timestep;
@@ -926,7 +946,7 @@ void CNRMIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string
 	}
 
 	if (create_dimensions) create_latlon_dimensions(ncid, grid_in, did_lat, did_lon, vid_lat, vid_lon);
-	if (create_time) create_time_dimension(ncid, did_time, vid_time);
+	if (create_time) create_time_dimension(date, ncid, did_time, vid_time);
 
 	if (is_record && create_variable) {
 		ncpp::add_3D_variable(ncid, varname, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
@@ -965,11 +985,16 @@ void CNRMIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_
 	add_attributes_for_variable(ncid, vid_lon, cf_longitude);
 }
 
-void CNRMIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time)
+void CNRMIO::create_time_dimension(const Date& ref_date, const int& ncid, int& did_time, int& vid_time)
 {
 	ncpp::add_dimension(ncid, CNRMIO::cf_time, NC_UNLIMITED, did_time);
-	ncpp::add_1D_variable(ncid, CNRMIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
-	add_attributes_for_variable(ncid, vid_time, CNRMIO::cf_time); //HACK: hard code here since we need to provide the ref date
+	ncpp::add_1D_variable(ncid, CNRMIO::cf_time, NC_INT, did_time, vid_time);
+	ncpp::add_attribute(ncid, vid_time, "standard_name", CNRMIO::cf_time);
+	ncpp::add_attribute(ncid, vid_time, "long_name", CNRMIO::cf_time);
+	
+	std::string ref_string( ref_date.toString(Date::ISO) );
+	std::replace( ref_string.begin(), ref_string.end(), 'T', ' ');
+	ncpp::add_attribute(ncid, vid_time, "units", "seconds since "+ref_string);
 }
 
 // When reading or writing gridded variables we should have a consistent naming
@@ -1022,7 +1047,7 @@ void CNRMIO::add_attributes_for_variable(const int& ncid, const int& varid, cons
 		ncpp::add_attribute(ncid, varid, "standard_name", "relative humidity");
 		ncpp::add_attribute(ncid, varid, "long_name", "relative humidity");
 		ncpp::add_attribute(ncid, varid, "units", "fraction");
-	} else if (varname == cf_time) {
+	} else if (varname == cf_time) { //HACK this should now be deprecated
 		ncpp::add_attribute(ncid, varid, "standard_name", CNRMIO::cf_time);
 		ncpp::add_attribute(ncid, varid, "long_name", CNRMIO::cf_time);
 		ncpp::add_attribute(ncid, varid, "units", "days since 1858-11-17 00:00:00");
@@ -1035,6 +1060,12 @@ void CNRMIO::add_attributes_for_variable(const int& ncid, const int& varid, cons
 	} else if (varname == CNRMIO::cnrm_slope) {
 		ncpp::add_attribute(ncid, varid, "long_name", "slope angle");
 		ncpp::add_attribute(ncid, varid, "units", "degrees from horizontal");
+	} else if (varname == CNRMIO::cnrm_uref) {
+		ncpp::add_attribute(ncid, varid, "long_name", "Reference_Height_for_Wind");
+		ncpp::add_attribute(ncid, varid, "units", "m");
+	} else if (varname == CNRMIO::cnrm_zref) {
+		ncpp::add_attribute(ncid, varid, "long_name", "Reference_Height");
+		ncpp::add_attribute(ncid, varid, "units", "m");
 	} else if (varname == CNRMIO::cnrm_latitude) {
 		ncpp::add_attribute(ncid, varid, "long_name", "latitude");
 		ncpp::add_attribute(ncid, varid, "units", "degrees_north");
@@ -1062,6 +1093,9 @@ void CNRMIO::add_attributes_for_variable(const int& ncid, const int& varid, cons
 	} else if (varname == CNRMIO::cnrm_rh) {
 		ncpp::add_attribute(ncid, varid, "long_name", "Relative Humidity");
 		ncpp::add_attribute(ncid, varid, "units", "%");
+	} else if (varname == CNRMIO::cnrm_qair) {
+		ncpp::add_attribute(ncid, varid, "long_name", "Near Surface Specific Humidity");
+		ncpp::add_attribute(ncid, varid, "units", "Kg/Kg");
 	} else if (varname == CNRMIO::cnrm_ilwr) {
 		ncpp::add_attribute(ncid, varid, "long_name", "Surface Incident Longwave Radiation");
 		ncpp::add_attribute(ncid, varid, "units", "W/m2");
@@ -1122,6 +1156,12 @@ void CNRMIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_
 
 		map_vid[name] = varid;
 	}
+}
+
+double CNRMIO::toNetcdfNodata(const double& value) const
+{
+		if (value==IOUtils::nodata) return plugin_nodata;
+		else return value;
 }
 
 } //namespace

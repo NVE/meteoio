@@ -79,6 +79,8 @@ namespace ncpp {
 	size_t add_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 	void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& pos,
 	                  const size_t& length, const double * const data);
+	void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, 
+	                  const size_t& length, const int * const data);
 
 	//Dealing with variables and dimensions
 	bool check_dim_var(const int& ncid, const std::string& dimname);

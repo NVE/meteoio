@@ -63,8 +63,8 @@ class CNRMIO : public IOInterface {
 		                       const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
 		                       std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid);
 		void create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid);
-		void get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
-		                    std::map<std::string, double*>& map_data_1D, double*& dates);
+		void get_parameters(const double& ref_julian, const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
+		                    std::map<std::string, double*>& map_data_1D, int*& dates);
 		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
 		size_t get_dates(const std::vector< std::vector<MeteoData> >& vecMeteo, double*& dates);
 		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
@@ -84,13 +84,14 @@ class CNRMIO : public IOInterface {
 		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
-		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
+		void create_time_dimension(const Date& ref_julian, const int& ncid, int& did_time, int& vid_time);
+		double toNetcdfNodata(const double& value) const;
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double epsilon; //for numerical comparisons of double values
 		static const std::string cf_time, cf_units, cf_days, cf_hours, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
-		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
+		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_uref, cnrm_zref, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
 		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_psum, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
 
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
@@ -101,6 +102,7 @@ class CNRMIO : public IOInterface {
 		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
+		double uref, zref; //sensor height for wind and TA
 		bool in_strict, out_strict;
 		std::vector<StationData> vecMetaData;
 };
