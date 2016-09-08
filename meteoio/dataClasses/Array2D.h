@@ -606,6 +606,8 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs) 
 
 template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array2D<T>
 	const size_t nxy = nx*ny;
 
@@ -716,6 +718,8 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs) 
 
 template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply to every single member of the Array2D<T>
 	const size_t nxy = nx*ny;
 

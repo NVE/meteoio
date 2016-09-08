@@ -685,6 +685,8 @@ template<class T> const Array3D<T> Array3D<T>::operator+(const Array3D<T>& rhs) 
 
 template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array3D<T>
 	const size_t nxyz = nx*ny*nz;
 	if (keep_nodata==false) {
@@ -795,6 +797,8 @@ template<class T> const Array3D<T> Array3D<T>::operator*(const Array3D<T>& rhs) 
 
 template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply every single member of the Array3D<T>
 	const size_t nxyz = nx*ny*nz;
 	if (keep_nodata==false) {

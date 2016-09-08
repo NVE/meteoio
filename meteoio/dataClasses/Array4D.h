@@ -626,6 +626,8 @@ template<class T> const Array4D<T> Array4D<T>::operator+(const Array4D<T>& rhs) 
 
 template<class T> Array4D<T>& Array4D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array4D<T>
 	const size_t nwyz = nwnxny*nz;
 	if (keep_nodata==false) {
@@ -736,6 +738,8 @@ template<class T> const Array4D<T> Array4D<T>::operator*(const Array4D<T>& rhs) 
 
 template<class T> Array4D<T>& Array4D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply every single member of the Array4D<T>
 	const size_t nwxyz = nwnxny*nz;
 	if (keep_nodata==false) {

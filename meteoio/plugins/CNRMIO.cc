@@ -182,7 +182,7 @@ void CNRMIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 void CNRMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	const string filename = cfg.get("GRID2DFILE", "Input");
-	const string varname = get_varname(parameter);
+	const string varname( get_varname(parameter) );
 	read2DGrid_internal(grid_out, filename, varname, date);
 }
 
@@ -191,14 +191,14 @@ void CNRMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& file
 	const bool is_record = (date != Date());
 	size_t lat_index = 0, lon_index = 1;
 
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+	
 	int ncid, varid;
 	vector<int> dimid, dim_varid;
-	vector<string> dimname;
-	vector<size_t> dimlen;
-
-	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	ncpp::get_variable(ncid, varname, varid);
+	vector<string> dimname;
+	vector<size_t> dimlen;
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
 	if (is_record) { // In case we're reading a record the first index is always the record index
@@ -234,7 +234,7 @@ void CNRMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& file
 		ncpp::read_data(ncid, varname, varid, grid);
 	}
 
-	double missing_value=plugin_nodata;
+	double missing_value = plugin_nodata;
 	if (ncpp::check_attribute(ncid, varid, "missing_value"))
 		ncpp::get_attribute(ncid, varname, varid, "missing_value", missing_value);
 
@@ -242,12 +242,12 @@ void CNRMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& file
 
 	//handle data packing if necessary
 	if (ncpp::check_attribute(ncid, varid, "scale_factor")) {
-		double scale_factor=1.;
+		double scale_factor = 1.;
 		ncpp::get_attribute(ncid, varname, varid, "scale_factor", scale_factor);
 		grid_out.grid2D *= scale_factor;
 	}
 	if (ncpp::check_attribute(ncid, varid, "add_offset")) {
-		double add_offset=0.;
+		double add_offset = 0.;
 		ncpp::get_attribute(ncid, varname, varid, "add_offset", add_offset);
 		grid_out.grid2D += add_offset;
 	}
@@ -274,8 +274,8 @@ void CNRMIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	const string filename = cfg.get("METEOFILE", "Input");
 	const string file_and_path = path + "/" + filename;
 
-	int ncid;
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
+	int ncid;
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
 	ncpp::close_file(file_and_path, ncid);
@@ -289,11 +289,11 @@ void CNRMIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 
 	int dimid;
 	size_t dimlen;
-	map<string, int> map_vid;
 
 	ncpp::get_dimension(ncid, cnrm_points, dimid, dimlen);
 	if (dimlen == 0) return; // There are no stations
 
+	map<string, int> map_vid;
 	get_meta_data_ids(ncid, map_vid);
 
 	double *alt = new double[dimlen];
@@ -338,8 +338,8 @@ void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 	const string filename = cfg.get("METEOFILE", "Input");
 	const string file_and_path = path + "/" + filename;
 
-	int ncid;
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
+	int ncid;
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 
 	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);
@@ -379,7 +379,7 @@ void CNRMIO::readData(const int& ncid, const size_t& index_start, const std::vec
 	map<string, double*> map_data;
 	for (map<string, size_t>::const_iterator it = map_parameters.begin(); it != map_parameters.end(); ++it) {
 		double* data = new double[number_of_stations*number_of_records];
-		const string& varname = it->first;
+		const string& varname( it->first );
 
 		map_data[varname] = data;
 
@@ -405,7 +405,7 @@ void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map
                          const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); ++it) {
-		const string& varname = it->first;
+		const string& varname( it->first );
 
 		//find correct handling for each parameter
 		bool simple_copy = false, mutiply_copy = false, psum_measurement = false, sw_measurement = false;
@@ -487,7 +487,7 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 	ncpp::get_variables(ncid, dimensions, parameters_present);
 
 	for (vector<string>::const_iterator it = parameters_present.begin(); it != parameters_present.end(); ++it) {
-		const string& name = *it;
+		const string& name( *it );
 		//cout << "Found parameter: " << name << endl;
 
 		// Check if parameter exists in paramname, which holds strict CNRM parameters
@@ -496,7 +496,7 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 			size_t index = strict_it->second;
 
 			if ((name == cnrm_theorsw) || (name == cnrm_qair) || (name == cnrm_co2air) || (name == cnrm_neb)) {
-			 	index = meteo_data.addParameter(name);
+			 	index = meteo_data.addParameter( name );
 			}
 
 			map_parameters[name] = index;
@@ -504,9 +504,9 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 			size_t index = IOUtils::npos;
 
 			if (meteo_data.param_exists(name)) {
-				index = meteo_data.getParameterIndex(name);
+				index = meteo_data.getParameterIndex( name );
 			} else {
-			 	index = meteo_data.addParameter(name);
+			 	index = meteo_data.addParameter( name );
 			}
 
 			map_parameters[name] = index;
@@ -678,8 +678,8 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
                          const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D)
 {
 	for (map<size_t, string>::const_iterator it = map_param_name.begin(); it != map_param_name.end(); ++it) {
-		const size_t param = it->first;
-		const string varname = it->second;
+		const size_t param( it->first );
+		const string varname( it->second );
 
 		bool simple_copy = false, multiply_copy = false;
 		double multiplier = IOUtils::nodata;
@@ -716,8 +716,8 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
 void CNRMIO::create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid)
 {
 	for (map<string, double*>::const_iterator it = map_data_1D.begin(); it != map_data_1D.end(); ++it) {
+		const string& varname( it->first );
 		int vid;
-		const string& varname = it->first;
 
 		if (varname == cnrm_timestep) {
 			ncpp::add_0D_variable(ncid, cnrm_timestep, NC_DOUBLE, vid);
@@ -740,7 +740,7 @@ void CNRMIO::create_parameters(const int& ncid, const int& did_time, const int& 
 	// At this point map_param_name holds all parameters that have values different from nodata
 	for (map<size_t, string>::iterator it = map_param_name.begin(); it != map_param_name.end();) {
 		bool create = false;
-		string& varname = it->second;
+		string& varname( it->second );
 
 		const map<string, string>::const_iterator it_cnrm = map_name.find(varname);
 		if (it_cnrm != map_name.end()) {
@@ -788,7 +788,7 @@ void CNRMIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMete
 
 	double interval = 0;
 	for (size_t ii=0; ii<number_of_records; ii++) {
-		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate();
+		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate(); //HACK give number of seconds
 		if (ii == 1) interval = static_cast<double>( Optim::round((dates[ii] - dates[ii-1]) * 86400.) );
 	}
 
@@ -944,7 +944,7 @@ void CNRMIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string
 	}
 
 	if (is_record) {
-		size_t pos_start = ncpp::add_record(ncid, CNRMIO::cf_time, vid_time, date.getModifiedJulianDate());
+		const size_t pos_start = ncpp::add_record(ncid, CNRMIO::cf_time, vid_time, date.getModifiedJulianDate());
 		ncpp::write_data(ncid, varname, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
 		ncpp::write_data(ncid, varname, vid_var, data);
@@ -969,7 +969,7 @@ void CNRMIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time
 {
 	ncpp::add_dimension(ncid, CNRMIO::cf_time, NC_UNLIMITED, did_time);
 	ncpp::add_1D_variable(ncid, CNRMIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
-	add_attributes_for_variable(ncid, vid_time, CNRMIO::cf_time);
+	add_attributes_for_variable(ncid, vid_time, CNRMIO::cf_time); //HACK: hard code here since we need to provide the ref date
 }
 
 // When reading or writing gridded variables we should have a consistent naming
@@ -1114,7 +1114,7 @@ void CNRMIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_
 
 	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); ++it) {
 		int varid;
-		const string& name = *it;
+		const string& name( *it );
 
 		ncpp::get_variable(ncid, name, varid);
 		if (!ncpp::check_dimensions(ncid, name, varid, dimensions))

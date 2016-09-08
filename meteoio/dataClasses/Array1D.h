@@ -455,6 +455,8 @@ template<class T> const Array1D<T> Array1D<T>::operator+(const Array1D<T>& rhs) 
 
 template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array1D<T>
 	if (keep_nodata==false) {
 		for (size_t ii=0; ii<nx; ii++) {
@@ -563,6 +565,8 @@ template<class T> const Array1D<T> Array1D<T>::operator*(const Array1D<T>& rhs) 
 
 template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply every single member of the Array1D<T>
 	if (keep_nodata==false) {
 		for (size_t ii=0; ii<nx; ii++) {
