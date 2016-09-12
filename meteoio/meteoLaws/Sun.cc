@@ -75,6 +75,14 @@ void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, c
 		throw NoDataException(ss.str(), AT);
 	}
 	
+	if (i_latitude==latitude && i_longitude==longitude) {
+		if (altitude==i_altitude) return; //everything is the same, nothing to do
+		
+		altitude = i_altitude;
+		beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
+		return;
+	}
+	
 	position.reset();
 	latitude = i_latitude;
 	longitude = i_longitude;
