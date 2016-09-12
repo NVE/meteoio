@@ -62,12 +62,13 @@ class SunObject {
 		double getCorrectionFactor(const double& iswr_measured, double &Md, bool &day, bool &night) const;
 		double getCorrectionFactor(const double& iswr_measured) const;
 
+		double getJulian(const double& o_TZ) const {return (julian_gmt+o_TZ*1./24.);}
+		const std::string toString() const;
+		
 		//SunTrajectory position;
 		SunMeeus position;
-
-		double getJulian(const double& o_TZ) const {return (julian_gmt+o_TZ*1./24.);}
-
-		const std::string toString() const;
+		static const double elevation_dftlThreshold, rad_threshold;
+		
 	private:
 		void getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
 		                      const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
@@ -81,7 +82,6 @@ class SunObject {
 		double latitude, longitude, altitude;
 		double elevation_threshold;
 		double beam_toa, beam_direct, beam_diffuse;
-		static const double elevation_dftlThreshold, rad_threshold;
 };
 
 } //end namespace

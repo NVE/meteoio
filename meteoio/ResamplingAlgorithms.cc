@@ -649,12 +649,12 @@ bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
 		pts.loss1 = pts.loss2;
 	} else {
 		const double pot1 = (foundP1)? getPotentialH( vecM[indexP1] ) : IOUtils::nodata;
-		pts.loss1 = (pot1!=IOUtils::nodata && pot1>0.)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
+		pts.loss1 = (pot1!=IOUtils::nodata && pot1>SunObject::rad_threshold)? vecM[indexP1](paramindex) / pot1 : IOUtils::nodata;
 		pts.jul1 = jul1;
 	}
 	
 	const double pot2 = (foundP2)? getPotentialH( vecM[indexP2] ) : IOUtils::nodata;
-	pts.loss2 = (pot2!=IOUtils::nodata && pot2>0.)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
+	pts.loss2 = (pot2!=IOUtils::nodata && pot2>SunObject::rad_threshold)? vecM[indexP2](paramindex) / pot2 : IOUtils::nodata;
 	pts.jul2 = vecM[indexP2].date.getJulian();
 	return true;
 }

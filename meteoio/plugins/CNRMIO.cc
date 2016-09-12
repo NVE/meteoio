@@ -113,13 +113,13 @@ bool CNRMIO::initStaticData()
 	paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname[cnrm_iswr] = MeteoData::ISWR;
+	paramname[cnrm_iswr] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_rh] = MeteoData::RH;
 	paramname[cnrm_vw] = MeteoData::VW;
 	paramname[cnrm_dw] = MeteoData::DW;
 	paramname[cnrm_rainf] = IOUtils::npos;
 	paramname[cnrm_snowf] = IOUtils::npos;
-	paramname[cnrm_swr_direct] = IOUtils::npos;
+	paramname[cnrm_swr_direct] = MeteoData::ISWR;
 	paramname[cnrm_swr_diffuse] = IOUtils::npos;
 	paramname[cnrm_p] = MeteoData::P;
 	paramname[cnrm_ilwr] = MeteoData::ILWR;
@@ -130,7 +130,7 @@ bool CNRMIO::initStaticData()
 	map_name["P"] = cnrm_p;
 	map_name["VW"] = cnrm_vw;
 	map_name["DW"] = cnrm_dw;
-	map_name["ISWR"] = cnrm_iswr;
+	map_name["ISWR"] = cnrm_swr_direct;
 	map_name["PSUM"] = cnrm_rainf;
 	map_name[cnrm_co2air] = cnrm_co2air;
 	map_name[cnrm_qair] = cnrm_qair;
@@ -638,6 +638,14 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
 			continue;
 		}
 		if (varname==cnrm_snowf) continue; //this is handled by cnrm_rainf
+		
+		if (varname==cnrm_swr_diffuse) { //HACK: Crocus will redo global = dir+diff
+			for (size_t ii=0; ii<number_of_stations; ++ii) {
+				for (size_t jj=0; jj<number_of_records; ++jj)
+					data[jj*number_of_stations + ii] = 0.;
+			}
+			continue;
+		}
 
 		for (size_t ii=0; ii<number_of_stations; ++ii) {
 			const size_t nr_of_parameters = vecMeteo[ii].front().getNrOfParameters();
@@ -792,7 +800,6 @@ void CNRMIO::get_parameters(const double& ref_julian, const std::vector< std::ve
 	map_param_name[nr_of_parameters+1] = cnrm_qair; //add Qair
 	map_param_name[nr_of_parameters+2] = cnrm_co2air; //this one needs to be there for Safran
 	map_param_name[nr_of_parameters+3] = cnrm_swr_diffuse; //this one needs to be there for Safran
-	map_param_name[nr_of_parameters+4] = cnrm_swr_direct; //this one needs to be there for Safran
 
 	double interval = (number_of_records>1)? static_cast<double>(dates[1] - dates[0]) : 0; //we consider this gives us the sampling rate
 	double* timestep = new double[1];
