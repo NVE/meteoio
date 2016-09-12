@@ -5,6 +5,7 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
 IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
@@ -44,13 +45,13 @@ SET(meteoio_sources
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
 	DataGenerator.cc
-	GeneratorAlgorithms.cc
 	plugins/libsmet.cc
 	IOInterface.cc
 	${plugins_sources}
 	${meteoLaws_sources}
 	${meteoStats_sources}
 	${meteoFilters_sources}
+	${dataGenerators_sources}
 )
 
 IF(GUI_EXCEPTIONS)
