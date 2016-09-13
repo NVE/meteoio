@@ -47,7 +47,7 @@
 #include <meteoio/DataGenerator.h>
 #include <meteoio/exports.h>
 #include <meteoio/FileUtils.h>
-#include <meteoio/GeneratorAlgorithms.h>
+#include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/InterpolationAlgorithms.h>
 #include <meteoio/IOExceptions.h>

@@ -26,6 +26,7 @@
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/GridsManager.h>
 #include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/meteoLaws/Sun.h>
 
 #include <vector>
 #include <string>

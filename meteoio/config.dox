@@ -756,6 +756,7 @@ WARN_LOGFILE           =
 
 INPUT                  = ./meteoio \
                          ./meteoio/dataClasses \
+                         ./meteoio/dataGenerators \
                          ./meteoio/plugins \
                          ./meteoio/meteoLaws \
                          ./meteoio/meteoFilters \
