@@ -16,6 +16,10 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Meteo1DInterpolator.h>
+#include <meteoio/dataClasses/StationData.h>
+
+#include <iostream>
+#include <utility>
 
 using namespace std;
 

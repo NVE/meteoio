@@ -5,6 +5,7 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoResampling/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
 IF(PROJ4)
@@ -39,7 +40,6 @@ SET(meteoio_sources
 	IOManager.cc
 	IOHandler.cc
 	MeteoProcessor.cc
-	ResamplingAlgorithms.cc
 	ResamplingAlgorithms2D.cc
 	InterpolationAlgorithms.cc
 	Meteo1DInterpolator.cc
@@ -47,6 +47,7 @@ SET(meteoio_sources
 	DataGenerator.cc
 	plugins/libsmet.cc
 	IOInterface.cc
+	${meteoResampling_sources}
 	${plugins_sources}
 	${meteoLaws_sources}
 	${meteoStats_sources}

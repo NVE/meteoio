@@ -87,7 +87,7 @@
 #include <meteoio/plugins/libsmet.h>
 
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>
 
 #endif

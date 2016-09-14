@@ -19,16 +19,13 @@
 #define METEO1DINTERPOLATOR_H
 
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/StationData.h>
 #include <meteoio/Config.h>
-#include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
-#include <utility>
 
 namespace mio {
 
