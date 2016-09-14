@@ -41,20 +41,14 @@ namespace mio {
  * In order to graphicaly explore the content and structure of NetCDF files, you can use the
  * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software.
  *
- * @section cnrm_units Units
- *
- *
  * @section cnrm_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] sections
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] sections
- * - DEMFILE: The filename of the file containing the DEM; [Input] section
- * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  * - METEOPATH: where to find the meteofiles as refered to here below; [Input] and [Output] sections
  * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] sections
  * - UREF: height of wind measurements (in m, default 10m); [Output] section
  * - ZREF: height of air temperature measurements (in m, default 2m); [Output] section
- * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] sections
  * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
  *                 in the specification will be omitted; [Input] and [Output] section
  *
@@ -64,6 +58,9 @@ namespace mio {
  * METEO     = CNRM
  * METEOFILE = ./input/meteo/forcing.nc
  * @endcode
+ * It is also recommended to use a dataGenerator on PSUM (for example, a constant generator set at 0) since
+ * <A HREF="http://www.cnrm-game-meteo.fr/spip.php?article555&lang=en">Crocus</A> does not accept nodata values (and re-accumulating
+ * the precipitation can still lead to nodata values).
  *
  * @section cnrm_compilation Compilation
  * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
@@ -554,6 +551,7 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		if (ref_date.isUndef() || ref_date < vecMeteo[ii].front().date)
 			ref_date = vecMeteo[ii].front().date;
 	}
+	ref_date.setTimeZone(0.); //so dates will be in GMT
 	ref_date.rnd(3600*24, Date::DOWN); //round to the day
 	
 	map<string, int> varid;
@@ -615,7 +613,7 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
 					map_data_2D[cnrm_rainf][ii] = plugin_nodata;
 					map_data_2D[cnrm_snowf][ii] = plugin_nodata;
 				}
-				
+
 				for (size_t jj=1; jj<number_of_records; ++jj) {
 					const double acc_period = (vecMeteo[ii][jj].date.getJulian() - vecMeteo[ii][jj-1].date.getJulian()) * (24.*3600.); //in seconds
 					if (acc_period==0.) continue; //this should not happen, but...
@@ -638,7 +636,7 @@ void CNRMIO::copy_data(const size_t& number_of_stations, const size_t& number_of
 			continue;
 		}
 		if (varname==cnrm_snowf) continue; //this is handled by cnrm_rainf
-		
+
 		if (varname==cnrm_swr_diffuse) { //HACK: Crocus will redo global = dir+diff
 			for (size_t ii=0; ii<number_of_stations; ++ii) {
 				for (size_t jj=0; jj<number_of_records; ++jj)
