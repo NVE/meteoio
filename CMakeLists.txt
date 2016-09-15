@@ -80,6 +80,7 @@ ADD_SUBDIRECTORY(meteoio/plugins)
 ADD_SUBDIRECTORY(meteoio/meteoLaws)
 ADD_SUBDIRECTORY(meteoio/meteoFilters)
 ADD_SUBDIRECTORY(meteoio/meteoResampling)
+ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
 ADD_SUBDIRECTORY(meteoio)
 ###########################################################
 #plugins
@@ -112,6 +113,7 @@ FILE(GLOB hfiles "meteoio/*.h")
 FILE(GLOB hdatafiles "meteoio/dataClasses/*.h")
 FILE(GLOB hgeneratorsfiles "meteoio/dataGenerators/*.h")
 FILE(GLOB hresamplingfiles "meteoio/meteoResampling/*.h")
+FILE(GLOB hspatialfiles "meteoio/spatialInterpolations/*.h")
 FILE(GLOB hpluginfiles "meteoio/plugins/*.h")
 FILE(GLOB hlawsfiles "meteoio/meteoLaws/*.h")
 FILE(GLOB hfilterfiles "meteoio/meteoFilters/*.h")
@@ -121,6 +123,7 @@ INSTALL(FILES ${hfiles} DESTINATION include/meteoio COMPONENT headers)
 INSTALL(FILES ${hdatafiles} DESTINATION include/meteoio/dataClasses COMPONENT headers)
 INSTALL(FILES ${hgeneratorsfiles} DESTINATION include/meteoio/dataGenerators COMPONENT headers)
 INSTALL(FILES ${hresamplingfiles} DESTINATION include/meteoio/meteoResampling COMPONENT headers)
+INSTALL(FILES ${hspatialfiles} DESTINATION include/meteoio/spatialInterpolations COMPONENT headers)
 INSTALL(FILES ${hpluginfiles} DESTINATION include/meteoio/plugins COMPONENT headers)
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteoLaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT headers)
@@ -139,7 +142,7 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove_directory meteoio/meteoFilters/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/meteoLaws/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/meteoResampling/CMakeFiles
-	COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/spatialInterpolations/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles
 	COMMAND cmake -E remove_directory tests/CMakeFiles
 	COMMAND cmake -E remove_directory tests/Testing

@@ -49,7 +49,7 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
-#include <meteoio/InterpolationAlgorithms.h>
+#include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/IOInterface.h>

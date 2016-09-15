@@ -25,7 +25,7 @@
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/DEMObject.h>
-#include <meteoio/InterpolationAlgorithms.h>
+#include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
 
 #include <memory>
 #include <vector>
