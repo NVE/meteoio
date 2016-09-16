@@ -17,6 +17,7 @@
 */
 #include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
+#include <meteoio/MathOptim.h>
 
 #include <meteoio/spatialInterpolations/ALSScaleAlgorithm.h>
 #include <meteoio/spatialInterpolations/AvgAlgorithm.h>
@@ -159,49 +160,51 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
 
-	if (algoname == "NONE"){// return a nodata grid
+	if (algoname == "NONE") {// return a nodata grid
 		return new NoneAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "STD_PRESS"){// standard air pressure interpolation
+	} else if (algoname == "STD_PRESS") {// standard air pressure interpolation
 		return new StandardPressureAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "CST"){// constant fill
+	} else if (algoname == "CST") {// constant fill
 		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "AVG"){// average fill
+	} else if (algoname == "AVG") {// average fill
 		return new AvgAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "AVG_LAPSE"){// average fill with an elevation lapse rate
+	} else if (algoname == "AVG_LAPSE") {// average fill with an elevation lapse rate
 		return new AvgLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "IDW"){// Inverse Distance Weighting fill
+	} else if (algoname == "IDW") {// Inverse Distance Weighting fill
 		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
+	} else if (algoname == "IDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill
 		return new IDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
+	} else if (algoname == "LIDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
 		return new LocalIDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "LISTON_RH"){// relative humidity interpolation
+	} else if (algoname == "LISTON_RH") {// relative humidity interpolation
 		return new RHListonAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "ILWR_EPS"){// long wave radiation interpolation
+	} else if (algoname == "ILWR_EPS") {// long wave radiation interpolation
 		return new ILWREpsAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "LISTON_WIND"){// wind velocity interpolation (using a heuristic terrain effect)
+	} else if (algoname == "LISTON_WIND") {// wind velocity interpolation (using a heuristic terrain effect)
 		return new ListonWindAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "RYAN"){// RYAN wind direction
+	} else if (algoname == "RYAN") {// RYAN wind direction
 		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "WINSTRAL"){// Winstral wind exposure factor
+	} else if (algoname == "WINSTRAL") {// Winstral wind exposure factor
 		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "WINSTRAL++"){// Winstral/Liston wind exposure factor
+	} else if (algoname == "WINSTRAL++") {// Winstral/Liston wind exposure factor
 		return new WinstralListonAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "ODKRIG"){// ordinary kriging
+	} else if (algoname == "ODKRIG") {// ordinary kriging
 		return new OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "ODKRIG_LAPSE"){// ordinary kriging with lapse rate
+	} else if (algoname == "ODKRIG_LAPSE") {// ordinary kriging with lapse rate
 		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "USER"){// read user provided grid
+	} else if (algoname == "USER") {// read user provided grid
 		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "ALS_SCALING"){// scale from ALS grid
+	} else if (algoname == "ALS_SCALING") {// scale from ALS grid
 		return new ALS_Interpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "PPHASE"){// precipitation phase parametrization
+	} else if (algoname == "PPHASE") {// precipitation phase parametrization
 		return new PPHASEInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "PSUM_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
+	} else if (algoname == "PSUM_SNOW") {// precipitation interpolation according to (Magnusson, 2010)
 		return new SnowPSUMInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "SWRAD"){// terrain shadding interpolation
+	} else if (algoname == "SWRAD") {// terrain shadding interpolation
 		return new SWRadInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	}else {
+	} else if (algoname == "RH") {//HACK deprecated
+		throw IOException("The 'RH' interpolation algorithm has been renamed as 'LISTON_RH' for consistency" , AT);
+	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
 }
@@ -259,15 +262,12 @@ size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData
 std::string InterpolationAlgorithm::getInfo() const
 {
 	std::ostringstream os;
-	os << algo << ", " << nrOfMeasurments;
-	if (nrOfMeasurments==1)
-		os << " station";
-	else
-		os << " stations";
+	os << algo << ", " << nrOfMeasurments << " station";
+	if (nrOfMeasurments!=1) os << "s"; //add plural mark
+
 	const std::string tmp( info.str() );
-	if (!tmp.empty()) {
-		os << ", " << tmp;
-	}
+	if (!tmp.empty()) os << ", " << tmp;
+
 	return os.str();
 }
 
@@ -340,9 +340,8 @@ void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<doubl
 
 void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt, const double& max_alt)
 {
-	const size_t nxy = grid.getNx()*grid.getNy();
-	const size_t dem_nxy = dem.grid2D.getNx()*dem.grid2D.getNy();
-	if (nxy != dem_nxy) {
+	const size_t nxy = grid.size();
+	if (dem.size() != nxy) {
 		std::ostringstream ss;
 		ss << "Dem size (" << dem.grid2D.getNx() << "," << dem.grid2D.getNy() << ") and";
 		ss << "grid size (" << grid.getNx() << "," << grid.getNy() << ") don't match!";
@@ -396,13 +395,13 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 	}
 
 	//recompute VW, DW in each cell
-	const size_t nrCells = VW.getNx()*VW.getNy();
+	const size_t nrCells = VW.size();
 	for (size_t ii=0; ii<nrCells; ii++) {
 		const double ve = VW(ii);
 		const double vn = DW(ii);
 
 		if (ve!=IOUtils::nodata && vn!=IOUtils::nodata) {
-			VW(ii) = sqrt(ve*ve + vn*vn);
+			VW(ii) = Optim::fastSqrt_Q3(ve*ve + vn*vn);
 			DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
 		}
 	}
