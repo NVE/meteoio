@@ -120,7 +120,7 @@ class GeneratorAlgorithm {
 
 class GeneratorAlgorithmFactory {
 	public:
-		static GeneratorAlgorithm* getAlgorithm(const std::string& i_algoname, const std::vector<std::string>& vecArgs);
+		static GeneratorAlgorithm* getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::vector<std::string>& vecArgs);
 };
 
 } //end namespace mio

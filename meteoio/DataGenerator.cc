@@ -230,7 +230,7 @@ void DataGenerator::setAlgorithms(const Config& cfg, const std::string& key_patt
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			std::vector<std::string> vecArgs;
 			getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], vecArgs);
-			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], vecArgs);
+			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
 		}
 
 		if (nrOfAlgorithms>0) {

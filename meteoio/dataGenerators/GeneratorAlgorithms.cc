@@ -113,7 +113,7 @@ const double GeneratorAlgorithm::soil_albedo = .23; //grass
 const double GeneratorAlgorithm::snow_albedo = .85; //snow
 const double GeneratorAlgorithm::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i_algoname, const std::vector<std::string>& vecArgs)
+GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*/, const std::string& i_algoname, const std::vector<std::string>& vecArgs)
 {
 	std::string algoname(i_algoname);
 	IOUtils::toUpper(algoname);
