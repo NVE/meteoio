@@ -422,9 +422,11 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			last_v1 = ii;
 		}
 		const size_t new_count = last_v1 - vec1_start;
-		if (new_count<tmp.size()) vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
+		if (new_count<tmp.size())
+			vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
 		
-		for(size_t ii=0; ii<tmp.size(); ii++) vec1[vec1_start+ii] = tmp[ii];
+		for(size_t ii=0; ii<tmp.size(); ii++)
+			vec1[vec1_start+ii] = tmp[ii];
 		
 		vec1_end = idx2;
 	} else {
