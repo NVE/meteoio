@@ -365,53 +365,51 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	std::string coordin, coordinparam, coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dem.llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
-
-	std::vector<std::string> vecStation;
-	cfg.getValues("Vstation", "INPUT", vecStation);
-	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
-		Coords tmp(coordin, coordinparam, vecStation[ii]);
-		if (!tmp.isNodata())
-			v_coords.push_back( tmp );
-	}
-	
-	//create stations' metadata
 	const double dem_easting = dem.llcorner.getEasting();
 	const double dem_northing = dem.llcorner.getNorthing();
-	for (size_t ii=0; ii<v_coords.size(); ii++) {
-		if (!dem.gridify(v_coords[ii])) {
-			ostringstream ss;
-			ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
-			throw NoDataException(ss.str(), AT);
-		}
 
-		const size_t i = v_coords[ii].getGridI(), j = v_coords[ii].getGridJ();
-		if (adjust_coordinates) { //adjust coordinates to match the chosen cell
-			const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
-			const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
-			v_coords[ii].setXY(easting, northing, dem(i,j));
-			v_coords[ii].setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
-		} else {
-			v_coords[ii].setAltitude(dem(i,j), false);
-		}
+	std::vector<std::string> vecStation, vecKeys;
+	cfg.getValues("Vstation", "INPUT", vecStation, vecKeys);
+	for (size_t ii=0; ii<vecStation.size(); ii++) {
+		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
+		Coords curr_point(coordin, coordinparam, vecStation[ii]);
 
-		ostringstream name;
-		name << "Virtual_Station_" << ii+1;
-		ostringstream id;
-		id << "VIR" << ii+1;
-		StationData sd(v_coords[ii], id.str(), name.str());
-		sd.setSlope(dem.slope(i,j), dem.azi(i,j));
+		if (!curr_point.isNodata()) {
+			v_coords.push_back( curr_point ); //so we can check for duplicates
 
-		//remove duplicate stations, ie stations that have same easting,northing,altitude
-		bool is_duplicate = false;
-		for (size_t jj=0; jj<ii; jj++) {
-			if (v_coords[ii]==v_coords[jj]) {
-				std::cout << "[W] removing VSTATION" << ii+1 << " as a duplicate of VSTATION" << jj+1 << "\n";
-				is_duplicate = true;
-				break;
+			if (!dem.gridify(curr_point)) {
+				ostringstream ss;
+				ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
+				throw NoDataException(ss.str(), AT);
+			}
+
+			const size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+			if (adjust_coordinates) { //adjust coordinates to match the chosen cell
+				const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
+				const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
+				curr_point.setXY(easting, northing, dem(i,j));
+				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
+			} else {
+				curr_point.setAltitude(dem(i,j), false);
+			}
+
+			//remove duplicate stations, ie stations that have same easting,northing,altitude
+			bool is_duplicate = false;
+			for (size_t jj=0; jj<ii; jj++) {
+				if (curr_point==v_coords[jj]) {
+					std::cout << "[W] removing VSTATION" << ii+1 << " as a duplicate of VSTATION" << jj+1 << "\n";
+					is_duplicate = true;
+					break;
+				}
+			}
+			if (!is_duplicate) {
+				//extract vstation number, build the station name and station ID
+				const std::string id_num = vecKeys[ii].substr(string("Vstation").length());
+				StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
+				sd.setSlope(dem.slope(i,j), dem.azi(i,j));
+				v_stations.push_back( sd );
 			}
 		}
-		if (!is_duplicate) v_stations.push_back( sd );
 	}
 }
 
