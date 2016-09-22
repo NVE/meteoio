@@ -295,8 +295,8 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
-		const string key_pattern = IOUtils::strToUpper(keymatch);
-		const string section_pattern = IOUtils::strToUpper(section);
+		const string key_pattern( IOUtils::strToUpper(keymatch) );
+		const string section_pattern( IOUtils::strToUpper(section) );
 
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_section = (it->first).find(section_pattern, 0);
@@ -304,17 +304,17 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 
 			const size_t found_pos = (it->first).find(key_pattern, section_len);
 			if (found_pos!=string::npos) { //found it!
-				const string key = (it->first).substr(section_len + 2); //from pos to the end
+				const string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back(key);
 			}
 		}
 	} else {
-		const string key_pattern = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch);
+		const string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
 
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(key_pattern, 0);
 			if (found_pos==0) { //found it!
-				const string key = (it->first).substr(section_len + 2); //from pos to the end
+				const string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back(key);
 			}
 		}

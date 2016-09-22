@@ -553,11 +553,11 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 	if (merge_commands.empty()) return;
 	
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const string toStationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
+		const std::string toStationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
 		
-		const map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
+		const std::map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
 		const std::vector<std::string> &merge_from( it->second );

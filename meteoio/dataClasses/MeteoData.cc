@@ -363,7 +363,7 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 	if (!vec1.empty()) {
 		const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
 		for (size_t pp=0; pp<nrExtra2; pp++) {
-			const std::string extra_name = vec2.back().extra_param_name[pp];
+			const std::string extra_name( vec2.back().extra_param_name[pp] );
 			if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
 				for (size_t ii=0; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
 			}
@@ -409,25 +409,29 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		size_t last_v1 = vec1_start; //last element from vec1 that will have to be invalidated
 		for(size_t ii=vec1_start; ii<vec1.size(); ii++) {
 			const Date curr_date( vec1[ii].date );
-			while ((curr_date>vec2[idx2].date) && (idx2<vec2.size())) {
+			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) {
 				tmp.push_back( md_pattern );
-				tmp.front().date = vec2[idx2].date;
-				tmp.front().merge( vec2[idx2] ); //so the extra params are properly handled
+				tmp.back().date = vec2[idx2].date;
+				tmp.back().merge( vec2[idx2] ); //so the extra params are properly handled
 				idx2++;
 			}
-			if (idx2==vec2.size())  return;//nothing left to merge
+			if (idx2==vec2.size())  break; //nothing left to merge
 				
-			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2] );
+			if (curr_date==vec2[idx2].date) {
+				vec1[ii].merge( vec2[idx2] );
+				idx2++;
+			}
 			tmp.push_back( vec1[ii] );
 			last_v1 = ii;
 		}
-		const size_t new_count = last_v1 - vec1_start;
+
+		const size_t new_count = last_v1 - vec1_start + 1;
 		if (new_count<tmp.size())
 			vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
-		
+
 		for(size_t ii=0; ii<tmp.size(); ii++)
 			vec1[vec1_start+ii] = tmp[ii];
-		
+
 		vec1_end = idx2;
 	} else {
 		size_t idx2 = vec1_start;
