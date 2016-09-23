@@ -28,8 +28,9 @@ namespace mio {
  * @class  ProcButterworth
  * @ingroup processing
  * @brief Simple 2 poles Butterworth low pass filter.
- * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. This filter introduces a phase
- * (ie the data has a delay compared to the original data). Future implementation might be non-causal in order to remove the phase.
+ * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. The phase is removed by running
+ * the filter twice, first backward and then forward (this also squares the amplitude response, ie doubles the order of the filter, see
+ * https://ccrma.stanford.edu/~jos/fp/Forward_Backward_Filtering.html or https://ch.mathworks.com/help/signal/ref/filtfilt.html)
  *
  * The original paper is <i>On the Theory of Filters Amplifiers</i>, S. Butterworth, Experimental wireless & the wireless engineer,
  * <b>7</b>, pp 536-541, 1930.
@@ -51,7 +52,6 @@ class ProcButterworth : public ProcessingBlock {
 		void computeCoefficients(const double& samplerate, const double& f_cutoff, double A[3], double B[3]) const;
 		void parse_args(std::vector<std::string> vec_args);
 
-		std::vector<double> X, Y;
 		double cutoff;
 };
 

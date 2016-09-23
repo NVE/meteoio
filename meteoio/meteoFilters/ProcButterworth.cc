@@ -24,7 +24,7 @@ using namespace std;
 namespace mio {
 
 ProcButterworth::ProcButterworth(const std::vector<std::string>& vec_args, const std::string& name)
-                  : ProcessingBlock(name), X(3, IOUtils::nodata), Y(3, IOUtils::nodata), cutoff(0.)
+                  : ProcessingBlock(name), cutoff(0.)
 {
 	parse_args(vec_args);
 	properties.points_before = 2;
@@ -44,8 +44,26 @@ void ProcButterworth::process(const unsigned int& param, const std::vector<Meteo
 	double A[3], B[3];
 	computeCoefficients(sampling_rate, 1./cutoff, A, B);
 
-	for (size_t ii=0; ii<ovec.size(); ++ii){
+	std::vector<double> X(3, IOUtils::nodata), Y(3, IOUtils::nodata);
+	std::vector<double> vecTmp(nr_data_pts);
+	
+	//backward filter
+	for (size_t ii=ovec.size(); ii--> 0;){
 		const double& raw_val = ivec[ii](param);
+
+		//propagate in X and Y
+		X[2] = X[1]; X[1] = X[0]; X[0] = raw_val;
+		Y[2] = Y[1]; Y[1] = Y[0]; Y[0] = raw_val; //Y[0] will be overwritten but in case of nodata we still propagate a value
+		if (X[2]==IOUtils::nodata || X[1]==IOUtils::nodata || X[0]==IOUtils::nodata) continue;
+		if (Y[2]==IOUtils::nodata || Y[1]==IOUtils::nodata) continue;
+
+		Y[0] = A[0]*X[0] + A[1]*X[1] + A[2]*X[2] - ( B[1]*Y[1] + B[2]*Y[2] );
+		vecTmp[ii] = Y[0];
+	}
+
+	//forward filter
+	for (size_t ii=0; ii<ovec.size(); ++ii){
+		const double& raw_val = vecTmp[ii];
 
 		//propagate in X and Y
 		X[2] = X[1]; X[1] = X[0]; X[0] = raw_val;
@@ -56,14 +74,13 @@ void ProcButterworth::process(const unsigned int& param, const std::vector<Meteo
 		Y[0] = A[0]*X[0] + A[1]*X[1] + A[2]*X[2] - ( B[1]*Y[1] + B[2]*Y[2] );
 		ovec[ii](param) = Y[0];
 	}
-
 }
 
 void ProcButterworth::computeCoefficients(const double& samplerate, const double& f_cutoff, double A[3], double B[3]) const
 {
 	const double QcRaw  = (2. * Cst::PI * f_cutoff) / samplerate; // Find cutoff frequency in [0..PI]
 	const double QcWarp = tan(QcRaw); // Warp cutoff frequency
-	const double gain = 1. / (1.+Cst::Sqrt2/QcWarp + 2./Optim::pow2(QcWarp));
+	const double gain = 1. / (1. + Cst::Sqrt2/QcWarp + 2./Optim::pow2(QcWarp));
 
 	B[0] = 1.;
 	B[1] = (2. - 2. * 2./Optim::pow2(QcWarp)) * gain;
