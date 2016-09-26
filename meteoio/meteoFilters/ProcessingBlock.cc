@@ -32,7 +32,7 @@
 #include <meteoio/meteoFilters/FilterTukey.h>
 #include <meteoio/meteoFilters/FilterMAD.h>
 #include <meteoio/meteoFilters/ProcAggregate.h>
-#include <meteoio/meteoFilters/ProcButterworth.h>
+#include <meteoio/meteoFilters/ProcIIRLowPass.h>
 #include <meteoio/meteoFilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Forland.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Hamon.h>
@@ -107,7 +107,7 @@ namespace mio {
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
- * - BUTTERWORTH: low pass butterworth filter, see ProcButterworth
+ * - LOW_PASS: low pass critically damped filter, see ProcIIRLowPass
  * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
@@ -165,8 +165,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
 		return new ProcWMASmoothing(vec_args, blockname);
-	} else if (blockname == "BUTTERWORTH"){
-		return new ProcButterworth(vec_args, blockname);
+	} else if (blockname == "LOW_PASS"){
+		return new ProcIIRLowPass(vec_args, blockname);
 	} else if (blockname == "AGGREGATE"){
 		return new ProcAggregate(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){

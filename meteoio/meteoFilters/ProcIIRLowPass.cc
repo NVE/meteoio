@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoFilters/ProcButterworth.h>
+#include <meteoio/meteoFilters/ProcIIRLowPass.h>
 #include <meteoio/MathOptim.h>
 #include <cmath>
 
@@ -23,32 +23,32 @@ using namespace std;
 
 namespace mio {
 
-const double ProcButterworth::n = 1.; //one pass
+const double ProcIIRLowPass::n = 1.; //one pass
 
 //Butterworth
-//const double ProcButterworth::g = 1.;
-//const double ProcButterworth::p = sqrt(2.);
-//const double ProcButterworth::c = 1. / pow( pow(2, 1./n) - 1., 1./4. ); //3dB cutoff correction
+//const double ProcIIRLowPass::g = 1.;
+//const double ProcIIRLowPass::p = sqrt(2.);
+//const double ProcIIRLowPass::c = 1. / pow( pow(2, 1./n) - 1., 1./4. ); //3dB cutoff correction
 
 //critically damped filter
-const double ProcButterworth::g = 1.;
-const double ProcButterworth::p = 2.;
-const double ProcButterworth::c = 1. / sqrt( pow(2., 1./(2.*n)) - 1. ); //3dB cutoff correction
+const double ProcIIRLowPass::g = 1.;
+const double ProcIIRLowPass::p = 2.;
+const double ProcIIRLowPass::c = 1. / sqrt( pow(2., 1./(2.*n)) - 1. ); //3dB cutoff correction
 
 //Bessel filter
-//const double ProcButterworth::g = 3.;
-//const double ProcButterworth::p = 3.;
-//const double ProcButterworth::c = 1./ sqrt( sqrt(pow(2., 1/n) - 3./4.) - 0.5 ) / sqrt(3.); //3dB cutoff correction
+//const double ProcIIRLowPass::g = 3.;
+//const double ProcIIRLowPass::p = 3.;
+//const double ProcIIRLowPass::c = 1./ sqrt( sqrt(pow(2., 1/n) - 3./4.) - 0.5 ) / sqrt(3.); //3dB cutoff correction
 
-ProcButterworth::ProcButterworth(const std::vector<std::string>& vec_args, const std::string& name)
-                  : ProcessingBlock(name), cutoff(0.)
+ProcIIRLowPass::ProcIIRLowPass(const std::vector<std::string>& vec_args, const std::string& name)
+                  : ProcessingBlock(name), cutoff(0.), bidirectional(true)
 {
 	parse_args(vec_args);
 	properties.points_before = 2;
 	properties.stage = ProcessingProperties::first;
 }
 
-void ProcButterworth::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void ProcIIRLowPass::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
@@ -151,7 +151,7 @@ void ProcButterworth::process(const unsigned int& param, const std::vector<Meteo
 
 //this computes the filter coefficients for a low pass filter.
 //the filter parameters are computed based on the filter type (this gives the polynomial coefficients and the cutoff correction) and the number of passes.
-void ProcButterworth::computeCoefficients(const double& f_s, const double& f_0, double A[3], double B[3]) const
+void ProcIIRLowPass::computeCoefficients(const double& f_s, const double& f_0, double A[3], double B[3]) const
 {
 	//using the filter polynomials, the number of passes and the cutoff correction, compute the filter coefficients
 	const double f_star = c * f_0 / f_s; //corrected cutoff frequency
@@ -168,16 +168,25 @@ void ProcButterworth::computeCoefficients(const double& f_s, const double& f_0, 
 	B[2] = 1. - (A[0] + A[1] + A[2] + B[1]);
 }
 
-void ProcButterworth::parse_args(std::vector<std::string> vec_args)
+void ProcIIRLowPass::parse_args(std::vector<std::string> vec_args)
 {
-	vector<double> filter_args;
-	convert_args(1, 1, vec_args, filter_args);
+	const size_t nrArgs = vec_args.size();
+	bool period_read = false;
 
-	if (filter_args.size() != 1)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
-	cutoff = filter_args[0];
-	bidirectional = true;
+	for (size_t ii=0; ii<nrArgs; ii++) {
+		if (IOUtils::isNumeric(vec_args[ii])) {
+			if (period_read==true)
+				throw InvalidArgumentException("Cutoff period has been provided more than once", AT);
+			if (!IOUtils::convertString(cutoff, vec_args[ii]))
+				throw InvalidArgumentException("Could not parse cutoff period '"+vec_args[ii]+"'", AT);
+			period_read = true;
+		} else if (vec_args[ii]=="single_pass") {
+			bidirectional = false;
+		} else
+			throw InvalidArgumentException("Invalid argument \""+vec_args[ii]+"\" for filter \""+getName()+"\"", AT);
+	}
+	if (!period_read)
+		throw InvalidArgumentException("Please provide the cutoff period for filter " + getName(), AT);
 }
 
 }

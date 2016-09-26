@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef PROCBUTTERWORTH_H
-#define PROCBUTTERWORTH_H
+#ifndef PROCIIRLOWPASS_H
+#define PROCIIRLOWPASS_H
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>
@@ -25,25 +25,26 @@
 namespace mio {
 
 /**
- * @class  ProcButterworth
+ * @class  ProcIIRLowPass
  * @ingroup processing
- * @brief Simple 2 poles Butterworth low pass filter.
- * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. The phase is removed by running
- * the filter twice, first backward and then forward (this also squares the amplitude response, ie doubles the order of the filter, see
- * http://www.dspguide.com/ch19/4.htm or http://unicorn.us.com/trading/allpolefilters.html)
+ * @brief Two poles Critically Damped low pass filter.
+ * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. The phase is removed by
+ * bidirectional filtering, ie. running the filter twice, first backward and then forward (this also squares the amplitude response, see
+ * http://www.dspguide.com/ch19/4.htm or http://unicorn.us.com/trading/allpolefilters.html) with a mechanism to disable filtering for
+ * the points that generate overshooting (basically, it runs forward/backward as well as backward/forward and removes that points that
+ * are too different between the two since these are indicators of overshooting).
  *
- * The original paper is <i>On the Theory of Filters Amplifiers</i>, S. Butterworth, Experimental wireless & the wireless engineer,
- * <b>7</b>, pp 536-541, 1930.
  * @code
- * VW::filter1	= BUTTERWORTH
+ * VW::filter1	= Low_Pass
  * VW::arg1	= 10800 ;3 hours
  * @endcode
  *
+ * It is possible to disable the bidirectional filtering by adding the "single_pass" argument.
  */
 
-class ProcButterworth : public ProcessingBlock {
+class ProcIIRLowPass : public ProcessingBlock {
 	public:
-		ProcButterworth(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcIIRLowPass(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
