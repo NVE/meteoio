@@ -30,7 +30,7 @@ namespace mio {
  * @brief Simple 2 poles Butterworth low pass filter.
  * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. The phase is removed by running
  * the filter twice, first backward and then forward (this also squares the amplitude response, ie doubles the order of the filter, see
- * https://ccrma.stanford.edu/~jos/fp/Forward_Backward_Filtering.html or https://ch.mathworks.com/help/signal/ref/filtfilt.html)
+ * http://www.dspguide.com/ch19/4.htm or http://unicorn.us.com/trading/allpolefilters.html)
  *
  * The original paper is <i>On the Theory of Filters Amplifiers</i>, S. Butterworth, Experimental wireless & the wireless engineer,
  * <b>7</b>, pp 536-541, 1930.
@@ -53,6 +53,9 @@ class ProcButterworth : public ProcessingBlock {
 		void parse_args(std::vector<std::string> vec_args);
 
 		double cutoff;
+		bool bidirectional;
+
+		static const double n, p, g, c; ///< filter definition: number of passes, polynomial coefficients, 3dB cutoff correction
 };
 
 } //end namespace
