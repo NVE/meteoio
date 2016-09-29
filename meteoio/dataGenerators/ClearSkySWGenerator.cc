@@ -16,12 +16,12 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <meteoio/dataGenerators/AllSkySWGenerator.h>
+#include <meteoio/dataGenerators/ClearSkySWGenerator.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 namespace mio {
 
-void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void ClearSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
@@ -29,12 +29,12 @@ void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	}
 }
 
-bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
+bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS), TAU_CLD=md(MeteoData::TAU_CLD);
-		double TA=md(MeteoData::TA), RH=md(MeteoData::RH), ILWR=md(MeteoData::ILWR);
+		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS);
+		double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 
 		const double lat = md.meta.position.getLat();
 		const double lon = md.meta.position.getLon();
@@ -55,12 +55,10 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 			//set TA & RH so the reduced precipitable water will get an average value
 			TA=274.98;
 			RH=0.666;
-			ILWR=IOUtils::nodata; //skip solarIndex correction
 		}
 
 		sun.setLatLon(lat, lon, alt);
 		sun.setDate(md.date.getJulian(true), 0.);
-		const double solarIndex = (TAU_CLD!=IOUtils::nodata)? TAU_CLD : (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
 
 		const double P=md(MeteoData::P);
 		if (P==IOUtils::nodata)
@@ -71,15 +69,15 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 		double toa, direct, diffuse;
 		sun.getHorizontalRadiation(toa, direct, diffuse);
 		if (param!=MeteoData::RSWR)
-			value = (direct+diffuse)*solarIndex; //ISWR
+			value = (direct+diffuse); //ISWR
 		else
-			value = (direct+diffuse)*albedo*solarIndex; //RSWR
+			value = (direct+diffuse)*albedo; //RSWR
 	}
 
 	return true; //all missing values could be filled
 }
 
-bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ClearSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
@@ -93,8 +91,8 @@ bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
 		if (value == IOUtils::nodata) {
-			const double ISWR=vecMeteo[ii](MeteoData::ISWR), RSWR=vecMeteo[ii](MeteoData::RSWR), HS=vecMeteo[ii](MeteoData::HS), TAU_CLD=vecMeteo[ii](MeteoData::HS);
-			double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), ILWR=vecMeteo[ii](MeteoData::ILWR);
+			const double ISWR=vecMeteo[ii](MeteoData::ISWR), RSWR=vecMeteo[ii](MeteoData::RSWR), HS=vecMeteo[ii](MeteoData::HS);
+			double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH);
 
 			double albedo = .5;
 			if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
@@ -110,11 +108,9 @@ bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 				//set TA & RH so the reduced precipitable water will get an average value
 				TA=274.98;
 				RH=0.666;
-				ILWR=IOUtils::nodata; //skip solarIndex correction
 			}
 
 			sun.setDate(vecMeteo[ii].date.getJulian(true), 0.);
-			const double solarIndex = (TAU_CLD!=IOUtils::nodata)? TAU_CLD : (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
 
 			const double P=vecMeteo[ii](MeteoData::P);
 			if (P==IOUtils::nodata)
@@ -125,29 +121,13 @@ bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			double toa, direct, diffuse;
 			sun.getHorizontalRadiation(toa, direct, diffuse);
 			if (param!=MeteoData::RSWR)
-				value = (direct+diffuse)*solarIndex; //ISWR
+				value = (direct+diffuse); //ISWR
 			else
-				value = (direct+diffuse)*albedo*solarIndex; //RSWR
+				value = (direct+diffuse)*albedo; //RSWR
 		}
 	}
 
 	return all_filled;
-}
-
-double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, const double& ilwr)
-{// this is based on Kartsen cloudiness, Dilley clear sky emissivity and Unsworth ILWR
-//this means that this solar index is the ratio of iswr for clear sky on a horizontal
-//surface and the measured iswr
-	const double epsilon_clear = Atmosphere::Dilley_emissivity(rh, ta);
-	const double ilwr_clear = Atmosphere::blkBody_Radiation(1., ta);
-
-	double cloudiness = (ilwr/ilwr_clear - epsilon_clear) / (.84 * (1.-epsilon_clear));
-	if (cloudiness>1.) cloudiness=1.;
-	if (cloudiness<0.) cloudiness=0.;
-
-	const double b1 = 0.75, b2 = 3.4;
-	const double karsten_Si = 1. - (b1 * pow(cloudiness, b2));
-	return karsten_Si;
 }
 
 } //namespace

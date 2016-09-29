@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef ALLSKYSWGENERATOR_H
-#define ALLSKYSWGENERATOR_H
+#ifndef CLEARSKYSWGENERATOR_H
+#define CLEARSKYSWGENERATOR_H
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/meteoLaws/Sun.h>
@@ -24,31 +24,28 @@
 namespace mio {
 
 /**
- * @class AllSkySWGenerator
- * @brief ISWR all sky parametrization
+ * @class ClearSkySWGenerator
+ * @brief ISWR clear sky parametrization
  *
- * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
+ * Using air temperature (TA) and relative humidity (RH),
  * this computes the potential incoming solar radiation, based on the position of the sun in the sky
  * (as a function of the location and the date) on the horizontal at ground level.
- * If a cloud transmissivity (TAU_CLD) has been provided, or if an
- * incoming long wave measurement is available, it corrects the generated iswr for cloudiness
- * (basically doing like UnsworthGenerator in reverse), otherwise this assumes clear sky!
+ *
  * If no TA or RH is available, average values will be used (in order to get an average value
  * for the precipitable water vapor).
  * @note This relies on SunObject to perform the heavy duty computation.
  * @code
- * ISWR::generators = allsky_SW
+ * ISWR::generators = clearSky_SW
  * @endcode
  */
-class AllSkySWGenerator : public GeneratorAlgorithm {
+class ClearSkySWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkySWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ClearSkySWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
-		double getSolarIndex(const double& ta, const double& rh, const double& ilwr);
 		SunObject sun;
 };
 

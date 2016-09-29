@@ -5,6 +5,7 @@ SET(dataGenerators_sources
 	dataGenerators/AllSkyLWGenerator.cc
 	dataGenerators/AllSkySWGenerator.cc
 	dataGenerators/ClearSkyLWGenerator.cc
+	dataGenerators/ClearSkySWGenerator.cc
 	dataGenerators/ConstGenerator.cc
 	dataGenerators/ESOLIPGenerator.cc
 	dataGenerators/IswrAlbedoGenerator.cc

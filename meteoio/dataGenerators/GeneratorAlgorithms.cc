@@ -20,6 +20,7 @@
 #include <meteoio/dataGenerators/AllSkyLWGenerator.h>
 #include <meteoio/dataGenerators/AllSkySWGenerator.h>
 #include <meteoio/dataGenerators/ClearSkyLWGenerator.h>
+#include <meteoio/dataGenerators/ClearSkySWGenerator.h>
 #include <meteoio/dataGenerators/ConstGenerator.h>
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
 #include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
@@ -80,6 +81,7 @@ namespace mio {
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
  * - ALLSKY_LW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
+ * - CLEARSKY_SW: use a clear sky model to generate ISWR from TA, RH (see ClearSkySWGenerator)
  * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
@@ -138,6 +140,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new AllSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_SW"){
 		return new AllSkySWGenerator(vecArgs, i_algoname);
+	} else if (algoname == "CLEARSKY_SW"){
+		return new ClearSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PPHASE"){
