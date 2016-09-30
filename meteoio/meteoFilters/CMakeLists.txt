@@ -8,6 +8,7 @@ SET(meteoFilters_sources
 	meteoFilters/FilterMAD.cc
 	meteoFilters/FilterStdDev.cc
 	meteoFilters/FilterTukey.cc
+	meteoFilters/FilterPotentialSW.cc
 	meteoFilters/FilterRate.cc
 	meteoFilters/FilterUnheatedPSUM.cc
 	meteoFilters/ProcAggregate.cc

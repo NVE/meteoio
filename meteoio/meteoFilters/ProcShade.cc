@@ -54,7 +54,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	const string stationHash = ovec[0].meta.getHash();
+	const string stationHash( ovec[0].meta.getHash() );
 	
 	//check if the station already has an associated SunObject
 	std::map< std::string, SunObject >::iterator it = Suns.find( stationHash );

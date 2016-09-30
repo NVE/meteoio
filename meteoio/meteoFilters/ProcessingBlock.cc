@@ -26,6 +26,7 @@
 #include <meteoio/meteoFilters/FilterMin.h>
 #include <meteoio/meteoFilters/FilterMax.h>
 #include <meteoio/meteoFilters/FilterMinMax.h>
+#include <meteoio/meteoFilters/FilterPotentialSW.h>
 #include <meteoio/meteoFilters/FilterStdDev.h>
 #include <meteoio/meteoFilters/FilterRate.h>
 #include <meteoio/meteoFilters/FilterUnheatedPSUM.h>
@@ -97,6 +98,7 @@ namespace mio {
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency
  * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
+ * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all or some data, see FilterSuppr
@@ -147,7 +149,9 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterOffsetsnowdepth(vec_args, blockname);
 	} else if (blockname == "DETECT_GRASS"){
 		return new FilterDeGrass(vec_args, blockname);
-	} 
+	} else if (blockname == "POTENTIALSW"){
+		return new FilterPotentialSW(vec_args, blockname);
+	}
 	
 	//general data transformations
 	else if (blockname == "SUPPR"){
