@@ -46,9 +46,7 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md)
 			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 		} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
-			albedo = RSWR / ISWR;
-			if (albedo>=1.) albedo=0.99;
-			if (albedo<=0.) albedo=0.01;
+			albedo = std::max(0.01, std::min(0.99, RSWR / ISWR));
 		}
 
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
