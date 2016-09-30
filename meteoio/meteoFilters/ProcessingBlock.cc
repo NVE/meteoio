@@ -191,6 +191,10 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 
 }
 
+const double ProcessingBlock::soil_albedo = .23; //grass
+const double ProcessingBlock::snow_albedo = .85; //snow
+const double ProcessingBlock::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
 ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_name(name)
 {}
 

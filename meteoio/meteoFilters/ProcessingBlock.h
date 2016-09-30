@@ -76,13 +76,13 @@ class ProcessingBlock {
 
 		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
 		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const;
-
 		static bool is_soft(std::vector<std::string>& vec_args);
-
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
 
 		ProcessingProperties properties;
 		const std::string block_name;
+
+		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
 };
 
 class BlockFactory {

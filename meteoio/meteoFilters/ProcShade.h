@@ -19,7 +19,6 @@
 #define PROCSHADE_H
 
 #include <meteoio/meteoFilters/FilterBlock.h>
-#include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/DEMObject.h>
 #include <vector>
@@ -72,10 +71,9 @@ class ProcShade : public ProcessingBlock {
 
 		const Config &cfg;
 		DEMObject dem;
-		std::map<std::string, SunObject> Suns;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
-		
-		static const double diffuse_thresh, soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
+
+		static const double diffuse_thresh;
 };
 
 } //end namespace

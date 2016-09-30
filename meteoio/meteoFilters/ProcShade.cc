@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include <meteoio/meteoFilters/ProcShade.h>
+#include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/FileUtils.h>
 
@@ -37,12 +38,9 @@ struct sort_pred {
 };
 
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
-const double ProcShade::soil_albedo = .23; //grass
-const double ProcShade::snow_albedo = .85; //snow
-const double ProcShade::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 ProcShade::ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg)
-        : ProcessingBlock(name), cfg(i_cfg), dem(), Suns(), masks()
+        : ProcessingBlock(name), cfg(i_cfg), dem(), masks()
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -54,16 +52,8 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	const string stationHash( ovec[0].meta.getHash() );
-	
-	//check if the station already has an associated SunObject
-	std::map< std::string, SunObject >::iterator it = Suns.find( stationHash );
-	if (it==Suns.end()) {
-		const Coords position( ovec[0].meta.position );
-		const SunObject tmp(position.getLat(), position.getLon(), position.getAltitude());
-		Suns[ stationHash ] = tmp;
-		it = Suns.find( stationHash );
-	}
+	const std::string stationHash( ovec[0].meta.getHash() );
+	SunObject Sun;
 	
 	//check if the station already has an associated mask, first as wildcard then by station hash
 	std::map< std::string , std::vector< std::pair<double,double> > >::iterator mask = masks.find( "*" );
@@ -84,10 +74,12 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 		if (tmp<diffuse_thresh) continue; //only diffuse radiation, there is nothing to correct
-		
-		it->second.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
+
+		const Coords position( ovec[ii].meta.position );
+		Sun.setLatLon(position.getLat(), position.getLon(), position.getAltitude()); //if they are constant, nothing will be recomputed
+		Sun.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
 		double sun_azi, sun_elev;
-		it->second.position.getHorizontalCoordinates(sun_azi, sun_elev);
+		Sun.position.getHorizontalCoordinates(sun_azi, sun_elev);
 		
 		const double mask_elev = getMaskElevation(mask->second, sun_azi);
 		if (mask_elev>0 && mask_elev>sun_elev) { //the point is in the shade
@@ -109,11 +101,11 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 
 			const bool has_potRad = (ISWR!=IOUtils::nodata && TA!=IOUtils::nodata && RH!=IOUtils::nodata);
 			if (has_potRad) 
-				it->second.calculateRadiation(TA, RH, albedo);
+				Sun.calculateRadiation(TA, RH, albedo);
 			else 
 				if (ovec[ii].date.getJulian(true) - julian_prev > 1.) continue; //no way to get ISWR and/or potential radiation, previous Md is too old
 			
-			const double Md = (has_potRad)? it->second.getSplitting(ISWR) : Md_prev; //fallback: use previous valid value
+			const double Md = (has_potRad)? Sun.getSplitting(ISWR) : Md_prev; //fallback: use previous valid value
 			tmp *= Md; //only keep the diffuse radiation, either on RSWR or ISWR
 			if (has_potRad) {
 				Md_prev = Md;

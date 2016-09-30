@@ -44,6 +44,15 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		Sun.setLatLon(position.getLat(), position.getLon(), position.getAltitude()); //if they are constant, nothing will be recomputed
 		Sun.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
 
+		double albedo = 1.; //needed if we are dealing with RSWR
+		if (param==MeteoData::RSWR) {
+			const double HS = ovec[ii](MeteoData::HS);
+			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			else
+				albedo = 0.5;
+		}
+
 		//if we don't have TA and RH, set them so the reduced precipitable water will get an average value
 		double TA = ovec[ii](MeteoData::TA);
 		double RH = ovec[ii](MeteoData::RH);
@@ -56,7 +65,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		double toa_h, direct_h, diffuse_h;
 		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
 
-		if (value<min_coeff*toa_h || value>max_coeff*(direct_h+diffuse_h))
+		if (value/albedo<min_coeff*toa_h || value/albedo>max_coeff*(direct_h+diffuse_h)) //for ISWR, albedo==1
 			value = IOUtils::nodata;
 	}
 }
