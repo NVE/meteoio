@@ -61,7 +61,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 			RH = 0.666;
 		}
 
-		Sun.calculateRadiation(TA, RH, .5); //a fixed .5 albedo is enough here
+		Sun.calculateRadiation(TA, RH, albedo);
 		double toa_h, direct_h, diffuse_h;
 		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
 
