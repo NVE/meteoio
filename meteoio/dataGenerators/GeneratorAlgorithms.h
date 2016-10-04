@@ -105,9 +105,9 @@ class GeneratorAlgorithm {
 	public:
 		GeneratorAlgorithm(const std::vector<std::string>& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {}
 		virtual ~GeneratorAlgorithm() {}
-		//fill one MeteoData, for one station
+		//fill one MeteoData, for one station. This is used by the dataGenerators
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
-		//fill one time series of MeteoData for one station
+		//fill one time series of MeteoData for one station. This is used by the dataCreators
 		virtual bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
 		std::string getAlgo() const;
  	protected:

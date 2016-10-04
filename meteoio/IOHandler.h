@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOExceptions.h>
+#include <meteoio/DataCreator.h>
 
 #include <map>
 #include <set>
@@ -86,6 +87,7 @@ class IOHandler : public IOInterface {
 		void merge_stations(STATIONS_SET& vecStation) const;
 
 		const Config& cfg;
+		DataCreator dataCreator;
 		std::map<std::string, IOInterface*> mapPlugins;
 		std::map< std::string, std::set<std::string> > excluded_params;
 		std::map< std::string, std::set<std::string> > kept_params;

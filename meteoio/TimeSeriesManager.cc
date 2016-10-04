@@ -48,10 +48,10 @@ void TimeSeriesManager::setDfltBufferProperties()
 	if ((buff_centering != -1.) && (buff_start != -1.))
 		throw InvalidArgumentException("Please do NOT provide both BUFF_CENTERING and BUFF_BEFORE!!", AT);
 
-	if (buff_start != -1.){
+	if (buff_start != -1.) {
 		buff_before = Duration(buff_start, 0);
 	} else {
-		if (buff_centering != -1.){
+		if (buff_centering != -1.) {
 			if ((buff_centering < 0.) || (buff_centering > 1.))
 				throw InvalidArgumentException("BUFF_CENTERING must be between 0 and 1", AT);
 
@@ -121,7 +121,7 @@ size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStat
 {
 	vecStation.clear();
 
-	if (processing_level == IOUtils::raw){
+	if (processing_level == IOUtils::raw) {
 		iohandler.readStationData(date, vecStation);
 	} else {
 		iohandler.readStationData(date, vecStation);
@@ -134,18 +134,18 @@ size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStat
 size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo)
 {
 	vecVecMeteo.clear();
-	if (processing_level == IOUtils::raw){
+	if (processing_level == IOUtils::raw) {
 		iohandler.readMeteoData(dateStart, dateEnd, vecVecMeteo);
 	} else {
 		const bool success = filtered_cache.get(dateStart, dateEnd, vecVecMeteo);
 
-		if (!success){
+		if (!success) {
 			vector< vector<MeteoData> > tmp_meteo;
 			fillRawBuffer(dateStart, dateEnd);
 			raw_buffer.get(dateStart, dateEnd, tmp_meteo);
 
 			//now it needs to be secured that the data is actually filtered, if configured
-			if ((IOUtils::filtered & processing_level) == IOUtils::filtered){
+			if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 				fill_filtered_cache();
 				filtered_cache.get(dateStart, dateEnd, vecVecMeteo);
 			} else {
@@ -153,10 +153,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEn
 			}
 		}
 
-		if ((IOUtils::generated & processing_level) == IOUtils::generated){
-			dataGenerator.createParameters(vecVecMeteo);
+		if ((IOUtils::generated & processing_level) == IOUtils::generated)
 			dataGenerator.fillMissing(vecVecMeteo);
-		}
 	}
 
 	return vecVecMeteo.size(); //equivalent with the number of stations that have data
@@ -172,7 +170,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		vector< vector<MeteoData> > vec_cache;
 		const Duration eps(1./(24.*3600.), 0.);
 		iohandler.readMeteoData(i_date-eps, i_date+eps, vec_cache);
-		for (size_t ii=0; ii<vec_cache.size(); ii++){ //for every station
+		for (size_t ii=0; ii<vec_cache.size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
@@ -182,7 +180,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	//2.  Check which data point is available, buffered locally
 	const map<Date, vector<MeteoData> >::const_iterator it = point_cache.find(i_date);
-	if (it != point_cache.end()){
+	if (it != point_cache.end()) {
 		vecMeteo = it->second;
 		return vecMeteo.size();
 	}
@@ -190,7 +188,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	//Let's make sure we have the data we need, in the filtered_cache or in vec_cache
 	const Date buffer_start( i_date-proc_properties.time_before ), buffer_end( i_date+proc_properties.time_after );
 	vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or raw_buffer
-	if ((IOUtils::filtered & processing_level) == IOUtils::filtered){
+	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool cached = (!filtered_cache.empty()) && (filtered_cache.getBufferStart() <= buffer_start) && (filtered_cache.getBufferEnd() >= buffer_end);
 		if (!cached) {
 			//explicit caching, rebuffer if necessary
@@ -217,10 +215,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		}
 	}
 
-	if ((IOUtils::generated & processing_level) == IOUtils::generated) {
-		dataGenerator.createParameters(vecMeteo);
+	if ((IOUtils::generated & processing_level) == IOUtils::generated)
 		dataGenerator.fillMissing(vecMeteo);
-	}
 
 	add_to_points_cache(i_date, vecMeteo); //Store result in the local cache
 
@@ -229,7 +225,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 void TimeSeriesManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
 {
-	if (processing_level == IOUtils::raw){
+	if (processing_level == IOUtils::raw) {
 		iohandler.writeMeteoData(vecMeteo, name);
 	} else {
 		iohandler.writeMeteoData(vecMeteo, name);
@@ -246,7 +242,7 @@ double TimeSeriesManager::getAvgSamplingRate() const
  */
 void TimeSeriesManager::fill_filtered_cache()
 {
-	if ((IOUtils::filtered & processing_level) == IOUtils::filtered){
+	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		filtered_cache.clear(); //HACK until we get true ringbuffers, to prevent eating up all memory
 		meteoprocessor.process(raw_buffer.getBuffer(), filtered_cache.getBuffer());
 		filtered_cache.setBufferStart( raw_buffer.getBufferStart() );

@@ -16,8 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DATAGENERATOR_H
-#define DATAGENERATOR_H
+#ifndef DATACREATOR_H
+#define DATACREATOR_H
 
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>
@@ -30,27 +30,25 @@
 namespace mio {
 
 /**
- * @class DataGenerator
- * @brief A class to generate meteo data from user-selected models or parametrizations.
+ * @class DataCreator
+ * @brief A class to create new meteo data parameters from user-selected models or parametrizations.
  * This class sits in between the actual implementation of the various methods and the IOManager in
  * order to offer some high level interface. It basically reads the arguments and creates the objects for
- * the various data generators in its constructor and loop through the parameters and stations when called to fill the data.
+ * the various data generators in its constructor and loop through the parameters and stations when called.
  *
  * @ingroup meteoLaws
  * @author Mathias Bavay
  */
 
-class DataGenerator {
+class DataCreator {
 	public:
-		DataGenerator(const Config& cfg);
-		DataGenerator(const DataGenerator& c) : mapGenerators(c.mapGenerators) {}
-		~DataGenerator();
+		DataCreator(const Config& cfg);
+		DataCreator(const DataCreator& c) : mapCreators(c.mapCreators) {}
+		~DataCreator();
 
-		void fillMissing(METEO_SET& vecMeteo) const;
-		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
+		void createParameters(std::vector<METEO_SET>& vecVecMeteo) const;
 
-		DataGenerator& operator=(const DataGenerator& source);
-
+		DataCreator& operator=(const DataCreator& source);
 		const std::string toString() const;
 
 	private:
@@ -60,7 +58,7 @@ class DataGenerator {
 		                                const std::string& algorithm,
 		                                std::vector<std::string>& vecArgs);
 
-		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapGenerators; //per parameter data generators algorithms
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapCreators; //per parameter data creators algorithms
 };
 
 } //end namespace

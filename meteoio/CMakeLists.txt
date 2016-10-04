@@ -44,6 +44,7 @@ SET(meteoio_sources
 	ResamplingAlgorithms2D.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
+	DataCreator.cc
 	DataGenerator.cc
 	plugins/libsmet.cc
 	IOInterface.cc
