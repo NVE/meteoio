@@ -140,7 +140,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			bool status = false;
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
-				status = vecGenerators[jj]->generate(param, vecVecMeteo[station]);
+				status = vecGenerators[jj]->create(param, vecVecMeteo[station]);
 				jj++;
 				#ifdef DATA_QA
 				const std::string parname( it->first );

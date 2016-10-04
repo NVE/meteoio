@@ -57,7 +57,7 @@ namespace mio {
  *    -# \subpage data_sources "Data input and sources"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
- *    -# \subpage generators "Available data generators" and usage
+ *    -# \subpage generators "Available data creators and generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage build_io "How to build your io.ini configuration file"
  * -# Programing using MeteoIO
@@ -84,13 +84,29 @@ namespace mio {
 
  /**
  * @page general General concepts
- * A large number of the problems encountered by users of numerical models working on large meteorological data sets can be traced back to the Input/Output functionality.
- * This comes from the focus of the model developers on the core modeling issues at the expanse of the I/O routines that are costly to properly implement. Therefore
- * the I/O routines often lack flexibility and robustness. When using numerical models in operational applications, this becomes a major drawback and a regular
- * source of problems.
+ * A large number of the problems encountered by users of numerical models working on large meteorological data sets can be
+ * traced back to the Input/Output functionality. This comes from the focus of the model developers on the core modeling issues at the expanse
+ * of the I/O routines that are costly to properly implement. Therefore the I/O routines often lack flexibility and robustness. When using
+ * numerical models in operational applications, this becomes a major drawback and a regular source of problems.
  *
  * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model, handling the retrieval of data
  * from various data sources as well as the data pre-processing.
+ *
+ * @section MeteoIO_structure General MeteoIO structure
+ * @anchor general_structure
+ * \image html meteoio_workflow.png "MeteoIO workflow"
+ * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
+ * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
+ * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
+ * - a set of \ref data_manipulations "raw data editing" methods to select/merge/convert the raw data
+ * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
+ * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
+ * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
+ * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
+ *
+ * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
+ * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
+ * of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
  * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
@@ -104,24 +120,6 @@ namespace mio {
  *
  * In this setup, MeteoIO is the "glue" between the numerical model at the core of the application and the data sources on one hand and the
  * publication system on the other hand.
- *
- * @section MeteoIO_structure General MeteoIO structure
- * @anchor general_structure
- * \image html meteoio_workflow.png "MeteoIO workflow"
- * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
- * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
- * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
- * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
- * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
- * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
- *
- * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user.
- *
- * Moreover, a few assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model. Therefore, you will also notice a few extra modules that come to play on the visible side:
- * - a module to deal with \ref DEMObject "Digital Elevation Models". Such module will for example interpret a grid of data as a grid of elevations and compute a grid of slopes.
- * - a module to deal with \ref coords "coordinate systems". Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
- * - a module to deal with \ref mio::Config "configuration files". The program that you are using might be using this module for other configuration files.
  *
  */
 

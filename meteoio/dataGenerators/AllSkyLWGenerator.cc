@@ -51,7 +51,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 		double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( 1.-TAU_CLD ) : IOUtils::nodata;
 
-		const std::string station_hash = md.meta.stationID + ":" + md.meta.stationName;
+		const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
 		const double julian_gmt = md.date.getJulian(true);
 		bool cloudiness_from_cache = false;
 
@@ -60,7 +60,6 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			const double lat = md.meta.position.getLat();
 			const double lon = md.meta.position.getLon();
 			const double alt = md.meta.position.getAltitude();
-			SunObject sun;
 			sun.setLatLon(lat, lon, alt);
 			sun.setDate(julian_gmt, 0.);
 
@@ -101,7 +100,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool AllSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkyLWGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 

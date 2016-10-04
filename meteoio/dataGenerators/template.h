@@ -32,7 +32,7 @@ class TEMPLATE : public GeneratorAlgorithm {
 		TEMPLATE(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), constant(IOUtils::nodata) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double constant;

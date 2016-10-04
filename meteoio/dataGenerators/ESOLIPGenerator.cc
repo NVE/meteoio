@@ -35,7 +35,7 @@ bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 
 //when we can not guarantee PSUM=0, we leave it at nodata. Therefore, it is highly recommended to
 //run through a Cst=0 data generator afterward
-bool ESOLIPGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ESOLIPGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (param!=MeteoData::PSUM)
 		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to PSUM!!", AT);

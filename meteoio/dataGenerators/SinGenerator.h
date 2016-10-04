@@ -40,7 +40,7 @@ class SinGenerator : public GeneratorAlgorithm {
 		SinGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(IOUtils::nodata), type(' ') { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double amplitude, offset, phase;

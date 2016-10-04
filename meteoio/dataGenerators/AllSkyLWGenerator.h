@@ -20,6 +20,7 @@
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
+#include <meteoio/meteoLaws/Sun.h>
 
 #include <map>
 #include <utility>
@@ -59,10 +60,10 @@ namespace mio {
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN),
+		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
 		                 last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 
@@ -74,6 +75,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		} parametrization;
 		parametrization model;
 
+		SunObject sun;
 		TauCLDGenerator::clf_parametrization clf_model;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 };

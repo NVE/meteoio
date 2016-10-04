@@ -46,9 +46,7 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 		} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
-			albedo = RSWR / ISWR;
-			if (albedo>=1.) albedo=0.99;
-			if (albedo<=0.) albedo=0.01;
+			albedo = std::max(0.01, std::min(0.99, RSWR / ISWR));
 		}
 
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
@@ -79,54 +77,14 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkySWGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
-	const double lat = vecMeteo.front().meta.position.getLat();
-	const double lon = vecMeteo.front().meta.position.getLon();
-	const double alt = vecMeteo.front().meta.position.getAltitude();
-	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
-	sun.setLatLon(lat, lon, alt);
-
 	bool all_filled = true;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		double &value = vecMeteo[ii](param);
-		if (value == IOUtils::nodata) {
-			const double ISWR=vecMeteo[ii](MeteoData::ISWR), RSWR=vecMeteo[ii](MeteoData::RSWR), HS=vecMeteo[ii](MeteoData::HS), TAU_CLD=vecMeteo[ii](MeteoData::HS);
-			double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), ILWR=vecMeteo[ii](MeteoData::ILWR);
-
-			double albedo = .5;
-			if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
-				if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-			} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
-				albedo = std::max(0.01, std::min(0.99, RSWR / ISWR));
-			}
-
-			if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
-				//set TA & RH so the reduced precipitable water will get an average value
-				TA=274.98;
-				RH=0.666;
-				ILWR=IOUtils::nodata; //skip solarIndex correction
-			}
-
-			sun.setDate(vecMeteo[ii].date.getJulian(true), 0.);
-			const double solarIndex = (TAU_CLD!=IOUtils::nodata)? TAU_CLD : (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
-
-			const double P=vecMeteo[ii](MeteoData::P);
-			if (P==IOUtils::nodata)
-				sun.calculateRadiation(TA, RH, albedo);
-			else
-				sun.calculateRadiation(TA, RH, P, albedo);
-
-			double toa, direct, diffuse;
-			sun.getHorizontalRadiation(toa, direct, diffuse);
-			if (param!=MeteoData::RSWR)
-				value = (direct+diffuse)*solarIndex; //ISWR
-			else
-				value = (direct+diffuse)*albedo*solarIndex; //RSWR
-		}
+		const bool status = generate(param, vecMeteo[ii]);
+		if (status==false) all_filled=false;
 	}
 
 	return all_filled;

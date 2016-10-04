@@ -102,7 +102,7 @@ namespace mio {
  /**
  * @page data_sources Data input overview
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they 
- * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are  only compiled if requested when configuring the 
+ * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
@@ -155,10 +155,12 @@ namespace mio {
  *     - rename certain parameters for all stations
  *     - exclude/keep certain parameters on a per station basis;
  *     - merge stations together;
- *     - make a copy of a certain parameter under a new parameter name for all stations.
+ *     - make a copy of a certain parameter under a new parameter name for all stations;
+ *     - create certain parameters based on some parametrizations.
  * 
  * @note Please note that the processing order is the following: the MOVE directives are processed first, then the EXCLUDE directives, 
- * then the KEEP directives, then the MERGE directives and finally the COPY directives.
+ * then the KEEP directives, then the MERGE directives and finally the COPY directives. The CREATE directives only come after all the raw data
+ * has been edited.
  * 
  * @subsection data_exclusion Data exclusion
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard) 
@@ -237,6 +239,16 @@ namespace mio {
  * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
  * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
+ *
+ * @subsection data_creation Data creation
+ * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
+ * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
+ * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
+ * data generators, they are listed in the \ref generators_keywords "data generators section".
+ * @code
+ * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
+ * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
+ * @endcode
  *
  * @section virtual_stations_section Virtual stations
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.

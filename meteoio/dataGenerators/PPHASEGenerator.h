@@ -42,7 +42,7 @@ class PPhaseGenerator : public GeneratorAlgorithm {
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
 		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);

@@ -35,7 +35,7 @@ class TsGenerator : public GeneratorAlgorithm {
 		TsGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		static const double e_snow, e_soil;
 };

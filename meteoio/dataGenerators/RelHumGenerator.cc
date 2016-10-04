@@ -50,7 +50,7 @@ bool RhGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool RhGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool RhGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 

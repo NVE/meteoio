@@ -67,7 +67,7 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool SinGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool SinGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 

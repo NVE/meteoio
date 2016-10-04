@@ -31,11 +31,17 @@ namespace mio {
 
 /**
  * @page dev_DataGenerator How to write a data generator
- * Once the data has been read, filtered and resampled, it can be that some data points are still missing.
- * These are either a few isolated periods (a sensor was not functioning) that are too large for performing
+ * One important thing to keep in mind is that data generators will be used at two totally different stages (see the \ref general_structure "MeteoIO workflow"):
+ *     + in raw data editing, when calling a data creator;
+ *     + when the requested data could not be provided as last resort as data generator.
+ *
+ * In the first case, the *GeneratorAlgorithm::create()* call will be used and the sampling rate will be the original sampling rate none of the data
+ * (such as the other parameters) being filtered or resampled. In the second case, most fo the time the *GeneratorAlgorithm::generate()* call
+ * will be used and all available data has already been filtered and resampled. In such a case, the goal is to provide reasonnable values
+ * for the data points that might still be missing. These are either a few isolated periods (a sensor was not functioning) that are too large for performing
  * a statistical temporal interpolation or that a meteorological parameter was not even measured. In such a case,
- * we generate data, generally relying on some parametrization using other meteorological parameters. In a few
- * cases, even fully arbitrary data might be helpful (replacing missing value by a given constant so a model can
+ * we generate data, generally relying on some parametrization using other meteorological parameters. Sometimes,
+ * even fully arbitrary data might be helpful (replacing missing value by a given constant so a model can
  * run over the data gap).
  *
  * @section structure_DataGenerator Structure
@@ -108,7 +114,7 @@ class GeneratorAlgorithm {
 		//fill one MeteoData, for one station. This is used by the dataGenerators
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
 		//fill one time series of MeteoData for one station. This is used by the dataCreators
-		virtual bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
+		virtual bool create(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
 		std::string getAlgo() const;
  	protected:
 		virtual void parse_args(const std::vector<std::string>& i_vecArgs);

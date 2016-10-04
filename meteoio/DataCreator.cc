@@ -91,7 +91,7 @@ void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 
 			//fill the new parameter
 			size_t jj=0;
-			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecVecMeteo[station]) != true) jj++;
+			while (jj<vecGenerators.size() && vecGenerators[jj]->create(param, vecVecMeteo[station]) != true) jj++;
 		}
 	}
 }

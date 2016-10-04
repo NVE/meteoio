@@ -125,7 +125,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool TauCLDGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool TauCLDGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
