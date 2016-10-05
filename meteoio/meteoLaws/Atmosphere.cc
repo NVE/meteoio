@@ -112,7 +112,7 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 	const double L = Cst::l_water_vaporization; //latent heat of vaporisation
 	const double mixing_ratio = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
 	const double p = stdAirPressure(altitude);
-	const double Vp = waterSaturationPressure(T);
+	const double Vp = vaporSaturationPressure(T);
 
 	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
 }
@@ -136,7 +136,7 @@ double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, con
 	//const double a=1, b=1, c=1; // get real values!
 	//const double h = a * pow(S, b) * pow(cos_Z, c);
 	const double h = 0.315; //personnal communication from S. Amburn
-	const double emissivity = 0.575 * pow(RH*waterSaturationPressure(TA), 1./7.);
+	const double emissivity = 0.575 * pow(RH*vaporSaturationPressure(TA), 1./7.);
 	const double B = S * (iswr_dir/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*iswr_diff) + emissivity*Optim::pow4(TA);
 	const double C = h * pow(VW, 0.58) / 5.3865e-8;
 
@@ -242,11 +242,13 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 }
 
 /**
-* @brief Standard water vapor saturation pressure
+* @brief Standard water vapor saturation pressure.
+* See Murray, F. W., <i>"On the computation of saturation vapor pressure"</i>, 1966, J. Appl. Meteor., <b>6</b>, 203–204,
+* doi: 10.1175/1520-0450(1967)006<0203:OTCOSV>2.0.CO;2.
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)
 */
-double Atmosphere::waterSaturationPressure(const double& T) {
+double Atmosphere::vaporSaturationPressure(const double& T) {
 	double c2, c3; // varying constants
 
 	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
@@ -285,7 +287,7 @@ double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
  * @return clear sky emissivity
  */
 double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
-	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
+	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	const double e0_mBar = 0.01 * e0;
 	const double exponent = 1./7.;
 	const double ea = 1.24 * pow( (e0_mBar / TA), exponent);
@@ -334,7 +336,7 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
  * @return long wave radiation (W/m^2)
 */
 double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
-	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
+	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 
 	const double tmp = TA/Cst::t_water_triple_pt;
@@ -351,7 +353,7 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
  * @return clear sky emissivity
 */
 double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
-	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
+	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
 	return std::min(ea, 1.);
@@ -433,7 +435,7 @@ double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
  * @return clear sky emissivity
 */
 double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
-	const double e0 = RH * waterSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
+	const double e0 = RH * vaporSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
 	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
 	return std::min(ea, 1.);
 }
@@ -461,7 +463,7 @@ double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
 * @return emissivity (between 0 and 1)
 */
 double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
-	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
+	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	const double eps_w = 0.97;
 	const double a1 = 0.68;
 	const double a2 = 0.0036;
@@ -495,7 +497,7 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
 * @return emissivity (between 0 and 1)
 */
 double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) {
-	const double ea = RH * waterSaturationPressure(TA); //screen-level water vapor pressure
+	const double ea = RH * vaporSaturationPressure(TA); //screen-level water vapor pressure
 	const double exponent = 1./8.;
 
 	const double epsilon_cs = 0.23 + 0.484*pow( ea/TA, exponent ); //clear sky emissivity
@@ -588,7 +590,7 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
 		clf = cloudiness;
 	}
 
-	const double e = RH * waterSaturationPressure(TA); //near surface water vapor pressure
+	const double e = RH * vaporSaturationPressure(TA); //near surface water vapor pressure
 	const double e_mBar = 0.01 * e;
 
 	const double epsilon = clf + (1.-clf) * (1.22 + 0.06*sin((month+2.)*Cst::PI/6.) ) * pow( (e_mBar/TA), 1./7.);
@@ -858,7 +860,7 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 */
 double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, const double& qi)
 {
-	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
+	const double SatVaporDensity = waterVaporDensity(TA, vaporSaturationPressure(TA));
 	const double dryAir_density = stdDryAirDensity(altitude, TA);
 	const double RH = qi/(1.-qi) * dryAir_density/SatVaporDensity;
 
@@ -875,7 +877,7 @@ double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, c
 double Atmosphere::relToSpecHumidity(const double& altitude, const double& TA, const double& RH)
 {
 	const double dryAir_density = stdDryAirDensity(altitude, TA);
-	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
+	const double SatVaporDensity = waterVaporDensity(TA, vaporSaturationPressure(TA));
 	const double qi_inv = dryAir_density/(RH*SatVaporDensity) + 1.;
 
 	return 1./qi_inv;

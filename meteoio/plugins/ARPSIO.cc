@@ -241,7 +241,7 @@ void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2D
 	/*if (parameter==MeteoGrids::RH) {
 		//const double epsilon = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
 		readGridLayer(filename, "qv", 2, grid_out); //water vapor mixing ratio
-		//Atmosphere::waterSaturationPressure(T);
+		//Atmosphere::vaporSaturationPressure(T);
 		//TODO: compute relative humidity out of it!
 		//through potential temperature "pt" -> local temperature?
 	}*/
