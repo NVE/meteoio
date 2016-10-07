@@ -16,7 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoFilters/FilterStdDev.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 

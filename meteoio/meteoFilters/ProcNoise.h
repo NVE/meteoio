@@ -18,7 +18,7 @@
 #ifndef NOISE_H
 #define NOISE_H
 
-#include <meteoio/meteoFilters/ProcessingBlock.h>
+#include <meteoio/meteoFilters/FilterBlock.h>
 
 #include <vector>
 #include <string>

@@ -19,10 +19,8 @@
 #define FILTERSTDDEV_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
-#include <meteoio/meteoStats/libinterpol1D.h>
 #include <vector>
 #include <string>
-#include <algorithm>
 
 namespace mio {
 
