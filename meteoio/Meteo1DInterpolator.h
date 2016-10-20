@@ -21,7 +21,7 @@
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/Config.h>
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
-#include <meteoio/meteoFilters/ProcessingBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h> //for ProcessingProperties
 
 #include <string>
 #include <vector>

@@ -119,12 +119,12 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 */
 void Meteo2DInterpolator::setAlgorithms()
 {
-	set<string> set_of_used_parameters;
+	std::set<std::string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
-	set<string>::const_iterator it;
+	std::set<std::string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
-		const std::string parname = *it;
+		const std::string parname( *it );
 		std::vector<std::string> tmpAlgorithms;
 		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
 
@@ -151,7 +151,7 @@ size_t Meteo2DInterpolator::get_parameters(const Config& cfg, std::set<std::stri
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const string tmp = vec_keys[ii].substr(0,found);
+			const std::string tmp( vec_keys[ii].substr(0,found) );
 			set_parameters.insert( IOUtils::strToUpper(tmp) );
 		}
 	}
@@ -172,7 +172,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	if (!algorithms_ready)
 		setAlgorithms();
 
-	const string param_name = MeteoData::getParameterName(meteoparam);
+	const std::string param_name( MeteoData::getParameterName(meteoparam) );
 	
 	//Get grid from buffer if it exists
 	std::ostringstream grid_hash;
@@ -181,7 +181,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		return;
 
 	//Show algorithms to be used for this parameter
-	const map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
+	const std::map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
 	if (it==mapAlgorithms.end())
 		throw IOException("No interpolation algorithms configured for parameter "+param_name, AT);
 
@@ -224,7 +224,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
 	result.clear();
-	vector<Coords> vec_coords(in_coords);
+	std::vector<Coords> vec_coords(in_coords);
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;
@@ -289,7 +289,7 @@ size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
                                                      std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
-	const string keyname = param +"::"+ algorithm;
+	const std::string keyname = param +"::"+ algorithm;
 	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
 
 	return vecArgs.size();
@@ -301,9 +301,9 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 
 	for (size_t ii=0; ii<nxy; ii++){
 		double& value = gridobj(ii);
-		if (value == IOUtils::nodata){
+		if (value == IOUtils::nodata)
 			continue;
-		}
+
 		if (value < minval) {
 			value = minval;
 		} else if (value > maxval) {
@@ -418,7 +418,7 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	vecMeteo.clear();
 
 	// Check if data is available in cache
-	const map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
+	const std::map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
 	if (it != virtual_point_cache.end()){
 		vecMeteo = it->second;
 		return vecMeteo.size();
@@ -514,7 +514,8 @@ size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO
 	return vecMeteo.size();
 }
 
-const std::string Meteo2DInterpolator::toString() const {
+const std::string Meteo2DInterpolator::toString() const
+{
 	ostringstream os;
 	os << "<Meteo2DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";

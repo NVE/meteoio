@@ -146,8 +146,7 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
-		ss << "Filter " << filter << ": ";
-		ss << "error opening file \"" << filename << "\", possible reason: " << strerror(errno);
+		ss << "Filter " << filter << ": " << "error opening file \"" << filename << "\", possible reason: " << strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 
@@ -222,10 +221,10 @@ void ProcShade::parse_args(const std::vector<std::string>& vec_args)
 	} else if (nrArgs==1) {
 		const std::string root_path( cfg.getConfigRootDir() );
 		//if this is a relative path, prefix the path with the current path
-		const std::string in_filename = vec_args[0];
+		const std::string in_filename( vec_args[0] );
 		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
-		const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
+		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 		std::vector< std::pair<double,double> > mask;
 		readMask(getName(), filename, mask);
 		masks["*"] = mask; //this mask is valid for ALL stations

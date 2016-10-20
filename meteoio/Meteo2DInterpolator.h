@@ -22,12 +22,10 @@
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/Buffer.h>
-#include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
 
-#include <memory>
 #include <vector>
 #include <map>
 
