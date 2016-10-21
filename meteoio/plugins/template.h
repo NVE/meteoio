@@ -19,7 +19,6 @@
 #define TEMPLATE_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 
 #include <string>
 
@@ -44,8 +43,7 @@ class TEMPLATE : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void cleanup() throw();

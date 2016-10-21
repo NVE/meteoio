@@ -15,12 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "NetCDFIO.h"
+#include <meteoio/plugins/NetCDFIO.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
-#include <meteoio/Timer.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/plugins/libncpp.h>
 

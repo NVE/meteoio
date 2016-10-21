@@ -16,9 +16,16 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/ImisIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Atmosphere.h> //for p_sea to p_local conversion
 #include <meteoio/MathOptim.h>
+
+#include <sstream>
+#include <set>
+#include <iostream>
+#include <ctime>
 
 using namespace std;
 using namespace oracle;
@@ -341,7 +348,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 }
 
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                           std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/)
+                           std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	Environment *env = NULL;
 	Connection *conn = NULL;

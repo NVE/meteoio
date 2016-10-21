@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OshdIO.h"
+#include <meteoio/plugins/OshdIO.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <matio.h>
 #include <algorithm>
@@ -278,8 +278,7 @@ void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& vec
 }
 
 void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector< std::vector<MeteoData> >& vecMeteo,
-                             const size_t&)
+                             std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	const size_t nr_files = cache_meteo_files.size();
 	const size_t nrIDs = vecIDs.size();

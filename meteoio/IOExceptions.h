@@ -161,10 +161,4 @@ class MIO_API NoDataException : public IOException
 };
 } //end namespace
 
-// Define DEBUG an empty function for seq compilation
-#ifndef DEBUG
-#define DEBUG printdebug
-inline void printdebug(...) {}
-#endif
-
 #endif

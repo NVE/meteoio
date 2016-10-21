@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "SMETIO.h"
+#include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
 
 using namespace std;
@@ -128,8 +128,8 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValues("STATION", "INPUT", vecFilenames);
 
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-			const string filename = vecFilenames[ii];
-			const string extension = FileUtils::getExtension(filename);
+			const std::string filename( vecFilenames[ii] );
+			const std::string extension( FileUtils::getExtension(filename) );
 			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
 			if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
@@ -143,7 +143,7 @@ void SMETIO::parseInputOutputSection()
 	outpath.clear();
 	outputIsAscii = true;
 
-	vector<string> vecArgs;
+	std::vector<std::string> vecArgs;
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 
@@ -180,7 +180,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
 	 */
 	for (size_t ii=0; ii<fields.size(); ii++){
-		const string& key = fields[ii];
+		const std::string& key = fields[ii];
 
 		if (md.param_exists(key)) {
 			indexes.push_back(md.getParameterIndex(key));
@@ -211,7 +211,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 			indexes.push_back(IOUtils::npos-5);
 		} else {
 			//this is an extra parameter, we convert to uppercase
-			const std::string extra_param = IOUtils::strToUpper(key);
+			const std::string extra_param( IOUtils::strToUpper(key) );
 			md.addParameter(extra_param);
 			indexes.push_back(md.getParameterIndex(extra_param));
 		}
@@ -264,13 +264,13 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	 * and copies the values into their respective places in the MeteoData structure
 	 * Meta data, whether in header or in data is also handled
 	 */
-	const string myfields = myreader.get_header_value("fields");
-	vector<string> fields;
+	const std::string myfields( myreader.get_header_value("fields") );
+	std::vector<std::string> fields;
 	IOUtils::readLineToVec(myfields, fields);
 
 	bool julian_present = false;
 	MeteoData md;
-	vector<size_t> indexes;
+	std::vector<size_t> indexes;
 	identify_fields(fields, indexes, julian_present, md);
 
 	if ((timestamps.empty()) && (!julian_present)) return; //nothing to do
@@ -346,34 +346,20 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 		}
 
 		previous_ts = tmp_md.date.getJulian();
-		vecMeteo.push_back(tmp_md);
+		vecMeteo.push_back( tmp_md );
 	}
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                           std::vector< std::vector<MeteoData> >& vecMeteo,
-                           const size_t& stationindex)
+                           std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	//Make sure that vecMeteo have the correct dimension and stationindex is valid
-	size_t startindex=0, endindex=vecFiles.size();
-	if (stationindex != (size_t)IOUtils::npos){ //HACK do we really still need stationindex??
-		if ((stationindex < vecFiles.size()) || (stationindex < vecMeteo.size())){
-			startindex = stationindex;
-			endindex = stationindex+1;
-		} else {
-			throw IndexOutOfBoundsException("Invalid stationindex", AT);
-		}
+	vecMeteo.clear();
+	vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
+	vecMeteo.reserve(nr_stations);
 
-		vecMeteo[stationindex].clear();
-	} else {
-		vecMeteo.clear();
-		vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
-		vecMeteo.reserve(nr_stations);
-	}
-
-	//Now loop through all requested stations, open the respective files and parse them
-	for (size_t ii=startindex; ii<endindex; ii++){
-		const string& filename = vecFiles.at(ii); //filename of current station
+	//Loop through all requested stations, open the respective files and parse them
+	for (size_t ii=0; ii<vecFiles.size(); ii++){
+		const std::string& filename = vecFiles.at(ii); //filename of current station
 
 		if (!FileUtils::fileExists(filename))
 			throw NotFoundException(filename, AT);
@@ -381,8 +367,8 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		smet::SMETReader& myreader = vec_smet_reader.at(ii);
 		myreader.convert_to_MKSA(true); // we want converted values for MeteoIO
 
-		vector<double> mydata; //sequentially store all data in the smet file
-		vector<string> mytimestamps;
+		std::vector<double> mydata; //sequentially store all data in the smet file
+		std::vector<std::string> mytimestamps;
 
 		if (myreader.contains_timestamp()){
 			myreader.read(dateStart.toString(Date::ISO), dateEnd.toString(Date::ISO), mytimestamps, mydata);
@@ -410,14 +396,14 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			sd.stationID = ss.str();
 		}
 
-		const string filename( outpath + "/" + sd.stationID + ".smet" );
+		const std::string filename( outpath + "/" + sd.stationID + ".smet" );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
-		vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
-		vector<string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
+		std::vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
+		std::vector<std::string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
 		double timezone = IOUtils::nodata; //time zone of the data
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
 		if (out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
@@ -429,8 +415,8 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
 
-			vector<string> vec_timestamp;
-			vector<double> vec_data;
+			std::vector<std::string> vec_timestamp;
+			std::vector<double> vec_data;
 			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				if (outputIsAscii){
 					if (out_dflt_TZ != IOUtils::nodata) { //user-specified time zone
@@ -494,7 +480,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		mywriter.set_header_value("station_name", sd.stationName);
 	mywriter.set_header_value("nodata", IOUtils::nodata);
 
-	vector<int> myprecision, mywidth; //set meaningful precision/width for each column
+	std::vector<int> myprecision, mywidth; //set meaningful precision/width for each column
 
 	if (i_outputIsAscii) {
 		ss << "timestamp";
@@ -667,7 +653,7 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 	}
 
 	smet::SMETReader myreader(filename);
-	vector<double> vec_data;
+	std::vector<double> vec_data;
 	myreader.read(vec_data);
 	const size_t nr_fields = myreader.get_nr_of_fields();
 	const int epsg = myreader.get_header_intvalue("epsg");
@@ -677,7 +663,7 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 		size_t lat_fd=IOUtils::unodata, lon_fd=IOUtils::unodata;
 		size_t alt_fd=IOUtils::unodata;
 		for (size_t ii=0; ii<nr_fields; ii++) {
-			const string tmp = myreader.get_field_name(ii);
+			const std::string tmp( myreader.get_field_name(ii) );
 			if (tmp=="latitude") lat_fd=ii;
 			if (tmp=="longitude") lon_fd=ii;
 			if (tmp=="altitude") alt_fd=ii;
@@ -691,10 +677,9 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 		if (epsg==(int)floor(smet_nodata + 0.1))
 			throw InvalidFormatException("In file \""+filename+"\", missing EPSG code in header!", AT);
 
-		size_t east_fd=IOUtils::unodata, north_fd=IOUtils::unodata;
-		size_t alt_fd=IOUtils::unodata;
+		size_t east_fd=IOUtils::unodata, north_fd=IOUtils::unodata, alt_fd=IOUtils::unodata;
 		for (size_t ii=0; ii<nr_fields; ii++) {
-			const string tmp = myreader.get_field_name(ii);
+			const std::string tmp( myreader.get_field_name(ii) );
 			if (tmp=="easting") east_fd=ii;
 			if (tmp=="northing") north_fd=ii;
 			if (tmp=="altitude") alt_fd=ii;

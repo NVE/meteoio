@@ -18,12 +18,7 @@
 #ifndef ARPSIO_H
 #define ARPSIO_H
 
-#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
-#include <meteoio/dataClasses/Grid3DObject.h>
 
 #include <string>
 #include <sstream>

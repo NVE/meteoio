@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "GSNIO.h"
+#include <meteoio/plugins/GSNIO.h>
 
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOExceptions.h>
@@ -224,8 +224,7 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 }
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                          std::vector< std::vector<MeteoData> >& vecMeteo,
-                          const size_t& /*stationindex*/)
+                          std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	const size_t nrStations = vecStationName.size();
 	vecMeteo.resize(nrStations, vector<MeteoData>());

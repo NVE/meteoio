@@ -19,6 +19,13 @@
 #include <errno.h>
 #include <string.h>
 #include <limits>
+#include <cmath>
+#include <cstdlib>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <algorithm>
 
 #if defined _WIN32 || defined __MINGW32__
 	#include <windows.h>

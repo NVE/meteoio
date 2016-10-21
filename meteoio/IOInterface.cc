@@ -102,8 +102,7 @@ void IOInterface::readStationData(const Date& /*date*/, std::vector<StationData>
 }
 
 void IOInterface::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-		                           std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-		                           const size_t& /*stationindex=IOUtils::npos*/) 
+		                           std::vector< std::vector<MeteoData> >& /*vecMeteo*/)
 {
 	 throw IOException("Nothing implemented here", AT);
 }

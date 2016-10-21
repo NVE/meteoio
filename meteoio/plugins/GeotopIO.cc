@@ -15,7 +15,10 @@
  You should have received a copy of the GNU Lesser General Public License
  along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "GeotopIO.h"
+#include <meteoio/plugins/GeotopIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/IOExceptions.h>
 
 #include <sstream>
 #include <iostream>
@@ -190,7 +193,7 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 }
 
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector<std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/) {
+                             std::vector<std::vector<MeteoData> >& vecMeteo) {
 	vecMeteo.clear();
 	string line;
 

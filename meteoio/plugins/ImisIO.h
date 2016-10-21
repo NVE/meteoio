@@ -18,19 +18,11 @@
 #ifndef IMISIO_H
 #define IMISIO_H
 
-#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <set>
 #include <map>
-#include <iostream>
 #include <vector>
-#include <ctime>
 #include <occi.h>
 
 namespace mio {
@@ -76,8 +68,7 @@ class ImisIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void openDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn);

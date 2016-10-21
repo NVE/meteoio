@@ -20,17 +20,11 @@
 
 #include <meteoio/FileUtils.h>
 
-#include <cmath>
-#include <cstdlib>
 #include <string>
-#include <sstream>
 #include <iostream>
-#include <iomanip>
 #include <vector>
 #include <set>
 #include <map>
-#include <fstream>
-#include <algorithm>
 
 #define SMET_STRINGIFY(x) #x
 #define SMET_TOSTRING(x) SMET_STRINGIFY(x)

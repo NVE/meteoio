@@ -18,9 +18,7 @@
 #ifndef BORMAIO_H
 #define BORMAIO_H
 
-#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/dataClasses/Date.h>
 
 #include <libxml++/libxml++.h>
 #include <string>
@@ -44,8 +42,7 @@ class BormaIO : public IOInterface {
 		BormaIO(const Config&);
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void convertUnits(MeteoData& meteo);

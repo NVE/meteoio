@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <time.h>
+#include <algorithm>
 #include <meteoio/MeteoIO.h>
 
 using namespace std;

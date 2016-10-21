@@ -20,6 +20,8 @@
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 
 using namespace std;
 using namespace mio;  // for the IOExceptions and IOUtils

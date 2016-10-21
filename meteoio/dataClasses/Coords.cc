@@ -15,14 +15,16 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/MathOptim.h>
+#include <meteoio/meteoLaws/Meteoconst.h> //for math constants
+
 #include <cmath>
 #include <cstdio>
 #include <iomanip>
-
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/dataClasses/CoordsAlgorithms.h>
-#include <meteoio/MathOptim.h>
-#include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
 #ifdef PROJ4
 	#include <proj_api.h>

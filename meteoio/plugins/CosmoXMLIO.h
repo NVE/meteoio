@@ -19,13 +19,8 @@ along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 #define CosmoXMLIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
 
 #include <string>
-
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
@@ -50,7 +45,7 @@ class CosmoXMLIO : public IOInterface {
 		CosmoXMLIO& operator=(const CosmoXMLIO&); ///<Assignement operator, required because of pointer member
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& stationindex=IOUtils::npos);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		typedef enum METEOREADSTATUS { read_ok, read_continue, read_stop } MeteoReadStatus;

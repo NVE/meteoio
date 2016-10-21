@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "template.h"
+#include <meteoio/plugins/template.h>
 
 using namespace std;
 
@@ -74,8 +74,7 @@ void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_
 }
 
 void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                             const size_t&)
+                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "PNGIO.h"
+#include <meteoio/plugins/PNGIO.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
@@ -427,14 +427,14 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
-	const string full_name = grid2dpath+"/"+filename;
+	const std::string full_name( grid2dpath+"/"+filename );
 	fp=NULL;
 	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
 	//scale input image
-	const Grid2DObject grid = scaleGrid(grid_in);
+	const Grid2DObject grid( scaleGrid(grid_in) );
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if (ncols==0 || nrows==0) return;
 
@@ -467,7 +467,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const bool isNormalParam = (parameter!=MeteoGrids::DEM && parameter!=MeteoGrids::SLOPE && parameter!=MeteoGrids::AZI);
 	std::string date_str = (isNormalParam)? date.toString(Date::ISO)+"_" : "";
 	std::replace( date_str.begin(), date_str.end(), ':', '.');
-	const std::string filename = grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png";
+	const std::string filename( grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png" );
 
 	fp=NULL;
 	png_color *palette=NULL;
@@ -475,7 +475,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	png_infop info_ptr=NULL;
 
 	//scale input image
-	Grid2DObject grid = scaleGrid(grid_in);
+	Grid2DObject grid( scaleGrid(grid_in) );
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if (ncols==0 || nrows==0) return;
 
@@ -614,15 +614,15 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename) const
 {
-	const string world_file = FileUtils::removeExtension(filename)+".pnw";
-	const double cellsize = grid_in.cellsize;
-	Coords world_ref = grid_in.llcorner;
-	world_ref.setProj(coordout, coordoutparam);
-	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
-
+	const std::string world_file( FileUtils::removeExtension(filename)+".pnw" );
 	if (!FileUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
 	std::ofstream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(world_file, AT);
+
+	const double cellsize = grid_in.cellsize;
+	Coords world_ref( grid_in.llcorner );
+	world_ref.setProj(coordout, coordoutparam);
+	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
 
 	try {
 		fout << std::setprecision(12) << cellsize << "\n";

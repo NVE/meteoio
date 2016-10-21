@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/SNIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <sstream>
@@ -162,7 +164,8 @@ SNIO::SNIO(const Config& cfgreader)
 	cfg.getValue("RHO_HN", "Input", rho_hn, IOUtils::nothrow);
 }
 
-std::string SNIO::file_pos(const std::string& filename, const size_t& linenr) {
+std::string SNIO::file_pos(const std::string& filename, const size_t& linenr)
+{
 	ostringstream ss2;
 	ss2 << filename << ":" <<linenr;
 	return ss2.str();
@@ -188,11 +191,11 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 		throw AccessException(metafile, AT);
 
 	try {
-		string line;
+		std::string line;
 		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 		size_t linenr = 0;
-		vector<string> tmpvec;
+		std::vector<std::string> tmpvec;
 
 		while (!fin.eof()) {
 			linenr++;
@@ -239,10 +242,10 @@ std::string SNIO::getStationID(const std::string& filename)
 
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
-	string station_id;
+	std::string station_id;
 	try {
-		string line;
-		vector<string> tmpvec;
+		std::string line;
+		std::vector<std::string> tmpvec;
 
 		getline(fin, line, eoln);      //read complete line meta information, parse it
 		const size_t ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
@@ -272,7 +275,7 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 		throw InvalidFormatException("While reading metadata: each line must have 6 columns", AT);
 
 	//Extract all data as double values
-	vector<double> tmpdata = vector<double>(vecLine.size());
+	std::vector<double> tmpdata = vector<double>(vecLine.size());
 	for (size_t ii=2; ii<5; ii++) {
 		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
 			throw ConversionFailedException("While reading meta data for station " + vecLine[0], AT);
@@ -291,17 +294,17 @@ void SNIO::readMetaData()
 	vecAllStations.clear();
 	vecFilenames.clear();
 
-	string metafile, inpath;
+	std::string metafile, inpath;
 	cfg.getValue("METAFILE", "Input", metafile, IOUtils::nothrow);
 	cfg.getValue("METEOPATH", "Input", inpath);
 	cfg.getValues("STATION", "INPUT", vecFilenames);
 	vecAllStations.resize(vecFilenames.size());
 
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-		const string filename = vecFilenames[ii];
-		const string extension = FileUtils::getExtension(filename);
+		const std::string filename( vecFilenames[ii] );
+		const std::string extension( FileUtils::getExtension(filename) );
 		const std::string file_and_path = (extension!="")? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
-		const string station_id = getStationID(file_and_path);
+		const std::string station_id( getStationID(file_and_path) );
 
 		if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 			throw InvalidNameException(file_and_path, AT);
@@ -320,7 +323,7 @@ void SNIO::readMetaData()
 }
 
 void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                         std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
+                         std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
@@ -328,8 +331,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	 * The first line may be a comment, it won't start with "M", but with "MTO"
 	 * The meteo data is terminated by a singular "END" on a line of its own
 	 */
-	vector<string> tmpvec;
-	string inpath;
+	std::string inpath;
 	cfg.getValue("METEOPATH", "Input", inpath);
 
 	if (vecAllStations.empty() || vecFilenames.empty())
@@ -340,8 +342,9 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vecIndex.empty()) //the vecIndex save file pointers for certain dates
 		vecIndex.resize(vecAllStations.size());
 
+	std::vector<std::string> tmpvec;
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
-		const std::string file_with_path = vecFilenames[ii];
+		const std::string file_with_path( vecFilenames[ii] );
 
 		if ( !FileUtils::validFileAndPath(file_with_path) ) throw InvalidNameException(file_with_path, AT);
 		if ( !FileUtils::fileExists(file_with_path) ) throw NotFoundException(file_with_path, AT);
@@ -437,9 +440,9 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	if (vecLine[1].length() != 10)
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": date format must be DD.MM.YYYY", AT);
 
-	const string year  = vecLine[1].substr(6,4);
-	const string month = vecLine[1].substr(3,2);
-	const string day   = vecLine[1].substr(0,2);
+	const std::string year( vecLine[1].substr(6,4) );
+	const std::string month( vecLine[1].substr(3,2) );
+	const std::string day( vecLine[1].substr(0,2) );
 
 	if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2], in_tz, std::dec))
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": invalid date format", AT);
@@ -448,7 +451,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		return false;
 
 	//Extract all data as double values
-	vector<double> tmpdata = vector<double>(vecLine.size());
+	std::vector<double> tmpdata( vecLine.size() );
 	for (size_t ii=4; ii<vecLine.size(); ii++) {
 		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
 			throw ConversionFailedException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": can not convert  '"+vecLine[ii]+"' to double", AT);
@@ -547,14 +550,14 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	string outpath;
+	std::string outpath;
 	cfg.getValue("METEOPATH", "Output", outpath);
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (!vecMeteo[ii].empty()) {
-			std::string station_id = vecMeteo[ii].front().meta.getStationID();
+			std::string station_id( vecMeteo[ii].front().meta.getStationID() );
 			if (station_id.empty()) station_id = "UNKNOWN";
-			const std::string output_name = outpath + "/" + station_id + ".inp";
+			const std::string output_name( outpath + "/" + station_id + ".inp" );
 			if (!FileUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
 			std::ofstream fout;
 			if ( !FileUtils::fileExists(output_name) ) {

@@ -15,7 +15,9 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "CosmoXMLIO.h"
+#include <meteoio/plugins/CosmoXMLIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <sstream>
@@ -470,8 +472,7 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 }
 
 void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                               std::vector< std::vector<MeteoData> >& vecMeteo,
-                               const size_t&)
+                               std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
 	const size_t nr_files = cache_meteo_files.size();

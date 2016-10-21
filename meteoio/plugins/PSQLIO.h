@@ -19,7 +19,6 @@
 #define PSQLIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 
 #include <libpq-fe.h>
 #include <string>
@@ -31,7 +30,7 @@ namespace mio {
  * @class PSQLIO
  * @brief This plugin connects to a generic PostgreSQL server to retrieve its meteorological data.
  *
- * This plugin was funded by Mountain-eering.
+ * This plugin was funded by <A HREF="http://www.mountain-eering.com">Mountain-eering</A>.
  * @ingroup plugins
  * @author Thomas Egger
  * @date   2014-01-28
@@ -46,8 +45,7 @@ class PSQLIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");

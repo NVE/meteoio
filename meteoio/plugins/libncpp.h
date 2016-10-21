@@ -18,8 +18,6 @@
 #ifndef LIBNCPP_H
 #define LIBNCPP_H
 
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
 
 #include <netcdf.h>

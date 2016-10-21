@@ -15,7 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "ARCIO.h"
+#include <meteoio/plugins/ARCIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+
 #include <errno.h>
 #include <string.h>
 #include <algorithm>

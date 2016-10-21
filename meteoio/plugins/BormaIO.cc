@@ -17,7 +17,6 @@
 */
 #include <meteoio/plugins/BormaIO.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOExceptions.h>
 
 #include <sstream>
@@ -73,28 +72,15 @@ BormaIO::BormaIO(const Config& cfgreader)
 }
 
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                            std::vector< std::vector<MeteoData> >& vecMeteo,
-                            const size_t& stationindex)
+                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
-	size_t indexStart=0, indexEnd=vecStationName.size();
+	vecMeteo.clear();
+	vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
 
-	//The following part decides whether all the stations are rebuffered or just one station
-	if (stationindex == IOUtils::npos){
-		vecMeteo.clear();
-		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
-	} else {
-		if (stationindex < vecMeteo.size()){
-			indexStart = stationindex;
-			indexEnd   = stationindex+1;
-		} else {
-			throw IndexOutOfBoundsException(std::string(), AT);
-		}
-	}
-
-	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	for (size_t ii=0; ii<vecStationName.size(); ii++){ //loop through stations
 		bufferData(dateStart, dateEnd, vecMeteo, ii);
 	}
 }

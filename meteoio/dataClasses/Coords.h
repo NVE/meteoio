@@ -18,14 +18,10 @@
 #ifndef COORDS_H
 #define COORDS_H
 
-#include <meteoio/IOUtils.h>
-#include <meteoio/IOExceptions.h>
-
 #include <string>
 #include <iostream>
 
 namespace mio {
-	
 /**
  * @page dev_coords Coordinate systems support developement guide
  * Geographic coordinates are transparently supported (ie converted to/from lat/lon as well as between cartesian coordinate systems) through

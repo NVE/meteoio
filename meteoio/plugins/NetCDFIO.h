@@ -19,7 +19,6 @@
 #define NetCDFIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 
 #include <string>
 

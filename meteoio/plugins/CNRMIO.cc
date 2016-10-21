@@ -18,7 +18,6 @@
 #include "CNRMIO.h"
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
-#include <meteoio/Timer.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/plugins/libncpp.h>
@@ -232,7 +231,7 @@ void CNRMIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 	delete[] alt; delete[] lat; delete[] lon; delete[] aspect; delete[] slope;
 }
 
-void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
+void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
 	const string path = cfg.get("METEOPATH", "Input");

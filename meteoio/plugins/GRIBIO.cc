@@ -727,8 +727,7 @@ void GRIBIO::scanMeteoPath()
 }
 
 void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector< std::vector<MeteoData> >& vecMeteo,
-                             const size_t&)
+                             std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (!meteo_initialized) {
 		readStations(vecPts);

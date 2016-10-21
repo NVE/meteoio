@@ -19,7 +19,6 @@
 #define GRIBIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 
 #include <string>
 #include <grib_api.h>
@@ -48,8 +47,7 @@ class GRIBIO : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 		
 	private:
 		void setOptions();

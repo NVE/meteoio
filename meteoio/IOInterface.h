@@ -18,7 +18,8 @@
 #ifndef IOINTERFACE_H
 #define IOINTERFACE_H
 
-#include <meteoio/dataClasses/Array1D.h>
+#include <meteoio/Config.h> //so the plugins can get access to Config for their constructor
+#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array2D.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/DEMObject.h>
@@ -142,11 +143,9 @@ class IOInterface {
 		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
 		* @param dateEnd     A Date object representing the end of an interval (inclusive)
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
-		* @param stationindex (optional) update only the station given by this index
 		*/
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
 		* @brief Write vecMeteo time series to a certain destination

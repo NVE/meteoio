@@ -14,7 +14,11 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "PGMIO.h"
+#include <meteoio/plugins/PGMIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+
+#include <iostream>
 #include <errno.h>
 #include <string.h>
 #include <algorithm>
@@ -67,10 +71,10 @@ PGMIO::PGMIO(const Config& cfgreader)
 
 void PGMIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
-	string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (grid_in == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
+	const std::string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
 	if (grid_out == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 }
@@ -90,13 +94,6 @@ size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::stri
 
 void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
 {
-	size_t ncols, nrows;
-	unsigned int nr_colors;
-	double xllcorner, yllcorner, cellsize;
-	double tmp_val, val_min, val_max;
-	std::vector<std::string> tmpvec;
-	std::string line;
-
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	if (!FileUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
@@ -111,6 +108,12 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
+	size_t ncols, nrows;
+	unsigned int nr_colors;
+	double xllcorner, yllcorner, cellsize;
+	double tmp_val, val_min, val_max;
+	std::vector<std::string> tmpvec;
+	std::string line;
 	//Go through file, save key value pairs
 	try {
 		//read header: magic value
@@ -161,8 +164,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 				}
 
 				if (tmp_val==plugin_nodata) {
-					//replace file's nodata by uniform, internal nodata
-					grid_out(ll, kk) = IOUtils::nodata;
+					grid_out(ll, kk) = IOUtils::nodata; //replace file's nodata by uniform, internal nodata
 				} else {
 					grid_out(ll, kk) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
 				}
@@ -182,21 +184,21 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 
 void PGMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::string date_str = date.toString(Date::ISO);
+	std::string date_str( date.toString(Date::ISO) );
 	std::replace( date_str.begin(), date_str.end(), ':', '.');
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+date_str+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
 }
 
 void PGMIO::readDEM(DEMObject& dem_out)
 {
-	string filename;
+	std::string filename;
 	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid_internal(dem_out, filename);
 }
 
 void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	const std::string full_name = grid2dpath_out+"/"+name;
+	const std::string full_name( grid2dpath_out+"/"+name );
 	const unsigned int nr_colors = 256;
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	errno = 0;
@@ -208,7 +210,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		throw AccessException(ss.str(), AT);
 	}
 
-	Coords llcorner=grid_in.llcorner;
+	Coords llcorner( grid_in.llcorner );
 	//we want to make sure that we are using the provided projection parameters
 	//so that we output is done in the same system as the inputs
 	llcorner.setProj(coordout, coordoutparam);

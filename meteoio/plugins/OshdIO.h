@@ -19,7 +19,6 @@
 #define OSHDIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 
 #include <string>
 
@@ -42,8 +41,7 @@ class OshdIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void parseInputOutputSection();

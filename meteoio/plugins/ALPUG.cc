@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "ALPUG.h"
-#include "libsmet.h"
+#include <meteoio/plugins/ALPUG.h>
+#include <meteoio/plugins/libsmet.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <errno.h>
@@ -112,7 +112,7 @@ void ALPUG::parseInputOutputSection()
 		readMetaData();
 		cfg.getValue("WRAP_MONTH", "Input", wrap_month, IOUtils::nothrow);
 
-		const string fields = cfg.get("ALPUG_FIELDS", "Input");
+		const std::string fields = cfg.get("ALPUG_FIELDS", "Input");
 		IOUtils::readLineToVec(fields, vecFields, ',');
 		if (vecFields.empty())
 			throw InvalidArgumentException("Please provide a comma delimited list of fields!", AT);
@@ -132,8 +132,8 @@ void ALPUG::readMetaData()
 	vecMeta.resize( nr_ids );
 	vector<bool> foundID(nr_ids, false);
 
-	const string filename = cfg.get("METAFILE", "Input");
-	const string metafile = inpath + "/" + filename;
+	const std::string filename = cfg.get("METAFILE", "Input");
+	const std::string metafile( inpath + "/" + filename );
 	if (!FileUtils::fileExists(metafile)) throw AccessException(metafile, AT); //prevent invalid filenames
 	errno = 0;
 	std::ifstream fin(metafile.c_str(), std::ifstream::in);
@@ -166,14 +166,14 @@ void ALPUG::readMetaData()
 				throw InvalidFormatException(ss.str(), AT);
 			}
 
-			const string line_id = vecLine[0];
+			const std::string line_id( vecLine[0] );
 
 			for (size_t ii=0; ii<nr_ids; ++ii) {
 				if (line_id==vecIDs[ii]) { //station ID found in the input list
 					if (foundID[ii])
 						throw InvalidFormatException("Error: station "+line_id+" appears multiple times in metafile \'"+metafile+"\'", AT);
 
-					vector<double> tmpdata = vector<double>(vecLine.size());
+					std::vector<double> tmpdata( vecLine.size() );
 					for (size_t jj=2; jj<5; jj++) {
 						if (!IOUtils::convertString(tmpdata[jj], vecLine[jj], std::dec))
 							throw ConversionFailedException("While reading meta data for station " + vecLine[0], AT);
@@ -192,7 +192,7 @@ void ALPUG::readMetaData()
 		throw;
 	}
 
-	string msg;
+	std::string msg;
 	for (size_t ii=0; ii<nr_ids; ++ii) {
 		if (!foundID[ii]) {
 			if (msg.empty())
@@ -233,13 +233,13 @@ bool ALPUG::parseLine(const std::string& filename, const size_t& nr_of_data_fiel
 	md.reset();
 
 	isValid = false;
-	vector<string> tmp_vec;
+	std::vector<std::string> tmp_vec;
 	if (IOUtils::readLineToVec(line, tmp_vec, ',') == nr_of_data_fields){
 		for (size_t ii=0; ii<nr_of_data_fields; ++ii) {
-			const string field = vecFields[ii];
+			const std::string field( vecFields[ii] );
 			if (field=="%" || field=="ID") continue;
 			if (field=="TIMESTAMP") {
-				Date date = parseDINDate(tmp_vec[ii]);
+				Date date( parseDINDate(tmp_vec[ii]) );
 				if (date.isUndef())
 					throw InvalidFormatException("Invalid date \'"+tmp_vec[ii]+"\' in file \'"+filename+"\'", AT);
 
@@ -295,9 +295,9 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 	if (start_month>=wrap_month) start_year++;
 	if (end_month>=wrap_month) end_year++;
 
-	const string station_id = vecIDs[station_index];
+	const std::string station_id( vecIDs[station_index] );
 	Date prev_date(0., 0.);
-	list<string> dirlist = FileUtils::readDirectory( inpath, station_id+dflt_extension );
+	std::list<std::string> dirlist( FileUtils::readDirectory( inpath, station_id+dflt_extension ) );
 	if (dirlist.empty()) {
 		const std::string msg = "No data file found for station "+station_id+" in \'"+inpath+"\'"+". Files should be named as {YY}{station_id}"+dflt_extension+" with {YY} the last two digits of the year.";
 		throw NoDataException(msg, AT);
@@ -306,11 +306,11 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 	for (int year=start_year; year<=end_year; ++year) {
 		stringstream ss;
 		ss << year;
-		const string filename = ss.str().substr(2,2) + station_id + dflt_extension;
+		const std::string filename( ss.str().substr(2,2) + station_id + dflt_extension );
 		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist
 			continue;
 
-		const string file_and_path = inpath + "/" + filename;
+		const std::string file_and_path( inpath + "/" + filename );
 		if (!FileUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
 		errno = 0;
 		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
@@ -328,7 +328,6 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 			if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 			//if (isDuplicate(line)) continue;
 
-			Coords pos;
 			MeteoData md(Date(), vecMeta[station_index]);
 			bool isValid;
 			if (!parseLine(file_and_path, nr_of_data_fields, dateStart, dateEnd, line, md, isValid))
@@ -351,8 +350,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 }
 
 void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector< std::vector<MeteoData> >& vecMeteo,
-                             const size_t&)
+                             std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
 	for (size_t ii=0; ii<vecIDs.size(); ++ii) {

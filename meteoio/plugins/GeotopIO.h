@@ -18,11 +18,7 @@
 #ifndef GEOTOPIO_H
 #define GEOTOPIO_H
 
-#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
 
 #include <string>
 
@@ -44,8 +40,7 @@ class GeotopIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 

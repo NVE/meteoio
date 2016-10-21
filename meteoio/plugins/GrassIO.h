@@ -18,11 +18,7 @@
 #ifndef GRASSIO_H
 #define GRASSIO_H
 
-#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOExceptions.h>
 
 #include <string>
 

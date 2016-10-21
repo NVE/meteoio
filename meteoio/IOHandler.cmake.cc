@@ -21,6 +21,8 @@
 #include <meteoio/IOHandler.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 
+#include <algorithm>
+
 #cmakedefine PLUGIN_ALPUG
 #cmakedefine PLUGIN_ARCIO
 #cmakedefine PLUGIN_A3DIO
@@ -434,11 +436,10 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                              std::vector<METEO_SET>& vecMeteo,
-                              const size_t& stationindex)
+                              std::vector<METEO_SET>& vecMeteo)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
-	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
+	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
 	
 	checkTimestamps(vecMeteo);
 	

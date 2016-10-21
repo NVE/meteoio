@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/A3DIO.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
 
 using namespace std;
 
@@ -110,8 +112,7 @@ void A3DIO::readStationData(const Date& timestamp, std::vector<StationData>& vec
 }
 
 void A3DIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                          std::vector< std::vector<MeteoData> >& vecMeteo,
-                          const size_t& /*stationindex*/)
+                          std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	//if dateStart and dateEnd are the same: return exact match for date
 	//if dateStart > dateEnd: return first data set with date > dateStart

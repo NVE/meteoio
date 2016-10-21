@@ -19,7 +19,6 @@
 #define PNGIO_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/Config.h>
 #include <meteoio/Graphics.h>
 
 #include <string>
