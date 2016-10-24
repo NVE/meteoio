@@ -18,8 +18,10 @@
 #include <meteoio/plugins/PNGIO.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/Graphics.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
+#include <fstream>
 #include <cstring>
 #include <algorithm>
 #include <errno.h>

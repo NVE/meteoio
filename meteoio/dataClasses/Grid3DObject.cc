@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid3DObject.h>
+#include <meteoio/IOExceptions.h>
 #include <cmath>
 
 using namespace std;

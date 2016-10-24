@@ -19,7 +19,6 @@
 #define IOHANDLER_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/IOExceptions.h>
 #include <meteoio/DataCreator.h>
 
 #include <map>

@@ -16,7 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/StationData.h>
+#include <meteoio/IOUtils.h>
 #include <cmath>
+#include <sstream>
 
 using namespace std;
 

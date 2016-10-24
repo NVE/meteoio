@@ -16,9 +16,11 @@
 */
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
 #include <iostream>
+#include <fstream>
 #include <errno.h>
 #include <string.h>
 #include <algorithm>

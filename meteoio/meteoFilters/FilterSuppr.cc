@@ -21,6 +21,9 @@
 #include <errno.h>
 
 #include <meteoio/meteoFilters/FilterSuppr.h>
+#include <meteoio/FileUtils.h>
+
+#include <fstream>
 
 using namespace std;
 

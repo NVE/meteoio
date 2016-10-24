@@ -17,9 +17,11 @@
 */
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <iomanip>
 

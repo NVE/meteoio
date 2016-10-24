@@ -22,7 +22,6 @@
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/GridsManager.h>
 

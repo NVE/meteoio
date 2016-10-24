@@ -17,11 +17,13 @@
  */
 #include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOExceptions.h>
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 

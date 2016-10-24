@@ -17,12 +17,14 @@
 */
 #include <meteoio/plugins/ARPSIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for PI
 #include <meteoio/MathOptim.h>
 
 #include <string.h>
 #include <algorithm>
+#include <fstream>
 
 using namespace std;
 

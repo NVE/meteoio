@@ -17,6 +17,8 @@
 */
 #include <meteoio/plugins/OshdIO.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/FileUtils.h>
+
 #include <matio.h>
 #include <algorithm>
 
@@ -73,6 +75,7 @@ namespace mio {
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
+ * - METEOPATH_RECURSIVE: should *meteopath* be searched recursively for files? (default: no); [Input] section
  * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
  * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
  provided or within the provided path)
@@ -200,7 +203,9 @@ void OshdIO::parseInputOutputSection()
 	
 	cfg.getValues("STATION", "INPUT", vecIDs);
 	cfg.getValue("METEOPATH", "Input", in_meteopath);
-	scanMeteoPath(in_meteopath, cache_meteo_files);
+	bool is_recursive = false;
+	cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+	scanMeteoPath(in_meteopath, is_recursive, cache_meteo_files);
 	
 	cfg.getValue("METAFILE", "INPUT", in_metafile);
 	if (FileUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
@@ -217,10 +222,10 @@ void OshdIO::parseInputOutputSection()
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
 }
 
-void OshdIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
+void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
 {
 	meteo_files.clear();
-	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, meteo_ext, is_recursive) );
 	std::list<std::string> prefix_list;
 
 	//make sure each timestamp only appears once, ie remove duplicates
@@ -280,13 +285,13 @@ void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& vec
 void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	const size_t nr_files = cache_meteo_files.size();
-	const size_t nrIDs = vecIDs.size();
 	vecMeteo.clear();
-	
 	size_t file_idx = getFileIdx( dateStart );
 	Date station_date( cache_meteo_files[file_idx].first );
 	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
+
+	const size_t nr_files = cache_meteo_files.size();
+	const size_t nrIDs = vecIDs.size();
 	
 	if (vecMeta.empty()) fillStationMeta(); //this also fills vecIdx
 	vecMeteo.resize( nrIDs );
@@ -303,7 +308,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		for (size_t ii=0; ii<params_map.size(); ii++) {
 			const MeteoData::Parameters param( params_map[ii].first );
 			const std::string prefix( params_map[ii].second );
-			const std::string filename = in_meteopath + "/" + prefix + "_" + file_suffix;
+			const std::string filename( in_meteopath + "/" + prefix + "_" + file_suffix );
 			vecData.resize( nrIDs, IOUtils::nodata );
 			readFromFile(filename, param, station_date, vecData);
 			
@@ -322,12 +327,12 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 {
 	std::vector<double> vecDir;
 	vecDir.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_dir = in_meteopath + "/" + "idir" + "_" + file_suffix;
+	const std::string filename_dir( in_meteopath + "/" + "idir" + "_" + file_suffix );
 	readFromFile(filename_dir, MeteoData::ISWR, station_date, vecDir);
 	
 	std::vector<double> vecDiff;
 	vecDiff.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_diff = in_meteopath + "/" + "idif" + "_" + file_suffix;
+	const std::string filename_diff( in_meteopath + "/" + "idif" + "_" + file_suffix );
 	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
 	
 	for (size_t jj=0; jj<nrIDs; jj++)
@@ -336,7 +341,6 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 
 void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const
 {
-	const size_t nrIDs = vecIDs.size();
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(filename, AT);
 
@@ -359,6 +363,7 @@ void OshdIO::readFromFile(const std::string& filename, const MeteoData::Paramete
 	//check that each station is still at the same index, build the index cache if necessary
 	std::vector<std::string> vecAcro;
 	readStringVector(filename, "acro", matfp, matvar, vecAcro);
+	const size_t nrIDs = vecIDs.size();
 	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
 		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
 			throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+filename+"'", AT);

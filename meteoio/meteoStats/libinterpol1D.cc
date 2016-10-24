@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 

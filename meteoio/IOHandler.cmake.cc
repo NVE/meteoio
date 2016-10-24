@@ -15,13 +15,14 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include <meteoio/IOHandler.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/IOHandler.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 
 #include <algorithm>
+#include <fstream>
 
 #cmakedefine PLUGIN_ALPUG
 #cmakedefine PLUGIN_ARCIO

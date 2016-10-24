@@ -19,6 +19,7 @@
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/plugins/libncpp.h>
 

@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/CosmoXMLIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 

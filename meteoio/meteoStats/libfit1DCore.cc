@@ -17,6 +17,7 @@
 */
 #include <meteoio/meteoStats/libfit1DCore.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/IOUtils.h>
 #include <algorithm>
 #include <cmath>
 #include <iomanip>

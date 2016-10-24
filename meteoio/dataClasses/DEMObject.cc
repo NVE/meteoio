@@ -21,6 +21,7 @@
 
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
 /**

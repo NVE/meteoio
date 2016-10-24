@@ -17,6 +17,9 @@
 */
 
 #include <meteoio/dataClasses/Matrix.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+
 #include <time.h> //needed for random()
 #include <cmath> //needed for fabs()
 #include <iostream>

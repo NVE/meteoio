@@ -17,6 +17,7 @@
 */
 
 #include <meteoio/GridsManager.h>
+#include <meteoio/dataClasses/Coords.h>
 
 using namespace std;
 

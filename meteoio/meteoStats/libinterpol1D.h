@@ -18,10 +18,8 @@
 #ifndef LIBINTERPOL1D_H
 #define LIBINTERPOL1D_H
 
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
-
 #include <vector>
+#include <string>
 
 namespace mio {
 

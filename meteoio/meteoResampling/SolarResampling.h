@@ -19,6 +19,9 @@
 #define SOLARRESAMPLING_H
 
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
+#include <meteoio/IOUtils.h>
+
+#include <map>
 
 namespace mio {
 

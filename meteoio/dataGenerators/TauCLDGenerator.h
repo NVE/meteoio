@@ -21,6 +21,8 @@
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/meteoLaws/Sun.h>
 
+#include <map>
+
 namespace mio {
 
 /**

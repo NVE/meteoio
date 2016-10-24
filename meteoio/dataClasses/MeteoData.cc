@@ -21,6 +21,8 @@
 
 #include <cmath>
 #include <limits>
+#include <iomanip>
+#include <sstream>
 
 using namespace std;
 namespace mio {

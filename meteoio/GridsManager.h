@@ -18,10 +18,8 @@
 #ifndef GRIDSMANAGER_H
 #define GRIDSMANAGER_H
 
-#include <meteoio/DataGenerator.h>
 #include <meteoio/dataClasses/Buffer.h>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/Config.h>
 

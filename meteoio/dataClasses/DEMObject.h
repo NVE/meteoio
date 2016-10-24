@@ -20,11 +20,7 @@
 
 #include <meteoio/dataClasses/Array2D.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
-#include <meteoio/IOUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
-
-#include <cmath>
-#include <limits>
 
 namespace mio {
 

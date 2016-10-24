@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
 #include <errno.h>
@@ -24,6 +25,7 @@
 #include <algorithm>
 #include <limits>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 
 using namespace std;

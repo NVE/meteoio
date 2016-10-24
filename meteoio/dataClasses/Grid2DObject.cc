@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <cmath>

@@ -19,6 +19,7 @@
 #define SNIO_H
 
 #include <meteoio/IOInterface.h>
+#include <meteoio/FileUtils.h>
 
 #include <string>
 

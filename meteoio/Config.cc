@@ -16,7 +16,11 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Config.h>
+#include <meteoio/FileUtils.h>
+
 #include <algorithm>
+#include <fstream>
+#include <cstdio>
 
 using namespace std;
 

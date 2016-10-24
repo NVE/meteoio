@@ -19,7 +19,6 @@
 #define METEOPROCESSOR_H
 
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/StationData.h>
 #include <meteoio/Config.h>
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/meteoFilters/ProcessingStack.h>

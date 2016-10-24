@@ -17,11 +17,13 @@
 */
 #include <meteoio/plugins/SNIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 

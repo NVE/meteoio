@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "GRIBIO.h"
+#include <meteoio/plugins/GRIBIO.h>
 
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
@@ -23,6 +23,7 @@
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/FileUtils.h>
 
 #include <cmath>
 #include <iostream>

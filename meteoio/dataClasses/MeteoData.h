@@ -22,10 +22,7 @@
 #include <meteoio/dataClasses/StationData.h>
 
 #include <string>
-#include <sstream>
-#include <iomanip>
 #include <vector>
-#include <map>
 
 namespace mio {
 

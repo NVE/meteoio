@@ -20,8 +20,6 @@
 
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array2D.h>
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
 
 #include <iostream>
 

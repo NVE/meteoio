@@ -19,14 +19,11 @@
 #define IOINTERFACE_H
 
 #include <meteoio/Config.h> //so the plugins can get access to Config for their constructor
-#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array2D.h>
-#include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/dataClasses/Grid3DObject.h>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/StationData.h>
 
 #include <vector>
 #include <string>

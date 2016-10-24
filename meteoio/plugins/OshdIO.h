@@ -51,7 +51,7 @@ class OshdIO : public IOInterface {
 		void fillStationMeta();
 		
 		size_t getFileIdx(const Date& start_date) const;
-		static void scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files);
+		static void scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< std::pair<mio::Date,std::string> > &meteo_files);
 		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
 		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param);
 		

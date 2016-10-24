@@ -18,6 +18,9 @@
 #include <meteoio/plugins/A3DIO.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
+
+#include <fstream>
 
 using namespace std;
 

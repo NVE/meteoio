@@ -19,7 +19,6 @@
 #define LIBFIT1DCORE_H
 
 #include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
 #include <meteoio/dataClasses/Matrix.h>
 
 #include <vector>

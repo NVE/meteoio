@@ -19,6 +19,7 @@
 #define GENERATORALGORITHMS_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/Config.h>
 
 #include <vector>
 #include <string>

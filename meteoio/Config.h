@@ -19,11 +19,8 @@
 #define CONFIGREADER_H
 
 #include <meteoio/IOUtils.h>
-#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
-#include <cstdio>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <map>

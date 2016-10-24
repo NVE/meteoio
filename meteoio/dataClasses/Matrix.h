@@ -18,9 +18,6 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <meteoio/IOUtils.h>
-#include <meteoio/IOExceptions.h>
-
 #include <vector>
 #include <iostream>
 

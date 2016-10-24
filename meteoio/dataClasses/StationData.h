@@ -19,10 +19,8 @@
 #define STATIONDATA_H
 
 #include <meteoio/dataClasses/Coords.h>
-#include <meteoio/IOUtils.h>
 
 #include <string>
-#include <sstream>
 #include <iomanip>
 #include <vector>
 

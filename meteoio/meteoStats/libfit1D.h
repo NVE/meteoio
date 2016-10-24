@@ -18,8 +18,8 @@
 #ifndef LIBFIT1D_H
 #define LIBFIT1D_H
 
-#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoStats/libfit1DCore.h>
+#include <meteoio/IOUtils.h>
 
 #include <vector>
 

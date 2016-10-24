@@ -160,7 +160,7 @@ inline double Interpol2D::weightInvDistN(const double& d2)
 void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 {
 	grid.set(dem, IOUtils::nodata);
-
+ 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (size_t j=0; j<grid.getNy(); j++) {
 		for (size_t i=0; i<grid.getNx(); i++) {
@@ -807,6 +807,8 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
+
+	std::cout << "initial precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 	
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
@@ -845,6 +847,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 		}
 	}
 	
+	std::cout << "final precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 }
 
 void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
@@ -859,6 +862,8 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
 	
+	std::cout << "initial precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
+
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
@@ -896,6 +901,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 		}
 	}
 	
+	std::cout << "final precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 }
 
 /**
