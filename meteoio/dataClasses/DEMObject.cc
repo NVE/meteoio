@@ -779,7 +779,7 @@ double DEMObject::getCurvature(double A[4][4]) {
 			count++;
 		}
 
-		if (count != 0.) return 1./(double)count * sum;
+		if (count != 0) return 1./(double)count * sum;
 	}
 	curvature_failures++;
 	return IOUtils::nodata;
