@@ -86,6 +86,7 @@ namespace mio {
  * [Input]
  * METEO = OSHD
  * METEOPATH = /local/LATEST_03h_RUN
+ * METEOPATH_RECURSIVE = true
  * METAFILE  = STAT_LIST.mat ;another possibility could be /local/metadata/STAT_LIST.mat
  * STATION1  = ATT2
  * STATION2  = WFJ2

@@ -36,8 +36,8 @@ TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_c
 
 void TimeSeriesManager::setDfltBufferProperties()
 {
-	double chunk_size_days = 15.; //default chunk size value
-	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, IOUtils::nothrow); //in days
+	double chunk_size_days = 370.; //default chunk size value
+	cfg.getValue("BUFFER_SIZE", "General", chunk_size_days, IOUtils::nothrow); //in days
 	chunk_size = Duration(chunk_size_days, 0);
 
 	//get buffer centering options

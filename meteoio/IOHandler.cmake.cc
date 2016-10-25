@@ -153,6 +153,10 @@ namespace mio {
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  *
+ * In order to optimize the data retrieval, the raw data is buffered. This means that up to BUFFER_SIZE days of data will be read at once by the plugin
+ * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure BUFFER_SIZE
+ * to the intended duration of the simulation (in days).
+ *
  * @section data_manipulations Raw data editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
  *     - rename certain parameters for all stations
@@ -221,7 +225,7 @@ namespace mio {
  * 
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra 
  * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size 
- * is large enough to reach all the way to this new station (by setting General::BUFF_CHUNK_SIZE at least to the number of days from 
+ * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
  * 
  * @subsection data_move Data renaming
@@ -590,7 +594,7 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 				}
 			}
 			if (!found)
-				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'. Consider increasing BUFF_CHUNK_SIZE!", AT);
+				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'. Consider increasing BUFFER_SIZE!", AT);
 		}
 	}
 	
