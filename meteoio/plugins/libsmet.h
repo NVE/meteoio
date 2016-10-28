@@ -157,6 +157,7 @@ class SMETWriter {
 		void set_width(const std::vector<int>& vec_width);
 		
 	private:
+		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
 		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);

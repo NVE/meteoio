@@ -576,7 +576,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::ILWR) {
 		if (!autoscale) {
-			min = 200.; max = 500.;
+			min = 150.; max = 400.;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::SWE) {
@@ -741,7 +741,7 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 	const double s = 3600.*(decimal - (double)d) - 60.*m;
 
 	std::ostringstream dms;
-	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
+	dms << d << "/1 " << static_cast<int>(m*100.) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
 }
 

@@ -66,7 +66,8 @@ class SMETIO : public IOInterface {
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& tz,
 		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
-		void getFormatting(const size_t& param, int& prec, int& width);
+		static void getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max);
+		static void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
 		                        const double& timezone, const size_t& nr_of_parameters,

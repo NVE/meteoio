@@ -473,7 +473,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	 * - timezone
 	 * - meta data (lat/lon/alt or east/north/alt/epsg if not part of data section)
 	 */
-	ostringstream ss;
+	std::ostringstream ss;
 
 	mywriter.set_header_value("station_id", sd.stationID);
 	if (!sd.stationName.empty())
@@ -481,6 +481,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_header_value("nodata", IOUtils::nodata);
 
 	std::vector<int> myprecision, mywidth; //set meaningful precision/width for each column
+	std::ostringstream plot_units, plot_description, plot_color, plot_min, plot_max;
 
 	if (i_outputIsAscii) {
 		ss << "timestamp";
@@ -489,6 +490,11 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		myprecision.push_back(8);
 		mywidth.push_back(16);
 	}
+	plot_units << "time ";
+	plot_description << "time ";
+	plot_color << "#000000 ";
+	plot_min << IOUtils::nodata << " ";
+	plot_max << IOUtils::nodata << " ";
 
 	if (isConsistent) {
 		mywriter.set_header_value("latitude", sd.position.getLat());
@@ -514,19 +520,80 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	int tmpwidth, tmpprecision;
 	for (size_t ll=0; ll<nr_of_parameters; ll++) {
 		if (vecParamInUse[ll]) {
-			string column = vecColumnName.at(ll);
+			std::string column( vecColumnName.at(ll) );
 			if (column == "RSWR") column = "OSWR";
 			ss << " " << column;
 
 			getFormatting(ll, tmpprecision, tmpwidth);
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
+
+			getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
 
+
 	mywriter.set_header_value("fields", ss.str());
+	mywriter.set_header_value("plot_units", plot_units.str());
+	mywriter.set_header_value("plot_description", plot_description.str());
+	mywriter.set_header_value("plot_color", plot_color.str());
+	mywriter.set_header_value("plot_min", plot_min.str());
+	mywriter.set_header_value("plot_max", plot_max.str());
 	mywriter.set_width(mywidth);
 	mywriter.set_precision(myprecision);
+}
+
+void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max)
+{
+	if (param==MeteoData::P) {
+		plot_units << "Pa ";		plot_description << "local_air_pressure ";
+		plot_color << "#AEAEAE ";	plot_min << "87000 "; plot_max << "115650 ";
+	} else if (param==MeteoData::TA) {
+		plot_units << "K ";			plot_description << "air_temperature ";
+		plot_color << "#8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+	} else if (param==MeteoData::RH) {
+		plot_units << "na ";			plot_description << "relative_humidity ";
+		plot_color << "#50CBDB ";	plot_min << "0 "; plot_max << "1 ";
+	} else if (param==MeteoData::TSG) {
+		plot_units << "K ";			plot_description << "ground_surface_temperature ";
+		plot_color << "#DE22E2 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+	} else if (param==MeteoData::TSS) {
+		plot_units << "K ";			plot_description << "snow_surface_temperature ";
+		plot_color << "#FA72B7 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+	} else if (param==MeteoData::HS) {
+		plot_units << "m ";			plot_description << "height_of_snow ";
+		plot_color << "#000000 ";	plot_min << "0 "; plot_max << "3 ";
+	} else if (param==MeteoData::VW) {
+		plot_units << "m/s ";		plot_description << "wind_velocity ";
+		plot_color << "#297E24 ";	plot_min << "0 "; plot_max << "30 ";
+	} else if (param==MeteoData::DW) {
+		plot_units << "° ";			plot_description << "wind_direction ";
+		plot_color << "#64DD78 ";	plot_min << "0 "; plot_max << "360 ";
+	} else if (param==MeteoData::VW_MAX) {
+		plot_units << "m/s ";		plot_description << "max_wind_velocity ";
+		plot_color << "#244A22 ";	plot_min << "0 "; plot_max << "30 ";
+	} else if (param==MeteoData::RSWR) {
+		plot_units << "W/m2 ";		plot_description << "outgoing_short_wave_radiation ";
+		plot_color << "#7D643A ";	plot_min << "0 "; plot_max << "1400 ";
+	} else if (param==MeteoData::ISWR) {
+		plot_units << "W/m2 ";		plot_description << "incoming_short_wave_radiation ";
+		plot_color << "#F9CA25 ";	plot_min << "0 "; plot_max << "1400 ";
+	} else if (param==MeteoData::ILWR) {
+		plot_units << "W/m2 ";		plot_description << "incoming_long_wave_radiation ";
+		plot_color << "#D99521 ";	plot_min << "150 "; plot_max << "400 ";
+	} else if (param==MeteoData::TAU_CLD) {
+		plot_units << "na ";			plot_description << "cloud_transmissivity ";
+		plot_color << "#D9A48F ";	plot_min << "0 "; plot_max << "1 ";
+	} else if (param==MeteoData::PSUM) {
+		plot_units << "kg/m2 ";		plot_description << "water_equivalent_precipitation_sum ";
+		plot_color << "#2431A4 ";	plot_min << "0 "; plot_max << "20 ";
+	} else if (param==MeteoData::PSUM_PH) {
+		plot_units << "na ";			plot_description << "precipitation_phase ";
+		plot_color << "#7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
+	} else {
+		plot_units << "na ";			plot_description << "na ";
+		plot_color << "#A0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
+	}
 }
 
 void SMETIO::getFormatting(const size_t& param, int& prec, int& width)

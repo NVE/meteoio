@@ -651,6 +651,13 @@ void SMETWriter::write(const std::vector<double>& data)
 	fout.close();
 }
 
+void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream& fout) const
+{
+	const std::map<string,string>::const_iterator it = header.find(header_field);
+	if (it != header.end())
+		fout << std::left << std::setw(16) << header_field << " = " << it->second << "\n";
+}
+
 void SMETWriter::write_header(std::ofstream& fout)
 {
 	if (!valid_header()) {
@@ -664,63 +671,42 @@ void SMETWriter::write_header(std::ofstream& fout)
 	else fout << "BINARY" << "\n";
 
 	fout << "[HEADER]" << "\n";
-	fout << "station_id       = " << header["station_id"] << "\n";
-
-	map<string,string>::const_iterator it = header.find("station_name");
-	if (it != header.end())
-		fout << "station_name     = " << it->second << "\n";
+	print_if_exists("station_id", fout);
+	print_if_exists("station_name", fout);
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
-			fout << "latitude         = " << header["latitude"]  << "\n";
-			fout << "longitude        = " << header["longitude"] << "\n";
-			fout << "altitude         = " << header["altitude"]  << "\n";
+			print_if_exists("latitude", fout);
+			print_if_exists("longitude", fout);
+			print_if_exists("altitude", fout);
 		}
 
 		if (location_epsg == 15){
-			fout << "easting          = " << header["easting"]   << "\n";
-			fout << "northing         = " << header["northing"]  << "\n";
+			print_if_exists("easting", fout);
+			print_if_exists("northing", fout);
 			if (location_wgs84 != 7)
-				fout << "altitude        = " << header["altitude"]  << "\n";
-			fout << "epsg             = " << header["epsg"]  << "\n";
+				print_if_exists("altitude", fout);
+			print_if_exists("epsg", fout);
 		}
 	} else {
 		if (location_in_data_epsg)
-			fout << "epsg             = " << header["epsg"]      << "\n";
+			print_if_exists("epsg", fout);
 	}
 
-	fout << "nodata           = " << header["nodata"] << "\n";
+	print_if_exists("nodata", fout);
 
-	//Optional header keys:
-	it = header.find("tz");
-	if (it != header.end())
-		fout << "tz               = " << it->second << "\n";
-
-	it = header.find("creation");
-	if (it != header.end())
-		fout << "creation         = " << it->second << "\n";
-
-	it = header.find("source");
-	if (it != header.end())
-		fout << "source           = " << it->second << "\n";
-
-	it = header.find("units_offset");
-	if (it != header.end())
-		fout << "units_offset     = " << it->second << "\n";
-
-	it = header.find("units_multiplier");
-	if (it != header.end())
-		fout << "units_multiplier = " << it->second << "\n";
-
-	it = header.find("comment");
-	if (it != header.end())
-		fout << "comment          = " << it->second << "\n";
+	print_if_exists("tz", fout);
+	print_if_exists("creation", fout);
+	print_if_exists("source", fout);
+	print_if_exists("units_offset", fout);
+	print_if_exists("units_multiplier", fout);
+	print_if_exists("comment", fout);
 
 	for (size_t ii=0; ii<other_header_keys.size(); ii++){
-		fout << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
+		fout << std::left << std::setw(16) << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
 	}
 
-	fout << "fields           = " << header["fields"] << "\n";
+	print_if_exists("fields", fout);
 	fout << "[DATA]" << endl;
 }
 
