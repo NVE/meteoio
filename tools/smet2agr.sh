@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #This script converts a given smet file into an XmGrace format
 #to automatically, on-the-fly convert smet to agr directly in xmgrace, add the following line to your gracerc:
 # DEFINE IFILTER "smet2agr.sh %s" PATTERN "*.smet"
@@ -14,37 +14,39 @@ printf "@timestamp def \"${datum}\"\n"
 
 #print the color table and generate the table of indices
 plot_colors=`head -100 ${INPUT} | grep "plot_color" | tr -s '\t' ' ' | cut -d'=' -f2 | tr ' ' '\n'`
-sorted_plot_colors=`echo "${plot_colors}" | sort -u | tr '\n' ' ' `
-color_table=`echo "${plot_colors}" | awk '
-	BEGIN {
-		split("'"${sorted_plot_colors}"'", sorted, " ")
-	}
-	/#/ {
-		for (color_idx in sorted) {
-			if ($1==sorted[color_idx]) {
-				printf("%d ", color_idx)
-				next
-			}
+if [ "x$plot_colors" != "x" ]; then
+	sorted_plot_colors=`echo "${plot_colors}" | sort -u | tr '\n' ' ' `
+	color_table=`echo "${plot_colors}" | awk '
+		BEGIN {
+			split("'"${sorted_plot_colors}"'", sorted, " ")
 		}
-	} '
-`
+		/#/ {
+			for (color_idx in sorted) {
+				if ($1==sorted[color_idx]) {
+					printf("%d ", color_idx)
+					next
+				}
+			}
+		} '
+	`
 
-echo "${sorted_plot_colors}" | tr ' ' '\n' | awk --non-decimal-data '
-	BEGIN {
-		printf("@map color 0 to (255, 255, 255), \"white\"\n")
-	}
-	/#/ {
-		col_count++
-		r=int( sprintf("%f", "0x" substr($1,2,2)) )
-		g=int( sprintf("%f", "0x" substr($1,4,2)) )
-		b=int( sprintf("%f", "0x" substr($1,6,2)) )
-		color_name=$1
-		if (r==0 && g==0 && b==0)
-			color_name="black"
+	echo "${sorted_plot_colors}" | tr ' ' '\n' | awk --non-decimal-data '
+		BEGIN {
+			printf("@map color 0 to (255, 255, 255), \"white\"\n")
+		}
+		/#/ {
+			col_count++
+			r=int( sprintf("%f", "0x" substr($1,2,2)) )
+			g=int( sprintf("%f", "0x" substr($1,4,2)) )
+			b=int( sprintf("%f", "0x" substr($1,6,2)) )
+			color_name=$1
+			if (r==0 && g==0 && b==0)
+				color_name="black"
 
-		printf("@map color %d to (%d, %d, %d), \"%s\"\n", col_count, r,g,b, color_name)
-	}
-'
+			printf("@map color %d to (%d, %d, %d), \"%s\"\n", col_count, r,g,b, color_name)
+		}
+	'
+fi
 
 #create g0 graph
 stat_id=`head -100 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
@@ -79,7 +81,7 @@ printf "@    xaxis  ticklabel format yymmdd\n"
 columns=$(head -100 ${INPUT} | grep "fields")
 echo "${columns}" | awk '
 	BEGIN {
-		split("'"${color_table}"'", color_table, " ")
+		n=split("'"${color_table}"'", color_table, " ")
 	}
 	/fields/ {
 		for(i=4; i<=NF; i++) {
@@ -88,14 +90,14 @@ echo "${columns}" | awk '
 			printf("@    s%d type xy\n", f)
 			printf("@    s%d comment \"%s\"\n", f, $(i))
 			printf("@    s%d legend  \"%s\"\n", f, $(i))
-			printf("@    s%d line color %d\n", f, color_table[f+2])
+			if (n>0) printf("@    s%d line color %d\n", f, color_table[f+2])
 		}
 	}
 '
 
 #create data sets data
 nb_sets=$(echo "${columns}" | wc -w)
-for (( i=4 ; i<=${nb_sets} ; i++ )); do
+for i in $(seq 4 ${nb_sets}); do
 	f=$(( i-4 ))
 	printf "@target G0.S${f}\n@type xy\n"
 	awk '
