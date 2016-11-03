@@ -552,7 +552,7 @@ void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_uni
 		plot_units << "K ";			plot_description << "air_temperature ";
 		plot_color << "#8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
 	} else if (param==MeteoData::RH) {
-		plot_units << "na ";			plot_description << "relative_humidity ";
+		plot_units << "- ";			plot_description << "relative_humidity ";
 		plot_color << "#50CBDB ";	plot_min << "0 "; plot_max << "1 ";
 	} else if (param==MeteoData::TSG) {
 		plot_units << "K ";			plot_description << "ground_surface_temperature ";
@@ -582,16 +582,16 @@ void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_uni
 		plot_units << "W/m2 ";		plot_description << "incoming_long_wave_radiation ";
 		plot_color << "#D99521 ";	plot_min << "150 "; plot_max << "400 ";
 	} else if (param==MeteoData::TAU_CLD) {
-		plot_units << "na ";			plot_description << "cloud_transmissivity ";
+		plot_units << "- ";			plot_description << "cloud_transmissivity ";
 		plot_color << "#D9A48F ";	plot_min << "0 "; plot_max << "1 ";
 	} else if (param==MeteoData::PSUM) {
 		plot_units << "kg/m2 ";		plot_description << "water_equivalent_precipitation_sum ";
 		plot_color << "#2431A4 ";	plot_min << "0 "; plot_max << "20 ";
 	} else if (param==MeteoData::PSUM_PH) {
-		plot_units << "na ";			plot_description << "precipitation_phase ";
+		plot_units << "- ";			plot_description << "precipitation_phase ";
 		plot_color << "#7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
 	} else {
-		plot_units << "na ";			plot_description << "na ";
+		plot_units << "- ";			plot_description << "- ";
 		plot_color << "#A0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
 	}
 }

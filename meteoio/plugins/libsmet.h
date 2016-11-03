@@ -155,6 +155,8 @@ class SMETWriter {
 		 *            (timestamp is not counted if present)
 		 */
 		void set_width(const std::vector<int>& vec_width);
+
+		const std::string toString() const;
 		
 	private:
 		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;

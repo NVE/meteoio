@@ -369,6 +369,20 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
 	if (julian_present) nr_of_fields++;
 }
 
+const std::string SMETWriter::toString() const {
+	ostringstream os;
+	os << "<SMETWriter>\n";
+	os << "\tfilename: " << filename << "\n";
+	os << "\ttype: " << ((smet_type==ASCII)? "Ascii" : "Binary") << " append_mode: " << std::boolalpha << append_mode << " append_possible: " << append_possible << "\n";
+	os << "\ttimestamp_present: " << timestamp_present << " field: " << timestamp_field << " julian_present: " << julian_present << " field: " << julian_field << "\n";
+	os << "\tlocation: in header? " << location_in_header << " in data_wgs84? " << location_in_data_wgs84 << " in data_epsg? " << location_in_data_epsg << "\n";
+	os << "\tlocation_wgs84: " << location_wgs84 << " location_epsg: " << location_epsg << "\n";
+	os << "\tnodata: " << nodata_value << " = \"" << nodata_string << "\"\n";
+	os << "\tnr_of_fields: " << nr_of_fields << "\n";
+	os << "</SMETWriter>\n";
+	return os.str();
+}
+
 void SMETWriter::set_header_value(const std::string& key, const double& value)
 {
 	//check if key is decimal, transform to string and add to header
@@ -468,7 +482,7 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 	}
 
 	if (key == "fields"){
-        size_t count_wgs84 = 0, count_epsg = 0;
+		size_t count_wgs84 = 0, count_epsg = 0;
 
 		//check if location is in data and if timestamp is present
 		for (size_t ii = 0; ii<tmp_vec.size(); ii++){
@@ -582,7 +596,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0)) {
 		fout.close();
 		ostringstream os;
-		os << "Inconsistency between the number of timestamp (" << vec_timestamp.size() << ")  and number of data points (" << data.size() << "/" << nr_of_fields-1 << ") detected for file \""+filename+"\", recheck your data";
+		os << "Inconsistency between the number of timestamp (" << vec_timestamp.size() << ")  and number of data points (" << data.size() << " for " << nr_of_fields-1 << " fields) detected for file \""+filename+"\", recheck your data";
 		throw SMETException(os.str(), SMET_AT);
 	}
 
