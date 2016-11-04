@@ -20,7 +20,7 @@ if [ "x$plot_colors" != "x" ]; then
 		BEGIN {
 			split("'"${sorted_plot_colors}"'", sorted, " ")
 		}
-		/#/ {
+		!/^$/{
 			for (color_idx in sorted) {
 				if ($1==sorted[color_idx]) {
 					printf("%d ", color_idx)
@@ -34,11 +34,11 @@ if [ "x$plot_colors" != "x" ]; then
 		BEGIN {
 			printf("@map color 0 to (255, 255, 255), \"white\"\n")
 		}
-		/#/ {
+		!/^$/{
 			col_count++
-			r=int( sprintf("%f", "0x" substr($1,2,2)) )
-			g=int( sprintf("%f", "0x" substr($1,4,2)) )
-			b=int( sprintf("%f", "0x" substr($1,6,2)) )
+			r=int( sprintf("%f", "0x" substr($1,1,2)) )
+			g=int( sprintf("%f", "0x" substr($1,3,2)) )
+			b=int( sprintf("%f", "0x" substr($1,5,2)) )
 			color_name=$1
 			if (r==0 && g==0 && b==0)
 				color_name="black"

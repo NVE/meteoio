@@ -547,52 +547,52 @@ void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_uni
 {
 	if (param==MeteoData::P) {
 		plot_units << "Pa ";		plot_description << "local_air_pressure ";
-		plot_color << "#AEAEAE ";	plot_min << "87000 "; plot_max << "115650 ";
+		plot_color << "AEAEAE ";	plot_min << "87000 "; plot_max << "115650 ";
 	} else if (param==MeteoData::TA) {
 		plot_units << "K ";			plot_description << "air_temperature ";
-		plot_color << "#8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+		plot_color << "8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
 	} else if (param==MeteoData::RH) {
 		plot_units << "- ";			plot_description << "relative_humidity ";
-		plot_color << "#50CBDB ";	plot_min << "0 "; plot_max << "1 ";
+		plot_color << "50CBDB ";	plot_min << "0 "; plot_max << "1 ";
 	} else if (param==MeteoData::TSG) {
 		plot_units << "K ";			plot_description << "ground_surface_temperature ";
-		plot_color << "#DE22E2 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+		plot_color << "DE22E2 ";	plot_min << "253.15 "; plot_max << "283.15 ";
 	} else if (param==MeteoData::TSS) {
 		plot_units << "K ";			plot_description << "snow_surface_temperature ";
-		plot_color << "#FA72B7 ";	plot_min << "253.15 "; plot_max << "283.15 ";
+		plot_color << "FA72B7 ";	plot_min << "253.15 "; plot_max << "283.15 ";
 	} else if (param==MeteoData::HS) {
 		plot_units << "m ";			plot_description << "height_of_snow ";
-		plot_color << "#000000 ";	plot_min << "0 "; plot_max << "3 ";
+		plot_color << "000000 ";	plot_min << "0 "; plot_max << "3 ";
 	} else if (param==MeteoData::VW) {
 		plot_units << "m/s ";		plot_description << "wind_velocity ";
-		plot_color << "#297E24 ";	plot_min << "0 "; plot_max << "30 ";
+		plot_color << "297E24 ";	plot_min << "0 "; plot_max << "30 ";
 	} else if (param==MeteoData::DW) {
 		plot_units << "° ";			plot_description << "wind_direction ";
-		plot_color << "#64DD78 ";	plot_min << "0 "; plot_max << "360 ";
+		plot_color << "64DD78 ";	plot_min << "0 "; plot_max << "360 ";
 	} else if (param==MeteoData::VW_MAX) {
 		plot_units << "m/s ";		plot_description << "max_wind_velocity ";
-		plot_color << "#244A22 ";	plot_min << "0 "; plot_max << "30 ";
+		plot_color << "244A22 ";	plot_min << "0 "; plot_max << "30 ";
 	} else if (param==MeteoData::RSWR) {
 		plot_units << "W/m2 ";		plot_description << "outgoing_short_wave_radiation ";
-		plot_color << "#7D643A ";	plot_min << "0 "; plot_max << "1400 ";
+		plot_color << "7D643A ";	plot_min << "0 "; plot_max << "1400 ";
 	} else if (param==MeteoData::ISWR) {
 		plot_units << "W/m2 ";		plot_description << "incoming_short_wave_radiation ";
-		plot_color << "#F9CA25 ";	plot_min << "0 "; plot_max << "1400 ";
+		plot_color << "F9CA25 ";	plot_min << "0 "; plot_max << "1400 ";
 	} else if (param==MeteoData::ILWR) {
 		plot_units << "W/m2 ";		plot_description << "incoming_long_wave_radiation ";
-		plot_color << "#D99521 ";	plot_min << "150 "; plot_max << "400 ";
+		plot_color << "D99521 ";	plot_min << "150 "; plot_max << "400 ";
 	} else if (param==MeteoData::TAU_CLD) {
 		plot_units << "- ";			plot_description << "cloud_transmissivity ";
-		plot_color << "#D9A48F ";	plot_min << "0 "; plot_max << "1 ";
+		plot_color << "D9A48F ";	plot_min << "0 "; plot_max << "1 ";
 	} else if (param==MeteoData::PSUM) {
 		plot_units << "kg/m2 ";		plot_description << "water_equivalent_precipitation_sum ";
-		plot_color << "#2431A4 ";	plot_min << "0 "; plot_max << "20 ";
+		plot_color << "2431A4 ";	plot_min << "0 "; plot_max << "20 ";
 	} else if (param==MeteoData::PSUM_PH) {
 		plot_units << "- ";			plot_description << "precipitation_phase ";
-		plot_color << "#7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
+		plot_color << "7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
 	} else {
 		plot_units << "- ";			plot_description << "- ";
-		plot_color << "#A0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
+		plot_color << "A0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
 	}
 }
 
