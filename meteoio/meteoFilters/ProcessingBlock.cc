@@ -229,7 +229,7 @@ std::string ProcessingBlock::getName() const {
 
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
 {
-	std::ifstream fin(filename.c_str());
+	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
 		std::ostringstream ss;
 		ss << "Filter " << filter << ": ";
@@ -256,7 +256,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 			IOUtils::trim(line);
 			if (line.empty()) continue;
 
-			std::istringstream iss(line);
+			std::istringstream iss( line );
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
 			iss >> std::skipws >> index;
