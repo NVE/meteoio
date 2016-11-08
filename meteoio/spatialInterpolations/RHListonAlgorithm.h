@@ -26,7 +26,8 @@ namespace mio {
  * @class RHListonAlgorithm
  * @brief Relative humidity interpolation algorithm.
  * This is an implementation of the method described in (Liston & Elder, 2006): for each input point, the dew
- * point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm.
+ * point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm
+ * (if only one station is available, no altitudinal trends will be applied).
  * Finally, each local dew point temperature is converted back to a local relative humidity.
  *
  * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for dew

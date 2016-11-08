@@ -78,12 +78,16 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		vecTd[ii] = Atmosphere::RhtoDewPoint(rh, vecDataTA[ii], 1);
 	}
 
-	Fit1D trend;
-	getTrend(vecAltitudes, vecTd, trend);
-	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecTd);
-	Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(dem, trend, grid);
+	if (nrOfMeasurments>=2) {
+		Fit1D trend;
+		getTrend(vecAltitudes, vecTd, trend);
+		info << trend.getInfo();
+		detrend(trend, vecAltitudes, vecTd);
+		Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+		retrend(dem, trend, grid);
+	} else {
+		Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	}
 
 	//Recompute Rh from the interpolated td
 	for (size_t jj=0; jj<grid.getNy(); jj++) {
