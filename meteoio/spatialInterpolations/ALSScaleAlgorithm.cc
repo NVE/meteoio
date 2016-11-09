@@ -108,7 +108,6 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 		info << FileUtils::getFilename(filename) << " - ";
 
 	initGrid(dem, grid);
-	const size_t nxy = grid.getNx()*grid.getNy();
 
 	// create map of TA to differ between solid and liquid precipitation
 	Grid2DObject ta;
@@ -119,7 +118,7 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
 		double psum_sum = 0.;
 		size_t count = 0;
-		for (size_t jj=0; jj<nxy; jj++) {
+		for (size_t jj=0; jj<grid.size(); jj++) {
 			const double val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan ) {
@@ -132,7 +131,7 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	} else { //use local air temperature
 		double psum_sum = 0., als_sum = 0.;
 		size_t count = 0;
-		for (size_t jj=0; jj<nxy; jj++) {
+		for (size_t jj=0; jj<grid.size(); jj++) {
 			const double val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			const bool has_TA = (ta(jj)!=IOUtils::nodata);
@@ -151,14 +150,14 @@ void ALS_Interpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	//pixels that are nodata are kept such as computed by "base_algo", otherwise we take the newly computed values
 	if (ta_thresh==IOUtils::nodata) { //simple case: no TA_THRESH
-		for (size_t jj=0; jj<nxy; jj++) {
+		for (size_t jj=0; jj<grid.size(); jj++) {
 			double &val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			if (val!=IOUtils::nodata && has_Scan)
 				val = ALS_scan(jj) * ( psum_mean / als_mean );
 		}
 	} else { //use local air temperature
-		for (size_t jj=0; jj<nxy; jj++) {
+		for (size_t jj=0; jj<grid.size(); jj++) {
 			double &val = grid(jj);
 			const bool has_Scan = (ALS_scan(jj)!=IOUtils::nodata);
 			const bool has_TA = (ta(jj)!=IOUtils::nodata);

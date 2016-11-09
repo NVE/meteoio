@@ -90,12 +90,10 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	}
 
 	//Recompute Rh from the interpolated td
-	for (size_t jj=0; jj<grid.getNy(); jj++) {
-		for (size_t ii=0; ii<grid.getNx(); ii++) {
-			double &value = grid(ii,jj);
-			if (value!=IOUtils::nodata)
-				value = Atmosphere::DewPointtoRh(value, ta(ii,jj), 1);
-		}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		double &value = grid(ii);
+		if (value!=IOUtils::nodata)
+			value = Atmosphere::DewPointtoRh(value, ta(ii), 1);
 	}
 }
 

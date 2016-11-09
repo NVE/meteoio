@@ -397,9 +397,8 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	if ((thresholds.size()+1) != ids.size()) {
 		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
 	}
-	const size_t count = grid2D.getNx()*grid2D.getNy();
 	const size_t nscl = thresholds.size();
-	for (size_t jj = 0; jj< count; jj++){
+	for (size_t jj = 0; jj< grid2D.size(); jj++){
 		const double& val = grid2D(jj);
 		if (val!=IOUtils::nodata){
 			size_t i = 0;

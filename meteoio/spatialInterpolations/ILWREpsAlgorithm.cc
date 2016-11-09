@@ -68,11 +68,9 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
-	for (size_t jj=0; jj<grid.getNy(); jj++) {
-		for (size_t ii=0; ii<grid.getNx(); ii++) {
-			double &value = grid(ii,jj);
-			value = Atmosphere::blkBody_Radiation(value, ta(ii,jj));
-		}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		double &value = grid(ii);
+		value = Atmosphere::blkBody_Radiation(value, ta(ii));
 	}
 }
 

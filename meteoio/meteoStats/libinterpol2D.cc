@@ -162,13 +162,10 @@ void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 	grid.set(dem, IOUtils::nodata);
  
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (size_t j=0; j<grid.getNy(); j++) {
-		for (size_t i=0; i<grid.getNx(); i++) {
-			const double& cell_altitude=dem(i,j);
-			if (cell_altitude!=IOUtils::nodata) {
-				grid(i,j) = Atmosphere::stdAirPressure(cell_altitude);
-			}
-		}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		const double& cell_altitude=dem(ii);
+		if (cell_altitude!=IOUtils::nodata)
+			grid(ii) = Atmosphere::stdAirPressure(cell_altitude);
 	}
 }
 
@@ -184,11 +181,9 @@ void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObjec
 	grid.set(dem, IOUtils::nodata);
 
 	//fills a data table with constant values
-	for (size_t j=0; j<grid.getNy(); j++) {
-		for (size_t i=0; i<grid.getNx(); i++) {
-			if (dem(i,j)!=IOUtils::nodata) {
-				grid(i,j) = value;
-			}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		if (dem(ii)!=IOUtils::nodata) {
+			grid(ii) = value;
 		}
 	}
 }
@@ -385,7 +380,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 	//compute modified VW and DW
 	const double gamma_s = 0.58; //speed weighting factor
 	const double gamma_c = 0.42; //direction weighting factor
-	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
+	for (size_t ii=0; ii<VW.size(); ii++) {
 		const double vw = VW(ii);
 		if (vw==0. || vw==IOUtils::nodata) continue; //we can not apply any correction factor!
 		const double dw = DW(ii);
@@ -428,18 +423,16 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 
 	const double orig_mean = grid.grid2D.getMean();
 
-	for (size_t j=0;j<grid.getNy();j++) {
-		for (size_t i=0;i<grid.getNx();i++) {
-			if (ta(i,j)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		if (ta(ii)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
 
-			const double slope = dem.slope(i, j);
-			const double curvature = dem.curvature(i, j);
-			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
+		const double slope = dem.slope(ii);
+		const double curvature = dem.curvature(ii);
+		if (slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
 
-			double& val = grid(i, j);
-			if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
-				val *= 0.5-(curvature-dem_max_curvature) / dem_range_curvature;
-			}
+		double& val = grid(ii);
+		if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
+			val *= 0.5-(curvature-dem_max_curvature) / dem_range_curvature;
 		}
 	}
 
@@ -571,33 +564,27 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 	}
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
 
-	const size_t nrows = grid.getNy();
-	const size_t ncols = grid.getNx();
-	
-	for (size_t j=0;j<nrows;j++) {
-		for (size_t i=0;i<ncols;i++) {
-			// Get input data
-			const double slope = dem.slope(i, j);
-			const double curvature = dem.curvature(i, j);
-			double val = grid.grid2D(i, j);
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		//we only modify the grid of precipitations if air temperature
+		//at this point is below or at freezing
+		if (ta.grid2D(ii)<=Cst::t_water_freezing_pt) {
+			const double slope = dem.slope(ii);
+			const double curvature = dem.curvature(ii);
+			double val = grid.grid2D(ii);
 
-			if (ta.grid2D(i, j)<=Cst::t_water_freezing_pt) {
-				//we only modify the grid of precipitations if air temperature
-				//at this point is below or at freezing
-				if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
-					val = IOUtils::nodata;
-				} else if (slope>60.) {
-					//No snow precipitation happens for these slopes
-					val = 0.;
-				} else if (slope>40.) {
-					//Linear transition from no snow to 100% snow
-					val *= (60.-slope)/20.;
-				} //else: unchanged
+			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
+				val = IOUtils::nodata;
+			} else if (slope>60.) {
+				//No snow precipitation happens for these slopes
+				val = 0.;
+			} else if (slope>40.) {
+				//Linear transition from no snow to 100% snow
+				val *= (60.-slope)/20.;
+			} //else: unchanged
 
-				if (val!=IOUtils::nodata && dem_range_curvature!=0.) {
-					//cf Huss
-					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
-				}
+			if (val!=IOUtils::nodata && dem_range_curvature!=0.) {
+				//cf Huss
+				grid.grid2D(ii) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
 			}
 		}
 	}
@@ -804,11 +791,9 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	WinstralSX(dem, dmax, in_bearing, Sx);
 	
 	//don't change liquid precipitation
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
-
-	std::cout << "initial precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 	
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
@@ -816,7 +801,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	double sum_erosion=0., sum_deposition=0.;
 
 	//erosion: fully eroded at min_sx
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
@@ -837,7 +822,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
@@ -846,8 +831,6 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 			val += deposited;
 		}
 	}
-	
-	std::cout << "final precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 }
 
 void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
@@ -858,19 +841,17 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	WinstralSX(dem, dmax, DW, Sx);
 	
 	//don't change liquid precipitation
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
 	}
 	
-	std::cout << "initial precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
-
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
 	double sum_erosion=0., sum_deposition=0.;
 
 	//erosion: fully eroded at min_sx
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata || (sx<0 && VW(ii)<vw_thresh)) continue; //low wind speed pixels don't contribute to erosion
 		double &val = grid(ii);
@@ -891,7 +872,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
@@ -900,8 +881,6 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 			val += deposited;
 		}
 	}
-	
-	std::cout << "final precip sum=" << grid.grid2D.getMean() * grid.grid2D.getCount() << "\n";
 }
 
 /**

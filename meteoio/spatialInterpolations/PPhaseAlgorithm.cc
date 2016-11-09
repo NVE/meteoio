@@ -63,16 +63,15 @@ void PPHASEInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
 	grid.set(dem, IOUtils::nodata);
-	const size_t nrCells = dem.getNx() * dem.getNy();
 
 	if (model==THRESH) {
-		for (size_t ii=0; ii<nrCells; ii++) {
+		for (size_t ii=0; ii<dem.size(); ii++) {
 			const double TA=ta(ii);
 			if (TA==IOUtils::nodata) continue;
 			grid(ii) = (TA>=fixed_thresh)? 1. : 0.;
 		}
 	} else if (model==RANGE) {
-		for (size_t ii=0; ii<nrCells; ii++) {
+		for (size_t ii=0; ii<dem.size(); ii++) {
 			const double TA=ta(ii);
 			if (TA==IOUtils::nodata) continue;
 			const double tmp_rainfraction = range_norm * (TA - range_start);
