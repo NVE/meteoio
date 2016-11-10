@@ -289,7 +289,7 @@ size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
                                                      std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
-	const std::string keyname = param +"::"+ algorithm;
+	const std::string keyname( param +"::"+ algorithm );
 	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
 
 	return vecArgs.size();
@@ -314,7 +314,7 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 {
 	//check that the stations are using the same projection as the dem
 	for (size_t ii=0; ii<vec_meteo.size(); ii++) {
-		const StationData& meta = vec_meteo[ii].meta;
+		const StationData& meta( vec_meteo[ii].meta );
 		if (!meta.position.isSameProj(dem.llcorner)) {
 			std::ostringstream os;
 			std::string type, args;
@@ -402,7 +402,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 			}
 			if (!is_duplicate) {
 				//extract vstation number, build the station name and station ID
-				const std::string id_num = vecKeys[ii].substr(string("Vstation").length());
+				const std::string id_num( vecKeys[ii].substr(string("Vstation").length()) );
 				StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
 				sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 				v_stations.push_back( sd );
@@ -447,7 +447,7 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	//fill meteo parameters
 	DEMObject dem;
 	gridsmanager.readDEM(dem); //this is not a big deal since it will be in the buffer
-	string info_string;
+	std::string info_string;
 	for (size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
 		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);

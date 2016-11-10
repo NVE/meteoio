@@ -543,7 +543,7 @@ void IOHandler::create_merge_map()
 		const size_t found = merge_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
 
-		const string station( IOUtils::strToUpper(merge_keys[ii].substr(0,found)) );
+		const std::string station( IOUtils::strToUpper(merge_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
 		cfg.getValue(merge_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+merge_keys[ii]+"\"", AT);
@@ -562,7 +562,7 @@ void IOHandler::create_merge_map()
 	//make sure there is no "chain merge": station A merging station B and station C merging station A
 	std::map< std::string, std::vector<std::string> >::iterator it_dest;
 	for(it_dest=merge_commands.begin(); it_dest!=merge_commands.end(); ++it_dest) {
-		const string &stationID = it_dest->first;
+		const std::string &stationID = it_dest->first;
 		if (std::binary_search(merged_stations.begin(), merged_stations.end(), stationID))
 			throw InvalidArgumentException("\'chain merge\' detected for station \'"+stationID+"\', this is not supported (see documentation)", AT);
 	}
@@ -583,11 +583,11 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 
 		const std::vector<std::string> &merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
-			const string fromStationID( *it_set );
+			const std::string fromStationID( *it_set );
 			
 			bool found = false;
 			for (size_t jj=0; jj<vecStation.size(); jj++) {
-				const string curr_station( IOUtils::strToUpper(vecStation[jj].stationID) );
+				const std::string curr_station( IOUtils::strToUpper(vecStation[jj].stationID) );
 				if (curr_station==fromStationID) {
 					vecStation[ii].merge( vecStation[jj] );
 					found = true;
@@ -600,8 +600,8 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 	
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const string stationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
-		const vector<string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
+		const std::string stationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
+		const std::vector<std::string>::const_iterator it = std::find(merged_stations.begin(), merged_stations.end(), stationID);
 		if ( it!=merged_stations.end() ) {
 			std::swap( vecStation[ii], vecStation.back() );
 			vecStation.pop_back();
@@ -658,13 +658,13 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 void IOHandler::create_exclude_map()
 {
 	excludes_ready = true;
-	const string exclude_file = cfg.get("EXCLUDE_FILE", "Input", IOUtils::nothrow);
+	const std::string exclude_file = cfg.get("EXCLUDE_FILE", "Input", IOUtils::nothrow);
 
 	if (!exclude_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
 		const std::string prefix = ( FileUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = FileUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + FileUtils::getFilename(exclude_file);
+		const std::string path( FileUtils::getPath(prefix+exclude_file, true) );  //clean & resolve path
+		const std::string filename( path + "/" + FileUtils::getFilename(exclude_file) );
 
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
@@ -698,7 +698,7 @@ void IOHandler::create_exclude_map()
 		fin.close();
 	}
 
-	vector<string> exclude_keys;
+	std::vector<std::string> exclude_keys;
 	const size_t nrOfStations = cfg.findKeys(exclude_keys, "::EXCLUDE", "Input", true);
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = exclude_keys[ii].find_first_of(":");
@@ -717,7 +717,7 @@ void IOHandler::create_exclude_map()
 	}
 	
 	//Handle "*" wildcard: add the params to all other declared stations
-	map< string, set<string> >::const_iterator it_station = excluded_params.find("*");
+	std::map< std::string, std::set<std::string> >::const_iterator it_station = excluded_params.find("*");
 	if (it_station!=excluded_params.end()) {
 		const std::set<std::string> wildcard( excluded_params["*"] );
 		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
@@ -734,13 +734,13 @@ void IOHandler::create_exclude_map()
 void IOHandler::create_keep_map()
 {
 	keeps_ready = true;
-	const string keep_file = cfg.get("KEEP_FILE", "Input", IOUtils::nothrow);
+	const std::string keep_file = cfg.get("KEEP_FILE", "Input", IOUtils::nothrow);
 
 	if (!keep_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
 		const std::string prefix = ( FileUtils::isAbsolutePath(keep_file) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path = FileUtils::getPath(prefix+keep_file, true);  //clean & resolve path
-		const std::string filename = path + "/" + FileUtils::getFilename(keep_file);
+		const std::string path( FileUtils::getPath(prefix+keep_file, true) );  //clean & resolve path
+		const std::string filename( path + "/" + FileUtils::getFilename(keep_file) );
 
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		std::ifstream fin(filename.c_str(), std::ifstream::in);
@@ -774,7 +774,7 @@ void IOHandler::create_keep_map()
 		fin.close();
 	}
 
-	vector<string> keep_keys;
+	std::vector<std::string> keep_keys;
 	const size_t nrOfStations = cfg.findKeys(keep_keys, "::KEEP", "Input", true);
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = keep_keys[ii].find_first_of(":");
@@ -793,7 +793,7 @@ void IOHandler::create_keep_map()
 	}
 	
 	//Handle "*" wildcard: add the params to all other declared stations
-	map< string, set<string> >::const_iterator it_station = kept_params.find("*");
+	std::map< std::string, std::set<std::string> >::const_iterator it_station = kept_params.find("*");
 	if (it_station!=kept_params.end()) {
 		const std::set<std::string> wildcard( kept_params["*"] );
 		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
@@ -817,17 +817,17 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
 		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
-		map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
+		std::map< std::string, std::set<std::string> >::const_iterator it = excluded_params.find(stationID);
 		if (it == excluded_params.end()) {
 			it = excluded_params.find("*"); //fallback: is there a wildcard like "*::KEEP"?
 			if (it == excluded_params.end()) continue;
 		}
 
-		const set<string> excluded = it->second;
+		const std::set<std::string> excluded( it->second );
 
 		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) { //loop over the timesteps
 			for (std::set<std::string>::const_iterator it_set=excluded.begin(); it_set != excluded.end(); ++it_set) {
-				const string param( *it_set );
+				const std::string param( *it_set );
 				if (vecVecMeteo[station][ii].param_exists(param))
 					vecVecMeteo[station][ii](param) = IOUtils::nodata;
 			}
@@ -846,13 +846,13 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 		if (vecVecMeteo[station].empty()) continue;
 		
 		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
-		map< string, set<string> >::const_iterator it = kept_params.find(stationID);
+		std::map< std::string, std::set<std::string> >::const_iterator it = kept_params.find(stationID);
 		if (it == kept_params.end()) {
 			it = kept_params.find("*"); //fallback: is there a wildcard like "*::KEEP"?
 			if (it == kept_params.end()) continue;
 		}
 
-		const set<string> kept = it->second;
+		const std::set<std::string> kept( it->second );
 		
 		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
 			MeteoData& md_ref = vecVecMeteo[station][ii];
@@ -860,7 +860,7 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 			md.reset(); //delete all meteo fields
 			
 			for (std::set<std::string>::const_iterator it_set=kept.begin(); it_set != kept.end(); ++it_set) { //loop over the parameters to keep
-				const string param( *it_set);
+				const std::string param( *it_set);
 				if (!md.param_exists(param)) continue;
 				 md(param) = md_ref(param);
 			}
@@ -877,11 +877,11 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 */
 void IOHandler::create_move_map()
 {
-	vector<string> move_keys;
+	std::vector<std::string> move_keys;
 	const size_t nrOfMatches = cfg.findKeys(move_keys, "::MOVE", "Input", true); //search anywhere in key
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
-		const string dest_param = move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") );
+		const std::string dest_param( move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") ) );
 		std::vector<std::string> vecString;
 		cfg.getValue(move_keys[ii], "Input", vecString); //multiple source can be provided
 		
@@ -940,12 +940,12 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 */
 void IOHandler::create_copy_map()
 {
-	vector<string> copy_keys;
+	std::vector<std::string> copy_keys;
 	const size_t nrOfMatches = cfg.findKeys(copy_keys, "::COPY", "Input", true); //search anywhere in key
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
-		const string dest_param = copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") );
-		const string src_param = cfg.get(copy_keys[ii], "Input");
+		const std::string dest_param( copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") ) );
+		const std::string src_param = cfg.get(copy_keys[ii], "Input");
 		if (!dest_param.empty() && !src_param.empty())
 			copy_commands[ dest_param ] = src_param;
 	}
