@@ -17,6 +17,12 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 			SET(EXTRA "-fsanitize=address -fno-omit-frame-pointer")
 		ENDIF(LEAKS_CHECK)
 	ENDIF()
+	IF(GCC_VERSION VERSION_GREATER 5.0 OR GCC_VERSION VERSION_EQUAL 5.0)
+	OPTION(USE_OCCI "Set to ON when using Oracle's OCCI" OFF)
+		IF (USE_OCCI) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
+			SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
+		ENDIF(USE_OCCI)
+	ENDIF()
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 SET(CMAKE_CXX_FLAGS "${EXTRA}" CACHE STRING "" FORCE)
 
