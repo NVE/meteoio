@@ -253,31 +253,31 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
  */
 void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 {
-	vector<string> vecStationID;
+	std::vector<std::string> vecStationID;
 	readStationIDs(vecStationID);
 
 	Statement *stmt = conn->createStatement();
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
-		string stat_abk, stao_nr, station_name;
+		std::string stat_abk, stao_nr, station_name;
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
 		
 		//Retrieve the drift station - this only needs to be done once per instance
-		vector<string> stnDrift;
-		string drift_stat_abk, drift_stao_nr;
+		std::vector<std::string> stnDrift;
+		std::string drift_stat_abk, drift_stao_nr;
 		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnDrift, stmt);
 		IOUtils::convertString(station_name, stnDrift.at(0));
 		IOUtils::convertString(drift_stat_abk, stnDrift.at(1));
 		IOUtils::convertString(drift_stao_nr, stnDrift.at(2));
-		const string drift_stationID = drift_stat_abk + drift_stao_nr;
+		const std::string drift_stationID( drift_stat_abk + drift_stao_nr );
 		if (!drift_stationID.empty())
 			mapDriftStation[vecStationID[ii]] = drift_stationID;
 		else
 			std::cerr << "[W] No drift station for station " << stat_abk << stao_nr << "\n";
 
 		// Retrieve the station meta data - this only needs to be done once per instance
-		vector<string> stationMetaData;
-		string stao_name;
+		std::vector<std::string> stationMetaData;
+		std::string stao_name;
 		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, stmt);
 		double east, north, alt;
 		IOUtils::convertString(stao_name, stationMetaData.at(0));
@@ -797,20 +797,20 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 	vecStationIDs.clear();
 
 	try {
-		stmt->setSQL(sqlQuery);
+		stmt->setSQL( sqlQuery );
 		stmt->setString(1, station_code); // set 1st variable's value
 
 		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
-		const vector<MetaData> cols = rs->getColumnListMetaData();
+		const std::vector<MetaData> cols( rs->getColumnListMetaData() );
 
 		while (rs->next() == true) {
 			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
-				vecStationIDs.push_back(rs->getString(ii));
+				vecStationIDs.push_back( rs->getString(ii) );
 			}
 		}
 
 		if (vecStationIDs.size() < 3) { //if the station has not been found
-			string stat_abk, stao_nr;
+			std::string stat_abk, stao_nr;
 			parseStationID(station_code, stat_abk, stao_nr);
 			vecStationIDs.push_back(station_code);
 			vecStationIDs.push_back(stat_abk);
@@ -844,11 +844,11 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
 		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
-		const vector<MetaData> cols = rs->getColumnListMetaData();
+		const std::vector<MetaData> cols( rs->getColumnListMetaData() );
 
 		while (rs->next() == true) {
 			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
-				vecHTS1.push_back(rs->getString(ii));
+				vecHTS1.push_back( rs->getString(ii) );
 			}
 		}
 
@@ -881,11 +881,11 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
 		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
-		const vector<MetaData> cols = rs->getColumnListMetaData();
+		const std::vector<MetaData> cols( rs->getColumnListMetaData() );
 
 		while (rs->next() == true) {
 			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
-				vecMetaData.push_back(rs->getString(ii));
+				vecMetaData.push_back( rs->getString(ii) );
 			}
 		}
 
@@ -923,15 +923,15 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 	bool fullStation = true;
 	const unsigned int max_row = static_cast<unsigned int>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
 	try {
-		const map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
+		const std::map<std::string, std::string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 		if (it != mapDriftStation.end()) {
-			stmt->setSQL(sqlQueryMeteoDataDrift);
-			string drift_stat_abk, drift_stao_nr;
+			stmt->setSQL( sqlQueryMeteoDataDrift );
+			std::string drift_stat_abk, drift_stao_nr;
 			parseStationID(it->second, drift_stat_abk, drift_stao_nr);
 			stmt->setString(5, drift_stat_abk);
 			stmt->setString(6, drift_stao_nr);
 		} else {
-			stmt->setSQL(sqlQueryMeteoData);
+			stmt->setSQL( sqlQueryMeteoData );
 			fullStation = false;
 		}
 		stmt->setPrefetchRowCount(max_row);
@@ -948,17 +948,17 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
 
 		ResultSet *rs = stmt->executeQuery(); // execute the statement stmt
-		const vector<MetaData> cols = rs->getColumnListMetaData();
+		const std::vector<MetaData> cols( rs->getColumnListMetaData() );
 
-		vector<string> vecData;
+		std::vector<std::string> vecData;
 		while (rs->next() == true) {
 			vecData.clear();
 			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
-				vecData.push_back(rs->getString(ii));
+				vecData.push_back( rs->getString(ii) );
 			}
 			if (fullStation) {
 				for (unsigned int ii=0; ii<static_cast<unsigned int>(vecHTS1.size()); ii++) {
-					vecData.push_back(vecHTS1.at(ii));
+					vecData.push_back( vecHTS1.at(ii) );
 				}
 			}
 			vecMeteoData.push_back(vecData);
