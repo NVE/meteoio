@@ -167,13 +167,13 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	//1. Check whether user wants raw data or processed data
 	//The first case: we are looking at raw data directly, only unresampled values are considered, exact date match
 	if (processing_level == IOUtils::raw) {
-		vector< vector<MeteoData> > vec_cache;
+		std::vector< std::vector<MeteoData> > vec_cache;
 		const Duration eps(1./(24.*3600.), 0.);
 		iohandler.readMeteoData(i_date-eps, i_date+eps, vec_cache);
 		for (size_t ii=0; ii<vec_cache.size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
-				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
+				vecMeteo.push_back( vec_cache[ii][index] ); //Insert station into vecMeteo
 		}
 		return vecMeteo.size();
 	}
@@ -187,7 +187,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	//Let's make sure we have the data we need, in the filtered_cache or in vec_cache
 	const Date buffer_start( i_date-proc_properties.time_before ), buffer_end( i_date+proc_properties.time_after );
-	vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or raw_buffer
+	std::vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or raw_buffer
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool cached = (!filtered_cache.empty()) && (filtered_cache.getBufferStart() <= buffer_start) && (filtered_cache.getBufferEnd() >= buffer_end);
 		if (!cached) {
@@ -205,13 +205,13 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			MeteoData md;
 			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
-			if (success) vecMeteo.push_back(md);
+			if (success) vecMeteo.push_back( md );
 		}
 	} else { //no resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, (*data)[ii], true); //needs to be an exact match
 			if (index != IOUtils::npos)
-				vecMeteo.push_back((*data)[ii][index]); //Insert station into vecMeteo
+				vecMeteo.push_back( (*data)[ii][index] ); //Insert station into vecMeteo
 		}
 	}
 
@@ -275,7 +275,7 @@ void TimeSeriesManager::fillRawBuffer(const Date& date_start, const Date& date_e
 	raw_buffer.clear(); //HACK until we have a proper ring buffer to avoid eating up all memory...
 
 	if (raw_buffer.empty()) {
-		vector< METEO_SET > vecMeteo;
+		std::vector< METEO_SET > vecMeteo;
 		iohandler.readMeteoData(new_start, new_end, vecMeteo);
 		raw_buffer.push(new_start, new_end, vecMeteo);
 		return;
@@ -284,20 +284,20 @@ void TimeSeriesManager::fillRawBuffer(const Date& date_start, const Date& date_e
 	const Date buffer_start( raw_buffer.getBufferStart() );
 	const Date buffer_end( raw_buffer.getBufferEnd() );
 	if (new_start>buffer_end || new_end<buffer_start) { //easy: full rebuffer
-		vector< METEO_SET > vecMeteo;
+		std::vector< METEO_SET > vecMeteo;
 		iohandler.readMeteoData(new_start, new_end, vecMeteo);
 		raw_buffer.push(new_start, new_end, vecMeteo);
 		return;
 	}
 
 	if (new_start<buffer_start) { //some data must be inserted before
-		vector< METEO_SET > vecMeteo;
+		std::vector< METEO_SET > vecMeteo;
 		iohandler.readMeteoData(new_start, buffer_start, vecMeteo);
 		raw_buffer.push(new_start, buffer_start, vecMeteo);
 	}
 
 	if (new_end>buffer_end) { //some data must be inserted after. Keep in mind both before and after could happen simultaneously!
-		vector< METEO_SET > vecMeteo;
+		std::vector< METEO_SET > vecMeteo;
 		iohandler.readMeteoData(buffer_end, new_end, vecMeteo);
 		raw_buffer.push(buffer_end, new_end, vecMeteo);
 	}

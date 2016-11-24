@@ -520,9 +520,9 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo)
 
 		Date previous_date( vecVecMeteo[stat_idx].front().date );
 		for (size_t ii=1; ii<nr_timestamps; ++ii) {
-			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
+			const Date current_date( vecVecMeteo[stat_idx][ii].date );
 			if (current_date<=previous_date) {
-				const StationData& station = vecVecMeteo[stat_idx][ii].meta;
+				const StationData& station( vecVecMeteo[stat_idx][ii].meta );
 				if (current_date==previous_date)
 					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
 				else
@@ -537,7 +537,7 @@ void IOHandler::create_merge_map()
 {
 	merge_ready = true;
 	
-	vector<string> merge_keys;
+	std::vector<std::string> merge_keys;
 	const size_t nrOfStations = cfg.findKeys(merge_keys, "::MERGE", "Input", true);
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = merge_keys[ii].find_first_of(":");
@@ -549,7 +549,7 @@ void IOHandler::create_merge_map()
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+merge_keys[ii]+"\"", AT);
 		
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
-			IOUtils::toUpper(*it);
+			IOUtils::toUpper( *it );
 			const std::vector<std::string>::const_iterator vec_it = find (merged_stations.begin(), merged_stations.end(), *it);
 			if (vec_it==merged_stations.end()) merged_stations.push_back( *it ); //this station will be merged into another one
 		}
@@ -562,7 +562,7 @@ void IOHandler::create_merge_map()
 	//make sure there is no "chain merge": station A merging station B and station C merging station A
 	std::map< std::string, std::vector<std::string> >::iterator it_dest;
 	for(it_dest=merge_commands.begin(); it_dest!=merge_commands.end(); ++it_dest) {
-		const std::string &stationID = it_dest->first;
+		const std::string stationID( it_dest->first );
 		if (std::binary_search(merged_stations.begin(), merged_stations.end(), stationID))
 			throw InvalidArgumentException("\'chain merge\' detected for station \'"+stationID+"\', this is not supported (see documentation)", AT);
 	}
@@ -581,7 +581,7 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 		const std::map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
-		const std::vector<std::string> &merge_from( it->second );
+		const std::vector<std::string> merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
 			const std::string fromStationID( *it_set );
 			
@@ -624,7 +624,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 		const std::map< std::string, std::vector<std::string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
-		const std::vector<std::string> &merge_from( it->second );
+		const std::vector<std::string> merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
 			const std::string fromStationID( *it_set );
 			
@@ -709,7 +709,7 @@ void IOHandler::create_exclude_map()
 		cfg.getValue(exclude_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
-			IOUtils::toUpper(*it);
+			IOUtils::toUpper( *it );
 		}
 
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
@@ -785,7 +785,7 @@ void IOHandler::create_keep_map()
 		cfg.getValue(keep_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
-			IOUtils::toUpper(*it);
+			IOUtils::toUpper( *it );
 		}
 
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
@@ -855,7 +855,7 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 		const std::set<std::string> kept( it->second );
 		
 		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
-			MeteoData& md_ref = vecVecMeteo[station][ii];
+			MeteoData& md_ref( vecVecMeteo[station][ii] );
 			MeteoData md( md_ref );
 			md.reset(); //delete all meteo fields
 			
@@ -887,7 +887,7 @@ void IOHandler::create_move_map()
 		
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+move_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
-			IOUtils::toUpper(*it);
+			IOUtils::toUpper( *it );
 		}
 		
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());

@@ -432,7 +432,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 	getAnetzPSUM(ad, mapAnetzNames, vec_of_psums, current_station_psum);
 
 	size_t counter = 0;
-	Date current_slice_date = dateStart;
+	Date current_slice_date( dateStart );
 	current_slice_date.setTimeZone(in_tz);
 	for (size_t jj=0; jj<vecMeteo[stationindex].size(); jj++){
 		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
@@ -458,7 +458,7 @@ void ImisIO::getAnetzPSUM(const AnetzData& ad, const std::map<std::string, size_
 	vector<size_t> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
 	for (size_t ii=0; ii<ad.nrOfAnetzStations; ii++){
 		const map<string, size_t>::const_iterator it = mapAnetzNames.find(ad.anetzstations[ii]);
-		vecIndex.push_back(it->second);
+		vecIndex.push_back( it->second );
 	}
 
 	if (ad.nrOfAnetzStations == ad.nrOfCoefficients){
@@ -496,7 +496,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 
 	for (size_t ii=0; ii<vecMeteoAnetz.size(); ii++){
 		double tmp_psum = 0.0;
-		Date current_date = dateStart;
+		Date current_date( dateStart );
 		current_date.setTimeZone(in_tz);
 
 		vector<double> vec_current_station;
@@ -547,7 +547,7 @@ void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
                                std::map<std::string, size_t>& mapAnetzNames,
                                std::vector<StationData>& vecAnetzStation)
 {
-	set<string> uniqueStations;
+	std::set<std::string> uniqueStations;
 
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		const map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
@@ -585,7 +585,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 {
 	vecMeteo.at(stationindex).clear();
 
-	string stat_abk, stao_nr;
+	std::string stat_abk, stao_nr;
 	vector< vector<string> > vecResult;
 
 	// Moving back to the IMIS timezone (UTC+1)
@@ -648,7 +648,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 	dateE.setTimeZone(in_tz);
 
 	//build stat_abk and stao_nr from station name
-	string stat_abk, stao_nr;
+	std::string stat_abk, stao_nr;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
 
 	const unsigned int max_row = static_cast<unsigned int>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
@@ -670,7 +670,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
 
 		ResultSet *rs = stmt->executeQuery(); // execute the statement stmt
-		const vector<MetaData> cols = rs->getColumnListMetaData();
+		const vector<MetaData> cols( rs->getColumnListMetaData() );
 
 		double prev_swe = IOUtils::nodata;
 		Date prev_date;
