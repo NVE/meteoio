@@ -36,9 +36,9 @@ if [ "x$plot_colors" != "x" ]; then
 		}
 		!/^$/{
 			col_count++
-			r=int( sprintf("%f", "0x" substr($1,1,2)) )
-			g=int( sprintf("%f", "0x" substr($1,3,2)) )
-			b=int( sprintf("%f", "0x" substr($1,5,2)) )
+			r=int( sprintf("%f", "0x" substr($1,3,2)) )
+			g=int( sprintf("%f", "0x" substr($1,5,2)) )
+			b=int( sprintf("%f", "0x" substr($1,7,2)) )
 			color_name=$1
 			if (r==0 && g==0 && b==0)
 				color_name="black"
