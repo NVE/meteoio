@@ -198,11 +198,11 @@ void NetCDFIO::parseInputOutputSection()
 	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow);
 	
-	const string in_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) );
+	const std::string in_schema( IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Input", IOUtils::nothrow) ) );
 	if (!in_schema.empty()) initAttributesMap(in_schema, in_attributes);
 	else initAttributesMap("ECMWF", in_attributes);
 	
-	const string out_schema = IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) );
+	const std::string out_schema( IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) ) );
 	if (!out_schema.empty()) initAttributesMap(out_schema, out_attributes);
 	else initAttributesMap("ECMWF", out_attributes);
 	
@@ -251,21 +251,21 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::SWE] = attributes("sd", "lwe_thickness_of_surface_snow_amount", "Snow depth", "m of water equivalent", IOUtils::nodata);
 		attr[MeteoGrids::TSS] = attributes("skt", "", "Skin temperature", "K", IOUtils::nodata);
 		attr[MeteoGrids::TSG] = attributes("stl1", "surface_temperature", "Soil temperature level 1", "K", IOUtils::nodata); //this is from 0 to -7cm
-		//attr[MeteoGrids::ALB] = attributes("al", "surface_albedo", "Albedo", "(0 - 1)", IOUtils::nodata);
+		attr[MeteoGrids::ALB] = attributes("al", "surface_albedo", "Albedo", "(0 - 1)", IOUtils::nodata);
 		attr[MeteoGrids::ALB] = attributes("fal", "", "Forecast albedo", "(0 - 1)", IOUtils::nodata);
 		attr[MeteoGrids::RSNO] = attributes("rsn", "", "Snow density", "kg m**-3", IOUtils::nodata);
 		attr[MeteoGrids::ROT] = attributes("ro", "", "Runoff", "m", IOUtils::nodata);
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
 	
-	vector<string> custom_attr;
+	std::vector<std::string> custom_attr;
 	const size_t nrOfCustoms = cfg.findKeys(custom_attr, "NETCDF::", "Input");
 	for (size_t ii=0; ii<nrOfCustoms; ++ii) {
 		const size_t found = custom_attr[ii].find_last_of(":");
 		if (found==std::string::npos || found==custom_attr[ii].length()) continue;
 
-		const string meteo_grid = custom_attr[ii].substr(found+1);
-		const string netcdf_param = cfg.get(custom_attr[ii], "Input");
+		const std::string meteo_grid( custom_attr[ii].substr(found+1) );
+		const std::string netcdf_param = cfg.get(custom_attr[ii], "Input");
 		const size_t param_index = MeteoGrids::getParameterIndex(meteo_grid);
 		if (param_index==IOUtils::npos)
 			throw InvalidArgumentException("Parameter '"+meteo_grid+"' is not a valid MeteoGrid! Please correct key '"+custom_attr[ii]+"'", AT);
@@ -276,7 +276,7 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 {
-	vector<string> vec_argument;
+	std::vector<std::string> vec_argument;
 	IOUtils::readLineToVec(arguments, vec_argument, ':');
 
 	if (vec_argument.size() == 2) {
@@ -290,20 +290,20 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 {
 	if (!cache_meteo_files.empty()) {
 		for (size_t ii=0; ii<cache_meteo_files.size(); ii++) {
-			const Date date_start = cache_meteo_files[ii].first.first;
-			const Date date_end = cache_meteo_files[ii].first.second;
+			const Date date_start( cache_meteo_files[ii].first.first );
+			const Date date_end( cache_meteo_files[ii].first.second );
 			if (date>=date_start && date<=date_end) {
-				const string filename = cache_meteo_files[ii].second;
+				const std::string filename( cache_meteo_files[ii].second );
 				read2DGrid(grid_out, parameter, date, filename);
 				return;
 			}
 		}
 		//the date was not found
-		string in_grid2d_path;
+		std::string in_grid2d_path;
 		cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
 		throw InvalidArgumentException("No Gridded data found for "+date.toString(Date::ISO)+"in '"+in_grid2d_path+"'", AT);
 	} else {
-		const string filename = cfg.get("GRID2DFILE", "Input");
+		const std::string filename = cfg.get("GRID2DFILE", "Input");
 		read2DGrid(grid_out, parameter, date, filename);
 	}
 }
@@ -420,8 +420,8 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 void NetCDFIO::readDEM(DEMObject& dem_out)
 {
-	const string filename = cfg.get("DEMFILE", "Input");
-	const string varname = cfg.get("DEMVAR", "Input", IOUtils::nothrow);
+	const std::string filename = cfg.get("DEMFILE", "Input");
+	const std::string varname = cfg.get("DEMVAR", "Input", IOUtils::nothrow);
 	if (!varname.empty()) {
 		if (!read2DGrid_internal(dem_out, filename, varname))
 			throw InvalidArgumentException("Variable \'"+varname+"\' not found in file \'"+filename+"\'", AT);
@@ -455,25 +455,25 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)
 {
 	// arguments is a string of the format filname:varname
-	vector<string> vec_argument;
+	std::vector<std::string> vec_argument;
 	if (IOUtils::readLineToVec(arguments, vec_argument, ':')  != 2)
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname", AT);
 
-	const string name = vec_argument[1];
+	const std::string name( vec_argument[1] );
 	const attributes attr(name, name, name, "", IOUtils::nodata);
 	write2DGrid_internal(grid_in, vec_argument[0], attr);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	const string filename = cfg.get("GRID2DFILE", "Output");
+	const std::string filename = cfg.get("GRID2DFILE", "Output");
 	
 	const std::map<MeteoGrids::Parameters, attributes>::const_iterator it = in_attributes.find(parameter);
 	if (it!=in_attributes.end()) {
 		const bool isPrecip = (parameter==MeteoGrids::PSUM || parameter==MeteoGrids::SWE);
 		write2DGrid_internal(grid_in, filename, it->second, date, isPrecip);
 	} else {
-		const string name = MeteoGrids::getParameterName(parameter);
+		const std::string name( MeteoGrids::getParameterName(parameter) );
 		const attributes attr(name, name, name, "", IOUtils::nodata);
 		write2DGrid_internal(grid_in, filename, attr, date);
 	}
@@ -492,7 +492,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 {
 	meteo_files.clear();
 
-	const string meteo_ext = cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
+	const std::string meteo_ext = cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
 	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();
@@ -500,7 +500,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 	//Check date range in every filename and cache it
 	std::list<std::string>::const_iterator it = dirlist.begin();
 	while ((it != dirlist.end())) {
-		const std::string& filename = meteopath_in + "/" + *it;
+		const std::string filename( meteopath_in + "/" + *it );
 		
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		int ncid;
@@ -542,20 +542,21 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 //isPrecip is used to convert the units of precip as well as prevent very small precip amounts
 bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const std::string& varname, const Date& date, const bool& isPrecip)
 {
-	int ncid, varid;
-	vector<int> dimid, dim_varid;
-	vector<string> dimname;
-	vector<size_t> dimlen;
-
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
+
+	int ncid, varid;
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
 	if (!ncpp::check_variable(ncid, varname)) return false;
 	ncpp::get_variable(ncid, varname, varid);
+
+	std::vector<int> dimid, dim_varid;
+	std::vector<string> dimname;
+	std::vector<size_t> dimlen;
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
 	size_t time_index = IOUtils::npos, lat_index = IOUtils::npos, lon_index = IOUtils::npos;
 	for (size_t ii=0; ii<dimname.size(); ii++) {
-		const string name=dimname[ii];
+		const std::string name( dimname[ii] );
 		if (name=="latitude" || name=="lat")
 			lat_index = ii;
 		else if (name=="longitude" || name=="lon")
@@ -611,7 +612,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	}
 	
 	//read nodata value
-	double missing_value=plugin_nodata;
+	double missing_value = plugin_nodata;
 	if (ncpp::check_attribute(ncid, varid, "missing_value")) ncpp::get_attribute(ncid, varname, varid, "missing_value", missing_value);
 
 	//fill our Grid2DObject with all the data that has been read
@@ -620,19 +621,19 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 
 	//handle data packing if necessary
 	if (ncpp::check_attribute(ncid, varid, "scale_factor")) {
-		double scale_factor=1.;
+		double scale_factor = 1.;
 		ncpp::get_attribute(ncid, varname, varid, "scale_factor", scale_factor);
 		grid_out *= scale_factor;
 	}
 	if (ncpp::check_attribute(ncid, varid, "add_offset")) {
-		double add_offset=0.;
+		double add_offset = 0.;
 		ncpp::get_attribute(ncid, varname, varid, "add_offset", add_offset);
 		grid_out += add_offset;
 	}
 	
 	//Correct the units if necessary
 	if (ncpp::check_attribute(ncid, varid, "units")) {
-		string units;
+		std::string units;
 		ncpp::get_attribute(ncid, varname, varid, "units", units);
 		if (units=="m**2 s**-2") grid_out /= Cst::gravity;
 		if (units=="%") grid_out /= 100.;
@@ -650,7 +651,7 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 
 void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& filename, const attributes& attr, const Date& date, const bool& isPrecip)
 {
-	const string varname = attr.var;
+	const std::string varname( attr.var );
 	const bool is_record = (date != Date() && date!=Date(0.));
 
 	double *lat_array = new double[grid_in.getNy()];
@@ -658,7 +659,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 	int *data = new int[grid_in.getNy() * grid_in.getNx()];
 	
 	//Correct the units if necessary
-	const string units = attr.units;
+	const std::string units( attr.units );
 	if (units=="m**2 s**-2") grid_in *= Cst::gravity;
 	if (units=="%") grid_in *= 100.;
 	if (units=="J m**-2") grid_in *= (3600.*1.); //HACK: assuming that we do hourly outputs
@@ -693,9 +694,9 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 		if (ncpp::check_variable(ncid, attr.var)) { // variable exists
 			ncpp::get_variable(ncid, attr.var, vid_var);
 
-			vector<int> dimid, dim_varid;
-			vector<string> dimname;
-			vector<size_t> dimlen;
+			std::vector<int> dimid, dim_varid;
+			std::vector<string> dimname;
+			std::vector<size_t> dimlen;
 			ncpp::get_dimension(ncid, attr.var, vid_var, dimid, dim_varid, dimname, dimlen);
 
 			if (is_record) {
@@ -748,7 +749,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 
 void NetCDFIO::getTimeTransform(const int& ncid, double &time_offset, double &time_multiplier) const
 {
-	string time_units;
+	std::string time_units;
 	ncpp::get_DimAttribute(ncid, NetCDFIO::cf_time, "units", time_units);
 
 	std::vector<std::string> vecString;
@@ -765,7 +766,7 @@ void NetCDFIO::getTimeTransform(const int& ncid, double &time_offset, double &ti
 	else if (vecString[0]=="seconds") time_multiplier = 1./(24.*3600);
 	else throw InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
 	
-	const string ref_date_str = (nrWords==3)? vecString[2] : vecString[2]+"T"+vecString[3];
+	const std::string ref_date_str = (nrWords==3)? vecString[2] : vecString[2]+"T"+vecString[3];
 	Date refDate;
 	if (!IOUtils::convertString(refDate, ref_date_str, in_dflt_TZ))
 		throw InvalidArgumentException("Invalid reference date \'"+ref_date_str+"\'", AT);

@@ -45,6 +45,8 @@ void real_main(int argc, char** argv) {
 		}
 	}
 
+	//io.getMeteoData(d1, d2, vecMeteo); //This would be the call that does NOT resample the data, instead of the above "for" loop
+
 	timer.stop();
 	//In both case, we write the data out
 	std::cout << "Writing output data" << std::endl;
