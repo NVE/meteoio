@@ -546,7 +546,10 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 
 	int ncid, varid;
 	ncpp::open_file(filename, NC_NOWRITE, ncid);
-	if (!ncpp::check_variable(ncid, varname)) return false;
+	if (!ncpp::check_variable(ncid, varname)) {
+		ncpp::close_file(filename, ncid);
+		return false;
+	}
 	ncpp::get_variable(ncid, varname, varid);
 
 	std::vector<int> dimid, dim_varid;

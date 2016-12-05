@@ -40,12 +40,13 @@ namespace mio {
  * geolocalized data, the desired coordinate system must also be specified for the outputs (in the output section).
  * This is done through the use of the COORDIN and COORDPARAM keys (see the documentation for each plugin).
  *
+ * \anchor Coordinate_types
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
- * - CH1903 or CH1903+ for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
- * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
- * - UPS for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
+ * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
+ * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
+ * - <a href="https://en.wikipedia.org/wiki/Universal_polar_stereographic_coordinate_system">UPS</a> for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
  *
  * Such an example of use is the following:
@@ -54,7 +55,7 @@ namespace mio {
  * COORDPARAM	= 31T
  * @endcode
  *
- * On the other hand, when using the Proj4 library for handling the coordinate conversion, the EPSG codes of
+ * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj4</a> library for handling the coordinate conversion, the EPSG codes of
  * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
  * @code
@@ -596,16 +597,9 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 
 /**
 * @brief Set projection to use
-* This projection will be used for converting between lat/lon and East/North
+* This projection will be used for converting between lat/lon and East/North (see the \ref Coordinate_types "supported projections")
 * @param[in] in_coordinatesystem string identifying the coordinate system to use
 * @param[in] in_parameters string giving some additional parameters for the projection (optional)
-*
-*  \anchor Coordinate_types
-* The coordinate system can be any of the following:
-* - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
-* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
-* - PROJ4 for coordinate conversion relying on the Proj4 library [ref: http://trac.osgeo.org/proj/]
-* - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
 */
 void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
 {

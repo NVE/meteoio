@@ -63,6 +63,12 @@ class DEMObject : public Grid2DObject {
 			CURVATURE=4 ///< update the curvatures
 		} update_type;
 
+		///Keywords for selecting the toString formats
+		typedef enum {
+			FULL, ///< Provide all the usually necessary information
+			SHORT ///< Simplified, lat/lon only
+		} FORMATS;
+
 		DEMObject(const slope_type& i_algorithm=DFLT);
 
 		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
@@ -121,7 +127,7 @@ class DEMObject : public Grid2DObject {
 		bool operator==(const DEMObject& in) const; ///<Operator that tests for equality
 		bool operator!=(const DEMObject& in) const; ///<Operator that tests for inequality
 
-		const std::string toString() const;
+		const std::string toString(const FORMATS& type = FULL) const;
 		friend std::iostream& operator<<(std::iostream& os, const DEMObject& dem);
 		friend std::iostream& operator>>(std::iostream& is, DEMObject& dem);
 

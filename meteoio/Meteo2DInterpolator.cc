@@ -377,7 +377,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 
 			if (!dem.gridify(curr_point)) {
 				ostringstream ss;
-				ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
+				ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM " << dem.toString(DEMObject::SHORT);
 				throw NoDataException(ss.str(), AT);
 			}
 

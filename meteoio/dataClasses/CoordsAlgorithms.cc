@@ -710,7 +710,9 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber)
 { //helper method: parse a UTM zone specification string into letter and number
 	if ((sscanf(zone_info.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
-		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
+		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2) &&
+		(sscanf(zone_info.c_str(), "%c%hd", &zoneLetter, &zoneNumber) < 2) &&
+		(sscanf(zone_info.c_str(), "%c %hd)", &zoneLetter, &zoneNumber) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
 	}
 	if (zoneNumber<1 || zoneNumber>60) {
