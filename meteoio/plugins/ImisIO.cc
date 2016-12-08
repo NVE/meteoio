@@ -375,6 +375,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			openDBConnection(env, conn);
 		stmt = conn->createStatement();
 
+		//read the "raw" station data from db (ie pure imis data)
 		for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
 			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 		}
@@ -614,7 +615,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 				} else {
 					double& psum = tmpmd(MeteoData::PSUM);
 					if (psum!=IOUtils::nodata) {
-						psum /= 2.; //half hour accumulated value for IMIS stations only
+						psum *= .5; //half hour accumulated value for IMIS stations only
 					}
 				}
 			}
@@ -703,7 +704,8 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 				continue;
 			}
 
-			if ((curr_date.getJulian()-prev_date.getJulian())<=max_interval || curr_swe==0.) {
+			const double measurement_interval = curr_date.getJulian() - prev_date.getJulian();
+			if (measurement_interval<=max_interval && curr_swe>0.) { //keep previous PSUM if no snow on the ground
 				vecMeteo[stationindex][ii_serie](MeteoData::PSUM) = 0.;
 				//data not too far apart, so we accept it for Delta SWE
 				if (vecMeteo[stationindex][ii_serie].date==curr_date) {
