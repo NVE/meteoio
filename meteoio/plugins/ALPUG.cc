@@ -305,7 +305,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 	}
 
 	for (int year=start_year; year<=end_year; ++year) {
-		stringstream ss;
+		ostringstream ss;
 		ss << year;
 		const std::string filename( ss.str().substr(2,2) + station_id + dflt_extension );
 		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist

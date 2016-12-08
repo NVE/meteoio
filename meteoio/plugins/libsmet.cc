@@ -1333,7 +1333,7 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		
 		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
 			const string& current_timestamp = tmp_vec[timestamp_field];
-			const size_t cmp_len = std::min(date_stop_len, current_timestamp.length());
+			const size_t cmp_len = min(date_stop_len, current_timestamp.length());
 			
 			if (current_timestamp.compare(0, cmp_len, date_stop) >= 0) break;
 		} else {
