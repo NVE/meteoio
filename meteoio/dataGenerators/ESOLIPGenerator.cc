@@ -18,6 +18,7 @@
 
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
 #include <meteoio/meteoFilters/ProcPSUMDistribute.h> //for the precipitation distribution
+#include <algorithm>
 
 namespace mio {
 

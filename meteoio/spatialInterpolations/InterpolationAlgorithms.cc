@@ -44,6 +44,7 @@
 
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 namespace mio {
 

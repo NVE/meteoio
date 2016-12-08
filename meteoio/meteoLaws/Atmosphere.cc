@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <sstream>
 #include <cmath>
+#include <algorithm>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Sun.h>

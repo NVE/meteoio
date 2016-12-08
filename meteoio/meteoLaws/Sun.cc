@@ -19,6 +19,7 @@
 #include <string>
 #include <iostream> //for "fixed"
 #include <iomanip> //for "setprecision"
+#include <algorithm>
 
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/meteoLaws/Atmosphere.h>

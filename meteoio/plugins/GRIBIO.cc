@@ -28,6 +28,7 @@
 #include <cmath>
 #include <iostream>
 #include <errno.h>
+#include <algorithm>
 #include <grib_api.h>
 
 using namespace std;

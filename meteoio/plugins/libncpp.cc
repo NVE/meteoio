@@ -23,6 +23,8 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/IOExceptions.h>
 
+#include <algorithm>
+
 using namespace std;
 using namespace mio;  // for the IOExceptions and IOUtils
 

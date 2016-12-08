@@ -18,6 +18,7 @@
 
 #include <meteoio/dataGenerators/AllSkySWGenerator.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
+#include <algorithm>
 
 namespace mio {
 

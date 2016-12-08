@@ -19,6 +19,7 @@
 #include <meteoio/spatialInterpolations/WinstralAlgorithm.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
 #include <meteoio/MathOptim.h>
+#include <algorithm>
 
 namespace mio {
 
