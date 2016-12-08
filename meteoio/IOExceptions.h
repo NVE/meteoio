@@ -38,7 +38,7 @@ namespace mio {
  */
 
 
-class IOException : public std::exception {
+class MIO_API IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
 		~IOException() throw() {}
