@@ -106,17 +106,11 @@ class ImisIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 
 		//helper functions for the Anetz coefficient mangling:
-		void findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
-		                       std::map<std::string, size_t>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
-		void getAnetzPSUM(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
-		                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
-		void assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
-		                         const std::vector< std::vector<double> > vec_of_psums,
-		                         const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
-		                         std::vector< std::vector<MeteoData> >& vecMeteo);
-		void calculatePsum(const Date& dateStart, const Date& dateEnd,
-		                   const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-		                   std::vector< std::vector<double> >& vec_of_psums);
+		void findAnetzStations(std::map<std::string, size_t>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
+		void assimilateAnetzData(const AnetzData& ad,
+                                 const std::map<std::string, size_t>& mapAnetzNames, const std::vector< std::vector< std::pair<Date, double> > > &vecPsum,
+                                 const size_t& stationindex, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void computeAnetzPSUM(std::vector<MeteoData> &vecMeteo, std::vector< std::pair<Date, double> > &vecPsum);
 
 		static const double in_tz; //timezone
 		const Config cfg;

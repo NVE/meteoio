@@ -365,9 +365,6 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			return;
 		}
 
-		size_t indexStart=0, indexEnd=vecStationMetaData.size();
-
-		//The following part decides whether all the stations are rebuffered or just one station
 		vecMeteo.clear();
 		vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
@@ -376,41 +373,34 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		stmt = conn->createStatement();
 
 		//read the "raw" station data from db (ie pure imis data)
-		for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
+		for (size_t ii=0; ii<vecStationMetaData.size(); ii++) { //loop through relevant stations
 			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 		}
 
 		if (useAnetz) { //Important: we don't care about the metadata for ANETZ stations
-			vector<StationData> vecAnetzStation;       //holds the unique ANETZ stations that need to be read
-			vector< vector<MeteoData> > vecMeteoAnetz; //holds the meteo data of the ANETZ stations
-			map<string, size_t> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
+			std::vector<StationData> vecAnetzStation;       //holds the unique ANETZ stations that need to be read
+			std::map<string, size_t> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
+			findAnetzStations(mapAnetzNames, vecAnetzStation);
 
-			findAnetzStations(indexStart, indexEnd, mapAnetzNames, vecAnetzStation);
-			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
+			//read Anetz Data, convert it to PSUMs at XX:00 and XX:30
+			std::vector< std::vector< std::pair<Date, double> > > vecPsum( vecAnetzStation.size() );
+			vector< vector<MeteoData> > vecMeteoAnetz( vecAnetzStation.size() ); //holds the meteo data of the ANETZ stations
+			const Date AnetzStart( dateStart-1./24. ); //to be sure that we can resample the ANETZ data
+			const Date AnetzEnd( dateEnd+1./24. );
+			for (size_t ii=0; ii<vecAnetzStation.size(); ii++) {
+				readData(AnetzStart, AnetzEnd, vecMeteoAnetz, ii, vecAnetzStation, env, stmt);
+				computeAnetzPSUM(vecMeteoAnetz[ii], vecPsum[ii]);
+			}
 
-			//date_anetz_start/end must be changed to be a multiple of 6h before the original dateStart, dateEnd
-			Date date_anetz_start = Date(floor(dateStart.getJulian(true) * 4.0) / 4.0, 0.);
-			date_anetz_start.setTimeZone(in_tz);
-			Date date_anetz_end   = Date(floor(dateEnd.getJulian(true) * 4.0) / 4.0, 0.);
-			date_anetz_end.setTimeZone(in_tz);
-
-			//read Anetz Data
-			for (size_t ii=0; ii<vecAnetzStation.size(); ii++)
-				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, stmt);
-
-			//We got all the data, now calc psum for all ANETZ stations
-			vector< vector<double> > vec_of_psums; //6 hour accumulations of psum
-			calculatePsum(date_anetz_start, date_anetz_end, vecMeteoAnetz, vec_of_psums);
-
-			for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
-				const map<string,AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
+			for (size_t ii=0; ii<vecStationMetaData.size(); ii++){ //loop through relevant stations
+				const map<string,AnetzData>::const_iterator it = mapAnetz.find( vecStationMetaData.at(ii).getStationID() );
 				if (it != mapAnetz.end())
-					assimilateAnetzData(date_anetz_start, it->second, vec_of_psums, mapAnetzNames, ii, vecMeteo);
+					assimilateAnetzData(it->second, mapAnetzNames, vecPsum, ii, vecMeteo);
 			}
 		}
 
 		if (use_psum_snowpack) {
-			for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
+			for (size_t ii=0; ii<vecStationMetaData.size(); ii++) { //loop through relevant stations
 				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 			}
 		}
@@ -423,138 +413,100 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
-                                 const std::vector< std::vector<double> > vec_of_psums,
-                                 const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
-                                 std::vector< std::vector<MeteoData> >& vecMeteo)
+//using the XX:00 and XX:30 Anetz precipi sums (in vecPsum), compute the regression for each timestep in vecMeteo for a given station
+void ImisIO::assimilateAnetzData(const AnetzData& ad,
+                                 const std::map<std::string, size_t>& mapAnetzNames, const std::vector< std::vector< std::pair<Date, double> > > &vecPsum,
+                                 const size_t& stationindex, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	//Do coefficient calculation (getPSUM) for every single station and data point
-	vector<double> current_station_psum;
-	getAnetzPSUM(ad, mapAnetzNames, vec_of_psums, current_station_psum);
+	std::vector<size_t> vecAnetz( ad.nrOfAnetzStations ); //this will contain the index in vecMeteoAnetz
+	for (size_t jj=0; jj<ad.nrOfAnetzStations; jj++) { //loop over all associated anetz stations
+		const map<string, size_t>::const_iterator it = mapAnetzNames.find( ad.anetzstations[jj] );
+		if (it==mapAnetzNames.end())
+			throw NotFoundException("The ANETZ station '"+ad.anetzstations[jj]+"' could not be found", AT);
+		vecAnetz[jj] = (it->second);
+	}
 
-	size_t counter = 0;
-	Date current_slice_date( dateStart );
-	current_slice_date.setTimeZone(in_tz);
-	for (size_t jj=0; jj<vecMeteo[stationindex].size(); jj++){
-		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
-			counter++;
-			const double julian = floor((current_slice_date.getJulian(true) +0.25001) * 4.0) / 4.0;
-			current_slice_date = Date(julian, 0.);
-			current_slice_date.setTimeZone(in_tz);
+	std::vector<size_t> last_found( vecAnetz.size(), 0 ); //index of last found timestep in vecPsum
+	for (size_t ii=0; ii<vecMeteo[stationindex].size(); ii++){ //loop over all timesteps for the current station
+		const Date current_date( vecMeteo[stationindex][ii].date );
+
+		//collect the ANETZ psums for this station and timestep
+		std::vector<double> psum( vecAnetz.size(), IOUtils::nodata );
+		for (size_t jj=0; jj<vecAnetz.size(); jj++) { //loop over all contributing anetz stations
+			//find the current timestep in vecPsum
+			for (size_t kk=last_found[jj]; kk<vecPsum[vecAnetz[jj]].size(); kk++) {
+				const Date &anetz_date = vecPsum[vecAnetz[jj]][kk].first;
+				if (anetz_date >= current_date) { //time step was found
+					if (anetz_date == current_date) {
+						last_found[jj]=kk;
+						psum[jj] = vecPsum[vecAnetz[jj]][kk].second;
+					}
+					break;
+				}
+			}
 		}
 
-		if (counter >= current_station_psum.size()) { break; } //should never happen
+		//compute regression for the current point using the contributing stations
+		double sum = 0.;
+		if (ad.nrOfAnetzStations == ad.nrOfCoefficients){ //1, 2, or 3 ANETZ stations without interaction
+			for (size_t jj=0; jj<vecAnetz.size(); jj++){
+				if (psum[jj]==IOUtils::nodata) {
+					sum = IOUtils::nodata;
+					break;
+				}
+				sum += ad.coeffs[jj] * psum[jj];
+			}
+		} else { // Exactly two ANETZ stations with one interaction term
+			if (ad.nrOfCoefficients != 3)
+				throw IOException("Misconfiguration in ANETZ data", AT);
 
-		double& psum = vecMeteo[stationindex][jj](MeteoData::PSUM);
-		if ((psum == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(psum, 0.0, 0.001))){
-			//replace by psum if there is no own value measured
-			psum = current_station_psum.at(counter);
+			if (psum[0]==IOUtils::nodata || psum[1]==IOUtils::nodata)
+				sum = IOUtils::nodata;
+			else {
+				sum =ad.coeffs[0] * psum[0] + ad.coeffs[1] * psum[1] + ad.coeffs[2] * psum[0] * psum[1];
+			}
 		}
+
+		//replace by ANETZ psum if there is no own value measured
+		double& md_psum = vecMeteo[stationindex][ii](MeteoData::PSUM);
+		if ((md_psum == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(md_psum, 0.0, 0.001)))
+			md_psum = sum;
 	}
 }
 
-void ImisIO::getAnetzPSUM(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
-                         const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum)
+//we compute PSUM at XX:30 and (XX+1):30 from the XX:40 sums from Anetz
+void ImisIO::computeAnetzPSUM(std::vector<MeteoData> &vecMeteo, std::vector< std::pair<Date, double> > &vecPsum)
 {
-	vector<size_t> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
-	for (size_t ii=0; ii<ad.nrOfAnetzStations; ii++){
-		const map<string, size_t>::const_iterator it = mapAnetzNames.find(ad.anetzstations[ii]);
-		vecIndex.push_back( it->second );
-	}
+	const size_t nr_meteo = vecMeteo.size();
+	for (size_t ii=0; ii<nr_meteo; ii++) {
+		//generate sum at XX:30
+		const double prev_psum = vecMeteo[ii](MeteoData::PSUM);
+		const Date datum_halfhour = Date::rnd(vecMeteo[ii].date, 1800, Date::DOWN);
+		if (prev_psum!=IOUtils::nodata)
+			vecPsum.push_back( std::make_pair(datum_halfhour, prev_psum*.5) ); //30 minute sum fully contained in the XX:40 sum
+		else
+			vecPsum.push_back( std::make_pair(datum_halfhour, IOUtils::nodata) );
 
-	if (ad.nrOfAnetzStations == ad.nrOfCoefficients){
-		//1, 2, or 3 ANETZ stations without interaction
-		for (size_t kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
-			double sum = 0.0;
-			for (size_t ii=0; ii<ad.nrOfCoefficients; ii++){
-				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk];
-			}
-			psum.push_back(sum/12.0);
-		}
-	} else {
-		if (ad.nrOfCoefficients != 3)
-			throw IOException("Misconfiguration in ANETZ data", AT);
-
-		// Exactly two ANETZ stations with one interaction term
-		for (size_t kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
-			double sum = 0.0;
-			const double& psum0 = vec_of_psums.at(vecIndex.at(0))[kk];
-			const double& psum1 = vec_of_psums.at(vecIndex.at(1))[kk];
-			sum += ad.coeffs[0] * psum0;
-			sum += ad.coeffs[1] * psum1;
-			sum += ad.coeffs[2] * psum0 * psum1;
-
-			psum.push_back(sum/12.0);
-		}
+		//generate sum at (XX+1):00
+		const double next_psum = (ii<(nr_meteo-1))? vecMeteo[ii+1](MeteoData::PSUM) : IOUtils::nodata;
+		const Date datum = Date::rnd(vecMeteo[ii].date, 3600, Date::UP);
+		if (prev_psum!=IOUtils::nodata && next_psum!=IOUtils::nodata)
+			vecPsum.push_back( std::make_pair(datum, (prev_psum+next_psum*2.)/6.) );
+		else
+			vecPsum.push_back( std::make_pair(datum, IOUtils::nodata) );
 	}
 }
 
-void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
-                           const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-                           std::vector< std::vector<double> >& vec_of_psums)
-{
-	const unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulian(true) - dateStart.getJulian(true) + 0.00001) * 4.0) + 1;
-
-	for (size_t ii=0; ii<vecMeteoAnetz.size(); ii++){
-		double tmp_psum = 0.0;
-		Date current_date( dateStart );
-		current_date.setTimeZone(in_tz);
-
-		vector<double> vec_current_station;
-		size_t counter_of_elements = 0;
-		for (size_t jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
-			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
-			const double& psum = vecMeteoAnetz[ii][jj](MeteoData::PSUM);
-
-			if ((current_date < anetzdate) && ((current_date+0.25) > anetzdate)){
-				;
-			} else {
-				if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
-					tmp_psum = tmp_psum * 6.0 / (double)counter_of_elements;
-
-				vec_current_station.push_back(tmp_psum);
-
-				current_date += 0.25;
-				tmp_psum = 0.0;
-				counter_of_elements = 0;
-			}
-
-			if (psum != IOUtils::nodata){
-				tmp_psum += psum;
-				counter_of_elements++;
-			}
-
-		}
-
-		if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
-			tmp_psum = tmp_psum*6./static_cast<double>(counter_of_elements);
-
-		vec_current_station.push_back(tmp_psum);
-
-		for (size_t jj=vec_current_station.size(); jj<nr_of_slices; jj++){ //To fill up the vector
-			vec_current_station.push_back(0.0);
-		}
-
-		vec_of_psums.push_back(vec_current_station);
-	}
-
-	for (size_t ii=1; ii<vec_of_psums.size(); ii++){
-		if (vec_of_psums[ii].size() != vec_of_psums[ii-1].size())
-			throw IOException("Error while summing up the precipitation data for the ANETZ stations", AT);
-	}
-}
-
-void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
-                               std::map<std::string, size_t>& mapAnetzNames,
+void ImisIO::findAnetzStations(std::map<std::string, size_t>& mapAnetzNames,
                                std::vector<StationData>& vecAnetzStation)
 {
 	std::set<std::string> uniqueStations;
 
-	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
-		const map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
+	for (size_t ii=0; ii<vecStationMetaData.size(); ii++){ //loop through stations
+		const map<string, AnetzData>::const_iterator it = mapAnetz.find( vecStationMetaData.at(ii).getStationID() );
 		if (it != mapAnetz.end()){
 			for (size_t jj=0; jj<it->second.nrOfAnetzStations; jj++){
-				uniqueStations.insert(it->second.anetzstations[jj]);
+				uniqueStations.insert( it->second.anetzstations[jj] );
 			}
 		}
 	}
@@ -566,7 +518,7 @@ void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
 
 		StationData sd;
 		sd.stationID = *ii;
-		vecAnetzStation.push_back(sd);
+		vecAnetzStation.push_back( sd );
 	}
 }
 
