@@ -534,7 +534,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 
 
 	mywriter.set_header_value("fields", ss.str());
-	mywriter.set_header_value("plot_units", plot_units.str());
+	mywriter.set_header_value("plot_unit", plot_units.str());
 	mywriter.set_header_value("plot_description", plot_description.str());
 	mywriter.set_header_value("plot_color", plot_color.str());
 	mywriter.set_header_value("plot_min", plot_min.str());
