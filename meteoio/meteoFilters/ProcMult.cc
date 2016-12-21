@@ -55,7 +55,7 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 			double& tmp = ovec[ii](param);
 			if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			tmp *= vecFactors[ ovec[ii].date.getJulianDayNumber() ];
+			tmp *= vecFactors[ ovec[ii].date.getJulianDayNumber()-1 ]; //indices start at 0 while day numbers start at 1
 		}
 	} else if (type=='h') {
 		int year, month, day, hour;
