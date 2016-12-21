@@ -140,7 +140,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEn
 		const bool success = filtered_cache.get(dateStart, dateEnd, vecVecMeteo);
 
 		if (!success) {
-			vector< vector<MeteoData> > tmp_meteo;
+			std::vector< std::vector<MeteoData> > tmp_meteo;
 			fillRawBuffer(dateStart, dateEnd);
 			raw_buffer.get(dateStart, dateEnd, tmp_meteo);
 

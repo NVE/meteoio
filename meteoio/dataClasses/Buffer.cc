@@ -59,9 +59,12 @@ bool MeteoBuffer::get(const Date& date_start, const Date& date_end, std::vector<
 		size_t pos_start = IOUtils::seek(date_start, ts_buffer[ii], false);
 		if (pos_start==IOUtils::npos) pos_start = 0;
 		size_t pos_end = IOUtils::seek(date_end, ts_buffer[ii], false);
-		if (pos_end==IOUtils::npos) pos_end = ts_buffer[ii].size() - 1;
+		if (pos_end==IOUtils::npos)
+			pos_end = ts_buffer[ii].size();
+		else
+			pos_end++; //because "insert" does not include the element pointed to by the last iterator
 
-		vecMeteo[ii].reserve(pos_end-pos_start+1); //weird that the "insert" does not handle it internally...
+		vecMeteo[ii].reserve(pos_end-pos_start);
 		vecMeteo[ii].insert(vecMeteo[ii].begin(), ts_buffer[ii].begin()+pos_start, ts_buffer[ii].begin()+pos_end);
 	}
 
@@ -138,7 +141,7 @@ void MeteoBuffer::push(const Date& date_start, const Date& date_end, const std::
 		//there is some overlap, only copy data that does NOT overlap
 		if (data_start<buffer_start) {
 			const size_t pos = IOUtils::seek(buffer_start, vecMeteo[ii], false); //returns the first date >=
-			ts_buffer[ii].insert(ts_buffer[ii].begin(), vecMeteo[ii].begin(), vecMeteo[ii].begin()+pos-1);
+			ts_buffer[ii].insert(ts_buffer[ii].begin(), vecMeteo[ii].begin(), vecMeteo[ii].begin()+pos);
 		}
 		if (data_end>buffer_end) {
 			size_t pos = IOUtils::seek(buffer_end, vecMeteo[ii], false); //returns the first date >=

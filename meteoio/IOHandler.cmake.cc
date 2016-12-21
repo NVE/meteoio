@@ -445,7 +445,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
-	
+
 	checkTimestamps(vecMeteo);
 	
 	if (!move_ready) create_move_map();
