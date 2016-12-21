@@ -57,7 +57,7 @@ void TimeSeriesManager::setDfltBufferProperties()
 
 			buff_before = chunk_size * buff_centering;
 		} else {
-			buff_before = chunk_size * 0.1; //10% centering by default
+			buff_before = chunk_size * 0.05; //5% centering by default
 		}
 	}
 
