@@ -66,7 +66,7 @@ std::string Accumulate::toString() const
 size_t Accumulate::findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart)
 {
 	size_t start_idx = IOUtils::npos;
-	for (size_t idx=index; idx--> 0; ) {
+	for (size_t idx=index+1; idx--> 0; ) { //because idx gets decremented right away
 		if ( vecM[idx].date <= dateStart) {
 			start_idx = idx;
 			break;
@@ -92,9 +92,9 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 {//to keep in mind: start_idx is last index <= dateStart and index is first index >= resampling_date
 	double sum = IOUtils::nodata;
 	//resample begining point, in the [start_idx ; start_idx+1] interval
-	const double start_value = partialAccumulateAtRight(vecM, paramindex, start_idx, dateStart);
-	if (start_value!=IOUtils::nodata)
-		sum=start_value;
+	const double start_val = partialAccumulateAtRight(vecM, paramindex, start_idx, dateStart);
+	if (start_val!=IOUtils::nodata)
+		sum = start_val;
 	else if (strict) return IOUtils::nodata;
 
 	//sum all whole periods AFTER the begining point, in the [start_idx+2 ; index-1] interval
@@ -107,11 +107,20 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 	}
 
 	//resample end point, in the [index-1 ; index] interval
-	const double end_val = partialAccumulateAtLeft(vecM, paramindex, index-1, resampling_date);
-	if (end_val!=IOUtils::nodata) {
-		if (sum!=IOUtils::nodata) sum += end_val;
-		else sum = end_val;
-	} else if (strict) return IOUtils::nodata;
+	if (vecM[index].date>=resampling_date) { //we have enough data points to cover the whole accumulating period
+		const double end_val = partialAccumulateAtLeft(vecM, paramindex, index-1, resampling_date);
+		if (end_val!=IOUtils::nodata) {
+			if (sum!=IOUtils::nodata) sum += end_val;
+			else sum = end_val;
+		} else if (strict) return IOUtils::nodata;
+	} else {  //some data points are missing to cover the whole accumulating period
+		if (strict) return IOUtils::nodata;
+		const double end_val = vecM[index](paramindex);
+		if (end_val!=IOUtils::nodata) {
+			if (sum!=IOUtils::nodata) sum += end_val;
+			else sum = end_val;
+		}
+	}
 
 	return sum;
 }
@@ -129,12 +138,18 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 
 	md(paramindex) = IOUtils::nodata;
 
-	const Date resampling_date = md.date;
-	const Date dateStart(resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone());
+	const Date resampling_date( md.date );
+	const Date dateStart( resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone() );
 	const size_t start_idx = findStartOfPeriod(vecM, index, dateStart);
 	if (start_idx==IOUtils::npos) {//No acceptable starting point found
 		std::cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
 		std::cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
+		return;
+	}
+
+	if (position==ResamplingAlgorithms::end && start_idx>=(vecM.size()-1)) { //the first element before "position" is the last of the vector
+		//the period that should be accumulated is not even in vecM
+		if (!strict) md(paramindex) = 0.;
 		return;
 	}
 

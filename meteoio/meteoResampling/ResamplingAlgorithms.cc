@@ -66,9 +66,10 @@ double ResamplingAlgorithms::partialAccumulateAtLeft(const std::vector<MeteoData
 
 	const double jul1 = vecM[pos].date.getJulian(true);
 	const double jul2 = vecM[end].date.getJulian(true);
+	const double jul_curr = curr_date.getJulian(true);
 
-	const double left_accumulation = linearInterpolation(jul1, 0., jul2, valend, curr_date.getJulian(true));
-
+	if (jul_curr>jul2) return IOUtils::nodata; //jul1 and jul2 should  frame jul_curr, if not some data points are missing
+	const double left_accumulation = linearInterpolation(jul1, 0., jul2, valend, jul_curr);
 	return left_accumulation;
 }
 
@@ -84,7 +85,9 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
 
 	const double jul1 = vecM[pos].date.getJulian(true);
 	const double jul2 = vecM[end].date.getJulian(true);
+	const double jul_curr = curr_date.getJulian(true);
 
+	if (jul_curr<jul1) return IOUtils::nodata; //jul1 and jul2 should  frame jul_curr, if not some data points are missing
 	const double left_accumulation = linearInterpolation(jul1, 0., jul2, valend, curr_date.getJulian(true));
 
 	return valend - left_accumulation;
@@ -107,7 +110,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 	indexP2=IOUtils::npos;
 
 	const Date dateStart = resampling_date - window_size;
-	for (size_t ii=pos; ii-- >0; ) {
+	for (size_t ii=pos; ii-- >0; ) { //because idx gets decremented right away
 		if (vecM[ii].date < dateStart) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {
 			indexP1 = ii;
