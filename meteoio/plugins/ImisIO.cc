@@ -239,7 +239,10 @@ void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Co
 	try {
 		if (conn != NULL)
 			env->terminateConnection(conn);
-		Environment::terminateEnvironment(env); // static OCCI function
+		if (env != NULL)
+			Environment::terminateEnvironment(env); // static OCCI function
+		conn = NULL;
+		env = NULL;
 	} catch (const exception&){
 		Environment::terminateEnvironment(env); // static OCCI function
 	}
@@ -380,7 +383,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 
 		if (vecStationMetaData.empty()) { //if there are no stations -> return
-			if ((env != NULL) || (conn != NULL)) closeDBConnection(env, conn);
+			closeDBConnection(env, conn);
 			return;
 		}
 
@@ -428,7 +431,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		closeDBConnection(env, conn);
 	} catch (const exception& e){
 		closeDBConnection(env, conn);
-		throw IOException("Oracle Error when reading stations' data: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading stations' data: " + std::string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
