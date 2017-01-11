@@ -42,7 +42,7 @@ namespace mio {
  * 
  * @section oshd_data_structure Data structure
  * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_F_{run time}.mat</i> with the following possible values:
- *     + *parameter* is one of idif, idir, ilwr, pair, prec, rhum, tair, tswe, wcor, wdir, wind;
+ *     + *parameter* is one of idif, idir, albd, ilwr, pair, prec, rhum, tcor, wcor, wdir;
  *     + *timestep* is written as purely numeric ISO with minute resolution;
  *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1, cosmoE;
  *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
@@ -115,6 +115,7 @@ void printStructure(matvar_t *matvar)
 	printf("\n");
 }
 
+
 std::string readString(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
 {
 	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
@@ -176,6 +177,56 @@ void readDoubleVector(const std::string &filename, const std::string &fieldname,
 	for (size_t ii=0; ii<ncols; ii++) {
 		vecData[ii] = matData[ii];
 	}
+}
+
+void printFileStructure(const std::string& filename)
+{
+	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
+	if ( NULL == matfp ) throw AccessException(filename, AT);
+
+	std::cout << "<" << filename << ">\n";
+	matvar_t *matvar;
+	while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
+		std::cout << "\t" << matvar->name << " [";
+		for (int ii=0; ii<matvar->rank; ii++) {
+			std::cout << (int)matvar->dims[ii];
+			if (ii<(matvar->rank-1)) std::cout << "x";
+		}
+		std::cout << "]\n";
+
+		const unsigned int nrFields = Mat_VarGetNumberOfFields(matvar);
+		char * const *fields = Mat_VarGetStructFieldnames(matvar);
+		for (unsigned int ii=0; ii<nrFields; ii++) {
+			const std::string field_name( fields[ii] );
+			matvar_t *field = Mat_VarGetStructFieldByName(matvar, field_name.c_str(), 0);
+			const std::string prefix = (ii<(nrFields-1))? "├──" : "└──";
+			std::cout << "\t" << prefix << field_name;
+			if (field->class_type==MAT_C_CHAR)
+				std::cout << " \"" << readString(filename, field_name, matfp, matvar) << "\"";
+			if (field->class_type==MAT_C_DOUBLE) {
+				std::cout << " [";
+				for (int jj=0; jj<field->rank; jj++) {
+					std::cout << field->dims[jj];
+					if (jj<(field->rank-1)) std::cout << "x";
+				}
+				std::cout << "]";
+			}
+			if (field->class_type==MAT_C_CELL) {
+				std::cout << " [";
+				for (int jj=0; jj<field->rank; jj++) {
+					std::cout << field->dims[jj];
+					if (jj<(field->rank-1)) std::cout << "x";
+				}
+				std::cout << "]";
+			}
+
+			std::cout << "\n";
+		}
+	}
+	std::cout << "</" << filename << ">\n";
+	Mat_VarFree(matvar);
+	matvar = NULL;
+	Mat_Close(matfp);
 }
 
 /**********************************************************************************
@@ -340,7 +391,7 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 	std::vector<double> vecAlbd;
 	vecAlbd.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_albd( in_meteopath + "/" + "albd" + "_" + file_suffix );
-	readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //HACK but we don't have ALB and RSWR is unused...
+	readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //We read ALBD and use it to build RSWR
 	
 	for (size_t jj=0; jj<nrIDs; jj++) {
 		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
@@ -368,6 +419,7 @@ void OshdIO::readPPhase(const Date& station_date, const std::string& file_suffix
 
 void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const
 {
+	if (debug) printFileStructure(filename);
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(filename, AT);
 
@@ -419,7 +471,7 @@ void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::strin
 	if (param==MeteoData::ISWR && type=="SWR") return;
 	if (param==MeteoData::P && type=="other") return;
 	if (param==MeteoData::PSUM_PH && type=="other") return;
-	if (param==MeteoData::RSWR && type=="other") return; //HACK this is in fact ALBD
+	if (param==MeteoData::RSWR && type=="other") return; //this is in fact ALBD
 	
 	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
 }
