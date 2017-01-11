@@ -98,6 +98,10 @@ std::string StationData::getHash() const {
 	return stationID+"::"+stationName;
 }
 
+double StationData::getAltitude() const {
+	return position.getAltitude();
+}
+
 double StationData::getSlopeAngle() const {
 	return slope;
 }

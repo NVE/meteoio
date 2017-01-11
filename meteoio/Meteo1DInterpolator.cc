@@ -74,10 +74,10 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	bool isResampled = true;
 	ResamplingAlgorithms::ResamplingPosition elementpos = ResamplingAlgorithms::exact_match;
 	if (index == IOUtils::npos) { //nothing found append new element at the left or right
-		if (vecM.front().date > date) {
+		if (date < vecM.front().date) {
 			elementpos = ResamplingAlgorithms::begin;
 			index = 0;
-		} else if (vecM.back().date < date) {
+		} else if (date >= vecM.back().date) {
 			elementpos = ResamplingAlgorithms::end;
 			index = vecM.size() - 1;
 		}

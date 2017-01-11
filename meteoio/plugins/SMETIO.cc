@@ -27,7 +27,8 @@ namespace mio {
  * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its
  * <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG,
  * RH, VW, DW, ISWR, OSWR, ILWR, OLWR, PINT, PSUM, HS). For PINT, it is assumed that the intensity (in mm/h) is valid for the whole period between the actual
- * time step and the previous one.
+ * time step and the previous one. You can also have a look at the following <A HREF="http://www.envidat.ch/dataset/10-16904-1">Weissfluhjoch dataset</A>
+ * as (quite large) example SMET dataset.
  *
  * This plugin can also provide Points Of Interest, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter,
  * the header must contain the epsg code (see example below).

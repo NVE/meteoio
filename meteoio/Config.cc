@@ -72,10 +72,10 @@ void Config::deleteKeys(const std::string& keymatch, const std::string& section,
 
 	//Loop through keys, look for match - delete matches
 	if (anywhere) {
-		const string key_pattern = IOUtils::strToUpper(keymatch);
-		const string section_pattern = IOUtils::strToUpper(section);
+		const string key_pattern( IOUtils::strToUpper(keymatch) );
+		const string section_pattern( IOUtils::strToUpper(section) );
 
-		map<string,string>::iterator it=properties.begin();
+		std::map<string,string>::iterator it=properties.begin();
 		while (it != properties.end()) {
 			const size_t found_section = (it->first).find(section_pattern, 0);
 
@@ -86,9 +86,9 @@ void Config::deleteKeys(const std::string& keymatch, const std::string& section,
 		}
 
 	} else {
-		const string key_pattern = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch);
+		const string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
 
-		map<string,string>::iterator it=properties.begin();
+		std::map<string,string>::iterator it=properties.begin();
 		while (it != properties.end()) {
 			if ( (it->first).find(key_pattern, 0)==0 ) //match found at start
 				properties.erase( it++ ); // advance before iterator become invalid
@@ -100,8 +100,8 @@ void Config::deleteKeys(const std::string& keymatch, const std::string& section,
 
 bool Config::keyExists(const std::string& key, const std::string& section) const
 {
-	const string full_key = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key);
-	const map<string,string>::const_iterator it = properties.find(full_key);
+	const string full_key( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) );
+	const std::map<string,string>::const_iterator it = properties.find(full_key);
 	return (it!=properties.end());
 }
 
@@ -246,7 +246,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	string key, value;
 	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
 		if (key=="IMPORT_BEFORE") {
-			const std::string file_and_path = clean_import_path(value);
+			const std::string file_and_path( clean_import_path(value) );
 			if (!accept_import_before)
 				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
 			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
@@ -255,7 +255,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 			return;
 		}
 		if (key=="IMPORT_AFTER") {
-			const std::string file_and_path = clean_import_path(value);
+			const std::string file_and_path( clean_import_path(value) );
 			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
 				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
 			import_after.push_back(file_and_path);
@@ -268,12 +268,12 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		ostringstream tmp;
 		tmp << linenr;
 
-		const string key_msg = (key.empty())? "" : "key "+key+" ";
-		const string key_value_link = (key.empty() && !value.empty())? "value " : "";
-		const string value_msg = (value.empty())? "" : value+" " ;
-		const string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
-		const string section_msg = (section.empty())? "" : "in section "+section+" ";
-		const string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+tmp.str();
+		const std::string key_msg = (key.empty())? "" : "key "+key+" ";
+		const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
+		const std::string value_msg = (value.empty())? "" : value+" " ;
+		const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
+		const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
+		const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+tmp.str();
 
 		throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 	}
@@ -299,8 +299,8 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
-		const string key_pattern( IOUtils::strToUpper(keymatch) );
-		const string section_pattern( IOUtils::strToUpper(section) );
+		const std::string key_pattern( IOUtils::strToUpper(keymatch) );
+		const std::string section_pattern( IOUtils::strToUpper(section) );
 
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_section = (it->first).find(section_pattern, 0);
@@ -308,17 +308,17 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 
 			const size_t found_pos = (it->first).find(key_pattern, section_len);
 			if (found_pos!=string::npos) { //found it!
-				const string key( (it->first).substr(section_len + 2) ); //from pos to the end
+				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back(key);
 			}
 		}
 	} else {
-		const string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
+		const std::string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
 
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(key_pattern, 0);
 			if (found_pos==0) { //found it!
-				const string key( (it->first).substr(section_len + 2) ); //from pos to the end
+				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back(key);
 			}
 		}
@@ -332,7 +332,7 @@ std::string Config::extract_section(std::string key) const
 	const string::size_type pos = key.find("::");
 
 	if (pos != string::npos){
-		const string sectionname = key.substr(0, pos);
+		const std::string sectionname( key.substr(0, pos) );
 		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
 		return sectionname;
 	}
@@ -343,8 +343,8 @@ std::string Config::clean_import_path(const std::string& in_path) const
 {
 	//if this is a relative path, prefix the import path with the current path
 	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
-	const std::string path = FileUtils::getPath(prefix+in_path, true);  //clean & resolve path
-	const std::string filename = FileUtils::getFilename(in_path);
+	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
+	const std::string filename( FileUtils::getFilename(in_path) );
 
 	return path + "/" + filename;
 }
@@ -356,11 +356,11 @@ void Config::write(const std::string& filename) const
 	if (fout.fail()) throw AccessException(filename, AT);
 
 	try {
-		string current_section;
+		std::string current_section;
 		unsigned int sectioncount = 0;
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const string key_full = it->first;
-			const string section = extract_section(key_full);
+			const std::string key_full( it->first );
+			const std::string section( extract_section(key_full) );
 
 			if (current_section != section) {
 				current_section = section;
@@ -371,7 +371,7 @@ void Config::write(const std::string& filename) const
 			}
 
 			const size_t key_start = key_full.find_first_of(":");
-			const string value = it->second;
+			const std::string value( it->second );
 			if (value.empty()) continue;
 
 			if (key_start!=string::npos) //start after the "::" marking the section prefix
