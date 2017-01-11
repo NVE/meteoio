@@ -573,7 +573,7 @@ void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
 //the element needs to be an exact hit or embedded between two measurments
 size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)
 {
-	if (vecM.empty() || soughtdate > vecM.back().date || soughtdate < vecM.front().date) {
+	if (vecM.empty() || soughtdate < vecM.front().date || soughtdate > vecM.back().date) {
 		//the sought date is not contained in the vector, return npos
 		return npos;
 	}
@@ -584,6 +584,8 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	//should be and provide a much smaller search interval around it
 	const double start_date = vecM.front().date.getJulian(true);
 	const double end_date = vecM.back().date.getJulian(true);
+	if (start_date==end_date) return 0; //there is onyl one element
+
 	const double curr_date = soughtdate.getJulian(true);
 	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
 	const size_t start_idx = static_cast<size_t>( floor(raw_pos*.9) );

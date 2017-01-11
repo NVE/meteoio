@@ -46,6 +46,7 @@ class OshdIO : public IOInterface {
 	private:
 		void parseInputOutputSection();
 		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		void readPPhase(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
 		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const;
 		void buildVecIdx(const std::vector<std::string>& vecAcro);
 		void fillStationMeta();
@@ -63,7 +64,6 @@ class OshdIO : public IOInterface {
 		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
 		std::string in_meteopath, in_metafile;
 		bool debug; ///< write out extra information to help understand what is being read
-		//std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		
 		static const char* meteo_ext; //for the file naming scheme
 		static const double in_dflt_TZ;     //default time zones

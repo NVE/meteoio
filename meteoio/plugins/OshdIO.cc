@@ -41,10 +41,10 @@ namespace mio {
  * ommitting the 'UTF8' option) to the (<A HREF="http://blog.omega-prime.co.uk/?p=150">partial</A>) UTF-8  encoding of Matlab.
  * 
  * @section oshd_data_structure Data structure
- * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}run{run time}.mat</i> with the following possible values:
+ * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_F_{run time}.mat</i> with the following possible values:
  *     + *parameter* is one of idif, idir, ilwr, pair, prec, rhum, tair, tswe, wcor, wdir, wind;
  *     + *timestep* is written as purely numeric ISO with minute resolution;
- *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1;
+ *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1, cosmoE;
  *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
  * 
  * The files have the following internal data structure (represented as "name {data type}"):
@@ -214,11 +214,11 @@ void OshdIO::parseInputOutputSection()
 	}
 	
 	//fill the params mapping vector
-	params_map.push_back( std::make_pair(MeteoData::TA, "tair") );
-	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
+	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwr") );
 	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
 	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") );
-	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwr") );
+	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
+	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
 	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") );
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
 }
@@ -312,13 +312,14 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			const std::string filename( in_meteopath + "/" + prefix + "_" + file_suffix );
 			vecData.resize( nrIDs, IOUtils::nodata );
 			readFromFile(filename, param, station_date, vecData);
-			
+
 			for (size_t jj=0; jj<nrIDs; jj++)
 				vecMeteo[jj].back()( param ) =  vecData[jj];
 		}
 		
 		readSWRad(station_date, file_suffix, nrIDs, vecMeteo); //the short wave radiation is a little different...
-		
+		readPPhase(station_date, file_suffix, nrIDs, vecMeteo); //the precipitation phase is a little different...
+
 		file_idx++;
 		station_date = ((file_idx)<nr_files)? cache_meteo_files[file_idx].first : dateEnd+1.;
 	} while (file_idx<nr_files && station_date<=dateEnd);
@@ -335,9 +336,34 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 	vecDiff.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_diff( in_meteopath + "/" + "idif" + "_" + file_suffix );
 	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
+
+	std::vector<double> vecAlbd;
+	vecAlbd.resize( nrIDs, IOUtils::nodata );
+	const std::string filename_albd( in_meteopath + "/" + "albd" + "_" + file_suffix );
+	readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //HACK but we don't have ALB and RSWR is unused...
 	
-	for (size_t jj=0; jj<nrIDs; jj++)
+	for (size_t jj=0; jj<nrIDs; jj++) {
 		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
+		vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
+	}
+}
+
+void OshdIO::readPPhase(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
+{
+	std::vector<double> vecSnowLine;
+	vecSnowLine.resize( nrIDs, IOUtils::nodata );
+	const std::string filename_dir( in_meteopath + "/" + "snfl" + "_" + file_suffix );
+	readFromFile(filename_dir, MeteoData::PSUM_PH, station_date, vecSnowLine);
+
+	for (size_t jj=0; jj<nrIDs; jj++) {
+		const double altitude = vecMeteo[jj].front().meta.getAltitude();
+		if (altitude>(vecSnowLine[jj]+50.))
+			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 0.;
+		else if (altitude<(vecSnowLine[jj]-50.))
+			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 1.;
+		else
+			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = .5;
+	}
 }
 
 void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const
@@ -392,6 +418,8 @@ void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::strin
 	if (param==MeteoData::ILWR && type=="LWR") return;
 	if (param==MeteoData::ISWR && type=="SWR") return;
 	if (param==MeteoData::P && type=="other") return;
+	if (param==MeteoData::PSUM_PH && type=="other") return;
+	if (param==MeteoData::RSWR && type=="other") return; //HACK this is in fact ALBD
 	
 	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
 }
