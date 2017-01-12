@@ -184,7 +184,7 @@ void printFileStructure(const std::string& filename)
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(filename, AT);
 
-	std::cout << "<" << filename << ">\n";
+	std::cout << "<" << FileUtils::getFilename( filename ) << ">\n";
 	matvar_t *matvar;
 	while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
 		std::cout << "\t" << matvar->name << " [";
@@ -202,14 +202,27 @@ void printFileStructure(const std::string& filename)
 			const std::string prefix = (ii<(nrFields-1))? "├──" : "└──";
 			std::cout << "\t" << prefix << field_name;
 			if (field->class_type==MAT_C_CHAR)
-				std::cout << " \"" << readString(filename, field_name, matfp, matvar) << "\"";
+				std::cout << " = \"" << readString(filename, field_name, matfp, matvar) << "\"";
 			if (field->class_type==MAT_C_DOUBLE) {
 				std::cout << " [";
+				size_t count=1;
 				for (int jj=0; jj<field->rank; jj++) {
 					std::cout << field->dims[jj];
 					if (jj<(field->rank-1)) std::cout << "x";
+					count *= field->dims[jj];
 				}
 				std::cout << "]";
+				if (count==1) {
+					if (Mat_VarReadDataAll(matfp, field))
+						throw InvalidFormatException("could not read field '"+field_name+"' in file '"+filename+"'", AT);
+					const double val = static_cast<double*>(field->data)[0];
+					if (field_name=="time") {
+						Date timestep;
+						timestep.setMatlabDate( val, OshdIO::in_dflt_TZ );
+						std::cout << " = " << timestep.toString(Date::ISO_TZ);
+					} else
+						std::cout << " = " << val;
+				}
 			}
 			if (field->class_type==MAT_C_CELL) {
 				std::cout << " [";
@@ -223,7 +236,7 @@ void printFileStructure(const std::string& filename)
 			std::cout << "\n";
 		}
 	}
-	std::cout << "</" << filename << ">\n";
+	std::cout << "</" << FileUtils::getFilename( filename ) << ">\n\n";
 	Mat_VarFree(matvar);
 	matvar = NULL;
 	Mat_Close(matfp);
@@ -233,7 +246,6 @@ void printFileStructure(const std::string& filename)
  * Now really implementing the OshdIO class
  **********************************************************************************/
 const char* OshdIO::meteo_ext = ".mat";
-const double OshdIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
 
 OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), vecMeta(), vecIDs(), params_map(), vecIdx(), 

@@ -43,6 +43,7 @@ class OshdIO : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
+		static const double in_dflt_TZ;     //default time zone, should be visible to matio for debugging
 	private:
 		void parseInputOutputSection();
 		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
@@ -66,8 +67,6 @@ class OshdIO : public IOInterface {
 		bool debug; ///< write out extra information to help understand what is being read
 		
 		static const char* meteo_ext; //for the file naming scheme
-		static const double in_dflt_TZ;     //default time zones
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 
 } //namespace
