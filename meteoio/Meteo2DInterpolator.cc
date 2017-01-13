@@ -106,7 +106,7 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 {
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
-		const vector<InterpolationAlgorithm*>& vecAlgs = iter->second;
+		const vector<InterpolationAlgorithm*>& vecAlgs( iter->second );
 		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
 	}
@@ -122,8 +122,8 @@ void Meteo2DInterpolator::setAlgorithms()
 	std::set<std::string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
-	std::set<std::string>::const_iterator it;
-	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
+	std::set<std::string>::const_iterator it  = set_of_used_parameters.begin();
+	for (; it != set_of_used_parameters.end(); ++it) {
 		const std::string parname( *it );
 		std::vector<std::string> tmpAlgorithms;
 		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
@@ -186,7 +186,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		throw IOException("No interpolation algorithms configured for parameter "+param_name, AT);
 
 	//look for algorithm with the highest quality rating
-	const vector<InterpolationAlgorithm*>& vecAlgs = it->second;
+	const vector<InterpolationAlgorithm*>& vecAlgs( it->second );
 	double maxQualityRating = -1.;
 	size_t bestalgorithm = 0;
 	for (size_t ii=0; ii < vecAlgs.size(); ++ii){
@@ -224,7 +224,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
 	result.clear();
-	std::vector<Coords> vec_coords(in_coords);
+	std::vector<Coords> vec_coords( in_coords );
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;

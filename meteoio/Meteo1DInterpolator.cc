@@ -40,9 +40,9 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	//read the Config object to create the resampling algorithms for each
 	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, psum, ...)
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
-		const std::string parname = MeteoData::getParameterName(ii); //Current parameter name
+		const std::string parname( MeteoData::getParameterName(ii) ); //Current parameter name
 		std::vector<std::string> vecArgs;
-		const std::string algo_name = getInterpolationForParameter(parname, vecArgs);
+		const std::string algo_name( getInterpolationForParameter(parname, vecArgs) );
 		mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 	}
 }
@@ -87,7 +87,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		isResampled = false;
 	}
 	md = vecM[index]; //create a clone of the found element
-	
+
 	if (!enable_resampling) {
 		if (isResampled==false) return true; //the element was found at the right time
 		else { //not found or wrong time: return a nodata element
@@ -103,13 +103,13 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 
 	//now, perform the resampling
 	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) {
-		const std::string parname = md.getNameForParameter(ii); //Current parameter name
+		const std::string parname( md.getNameForParameter(ii) ); //Current parameter name
 		const std::map< std::string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
 		if (it!=mapAlgorithms.end()) {
 			it->second->resample(index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			std::vector<std::string> vecArgs;
-			const std::string algo_name = getInterpolationForParameter(parname, vecArgs);
+			const std::string algo_name( getInterpolationForParameter(parname, vecArgs) );
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
 			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
@@ -117,10 +117,10 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		#ifdef DATA_QA
 		const std::map< std::string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
 		if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
-			const std::string statName = md.meta.getStationName();
-			const std::string statID = md.meta.getStationID();
+			const std::string statName( md.meta.getStationName() );
+			const std::string statID( md.meta.getStationID() );
 			const std::string stat = (!statID.empty())? statID : statName;
-			const std::string algo_name = it2->second->getAlgo();
+			const std::string algo_name( it2->second->getAlgo() );
 			cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
 		}
 		#endif
@@ -138,9 +138,8 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
  */
 string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const
 {
-	string algo_name = "linear"; //the default resampling is linear
+	std::string algo_name( "linear" ); //the default resampling is linear
 	cfg.getValue(parname+"::resample", "Interpolations1D", algo_name, IOUtils::nothrow);
-
 	cfg.getValue(parname+"::"+algo_name, "Interpolations1D", vecArguments, IOUtils::nothrow);
 
 	if (cfg.keyExists(parname+"::"+"args", "Interpolations1D")) //HACK: temporary until we consider everybody has migrated
