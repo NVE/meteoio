@@ -770,8 +770,9 @@ bool Date::isLeapYear() const {
  */
 unsigned int Date::mod(const double& julian, const unsigned int& seconds)
 {
-	const long int julian_rnd =static_cast<long int>(  rnd(julian*3600.*24., 1) );
-	return static_cast<unsigned int>( julian_rnd % static_cast<long int>(seconds) );
+	const unsigned int julian_mod = static_cast<unsigned int>( round( fmod(julian*24.*3600., seconds) ) ); //this reduces the rounding errors and allows second precision
+	if (julian_mod==seconds) return 0; //since after "round" it is possible that julian_mod==seconds
+	else return julian_mod;
 }
 
 /**
