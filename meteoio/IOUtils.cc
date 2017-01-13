@@ -330,7 +330,7 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 
 	const std::string::size_type pos = s.find_first_not_of(ALPHANUM);
 	if (pos != std::string::npos) {
-		std::string tmp = s.substr(pos);
+		std::string tmp( s.substr(pos) );
 		trim(tmp);
 		if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 			return false;
@@ -496,7 +496,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		if (date_beg==npos || date_beg==in_len) return false;
 		size_t date_end = s.find_first_not_of(NUM, date_beg+1);
 		if (date_end==npos) date_end = in_len;
-		const std::string date = s.substr(date_beg, date_end-date_beg);
+		const std::string date( s.substr(date_beg, date_end-date_beg) );
 
 		//parse date/time
 		const size_t date_len = date.length();
@@ -528,7 +528,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		if (tz_beg!=npos && tz_beg!=in_len) {
 			size_t tz_end = s.find_first_not_of("0123456789:", date_end+1);
 			if (tz_end==npos) tz_end = in_len;
-			const std::string timezone_iso = s.substr(tz_beg, tz_end-tz_beg);
+			const std::string timezone_iso( s.substr(tz_beg, tz_end-tz_beg) );
 			if (!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
 		}
 
