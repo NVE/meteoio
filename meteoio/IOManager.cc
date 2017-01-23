@@ -66,7 +66,13 @@ void IOManager::push_meteo_data(const IOUtils::ProcessingLevel& level, const Dat
 
 size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
-	return tsmanager.getStationData(date, vecStation);
+	vecStation.clear();
+
+	if (virtual_stations || downscaling) {
+		return interpolator.getVirtualStationsMeta(date, vecStation);
+	} else { //usual case
+		return tsmanager.getStationData(date, vecStation);
+	}
 }
 
 //for an interval of data: decide whether data should be filtered or raw

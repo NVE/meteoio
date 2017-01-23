@@ -46,6 +46,7 @@ namespace mio {
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
+ * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
  *
  * Example:
@@ -83,7 +84,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputPlotHeaders(true)
 {
 	parseInputOutputSection();
 }
@@ -92,7 +93,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputPlotHeaders(true)
 {
 	parseInputOutputSection();
 }
@@ -147,9 +148,9 @@ void SMETIO::parseInputOutputSection()
 	std::vector<std::string> vecArgs;
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
+	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
 
-	if (outpath.empty())
-		return;
+	if (outpath.empty()) return;
 
 	if (vecArgs.empty())
 		vecArgs.push_back("ASCII");
@@ -529,17 +530,19 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
 
-			getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
+			if (outputPlotHeaders) getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
 
 
 	mywriter.set_header_value("fields", ss.str());
-	mywriter.set_header_value("plot_unit", plot_units.str());
-	mywriter.set_header_value("plot_description", plot_description.str());
-	mywriter.set_header_value("plot_color", plot_color.str());
-	mywriter.set_header_value("plot_min", plot_min.str());
-	mywriter.set_header_value("plot_max", plot_max.str());
+	if (outputPlotHeaders) {
+		mywriter.set_header_value("plot_unit", plot_units.str());
+		mywriter.set_header_value("plot_description", plot_description.str());
+		mywriter.set_header_value("plot_color", plot_color.str());
+		mywriter.set_header_value("plot_min", plot_min.str());
+		mywriter.set_header_value("plot_max", plot_max.str());
+	}
 	mywriter.set_width(mywidth);
 	mywriter.set_precision(myprecision);
 }

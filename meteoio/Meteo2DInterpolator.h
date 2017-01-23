@@ -151,6 +151,13 @@ class Meteo2DInterpolator {
 		                                std::vector<std::string>& vecArgs) const;
 
 		/**
+		 * @brief Returns the metadata associated with the configured virtual stations
+		 * @param date when to extract the virtual stations' metadata
+		 * @param vecStation a vector of stationdata for the configured virtual stations
+		 */
+		size_t getVirtualStationsMeta(const Date& date, STATIONS_SET& vecStation);
+
+		/**
 		 * @brief Compute point measurements from grids following a given computing strategy
 		 * @param strategy sampling/computing strategy
 		 * @param i_date when to compute the virtual stations

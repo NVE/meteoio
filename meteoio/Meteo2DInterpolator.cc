@@ -411,6 +411,12 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	}
 }
 
+size_t Meteo2DInterpolator::getVirtualStationsMeta(const Date& /*date*/, STATIONS_SET& vecStation)
+{
+	vecStation = v_stations;
+	return vecStation.size();
+}
+
 size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
