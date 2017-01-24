@@ -80,6 +80,15 @@ namespace IOUtils {
 	*/
 	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
 
+	/**
+	* @brief Search for an element at a given date in a vector of MeteoData.
+	* The position of the matching date is returned or IOUtils::npos if not found. If \em exactmatch=false,
+	* the position of the first element \em after \em soughtdate is returned (or IOUtils::npos if this is
+	* not possible / relevant).
+	* @param[in] soughtdate date that should be found
+	* @param[in] vecM vector that should contain the data
+	* @param[in] exactmatch if the exact requested date is not found, return npos
+	*/
 	size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
