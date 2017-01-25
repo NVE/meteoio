@@ -216,6 +216,7 @@ class IOManager {
 
 	private:
 		void initIOManager();
+		void load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler iohandler;

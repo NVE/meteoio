@@ -107,7 +107,7 @@ class MeteoBuffer {
 		 * @brief Add a data point for several stations. The data is considered valid within the provided two dates
 		 * @param date_start      A Date object representing the beginning of an interval (inclusive)
 		 * @param date_end        A Date object representing the end of an interval (inclusive)
-		 * @param vecMeteo        A vector of <MeteoData> objects providing the data
+		 * @param vecMeteo        A vector of MeteoData objects providing the data
 		 */
 		void push(const Date& date_start, const Date& date_end, const std::vector<MeteoData>& vecMeteo);
 

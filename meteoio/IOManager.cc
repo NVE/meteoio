@@ -99,6 +99,21 @@ void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMete
 	tsmanager.add_to_points_cache(i_date, vecMeteo);
 }
 
+//This is small helper method to call the spatial interpolations when dealing with virtual stations or downsampling
+void IOManager::load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo)
+{
+	const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
+	const Date range_start = i_date - half_range;
+	const Date range_end = i_date + half_range;
+
+	if (virtual_stations)
+		interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, i_date, vecMeteo);
+	if (downscaling)
+		interpolator.getVirtualMeteoData(Meteo2DInterpolator::SMART_DOWNSCALING, i_date, vecMeteo);
+
+	tsmanager.push_meteo_data(IOUtils::raw, range_start, range_end, vecMeteo);
+}
+
 //data can be raw or processed (filtered, resampled)
 size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
@@ -107,37 +122,17 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	if (!virtual_stations && !downscaling) { //this is the usual case
 		tsmanager.getMeteoData(i_date, vecMeteo);
 	} else {
-		//std::cerr << "Calling getMeteoData @ " << i_date.toString(Date::ISO) << "\n";
-		Date buff_start( tsmanager.getRawBufferStart() ), buff_end( tsmanager.getRawBufferEnd() );
+		//find the nearest sampling points (vstations_refresh_rate apart) around the requested point
+		const Date i_date_down( Date::rnd(i_date, vstations_refresh_rate, Date::DOWN) );
+		const Date i_date_up( Date::rnd(i_date, vstations_refresh_rate, Date::UP) );
+		const Date buff_start( tsmanager.getRawBufferStart() );
+		const Date buff_end( tsmanager.getRawBufferEnd() );
 
-		Date request_date( i_date );
-		bool rebuffer = false;
-		if (buff_start.isUndef()) { //the buffer is empty
-			//request_date.rnd(vstations_refresh_rate, Date::CLOSEST);
-			rebuffer = true;
-		} else {
-			buff_start.rnd(vstations_refresh_rate, Date::UP);
-			buff_end.rnd(vstations_refresh_rate, Date::DOWN);
-			if (i_date<buff_start || i_date>buff_end) { //we need to read more data in the buffer
-				const Date::RND rnd_direction = (i_date<buff_start)? Date::DOWN : Date::UP;
-				request_date.rnd(vstations_refresh_rate, rnd_direction);
-				rebuffer = true;
-			}
-		}
+		if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end)
+			load_virtual_meteo(i_date_down, vecMeteo);
 
-		if (rebuffer) {
-			const double half_range = (vstations_refresh_rate)/(3600.*24.*2.); //we add 1s to account for rounding errors
-			const Date range_start = request_date - half_range;
-			const Date range_end = request_date + half_range;
-			//if ( vstations_refresh_rate!=IOUtils::unodata && Date::mod(i_date, vstations_refresh_rate) != 0) return vecMeteo.size();
-			if (virtual_stations)
-				interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, request_date, vecMeteo);
-			if (downscaling)
-				interpolator.getVirtualMeteoData(Meteo2DInterpolator::SMART_DOWNSCALING, request_date, vecMeteo);
-			tsmanager.push_meteo_data(IOUtils::raw, range_start, range_end, vecMeteo);
-			//std::cerr << "Rebuffering, pushed data point @ " << request_date.toString(Date::ISO) << " buffer: [" << range_start.toString(Date::ISO) << " - " << range_end.toString(Date::ISO) << "]\n";
-		} /*else
-			std::cerr << "No rebuffer @ " <<  request_date.toString(Date::ISO) << "\n";*/
+		if (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)
+			load_virtual_meteo(i_date_up, vecMeteo);
 
 		tsmanager.getMeteoData(i_date, vecMeteo);
 	}
