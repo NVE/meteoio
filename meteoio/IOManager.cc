@@ -24,14 +24,14 @@ namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                                       downscaling(false), virtual_stations(false)
+                                                       vstations_refresh_rate(IOUtils::unodata), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                            downscaling(false), virtual_stations(false)
+                                            vstations_refresh_rate(IOUtils::unodata), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
@@ -40,12 +40,19 @@ void IOManager::initIOManager()
 {
 	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
 	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
+	if (virtual_stations || downscaling) { //in this case, we do not want to re-apply the filters
+		tsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
+		gridsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
+		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
+	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
 {
-	tsmanager.setProcessingLevel(i_level);
-	gridsmanager.setProcessingLevel(i_level);
+	if (!virtual_stations && !downscaling) {
+		tsmanager.setProcessingLevel(i_level);
+		gridsmanager.setProcessingLevel(i_level);
+	}
 }
 
 void IOManager::setMinBufferRequirements(const double& buffer_size, const double& buff_before)
@@ -100,10 +107,39 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	if (!virtual_stations && !downscaling) { //this is the usual case
 		tsmanager.getMeteoData(i_date, vecMeteo);
 	} else {
-		if (virtual_stations)
-			interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, i_date, vecMeteo);
-		if (downscaling)
-			interpolator.getVirtualMeteoData(Meteo2DInterpolator::SMART_DOWNSCALING, i_date, vecMeteo);
+		//std::cerr << "Calling getMeteoData @ " << i_date.toString(Date::ISO) << "\n";
+		Date buff_start( tsmanager.getRawBufferStart() ), buff_end( tsmanager.getRawBufferEnd() );
+
+		Date request_date( i_date );
+		bool rebuffer = false;
+		if (buff_start.isUndef()) { //the buffer is empty
+			//request_date.rnd(vstations_refresh_rate, Date::CLOSEST);
+			rebuffer = true;
+		} else {
+			buff_start.rnd(vstations_refresh_rate, Date::UP);
+			buff_end.rnd(vstations_refresh_rate, Date::DOWN);
+			if (i_date<buff_start || i_date>buff_end) { //we need to read more data in the buffer
+				const Date::RND rnd_direction = (i_date<buff_start)? Date::DOWN : Date::UP;
+				request_date.rnd(vstations_refresh_rate, rnd_direction);
+				rebuffer = true;
+			}
+		}
+
+		if (rebuffer) {
+			const double half_range = (vstations_refresh_rate)/(3600.*24.*2.); //we add 1s to account for rounding errors
+			const Date range_start = request_date - half_range;
+			const Date range_end = request_date + half_range;
+			//if ( vstations_refresh_rate!=IOUtils::unodata && Date::mod(i_date, vstations_refresh_rate) != 0) return vecMeteo.size();
+			if (virtual_stations)
+				interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, request_date, vecMeteo);
+			if (downscaling)
+				interpolator.getVirtualMeteoData(Meteo2DInterpolator::SMART_DOWNSCALING, request_date, vecMeteo);
+			tsmanager.push_meteo_data(IOUtils::raw, range_start, range_end, vecMeteo);
+			//std::cerr << "Rebuffering, pushed data point @ " << request_date.toString(Date::ISO) << " buffer: [" << range_start.toString(Date::ISO) << " - " << range_end.toString(Date::ISO) << "]\n";
+		} /*else
+			std::cerr << "No rebuffer @ " <<  request_date.toString(Date::ISO) << "\n";*/
+
+		tsmanager.getMeteoData(i_date, vecMeteo);
 	}
 
 	return vecMeteo.size();
@@ -117,7 +153,7 @@ void IOManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const s
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
 {
-	string info_string;
+	std::string info_string;
 	const bool status = getMeteoData(date, dem, meteoparam, result, info_string);
 	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cerr << " (" << info_string << ") " << endl;

@@ -111,12 +111,6 @@ class MeteoBuffer {
 		 */
 		void push(const Date& date_start, const Date& date_end, const std::vector<MeteoData>& vecMeteo);
 
-		/**
-		 * @brief Add a data point for several stations. The date is taken from the data itself
-		 * @param vecMeteo        A vector of <MeteoData> objects providing the data
-		 */
-		void push(const std::vector<MeteoData>& vecMeteo);
-
 		const std::string toString() const;
 
 		//HACK: these should be removed in order to hide the internals! But this requires a re-write of MeteoProcessor

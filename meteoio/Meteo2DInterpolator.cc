@@ -75,31 +75,58 @@ namespace mio {
  */
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                    : cfg(i_cfg), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager),
+                    : cfg(i_cfg), tsmanager(&i_tsmanager), gridsmanager(&i_gridsmanager),
                       grid_buffer(0), mapAlgorithms(),
-                      v_params(), v_coords(), v_stations(), virtual_point_cache(),
-                      vstations_refresh_rate(IOUtils::unodata), algorithms_ready(false), use_full_dem(false)
+                      v_params(), v_coords(), v_stations(),
+                     algorithms_ready(false), use_full_dem(false), use_internal_managers(false)
 {
+	bool virtual_stations = false; ///< compute the meteo values at virtual stations
+	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
+	if (virtual_stations) {
+		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
+	}
+
+	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
+	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
+	if (virtual_stations && downscaling)
+		throw InvalidArgumentException("It is not possible to use both Virtual_stations and Downscaling!", AT);
+
+	use_internal_managers = (virtual_stations || downscaling);
+	if (use_internal_managers) {
+		tsmanager = new TimeSeriesManager(i_tsmanager.getIOHandler(), i_cfg);
+		gridsmanager = new GridsManager(i_gridsmanager.getIOHandler(), i_cfg);
+		initVirtualStations(downscaling); //adjust the coordinates if downscaling
+	}
+
 	size_t max_grids = 10; //default number of grids to keep in buffer
 	cfg.getValue("BUFF_GRIDS", "Interpolations2D", max_grids, IOUtils::nothrow);
 	grid_buffer.setMaxGrids(max_grids);
 	
 	setAlgorithms();
-	bool virtual_stations = false; ///< compute the meteo values at virtual stations
-	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	if (virtual_stations) {
-		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
-		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
+}
+
+Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& source)
+           : cfg(source.cfg), tsmanager(source.tsmanager), gridsmanager(source.gridsmanager),
+                      grid_buffer(source.grid_buffer), mapAlgorithms(source.mapAlgorithms),
+                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations),
+                     algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem), use_internal_managers(source.use_internal_managers)
+{}
+
+Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source) {
+	if (this != &source) {
+		//cfg = source.cfg;
+		tsmanager = source.tsmanager;
+		gridsmanager = source.gridsmanager;
+		grid_buffer = source.grid_buffer;
+		mapAlgorithms = source.mapAlgorithms;
+		v_params = source.v_params;
+		v_coords = source.v_coords;
+		v_stations = source.v_stations;
+		algorithms_ready = source.algorithms_ready;
+		use_full_dem = source.use_full_dem;
+		use_internal_managers = source.use_internal_managers;
 	}
-	
-	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
-	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
-	if (virtual_stations && downscaling)
-		throw InvalidArgumentException("It is not possible to use both Virtual_stations and Downscaling!", AT);
-		
-	if (virtual_stations || downscaling) {
-		initVirtualStations(downscaling); //adjust the coordinates if downscaling
-	}
+	return *this;
 }
 
 Meteo2DInterpolator::~Meteo2DInterpolator()
@@ -109,6 +136,10 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 		const vector<InterpolationAlgorithm*>& vecAlgs( iter->second );
 		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
+	}
+	if (use_internal_managers) {
+		delete tsmanager;
+		delete gridsmanager;
 	}
 }
 
@@ -132,7 +163,7 @@ void Meteo2DInterpolator::setAlgorithms()
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			std::vector<std::string> vecArgs;
 			getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], vecArgs);
-			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, tsmanager, gridsmanager);
+			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *tsmanager, *gridsmanager);
 		}
 
 		if (nrOfAlgorithms>0) {
@@ -357,7 +388,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 		throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
 	DEMObject dem;
 	dem.setUpdatePpt( DEMObject::SLOPE ); //we only need the elevation
-	gridsmanager.readDEM(dem);
+	gridsmanager->readDEM(dem);
 
 	//get virtual stations coordinates
 	std::string coordin, coordinparam, coordout, coordoutparam;
@@ -421,16 +452,9 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 {
 	vecMeteo.clear();
 
-	// Check if data is available in cache
-	const std::map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
-	if (it != virtual_point_cache.end()){
-		vecMeteo = it->second;
-		return vecMeteo.size();
-	}
-
 	//get data from real input stations
 	METEO_SET vecTrueMeteo;
-	tsmanager.getMeteoData(i_date, vecTrueMeteo);
+	tsmanager->getMeteoData(i_date, vecTrueMeteo);
 	if (vecTrueMeteo.empty()) return 0;
 
 	if (v_params.empty()) {
@@ -448,11 +472,10 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 		MeteoData md(i_date, v_stations[ii]);
 		vecMeteo.push_back( md );
 	}
-	if ( vstations_refresh_rate!=IOUtils::unodata && Date::mod(i_date, vstations_refresh_rate) != 0) return vecMeteo.size();
 
 	//fill meteo parameters
 	DEMObject dem;
-	gridsmanager.readDEM(dem); //this is not a big deal since it will be in the buffer
+	gridsmanager->readDEM(dem); //this is not a big deal since it will be in the buffer
 	std::string info_string;
 	for (size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
@@ -467,14 +490,7 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
-	
-	// Check if data is available in cache
-	const map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
-	if (it != virtual_point_cache.end()){
-		vecMeteo = it->second;
-		return vecMeteo.size();
-	}
-	
+
 	if (v_params.empty()) { //get parameters to interpolate if not already done
 		std::vector<std::string> vecStr;
 		cfg.getValue("Virtual_parameters", "Input", vecStr);		
@@ -494,12 +510,12 @@ size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO
 	
 	DEMObject dem;
 	dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevation
-	gridsmanager.readDEM(dem); //this is not a big deal since it will be in the buffer
+	gridsmanager->readDEM(dem); //this is not a big deal since it will be in the buffer
 	
 	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
 		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>(v_params[param]);
 		Grid2DObject grid;
-		gridsmanager.read2DGrid(grid, grid_param, i_date);
+		gridsmanager->read2DGrid(grid, grid_param, i_date);
 		
 		if (!grid.isSameGeolocalization(dem))
 			throw InvalidArgumentException("In SMART_DOWNSCALING, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+i_date.toString(Date::ISO));

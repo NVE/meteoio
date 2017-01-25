@@ -28,7 +28,7 @@ TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_c
                                             meteoprocessor(in_cfg), dataGenerator(in_cfg),
                                             proc_properties(), point_cache(), raw_buffer(), filtered_cache(),
                                             chunk_size(), buff_before(),
-                                            processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
+                                            processing_level(IOUtils::raw | IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
 {
 	meteoprocessor.getWindowSize(proc_properties);
 	setDfltBufferProperties();
@@ -87,10 +87,6 @@ void TimeSeriesManager::setProcessingLevel(const unsigned int& i_level)
 	if (i_level >= IOUtils::num_of_levels)
 		throw InvalidArgumentException("The processing level is invalid", AT);
 
-	if (((i_level & IOUtils::raw) == IOUtils::raw)
-	    && ((i_level & IOUtils::filtered) == IOUtils::filtered))
-		throw InvalidArgumentException("The processing level is invalid (raw and filtered at the same time)", AT);
-
 	processing_level = i_level;
 }
 
@@ -115,9 +111,33 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 	}
 
 	point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
+	//if (invalidate_cache) point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
 }
 
-size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStation)
+void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
+		                     const std::vector< MeteoData >& vecMeteo, const bool& invalidate_cache)
+{
+	//perform check on date_start and date_end
+	if (date_end < date_start) {
+		std::ostringstream ss;
+		ss << "Trying to push data set from " << date_start.toString(Date::ISO) << " to " << date_end.toString(Date::ISO) << ". ";
+		ss << " Obviously, date_start should be less than date_end!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	if (level == IOUtils::filtered) {
+		filtered_cache.push(date_start, date_end, vecMeteo);
+	} else if (level == IOUtils::raw) {
+		filtered_cache.clear();
+		raw_buffer.push(date_start, date_end, vecMeteo);
+	} else {
+		throw InvalidArgumentException("The processing level is invalid (should be raw OR filtered)", AT);
+	}
+
+	if (invalidate_cache) point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
+}
+
+size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStation) //HACK HACK HACK
 {
 	vecStation.clear();
 
@@ -141,7 +161,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEn
 
 		if (!success) {
 			std::vector< std::vector<MeteoData> > tmp_meteo;
-			fillRawBuffer(dateStart, dateEnd);
+			if ((IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(dateStart, dateEnd);
 			raw_buffer.get(dateStart, dateEnd, tmp_meteo);
 
 			//now it needs to be secured that the data is actually filtered, if configured
@@ -192,12 +212,12 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		const bool cached = (!filtered_cache.empty()) && (filtered_cache.getBufferStart() <= buffer_start) && (filtered_cache.getBufferEnd() >= buffer_end);
 		if (!cached) {
 			//explicit caching, rebuffer if necessary
-			fillRawBuffer(buffer_start, buffer_end);
+			if ((IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(buffer_start, buffer_end);
 			fill_filtered_cache();
 		}
 		data = &filtered_cache.getBuffer();
 	} else { //data to be resampled should be IOUtils::raw
-		fillRawBuffer(buffer_start, buffer_end);
+		if ((IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(buffer_start, buffer_end);
 		data = &raw_buffer.getBuffer();
 	}
 

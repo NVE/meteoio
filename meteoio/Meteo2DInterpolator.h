@@ -102,6 +102,8 @@ class Meteo2DInterpolator {
 		* @brief Constructor.
 		*/
 		Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
+		Meteo2DInterpolator(const Meteo2DInterpolator&);
+		Meteo2DInterpolator& operator=(const Meteo2DInterpolator&); ///<Assignement operator
 
 		~Meteo2DInterpolator();
 
@@ -180,8 +182,8 @@ class Meteo2DInterpolator {
 		void initVirtualStations(const bool& adjust_coordinates);
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
-		TimeSeriesManager& tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
-		GridsManager& gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
+		TimeSeriesManager *tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
+		GridsManager *gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
 		GridBuffer grid_buffer;
 
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
@@ -189,12 +191,10 @@ class Meteo2DInterpolator {
 		std::vector<size_t> v_params; ///< Parameters for virtual stations
 		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
-		std::map<Date, METEO_SET > virtual_point_cache;  ///< stores already resampled virtual data points
 		
-		unsigned int vstations_refresh_rate; ///< how often to refresh the spatial interpolations for virtual stations? (in seconds)
-
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
+		bool use_internal_managers; ///< When using virtual stations or downsampling, the ts and grids managers need to be private
 };
 
 } //end namespace

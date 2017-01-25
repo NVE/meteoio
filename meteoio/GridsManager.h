@@ -53,6 +53,13 @@ class GridsManager {
 		 */
 		const Config getConfig() const {return cfg;}
 
+		/**
+		 * @brief Returns a copy of the internal IOHandler object.
+		 * This is convenient to clone an iomanager
+		 * @return new IOHandler object as a copy of the internal IOHandler
+		 */
+		IOHandler& getIOHandler() const {return iohandler;}
+
 		const std::string toString() const;
 
 	private:

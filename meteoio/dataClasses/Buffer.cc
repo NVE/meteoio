@@ -84,19 +84,24 @@ void MeteoBuffer::clear()
 	ts_end.setUndef(true);
 }
 
-void MeteoBuffer::push(const std::vector<MeteoData>& vecMeteo)
+void MeteoBuffer::push(const Date& date_start, const Date& date_end, const std::vector<MeteoData>& vecMeteo)
 {
 	const size_t nrStationsPush = vecMeteo.size();
 	if (nrStationsPush==0) return;
 
 	if (empty()) {
-		ts_start = vecMeteo.front().date;
-		ts_end = vecMeteo.front().date;
+		ts_start = date_start;
+		ts_end = date_end;
 		ts_buffer.resize(nrStationsPush); //allocate the memory
 		for (size_t ii=0; ii<nrStationsPush; ii++)
 			ts_buffer[ii].push_back( vecMeteo[ii] );
 		return;
 	} else {
+		if (date_start>ts_end || date_end<ts_start) {
+			std::cerr << "Clearing buffer [" << ts_start.toString(Date::ISO) << " - " << ts_end.toString(Date::ISO) << "] to accommodate date [";
+			std::cerr << date_start.toString(Date::ISO) << " - " << date_end.toString(Date::ISO) << "]\n";
+		}
+
 		const size_t nrStationsBuffer = ts_buffer.size();
 
 		//check that we are dealing with the same stations
@@ -104,23 +109,13 @@ void MeteoBuffer::push(const std::vector<MeteoData>& vecMeteo)
 			ostringstream ss;
 			ss << "The number of stations changed over time from " << nrStationsBuffer << " to " << nrStationsPush << ", ";
 			ss << "this is not handled yet!";
-			std::cerr << "trying to push: ";
-			for (size_t ii=0; ii<nrStationsPush; ii++) //for all stations
-				std::cerr << vecMeteo[ii].meta.stationID << " ";
-			std::cerr << "\nWas before: ";
-			for (size_t ii=0; ii<nrStationsBuffer; ii++) //for all stations
-				std::cerr << ts_buffer[ii].front().meta.stationID << " ";
 			throw IOException(ss.str(), AT);
 		}
 
 		for (size_t ii=0; ii<nrStationsPush; ii++) { //for all stations
 			if (ts_buffer[ii].empty()) continue;
-			if (ts_buffer[ii].front().meta.getHash()!=vecMeteo[ii].meta.getHash()) {
-				ostringstream ss;
-				ss << "The stations changed over time from " << ts_buffer[ii].front().meta.getHash() << " to " << vecMeteo[ii].meta.getHash() << ", ";
-				ss << "this is not handled yet!";
-				throw IOException(ss.str(), AT);
-			}
+			if (ts_buffer[ii].front().meta.getHash()!=vecMeteo[ii].meta.getHash())
+				throw IOException("A station changed over time from "+ts_buffer[ii].front().meta.getHash()+" to "+vecMeteo[ii].meta.getHash(), AT);
 		}
 	}
 
@@ -129,6 +124,10 @@ void MeteoBuffer::push(const std::vector<MeteoData>& vecMeteo)
 		const Date buffer_start = ts_buffer[ii].front().date;
 		const Date buffer_end = ts_buffer[ii].back().date;
 		const Date data_ts = vecMeteo[ii].date;
+		if (data_ts<date_start || data_ts>date_end) {
+			const std::string msg( "Trying to insert data point at "+data_ts.toString(Date::ISO)+" in while declaring it to be between "+date_start.toString(Date::ISO)+" and "+date_end.toString(Date::ISO));
+			throw InvalidArgumentException(msg, AT);
+		}
 
 		if (data_ts<buffer_start) { //the data simply fits at the start
 			ts_buffer[ii].insert(ts_buffer[ii].begin(), vecMeteo[ii]);
@@ -144,17 +143,8 @@ void MeteoBuffer::push(const std::vector<MeteoData>& vecMeteo)
 			ts_buffer[ii].insert(ts_buffer[ii].begin()+insert_pos, vecMeteo[ii]); //insert takes place at element *before* insert_pos
 		else
 			ts_buffer[ii][insert_pos] = vecMeteo[ii]; //if the element already existed, replace it
-
-		ts_start = min(ts_start, data_ts);
-		ts_end = max(ts_end, data_ts);
 	}
-}
 
-void MeteoBuffer::push(const Date& date_start, const Date& date_end, const std::vector<MeteoData>& vecMeteo)
-{
-	//HACK: check that the provided data is between date_start and date_end?
-	push(vecMeteo);
-	//take the data validity range into account for buffer validity
 	ts_start = min(ts_start, date_start);
 	ts_end = max(ts_end, date_end);
 }
