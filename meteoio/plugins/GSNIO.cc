@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 EPFL                                                            */
+/*  Copyright 2009 SLF                                                                                                                                */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify

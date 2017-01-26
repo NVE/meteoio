@@ -33,6 +33,13 @@ IF(PLUGIN_COSMOXMLIO)
 	SET(plugins_sources ${plugins_sources} plugins/CosmoXMLIO.cc)
 ENDIF(PLUGIN_COSMOXMLIO)
 
+IF(PLUGIN_DBO)
+	FIND_PACKAGE(CURL REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${CURL_INCLUDE_DIRS})
+	SET(plugin_libs ${plugin_libs} ${CURL_LIBRARIES})
+	SET(plugins_sources ${plugins_sources} plugins/DBO.cc)
+ENDIF(PLUGIN_DBO)
+
 IF(PLUGIN_GRASSIO)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
 ENDIF(PLUGIN_GRASSIO)

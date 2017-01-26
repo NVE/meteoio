@@ -279,7 +279,7 @@ void OshdIO::parseInputOutputSection()
 	//fill the params mapping vector
 	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwr") );
 	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
-	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") );
+	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") ); //in mm/ts
 	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
 	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
 	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") );
