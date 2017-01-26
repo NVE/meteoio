@@ -24,14 +24,14 @@ namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                                       vstations_refresh_rate(IOUtils::unodata), downscaling(false), virtual_stations(false)
+                                                       vstations_refresh_rate(IOUtils::unodata), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                            vstations_refresh_rate(IOUtils::unodata), downscaling(false), virtual_stations(false)
+                                            vstations_refresh_rate(IOUtils::unodata), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
@@ -44,6 +44,7 @@ void IOManager::initIOManager()
 		tsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
 		gridsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
 		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
+		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
 	}
 }
 
@@ -123,8 +124,8 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		tsmanager.getMeteoData(i_date, vecMeteo);
 	} else {
 		//find the nearest sampling points (vstations_refresh_rate apart) around the requested point
-		const Date i_date_down( Date::rnd(i_date, vstations_refresh_rate, Date::DOWN) );
-		const Date i_date_up( Date::rnd(i_date, vstations_refresh_rate, Date::UP) );
+		const Date i_date_down( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset );
+		const Date i_date_up( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::UP) + vstations_refresh_offset );
 		const Date buff_start( tsmanager.getRawBufferStart() );
 		const Date buff_end( tsmanager.getRawBufferEnd() );
 

@@ -25,9 +25,9 @@ namespace mio {
 /**
  * @page virtual_stations Virtual stations handling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "virtual stations" since the data **will seem to originate from these virtual stations points** where no station is present. 
+ * This is handled as "virtual stations" since the data **will seem to originate from these virtual stations points** where no station is present. This obviously
+ * comes at the cost of much higher run times.
  * 
- * *Virtual stations are currently in a "beta" stage and their implementation might significantly change in the future.*
  *
  * @section virtual_stations_from_interpolation From spatial interpolations
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
@@ -36,11 +36,15 @@ namespace mio {
  *    + VIRTUAL_STATIONS set to *true*;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
- *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds (otherwise, only IOUtils::nodata will be returned);
+ *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
+ *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTAL);
  * 
  * Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
  * 
+ * In the example provided below, 4 stations provide the original data that will be spatially interpolated at 2 points (virtual stations) for 7 meteorological
+ * parameters. Every 6 hours, with starting offset of on hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
+ * Any data requested at other time steps will be temporally resampled from the spatially interpolated data.
  * @code
  * DEM = ARC
  * DEMFILE = ./input/surface-grids/davos.asc
@@ -61,16 +65,22 @@ namespace mio {
  * VSTATION2 = 46.793031 9.831572
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
+ * VSTATIONS_REFRESH_OFFSET = 3600
  * @endcode
+ *
+ * \image html vstations_sampling.png "virtual stations workflow"
+ * \image latex vstations_sampling.eps "virtual stations workflow" width=0.9\textwidth
  * 
-* @section virtual_stations_from_grids From gridded data
-* The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
-* the [Input] section). The following keys control this downscaling process:
-*    + DOWNSCALING set to *true*;
-*    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
-*    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations; 
-* 
-* Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
+ * @section virtual_stations_from_grids From gridded data
+ * The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
+ * the [Input] section). The following keys control this downscaling process:
+ *    + DOWNSCALING set to *true*;
+ *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
+ *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
+ *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
+ *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
+ *
+ * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * 
  */
 
@@ -222,8 +232,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	size_t bestalgorithm = 0;
 	for (size_t ii=0; ii < vecAlgs.size(); ++ii){
 		const double rating = vecAlgs[ii]->getQualityRating(date, meteoparam);
-		if ((rating != 0.0) && (rating > maxQualityRating)) {
-			//we use ">" so that in case of equality, the first choice will be kept
+		if ((rating != 0.0) && (rating > maxQualityRating)) { //we use ">" so that in case of equality, the first choice will be kept
 			bestalgorithm = ii;
 			maxQualityRating = rating;
 		}
@@ -250,7 +259,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	grid_buffer.push(result, grid_hash.str(), InfoString);
 }
 
-//HACK make sure that skip_virtual_stations = true before calling this method when using virtual stations!
+//NOTE make sure that skip_virtual_stations = true before calling this method when using virtual stations!
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
@@ -347,13 +356,12 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 	for (size_t ii=0; ii<vec_meteo.size(); ii++) {
 		const StationData& meta( vec_meteo[ii].meta );
 		if (!meta.position.isSameProj(dem.llcorner)) {
-			std::ostringstream os;
 			std::string type, args;
 			meta.position.getProj(type, args);
-			os << "Station " << meta.stationID << " is using projection (" << type << " " << args << ") ";
+			const std::string station_str( "Station "+meta.stationID+" is using projection ("+type+" "+args+") " );
 			dem.llcorner.getProj(type, args);
-			os << "while DEM is using projection ("<< type << " " << args << ") ";
-			throw IOException(os.str(), AT);
+			const std::string dem_str( "while DEM is using projection ("+type+" "+args+") " );
+			throw IOException(station_str+dem_str, AT);
 		}
 	}
 }
@@ -366,14 +374,10 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 		return getVirtualStationsData(i_date, vecMeteo);
 	} else if (strategy==SMART_DOWNSCALING) {
 		//This reads already gridded data and extract points from the grids
-		
-		//Questions/tricks:
-		//   should we recompute which points to take between each time steps? (ie more flexibility)
-		//   move this to the IOHandler so the data could be filtered, corrected, interpolated
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
 	} else if (strategy==DOWNSCALING) {
 		//extract all grid points
-		return 0; //hack
+		return 0; //HACK
 	}
 
 	throw UnknownValueException("Unknown virtual station strategy", AT);

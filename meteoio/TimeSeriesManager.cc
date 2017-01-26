@@ -111,7 +111,6 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 	}
 
 	point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
-	//if (invalidate_cache) point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
 }
 
 void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
@@ -137,14 +136,14 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 	if (invalidate_cache) point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
 }
 
-size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStation) //HACK HACK HACK
+size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	vecStation.clear();
 
 	if (processing_level == IOUtils::raw) {
 		iohandler.readStationData(date, vecStation);
 	} else {
-		iohandler.readStationData(date, vecStation);
+		iohandler.readStationData(date, vecStation); //HACK
 	}
 
 	return vecStation.size();

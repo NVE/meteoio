@@ -223,7 +223,7 @@ class IOManager {
 		TimeSeriesManager tsmanager;
 		GridsManager gridsmanager;
 		Meteo2DInterpolator interpolator;
-		unsigned int vstations_refresh_rate; ///< when using virtual stations, how often should the data be spatially re-interpolated?
+		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
 		bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
 		bool virtual_stations; ///< compute the meteo values at virtual stations
 };
