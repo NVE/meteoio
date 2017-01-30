@@ -167,6 +167,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			if (line.empty()) { //so we can tolerate empty lines
 				kk++; //to keep the same kk at the next iteration
 				nr_empty++;
+				if (nr_empty>1000) throw InvalidFormatException("Too many empty lines, most probably the file format is wrong (check the end-of-lines character!)", AT);
 				continue;
 			}
 			std::istringstream iss(line);
