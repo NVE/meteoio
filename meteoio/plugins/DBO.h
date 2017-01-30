@@ -58,6 +58,7 @@ class DBO : public IOInterface {
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
+		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;
 		int http_timeout; //time out for http connections

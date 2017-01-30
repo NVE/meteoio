@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <curl/curl.h>
+#include <meteoio/plugins/picojson.h>
 
 using namespace std;
 
@@ -55,26 +56,153 @@ namespace mio {
  *
  */
 
+//we keep it as a simple function in order to avoid exposing picojson stuff in the header
+void printJSON(const picojson::value& v, const unsigned int& depth)
+{
+	if (v.is<picojson::null>()) {
+		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+		std::cout << "NULL\n";
+		return;
+	}
+
+	if (v.is<picojson::object>()) {
+		const picojson::value::object& obj = v.get<picojson::object>();
+		for (picojson::value::object::const_iterator ii = obj.begin(); ii != obj.end(); ++ii) {
+			for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+			std::cout << ii->first << "\n";
+			printJSON(ii->second, depth+1);
+		}
+	} else if (v.is<std::string>()){
+		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+		std::cout << v.get<std::string>() << "\n";
+	} else if (v.is<double>()){
+		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+		std::cout << v.get<double>() << "\n";
+	} else if (v.is<bool>()){
+		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+		std::cout << std::boolalpha << v.get<bool>() << "\n";
+	} else if (v.is<picojson::array>()){ //ie vector<picojson::value>
+		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
+		const picojson::array& array = v.get<picojson::array>();
+		std::cout << "array " << array.size() << "\n";
+		for (size_t jj=0; jj<array.size(); jj++)
+			printJSON(array[jj], depth+1);
+	}
+}
+
+void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson::value>& results)
+{
+	if (v.is<picojson::null>()) return;
+
+	size_t start_pos = 0;
+	if (path[0]=='$') start_pos++;
+	if (path[1]=='.') start_pos++;
+
+	const size_t end_pos = path.find(".", start_pos);
+	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
+	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
+
+	if (v.is<picojson::object>()) {
+		picojson::value::object& obj = v.get<picojson::object>();
+		for (map<string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
+			if (it->first==local_path) {
+				if (!remaining_path.empty())
+					JSONQuery(remaining_path, it->second, results);
+				else
+					results.push_back( it->second );
+			}
+		}
+	}
+}
+
+void goToJSONPath(const std::string& path, picojson::value& v, std::vector<picojson::value>& results)
+{
+	if (v.is<picojson::null>()) return;
+
+	size_t start_pos = 0;
+	if (path[0]=='$') start_pos++;
+	if (path[1]=='.') start_pos++;
+
+	const size_t end_pos = path.find(".", start_pos);
+	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
+	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
+
+	if (v.is<picojson::object>()) {
+		picojson::value::object& obj = v.get<picojson::object>();
+		for (map<string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
+			if (it->first==local_path) {
+				if (!remaining_path.empty())
+					goToJSONPath(remaining_path, it->second, results);
+				else
+					results.push_back( it->second );
+			}
+		}
+	}
+}
+
+std::string getString(const std::string& path, picojson::value& v)
+{
+	std::vector<picojson::value> results;
+	goToJSONPath(path, v, results);
+	if (!results.empty()) {
+		if (! results.front().is<picojson::null>() &&  results.front().is<std::string>()) return  results.front().get<std::string>();
+	}
+
+	return std::string();
+}
+
+double getDouble(const std::string& path, picojson::value& v)
+{
+	std::vector<picojson::value> results;
+	goToJSONPath(path, v, results);
+	if (!results.empty()) {
+		if (! results.front().is<picojson::null>() &&  results.front().is<double>()) return  results.front().get<double>();
+	}
+
+	return IOUtils::nodata;
+}
+
+std::vector<double> getDoubles(const std::string& path, picojson::value& v)
+{
+	std::vector<picojson::value> results;
+	goToJSONPath(path, v, results);
+
+	std::vector<double> vecDouble;
+	for (size_t ii=0; ii<results.size(); ii++) {
+		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
+			const picojson::array& array = results[ii].get<picojson::array>();
+			for (size_t jj=0; jj<array.size(); jj++) {
+				if (! array[jj].is<picojson::null>() &&  array[jj].is<double>()) vecDouble.push_back( array[jj].get<double>() );
+			}
+		}
+	}
+
+	return vecDouble;
+}
+
+/*************************************************************************************************/
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string DBO::sensors_endpoint = "sensors";
+const std::string DBO::sensors_endpoint = "/osper-api/osper/stations/";
 const std::string DBO::sensors_format = "format=csv";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
-      : cfg(configfile), vecStationName(),
+      : cfg(configfile), vecStationName(), coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
 DBO::DBO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(),
+      : cfg(cfgreader), vecStationName(), coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
@@ -97,12 +225,41 @@ void DBO::readStationData(const Date& /*date*/, std::vector<StationData>& vecSta
 {
 	vecStation.clear();
 
+	for(size_t ii=0; ii<vecStationName.size(); ii++) {
+		const std::string station_id = vecStationName[ii];
+		const string anon_request = sensors_endpoint + IOUtils::strToLower( station_id );
+		const string auth = "&username=" + userid + "&password=" + passwd;
+		const string request = (!userid.empty())? anon_request+auth : anon_request;
+
+		stringstream ss;
+		if (curl_read(request, ss)) {
+			picojson::value v;
+			const std::string err( picojson::parse(v, ss.str()) );
+			if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
+
+			const std::vector<double> coordinates( getDoubles("$.geometry.coordinates", v) );
+			if (coordinates.size()!=3)
+				throw InvalidFormatException("Wrong coordinates specification!", AT);
+
+			Coords position(coordin, coordinparam);
+			position.setLatLon(coordinates[1], coordinates[0], coordinates[2]);
+			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
+			vecStation.push_back( sd );
+		} else {
+			if (dbo_debug)
+				std::cout << "****\nRequest: " << request << "\n****\n";
+			throw IOException("Could not retrieve data for station " + station_id, AT);
+		}
+	}
 }
 
-void DBO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
+void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                           std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+
+	for(size_t ii=0; ii<vecStationName.size(); ii++)
+		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 }
 
 //this method is called on each station in order to parse the header and set the metadata
@@ -112,47 +269,27 @@ bool DBO::parseMetadata(std::stringstream& /*ss*/, StationData &/*sd*/, std::str
 	return true;
 }
 
-void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
+void DBO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vector<MeteoData>& /*vecMeteo*/, const size_t& stationindex)
 {
 	const std::string station_id = vecStationName[stationindex];
-	const string anon_request = sensors_endpoint + "/" + IOUtils::strToLower( station_id ) + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO)
-	                            + "&to=" + dateEnd.toString(Date::ISO);
+	const string anon_request = sensors_endpoint + IOUtils::strToLower( station_id );
 	const string auth = "&username=" + userid + "&password=" + passwd;
 	const string request = (!userid.empty())? anon_request+auth : anon_request;
 
+	std::cerr << "Request: " << request << "\n";
 	stringstream ss;
 	if (curl_read(request, ss)) {
-		vector<size_t> index;
-		string line, fields, units;
+		picojson::value v;
 
-		MeteoData tmpmeteo;
-		const bool meta_status = parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
+		const std::string err( picojson::parse(v, ss.str()) );
+		if (!err.empty())
+			throw IOException("Error while parsing JSON: "+err, AT);
 
-		if (units.empty() || fields.empty() || meta_status==false) {
-			//when printing out a DBO error message, the # and ' ' have to be stripped from the begining -> substr(2)
-			if (ss.str().find("doesn't exist in DBO!") != std::string::npos)
-				throw NotFoundException(ss.str().substr(2), AT);
-			if (ss.str().find("doesn't have access to the sensor") != std::string::npos)
-				throw AccessException(ss.str().substr(2), AT);
-			if (ss.str().find("There is no user with the provided") != std::string::npos)
-				throw AccessException(ss.str().substr(2), AT);
-			if (ss.str().find("The query consumed too many server resources!") != std::string::npos)
-				throw IOException(ss.str().substr(2), AT);
-			if (dbo_debug) {
-				std::cout << "****\nRequest: " << request << "\n";
-				std::cout << "Reply: " << ss.str() << "\n****\nPlease check the station name!\n";
-			}
-			throw InvalidFormatException("Invalid header for station " + station_id, AT);
-		}
-		//map_parameters(fields, units, tmpmeteo, index);
-
-		do { //parse data section, the first line should already be buffered
-			if (line.empty() || (line[0] == '#') || !isdigit(line[0])) continue; //skip empty lines
-			//parse_streamElement(line, index, tmpmeteo);
-			vecMeteo.push_back( tmpmeteo );
-		} while (getline(ss, line));
-		if (vecMeteo.empty()) //ie the data section was empty
-			vecMeteo.push_back( tmpmeteo );
+		std::cout << "$.properties.name = " << getString("$.properties.name", v) << "\n";
+		std::cout << "$.properties.id = " << getDouble("$.properties.id", v) << "\n";
+		const std::vector<double> coordinates( getDoubles("$.geometry.coordinates", v) );
+		for(size_t ii=0; ii<coordinates.size(); ii++) std::cerr << " " << coordinates[ii];
+		std::cerr << "\n";
 	} else {
 		if (dbo_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";
@@ -198,7 +335,7 @@ bool DBO::curl_read(const std::string& url_query, std::ostream& os)
 	CURLcode code(CURLE_FAILED_INIT);
 	CURL* curl = curl_easy_init();
 
-	const string url = endpoint + url_query;
+	const std::string url( endpoint + url_query );
 
 	if (curl) {
 		if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
