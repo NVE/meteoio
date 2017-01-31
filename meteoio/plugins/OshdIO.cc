@@ -286,34 +286,55 @@ void OshdIO::parseInputOutputSection()
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
 }
 
-void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< std::pair<mio::Date,std::string> > &meteo_files)
+void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< struct file_index > &meteo_files)
 {
 	meteo_files.clear();
-	std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, meteo_ext, is_recursive) );
-	std::list<std::string> prefix_list;
 
-	//make sure each timestamp only appears once, ie remove duplicates
-	std::list<std::string>::iterator it = dirlist.begin();
-	while ((it != dirlist.end())) {
-		const std::string filename( *it );
-		const std::string::size_type date_pos = filename.find_first_of("0123456789", 0);
-		if (date_pos!=string::npos) 
-			prefix_list.push_back( filename.substr(date_pos) );
-		it++;
-	}
-	
-	prefix_list.sort();
-	prefix_list.unique();
-	
-	//Convert date in every filename and cache it
-	std::list<std::string>::const_iterator it_prefix = prefix_list.begin();
-	while ((it_prefix != prefix_list.end())) {
-		const std::string filename( *it_prefix );
+	std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "prec", is_recursive) ); //we consider that if we have found one parameter, the others are also there
+
+	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
+	for (std::list<std::string>::iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+		const std::string file_and_path( *it );
+		const std::string filename( FileUtils::getFilename(file_and_path) );
+
+		//we need to split the file name into its components: parameter, date, run_date
+		const std::string::size_type pos_param = filename.find('_');
+		if (pos_param==string::npos) continue;
+		const std::string::size_type date_start = filename.find_first_of("0123456789");
+		if (date_start==string::npos) continue;
+		const std::string::size_type date_end = filename.find('_', date_start);
+		if (date_end==string::npos) continue;
+		const std::string::size_type rundate_start = filename.rfind('_');
+		if (rundate_start==string::npos) continue;
+		const std::string::size_type rundate_end = filename.rfind('.');
+		if (rundate_end==string::npos) continue;
+
+		const std::string date_str( filename.substr(date_start, date_end-date_start) );
+		const std::string run_date( filename.substr(rundate_start+1, rundate_end-rundate_start-1) );
+
+		//do we already have an entry for this date?
+		size_t idx = IOUtils::npos;
+		const std::map<std::string, size_t>::const_iterator it_map = mapIdx.find( date_str );
+		if (it_map!=mapIdx.end()) {
+			idx = it_map->second;
+			if (meteo_files[idx].run_date>run_date) continue;
+		}
+
+		//we don't have an entry or it is too old -> create new entry / replace existing one
+		const std::string path( FileUtils::getPath(file_and_path) );
 		Date date;
-		IOUtils::convertString(date, filename.substr(0,12), in_dflt_TZ);
-		meteo_files.push_back( std::make_pair(date, filename) );
-		it_prefix++;
+		IOUtils::convertString(date, date_str, in_dflt_TZ);
+		const file_index elem(date, path, filename.substr(pos_param), run_date);
+		if (idx==IOUtils::npos) {
+			meteo_files.push_back( elem );
+			mapIdx[ date_str ] = meteo_files.size()-1;
+		} else {
+			meteo_files[ idx] = elem;
+			mapIdx[ date_str ] = idx;
+		}
 	}
+
+	std::sort(meteo_files.begin(), meteo_files.end());
 }
 
 size_t OshdIO::getFileIdx(const Date& start_date) const
@@ -326,13 +347,13 @@ size_t OshdIO::getFileIdx(const Date& start_date) const
 		return 0;
 	} else {
 		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
-			if (start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
+			if (start_date>=cache_meteo_files[idx-1].date && start_date<cache_meteo_files[idx].date) {
 				return --idx;
 			}
 		}
 
 		//not found, we take the closest timestamp we have
-		if (start_date<cache_meteo_files.front().first)
+		if (start_date<cache_meteo_files.front().date)
 			return 0;
 		else
 			return cache_meteo_files.size()-1;
@@ -351,7 +372,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 	size_t file_idx = getFileIdx( dateStart );
-	Date station_date( cache_meteo_files[file_idx].first );
+	Date station_date( cache_meteo_files[file_idx].date );
 	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
 
 	const size_t nr_files = cache_meteo_files.size();
@@ -367,12 +388,12 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 		
 		//read the data and fill vecMeteo
-		const std::string file_suffix( cache_meteo_files[ file_idx ].second );
+		const std::string file_suffix( cache_meteo_files[ file_idx ].file_suffix );
+		const std::string path( in_meteopath + "/" + cache_meteo_files[ file_idx ].path );
 		std::vector<double> vecData;
 		for (size_t ii=0; ii<params_map.size(); ii++) {
 			const MeteoData::Parameters param( params_map[ii].first );
-			const std::string prefix( params_map[ii].second );
-			const std::string filename( in_meteopath + "/" + prefix + "_" + file_suffix );
+			const std::string filename( path + "/" + params_map[ii].second + file_suffix );
 			vecData.resize( nrIDs, IOUtils::nodata );
 			readFromFile(filename, param, station_date, vecData);
 
@@ -380,29 +401,29 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				vecMeteo[jj].back()( param ) =  vecData[jj];
 		}
 		
-		readSWRad(station_date, file_suffix, nrIDs, vecMeteo); //the short wave radiation is a little different...
-		readPPhase(station_date, file_suffix, nrIDs, vecMeteo); //the precipitation phase is a little different...
+		readSWRad(station_date, path, file_suffix, nrIDs, vecMeteo); //the short wave radiation is a little different...
+		readPPhase(station_date, path, file_suffix, nrIDs, vecMeteo); //the precipitation phase is a little different...
 
 		file_idx++;
-		station_date = ((file_idx)<nr_files)? cache_meteo_files[file_idx].first : dateEnd+1.;
+		station_date = ((file_idx)<nr_files)? cache_meteo_files[file_idx].date : dateEnd+1.;
 	} while (file_idx<nr_files && station_date<=dateEnd);
 }
 
-void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
+void OshdIO::readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
 	std::vector<double> vecDir;
 	vecDir.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_dir( in_meteopath + "/" + "idir" + "_" + file_suffix );
+	const std::string filename_dir( path + "/" + "idir" + file_suffix );
 	readFromFile(filename_dir, MeteoData::ISWR, station_date, vecDir);
 	
 	std::vector<double> vecDiff;
 	vecDiff.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_diff( in_meteopath + "/" + "idif" + "_" + file_suffix );
+	const std::string filename_diff( path + "/" + "idif" + file_suffix );
 	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
 
 	std::vector<double> vecAlbd;
 	vecAlbd.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_albd( in_meteopath + "/" + "albd" + "_" + file_suffix );
+	const std::string filename_albd( path + "/" + "albd" + file_suffix );
 	readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //We read ALBD and use it to build RSWR
 	
 	for (size_t jj=0; jj<nrIDs; jj++) {
@@ -411,11 +432,11 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& file_suffix,
 	}
 }
 
-void OshdIO::readPPhase(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
+void OshdIO::readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
 	std::vector<double> vecSnowLine;
 	vecSnowLine.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_dir( in_meteopath + "/" + "snfl" + "_" + file_suffix );
+	const std::string filename_dir( path + "/" + "snfl" + file_suffix );
 	readFromFile(filename_dir, MeteoData::PSUM_PH, station_date, vecSnowLine);
 
 	for (size_t jj=0; jj<nrIDs; jj++) {

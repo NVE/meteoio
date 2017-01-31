@@ -45,20 +45,34 @@ class OshdIO : public IOInterface {
 
 		static const double in_dflt_TZ;     //default time zone, should be visible to matio for debugging
 	private:
+		struct file_index {
+			file_index(const Date& i_date, const std::string& i_path, const std::string& i_file_suffix, const std::string& i_run_date)
+			                : date(i_date), run_date(i_run_date), path(i_path), file_suffix(i_file_suffix) {}
+			bool operator<(const file_index& a) const {
+				return date < a.date;
+			}
+			bool operator>(const file_index& a) const {
+				return date > a.date;
+			}
+			Date date;
+			std::string run_date;
+			std::string path;
+			std::string file_suffix;
+		};
 		void parseInputOutputSection();
-		void readSWRad(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
-		void readPPhase(const Date& station_date, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		void readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		void readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
 		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const;
 		void buildVecIdx(const std::vector<std::string>& vecAcro);
 		void fillStationMeta();
 		
 		size_t getFileIdx(const Date& start_date) const;
-		static void scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< std::pair<mio::Date,std::string> > &meteo_files);
+		static void scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< struct file_index > &meteo_files);
 		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
 		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param);
 		
 		const Config cfg;
-		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
+		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::vector<StationData> vecMeta;
 		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
 		std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files

@@ -48,7 +48,7 @@ class DBO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
-		bool parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const;
+		void fillStationMeta();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void convertUnits(MeteoData& meteo) const;
 
@@ -58,6 +58,7 @@ class DBO : public IOInterface {
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
+		std::vector<StationData> vecMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;

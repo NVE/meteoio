@@ -187,7 +187,8 @@ const std::string DBO::sensors_format = "format=csv";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), coordin(), coordinparam(), coordout(), coordoutparam(),
+      : cfg(configfile), vecStationName(), vecMeta(),
+        coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
@@ -197,7 +198,8 @@ DBO::DBO(const std::string& configfile)
 }
 
 DBO::DBO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), coordin(), coordinparam(), coordout(), coordoutparam(),
+      : cfg(cfgreader), vecStationName(), vecMeta(),
+        coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
@@ -224,6 +226,22 @@ void DBO::initDBOConnection() {
 void DBO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
+	if (vecMeta.empty()) fillStationMeta();
+	vecStation = vecMeta;
+}
+
+void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+                          std::vector< std::vector<MeteoData> >& vecMeteo)
+{
+	vecMeteo.clear();
+
+	for(size_t ii=0; ii<vecStationName.size(); ii++)
+		readData(dateStart, dateEnd, vecMeteo[ii], ii);
+}
+
+void DBO::fillStationMeta()
+{
+	vecMeta.clear();
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
 		const std::string station_id = vecStationName[ii];
@@ -244,29 +262,13 @@ void DBO::readStationData(const Date& /*date*/, std::vector<StationData>& vecSta
 			Coords position(coordin, coordinparam);
 			position.setLatLon(coordinates[1], coordinates[0], coordinates[2]);
 			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
-			vecStation.push_back( sd );
+			vecMeta.push_back( sd );
 		} else {
 			if (dbo_debug)
 				std::cout << "****\nRequest: " << request << "\n****\n";
 			throw IOException("Could not retrieve data for station " + station_id, AT);
 		}
 	}
-}
-
-void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                          std::vector< std::vector<MeteoData> >& vecMeteo)
-{
-	vecMeteo.clear();
-
-	for(size_t ii=0; ii<vecStationName.size(); ii++)
-		readData(dateStart, dateEnd, vecMeteo[ii], ii);
-}
-
-//this method is called on each station in order to parse the header and set the metadata
-bool DBO::parseMetadata(std::stringstream& /*ss*/, StationData &/*sd*/, std::string &/*fields*/, std::string &/*units*/) const
-{
-
-	return true;
 }
 
 void DBO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vector<MeteoData>& /*vecMeteo*/, const size_t& stationindex)
