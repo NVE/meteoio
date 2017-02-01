@@ -282,7 +282,7 @@ void OshdIO::parseInputOutputSection()
 	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") ); //in mm/ts
 	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
 	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
-	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") );
+	params_map.push_back( std::make_pair(MeteoData::VW, "wind") ); //upcoming: wcor
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
 }
 
@@ -434,6 +434,7 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& path, const 
 
 void OshdIO::readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
+	const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
 	std::vector<double> vecSnowLine;
 	vecSnowLine.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_dir( path + "/" + "snfl" + file_suffix );
@@ -441,9 +442,9 @@ void OshdIO::readPPhase(const Date& station_date, const std::string& path, const
 
 	for (size_t jj=0; jj<nrIDs; jj++) {
 		const double altitude = vecMeteo[jj].front().meta.getAltitude();
-		if (altitude>(vecSnowLine[jj]+50.))
+		if (altitude>(vecSnowLine[jj]+half_elevation_band))
 			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 0.;
-		else if (altitude<(vecSnowLine[jj]-50.))
+		else if (altitude<(vecSnowLine[jj]-half_elevation_band))
 			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 1.;
 		else
 			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = .5;
