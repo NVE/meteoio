@@ -257,8 +257,9 @@ namespace mio {
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
  * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
- * data generators, they are listed in the \ref generators_keywords "data generators section".
+ * data generators, they are listed in the \ref generators_keywords "data generators section" (but the data creators must be declared in the [Input] section).
  * @code
+ * [Input]
  * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
  * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
  * @endcode
