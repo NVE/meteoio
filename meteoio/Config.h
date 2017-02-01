@@ -39,8 +39,9 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
+ * 
  * @anchor config_import
- * - it is possible to import another ini file, by specifying as many of the keys listed below as necessary.
+ * It is possible to import another ini file, by specifying as many of the keys listed below as necessary.
  *   Please not that in order to prevent circular dependencies, it is not possible to import the same file several times.
  *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
  *        key or section header. This imports the specified file before processing the current file, allowing
