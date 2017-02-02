@@ -43,11 +43,33 @@ namespace mio {
  *
  * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following data representation are currently supported:
- * - julian date, see Date::getJulianDate
+ * - julian date, see Date::getJulian
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
+ *
+ * When parsing a string to extract a date, various string representations are supported (the timezone term {TZ} is optional \em if a
+ * fallback timezone is available, most probably as Input::TIME_ZONE in the configuration file):
+ * - <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> variations:
+ *     - YYYY-MM-DDThh:mm:ss{TZ}
+ *     - YYYY-MM-DDThh:mm{TZ}
+ * - similar to ISO but without the 'T' marker (some systems wrongfuly reject it):
+ *     - YYYY-MM-DD hh:mm:ss{TZ}
+ *     - YYYY-MM-DD hh:mm{TZ}
+ * - simplified:
+ *     - YYYY-MM-DD{TZ}
+ *     - hh:mm{TZ}
+ * - numeric:
+ *     - YYYYMMDDHHmmss{TZ}
+ *     - YYYYMMDDHHmm{TZ}
+ *     - YYYYMMDDHH{TZ}
+ * - relative, with keyword (in this case a fallback time zone must be available from somewhere else):
+ *     - NOW
+ *     - NOW+{offset} (the offset is in seconds)
+ *     - NOW-{offset} (the offset is in seconds)
+ *
+ * The timezone information {TZ} is as laid out in Date::parseTimeZone.
  *
  * @ingroup data_str
  * @author Mathias Bavay

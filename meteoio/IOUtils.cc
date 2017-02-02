@@ -426,6 +426,23 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
+	//special case: NOW or NOW±xxx (offset in seconds)
+	if (s.substr(0, 3)=="NOW") {
+		t.setFromSys();
+		t.setTimeZone(time_zone);
+		if (s.size()>3) {
+			const size_t beg = s.find_first_of(NUM);
+			if (beg==npos)
+				throw InvalidFormatException("Invalid date specification '"+s+"'", AT);
+			size_t end = s.find_first_not_of(NUM, beg+1);
+			if (end!=npos)
+				throw InvalidFormatException("Invalid date specification '"+s+"'", AT);
+			const int offset = atoi( s.substr(beg-1, std::string::npos).c_str());
+			t += static_cast<double>(offset)/(3600.*24.);
+		}
+		return true;
+	}
+
 	(void)f;
 	int year;
 	unsigned int month, day, hour, minute;
@@ -481,7 +498,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		t.setDate( (static_cast<double>(hour))/24. + (static_cast<double>(minute))/24./60. , tz);
 		return true;
 
-	} else {
+	} else { //purely numeric date: YYYYMMDDHHmmss where ss and mm can be skipped
 		const size_t wrong_dash1 = s.find("–");
 		const size_t wrong_dash2 = s.find("Ð");
 		if (wrong_dash1!=std::string::npos || wrong_dash2!=std::string::npos)
