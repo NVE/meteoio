@@ -52,22 +52,22 @@ namespace mio {
  * When parsing a string to extract a date, various string representations are supported (the timezone term {TZ} is optional \em if a
  * fallback timezone is available, most probably as Input::TIME_ZONE in the configuration file):
  * - <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> variations:
- *     - YYYY-MM-DDThh:mm:ss{TZ}
- *     - YYYY-MM-DDThh:mm{TZ}
+ *     - YYYY-MM-DDThh:mm:ss{TZ}, for example 2017-02-02T12:35:00 in the fallback time zone
+ *     - YYYY-MM-DDThh:mm{TZ}, for example 2017-02-02T12:35+01:00
  * - similar to ISO but without the 'T' marker (some systems wrongfuly reject it):
- *     - YYYY-MM-DD hh:mm:ss{TZ}
- *     - YYYY-MM-DD hh:mm{TZ}
+ *     - YYYY-MM-DD hh:mm:ss{TZ}, for example 2017-02-02 11:35:00Z
+ *     - YYYY-MM-DD hh:mm{TZ}, for example 2017-02-02 12:35+01
  * - simplified:
- *     - YYYY-MM-DD{TZ}
- *     - hh:mm{TZ}
+ *     - YYYY-MM-DD{TZ}, for example 2017-02-01
+ *     - hh:mm{TZ}, for example 15:12+01:30
  * - numeric:
  *     - YYYYMMDDHHmmss{TZ}
  *     - YYYYMMDDHHmm{TZ}
  *     - YYYYMMDDHH{TZ}
  * - relative, with keyword (in this case a fallback time zone must be available from somewhere else):
  *     - NOW
- *     - NOW+{offset} (the offset is in seconds)
- *     - NOW-{offset} (the offset is in seconds)
+ *     - NOW±{offset} (the offset is in seconds), for example NOW+3600
+ *     - NOW±hh:mm (the offset is in hours and minutes), for example NOW-01:30
  *
  * The timezone information {TZ} is as laid out in Date::parseTimeZone.
  *
