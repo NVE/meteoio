@@ -129,11 +129,16 @@ void goToJSONPath(const std::string& path, picojson::value& v, std::vector<picoj
 
 	if (v.is<picojson::object>()) {
 		picojson::value::object& obj = v.get<picojson::object>();
-		for (map<string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
+		for (std::map<std::string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
 			if (it->first==local_path) {
-				if (!remaining_path.empty())
-					goToJSONPath(remaining_path, it->second, results);
-				else
+				if (!remaining_path.empty()) {
+					 if (it->second.is<picojson::array>()){ //ie vector<picojson::value>
+						picojson::array& array = it->second.get<picojson::array>();
+						for (size_t jj=0; jj<array.size(); jj++)
+							goToJSONPath(remaining_path, array[jj], results);
+					} else
+						goToJSONPath(remaining_path, it->second, results);
+				} else
 					results.push_back( it->second );
 			}
 		}
@@ -149,6 +154,25 @@ std::string getString(const std::string& path, picojson::value& v)
 	}
 
 	return std::string();
+}
+
+std::vector<std::string> getStrings(const std::string& path, picojson::value& v)
+{
+	std::vector<picojson::value> results;
+	goToJSONPath(path, v, results);
+
+	std::vector<std::string> vecString;
+	for (size_t ii=0; ii<results.size(); ii++) {
+		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
+			const picojson::array& array = results[ii].get<picojson::array>();
+			for (size_t jj=0; jj<array.size(); jj++) {
+				if (! array[jj].is<picojson::null>() &&  array[jj].is<std::string>()) vecString.push_back( array[jj].get<std::string>() );
+			}
+		} else
+			if (! results[ii].is<picojson::null>() &&  results[ii].is<std::string>()) vecString.push_back( results[ii].get<std::string>() );
+	}
+
+	return vecString;
 }
 
 double getDouble(const std::string& path, picojson::value& v)
@@ -174,7 +198,8 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 			for (size_t jj=0; jj<array.size(); jj++) {
 				if (! array[jj].is<picojson::null>() &&  array[jj].is<double>()) vecDouble.push_back( array[jj].get<double>() );
 			}
-		}
+		} else
+			if (! results[ii].is<picojson::null>() &&  results[ii].is<double>()) vecDouble.push_back( results[ii].get<double>() );
 	}
 
 	return vecDouble;
@@ -183,7 +208,6 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 /*************************************************************************************************/
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
 const std::string DBO::sensors_endpoint = "/osper-api/osper/stations/";
-const std::string DBO::sensors_format = "format=csv";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
@@ -263,6 +287,12 @@ void DBO::fillStationMeta()
 			position.setLatLon(coordinates[1], coordinates[0], coordinates[2]);
 			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
 			vecMeta.push_back( sd );
+
+			//select proper time series
+			/*const std::vector<std::string> ts_codes( getStrings("$.properties.timeseries.measurand.code", v) );
+			for(size_t jj=0; jj<ts_codes.size(); jj++)
+				std::cout << "Found " << ts_codes[jj] << "\n";*/
+
 		} else {
 			if (dbo_debug)
 				std::cout << "****\nRequest: " << request << "\n****\n";
@@ -287,11 +317,7 @@ void DBO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vect
 		if (!err.empty())
 			throw IOException("Error while parsing JSON: "+err, AT);
 
-		std::cout << "$.properties.name = " << getString("$.properties.name", v) << "\n";
-		std::cout << "$.properties.id = " << getDouble("$.properties.id", v) << "\n";
-		const std::vector<double> coordinates( getDoubles("$.geometry.coordinates", v) );
-		for(size_t ii=0; ii<coordinates.size(); ii++) std::cerr << " " << coordinates[ii];
-		std::cerr << "\n";
+		//printJSON(v, 1);
 	} else {
 		if (dbo_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";

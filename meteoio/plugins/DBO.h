@@ -66,7 +66,7 @@ class DBO : public IOInterface {
 		bool dbo_debug;
 
 		static const int http_timeout_dflt;
-		static const std::string sensors_endpoint, sensors_format, null_string;
+		static const std::string sensors_endpoint, null_string;
 };
 
 } //end namespace mio
