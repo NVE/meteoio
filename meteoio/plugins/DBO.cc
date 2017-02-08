@@ -104,7 +104,7 @@ void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson
 
 	if (v.is<picojson::object>()) {
 		picojson::value::object& obj = v.get<picojson::object>();
-		for (map<string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
+		for (std::map<std::string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
 			if (it->first==local_path) {
 				if (!remaining_path.empty())
 					JSONQuery(remaining_path, it->second, results);
@@ -207,13 +207,14 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 
 /*************************************************************************************************/
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string DBO::sensors_endpoint = "/osper-api/osper/stations/";
+const std::string DBO::metadata_endpoint = "/osper-api/osper/stations/";
+const std::string DBO::data_endpoint = "/osper-api/osper/timeseries/";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
       : cfg(configfile), vecStationName(), vecMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), userid(), passwd(), default_timezone(1.),
+        endpoint(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
@@ -224,7 +225,7 @@ DBO::DBO(const std::string& configfile)
 DBO::DBO(const Config& cfgreader)
       : cfg(cfgreader), vecStationName(), vecMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), userid(), passwd(), default_timezone(1.),
+        endpoint(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
@@ -242,8 +243,6 @@ void DBO::initDBOConnection() {
 	if (*endpoint.rbegin() != '/') endpoint += "/";
 	cerr << "[i] Using DBO URL: " << endpoint << endl;
 
-	cfg.getValue("DBO_USER", "Input", userid, IOUtils::nothrow);
-	cfg.getValue("DBO_PASS", "Input", passwd, IOUtils::nothrow);
 	cfg.getValue("DBO_DEBUG", "INPUT", dbo_debug, IOUtils::nothrow);
 }
 
@@ -268,10 +267,8 @@ void DBO::fillStationMeta()
 	vecMeta.clear();
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
-		const std::string station_id = vecStationName[ii];
-		const string anon_request = sensors_endpoint + IOUtils::strToLower( station_id );
-		const string auth = "&username=" + userid + "&password=" + passwd;
-		const string request = (!userid.empty())? anon_request+auth : anon_request;
+		const std::string station_id( vecStationName[ii] );
+		const std::string request( metadata_endpoint + IOUtils::strToLower( station_id ) );
 
 		stringstream ss;
 		if (curl_read(request, ss)) {
@@ -301,12 +298,14 @@ void DBO::fillStationMeta()
 	}
 }
 
-void DBO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vector<MeteoData>& /*vecMeteo*/, const size_t& stationindex)
+void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& /*vecMeteo*/, const size_t& /*stationindex*/)
 {
-	const std::string station_id = vecStationName[stationindex];
-	const string anon_request = sensors_endpoint + IOUtils::strToLower( station_id );
-	const string auth = "&username=" + userid + "&password=" + passwd;
-	const string request = (!userid.empty())? anon_request+auth : anon_request;
+	const unsigned int tsID = 4;
+	std::ostringstream ss_ID;
+	ss_ID << tsID;
+	const std::string base_url( data_endpoint + ss_ID.str() );
+	const std::string period( "?from=" + dateStart.toString(Date::ISO_TZ) + "&until=" + dateEnd.toString(Date::ISO_TZ) );
+	const std::string request( base_url + period + "&limit=10" );
 
 	std::cerr << "Request: " << request << "\n";
 	stringstream ss;
@@ -317,11 +316,12 @@ void DBO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vect
 		if (!err.empty())
 			throw IOException("Error while parsing JSON: "+err, AT);
 
-		//printJSON(v, 1);
+		printJSON(v, 1);
+		//http://developwis.wsl.ch:8730/osper-api/osper/timeseries/1?from=2016-11-17T13%3A00Z&until=2017-01-05T13%3A00Z&limit=3
 	} else {
 		if (dbo_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";
-		throw IOException("Could not retrieve data for station " + station_id, AT);
+		throw IOException("Could not retrieve data for timeseries " + ss_ID.str(), AT);
 	}
 }
 

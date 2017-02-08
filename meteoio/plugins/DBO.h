@@ -60,13 +60,13 @@ class DBO : public IOInterface {
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
-		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
+		std::string endpoint; ///< Variables for endpoint configuration
 		double default_timezone;
 		int http_timeout; //time out for http connections
 		bool dbo_debug;
 
 		static const int http_timeout_dflt;
-		static const std::string sensors_endpoint, null_string;
+		static const std::string metadata_endpoint, data_endpoint, null_string;
 };
 
 } //end namespace mio

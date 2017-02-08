@@ -36,11 +36,6 @@ ProcUnventilatedT::ProcUnventilatedT(const std::vector<std::string>& vec_args, c
 void ProcUnventilatedT::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	if (param!=MeteoData::TA) {
-		ostringstream ss;
-		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
 	ovec = ivec;
 
 	if (usr_vw_thresh!=IOUtils::nodata)
@@ -62,18 +57,17 @@ void ProcUnventilatedT::filterTA(const unsigned int& param, std::vector<MeteoDat
 void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoData>& ovec) const
 {
 	for (size_t ii=0; ii<ovec.size(); ii++) {
-		double& tmp = ovec[ii](param);
-		if (tmp == IOUtils::nodata) continue; //preserve nodata values
+		double& ta = ovec[ii](param);
+		if (ta == IOUtils::nodata) continue; //preserve nodata values
 
 		double albedo = usr_albedo;
 		double iswr = ovec[ii](MeteoData::ISWR);
 		const double rswr = ovec[ii](MeteoData::RSWR);
-		const double ta = ovec[ii](MeteoData::TA);
 		double vw = ovec[ii](MeteoData::VW);
 		double hs = ovec[ii](MeteoData::HS);
 
 		if (iswr!=IOUtils::nodata && rswr!=IOUtils::nodata && rswr>5. && iswr>5.) {
-			albedo = iswr / rswr;
+			albedo = rswr / iswr;
 			hs = IOUtils::nodata; //to make sure we would not try to recompute a pseudo albedo later
 		}
 
@@ -82,7 +76,7 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 			else iswr = soil_albedo*rswr;
 		}
 
-		if (iswr==IOUtils::nodata || ta==IOUtils::nodata || vw==IOUtils::nodata)
+		if (iswr==IOUtils::nodata || vw==IOUtils::nodata)
 			continue;
 
 		if (hs!=IOUtils::nodata) { //try to get snow height in order to adjust the albedo
@@ -97,12 +91,12 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 		if (X<1e-4) continue; //the correction does not work well for small X values
 		if (nakamura) {
 			const double C0 = 0.13;
-			const double C1 = 373.40 * albedo / dflt_albedo; //in order to introduce the albedo as a scaling factor
+			const double C1 = 373.40; /* albedo / dflt_albedo; //in order to introduce the albedo as a scaling factor*/
 			const double RE = C0 + C1*X;
-			tmp -= RE; //substracting the radiative error
+			ta -= RE; //substracting the radiative error
 		} else {
-			const double RE = 3.1 * sqrt(X);
-			tmp -= RE; //substracting the radiative error
+			const double RE = 3.1 * sqrt(albedo*X*1e3);
+			ta -= RE; //substracting the radiative error
 		}
 	}
 }
