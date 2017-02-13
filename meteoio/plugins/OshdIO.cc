@@ -562,10 +562,17 @@ void OshdIO::fillStationMeta()
 	
 	buildVecIdx(vecAcro);
 	for (size_t ii=0; ii<vecIdx.size(); ii++) {
-		Coords position("CH1903", "");
 		const size_t idx = vecIdx[ii];
+		Coords position("CH1903", "");
 		position.setXY(easting[idx], northing[idx], altitude[idx]);
-		const StationData sd(position, vecAcro[idx], vecNames[idx]);
+		std::string name( vecNames[idx] );
+
+		//if the network name has been appended, remove it. We also remove spaces, just in case
+		const size_t netz_pos = name.find(" (");
+		if (netz_pos!=std::string::npos) name.erase(netz_pos);
+		std::replace( name.begin(), name.end(), ' ', '_');
+
+		const StationData sd(position, vecAcro[idx], name);
 		vecMeta[ii] = sd;
 	}
 }
