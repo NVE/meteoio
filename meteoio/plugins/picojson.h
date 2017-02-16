@@ -42,13 +42,6 @@
 #include <vector>
 #include <utility>
 
-#ifdef __GNUC__
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Weffc++"
-	#pragma GCC diagnostic ignored "-Wshadow"
-	#pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
 // for isnan/isinf
 #if __cplusplus>=201103L
 # include <cmath>
@@ -175,12 +168,12 @@ namespace picojson {
     template <typename T> void set(T &&);
 #endif
     bool evaluate_as_boolean() const;
-    const value& get(size_t idx) const;
+    const value& get(const size_t idx) const;
     const value& get(const std::string& key) const;
-    value& get(size_t idx);
+    value& get(const size_t idx);
     value& get(const std::string& key);
 
-    bool contains(size_t idx) const;
+    bool contains(const size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os, bool prettify = false) const;
@@ -196,9 +189,9 @@ namespace picojson {
   typedef value::array array;
   typedef value::object object;
 
-  inline value::value() : type_(null_type) {}
+  inline value::value() : type_(null_type), u_() {}
 
-  inline value::value(int type, bool) : type_(type) {
+  inline value::value(int type, bool) : type_(type), u_() {
     switch (type) {
 #define INIT(p, v) case p##type: u_.p = v; break
       INIT(boolean_, false);
@@ -214,17 +207,17 @@ namespace picojson {
     }
   }
 
-  inline value::value(bool b) : type_(boolean_type) {
+  inline value::value(bool b) : type_(boolean_type), u_() {
     u_.boolean_ = b;
   }
 
 #ifdef PICOJSON_USE_INT64
-  inline value::value(int64_t i) : type_(int64_type) {
+  inline value::value(int64_t i) : type_(int64_type), u_() {
     u_.int64_ = i;
   }
 #endif
 
-  inline value::value(double n) : type_(number_type) {
+  inline value::value(double n) : type_(number_type), u_() {
     if (
 #ifdef _MSC_VER
         ! _finite(n)
@@ -239,37 +232,37 @@ namespace picojson {
     u_.number_ = n;
   }
 
-  inline value::value(const std::string& s) : type_(string_type) {
+  inline value::value(const std::string& s) : type_(string_type), u_() {
     u_.string_ = new std::string(s);
   }
 
-  inline value::value(const array& a) : type_(array_type) {
+  inline value::value(const array& a) : type_(array_type), u_() {
     u_.array_ = new array(a);
   }
 
-  inline value::value(const object& o) : type_(object_type) {
+  inline value::value(const object& o) : type_(object_type), u_() {
     u_.object_ = new object(o);
   }
 
 #if PICOJSON_USE_RVALUE_REFERENCE
-  inline value::value(std::string&& s) : type_(string_type) {
+  inline value::value(std::string&& s) : type_(string_type), u_() {
     u_.string_ = new std::string(std::move(s));
   }
 
-  inline value::value(array&& a) : type_(array_type) {
+  inline value::value(array&& a) : type_(array_type), u_() {
     u_.array_ = new array(std::move(a));
   }
 
-  inline value::value(object&& o) : type_(object_type) {
+  inline value::value(object&& o) : type_(object_type), u_() {
     u_.object_ = new object(std::move(o));
   }
 #endif
 
-  inline value::value(const char* s) : type_(string_type) {
+  inline value::value(const char* s) : type_(string_type), u_() {
     u_.string_ = new std::string(s);
   }
 
-  inline value::value(const char* s, size_t len) : type_(string_type) {
+  inline value::value(const char* s, size_t len) : type_(string_type), u_() {
     u_.string_ = new std::string(s, len);
   }
 
@@ -288,7 +281,7 @@ namespace picojson {
     clear();
   }
 
-  inline value::value(const value& x) : type_(x.type_) {
+  inline value::value(const value& x) : type_(x.type_), u_() {
     switch (type_) {
 #define INIT(p, v) case p##type: u_.p = v; break
       INIT(string_, new std::string(*x.u_.string_));
@@ -310,7 +303,7 @@ namespace picojson {
   }
 
 #if PICOJSON_USE_RVALUE_REFERENCE
-  inline value::value(value&& x)throw() : type_(null_type) {
+  inline value::value(value&& x)throw() : type_(null_type), u_() {
     swap(x);
   }
   inline value& value::operator=(value&& x)throw() {
@@ -415,13 +408,13 @@ namespace picojson {
     }
   }
 
-  inline const value& value::get(size_t idx) const {
+  inline const value& value::get(const size_t idx) const {
     static value s_null;
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
-  inline value& value::get(size_t idx) {
+  inline value& value::get(const size_t idx) {
     static value s_null;
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
@@ -441,7 +434,7 @@ namespace picojson {
     return i != u_.object_->end() ? i->second : s_null;
   }
 
-  inline bool value::contains(size_t idx) const {
+  inline bool value::contains(const size_t idx) const {
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size();
   }
@@ -662,9 +655,9 @@ namespace picojson {
 	}
       }
     }
-    bool expect(int expect) {
+    bool expect(const int expected) {
       skip_ws();
-      if (getc() != expect) {
+      if (getc() != expected) {
 	ungetc();
 	return false;
       }
@@ -727,20 +720,20 @@ namespace picojson {
       uni_ch += 0x10000;
     }
     if (uni_ch < 0x80) {
-      out.push_back(uni_ch);
+      out.push_back( static_cast<char>(uni_ch) );
     } else {
       if (uni_ch < 0x800) {
-	out.push_back(0xc0 | (uni_ch >> 6));
+	out.push_back( static_cast<char>(0xc0 | (uni_ch >> 6)) );
       } else {
 	if (uni_ch < 0x10000) {
-	  out.push_back(0xe0 | (uni_ch >> 12));
+	  out.push_back( static_cast<char>(0xe0 | (uni_ch >> 12)) );
 	} else {
-	  out.push_back(0xf0 | (uni_ch >> 18));
-	  out.push_back(0x80 | ((uni_ch >> 12) & 0x3f));
+	  out.push_back( static_cast<char>(0xf0 | (uni_ch >> 18)) );
+	  out.push_back( static_cast<char>(0x80 | ((uni_ch >> 12) & 0x3f)) );
 	}
-	out.push_back(0x80 | ((uni_ch >> 6) & 0x3f));
+	out.push_back( static_cast<char>(0x80 | ((uni_ch >> 6) & 0x3f)) );
       }
-      out.push_back(0x80 | (uni_ch & 0x3f));
+      out.push_back( static_cast<char>(0x80 | (uni_ch & 0x3f)) );
     }
     return true;
   }
@@ -777,7 +770,7 @@ namespace picojson {
 	  return false;
 	}
       } else {
-	out.push_back(ch);
+	out.push_back( static_cast<char>(ch) );
       }
     }
     return false;
@@ -827,7 +820,7 @@ namespace picojson {
       int ch = in.getc();
       if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-'
           || ch == 'e' || ch == 'E') {
-        num_str.push_back(ch);
+        num_str.push_back( static_cast<char>(ch) );
       } else if (ch == '.') {
 #if PICOJSON_USE_LOCALE
         num_str += localeconv()->decimal_point;
@@ -867,7 +860,7 @@ namespace picojson {
         double f;
         char *endp;
 	in.ungetc();
-        std::string num_str = _parse_number(in);
+        std::string num_str( _parse_number(in) );
         if (num_str.empty()) {
           return false;
         }
@@ -1018,7 +1011,7 @@ namespace picojson {
 	if (ch == -1 || ch == '\n') {
 	  break;
 	} else if (ch >= ' ') {
-	  err->push_back(ch);
+	  err->push_back( static_cast<char>(ch) );
 	}
       }
     }
@@ -1092,7 +1085,7 @@ namespace std {
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
 {
   picojson::set_last_error(std::string());
-  std::string err = picojson::parse(x, is);
+  const std::string err( picojson::parse(x, is) );
   if (! err.empty()) {
     picojson::set_last_error(err);
     is.setstate(std::ios::failbit);
@@ -1107,9 +1100,6 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
 }
 #ifdef _MSC_VER
     #pragma warning(pop)
-#endif
-#ifdef __GNUC__
-	#pragma GCC diagnostic pop
 #endif
 
 #endif

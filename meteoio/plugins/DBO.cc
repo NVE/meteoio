@@ -42,7 +42,7 @@ namespace mio {
  * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730/osper-api
  * - DBO_USER: The username to access the service (optional)
  * - DBO_PASS: The password to authenticate the USER (optional)
- * - STATION#: station code for the given station, e. g. la_fouly_1034 (case sensitive!)
+ * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
@@ -54,6 +54,39 @@ namespace mio {
  * STATION1	= wind_tunnel_meteo
  * @endcode
  *
+ * @section dbo_dependencies Picojson
+ * This plugin relies on <A HREF="https://github.com/kazuho/picojson/">picojson</A> for reading and parsing
+ * <A HREF="https://en.wikipedia.org/wiki/JSON">JSON</A> data. Picojson is released under a
+ * <A HREF="https://opensource.org/licenses/BSD-2-Clause">2-Clause BSD License</A>. Please find here below
+ * the full license agreement for picojson:
+ *
+ * @code
+ * Copyright 2009-2010 Cybozu Labs, Inc.
+ * Copyright 2011-2014 Kazuho Oku
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * @endcode
  */
 
 //we keep it as a simple function in order to avoid exposing picojson stuff in the header
@@ -138,8 +171,9 @@ void goToJSONPath(const std::string& path, picojson::value& v, std::vector<picoj
 							goToJSONPath(remaining_path, array[jj], results);
 					} else
 						goToJSONPath(remaining_path, it->second, results);
-				} else
+				} else {
 					results.push_back( it->second );
+				}
 			}
 		}
 	}
@@ -267,11 +301,15 @@ void DBO::fillStationMeta()
 	vecMeta.clear();
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
-		const std::string station_id( vecStationName[ii] );
-		const std::string request( metadata_endpoint + IOUtils::strToLower( station_id ) );
+		std::string station_id( vecStationName[ii] );
+		if (station_id.find(':')==std::string::npos) station_id = "IMIS::" + station_id;
+		const std::string request( metadata_endpoint + "name=" + IOUtils::strToLower( station_id ) );
 
 		stringstream ss;
 		if (curl_read(request, ss)) {
+			if (ss.str().empty())
+				throw UnknownValueException("Station not found: '"+station_id+"'", AT);
+
 			picojson::value v;
 			const std::string err( picojson::parse(v, ss.str()) );
 			if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
@@ -286,9 +324,9 @@ void DBO::fillStationMeta()
 			vecMeta.push_back( sd );
 
 			//select proper time series
-			/*const std::vector<std::string> ts_codes( getStrings("$.properties.timeseries.measurand.code", v) );
+			const std::vector<std::string> ts_codes( getStrings("$.properties.timeseries.code", v) );
 			for(size_t jj=0; jj<ts_codes.size(); jj++)
-				std::cout << "Found " << ts_codes[jj] << "\n";*/
+				std::cout << "Found " << ts_codes[jj] << "\n";
 
 		} else {
 			if (dbo_debug)
