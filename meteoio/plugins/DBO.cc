@@ -296,6 +296,48 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 }
 
+void getTsProperties(picojson::value& v)
+{
+	std::vector<picojson::value> results;
+	goToJSONPath("$.properties.timeseries", v, results);
+
+	for (size_t ii=0; ii<results.size(); ii++) {
+		 if (results[ii].is<picojson::array>()){
+			const picojson::array& array = results[ii].get<picojson::array>();
+			for (size_t jj=0; jj<array.size(); jj++) {
+				if (! array[jj].is<picojson::null>()) {
+					std::string code, agg_type;
+					double ts_id;
+					unsigned int interval;
+					Date since, until;
+
+					const picojson::value::object& obj = array[jj].get<picojson::object>();
+					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
+						if (it->first=="code" && it->second.is<std::string>()) {
+							code = it->second.get<std::string>();
+							code = code.substr(0, code.find('_'));
+						}
+						if (it->first=="id" && it->second.is<double>()) ts_id = it->second.get<double>();
+						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
+						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
+						if (it->first=="aggregationInterval" && it->second.is<std::string>()) {
+							unsigned int hour, minute, second;
+							 if (sscanf(it->second.get<std::string>().c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
+								interval = hour*3600 + minute*60 + second;
+							 } else
+								throw ConversionFailedException("Could not read aggregation interval '"+it->second.get<std::string>()+"'", AT);
+						}
+						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
+
+					}
+
+					std::cout << code << " (" << ts_id << ") since " << since.toString(Date::ISO) << " every " << interval << " seconds (" << agg_type << ")\n";
+				}
+			}
+		}
+	}
+}
+
 void DBO::fillStationMeta()
 {
 	vecMeta.clear();
@@ -305,7 +347,7 @@ void DBO::fillStationMeta()
 		if (station_id.find(':')==std::string::npos) station_id = "IMIS::" + station_id;
 		const std::string request( metadata_endpoint + "name=" + IOUtils::strToLower( station_id ) );
 
-		stringstream ss;
+		std::stringstream ss;
 		if (curl_read(request, ss)) {
 			if (ss.str().empty())
 				throw UnknownValueException("Station not found: '"+station_id+"'", AT);
@@ -324,9 +366,7 @@ void DBO::fillStationMeta()
 			vecMeta.push_back( sd );
 
 			//select proper time series
-			const std::vector<std::string> ts_codes( getStrings("$.properties.timeseries.code", v) );
-			for(size_t jj=0; jj<ts_codes.size(); jj++)
-				std::cout << "Found " << ts_codes[jj] << "\n";
+			getTsProperties(v);
 
 		} else {
 			if (dbo_debug)
