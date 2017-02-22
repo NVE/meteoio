@@ -47,6 +47,24 @@ class DBO : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
+		typedef struct ts_Meta {
+			ts_Meta(const Date& i_since, const Date& i_until, const std::string& i_agg_type, const double& i_ts_id, const unsigned int& i_interval)
+			                : since(i_since), until(i_until), agg_type(i_agg_type), ts_id(i_ts_id), interval(i_interval) {}
+
+			std::string toString() {
+				std::ostringstream os;
+				os << ts_id << " [";
+				if (since.isUndef()) os << " -∞ - "; else os << since.toString(Date::ISO) << " - ";
+				if (until.isUndef()) os << " ∞] "; else os << until.toString(Date::ISO) << "] ";
+				os << agg_type << " - " << interval << " s";
+				return os.str();
+			}
+
+			Date since, until;
+			std::string agg_type;
+			double ts_id;
+			unsigned int interval;
+		} tsMeta;
 	private:
 		void fillStationMeta();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
@@ -59,6 +77,7 @@ class DBO : public IOInterface {
 		const Config cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
+		std::vector< std::map<MeteoData::Parameters, std::vector<DBO::tsMeta> > > vecTsMeta; ///< for every station, a map that contains for each parameter the relevant timeseries properties
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
 		double default_timezone;

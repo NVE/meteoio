@@ -239,6 +239,90 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 	return vecDouble;
 }
 
+unsigned int parseInterval(const std::string& interval_str)
+{
+	unsigned int hour, minute, second;
+	if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
+		return (hour*3600 + minute*60 + second);
+	} else
+		throw ConversionFailedException("Could not read aggregation interval '"+interval_str+"'", AT);
+}
+
+bool getParameter(const std::string& code, const std::string& agg_type, MeteoData::Parameters &param)
+{
+	if (agg_type=="SD") return false; //we don't care about standard deviation anyway
+	const std::string param_str( code.substr(0, code.find('_')) );
+
+	if (param_str=="P") {
+		param = MeteoData::P;
+	} else if (param_str=="TA") {
+		param = MeteoData::TA;
+	} else if (param_str=="RH") {
+		param = MeteoData::RH;
+	} else if (param_str=="TSG") {
+		param = MeteoData::TSG;
+	} else if (param_str=="TSS") {
+		param = MeteoData::TSS;
+	} else if (param_str=="HS") {
+		param = MeteoData::HS;
+	} else if (param_str=="VW" && agg_type=="MAX") {
+		param = MeteoData::VW_MAX;
+	} else if (param_str=="VW") {
+		param = MeteoData::VW;
+	}else if (param_str=="DW") {
+		param = MeteoData::DW;
+	} else if (param_str=="RSWR") {
+		param = MeteoData::RSWR;
+	} else if (param_str=="ISWR") {
+		param = MeteoData::ISWR;
+	} else if (param_str=="ILWR") {
+		param = MeteoData::ILWR;
+	} else if (param_str=="RRI") {
+		param = MeteoData::PSUM;
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+std::map<MeteoData::Parameters, std::vector<DBO::tsMeta> > getTsProperties(picojson::value& v)
+{
+	std::map<MeteoData::Parameters, std::vector<DBO::tsMeta> > tsMap;
+	std::vector<picojson::value> results;
+	goToJSONPath("$.properties.timeseries", v, results);
+
+	for (size_t ii=0; ii<results.size(); ii++) {
+		 if (results[ii].is<picojson::array>()){
+			const picojson::array& array = results[ii].get<picojson::array>();
+			for (size_t jj=0; jj<array.size(); jj++) {
+				if (! array[jj].is<picojson::null>()) {
+					std::string code, agg_type;
+					double ts_id;
+					unsigned int interval;
+					Date since, until;
+
+					const picojson::value::object& obj = array[jj].get<picojson::object>();
+					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
+						if (it->first=="code" && it->second.is<std::string>()) code = it->second.get<std::string>();
+						if (it->first=="id" && it->second.is<double>()) ts_id = it->second.get<double>();
+						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
+						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
+						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
+						if (it->first=="aggregationInterval" && it->second.is<std::string>()) interval = parseInterval(it->second.get<std::string>());
+					}
+
+					MeteoData::Parameters param;
+					if (getParameter(code, agg_type, param))
+						tsMap[param].push_back( DBO::tsMeta(since, until, agg_type, ts_id, interval) );
+				}
+			}
+		}
+	}
+
+	return tsMap;
+}
+
 /*************************************************************************************************/
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
 const std::string DBO::metadata_endpoint = "/osper-api/osper/stations/";
@@ -246,7 +330,7 @@ const std::string DBO::data_endpoint = "/osper-api/osper/timeseries/";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), vecMeta(),
+      : cfg(configfile), vecStationName(), vecMeta(), vecTsMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
@@ -257,7 +341,7 @@ DBO::DBO(const std::string& configfile)
 }
 
 DBO::DBO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), vecMeta(),
+      : cfg(cfgreader), vecStationName(), vecMeta(), vecTsMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), default_timezone(1.),
         http_timeout(http_timeout_dflt), dbo_debug(false)
@@ -296,51 +380,10 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 }
 
-void getTsProperties(picojson::value& v)
-{
-	std::vector<picojson::value> results;
-	goToJSONPath("$.properties.timeseries", v, results);
-
-	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){
-			const picojson::array& array = results[ii].get<picojson::array>();
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>()) {
-					std::string code, agg_type;
-					double ts_id;
-					unsigned int interval;
-					Date since, until;
-
-					const picojson::value::object& obj = array[jj].get<picojson::object>();
-					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
-						if (it->first=="code" && it->second.is<std::string>()) {
-							code = it->second.get<std::string>();
-							code = code.substr(0, code.find('_'));
-						}
-						if (it->first=="id" && it->second.is<double>()) ts_id = it->second.get<double>();
-						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
-						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
-						if (it->first=="aggregationInterval" && it->second.is<std::string>()) {
-							unsigned int hour, minute, second;
-							 if (sscanf(it->second.get<std::string>().c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
-								interval = hour*3600 + minute*60 + second;
-							 } else
-								throw ConversionFailedException("Could not read aggregation interval '"+it->second.get<std::string>()+"'", AT);
-						}
-						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
-
-					}
-
-					std::cout << code << " (" << ts_id << ") since " << since.toString(Date::ISO) << " every " << interval << " seconds (" << agg_type << ")\n";
-				}
-			}
-		}
-	}
-}
-
 void DBO::fillStationMeta()
 {
 	vecMeta.clear();
+	vecTsMeta.resize( vecStationName.size() );
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
 		std::string station_id( vecStationName[ii] );
@@ -366,12 +409,19 @@ void DBO::fillStationMeta()
 			vecMeta.push_back( sd );
 
 			//select proper time series
-			getTsProperties(v);
-
+			vecTsMeta[ii] = getTsProperties(v);
 		} else {
 			if (dbo_debug)
 				std::cout << "****\nRequest: " << request << "\n****\n";
 			throw IOException("Could not retrieve data for station " + station_id, AT);
+		}
+	}
+
+	//debug info
+	for(size_t ii=0; ii<vecStationName.size(); ii++) {
+		for (std::map<MeteoData::Parameters, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[ii].begin(); it != vecTsMeta[ii].end(); ++it) {
+			for(size_t jj=0; jj<it->second.size(); jj++)
+				std::cout << MeteoData::getParameterName(it->first) << " " << it->second[jj].toString() << "\n";
 		}
 	}
 }
