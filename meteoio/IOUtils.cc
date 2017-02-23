@@ -322,9 +322,8 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 		std::istringstream iss(s);
 		int i;
 		iss >> f >> i; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-		if (iss.fail()) {//Conversion failed
-			return false;
-		}
+		//Conversion failed
+		if (iss.fail()) return false;
 		t = (i != 0);
 	}
 
@@ -380,10 +379,8 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 	iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 	iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
 
-	if (iss.fail()) {
-		//Conversion failed
-		return false;
-	}
+	//Conversion failed
+	if (iss.fail()) return false;
 	std::string tmp;
 	getline(iss,  tmp); //get rest of line, if any
 	trim(tmp);
@@ -406,10 +403,8 @@ template<> bool convertString<unsigned int>(unsigned int& t, const std::string& 
 		iss.setf(std::ios::fixed);
 		iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-		if (iss.fail()) {
-			//Conversion failed
-			return false;
-		}
+		//Conversion failed
+		if (iss.fail()) return false;
 		std::string tmp;
 		getline(iss,  tmp); //get rest of line, if any
 		trim(tmp);

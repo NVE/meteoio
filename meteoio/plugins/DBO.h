@@ -68,7 +68,7 @@ class DBO : public IOInterface {
 	private:
 		void fillStationMeta();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void convertUnits(MeteoData& meteo) const;
+		void readTimeSerie(const unsigned int& ts_id, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 
 		void initDBOConnection();
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
@@ -77,7 +77,7 @@ class DBO : public IOInterface {
 		const Config cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
-		std::vector< std::map<MeteoData::Parameters, std::vector<DBO::tsMeta> > > vecTsMeta; ///< for every station, a map that contains for each parameter the relevant timeseries properties
+		std::vector< std::map<std::string, std::vector<DBO::tsMeta> > > vecTsMeta; ///< for every station, a map that contains for each parameter the relevant timeseries properties
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
 		double default_timezone;
