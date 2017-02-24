@@ -277,12 +277,12 @@ void OshdIO::parseInputOutputSection()
 	}
 	
 	//fill the params mapping vector
-	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwr") );
+	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwc") );
 	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
 	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") ); //in mm/ts
-	params_map.push_back( std::make_pair(MeteoData::RH, "rhum") );
+	params_map.push_back( std::make_pair(MeteoData::RH, "rcor") ); //old: rhum
 	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
-	params_map.push_back( std::make_pair(MeteoData::VW, "wind") ); //upcoming: wcor
+	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") ); //old: wind
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
 }
 
@@ -413,41 +413,47 @@ void OshdIO::readSWRad(const Date& station_date, const std::string& path, const 
 {
 	std::vector<double> vecDir;
 	vecDir.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_dir( path + "/" + "idir" + file_suffix );
+	const std::string filename_dir( path + "/" + "idrc" + file_suffix );
 	readFromFile(filename_dir, MeteoData::ISWR, station_date, vecDir);
 	
 	std::vector<double> vecDiff;
 	vecDiff.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_diff( path + "/" + "idif" + file_suffix );
+	const std::string filename_diff( path + "/" + "idfc" + file_suffix );
 	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
 
 	std::vector<double> vecAlbd;
-	vecAlbd.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_albd( path + "/" + "albd" + file_suffix );
-	readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //We read ALBD and use it to build RSWR
+	if (FileUtils::fileExists(filename_albd)) {
+		vecAlbd.resize( nrIDs, IOUtils::nodata );
+		readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //We read ALBD and use it to build RSWR
+	}
 	
+	const double albedo = !vecAlbd.empty();
 	for (size_t jj=0; jj<nrIDs; jj++) {
 		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
-		vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
+		if (albedo) vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
 	}
 }
 
 void OshdIO::readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
-	const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
-	std::vector<double> vecSnowLine;
-	vecSnowLine.resize( nrIDs, IOUtils::nodata );
-	const std::string filename_dir( path + "/" + "snfl" + file_suffix );
-	readFromFile(filename_dir, MeteoData::PSUM_PH, station_date, vecSnowLine);
+	const std::string filename( path + "/" + "snfl" + file_suffix );
 
-	for (size_t jj=0; jj<nrIDs; jj++) {
-		const double altitude = vecMeteo[jj].front().meta.getAltitude();
-		if (altitude>(vecSnowLine[jj]+half_elevation_band))
-			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 0.;
-		else if (altitude<(vecSnowLine[jj]-half_elevation_band))
-			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 1.;
-		else
-			vecMeteo[jj].back()( MeteoData::PSUM_PH ) = .5;
+	if (FileUtils::fileExists(filename)) {
+		const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
+		std::vector<double> vecSnowLine;
+		vecSnowLine.resize( nrIDs, IOUtils::nodata );
+		readFromFile(filename, MeteoData::PSUM_PH, station_date, vecSnowLine);
+
+		for (size_t jj=0; jj<nrIDs; jj++) {
+			const double altitude = vecMeteo[jj].front().meta.getAltitude();
+			if (altitude>(vecSnowLine[jj]+half_elevation_band))
+				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 0.;
+			else if (altitude<(vecSnowLine[jj]-half_elevation_band))
+				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 1.;
+			else
+				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = .5;
+		}
 	}
 }
 

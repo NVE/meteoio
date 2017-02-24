@@ -242,6 +242,8 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 //converts C to Kelvin, converts RH to [0,1], HS to m
 double convertUnits(const MeteoData::Parameters& param, const double& value)
 {
+	if (value==IOUtils::nodata) return value;
+
 	switch (param) {
 		case MeteoData::TA: case MeteoData::TSG: case MeteoData::TSS:
 			return IOUtils::C_TO_K(value);
@@ -266,8 +268,11 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 
 	if (array[1].is<double>())
 		value = array[1].get<double>();
-	else
-		return false;
+	else {
+		if (!array[1].is<picojson::null>()) return false;
+		value = IOUtils::nodata;
+		return true;
+	}
 
 	return true;
 }
@@ -285,6 +290,7 @@ void parseTimeSerie(const std::string& tsID, const MeteoData::Parameters& param,
 			Date datum;
 			double value;
 			if (!parseTsPoint(vecRaw[ii], datum, value)) {
+				printJSON(vecRaw[ii], 1);
 				std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
 				throw InvalidFormatException(ss.str(), AT);
 			}
@@ -298,13 +304,21 @@ void parseTimeSerie(const std::string& tsID, const MeteoData::Parameters& param,
 			Date datum;
 			double value;
 			if (!parseTsPoint(vecRaw[ii], datum, value)) {
+				printJSON(vecRaw[ii], 1);
 				std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
 				throw InvalidFormatException(ss.str(), AT);
 			}
 
-			/*MeteoData md(datum, sd);
-			md(param) = convertUnits(param, value);
-			vecMeteo.push_back( md );*/
+			//easy case: all TS have the same indices
+			if (ii<vecMeteo.size()) {
+				if (datum==vecMeteo[ii].date) {
+					vecMeteo[ii](param) = convertUnits(param, value);
+					continue;
+				}
+			}
+
+			//hard case: the TS don't match HACK
+
 		}
 	}
 }
@@ -330,7 +344,7 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 			for (size_t jj=0; jj<array.size(); jj++) {
 				if (! array[jj].is<picojson::null>()) {
 					std::string code, device_code, agg_type;
-					double ts_id;
+					double id;
 					unsigned int interval;
 					Date since, until;
 
@@ -338,7 +352,7 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
 						if (it->first=="code" && it->second.is<std::string>()) code = it->second.get<std::string>();
 						if (it->first=="deviceCode" && it->second.is<std::string>()) device_code = it->second.get<std::string>();
-						if (it->first=="id" && it->second.is<double>()) ts_id = it->second.get<double>();
+						if (it->first=="id" && it->second.is<double>()) id = it->second.get<double>();
 						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
 						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
 						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
@@ -348,9 +362,8 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 					if (device_code=="BATTERY" || device_code=="LOGGER") break;
 					if (agg_type=="SD") break; //we don't care about standard deviation anyway
 
-					std::string param_str( code.substr(0, code.find('_')) );
-					IOUtils::toUpper( param_str );
-					tsMap[param_str].push_back( DBO::tsMeta(since, until, agg_type, ts_id, interval) );
+					const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
+					tsMap[param_str].push_back( DBO::tsMeta(since, until, agg_type, id, interval) );
 				}
 			}
 		}
@@ -452,7 +465,11 @@ void DBO::fillStationMeta()
 			throw IOException("Could not retrieve data for station " + station_id, AT);
 		}
 	}
+}
 
+//read all data for the given station
+void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
+{
 	//debug info
 	/*for(size_t ii=0; ii<vecStationName.size(); ii++) {
 		for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[ii].begin(); it != vecTsMeta[ii].end(); ++it) {
@@ -460,19 +477,27 @@ void DBO::fillStationMeta()
 				std::cout << it->first << " " << it->second[jj].toString() << "\n";
 		}
 	}*/
-}
 
-//read all data for the given station
-void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
-{
 	//TODO: for station stationindex, loop over the timeseries that cover [dateStart, dateEnd] for the current station
 	//vecTsMeta[ stationindex ]
 
-	const unsigned int ts_id = 39;
-	readTimeSerie(ts_id, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	/*for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
+		for(size_t jj=0; jj<it->second.size(); jj++)
+			std::cout << it->first << " " << it->second[jj].toString() << "\n";
+	}*/
+
+	readTimeSerie(15, MeteoData::TA, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(23, MeteoData::RH, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(93, MeteoData::RSWR, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(31, MeteoData::HS, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(46, MeteoData::TSG, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+
+	/*for (size_t param=MeteoData::firstparam; param<=MeteoData::lastparam; param++) {
+
+	}*/
 }
 
-void DBO::readTimeSerie(const unsigned int& ts_id, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo)
+void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo)
 {
 	std::ostringstream ss_ID; ss_ID << ts_id;
 	const std::string base_url( data_endpoint + ss_ID.str() );
@@ -482,12 +507,12 @@ void DBO::readTimeSerie(const unsigned int& ts_id, const Date& dateStart, const 
 
 	std::stringstream ss;
 	if (curl_read(request, ss)) {
-		if (ss.str().empty()) throw UnknownValueException("Timeserie not found: '"+ss_ID.str()+"'", AT);
+		if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
 		picojson::value v;
 		const std::string err( picojson::parse(v, ss.str()) );
 		if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
 
-		parseTimeSerie(ss_ID.str(), MeteoData::RH, sd, v, vecMeteo);
+		parseTimeSerie(ss_ID.str(), param, sd, v, vecMeteo);
 	} else {
 		if (dbo_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";

@@ -54,8 +54,8 @@ class DBO : public IOInterface {
 			std::string toString() {
 				std::ostringstream os;
 				os << ts_id << " [";
-				if (since.isUndef()) os << " -∞ - "; else os << since.toString(Date::ISO) << " - ";
-				if (until.isUndef()) os << " ∞] "; else os << until.toString(Date::ISO) << "] ";
+				os << ((since.isUndef())? "-∞" : since.toString(Date::ISO)) << " - ";
+				os << ((until.isUndef())? "∞" : until.toString(Date::ISO)) << "] ";
 				os << agg_type << " - " << interval << " s";
 				return os.str();
 			}
@@ -68,7 +68,7 @@ class DBO : public IOInterface {
 	private:
 		void fillStationMeta();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void readTimeSerie(const unsigned int& ts_id, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo);
+		void readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 
 		void initDBOConnection();
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
