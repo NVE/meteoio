@@ -668,8 +668,13 @@ void SMETWriter::write(const std::vector<double>& data)
 void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream& fout) const
 {
 	const std::map<string,string>::const_iterator it = header.find(header_field);
-	if (it != header.end())
-		fout << std::left << std::setw(16) << header_field << " = " << it->second << "\n";
+	if (it != header.end()) {
+		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
+		const std::streamsize width = fout.width(16);
+		fout << header_field << " = " << it->second << "\n";
+		fout.width(width);
+		fout.setf(flags);
+	}
 }
 
 void SMETWriter::write_header(std::ofstream& fout)
@@ -765,7 +770,6 @@ void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::
 	for (size_t ii = 0; ii < data.size(); ii++){
 		if (ii > 0) fout << " ";
 		if (timestamp_present && (timestamp_field == ii))	fout << timestamp << " ";
-
 		fout << setw(ascii_width[ii]) << setprecision(ascii_precision[ii]);
 		if (data[ii] == nodata_value) fout << nodata_string; //to have a nicer representation
 		else fout << data[ii];
@@ -1084,7 +1088,7 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 	}
 	
 	std::ofstream fout; //for the tmp file
-	const std::string filename_tmp = filename + ".tmp";
+	const std::string filename_tmp( filename + ".tmp" );
 	fout.open(filename_tmp.c_str(), ios::out|ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
@@ -1100,7 +1104,13 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 	fin.close();
 	
 	SMETCommon::copy_file(filename_tmp, filename);
-	remove(filename_tmp.c_str()); //delete temporary file
+
+	errno = 0;
+	if (remove(filename_tmp.c_str())!=0) { //delete temporary file
+		ostringstream ss;
+		ss << "Error deleting file \"" << filename << "\", possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
 }
 
 void SMETReader::copy_file_header(std::ifstream& fin, std::ofstream& fout) const

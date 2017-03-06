@@ -136,15 +136,11 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 	if (invalidate_cache) point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
 }
 
+//should we implement a cache for stationData?
 size_t TimeSeriesManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	vecStation.clear();
-
-	if (processing_level == IOUtils::raw) {
-		iohandler.readStationData(date, vecStation);
-	} else {
-		iohandler.readStationData(date, vecStation); //HACK
-	}
+	iohandler.readStationData(date, vecStation);
 
 	return vecStation.size();
 }
@@ -244,11 +240,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 void TimeSeriesManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
 {
-	if (processing_level == IOUtils::raw) {
-		iohandler.writeMeteoData(vecMeteo, name);
-	} else {
-		iohandler.writeMeteoData(vecMeteo, name);
-	}
+	iohandler.writeMeteoData(vecMeteo, name);
 }
 
 double TimeSeriesManager::getAvgSamplingRate() const

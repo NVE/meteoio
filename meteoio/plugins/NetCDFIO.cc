@@ -740,7 +740,7 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 	}
 
 	if (is_record) {
-		size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, static_cast<double>( date.getUnixDate()/3600 ));
+		const size_t pos_start = ncpp::add_record(ncid, NetCDFIO::cf_time, vid_time, static_cast<double>(date.getUnixDate())/3600. );
 		ncpp::write_data(ncid, attr.var, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
 		ncpp::write_data(ncid, attr.var, vid_var, data);

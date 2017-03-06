@@ -280,13 +280,13 @@ void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2D
 void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 {
 	const size_t pos = i_name.find_last_of(":");//a specific parameter can be provided as {filename}:{parameter}
-	const std::string filename = (pos!=IOUtils::npos)? grid3dpath_in +"/" + i_name.substr(0, pos) : grid3dpath_in +"/" + i_name;
-	if (pos==IOUtils::npos) { //TODO: read by default the first data grid that is found?
+	const std::string filename = (pos!=std::string::npos)? grid3dpath_in +"/" + i_name.substr(0, pos) : grid3dpath_in +"/" + i_name;
+	if (pos==std::string::npos) { //TODO: read by default the first data grid that is found?
 		listFields(i_name);
 		throw InvalidArgumentException("Please provide the parameter that has to be read!", AT);
 	}
 	
-	std::string parameter = (pos!=IOUtils::npos)?  i_name.substr(pos+1) : "";
+	std::string parameter = (pos!=std::string::npos)?  i_name.substr(pos+1) : "";
 	if (parameter=="DEM") { //this is called damage control... this is so ugly...
 		parameter = (is_true_arps)? "zp coordinat" : "zp_coordinat";
 	}
@@ -420,7 +420,6 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 {
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
-		fclose(fin);
 		throw AccessException("Can not open file "+filename, AT);
 	}
 

@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdio>
 #include <algorithm>
+#include <errno.h>
 
 using namespace std;
 
@@ -211,7 +212,7 @@ void CNRMIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 
 	//Parse to StationData objects
 	Coords location(coordin, coordinparam);
-	ostringstream ss;
+	std::ostringstream ss;
 	for (size_t ii=0; ii<dimlen; ii++) {
 		location.setLatLon(lat[ii], lon[ii], alt[ii]);
 
@@ -533,7 +534,14 @@ void CNRMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	int ncid, did_time, vid_time, did_points;
 
 	const bool exists = FileUtils::fileExists(file_and_path);
-	if (exists) remove(file_and_path.c_str()); // NOTE: file is deleted if it exists
+	if (exists) {// NOTE: file is deleted if it exists
+		errno = 0;
+		if ( remove(file_and_path.c_str())!=0 ) {
+			std::ostringstream ss;
+			ss << "Error deleting file \"" << file_and_path << "\", possible reason: " << strerror(errno);
+			throw AccessException(ss.str(), AT);
+		}
+	}
 
 	map<string, double*> map_data; // holds a pointer for every C array to be written
 	map_data[cnrm_latitude] = new double[number_of_stations];

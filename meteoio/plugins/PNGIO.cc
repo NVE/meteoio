@@ -341,7 +341,7 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 	std::vector<unsigned char> pal;
 	size_t nr_colors;
 	gradient.getPalette(pal, nr_colors);
-	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
+	palette = (png_color*)calloc(nr_colors, sizeof (png_color)); //ie: three png_bytes, each being an unsigned char
 	for (size_t ii=0; ii<nr_colors; ii++) {
 		const size_t interlace = ii*3; //colors from Gradient interlaced
 		palette[ii].red = static_cast<png_byte>(pal[interlace]);
@@ -358,7 +358,7 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
-	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
+	png_bytep row = (png_bytep)calloc(full_width, channels*sizeof(png_byte));
 	if (row==NULL) {
 		fclose(fp); fp=NULL;
 		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
@@ -707,13 +707,13 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 {
 	const size_t max_len = 79; //according to the official specs' recommendation
 	const size_t nr = metadata_key.size();
-	png_text *info_text = (png_text *)calloc(sizeof(png_text), nr);
-	char **key = (char**)calloc(sizeof(char)*max_len, nr);
-	char **text = (char**)calloc(sizeof(char)*max_len, nr);
+	png_text *info_text = (png_text *)calloc(nr, sizeof(png_text));
+	char **key = (char**)calloc(nr, sizeof(char)*max_len);
+	char **text = (char**)calloc(nr, sizeof(char)*max_len);
 
 	for (size_t ii=0; ii<nr; ii++) {
-		key[ii] = (char *)calloc(sizeof(char), max_len);
-		text[ii] = (char *)calloc(sizeof(char), max_len);
+		key[ii] = (char *)calloc(max_len, sizeof(char));
+		text[ii] = (char *)calloc(max_len, sizeof(char));
 		strncpy(key[ii], metadata_key[ii].c_str(), max_len-1); //in case the '\0' was not counted by maxlen
 		key[ii][max_len-1] = '\0'; //make sure it is null terminated
 		strncpy(text[ii], metadata_text[ii].c_str(), max_len-1);

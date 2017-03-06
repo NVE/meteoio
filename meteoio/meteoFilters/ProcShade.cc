@@ -128,10 +128,10 @@ double ProcShade::getMaskElevation(const std::vector< std::pair<double,double> >
 		x2 = mask[ii].first;
 		y2 = mask[ii].second;
 	} else {
-		x1 = mask.end()->first - 360.;
-		y1 = mask.end()->second;
-		x2 = mask.begin()->first;
-		y2 = mask.begin()->second;
+		x1 = mask.back().first - 360.;
+		y1 = mask.back().second;
+		x2 = mask.front().first;
+		y2 = mask.front().second;
 	}
 	
 	const double a = (y2 - y1) / (x2 - x1);
@@ -190,6 +190,7 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 		throw;
 	}
 	
+	if (o_mask.empty()) throw InvalidArgumentException("In filter 'SHADE', no valid mask found in file '"+filename+"'", AT);
 	std::sort(o_mask.begin(), o_mask.end(), sort_pred());
 }
 
@@ -203,6 +204,8 @@ void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::
 	}
 	
 	i_dem.getHorizon(position, 10., o_mask); //by 10deg increments
+	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
+
 	if (dump_mask) {
 		std::cout << "Horizon mask for station '" << sd.stationID << "'\n";
 		for (size_t ii=0; ii<o_mask.size(); ii++)

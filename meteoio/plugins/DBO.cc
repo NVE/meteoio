@@ -344,8 +344,8 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 			for (size_t jj=0; jj<array.size(); jj++) {
 				if (! array[jj].is<picojson::null>()) {
 					std::string code, device_code, agg_type;
-					double id;
-					unsigned int interval;
+					double id = -1.;
+					unsigned int interval = 0;
 					Date since, until;
 
 					const picojson::value::object& obj = array[jj].get<picojson::object>();
@@ -361,6 +361,7 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 
 					if (device_code=="BATTERY" || device_code=="LOGGER") break;
 					if (agg_type=="SD") break; //we don't care about standard deviation anyway
+					if (id==-1.) break; //no id was provided
 
 					const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
 					tsMap[param_str].push_back( DBO::tsMeta(since, until, agg_type, id, interval) );
@@ -470,6 +471,8 @@ void DBO::fillStationMeta()
 //read all data for the given station
 void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
+	const Date Start(dateStart.getJulian(true), 0.);
+	const Date End(dateEnd.getJulian(true), 0.);
 	//debug info
 	/*for(size_t ii=0; ii<vecStationName.size(); ii++) {
 		for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[ii].begin(); it != vecTsMeta[ii].end(); ++it) {
@@ -478,31 +481,32 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 		}
 	}*/
 
-	//TODO: for station stationindex, loop over the timeseries that cover [dateStart, dateEnd] for the current station
+	//TODO: for station stationindex, loop over the timeseries that cover [Start, End] for the current station
 	//vecTsMeta[ stationindex ]
 
-	/*for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
+	for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
 		for(size_t jj=0; jj<it->second.size(); jj++)
 			std::cout << it->first << " " << it->second[jj].toString() << "\n";
-	}*/
+	}
 
-	readTimeSerie(15, MeteoData::TA, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(23, MeteoData::RH, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(93, MeteoData::RSWR, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(31, MeteoData::HS, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(46, MeteoData::TSG, dateStart, dateEnd, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(15, MeteoData::TA, Start, End, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(23, MeteoData::RH, Start, End, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(93, MeteoData::RSWR, Start, End, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(31, MeteoData::HS, Start, End, vecMeta[stationindex], vecMeteo);
+	readTimeSerie(46, MeteoData::TSG, Start, End, vecMeta[stationindex], vecMeteo);
 
 	/*for (size_t param=MeteoData::firstparam; param<=MeteoData::lastparam; param++) {
 
 	}*/
 }
 
+//dateStart and dateEnd should already be GMT
 void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo)
 {
 	std::ostringstream ss_ID; ss_ID << ts_id;
 	const std::string base_url( data_endpoint + ss_ID.str() );
-	//const std::string period( "?from=" + dateStart.toString(Date::ISO_TZ) + "&until=" + dateEnd.toString(Date::ISO_TZ) );
-	const std::string period( string("?from=2016-11-17T13:00Z") + "&until=" + "2017-01-05T13:00Z" );
+	const std::string period( "?from=" + dateStart.toString(Date::ISO) + "Z&until=" + dateEnd.toString(Date::ISO)+"Z" );
+	//const std::string period( string("?from=2016-11-17T13:00Z") + "&until=" + "2017-01-05T13:00Z" );
 	const std::string request( base_url + period );
 
 	std::stringstream ss;
@@ -510,7 +514,10 @@ void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& 
 		if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
 		picojson::value v;
 		const std::string err( picojson::parse(v, ss.str()) );
-		if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
+		if (!err.empty()) {
+			std::cerr << ss.str() << "\n";
+			throw IOException("Error while parsing JSON: "+err, AT);
+		}
 
 		parseTimeSerie(ss_ID.str(), param, sd, v, vecMeteo);
 	} else {
