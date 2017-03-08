@@ -25,9 +25,6 @@
 #include <iostream>
 #include <cstring>
 
-#define ARPS_MAX_LINE_LENGTH 6000
-#define ARPS_MAX_STRING_LENGTH 256
-
 namespace mio {
 
 /**
@@ -59,7 +56,7 @@ class ARPSIO : public IOInterface {
 		void listFields(const std::string& filename);
 		void read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter);
 		void initializeGRIDARPS(FILE* &fin, const std::string& filename);
-		void initializeTrueARPS(FILE* &fin, const std::string& filename, const char curr_line[ARPS_MAX_LINE_LENGTH]);
+		void initializeTrueARPS(FILE* &fin, const std::string& filename, const std::string& curr_line);
 		void openGridFile(FILE* &fin, const std::string& filename);
 		void readGridLayer(FILE* &fin, const std::string& filename, const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		static void moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker);

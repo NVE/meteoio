@@ -26,6 +26,13 @@
 #include <algorithm>
 #include <fstream>
 
+//these macros are needed to define a scanf string length by macro
+#define STR(x) # x
+#define XSTR(x) STR(x)
+
+#define ARPS_MAX_LINE_LENGTH 6000
+#define ARPS_MAX_STRING_LENGTH 256
+
 using namespace std;
 
 namespace mio {
@@ -135,7 +142,7 @@ void ARPSIO::listFields(const std::string& i_name)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	int nb_elems = 0;
 	do {
-		nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
 		if (dummy[0]>='A' && dummy[0]<='z') { //white spaces have been skipped above
 			std::string tmp( dummy );
 			IOUtils::trim(tmp);
@@ -164,7 +171,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	openGridFile(fin, filename);
 	read2DGrid_internal(fin, filename, grid_out, static_cast<MeteoGrids::Parameters>(param));
 	if (grid_out.empty()) {
-		ostringstream ss;
+		std::ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(param) << " ";
 		ss << " in file \"" << filename << "\"";
 		throw NoDataException(ss.str(), AT);
@@ -174,9 +181,9 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 
 void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::string date_str = date.toString(Date::ISO);
+	std::string date_str( date.toString(Date::ISO) );
 	std::replace( date_str.begin(), date_str.end(), ':', '.');
-	const std::string filename = grid2dpath_in + "/" + date_str + ext;
+	const std::string filename( grid2dpath_in + "/" + date_str + ext );
 	FILE *fin;
 	openGridFile(fin, filename);
 	read2DGrid_internal(fin, filename, grid_out, parameter);
@@ -372,10 +379,10 @@ void ARPSIO::initializeGRIDARPS(FILE* &fin, const std::string& filename)
 
 }
 
-void ARPSIO::initializeTrueARPS(FILE* &fin, const std::string& filename, const char curr_line[ARPS_MAX_LINE_LENGTH])
+void ARPSIO::initializeTrueARPS(FILE* &fin, const std::string& filename, const std::string& curr_line)
 {
 	//go to read the sizes
-	if (sscanf(curr_line," nx = %u, ny = %u, nz = %u ",&dimx,&dimy,&dimz)!=3) {
+	if (sscanf(curr_line.c_str()," nx = %u, ny = %u, nz = %u ",&dimx,&dimy,&dimz)!=3) {
 		fclose(fin);
 		throw InvalidFormatException("Can not read dimx, dimy, dimz from file "+filename, AT);
 	}
@@ -440,7 +447,7 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 		initializeGRIDARPS(fin, filename);
 	} else {
 		//this is a true ARPS file
-		initializeTrueARPS(fin, filename, dummy);
+		initializeTrueARPS(fin, filename, std::string(dummy));
 	}
 	//set xcoord, ycoord to a default value if not set by the user
 	if (xcoord==IOUtils::nodata) xcoord = -cellsize;
@@ -511,10 +518,10 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 				grid(ix,iy) = tmp;
 			} else {
 				char dummy[ARPS_MAX_LINE_LENGTH];
-				const int status = fscanf(fin,"%s",dummy);
+				const int status = fscanf(fin,"%" XSTR(ARPS_MAX_LINE_LENGTH) "s",dummy);
 				fclose(fin);
-				string msg = "Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"'";
-				if (status>0) msg += ", instead read: '"+string(dummy)+"'";
+				std::string msg( "Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"'" );
+				if (status>0) msg += ", instead read: '"+std::string(dummy)+"'";
 				
 				throw InvalidFormatException(msg, AT);
 			}
@@ -526,7 +533,7 @@ void ARPSIO::moveToMarker(FILE* &fin, const std::string& filename, const std::st
 {
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	do {
-		const int nb_elems = fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
+		const int nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
 		if (nb_elems==0) {
 			fclose(fin);
 			throw InvalidFormatException("Matching failure in file "+filename+" when looking for "+marker, AT);
