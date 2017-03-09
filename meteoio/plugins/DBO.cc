@@ -468,26 +468,65 @@ void DBO::fillStationMeta()
 	}
 }
 
+bool DBO::getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param)
+{
+	if (agg_type=="SD") return false; //we don't care about standard deviation anyway
+
+	if (param_str=="P") {
+		param = MeteoData::P;
+	} else if (param_str=="TA") {
+		param = MeteoData::TA;
+	} else if (param_str=="RH") {
+		param = MeteoData::RH;
+	} else if (param_str=="TSG") {
+		param = MeteoData::TSG;
+	} else if (param_str=="TSS") {
+		param = MeteoData::TSS;
+	} else if (param_str=="HS") {
+		param = MeteoData::HS;
+	} else if (param_str=="VW" && agg_type=="MAX") {
+		param = MeteoData::VW_MAX;
+	} else if (param_str=="VW") {
+		param = MeteoData::VW;
+	}else if (param_str=="DW") {
+		param = MeteoData::DW;
+	} else if (param_str=="RSWR") {
+		param = MeteoData::RSWR;
+	} else if (param_str=="ISWR") {
+		param = MeteoData::ISWR;
+	} else if (param_str=="ILWR") {
+		param = MeteoData::ILWR;
+	} else if (param_str=="RRI") {
+		param = MeteoData::PSUM;
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+
 //read all data for the given station
 void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
-	const Date Start(dateStart.getJulian(true), 0.);
-	const Date End(dateEnd.getJulian(true), 0.);
-	//debug info
-	/*for(size_t ii=0; ii<vecStationName.size(); ii++) {
-		for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[ii].begin(); it != vecTsMeta[ii].end(); ++it) {
-			for(size_t jj=0; jj<it->second.size(); jj++)
-				std::cout << it->first << " " << it->second[jj].toString() << "\n";
+	const std::string Start( dateStart.toString(Date::ISO_Z) );
+	const std::string End( dateEnd.toString(Date::ISO_Z) );
+
+	//for station stationindex, loop over the timeseries that cover [Start, End] for the current station
+	/*std::map<MeteoData::Parameters, DBO::tsMeta*> mapParams;
+	for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
+		for(size_t ii=0; ii<it->second.size(); ii++) {//loop over all timeseries for this parameter
+			MeteoData::Parameters param;
+			if (getParameter(it->first, it->second[ii].agg_type, param)==false) continue; //unrecognized parameter
+
+			if (mapParams.count(param)==0)
+				mapParams[param] = &it->second.front();
+			else
+
+
+			std::cout << " " << it->first << " " << it->second[ii].toString() << "\n";
 		}
 	}*/
-
-	//TODO: for station stationindex, loop over the timeseries that cover [Start, End] for the current station
-	//vecTsMeta[ stationindex ]
-
-	for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
-		for(size_t jj=0; jj<it->second.size(); jj++)
-			std::cout << it->first << " " << it->second[jj].toString() << "\n";
-	}
 
 	readTimeSerie(15, MeteoData::TA, Start, End, vecMeta[stationindex], vecMeteo);
 	readTimeSerie(23, MeteoData::RH, Start, End, vecMeta[stationindex], vecMeteo);
@@ -501,13 +540,11 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 }
 
 //dateStart and dateEnd should already be GMT
-void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData>& vecMeteo)
+void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo)
 {
 	std::ostringstream ss_ID; ss_ID << ts_id;
 	const std::string base_url( data_endpoint + ss_ID.str() );
-	const std::string period( "?from=" + dateStart.toString(Date::ISO) + "Z&until=" + dateEnd.toString(Date::ISO)+"Z" );
-	//const std::string period( string("?from=2016-11-17T13:00Z") + "&until=" + "2017-01-05T13:00Z" );
-	const std::string request( base_url + period );
+	const std::string request( base_url + "?from=" + Start + "&until=" + End );
 
 	std::stringstream ss;
 	if (curl_read(request, ss)) {

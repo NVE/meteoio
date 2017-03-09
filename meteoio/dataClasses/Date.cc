@@ -1117,7 +1117,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 		calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out, second_out);
 	}
 
-	ostringstream tmpstr;
+	std::ostringstream tmpstr;
 	switch(type) {
 		case(ISO_TZ):
 		case(ISO):
@@ -1142,6 +1142,15 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 				tmpstr << setw(2) << setfill('0') << tz_h << ":"
 				<< setw(2) << setfill('0') << tz_min;
 			}
+			break;
+		case(ISO_Z):
+			tmpstr
+			<< setw(4) << setfill('0') << gmt_year << "-"
+			<< setw(2) << setfill('0') << gmt_month << "-"
+			<< setw(2) << setfill('0') << gmt_day << "T"
+			<< setw(2) << setfill('0') << gmt_hour << ":"
+			<< setw(2) << setfill('0') << gmt_minute << ":"
+			<< setw(2) << setfill('0') << gmt_second << "Z";
 			break;
 		case(ISO_DATE):
 			tmpstr
