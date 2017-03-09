@@ -27,6 +27,17 @@ SET_COMPILER_OPTIONS()
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	#set a full rpath for both build & install tree
+	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the automatically determined parts of the RPATH
+	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	# the RPATH to be used when installing, but only if it's not a system directory
+	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+	IF("${isSystemDir}" STREQUAL "-1")
+		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+	ENDIF("${isSystemDir}" STREQUAL "-1")
+
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")
 		SET(STAT_EXT "a")
@@ -34,21 +45,6 @@ IF(UNIX)
 		SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
 		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
 		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
-
-		#set a full rpath for both build & install tree
-		SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-		# add the automatically determined parts of the RPATH
-		# which point to directories outside the build tree to the install RPATH
-		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-		# the RPATH to be used when installing, but only if it's not a system directory
-		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-		IF("${isSystemDir}" STREQUAL "-1")
-			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-		ENDIF("${isSystemDir}" STREQUAL "-1")
 	ELSE(APPLE)
 		SET(DLL_EXT "so*")
 		SET(STAT_EXT "a")
