@@ -318,7 +318,7 @@ void parseTimeSerie(const std::string& tsID, const MeteoData::Parameters& param,
 			}
 
 			//hard case: the TS don't match HACK
-
+			//throw IOException("Hard case not implemented yet...", AT);
 		}
 	}
 }
@@ -332,9 +332,9 @@ unsigned int parseInterval(const std::string& interval_str)
 		throw ConversionFailedException("Could not read aggregation interval '"+interval_str+"'", AT);
 }
 
-std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value& v)
+std::map<size_t, DBO::tsMeta> getTsProperties(picojson::value& v)
 {
-	std::map<std::string, std::vector<DBO::tsMeta> > tsMap;
+	std::map<size_t, DBO::tsMeta> tsMap;
 	std::vector<picojson::value> results;
 	JSONQuery("$.properties.timeseries", v, results);
 
@@ -363,8 +363,8 @@ std::map<std::string, std::vector<DBO::tsMeta> > getTsProperties(picojson::value
 					if (agg_type=="SD") break; //we don't care about standard deviation anyway
 					if (id==-1.) break; //no id was provided
 
-					const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
-					tsMap[param_str].push_back( DBO::tsMeta(since, until, agg_type, id, interval) );
+					const std::string param( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
+					tsMap[ static_cast<size_t>(id) ] = DBO::tsMeta(param, since, until, agg_type, interval);
 				}
 			}
 		}
@@ -458,7 +458,7 @@ void DBO::fillStationMeta()
 			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
 			vecMeta.push_back( sd );
 
-			//select proper time series
+			//parse and store the time series belonging to this station
 			vecTsMeta[ii] = getTsProperties(v);
 		} else {
 			if (dbo_debug)
@@ -513,34 +513,30 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
 
 	//for station stationindex, loop over the timeseries that cover [Start, End] for the current station
-	/*std::map<MeteoData::Parameters, DBO::tsMeta*> mapParams;
-	for (std::map<std::string, std::vector<DBO::tsMeta> >::iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
-		for(size_t ii=0; ii<it->second.size(); ii++) {//loop over all timeseries for this parameter
-			MeteoData::Parameters param;
-			if (getParameter(it->first, it->second[ii].agg_type, param)==false) continue; //unrecognized parameter
+	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams; //for each parameter, a vector of tsID that should be used
+	for (std::map<size_t, DBO::tsMeta>::const_iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
+		//std::cerr << it->first << " " << it->second.toString() << "\n";
+		MeteoData::Parameters param;
+		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
 
-			if (mapParams.count(param)==0)
-				mapParams[param] = &it->second.front();
-			else
+		if (it->second.interval!=1800 && it->second.interval!=0) continue; //HACK for now, to keep things simpler
+		if (!it->second.since.isUndef() && it->second.since>dateEnd) continue; //this TS does not contain our period of interest
+		if (!it->second.until.isUndef() && it->second.until<dateStart) continue; //this TS does not contain our period of interest
 
+		mapParams[param].push_back( it->first );
+	}
 
-			std::cout << " " << it->first << " " << it->second[ii].toString() << "\n";
+	for (std::map<MeteoData::Parameters, std::vector<size_t> >::const_iterator it = mapParams.begin(); it != mapParams.end(); ++it) {
+		const MeteoData::Parameters param = it->first;
+		for(size_t ii=0; ii<it->second.size(); ii++) {
+			//std::cerr << "Reading tsID " << it->second[ii] << " for " << MeteoData::getParameterName(param) << "\n";
+			readTimeSerie(it->second[ii], param, Start, End, vecMeta[stationindex], vecMeteo);
 		}
-	}*/
-
-	readTimeSerie(15, MeteoData::TA, Start, End, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(23, MeteoData::RH, Start, End, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(93, MeteoData::RSWR, Start, End, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(31, MeteoData::HS, Start, End, vecMeta[stationindex], vecMeteo);
-	readTimeSerie(46, MeteoData::TSG, Start, End, vecMeta[stationindex], vecMeteo);
-
-	/*for (size_t param=MeteoData::firstparam; param<=MeteoData::lastparam; param++) {
-
-	}*/
+	}
 }
 
 //dateStart and dateEnd should already be GMT
-void DBO::readTimeSerie(const unsigned int& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo)
+void DBO::readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo)
 {
 	std::ostringstream ss_ID; ss_ID << ts_id;
 	const std::string base_url( data_endpoint + ss_ID.str() );
