@@ -65,11 +65,20 @@ class DBO : public IOInterface {
 			std::string param, agg_type;
 			unsigned int interval;
 		} tsMeta;
+
+		typedef struct ts_Data {
+			ts_Data() : date(), val(IOUtils::nodata) {}
+			ts_Data(const Date& i_date, const double& i_val) : date(i_date), val(i_val){}
+
+			Date date;
+			double val;
+		} tsData;
 	private:
 		void fillStationMeta();
 		static bool getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo);
+		void mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 
 		void initDBOConnection();
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);

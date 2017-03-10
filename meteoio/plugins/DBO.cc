@@ -262,7 +262,7 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 	if (array.size()!=2) return false;
 
 	if (array[0].is<std::string>())
-		IOUtils::convertString(datum, array[0].get<std::string>(), 0.); //HACK: hard-coding GMT
+		IOUtils::convertString(datum, array[0].get<std::string>(), 0.); //hard-coding GMT
 	else
 		return false;
 
@@ -277,59 +277,40 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 	return true;
 }
 
-void parseTimeSerie(const std::string& tsID, const MeteoData::Parameters& param, const StationData& sd, picojson::value& v, std::vector<MeteoData>& vecMeteo)
+const std::vector<DBO::tsData> parseTimeSerie(const std::string& tsID, picojson::value& v)
 {
 	picojson::value ts( goToJSONPath("$.measurements", v) );
 	if (!ts.is<picojson::array>())
 		throw InvalidFormatException("Could not parse timeserie "+tsID, AT);
 	const picojson::array& vecRaw = ts.get<picojson::array>();
 
-	if (vecMeteo.empty()) {
-		vecMeteo.reserve(vecRaw.size());
-		for (size_t ii=0; ii<vecRaw.size(); ii++) {
-			Date datum;
-			double value;
-			if (!parseTsPoint(vecRaw[ii], datum, value)) {
-				printJSON(vecRaw[ii], 1);
-				std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
-				throw InvalidFormatException(ss.str(), AT);
-			}
+	std::vector<DBO::tsData> vecData;
+	if (vecRaw.empty()) return vecData;
 
-			MeteoData md(datum, sd);
-			md(param) = convertUnits(param, value);
-			vecMeteo.push_back( md );
+	vecData.reserve( vecRaw.size() );
+	for (size_t ii=0; ii<vecRaw.size(); ii++) {
+		double value;
+		Date datum;
+		if (!parseTsPoint(vecRaw[ii], datum, value))  {
+			printJSON(vecRaw[ii], 0);
+			std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
+			throw InvalidFormatException(ss.str(), AT);
 		}
-	} else {
-		for (size_t ii=0; ii<vecRaw.size(); ii++) {
-			Date datum;
-			double value;
-			if (!parseTsPoint(vecRaw[ii], datum, value)) {
-				printJSON(vecRaw[ii], 1);
-				std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
-				throw InvalidFormatException(ss.str(), AT);
-			}
-
-			//easy case: all TS have the same indices
-			if (ii<vecMeteo.size()) {
-				if (datum==vecMeteo[ii].date) {
-					vecMeteo[ii](param) = convertUnits(param, value);
-					continue;
-				}
-			}
-
-			//hard case: the TS don't match HACK
-			//throw IOException("Hard case not implemented yet...", AT);
-		}
+		vecData.push_back( DBO::tsData(datum, value) );
 	}
+
+	return vecData;
 }
 
 unsigned int parseInterval(const std::string& interval_str)
 {
 	unsigned int hour, minute, second;
-	if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
+	if (sscanf(interval_str.c_str(), "%uMIN", &minute) == 1) {
+		return (minute*60);
+	} if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
 		return (hour*3600 + minute*60 + second);
 	} else
-		throw ConversionFailedException("Could not read aggregation interval '"+interval_str+"'", AT);
+		throw ConversionFailedException("Could not read measure interval '"+interval_str+"'", AT);
 }
 
 std::map<size_t, DBO::tsMeta> getTsProperties(picojson::value& v)
@@ -356,7 +337,7 @@ std::map<size_t, DBO::tsMeta> getTsProperties(picojson::value& v)
 						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
 						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
 						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
-						if (it->first=="aggregationInterval" && it->second.is<std::string>()) interval = parseInterval(it->second.get<std::string>());
+						if (it->first=="measureInterval" && it->second.is<std::string>()) interval = parseInterval(it->second.get<std::string>());
 					}
 
 					if (device_code=="BATTERY" || device_code=="LOGGER") break;
@@ -472,39 +453,23 @@ bool DBO::getParameter(const std::string& param_str, const std::string& agg_type
 {
 	if (agg_type=="SD") return false; //we don't care about standard deviation anyway
 
-	if (param_str=="P") {
-		param = MeteoData::P;
-	} else if (param_str=="TA") {
-		param = MeteoData::TA;
-	} else if (param_str=="RH") {
-		param = MeteoData::RH;
-	} else if (param_str=="TSG") {
-		param = MeteoData::TSG;
-	} else if (param_str=="TSS") {
-		param = MeteoData::TSS;
-	} else if (param_str=="HS") {
-		param = MeteoData::HS;
-	} else if (param_str=="VW" && agg_type=="MAX") {
-		param = MeteoData::VW_MAX;
-	} else if (param_str=="VW") {
-		param = MeteoData::VW;
-	}else if (param_str=="DW") {
-		param = MeteoData::DW;
-	} else if (param_str=="RSWR") {
-		param = MeteoData::RSWR;
-	} else if (param_str=="ISWR") {
-		param = MeteoData::ISWR;
-	} else if (param_str=="ILWR") {
-		param = MeteoData::ILWR;
-	} else if (param_str=="RRI") {
-		param = MeteoData::PSUM;
-	} else {
-		return false;
-	}
+	if (param_str=="P") param = MeteoData::P;
+	else if (param_str=="TA") param = MeteoData::TA;
+	else if (param_str=="RH") param = MeteoData::RH;
+	else if (param_str=="TSG") param = MeteoData::TSG;
+	else if (param_str=="TSS") param = MeteoData::TSS;
+	else if (param_str=="HS") param = MeteoData::HS;
+	else if (param_str=="VW" && agg_type=="MAX") param = MeteoData::VW_MAX;
+	else if (param_str=="VW") param = MeteoData::VW;
+	else if (param_str=="DW") param = MeteoData::DW;
+	else if (param_str=="RSWR") param = MeteoData::RSWR;
+	else if (param_str=="ISWR") param = MeteoData::ISWR;
+	else if (param_str=="ILWR") param = MeteoData::ILWR;
+	else if (param_str=="RRI") param = MeteoData::PSUM;
+	else return false;
 
 	return true;
 }
-
 
 //read all data for the given station
 void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
@@ -512,20 +477,23 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 	const std::string Start( dateStart.toString(Date::ISO_Z) );
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
 
+	//for each parameter, a vector of tsID that should be used
+	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
+
 	//for station stationindex, loop over the timeseries that cover [Start, End] for the current station
-	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams; //for each parameter, a vector of tsID that should be used
 	for (std::map<size_t, DBO::tsMeta>::const_iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
-		//std::cerr << it->first << " " << it->second.toString() << "\n";
+		std::cerr << it->first << " " << it->second.toString() << "\n";
 		MeteoData::Parameters param;
 		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
 
-		if (it->second.interval!=1800 && it->second.interval!=0) continue; //HACK for now, to keep things simpler
+		if (it->second.interval>1800 && it->second.interval<600) continue; //HACK for now, to keep things simpler
 		if (!it->second.since.isUndef() && it->second.since>dateEnd) continue; //this TS does not contain our period of interest
 		if (!it->second.until.isUndef() && it->second.until<dateStart) continue; //this TS does not contain our period of interest
 
 		mapParams[param].push_back( it->first );
 	}
 
+	//second pass: we try a finer selection when multiple TS cover the same parameter and get the suitable TS
 	for (std::map<MeteoData::Parameters, std::vector<size_t> >::const_iterator it = mapParams.begin(); it != mapParams.end(); ++it) {
 		const MeteoData::Parameters param = it->first;
 		for(size_t ii=0; ii<it->second.size(); ii++) {
@@ -547,16 +515,77 @@ void DBO::readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param,
 		if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
 		picojson::value v;
 		const std::string err( picojson::parse(v, ss.str()) );
-		if (!err.empty()) {
-			std::cerr << ss.str() << "\n";
-			throw IOException("Error while parsing JSON: "+err, AT);
-		}
+		if (!err.empty())
+			throw IOException("Error while parsing JSON: "+ss.str(), AT);
 
-		parseTimeSerie(ss_ID.str(), param, sd, v, vecMeteo);
+		const std::vector<DBO::tsData> vecData = parseTimeSerie(ss_ID.str(), v);
+		mergeTimeSeries(param, vecData, sd, vecMeteo);
 	} else {
 		if (dbo_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";
 		throw IOException("Could not retrieve data for timeseries " + ss_ID.str(), AT);
+	}
+}
+
+void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo)
+{
+	if (vecData.empty()) return;
+
+	if (vecMeteo.empty()) { //easy case: the initial vector is empty
+		vecMeteo.reserve(vecData.size());
+		for (size_t ii=0; ii<vecData.size(); ii++) {
+			MeteoData md(vecData[ii].date, sd);
+			md(param) = convertUnits(param, vecData[ii].val);
+			vecMeteo.push_back( md );
+		}
+	} else {
+		size_t vecM_start = 0; //the index in vecRaw that matches the original start of vecMeteo
+		size_t vecM_end = 0; //the index in vecRaw that matches the original end of vecMeteo
+
+		//filling data before vecMeteo
+		if (vecData.front().date<vecMeteo.front().date) {
+			const Date start_date( vecMeteo.front().date );
+			vecM_start = vecData.size(); //if no overlap is found, take all vecData
+			for(size_t ii=0; ii<vecData.size(); ii++) { //find the range of elements to add
+				if (vecData[ii].date>=start_date) {
+					vecM_start = ii;
+					break;
+				}
+			}
+
+			const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
+			vecMeteo.insert(vecMeteo.begin(), vecM_start, md_pattern);
+			for (size_t ii=0; ii<vecM_start; ii++) {
+				vecMeteo[ii].date = vecData[ii].date;
+				vecMeteo[ii](param) = convertUnits(param, vecData[ii].val);
+			}
+		}
+
+		//general case: merge one timestamp at a time
+		for (size_t ii=0; ii<vecData.size(); ii++) {
+			//easy case: all TS have the same indices
+			if (ii<vecMeteo.size()) {
+				if (vecData[ii].date==vecMeteo[ii].date) {
+					vecMeteo[ii](param) = convertUnits(param, vecData[ii].val);
+					continue;
+				}
+			}
+
+			//hard case: the TS don't match HACK
+			//throw IOException("Hard case not implemented yet...", AT);
+		}
+
+		//filling data after vec1
+		if (vecMeteo.back().date<vecData.back().date) {
+			if (vecM_end!=vecData.size()) {
+				const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
+				for (size_t ii=vecM_end; ii<vecData.size(); ii++) {
+					vecMeteo.push_back( md_pattern );
+					vecMeteo.back().date = vecData[ii].date;
+					vecMeteo.back()(param) = convertUnits(param, vecData[ii].val);
+				}
+			}
+		}
 	}
 }
 
