@@ -541,6 +541,7 @@ void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<
 	} else {
 		size_t vecM_start = 0; //the index in vecRaw that matches the original start of vecMeteo
 		size_t vecM_end = 0; //the index in vecRaw that matches the original end of vecMeteo
+		const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
 
 		//filling data before vecMeteo
 		if (vecData.front().date<vecMeteo.front().date) {
@@ -553,7 +554,6 @@ void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<
 				}
 			}
 
-			const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
 			vecMeteo.insert(vecMeteo.begin(), vecM_start, md_pattern);
 			for (size_t ii=0; ii<vecM_start; ii++) {
 				vecMeteo[ii].date = vecData[ii].date;
@@ -562,23 +562,41 @@ void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<
 		}
 
 		//general case: merge one timestamp at a time
-		for (size_t ii=0; ii<vecData.size(); ii++) {
-			//easy case: all TS have the same indices
-			if (ii<vecMeteo.size()) {
-				if (vecData[ii].date==vecMeteo[ii].date) {
-					vecMeteo[ii](param) = convertUnits(param, vecData[ii].val);
-					continue;
-				}
-			}
+		std::vector<MeteoData> tmp;
+		tmp.reserve( vecMeteo.size() + (vecData.size() - vecM_start)); //"worst case" scenario: all elements will be added
 
-			//hard case: the TS don't match HACK
-			//throw IOException("Hard case not implemented yet...", AT);
+		size_t idx2 = vecM_start; //all previous elements were handled before
+		size_t last_vM = vecM_start; //last element from vecMeteo that will have to be invalidated
+		for(size_t ii=vecM_start; ii<vecMeteo.size(); ii++) {
+			const Date curr_date( vecMeteo[ii].date );
+			while ((idx2<vecData.size()) && (curr_date>vecData[idx2].date)) {
+				tmp.push_back( md_pattern );
+				tmp.back().date = vecData[idx2].date;
+				tmp.back()(param) = convertUnits(param, vecData[idx2].val);
+				idx2++;
+			}
+			if (idx2==vecData.size())  break; //nothing left to merge
+
+			if (curr_date==vecData[idx2].date) {
+				vecMeteo[ii](param) = convertUnits(param, vecData[idx2].val);
+				idx2++;
+			}
+			tmp.push_back( vecMeteo[ii] );
+			last_vM = ii;
 		}
 
-		//filling data after vec1
+		const size_t new_count = last_vM - vecM_start + 1;
+		if (new_count<tmp.size())
+			vecMeteo.insert( vecMeteo.begin() + vecM_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
+
+		for(size_t ii=0; ii<tmp.size(); ii++)
+			vecMeteo[vecM_start+ii] = tmp[ii];
+
+		vecM_end = idx2;
+
+		//filling data after vecMeteo
 		if (vecMeteo.back().date<vecData.back().date) {
 			if (vecM_end!=vecData.size()) {
-				const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
 				for (size_t ii=vecM_end; ii<vecData.size(); ii++) {
 					vecMeteo.push_back( md_pattern );
 					vecMeteo.back().date = vecData[ii].date;
