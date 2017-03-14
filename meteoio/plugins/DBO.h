@@ -81,7 +81,7 @@ class DBO : public IOInterface {
 		void mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 
 		void initDBOConnection();
-		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
+		static size_t data_write(void* buf, const size_t size, const size_t nmemb, void* userp);
 		bool curl_read(const std::string& url, std::ostream& os);
 
 		const Config cfg;

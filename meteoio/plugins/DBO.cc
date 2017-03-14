@@ -229,6 +229,7 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 	for (size_t ii=0; ii<results.size(); ii++) {
 		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
 			const picojson::array& array = results[ii].get<picojson::array>();
+			//results.reserve( results.size()+array.size() ); //most of the time, we will come here with an empty vector
 			for (size_t jj=0; jj<array.size(); jj++) {
 				if (! array[jj].is<picojson::null>() &&  array[jj].is<double>()) vecDouble.push_back( array[jj].get<double>() );
 			}
@@ -284,10 +285,9 @@ const std::vector<DBO::tsData> parseTimeSerie(const std::string& tsID, picojson:
 		throw InvalidFormatException("Could not parse timeserie "+tsID, AT);
 	const picojson::array& vecRaw = ts.get<picojson::array>();
 
-	std::vector<DBO::tsData> vecData;
-	if (vecRaw.empty()) return vecData;
+	if (vecRaw.empty()) return std::vector<DBO::tsData>();
 
-	vecData.reserve( vecRaw.size() );
+	std::vector<DBO::tsData> vecData( vecRaw.size() );
 	for (size_t ii=0; ii<vecRaw.size(); ii++) {
 		double value;
 		Date datum;
@@ -296,7 +296,7 @@ const std::vector<DBO::tsData> parseTimeSerie(const std::string& tsID, picojson:
 			std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
 			throw InvalidFormatException(ss.str(), AT);
 		}
-		vecData.push_back( DBO::tsData(datum, value) );
+		vecData[ii] = DBO::tsData(datum, value);
 	}
 
 	return vecData;
@@ -382,7 +382,8 @@ DBO::DBO(const Config& cfgreader)
 	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
-void DBO::initDBOConnection() {
+void DBO::initDBOConnection()
+{
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
@@ -486,7 +487,7 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 		MeteoData::Parameters param;
 		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
 
-		if (it->second.interval>1800 && it->second.interval<600) continue; //HACK for now, to keep things simpler
+		if (it->second.interval>3600 && it->second.interval<600) continue; //HACK for now, to keep things simpler for IMIS
 		if (!it->second.since.isUndef() && it->second.since>dateEnd) continue; //this TS does not contain our period of interest
 		if (!it->second.until.isUndef() && it->second.until<dateStart) continue; //this TS does not contain our period of interest
 
@@ -515,10 +516,9 @@ void DBO::readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param,
 		if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
 		picojson::value v;
 		const std::string err( picojson::parse(v, ss.str()) );
-		if (!err.empty())
-			throw IOException("Error while parsing JSON: "+ss.str(), AT);
+		if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
 
-		const std::vector<DBO::tsData> vecData = parseTimeSerie(ss_ID.str(), v);
+		const std::vector<DBO::tsData> vecData( parseTimeSerie(ss_ID.str(), v) );
 		mergeTimeSeries(param, vecData, sd, vecMeteo);
 	} else {
 		if (dbo_debug)
@@ -607,7 +607,7 @@ void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<
 	}
 }
 
-size_t DBO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
+size_t DBO::data_write(void* buf, const size_t size, const size_t nmemb, void* userp)
 {
 	if (userp) {
 		ostream& os = *static_cast<ostream*>(userp);
