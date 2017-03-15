@@ -76,8 +76,10 @@ class DBO : public IOInterface {
 	private:
 		void fillStationMeta();
 		static bool getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param);
+		static std::string getExtraParameter(const std::string& param_str);
+		std::map<MeteoData::Parameters, std::vector<size_t> > selectTimeSeries(const std::map<size_t, DBO::tsMeta>& mapTs, const Date& dateStart, const Date& dateEnd) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo);
+		void readTimeSeries(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 		void mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 
 		void initDBOConnection();

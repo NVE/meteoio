@@ -452,12 +452,10 @@ void DBO::fillStationMeta()
 
 bool DBO::getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param)
 {
-	if (agg_type=="SD") return false; //we don't care about standard deviation anyway
-
 	if (param_str=="P") param = MeteoData::P;
 	else if (param_str=="TA") param = MeteoData::TA;
 	else if (param_str=="RH") param = MeteoData::RH;
-	else if (param_str=="TSG") param = MeteoData::TSG;
+	else if (param_str=="TS0") param = MeteoData::TSG;
 	else if (param_str=="TSS") param = MeteoData::TSS;
 	else if (param_str=="HS") param = MeteoData::HS;
 	else if (param_str=="VW" && agg_type=="MAX") param = MeteoData::VW_MAX;
@@ -472,6 +470,57 @@ bool DBO::getParameter(const std::string& param_str, const std::string& agg_type
 	return true;
 }
 
+std::string DBO::getExtraParameter(const std::string& param_str)
+{
+	if (param_str=="TS25") return "TS1";
+	else if (param_str=="TS50")  return "TS2";
+	else if (param_str=="TS100")  return "TS3";
+	else return param_str;
+}
+
+std::map<MeteoData::Parameters, std::vector<size_t> > DBO::selectTimeSeries(const std::map<size_t, DBO::tsMeta>& tsMap, const Date& dateStart, const Date& dateEnd) const
+{
+	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
+
+	//for the current station, loop over the timeseries that cover [Start, End]
+	std::map<size_t, bool> selected;
+	for (std::map<size_t, DBO::tsMeta>::const_iterator it = tsMap.begin(); it != tsMap.end(); ++it) {
+		selected[ it->first ] = false;
+		MeteoData::Parameters param;
+		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
+
+		const Date tsStart(it->second.since), tsEnd(it->second.until);
+		if (!tsStart.isUndef() && tsStart>dateEnd) continue; //this TS does not contain our period of interest
+		if (!tsEnd.isUndef() && tsEnd<dateStart) continue; //this TS does not contain our period of interest
+
+		if (mapParams.count(param)==0) {
+			mapParams[param].push_back( it->first );
+			selected[ it->first ] = true;
+		} else {
+			const bool hasStart = !tsStart.isUndef() && tsStart<=dateStart;
+			const bool hasEnd = !tsEnd.isUndef() && tsEnd>=dateEnd;
+			const unsigned int meas_interval = it->second.interval;
+			if (hasStart && hasEnd && (meas_interval==1800 || meas_interval==3600)) { //it has everything we want from IMIS, so we take it
+				selected[ mapParams[param][0] ] = false;
+				mapParams[param][0] = it->first;
+				selected[ it->first ] = true;
+			}
+		}
+	}
+
+	if (dbo_debug) {
+		for (std::map<size_t, bool>::const_iterator it = selected.begin(); it != selected.end(); ++it) {
+			const size_t tsID = it->first;
+			const std::map<size_t, DBO::tsMeta>::const_iterator tsPpt = tsMap.find( tsID );
+			if (tsPpt==tsMap.end()) continue; //this should not happen
+			if (it->second) std::cout << tsID << " * \t" << tsPpt->second.toString() << "\n";
+			else std::cout << tsID << "   \t" << tsPpt->second.toString() << "\n";
+		}
+	}
+
+	return mapParams;
+}
+
 //read all data for the given station
 void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
@@ -479,33 +528,17 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
 
 	//for each parameter, a vector of tsID that should be used
-	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
+	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams( selectTimeSeries(vecTsMeta[stationindex], dateStart, dateEnd) );
 
-	//for station stationindex, loop over the timeseries that cover [Start, End] for the current station
-	for (std::map<size_t, DBO::tsMeta>::const_iterator it = vecTsMeta[stationindex].begin(); it != vecTsMeta[stationindex].end(); ++it) {
-		std::cerr << it->first << " " << it->second.toString() << "\n";
-		MeteoData::Parameters param;
-		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
-
-		if (it->second.interval>3600 && it->second.interval<600) continue; //HACK for now, to keep things simpler for IMIS
-		if (!it->second.since.isUndef() && it->second.since>dateEnd) continue; //this TS does not contain our period of interest
-		if (!it->second.until.isUndef() && it->second.until<dateStart) continue; //this TS does not contain our period of interest
-
-		mapParams[param].push_back( it->first );
-	}
-
-	//second pass: we try a finer selection when multiple TS cover the same parameter and get the suitable TS
+	//now get the data
 	for (std::map<MeteoData::Parameters, std::vector<size_t> >::const_iterator it = mapParams.begin(); it != mapParams.end(); ++it) {
-		const MeteoData::Parameters param = it->first;
-		for(size_t ii=0; ii<it->second.size(); ii++) {
-			//std::cerr << "Reading tsID " << it->second[ii] << " for " << MeteoData::getParameterName(param) << "\n";
-			readTimeSerie(it->second[ii], param, Start, End, vecMeta[stationindex], vecMeteo);
-		}
+		for(size_t ii=0; ii<it->second.size(); ii++)
+			readTimeSeries(it->second[ii], it->first, Start, End, vecMeta[stationindex], vecMeteo);
 	}
 }
 
 //dateStart and dateEnd should already be GMT
-void DBO::readTimeSerie(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo)
+void DBO::readTimeSeries(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo)
 {
 	std::ostringstream ss_ID; ss_ID << ts_id;
 	const std::string base_url( data_endpoint + ss_ID.str() );
