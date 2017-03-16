@@ -29,8 +29,13 @@ namespace mio {
  * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
  * Please do not forget to provide the arguments of the chosen algorithm itself if necessary!
  *
- * After this initialization, the pixels whose air temperatures are below or at freezing are modified according
- * to the method described in <i>"Quantitative evaluation of different hydrological modelling approaches
+ * After filling the initial grid, this method modifies the solid precipitation distribution according to the local slope and curvature:
+ * all pixels whose slope is greater than 60° will not receive any snow at all. All pixels whose slope is less than 40° will receive full snow
+ * and any pixel between 40° and 60° sees a linear correction between 100% and 0% snow. After this step, a curvature
+ * correction is applied: pixels having the minimu curvature see 50% snow more, pixels having the maximum curvature see
+ * 50% snow less and pixels ate the middle of the curvature range are unaffected.
+ *
+ * For more, see <i>"Quantitative evaluation of different hydrological modelling approaches
  * in a partly glacierized Swiss watershed"</i>, Magnusson et Al., Hydrological Processes, <b>25</b>, 2071-2084, 2011 and
  * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  *

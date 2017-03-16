@@ -548,8 +548,13 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 
 /**
 * @brief Distribute precipitation in a way that reflects snow redistribution on the ground, according to (Huss, 2008)
-* This method modifies the solid precipitation distribution according to the local slope and curvature. See
-* <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
+* This method modifies the solid precipitation distribution according to the local slope and curvature: all pixels whose slope
+* is greater than 60° will not receive any snow at all. All pixels whose slope is less than 40° will receive full snow
+* and any pixel between 40° and 60° sees a linear correction between 100% and 0% snow. After this step, a curvature
+* correction is applied: pixels having the minimu curvature see 50% snow more, pixels having the maximum curvature see
+* 50% snow less and pixels ate the middle of the curvature range are unaffected.
+*
+* For more, see <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
 * and
 * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
 * @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
@@ -574,16 +579,13 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 
 			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
 				val = IOUtils::nodata;
-			} else if (slope>60.) {
-				//No snow precipitation happens for these slopes
+			} else if (slope>60.) { //No snow precipitation happens for these slopes
 				val = 0.;
-			} else if (slope>40.) {
-				//Linear transition from no snow to 100% snow
+			} else if (slope>40.) { //Linear transition from no snow to 100% snow
 				val *= (60.-slope)/20.;
 			} //else: unchanged
 
-			if (val!=IOUtils::nodata && dem_range_curvature!=0.) {
-				//cf Huss
+			if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
 				grid.grid2D(ii) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
 			}
 		}
