@@ -62,23 +62,6 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
-#finally, SET compile flags
-SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
-MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
-
-#Add subdirectory, so they can inherit all variables defined above
-ADD_SUBDIRECTORY(meteoio/dataClasses)
-ADD_SUBDIRECTORY(meteoio/dataGenerators)
-ADD_SUBDIRECTORY(meteoio/plugins)
-ADD_SUBDIRECTORY(meteoio/meteoLaws)
-ADD_SUBDIRECTORY(meteoio/meteoFilters)
-ADD_SUBDIRECTORY(meteoio/meteoResampling)
-ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
-ADD_SUBDIRECTORY(meteoio)
-###########################################################
 #plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
 SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
@@ -103,6 +86,24 @@ SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SASEIO OFF CACHE BOOL "Compilation SASEIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 SET(DATA_QA OFF CACHE BOOL "Data Quality Assurance outputs ON or OFF")
+
+###########################################################
+#finally, SET compile flags
+SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
+MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
+
+#Add subdirectory, so they can inherit all variables defined above
+ADD_SUBDIRECTORY(meteoio/dataClasses)
+ADD_SUBDIRECTORY(meteoio/dataGenerators)
+ADD_SUBDIRECTORY(meteoio/plugins)
+ADD_SUBDIRECTORY(meteoio/meteoLaws)
+ADD_SUBDIRECTORY(meteoio/meteoFilters)
+ADD_SUBDIRECTORY(meteoio/meteoResampling)
+ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
+ADD_SUBDIRECTORY(meteoio)
 
 ###########################################################
 #for the install target
