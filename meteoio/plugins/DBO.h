@@ -48,13 +48,13 @@ class DBO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		typedef struct ts_Meta {
-			ts_Meta() : since(), until(), param(), agg_type(), interval(IOUtils::unodata) {} //required by std::map
-			ts_Meta(const std::string& i_param, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const unsigned int& i_interval)
-			                : since(i_since), until(i_until), param(i_param), agg_type(i_agg_type), interval(i_interval) {}
+			ts_Meta() : since(), until(), param(), agg_type(), ID(0), interval(IOUtils::unodata) {} //required by std::map
+			ts_Meta(const std::string& i_param, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const size_t i_ID, const unsigned int& i_interval)
+			                : since(i_since), until(i_until), param(i_param), agg_type(i_agg_type), ID(i_ID), interval(i_interval) {}
 
 			std::string toString() const {
 				std::ostringstream os;
-				os << param << " [";
+				os << ID << " " << param << " [";
 				os << ((since.isUndef())? "-∞" : since.toString(Date::ISO)) << " - ";
 				os << ((until.isUndef())? "∞" : until.toString(Date::ISO)) << "] ";
 				os << agg_type << " - " << interval << " s";
@@ -63,6 +63,7 @@ class DBO : public IOInterface {
 
 			Date since, until;
 			std::string param, agg_type;
+			size_t ID;
 			unsigned int interval;
 		} tsMeta;
 
@@ -77,7 +78,7 @@ class DBO : public IOInterface {
 		void fillStationMeta();
 		static bool getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param);
 		static std::string getExtraParameter(const std::string& param_str);
-		std::map<MeteoData::Parameters, std::vector<size_t> > selectTimeSeries(const std::map<size_t, DBO::tsMeta>& mapTs, const Date& dateStart, const Date& dateEnd) const;
+		std::map<MeteoData::Parameters, std::vector<size_t> > selectTimeSeries(const std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void readTimeSeries(const size_t& ts_id, const MeteoData::Parameters& param, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo);
 		void mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo);
@@ -89,7 +90,7 @@ class DBO : public IOInterface {
 		const Config cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
-		std::vector< std::map<size_t, DBO::tsMeta> > vecTsMeta; ///< for every station, a map that contains for each timeseries the relevant timeseries properties
+		std::vector< std::vector<DBO::tsMeta> > vecTsMeta; ///< for every station, a map that contains for each timeseries the relevant timeseries properties
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
 		double default_timezone;

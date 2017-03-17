@@ -313,9 +313,9 @@ unsigned int parseInterval(const std::string& interval_str)
 		throw ConversionFailedException("Could not read measure interval '"+interval_str+"'", AT);
 }
 
-std::map<size_t, DBO::tsMeta> getTsProperties(picojson::value& v)
+std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 {
-	std::map<size_t, DBO::tsMeta> tsMap;
+	std::vector<DBO::tsMeta> tsVec;
 	std::vector<picojson::value> results;
 	JSONQuery("$.properties.timeseries", v, results);
 
@@ -345,13 +345,13 @@ std::map<size_t, DBO::tsMeta> getTsProperties(picojson::value& v)
 					if (id==-1.) break; //no id was provided
 
 					const std::string param( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
-					tsMap[ static_cast<size_t>(id) ] = DBO::tsMeta(param, since, until, agg_type, interval);
+					tsVec.push_back( DBO::tsMeta(param, since, until, agg_type, static_cast<size_t>(id), interval) );
 				}
 			}
 		}
 	}
 
-	return tsMap;
+	return tsVec;
 }
 
 /*************************************************************************************************/
@@ -478,43 +478,44 @@ std::string DBO::getExtraParameter(const std::string& param_str)
 	else return param_str;
 }
 
-std::map<MeteoData::Parameters, std::vector<size_t> > DBO::selectTimeSeries(const std::map<size_t, DBO::tsMeta>& tsMap, const Date& dateStart, const Date& dateEnd) const
+//to evaluate the best combination of TS to select: try all possible combinations (there are not so many), rate them and pick the best!
+//example: if a given combination covers the whole period, +10. If it is consistent in terms of rate, +5. If precips have the highest rate, +20...
+
+std::map<MeteoData::Parameters, std::vector<size_t> > DBO::selectTimeSeries(const std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const
 {
 	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
 
 	//for the current station, loop over the timeseries that cover [Start, End]
 	std::map<size_t, bool> selected;
-	for (std::map<size_t, DBO::tsMeta>::const_iterator it = tsMap.begin(); it != tsMap.end(); ++it) {
-		selected[ it->first ] = false;
+	for (size_t ii=0; ii<tsVec.size(); ii++) {
+		selected[ tsVec[ii].ID ] = false;
 		MeteoData::Parameters param;
-		if (getParameter(it->second.param, it->second.agg_type, param)==false) continue; //unrecognized parameter
+		if (getParameter(tsVec[ii].param, tsVec[ii].agg_type, param)==false) continue; //unrecognized parameter
 
-		const Date tsStart(it->second.since), tsEnd(it->second.until);
+		const Date tsStart(tsVec[ii].since), tsEnd(tsVec[ii].until);
 		if (!tsStart.isUndef() && tsStart>dateEnd) continue; //this TS does not contain our period of interest
 		if (!tsEnd.isUndef() && tsEnd<dateStart) continue; //this TS does not contain our period of interest
 
 		if (mapParams.count(param)==0) {
-			mapParams[param].push_back( it->first );
-			selected[ it->first ] = true;
+			mapParams[param].push_back( tsVec[ii].ID );
+			selected[ tsVec[ii].ID ] = true;
 		} else {
 			const bool hasStart = !tsStart.isUndef() && tsStart<=dateStart;
 			const bool hasEnd = !tsEnd.isUndef() && tsEnd>=dateEnd;
-			const unsigned int meas_interval = it->second.interval;
+			const unsigned int meas_interval = tsVec[ii].interval;
 			if (hasStart && hasEnd && (meas_interval==1800 || meas_interval==3600)) { //it has everything we want from IMIS, so we take it
 				selected[ mapParams[param][0] ] = false;
-				mapParams[param][0] = it->first;
-				selected[ it->first ] = true;
+				mapParams[param][0] = tsVec[ii].ID;
+				selected[ tsVec[ii].ID ] = true;
 			}
 		}
 	}
 
 	if (dbo_debug) {
-		for (std::map<size_t, bool>::const_iterator it = selected.begin(); it != selected.end(); ++it) {
-			const size_t tsID = it->first;
-			const std::map<size_t, DBO::tsMeta>::const_iterator tsPpt = tsMap.find( tsID );
-			if (tsPpt==tsMap.end()) continue; //this should not happen
-			if (it->second) std::cout << tsID << " * \t" << tsPpt->second.toString() << "\n";
-			else std::cout << tsID << "   \t" << tsPpt->second.toString() << "\n";
+		for (size_t ii=0; ii<tsVec.size(); ii++) {
+			if (selected[ tsVec[ii].ID ]==true) std::cout << " *\t";
+			else std::cout << "  \t";
+			std::cout << tsVec[ii].toString() << "\n";
 		}
 	}
 
