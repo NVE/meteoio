@@ -126,7 +126,7 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 
 	value[attr_len] = '\0';
-	attr_value = string(value);
+	attr_value = std::string(value);
 
 	delete[] value;
 }
@@ -187,7 +187,7 @@ void get_variables(const int& ncid, const std::vector<std::string>& dimensions, 
 		const int stat = nc_inq_varname(ncid, ii, name);
 		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
 
-		const string varname(name);
+		const std::string varname(name);
 		const bool check = check_dimensions(ncid, varname, ii, dimensions);
 
 		if (check) variables.push_back(varname);
@@ -212,7 +212,7 @@ bool check_dimensions(const int& ncid, const std::string& varname, const int& va
 		const int stat = nc_inq_dimname(ncid, dimids[ii], name);
 		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
 
-		const string dimname(name);
+		const std::string dimname(name);
 		const bool exists = (dimname == names[ii]); //(find(names.begin(), names.end(), dimname) != names.end());
 
 		if (!exists) return false;
@@ -233,16 +233,15 @@ void get_dimension(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
 
 	for (int ii=0; ii<ndimsp; ++ii) {
-		int dimvarid;
-		size_t length=0;
 		char name[NC_MAX_NAME+1];
-
 		status = nc_inq_dimname(ncid, dimids[ii], name);
 		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
 
+		size_t length=0;
 		status = nc_inq_dimlen(ncid, dimids[ii], &length);
 		if (status != NC_NOERR) throw IOException("Could not read dimension length for '" + string(name)  + "':" + nc_strerror(status), AT);
 
+		int dimvarid;
 		status = nc_inq_varid(ncid, name, &dimvarid);
 		if (status != NC_NOERR)
 			throw IOException("Could not retrieve varid for variable '" + string(name) + "': " + nc_strerror(status), AT);
@@ -372,7 +371,6 @@ bool get_dimensionMinMax(const int& ncid, const std::string& varname, double &mi
 {
 	int dimid;
 	size_t dimlen;
-
 	get_dimension(ncid, varname, dimid, dimlen);
 	
 	//check if record already exists

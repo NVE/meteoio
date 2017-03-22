@@ -263,11 +263,13 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 	return true;
 }
 
-const std::vector<DBO::tsData> parseTimeSerie(const std::string& tsID, const double& factor, const double& offset, picojson::value& v)
+const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& factor, const double& offset, picojson::value& v)
 {
 	picojson::value ts( goToJSONPath("$.measurements", v) );
-	if (!ts.is<picojson::array>())
-		throw InvalidFormatException("Could not parse timeserie "+tsID, AT);
+	if (!ts.is<picojson::array>()) {
+		std::ostringstream ss; ss << "Could not parse timeseries " << tsID;
+		throw InvalidFormatException(ss.str(), AT);
+	}
 	const picojson::array& vecRaw = ts.get<picojson::array>();
 
 	if (vecRaw.empty()) return std::vector<DBO::tsData>();
@@ -278,7 +280,7 @@ const std::vector<DBO::tsData> parseTimeSerie(const std::string& tsID, const dou
 		Date datum;
 		if (!parseTsPoint(vecRaw[ii], datum, value))  {
 			printJSON(vecRaw[ii], 0);
-			std::ostringstream ss; ss << "Error parsing element " << ii << " of timeserie " << tsID;
+			std::ostringstream ss; ss << "Error parsing element " << ii << " of timeseries " << tsID;
 			throw InvalidFormatException(ss.str(), AT);
 		}
 
@@ -457,12 +459,41 @@ bool DBO::getParameter(const std::string& param_str, const std::string& agg_type
 	return true;
 }
 
-std::string DBO::getExtraParameter(const std::string& param_str)
+bool DBO::getExtraParameter(const std::string& param_str, std::string& param_extra)
 {
-	if (param_str=="TS25") return "TS1";
-	else if (param_str=="TS50")  return "TS2";
-	else if (param_str=="TS100")  return "TS3";
-	else return param_str;
+	if (param_str=="TS25") param_extra = "TS1";
+	else if (param_str=="TS50")  param_extra = "TS2";
+	else if (param_str=="TS100")  param_extra = "TS3";
+	else return false;
+
+	return true;
+}
+
+void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &factor, double &offset)
+{
+	if (is_std) {
+		const MeteoData::Parameters param = static_cast<MeteoData::Parameters>( ts.param );
+
+		//compute the conversion parameters (C to K, cm to m, % to [0-1], PINT to PSUM
+		switch (param) {
+			case MeteoData::TA: case MeteoData::TSG: case MeteoData::TSS:
+				factor = 1.;
+				offset = Cst::t_water_freezing_pt;
+				return;
+			case MeteoData::RH: case MeteoData::HS:
+				factor = 1./100.;
+				offset = 0.;
+				return;
+			case MeteoData::PSUM:
+				factor = 3600. / ts.interval;
+				offset = 0.;
+				return;
+			default:
+				return;
+		}
+	} else {
+		if (ts.param_extra=="TS1" || ts.param_extra=="TS2" || ts.param_extra=="TS3") offset = Cst::t_water_freezing_pt;
+	}
 }
 
 //to evaluate the best combination of TS to select: try all possible combinations (there are not so many), rate them and pick the best!
@@ -476,7 +507,12 @@ void DBO::selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStar
 	//for the current station, loop over the timeseries that cover [Start, End]
 	for (size_t ii=0; ii<tsVec.size(); ii++) {
 		MeteoData::Parameters param;
-		if (getParameter(tsVec[ii].param_str, tsVec[ii].agg_type, param)==false) continue; //unrecognized parameter
+		if (getParameter(tsVec[ii].param_str, tsVec[ii].agg_type, param)==false) { //unrecognized parameter
+			if (getExtraParameter(tsVec[ii].param_str, tsVec[ii].param_extra)==false) continue;
+			tsVec[ii].selected = true;
+			continue;
+		}
+		tsVec[ii].param = param; //we identified the parameter
 
 		const Date tsStart(tsVec[ii].since), tsEnd(tsVec[ii].until);
 		if (!tsStart.isUndef() && tsStart>dateEnd) continue; //this TS does not contain our period of interest
@@ -484,25 +520,21 @@ void DBO::selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStar
 
 		if (mapParams.count(param)==0) {
 			mapParams[param].push_back( ii );
-			tsVec[ii].param = param;
+			tsVec[ii].selected = true;
 		} else {
 			const bool hasStart = !tsStart.isUndef() && tsStart<=dateStart;
 			const bool hasEnd = !tsEnd.isUndef() && tsEnd>=dateEnd;
 			const unsigned int meas_interval = tsVec[ii].interval;
 			if (hasStart && hasEnd && (meas_interval==1800 || meas_interval==3600)) { //it has everything we want from IMIS, so we take it
-				tsVec[ mapParams[param][0] ].param = IOUtils::unodata;
+				tsVec[ mapParams[param][0] ].selected = false;
 				mapParams[param][0] = ii;
-				tsVec[ii].param = param;
+				tsVec[ii].selected = true;
 			}
 		}
 	}
 
 	if (dbo_debug) {
-		for (size_t ii=0; ii<tsVec.size(); ii++) {
-			if (tsVec[ii].param!=IOUtils::unodata) std::cout << " *\t";
-			else std::cout << "  \t";
-			std::cout << tsVec[ii].toString() << "\n";
-		}
+		for (size_t ii=0; ii<tsVec.size(); ii++) std::cout << tsVec[ii].toString() << "\n";
 	}
 }
 
@@ -517,67 +549,65 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 
 	//now get the data
 	for (size_t ii=0; ii<vecTsMeta[stationindex].size(); ii++) {
-		const size_t param = vecTsMeta[stationindex][ii].param;
-		if (param==IOUtils::unodata) continue; //this timeseries was not selected
+		const DBO::tsMeta &ts = vecTsMeta[stationindex][ii];
+		if ( !ts.selected ) continue; //this timeseries was not selected
 
-		//compute the conversion parameters (C to K, cm to m, % to [0-1], PINT to PSUM
-		double factor = 1., offset = 0.;
-		switch (param) {
-			case MeteoData::TA: case MeteoData::TSG: case MeteoData::TSS:
-				offset = Cst::t_water_freezing_pt;
-				break;
-			case MeteoData::RH: case MeteoData::HS:
-				factor = 1./100.;
-				break;
-			case MeteoData::PSUM:
-				factor = 3600. / vecTsMeta[stationindex][ii].interval;
-				break;
+		const StationData &sd = vecMeta[stationindex];
+		std::ostringstream ss_ID; ss_ID << ts.id;
+		const std::string request( data_endpoint + ss_ID.str() + "?from=" + Start + "&until=" + End );
+
+		std::stringstream ss;
+		if (curl_read(request, ss)) { //retrieve the page from the formed URL
+			if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
+			picojson::value v;
+			const std::string err( picojson::parse(v, ss.str()) );
+			if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
+
+			const bool is_std = (ts.param!=IOUtils::unodata);
+			double factor = 1., offset = 0.;
+			getUnitsConversion(ts, is_std, factor, offset);
+
+			const std::vector<DBO::tsData> vecData( parseTimeSerie(ts.id, factor, offset, v) );
+			if (vecData.empty()) return;
+
+			MeteoData md_pattern = (vecMeteo.empty())? MeteoData(Date(), sd) : vecMeteo.front(); //This assumes that the station is not moving!
+			if (is_std) { //this is a standard parameter
+				mergeTimeSeries(md_pattern, ts.param, vecData, vecMeteo);
+			} else { //this is an extra parameter
+				const size_t param = md_pattern.addParameter( ts.param_extra );
+				for (size_t jj=0; jj<vecMeteo.size(); jj++) vecMeteo[jj].addParameter( ts.param_extra );
+				mergeTimeSeries(md_pattern, param, vecData, vecMeteo);
+			}
+		} else {
+			if (dbo_debug)
+				std::cout << "****\nRequest: " << request << "\n****\n";
+			throw IOException("Could not retrieve data for timeseries " + ss_ID.str(), AT);
 		}
-
-		const size_t ts_id =  vecTsMeta[stationindex][ii].ID;
-		readTimeSeries(ts_id, static_cast<MeteoData::Parameters>(param), factor, offset, Start, End, vecMeta[stationindex], vecMeteo);
 	}
 }
 
-//dateStart and dateEnd should already be GMT
-void DBO::readTimeSeries(const size_t& ts_id, const MeteoData::Parameters& param, const double& factor, const double& offset, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo) const
-{
-	std::ostringstream ss_ID; ss_ID << ts_id;
-	const std::string base_url( data_endpoint + ss_ID.str() );
-	const std::string request( base_url + "?from=" + Start + "&until=" + End );
-
-	std::stringstream ss;
-	if (curl_read(request, ss)) {
-		if (ss.str().empty()) throw UnknownValueException("Timeseries not found: '"+ss_ID.str()+"'", AT);
-		picojson::value v;
-		const std::string err( picojson::parse(v, ss.str()) );
-		if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
-
-		const std::vector<DBO::tsData> vecData( parseTimeSerie(ss_ID.str(), factor, offset, v) );
-
-		mergeTimeSeries(param, vecData, sd, vecMeteo);
-	} else {
-		if (dbo_debug)
-			std::cout << "****\nRequest: " << request << "\n****\n";
-		throw IOException("Could not retrieve data for timeseries " + ss_ID.str(), AT);
-	}
-}
-
-void DBO::mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo) const
+/**
+* @brief Merge a newly read timeseries into vecMeteo
+* @param[in] md_pattern pattern MeteoData to be used to insert new elements
+* @param[in] param index of the current meteo parameter
+* @param[in] vecData the raw (but parsed) data
+* @param vecMeteo the vector that will receive the new values (as well as inserts if necessary)
+*/
+void DBO::mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, const std::vector<DBO::tsData>& vecData, std::vector<MeteoData>& vecMeteo) const
 {
 	if (vecData.empty()) return;
 
 	if (vecMeteo.empty()) { //easy case: the initial vector is empty
 		vecMeteo.reserve(vecData.size());
 		for (size_t ii=0; ii<vecData.size(); ii++) {
-			MeteoData md(vecData[ii].date, sd);
+			MeteoData md( md_pattern );
+			md.date = vecData[ii].date;
 			md(param) = vecData[ii].val;
 			vecMeteo.push_back( md );
 		}
 	} else {
 		size_t vecM_start = 0; //the index in vecRaw that matches the original start of vecMeteo
 		size_t vecM_end = 0; //the index in vecRaw that matches the original end of vecMeteo
-		const MeteoData md_pattern(Date(), sd); //This assumes that the station is not moving!
 
 		//filling data before vecMeteo
 		if (vecData.front().date<vecMeteo.front().date) {

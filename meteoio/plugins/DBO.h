@@ -48,13 +48,13 @@ class DBO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		typedef struct ts_Meta {
-			ts_Meta() : since(), until(), param_str(), agg_type(), ID(0), param(IOUtils::unodata), interval(IOUtils::unodata) {} //required by std::map
-			ts_Meta(const std::string& i_param_str, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const size_t i_ID, const unsigned int& i_interval)
-			                : since(i_since), until(i_until), param_str(i_param_str), agg_type(i_agg_type), ID(i_ID), param(IOUtils::unodata), interval(i_interval) {}
+			ts_Meta() : since(), until(), param_str(), param_extra(), agg_type(), id(0), param(IOUtils::unodata), interval(IOUtils::unodata), selected(false) {} //required by std::map
+			ts_Meta(const std::string& i_param_str, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const size_t i_id, const unsigned int& i_interval)
+			                : since(i_since), until(i_until), param_str(i_param_str), param_extra(), agg_type(i_agg_type), id(i_id), param(IOUtils::unodata), interval(i_interval), selected(false) {}
 
 			std::string toString() const {
 				std::ostringstream os;
-				os << ID << " " << param_str << " [";
+				os << (selected? " * " : "   ") << id << " " << param_str << " [";
 				os << ((since.isUndef())? "-∞" : since.toString(Date::ISO)) << " - ";
 				os << ((until.isUndef())? "∞" : until.toString(Date::ISO)) << "] ";
 				os << agg_type << " - " << interval << " s";
@@ -62,9 +62,10 @@ class DBO : public IOInterface {
 			}
 
 			Date since, until;
-			std::string param_str, agg_type;
-			size_t ID, param;
+			std::string param_str, param_extra, agg_type; ///< param_extra is the string representation of an extra parameter
+			size_t id, param;
 			unsigned int interval;
+			bool selected;
 		} tsMeta;
 
 		typedef struct ts_Data {
@@ -77,11 +78,11 @@ class DBO : public IOInterface {
 	private:
 		void fillStationMeta();
 		static bool getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param);
-		static std::string getExtraParameter(const std::string& param_str);
+		static bool getExtraParameter(const std::string& param_str, std::string& param_extra);
+		static void getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &factor, double &offset);
 		void selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void readTimeSeries(const size_t& ts_id, const MeteoData::Parameters& param, const double& factor, const double& offset, const std::string& Start, const std::string& End, const StationData& sd, std::vector<MeteoData>& vecMeteo) const;
-		void mergeTimeSeries(const MeteoData::Parameters& param, const std::vector<DBO::tsData>& vecData, const StationData& sd, std::vector<MeteoData>& vecMeteo) const;
+		void mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, const std::vector<DBO::tsData>& vecData, std::vector<MeteoData>& vecMeteo) const;
 
 		void initDBOConnection();
 		static size_t data_write(void* buf, const size_t size, const size_t nmemb, void* userp);
