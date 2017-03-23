@@ -40,8 +40,6 @@ namespace mio {
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
  * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730/osper-api
- * - DBO_USER: The username to access the service (optional)
- * - DBO_PASS: The password to authenticate the USER (optional)
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected
@@ -49,9 +47,8 @@ namespace mio {
  * @code
  * METEO	= DBO
  * DBO_URL	= http://developwis.wsl.ch:8730/osper-api
- * DBO_USER	= mylogin
- * DBO_PASS	= mypasswd
- * STATION1	= wind_tunnel_meteo
+ * STATION1	= WFJ2
+ * STATION2	= DAV3
  * @endcode
  *
  * @section dbo_dependencies Picojson
@@ -89,7 +86,7 @@ namespace mio {
  * @endcode
  */
 
-//we keep it as a simple function in order to avoid exposing picojson stuff in the header
+//we keep these below as a simple functions in order to avoid exposing picojson stuff in the header
 void printJSON(const picojson::value& v, const unsigned int& depth)
 {
 	if (v.is<picojson::null>()) {
@@ -403,6 +400,9 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 }
 
+/**
+* @brief Read and cache the stations' metadata
+*/
 void DBO::fillStationMeta()
 {
 	vecMeta.clear();
@@ -439,6 +439,13 @@ void DBO::fillStationMeta()
 	}
 }
 
+/**
+* @brief Identify the relevant MeteoData::Parameters from DBO provided information
+* @param[in] param_str DBO string representation of the meteo parameter
+* @param[in] agg_type DBO aggregation type
+* @param[out] param MeteoData::Parameters standardized parameter
+* @return true if the parameter was properly identified, false otherwise
+*/
 bool DBO::getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param)
 {
 	if (param_str=="P") param = MeteoData::P;
@@ -469,6 +476,14 @@ bool DBO::getExtraParameter(const std::string& param_str, std::string& param_ext
 	return true;
 }
 
+/**
+* @brief Provide the way to convert the DBO units into standardized units (SI).
+* It is assume that we can first multiply by a factor, then add an offset.
+* @param[in] ts DBO timeseries properties
+* @param[in] is_std is it a standard parameter or an extra parameter?
+* @param[out] factor factor to apply
+* @param[out] offset offset to apply
+*/
 void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &factor, double &offset)
 {
 	if (is_std) {
@@ -499,6 +514,14 @@ void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &
 //to evaluate the best combination of TS to select: try all possible combinations (there are not so many), rate them and pick the best!
 //example: if a given combination covers the whole period, +10. If it is consistent in terms of rate, +5. If precips have the highest rate, +20...
 
+/**
+* @brief Select the timeseries that have to be retrive to build the output dataset.
+* Since a parameter might be provided by multiple timeseries (with different start/end, sampling rates, etc),
+* we have to select which ones are relevant for the output dataset.
+* @param[in] tsVec DBO timeseries properties
+* @param[in] dateStart start date of the output dataset
+* @param[out] dateEnd end date of the output dataset
+*/
 void DBO::selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const
 {
 	//for each parameter, a vector of suitable indices within tsVec (for internal use only)
