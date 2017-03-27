@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #include <curl/curl.h>
 #include <meteoio/plugins/picojson.h>
@@ -290,13 +291,22 @@ const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& 
 
 unsigned int parseInterval(const std::string& interval_str)
 {
-	unsigned int hour, minute, second;
-	if (sscanf(interval_str.c_str(), "%uMIN", &minute) == 1) {
-		return (minute*60);
-	} if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
+	unsigned int hour, minute, second, val;
+	 if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
 		return (hour*3600 + minute*60 + second);
+	}
+
+	static const unsigned int len = 16;
+	char rest[len] = "";
+	if (sscanf(interval_str.c_str(), "%u%15s", &val, rest) == 2) {
+		if (strncmp(rest, "MIN", len)==0) return (val*60);
+		if (strncmp(rest, "HOUR", len)==0) return (val*3600);
+		if (strncmp(rest, "DAY", len)==0) return (val*24*3600);
+		if (strncmp(rest, "D_BEOB", len)==0) return (val*24*3600);
+
+		throw ConversionFailedException("Could not read measure interval unit '" + std::string(rest) + "'", AT);
 	} else
-		throw ConversionFailedException("Could not read measure interval '"+interval_str+"'", AT);
+		throw ConversionFailedException("Could not read measure interval '" + interval_str + "'", AT);
 }
 
 std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
@@ -518,11 +528,12 @@ void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &
 * @brief Select the timeseries that have to be retrive to build the output dataset.
 * Since a parameter might be provided by multiple timeseries (with different start/end, sampling rates, etc),
 * we have to select which ones are relevant for the output dataset.
+* @param[in] stat_id Station ID (only needed for debug output)
 * @param[in] tsVec DBO timeseries properties
 * @param[in] dateStart start date of the output dataset
 * @param[out] dateEnd end date of the output dataset
 */
-void DBO::selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const
+void DBO::selectTimeSeries(const std::string& stat_id, std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const
 {
 	//for each parameter, a vector of suitable indices within tsVec (for internal use only)
 	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
@@ -557,7 +568,9 @@ void DBO::selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStar
 	}
 
 	if (dbo_debug) {
+		std::cout << "<Station " << stat_id << ">\n";
 		for (size_t ii=0; ii<tsVec.size(); ii++) std::cout << tsVec[ii].toString() << "\n";
+		std::cout << "</Station " << stat_id << ">\n";
 	}
 }
 
@@ -568,7 +581,7 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
 
 	//tag each timeseries with a valid MeteoData::Parameter if it should be used
-	selectTimeSeries(vecTsMeta[stationindex], dateStart, dateEnd);
+	selectTimeSeries(vecMeta[stationindex].getStationID(), vecTsMeta[stationindex], dateStart, dateEnd);
 
 	//now get the data
 	for (size_t ii=0; ii<vecTsMeta[stationindex].size(); ii++) {

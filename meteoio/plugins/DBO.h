@@ -80,7 +80,7 @@ class DBO : public IOInterface {
 		static bool getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param);
 		static bool getExtraParameter(const std::string& param_str, std::string& param_extra);
 		static void getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &factor, double &offset);
-		void selectTimeSeries(std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const;
+		void selectTimeSeries(const std::string& stat_id, std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const;
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, const std::vector<DBO::tsData>& vecData, std::vector<MeteoData>& vecMeteo) const;
 
