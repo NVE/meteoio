@@ -10,6 +10,7 @@ SET(dataGenerators_sources
 	dataGenerators/ESOLIPGenerator.cc
 	dataGenerators/IswrAlbedoGenerator.cc
 	dataGenerators/PPHASEGenerator.cc
+	dataGenerators/PSUMGenerator.cc
 	dataGenerators/RelHumGenerator.cc
 	dataGenerators/SinGenerator.cc
 	dataGenerators/StdPressGenerator.cc

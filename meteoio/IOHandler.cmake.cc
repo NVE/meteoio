@@ -930,7 +930,7 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 			
 			for (std::set<std::string>::const_iterator it_set=src.begin(); it_set != src.end(); ++it_set) { //loop over the parameters to move
 				const std::string src_param( *it_set );
-				const size_t src_index = vecMeteo[station].front().getParameterIndex( *it_set );
+				const size_t src_index = vecMeteo[station].front().getParameterIndex( src_param );
 				if (src_index == IOUtils::npos) continue; //no such parameter for this station, skipping
 
 				for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {

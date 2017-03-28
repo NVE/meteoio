@@ -82,6 +82,21 @@ awk '
 			}
 		}
 	}
+	/^units_offset/ {
+		offset=$(field+2)
+	}
+	/^units_multiplier/ {
+		multiplier=$(field+2)
+	}
+	/^plot_unit/ {
+		unit=$(field+2)
+	}
+	/^plot_description/ {
+		description=$(field+2)
+	}
+	/^\[DATA\]/ {
+		printf("#offset=%g - multiplier=%g - unit=\"%s\" - description=\"%s\"\n", offset, multiplier, unit, description)
+	}
 	END {
 		if (agg_type=="AVG") {
 			n = asorti(agg, data)

@@ -1,0 +1,46 @@
+/***********************************************************************************/
+/*  Copyright 2017 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#ifndef PSUMGenerator_H
+#define PSUMGenerator_H
+
+#include <meteoio/dataGenerators/GeneratorAlgorithms.h>
+
+namespace mio {
+
+/**
+ * @class PSUMGenerator Split precipitation to amount/phase.
+ * @brief This generator reads rain and snow amounts (as provided by the "RAIN" and "SNOW" parameters) and
+ * build either PSUM (if it is attached to PSUM) or PSUM_PH (for any other parameter it is attached to). Please note that
+ * when either "RAIN" or "SNOW" is nodata, no value is generated.
+ *
+ * @code
+ * PSUM_PH::generators = PSUMGen
+ * PSUM::generators = PSUMGen
+ * @endcode
+ */
+class PSUMGenerator : public GeneratorAlgorithm {
+	public:
+		PSUMGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) {}
+		bool generate(const size_t& param, MeteoData& md);
+		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+};
+
+} //end namespace mio
+
+#endif
