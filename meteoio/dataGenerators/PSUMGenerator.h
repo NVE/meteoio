@@ -23,9 +23,9 @@
 namespace mio {
 
 /**
- * @class PSUMGenerator Split precipitation to amount/phase.
- * @brief This generator reads rain and snow amounts (as provided by the "RAIN" and "SNOW" parameters) and
- * build either PSUM (if it is attached to PSUM) or PSUM_PH (for any other parameter it is attached to). Please note that
+ * @class PSUMGenerator
+ * @brief This generator converts split precipitation (as provided by the "RAIN" and "SNOW" parameters)  into amount/phase. It therefore
+ * builds either PSUM (if it is attached to PSUM) or PSUM_PH (for any other parameter it is attached to). Please note that
  * when either "RAIN" or "SNOW" is nodata, no value is generated.
  *
  * @code
