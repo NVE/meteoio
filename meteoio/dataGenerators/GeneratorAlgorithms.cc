@@ -25,7 +25,7 @@
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
 #include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
 #include <meteoio/dataGenerators/PPHASEGenerator.h>
-#include <meteoio/dataGenerators/PSUMGenerator.h>
+#include <meteoio/dataGenerators/PrecUnsplit.h>
 #include <meteoio/dataGenerators/RelHumGenerator.h>
 #include <meteoio/dataGenerators/SinGenerator.h>
 #include <meteoio/dataGenerators/StdPressGenerator.h>
@@ -92,7 +92,7 @@ namespace mio {
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
  * - PPHASE: generate precipitation phase with a user-selected method (see PPhaseGenerator)
- * - PSUMGen: generate the precipitation amount and/or phase from split precipitation (see PSUMGen)
+ * - PrecUnsplit: generate the precipitation amount and/or phase from split precipitation (see PrecUnsplit)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -153,8 +153,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PPHASE"){
 		return new PPhaseGenerator(vecArgs, i_algoname);
-	} else if (algoname == "PSUMGEN"){
-		return new PSUMGenerator(vecArgs, i_algoname);
+	} else if (algoname == "PRECUNSPLIT"){
+		return new PrecUnsplit(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}

@@ -15,27 +15,27 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef PSUMGenerator_H
-#define PSUMGenerator_H
+#ifndef PrecUnsplit_H
+#define PrecUnsplit_H
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 
 namespace mio {
 
 /**
- * @class PSUMGenerator
+ * @class PrecUnsplit
  * @brief This generator converts split precipitation (as provided by the "RAIN" and "SNOW" parameters)  into amount/phase. It therefore
  * builds either PSUM (if it is attached to PSUM) or PSUM_PH (for any other parameter it is attached to). Please note that
  * when either "RAIN" or "SNOW" is nodata, no value is generated.
  *
  * @code
- * PSUM_PH::generators = PSUMGen
- * PSUM::generators = PSUMGen
+ * PSUM_PH::generators = PrecUnsplit
+ * PSUM::generators = PrecUnsplit
  * @endcode
  */
-class PSUMGenerator : public GeneratorAlgorithm {
+class PrecUnsplit : public GeneratorAlgorithm {
 	public:
-		PSUMGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		PrecUnsplit(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo) {}
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);

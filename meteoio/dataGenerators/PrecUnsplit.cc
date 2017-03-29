@@ -16,11 +16,11 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <meteoio/dataGenerators/PSUMGenerator.h>
+#include <meteoio/dataGenerators/PrecUnsplit.h>
 
 namespace mio {
 
-bool PSUMGenerator::generate(const size_t& param, MeteoData& md)
+bool PrecUnsplit::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -45,7 +45,7 @@ bool PSUMGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool PSUMGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool PrecUnsplit::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
