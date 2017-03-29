@@ -43,7 +43,7 @@ namespace ncpp {
 	//Adding attributes
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
-	void get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name, std::string& attr_value);
+	std::string get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name);
 	void get_VarAttribute(const int& ncid, const std::string& varname, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, double& attr_value);
@@ -70,6 +70,7 @@ namespace ncpp {
 	                const size_t& pos_start, const int * const data);
 
 	//Dealing with variables that have dimension NC_UNLIMITED
+	void get_unlimited_dimname(const int& ncid, std::string& dimname);
 	bool get_dimensionMinMax(const int& ncid, const std::string& varname, double &min, double &max);
 	bool get_recordMinMax(const int& ncid, const std::string& varname, const int& varid, double &min, double &max);
 	size_t find_record(const int& ncid, const std::string& varname, const double& data);

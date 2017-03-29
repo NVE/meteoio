@@ -111,15 +111,6 @@ namespace mio {
  * @section netcdf_meteoch MeteoCH RhiresD & similar products
  * <A HREF="http://www.meteoswiss.admin.ch/home.html?tab=overview">MeteoSwiss</A> provides <A HREF="http://www.ifu.ethz.ch/hydrologie/research/research_data/proddoc.pdf">reanalysis</A> of precipitation and other meteo fields from 1961 to present over Switzerland for different time scales: daily, monthly, yearly, as well as hourly (CPC dataset). The DEM are also provided, either in lat/lon, 
  * Swiss coordinates, rotated lat/lon, ... These data sets must be requested from MeteoSwiss and are available with a specific license for research. 
- *
- * Unfortunatelly, the naming of the parameters and dimensions within the files is not standard nor consistent. In order to handle the parameters names, 
- * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
- * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TS_REFERENCE"), 
- * use first the <A HREF="http://linux.die.net/man/1/ncrename">ncrename</A> tool that is part of the 
- * <A HREF="http://nco.sourceforge.net/">NCO utilities</A> to rename both the dimension (-d) and the variable (-v): 
- * @code
- * ncrename -d TS_REFERENCE,time -v TS_REFERENCE,time {my_netcdf_file}
- * @endcode
  * 
  * @section netcdf_ecmwf ECMWF Era Interim
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A> 
@@ -165,6 +156,16 @@ namespace mio {
  * "type": "fc",
  * })
  * @endcode
+ *
+ * @section netcdf_tricks Saving the day when a file is not standard compliant
+ * Unfortunatelly, the naming of the parameters and dimensions within the files is not always standard nor consistent. In order to handle the parameters names,
+ * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
+ * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TIME_T"),
+ * use first the <A HREF="http://linux.die.net/man/1/ncrename">ncrename</A> tool that is part of the
+ * <A HREF="http://nco.sourceforge.net/">NCO utilities</A> to rename both the dimension (-d) and the variable (-v):
+ * @code
+ * ncrename -d TIME_T,time -v TIME_T,time {my_netcdf_file}
+ * @endcode
  */
  
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
@@ -173,18 +174,18 @@ const std::string NetCDFIO::cf_latitude = "latitude";
 const std::string NetCDFIO::cf_longitude = "longitude";
 
 NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), in_attributes(), out_attributes(), 
-                                                    coordin(), coordinparam(), coordout(), coordoutparam(), 
+                                                    coordin(), coordinparam(), coordout(), coordoutparam(), time_dimension(),
                                                     in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(IOUtils::nodata), in_time_multiplier(IOUtils::nodata), 
-                                                    dem_altimeter(false), in_strict(false), out_strict(false), vecMetaData()
+                                                    dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), in_attributes(), out_attributes(), 
-                                              coordin(), coordinparam(), coordout(), coordoutparam(), 
+                                              coordin(), coordinparam(), coordout(), coordoutparam(), time_dimension(),
                                               in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(IOUtils::nodata), in_time_multiplier(IOUtils::nodata), 
-                                              dem_altimeter(false), in_strict(false), out_strict(false), vecMetaData()
+                                              dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -205,12 +206,6 @@ void NetCDFIO::parseInputOutputSection()
 	const std::string out_schema( IOUtils::strToUpper( cfg.get("NETCDF_SCHEMA", "Output", IOUtils::nothrow) ) );
 	if (!out_schema.empty()) initAttributesMap(out_schema, out_attributes);
 	else initAttributesMap("ECMWF", out_attributes);
-	
-	const std::string in_meteo = cfg.get("GRID2D", "Input", IOUtils::nothrow);
-	if (in_meteo == "NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		const string in_grid2d_path = cfg.get("GRID2DPATH", "Input", IOUtils::nothrow);
-		if (!in_grid2d_path.empty()) scanMeteoPath(in_grid2d_path,  cache_meteo_files);
-	}
 }
 
 void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids::Parameters, attributes> &attr)
@@ -255,6 +250,19 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::ALB] = attributes("fal", "", "Forecast albedo", "(0 - 1)", IOUtils::nodata);
 		attr[MeteoGrids::RSNO] = attributes("rsn", "", "Snow density", "kg m**-3", IOUtils::nodata);
 		attr[MeteoGrids::ROT] = attributes("ro", "", "Runoff", "m", IOUtils::nodata);
+	} else if (schema=="WRF") {
+		attr[MeteoGrids::DEM] = attributes("HGT", "Terrain Height", "Terrain Height", "m", IOUtils::nodata);
+		attr[MeteoGrids::P] = attributes("PSFC", "Surface pressure", "Surface pressure", "Pa", IOUtils::nodata);
+		attr[MeteoGrids::TA] = attributes("T2", "2-meter temperature", "2-meter temperature", "K", 2.);
+		attr[MeteoGrids::QI] = attributes("Q2", "2-meter specific humidity", "2-meter specific humidity", "kg kg-1", 2);
+		attr[MeteoGrids::ISWR] = attributes("ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W m**-2", IOUtils::nodata);
+		attr[MeteoGrids::RSWR] = attributes("ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W m**-2", IOUtils::nodata);
+		attr[MeteoGrids::ILWR] = attributes("ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W m**-2", IOUtils::nodata);
+		attr[MeteoGrids::ROT] = attributes("SFROFF", "Surface runoff ", "Surface runoff ", "kg*m2*s-1", IOUtils::nodata);
+		attr[MeteoGrids::HS] = attributes("SNOWH", "Snow depth", "Snow depth", "Pa", IOUtils::nodata);
+		attr[MeteoGrids::TSS] = attributes("TSK", "Surface skin temperature", "Surface skin temperature", "K", IOUtils::nodata);
+		attr[MeteoGrids::U] = attributes("U10", "10-meter wind speed", "10 metre U wind component", "m s**-1", 10.);
+		attr[MeteoGrids::V] = attributes("V10", "10-meter wind speed", "10 metre V wind component", "m s**-1", 10.);
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
 	
@@ -288,6 +296,12 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
+	if (!meteo_cache_ready) {
+		const std::string in_grid2d_path = cfg.get("GRID2DPATH", "Input", IOUtils::nothrow);
+		if (!in_grid2d_path.empty()) scanMeteoPath(in_grid2d_path,  cache_meteo_files);
+		meteo_cache_ready = true;
+	}
+
 	if (!cache_meteo_files.empty()) {
 		for (size_t ii=0; ii<cache_meteo_files.size(); ii++) {
 			const Date date_start( cache_meteo_files[ii].first.first );
@@ -430,6 +444,7 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 		if (read2DGrid_internal(dem_out, filename, "Band1")) return; //ASTER naming
 		if (read2DGrid_internal(dem_out, filename, "z")) return; //GDAL naming
 		if (read2DGrid_internal(dem_out, filename, "height")) return; //MeteoCH naming
+		if (read2DGrid_internal(dem_out, filename, "HGT")) return; //WRF naming
 		
 		//last chance: read from pressure grids
 		if (dem_altimeter) {
@@ -505,9 +520,10 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		int ncid;
 		ncpp::open_file(filename, NC_NOWRITE, ncid);
+		if (time_dimension.empty()) ncpp::get_unlimited_dimname(ncid, time_dimension);
 		getTimeTransform(ncid, in_time_offset, in_time_multiplier); //always re-read offset and multiplier, it might be different for each file
 		double min, max;
-		const bool status = ncpp::get_dimensionMinMax(ncid, NetCDFIO::cf_time, min, max);
+		const bool status = ncpp::get_dimensionMinMax(ncid, time_dimension, min, max);
 		ncpp::close_file(filename, ncid); //no need to keep file open anymore
 		
 		if (!status) throw IOException("Could not get min/max time for file '"+filename+"'", AT);
@@ -557,14 +573,16 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	std::vector<size_t> dimlen;
 	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
+	if (time_dimension.empty()) ncpp::get_unlimited_dimname(ncid, time_dimension);
+
 	size_t time_index = IOUtils::npos, lat_index = IOUtils::npos, lon_index = IOUtils::npos;
 	for (size_t ii=0; ii<dimname.size(); ii++) {
-		const std::string name( dimname[ii] );
+		const std::string name( IOUtils::strToLower(dimname[ii]) );
 		if (name=="latitude" || name=="lat")
 			lat_index = ii;
 		else if (name=="longitude" || name=="lon")
 			lon_index = ii;
-		else if (name=="time")
+		else if (name==IOUtils::strToLower(time_dimension))
 			time_index = ii;
 		else
 			throw InvalidArgumentException("Unknown dimension \'"+name+"\' found in file \'"+filename+"\'", AT);
@@ -594,10 +612,10 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		if (date_requested) {
 			getTimeTransform(ncid, in_time_offset, in_time_multiplier);
 			const double timestamp = (date.getJulian() - in_time_offset) / in_time_multiplier;
-			const size_t pos = ncpp::find_record(ncid, NetCDFIO::cf_time, timestamp);
+			const size_t pos = ncpp::find_record(ncid, time_dimension, timestamp);
 			if (pos == IOUtils::npos) {
 				double min, max;
-				const bool status = ncpp::get_dimensionMinMax(ncid, NetCDFIO::cf_time, min, max);
+				const bool status = ncpp::get_dimensionMinMax(ncid, time_dimension, min, max);
 				if (status) {
 					Date d_min, d_max;
 					d_min.setDate(min*in_time_multiplier + in_time_offset, in_dflt_TZ);
@@ -752,8 +770,8 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 
 void NetCDFIO::getTimeTransform(const int& ncid, double &time_offset, double &time_multiplier) const
 {
-	std::string time_units;
-	ncpp::get_DimAttribute(ncid, NetCDFIO::cf_time, "units", time_units);
+	if (time_dimension.empty()) throw IOException("time_dimension has not been initialized!", AT);
+	const std::string time_units = ncpp::get_DimAttribute(ncid, time_dimension, "units");
 
 	std::vector<std::string> vecString;
 	const size_t nrWords = IOUtils::readLineToVec(time_units, vecString);

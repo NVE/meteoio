@@ -54,6 +54,21 @@ void get_variable(const int& ncid, const std::string& varname, int& varid)
 		throw IOException("Could not retrieve varid for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
+void get_unlimited_dimname(const int& ncid, std::string& dimname)
+{
+	int unlim_id;
+	const int status = nc_inq_unlimdim(ncid, &unlim_id);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve unlimited dimension: " + std::string(nc_strerror(status)), AT);
+
+	char name[NC_MAX_NAME+1];
+	const int status2 = nc_inq_dimname (ncid, unlim_id, name);
+	if (status2 != NC_NOERR)
+		throw IOException("Could not retrieve the name of the unlimited dimension: " + std::string(nc_strerror(status)), AT);
+
+	dimname = std::string( name );
+}
+
 void get_dimension(const int& ncid, const std::string& dimname, int& dimid)
 {
 	const int status = nc_inq_dimid(ncid, dimname.c_str(), &dimid);
@@ -70,7 +85,7 @@ void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size
 		throw IOException("Could not retrieve length for dimension '" + dimname + "': " + nc_strerror(status), AT);
 }
 
-void get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name, std::string& attr_value)
+std::string get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name)
 {
 	int dimid;
 	get_dimension(ncid, dimname, dimid);
@@ -86,9 +101,9 @@ void get_DimAttribute(const int& ncid, const std::string& dimname, const std::st
 		throw IOException("Could not read attribute '" + attr_name + "' for var '" + dimname + "': " + nc_strerror(status), AT);
 
 	value[attr_len] = '\0';
-	attr_value = string(value);
-
+	const std::string attr_value(value);
 	delete[] value;
+	return attr_value;
 }
 
 void get_VarAttribute(const int& ncid, const std::string& varname, const std::string& attr_name, std::string& attr_value)

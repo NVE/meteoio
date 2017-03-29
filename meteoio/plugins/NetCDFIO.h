@@ -78,15 +78,16 @@ class NetCDFIO : public IOInterface {
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string cf_time, cf_latitude, cf_longitude;
+		static const std::string cf_time, cf_latitude, cf_longitude; ///< these are used to write out CF compliant files
 
 		const Config cfg;
 		std::vector< std::pair<std::pair<Date,Date>, std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::map <MeteoGrids::Parameters, attributes> in_attributes, out_attributes;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string time_dimension;
 		double in_dflt_TZ, out_dflt_TZ; //default time zones
 		double in_time_offset, in_time_multiplier; //each schema defines its own time specification...
-		bool dem_altimeter, in_strict, out_strict;
+		bool dem_altimeter, in_strict, out_strict, meteo_cache_ready;
 		std::vector<StationData> vecMetaData;
 };
 
