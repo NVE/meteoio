@@ -31,8 +31,8 @@ namespace mio {
  *
  * @section virtual_stations_from_interpolation From spatial interpolations
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
- * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points. This behavior is configured
- * by the following keys (in the [Input] section):
+ * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
+ * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
  *    + VIRTUAL_STATIONS set to *true*;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
@@ -42,8 +42,8 @@ namespace mio {
  * 
  * Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
  * 
- * In the example provided below, 4 stations provide the original data that will be spatially interpolated at 2 points (virtual stations) for 7 meteorological
- * parameters. Every 6 hours, with starting offset of on hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
+ * In the example provided below, 4 stations provide the original data that will be spatially interpolated at 2 points (or virtual stations, VIR1 and VIR2) for
+ * 7 meteorological parameters. Every 6 hours, with starting offset of on hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
  * Any data requested at other time steps will be temporally resampled from the spatially interpolated data.
  * @code
  * DEM = ARC
@@ -444,6 +444,9 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 			}
 		}
 	}
+
+	if (v_stations.empty())
+		throw NoDataException("No suitable virtual stations found", AT);
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsMeta(const Date& /*date*/, STATIONS_SET& vecStation)

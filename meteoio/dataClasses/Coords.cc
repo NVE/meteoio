@@ -225,11 +225,11 @@ void Coords::merge(const Coords& coord2) {
 const std::string Coords::toString(const FORMATS& type) const 
 {
 	std::ostringstream os;
+	std::streamsize p = os.precision();
 	if (type==DEBUG) {
 		os << "<Coords>\n";
 		os << "Altitude\t" << altitude << "\n";
 		os << "Lat/Long\t" << CoordsAlgorithms::printLatLon(latitude, longitude) << "\n";
-		std::streamsize p = os.precision();
 		os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
 		os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
@@ -252,7 +252,9 @@ const std::string Coords::toString(const FORMATS& type) const
 		if (validIndex) 
 			os << "grid: (" << getGridI() << "," << getGridJ() << ")";
 	} else if (type==LATLON) {
-		os << CoordsAlgorithms::printLatLon(latitude, longitude);
+		os << std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")";
+		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
+		os.precision(p);
 	} else if (type==CARTESIAN) {
 		os << "[ (" << getEasting() << "," << getNorthing() << ");(" << getGridI() << "," << getGridJ() << ");@" << altitude << " ]";
 	} else
@@ -378,20 +380,21 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
          grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
          coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
-	std::istringstream iss(coord_spec);
-	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
+	char rest[32] = "";
+	double x, y;
+	if (sscanf(coord_spec.c_str(), "%lg %lg%31s", &x, &y, rest) < 2)
+	if (sscanf(coord_spec.c_str(), "(%lg,%lg,%31s)", &x, &y, rest) < 2)
+	if (sscanf(coord_spec.c_str(), "(%lg, %lg, %31s)", &x, &y, rest) < 2) {
+		return;
+	}
+
 	int epsg=IOUtils::inodata;
-
-	iss >> std::skipws >> coord1;
-	iss >> std::skipws >> coord2;
-	iss >> std::skipws >> epsg;
-
-	if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
+	if (sscanf(rest, "%d", &epsg)==1) {
 		setEPSG(epsg);
-		setXY(coord1, coord2, IOUtils::nodata);
+		setXY(x, y, IOUtils::nodata);
 		setProj(in_coordinatesystem, in_parameters);
-	} else if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
-		setLatLon(coord1, coord2, IOUtils::nodata);
+	} else {
+		setLatLon(x, y, IOUtils::nodata);
 	}
 }
 
