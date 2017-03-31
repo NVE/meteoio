@@ -371,7 +371,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
 * @param[in] in_parameters string giving some additional parameters for the projection (empty string if not applicable)
 * @param[in] coord_spec coordinate specification
 *
-* The coordinate specification is given as either: "easting northing epsg" or "lat lon".
+* The coordinate specification is given as either: "easting northing epsg" or "lat lon" or "(lat, lon)"
 */
 Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, const std::string& coord_spec)
        : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
