@@ -94,7 +94,73 @@ size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::stri
 	throw IOException("Can not read necessary header lines in " + filename, AT);
 }
 
-void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
+bool PGMIO::readGridded(std::ifstream& fin, const std::string& full_name, const double& scale_factor, const double& val_min, Grid2DObject& grid_out)
+{
+	std::vector<std::string> tmpvec;
+	std::string line;
+	double tmp_val;
+	const size_t ncols = grid_out.getNx();
+	const size_t nrows = grid_out.getNy();
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+
+	for (size_t kk=nrows-1; (kk < nrows); kk--) {
+		getline(fin, line, eoln); //read complete line
+
+		const size_t nr_read = IOUtils::readLineToVec(line, tmpvec);
+		if (nr_read==1) return false; //most probably it has not been written in gridded form
+
+		if (nr_read != ncols) {
+			ostringstream ss;
+			ss << "Invalid number of columns at line " << nrows-kk << " in file \"" << full_name << "\". ";
+			ss << "Expecting " << ncols << " columns\n";
+			throw InvalidFormatException(ss.str(), AT);
+		}
+
+		for (size_t ll=0; ll < ncols; ll++){
+			if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
+				throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
+			}
+
+			if (tmp_val==plugin_nodata) {
+				grid_out(ll, kk) = IOUtils::nodata; //replace file's nodata by uniform, internal nodata
+			} else {
+				grid_out(ll, kk) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
+			}
+		}
+	}
+
+	return true;
+}
+
+void PGMIO::readColumn(std::ifstream& fin, const std::string& full_name, const double& scale_factor, const double& val_min, Grid2DObject& grid_out)
+{
+	std::vector<std::string> tmpvec;
+	std::string line;
+	double tmp_val;
+	const size_t nr_cells = grid_out.size();
+	const size_t ncols = grid_out.getNx();
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+
+	for (size_t kk=(nr_cells-1); kk-->0; ) {
+		getline(fin, line, eoln); //read complete line
+		const size_t row = kk/ncols;
+		const size_t col = ncols - (kk - row*ncols) - 1;
+
+		if (!IOUtils::convertString(tmp_val, line, std::dec)) {
+			ostringstream ss;
+			ss << "Error reading single column PGM file '" << full_name << "' at line " << row;
+			throw InvalidFormatException(ss.str(), AT);
+		}
+
+		if (tmp_val==plugin_nodata) {
+			grid_out(col, row) = IOUtils::nodata; //replace file's nodata by uniform, internal nodata
+		} else {
+			grid_out(col, row) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
+		}
+	}
+}
+
+void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name) const
 {
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	if (!FileUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
@@ -108,20 +174,24 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		throw AccessException(ss.str(), AT);
 	}
 
-	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-
 	size_t ncols, nrows;
 	unsigned int nr_colors;
 	double xllcorner, yllcorner, cellsize;
-	double tmp_val, val_min, val_max;
+	double val_min, val_max;
 	std::vector<std::string> tmpvec;
-	std::string line;
 	//Go through file, save key value pairs
 	try {
 		//read header: magic value
 		if (getNextHeader(tmpvec, full_name, fin)!=1) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
+		if (tmpvec.size()!=1) {
+			throw IOException("Invalid PGM signature for file " + full_name, AT);
+		}
+		if (tmpvec[0]!="P2") {
+			throw IOException("Invalid PGM signature for file " + full_name, AT);
+		}
+
 		//read header: image width and height
 		if (getNextHeader(tmpvec, full_name, fin)!=2) {
 			throw IOException("Can not read necessary header in " + full_name, AT);
@@ -149,34 +219,14 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		//initialize scale factor
 		const double scale_factor = (val_max-val_min)/(double)(nr_colors-2); //because 256 colors = 0 to 255!! and color0 = nodata
 
-		//Read one line after the other and parse values into Grid2DObject
-		for (size_t kk=nrows-1; (kk < nrows); kk--) {
-			getline(fin, line, eoln); //read complete line
-
-			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				ostringstream ss;
-				ss << "Invalid number of columns at line " << nrows-kk << " in file \"" << full_name << "\". ";
-				ss << "Expecting " << ncols << " columns\n";
-				throw InvalidFormatException(ss.str(), AT);
-			}
-
-			for (size_t ll=0; ll < ncols; ll++){
-				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
-					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
-				}
-
-				if (tmp_val==plugin_nodata) {
-					grid_out(ll, kk) = IOUtils::nodata; //replace file's nodata by uniform, internal nodata
-				} else {
-					grid_out(ll, kk) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
-				}
-			}
-		}
+		if (!readGridded(fin, full_name, scale_factor, val_min, grid_out)) //if the data is not written in gridded form, then it must be as a single column
+			readColumn(fin, full_name, scale_factor, val_min, grid_out);
 	} catch(const std::exception&) {
 		cerr << "[E] error when reading PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
 		fin.close();
 		throw;
 	}
+
 	fin.close();
 }
 

@@ -49,8 +49,10 @@ class PGMIO : public IOInterface {
 
 	private:
 		void getGridPaths();
-		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
-		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename, std::ifstream& fin);
+		static bool readGridded(std::ifstream& fin, const std::string& full_name, const double& scale_factor, const double& val_min, Grid2DObject& grid_out);
+		static void readColumn(std::ifstream& fin, const std::string& full_name, const double& scale_factor, const double& val_min, Grid2DObject& grid_out);
+		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name) const;
+		static size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename, std::ifstream& fin);
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
