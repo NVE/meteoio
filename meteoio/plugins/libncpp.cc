@@ -248,22 +248,63 @@ void get_dimension(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
 
 	for (int ii=0; ii<ndimsp; ++ii) {
-		char name[NC_MAX_NAME+1];
-		status = nc_inq_dimname(ncid, dimids[ii], name);
+		char name_cstr[NC_MAX_NAME+1];
+		status = nc_inq_dimname(ncid, dimids[ii], name_cstr);
 		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+		const std::string name( name_cstr );
 
 		size_t length=0;
 		status = nc_inq_dimlen(ncid, dimids[ii], &length);
-		if (status != NC_NOERR) throw IOException("Could not read dimension length for '" + string(name)  + "':" + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw IOException("Could not read dimension length for '" + name  + "':" + nc_strerror(status), AT);
 
 		int dimvarid;
-		status = nc_inq_varid(ncid, name, &dimvarid);
+		status = nc_inq_varid(ncid, name_cstr, &dimvarid);
 		if (status != NC_NOERR)
-			throw IOException("Could not retrieve varid for variable '" + string(name) + "': " + nc_strerror(status), AT);
+			throw IOException("Could not retrieve varid for variable '" + name + "': " + nc_strerror(status), AT);
 
 		dimid.push_back(dimids[ii]);
 		dim_varid.push_back(dimvarid);
-		dimname.push_back(string(name));
+		dimname.push_back(name);
+		dimlen.push_back(length);
+	}
+}
+
+void get_wrf_dimension(const int& ncid, const std::string& varname, const int& varid,
+                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen)
+{
+	dimid.clear(); dim_varid.clear(); dimname.clear(); dimlen.clear();
+
+	int dimids[NC_MAX_VAR_DIMS], ndimsp;
+	int status = nc_inq_var(ncid, varid, NULL, NULL, &ndimsp, dimids, NULL);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
+
+	for (int ii=0; ii<ndimsp; ++ii) {
+		char name_cstr[NC_MAX_NAME+1];
+		status = nc_inq_dimname(ncid, dimids[ii], name_cstr);
+		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+		const std::string name( name_cstr );
+
+		size_t length=0;
+		status = nc_inq_dimlen(ncid, dimids[ii], &length);
+		if (status != NC_NOERR) throw IOException("Could not read dimension length for '" + name  + "':" + nc_strerror(status), AT);
+
+		int dimvarid;
+		if (name=="Time") {
+			status = nc_inq_varid(ncid, "Times", &dimvarid);
+		} else if (name=="south_north") {
+			status = nc_inq_varid(ncid, "XLAT", &dimvarid);
+		} else if (name=="west_east") {
+			status = nc_inq_varid(ncid, "XLONG", &dimvarid);
+		} else
+			status = nc_inq_varid(ncid, name_cstr, &dimvarid);
+
+		if (status != NC_NOERR)
+			throw IOException("Could not retrieve varid for variable '" + name + "': " + nc_strerror(status), AT);
+
+		dimid.push_back(dimids[ii]);
+		dim_varid.push_back(dimvarid);
+		dimname.push_back(name);
 		dimlen.push_back(length);
 	}
 }
@@ -271,8 +312,8 @@ void get_dimension(const int& ncid, const std::string& varname, const int& varid
 void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
                   const size_t& record, const size_t& nr_of_records, const size_t& length, double*& data)
 {
-	size_t start[] = {record, 0};
-	size_t count[] = {nr_of_records, length};
+	const size_t start[] = {record, 0};
+	const size_t count[] = {nr_of_records, length};
 
 	const int status = nc_get_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR)
@@ -286,7 +327,7 @@ void read_value(const int& ncid, const std::string& varname, const int& varid, d
 
 void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data)
 {
-	size_t index[] = {pos};
+	const size_t index[] = {pos};
 
 	const int status = nc_get_var1_double(ncid, varid, index, &data);
 	if (status != NC_NOERR)
@@ -297,8 +338,8 @@ void read_value(const int& ncid, const std::string& varname, const int& varid, c
 void read_data(const int& ncid, const std::string& varname, const int& varid,
                const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data)
 {
-	size_t start[] = {pos, 0, 0};
-	size_t count[] = {1, latlen, lonlen};
+	const size_t start[] = {pos, 0, 0};
+	const size_t count[] = {1, latlen, lonlen};
 
 	const int status = nc_get_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR)
@@ -310,6 +351,21 @@ void read_data(const int& ncid, const std::string& varname, const int& varid, do
 	const int status = nc_get_var_double(ncid, varid, data);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
+}
+
+void read_wrf_latlon(const int& ncid, const int& latid, const int& lonid, const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon)
+{
+	const size_t start[] = {0, 0, 0};
+
+	const size_t count_lat[] = {1, latlen, 1};
+	int status = nc_get_vara_double(ncid, latid, start, count_lat, lat);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
+
+	const size_t count_lon[] = {1, 1, lonlen};
+	status = nc_get_vara_double(ncid, lonid, start, count_lon, lon);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
 }
 
 void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data)
@@ -382,23 +438,64 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 	return dimlen;
 }
 
+std::vector<Date> get_wrf_Time(const int& ncid, const int& dimid, const size_t& dimlen)
+{
+	static const size_t DateStrLen = 19; //DateStrLen = 19, defined in Dimensions
+
+	char *record_value = (char*)calloc(dimlen, sizeof(char)*DateStrLen);
+	const int status = nc_get_var_text(ncid, dimid, record_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve data for Time variable: " + std::string(nc_strerror(status)), AT);
+
+	std::vector<Date> dates(dimlen);
+	for(size_t ii=0; ii<dimlen; ii++) {
+		std::string tmp(DateStrLen, '\0');
+		for(size_t jj=0; jj<DateStrLen; jj++) {
+			const char c = record_value[ii*DateStrLen+jj];
+			tmp[jj] = (c!='_')? c : 'T';
+		}
+		IOUtils::convertString(dates[ii], tmp, 0.); //assuming GMT
+	}
+	free( record_value );
+	return dates;
+}
+
 bool get_dimensionMinMax(const int& ncid, const std::string& varname, double &min, double &max)
 {
 	int dimid;
 	size_t dimlen;
 	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return false; //data not found
 	
-	//check if record already exists
-	if (dimlen > 0) {
+	double *record_value = new double[dimlen];
+	read_data(ncid, varname, dimid, record_value);
+	min = record_value[0];
+	max =  record_value[dimlen-1];
+
+	delete[] record_value;
+	return true;
+}
+
+bool get_wrf_dimensionMinMax(const int& ncid, const std::string& varname, double &min, double &max)
+{
+	int dimid;
+	size_t dimlen;
+	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return false;
+
+	if (varname=="Time") {
+		const std::vector<Date> dates( get_wrf_Time(ncid, dimid, dimlen) );
+		min = dates.front().getJulian();
+		max = dates.back().getJulian();
+	} else {
 		double *record_value = new double[dimlen];
 		read_data(ncid, varname, dimid, record_value);
 		min = record_value[0];
 		max =  record_value[dimlen-1];
 
 		delete[] record_value;
-	} else 
-		return false; // data not found
-		
+	}
+
 	return true;
 }
 
@@ -408,18 +505,16 @@ bool get_recordMinMax(const int& ncid, const std::string& varname, const int& va
 	size_t dimlen;
 
 	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return false;
 
 	//check if record already exists
-	if (dimlen > 0) {
-		double *record_value = new double[dimlen];
-		read_data(ncid, varname, varid, record_value);
+	double *record_value = new double[dimlen];
+	read_data(ncid, varname, varid, record_value);
 
-		min = record_value[0];
-		max =  record_value[dimlen-1];
+	min = record_value[0];
+	max =  record_value[dimlen-1];
 
-		delete[] record_value;
-	} else 
-		return false; // data not found
+	delete[] record_value;
 
 	return true;
 }
@@ -431,9 +526,37 @@ size_t find_record(const int& ncid, const std::string& varname, const double& da
 	int dimid;
 	size_t dimlen;
 	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return IOUtils::npos; // data not found
 
 	//check if record already exists
-	if (dimlen > 0) {
+	double *record_value = new double[dimlen];
+	read_data(ncid, varname, dimid, record_value);
+
+	for (size_t ii=0; ii<dimlen; ii++) {
+		if (record_value[ii] == data) {
+			delete[] record_value;
+			return ii;
+		}
+	}
+
+	delete[] record_value;
+	return IOUtils::npos; // data not found
+}
+
+size_t find_wrf_record(const int& ncid, const std::string& varname, const double& data)
+{
+	int dimid;
+	size_t dimlen;
+	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return IOUtils::npos; // data not found
+
+	if (varname=="Time") {
+		const std::vector<Date> dates( get_wrf_Time(ncid, dimid, dimlen) );
+
+		for (size_t ii=0; ii<dimlen; ii++) {
+			if (dates[ii].getJulian() == data) return ii;
+		}
+	} else {
 		double *record_value = new double[dimlen];
 		read_data(ncid, varname, dimid, record_value);
 
@@ -454,24 +577,21 @@ size_t find_record(const int& ncid, const std::string& varname, const int& varid
 {
 	int dimid;
 	size_t dimlen;
-
 	get_dimension(ncid, varname, dimid, dimlen);
+	if (dimlen<=0) return IOUtils::npos; // data not found
 
 	//check if record already exists
-	if (dimlen > 0) {
-		double *record_value = new double[dimlen];
-		read_data(ncid, varname, varid, record_value);
+	double *record_value = new double[dimlen];
+	read_data(ncid, varname, varid, record_value);
 
-		for (size_t ii=0; ii<dimlen; ii++) {
-			if (record_value[ii] == data) {
-				delete[] record_value;
-				return ii;
-			}
+	for (size_t ii=0; ii<dimlen; ii++) {
+		if (record_value[ii] == data) {
+			delete[] record_value;
+			return ii;
 		}
-
-		delete[] record_value;
 	}
 
+	delete[] record_value;
 	return IOUtils::npos; // data not found
 }
 
@@ -481,8 +601,8 @@ size_t find_record(const int& ncid, const std::string& varname, const int& varid
 // will be added.
 void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, const size_t& length, const double * const data)
 {
-	size_t start[] = {start_pos};
-	size_t count[] = {length};
+	const size_t start[] = {start_pos};
+	const size_t count[] = {length};
 
 	const int status = nc_put_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR)

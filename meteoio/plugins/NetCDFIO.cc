@@ -175,8 +175,8 @@ const std::string NetCDFIO::cf_longitude = "longitude";
 
 NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), in_attributes(), out_attributes(), 
                                                     coordin(), coordinparam(), coordout(), coordoutparam(), time_dimension(),
-                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(IOUtils::nodata), in_time_multiplier(IOUtils::nodata), 
-                                                    dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), vecMetaData()
+                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(0.), in_time_multiplier(1.),
+                                                    dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), wrf_hacks(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -184,8 +184,8 @@ NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), cache_meteo
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), in_attributes(), out_attributes(), 
                                               coordin(), coordinparam(), coordout(), coordoutparam(), time_dimension(),
-                                              in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(IOUtils::nodata), in_time_multiplier(IOUtils::nodata), 
-                                              dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), vecMetaData()
+                                              in_dflt_TZ(0.), out_dflt_TZ(0.), in_time_offset(0.), in_time_multiplier(1.),
+                                              dem_altimeter(false), in_strict(false), out_strict(false), meteo_cache_ready(false), wrf_hacks(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -263,6 +263,7 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 		attr[MeteoGrids::TSS] = attributes("TSK", "Surface skin temperature", "Surface skin temperature", "K", IOUtils::nodata);
 		attr[MeteoGrids::U] = attributes("U10", "10-meter wind speed", "10 metre U wind component", "m s**-1", 10.);
 		attr[MeteoGrids::V] = attributes("V10", "10-meter wind speed", "10 metre V wind component", "m s**-1", 10.);
+		wrf_hacks = true;
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
 	
@@ -521,9 +522,9 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 		int ncid;
 		ncpp::open_file(filename, NC_NOWRITE, ncid);
 		if (time_dimension.empty()) ncpp::get_unlimited_dimname(ncid, time_dimension);
-		getTimeTransform(ncid, in_time_offset, in_time_multiplier); //always re-read offset and multiplier, it might be different for each file
+		if (!wrf_hacks) getTimeTransform(ncid, in_time_offset, in_time_multiplier); //always re-read offset and multiplier, it might be different for each file
 		double min, max;
-		const bool status = ncpp::get_dimensionMinMax(ncid, time_dimension, min, max);
+		const bool status = (!wrf_hacks)? ncpp::get_dimensionMinMax(ncid, time_dimension, min, max) : ncpp::get_wrf_dimensionMinMax(ncid, time_dimension, min, max);
 		ncpp::close_file(filename, ncid); //no need to keep file open anymore
 		
 		if (!status) throw IOException("Could not get min/max time for file '"+filename+"'", AT);
@@ -571,16 +572,19 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	std::vector<int> dimid, dim_varid;
 	std::vector<string> dimname;
 	std::vector<size_t> dimlen;
-	ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
+	if (!wrf_hacks)
+		ncpp::get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
+	else
+		ncpp::get_wrf_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
 	if (time_dimension.empty()) ncpp::get_unlimited_dimname(ncid, time_dimension);
 
 	size_t time_index = IOUtils::npos, lat_index = IOUtils::npos, lon_index = IOUtils::npos;
 	for (size_t ii=0; ii<dimname.size(); ii++) {
 		const std::string name( IOUtils::strToLower(dimname[ii]) );
-		if (name=="latitude" || name=="lat")
+		if (name=="latitude" || name=="lat" || name=="south_north")
 			lat_index = ii;
-		else if (name=="longitude" || name=="lon")
+		else if (name=="longitude" || name=="lon" || name=="west_east")
 			lon_index = ii;
 		else if (name==IOUtils::strToLower(time_dimension))
 			time_index = ii;
@@ -595,9 +599,12 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	//read latitude and longitude vectors
 	double *lat = new double[dimlen[lat_index]];
 	double *lon = new double[dimlen[lon_index]];
-	ncpp::read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
-	ncpp::read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
-	
+	if (!wrf_hacks) {
+		ncpp::read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
+		ncpp::read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
+	} else
+		ncpp::read_wrf_latlon(ncid, dim_varid[lat_index], dim_varid[lon_index], dimlen[lat_index], dimlen[lon_index], lat, lon);
+
 	//read gridded data
 	const bool date_requested = (date!=Date());
 	const bool date_in_file = (time_index!=IOUtils::npos);
@@ -610,12 +617,12 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 			throw InvalidArgumentException("File \'"+filename+"\' does not contain a time dimension", AT);
 	} else {
 		if (date_requested) {
-			getTimeTransform(ncid, in_time_offset, in_time_multiplier);
+			if (!wrf_hacks) getTimeTransform(ncid, in_time_offset, in_time_multiplier);
 			const double timestamp = (date.getJulian() - in_time_offset) / in_time_multiplier;
-			const size_t pos = ncpp::find_record(ncid, time_dimension, timestamp);
+			const size_t pos = (!wrf_hacks)? ncpp::find_record(ncid, time_dimension, timestamp) : ncpp::find_wrf_record(ncid, time_dimension, timestamp);
 			if (pos == IOUtils::npos) {
 				double min, max;
-				const bool status = ncpp::get_dimensionMinMax(ncid, time_dimension, min, max);
+				const bool status = (!wrf_hacks)? ncpp::get_dimensionMinMax(ncid, time_dimension, min, max) : ncpp::get_wrf_dimensionMinMax(ncid, time_dimension, min, max);
 				if (status) {
 					Date d_min, d_max;
 					d_min.setDate(min*in_time_multiplier + in_time_offset, in_dflt_TZ);
