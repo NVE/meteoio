@@ -110,6 +110,14 @@ namespace mio {
  * 		- VW_DRIFT: bool, a wind velocity to use for blowing and drifting snow is provided; [Input] section
  * 		- RHO_HN: bool, measured new snow density is provided; [Input] section
  *
+ * @code
+ * [Input]
+ * METEO     = SNOWPACK
+ * METEOPATH = input
+ * METAFILE  = IMIS_Extracted_Info.txt ;metadata for all stations
+ * STATION1  = MST96_RR.inp
+ * @endcode
+ *
  * @section snowpack_errors Errors
  * When writing in Snowpack format, potential errors in the data set are written out. The error count is split between the different
  * types of errors:

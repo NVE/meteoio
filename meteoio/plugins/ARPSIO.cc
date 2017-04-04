@@ -63,6 +63,14 @@ namespace mio {
  * - GRID2DPATH: path to the input directory where to find the arps files to be read as grids; [Input] section
  * - GRID3DPATH: path to the input directory where to find the arps 3D files to be read as grids; [Input] section
  * - ARPS_EXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
+ *
+ * @code
+ * [Input]
+ * DEM     = ARPS
+ * DEMFILE = ./wgrt10r2_vw4.asc
+ * ARPS_X  = 653400
+ * ARPS_Y  = 112204
+ * @endcode
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value

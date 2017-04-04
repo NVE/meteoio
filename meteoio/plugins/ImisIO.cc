@@ -64,6 +64,20 @@ namespace mio {
  * It is possible to use both USE_IMIS_PSUM and USE_SNOWPACK_PSUM to create composite PSUM (from SNOWPACK in the snow season and from IMIS otherwise).
  * In such a case, as soon as SNOWPACK SWE > 0, all previous PSUM data will be deleted (ie those potentially coming from IMIS_PSUM).
  * But if there is no SNOWPACK data, the IMIS measurements will be kept.
+ *
+ * @code
+ * [Input]
+ * METEO    = IMIS
+ * USEANETZ = true
+ * USE_IMIS_PSUM = true
+ * DBNAME   = sdbo
+ * DBUSER   = xxx
+ * DBPASS   = xxx
+ *
+ * STATION1 = WFJ2
+ * STATION2 = *SIO
+ * STATION3 = *MVE
+ * @endcode
  */
 
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value

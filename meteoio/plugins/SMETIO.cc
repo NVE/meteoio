@@ -52,13 +52,13 @@ namespace mio {
  * Example:
  * @code
  * [Input]
- * METEO = SMET
+ * METEO     = SMET
  * METEOPATH = ./input
- * STATION1 = uppper_station.smet
- * STATION2 = lower_station.smet
- * STATION3 = outlet_station.smet
+ * STATION1  = uppper_station.smet
+ * STATION2  = lower_station.smet
+ * STATION3  = outlet_station.smet
  * [Output]
- * METEOPATH = ./output
+ * METEOPATH  = ./output
  * METEOPARAM = ASCII GZIP
  * @endcode
  *
@@ -66,10 +66,10 @@ namespace mio {
  * @code
  * SMET 1.1 ASCII
  * [HEADER]
- * station_id	= my_pts
- * epsg	= 21781
- * nodata	= -999
- * fields = easting northing altitude
+ * station_id = my_pts
+ * epsg       = 21781
+ * nodata     = -999
+ * fields     = easting northing altitude
  * [DATA]
  * 832781 187588 2115
  * 635954 80358 2428

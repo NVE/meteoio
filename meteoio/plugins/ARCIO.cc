@@ -57,7 +57,18 @@ namespace mio {
  * - A3D_VIEW: use Alpine3D's grid viewer naming scheme (default=false)? [Input] and [Output] sections.
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
- * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
+ * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension,
+ * example ./input/dagrids/sdp_200812011530.sca)
+ *
+ * @code
+ * [Input]
+ * GRID2D     = ARC
+ * GRID2DPATH = ./input/surface-grids
+ *
+ * #reading ARC dem
+ * DEM     = ARC
+ * DEMFILE = ./input/surface-grids/Switzerland_1000m.asc
+ * @endcode
  */
 
 ARCIO::ARCIO(const std::string& configfile)

@@ -49,6 +49,18 @@ namespace mio {
  * - PGM_CELLSIZE: cellsize in meters; [Input] section
  * - PGM_MIN: minimum value in real world coordinates to match with the minimum value read out of the PGM file (such minimum being greater than 0 because 0 is NODATA)
  * - PGM_MAX: maximum value in real world coordinates to match with the maximum value read out of the PGM file
+ *
+ * Example:
+ * @code
+ * [Input]
+ * DEM          = PGM
+ * DEMFILE      = ./input/surface-grids/synthetic.pgm
+ * PGM_XCOORD   = 479500.
+ * PGM_YCOORD   = 73500.
+ * PGM_CELLSIZE = 1000.
+ * PGM_MIN      = 193.
+ * PGM_MAX      = 4204.
+ * @endcode
  */
 
 const double PGMIO::plugin_nodata = 0.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)

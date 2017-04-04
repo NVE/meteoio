@@ -51,6 +51,13 @@ namespace mio {
  * - METEOPATH: string containing the path to the meteorological files
  * - METEOPREFIX: file name prefix for meteorological files
  * - METEOSEQ:specifiy in which order the columns should be printed out! ONLY relevant for writing out
+ *
+ * @code
+ * [Input]
+ * METEO       = GEOTOP
+ * METEOPATH   = meteo/
+ * METEOPREFIX = _meteo
+ * @endcode
  */
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value

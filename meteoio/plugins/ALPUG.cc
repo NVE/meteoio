@@ -65,6 +65,7 @@ namespace mio {
  * - METAFILE: file within METEOPATH that contains the stations' metadata; [Input] section
  *
  * @code
+ * [Input]
  * METEO        = ALPUG
  * METEOPATH    = ./Met_files
  * METAFILE     = meta.txt

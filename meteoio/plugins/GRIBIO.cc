@@ -92,6 +92,23 @@ namespace mio {
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
  *
+ * @code
+ * [Input]
+ * METEO           = GRIB
+ * METEOPATH       = ./input
+ * METEOEXT        = none
+ * STATION1        = 779932 188182 21781 ;WFJ
+ * STATION2        = 788889 192513 21781 ;Kloster
+ * STATION3        = 793274 183770 21781 ;Weisshorn
+ *
+ * GRID2D          = GRIB
+ * GRID2DPATH      = ./input
+ * GRID2DPREFIX    = lfff
+ * GRID2DEXT       = none
+ *
+ * DEM             = GRIB
+ * DEMFILE         = ./input/laf2012031001
+ * @endcode
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)

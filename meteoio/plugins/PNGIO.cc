@@ -75,7 +75,8 @@ namespace mio {
  *
  * @section pngio_example Example use
  * @code
- * GRID2D = PNG
+ * [ouput]
+ * GRID2D     = PNG
  * png_legend = false
  * png_min_size = 400x400
  * png_max_size = 1366*768

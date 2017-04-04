@@ -58,7 +58,14 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - POIFILE: a path+file name to the a file containing grid coordinates of Points of Interest (for special outputs). Everything after a comment marker will be ignored until the end of the line.
+ * - POIFILE: a path+file name to the a file containing grid coordinates of Points of Interest (for special outputs). Everything
+ * after a comment marker will be ignored until the end of the line.
+ *
+ * @code
+ * [Input]
+ * METEO     = A3D
+ * METEOPATH = ./input/meteo
+ * @endcode
  */
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
