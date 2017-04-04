@@ -328,11 +328,9 @@ void read_value(const int& ncid, const std::string& varname, const int& varid, d
 void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data)
 {
 	const size_t index[] = {pos};
-
 	const int status = nc_get_var1_double(ncid, varid, index, &data);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
-
 }
 
 void read_data(const int& ncid, const std::string& varname, const int& varid,
@@ -378,8 +376,8 @@ void write_data(const int& ncid, const std::string& varname, const int& varid, c
 void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
                 const size_t& pos_start, const double * const data)
 {
-	size_t start[] = {pos_start, 0, 0};
-	size_t count[] = {1, nrows, ncols};
+	const size_t start[] = {pos_start, 0, 0};
+	const size_t count[] = {1, nrows, ncols};
 
 	const int status = nc_put_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR) {
@@ -397,8 +395,8 @@ void write_data(const int& ncid, const std::string& varname, const int& varid, c
 void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
                 const size_t& pos_start, const int * const data)
 {
-	size_t start[] = {pos_start, 0, 0};
-	size_t count[] = {1, nrows, ncols};
+	const size_t start[] = {pos_start, 0, 0};
+	const size_t count[] = {1, nrows, ncols};
 
 	const int status = nc_put_vara_int(ncid, varid, start, count, data);
 	if (status != NC_NOERR) {
@@ -440,7 +438,7 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 
 std::vector<Date> get_wrf_Time(const int& ncid, const int& dimid, const size_t& dimlen)
 {
-	static const size_t DateStrLen = 19; //DateStrLen = 19, defined in Dimensions
+	static const size_t DateStrLen = 19; //HACK DateStrLen = 19, defined in Dimensions
 
 	char *record_value = (char*)calloc(dimlen, sizeof(char)*DateStrLen);
 	const int status = nc_get_var_text(ncid, dimid, record_value);
@@ -611,8 +609,8 @@ void write_record(const int& ncid, const std::string& varname, const int& varid,
 
 void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, const size_t& length, const int * const data)
 {
-	size_t start[] = {start_pos};
-	size_t count[] = {length};
+	const size_t start[] = {start_pos};
+	const size_t count[] = {length};
 
 	const int status = nc_put_vara_int(ncid, varid, start, count, data);
 	if (status != NC_NOERR)

@@ -87,11 +87,8 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 	}
 
 	decimal = fabs(d);
-	if (m!=IOUtils::nodata)
-		decimal += m/60.;
-	
-	if (s!=IOUtils::nodata)
-		decimal += s/3600.;
+	if (m!=IOUtils::nodata) decimal += m/60.;
+	if (s!=IOUtils::nodata) decimal += s/3600.;
 
 	if (d<0.) return (-decimal);
 	else return decimal;
@@ -110,7 +107,7 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 */
 void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double &lat, double &lon)
 {
-	const size_t len=64;
+	static const size_t len=64;
 	char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 	char lon_str[len]="";
 
@@ -155,9 +152,9 @@ std::string CoordsAlgorithms::decimal_to_dms(const double& decimal) {
 * @return lenght of one degree of latitude
 */
 double CoordsAlgorithms::lat_degree_lenght(const double& latitude) {
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad)), 1.5) );
 	return fabs( degree_length );
@@ -171,9 +168,9 @@ double CoordsAlgorithms::lat_degree_lenght(const double& latitude) {
 * @return lenght of one degree of longitude
 */
 double CoordsAlgorithms::lon_degree_lenght(const double& latitude) {
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*cos(latitude*Cst::to_rad)) / ( 180.*sqrt(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad))) );
 	return fabs( degree_length );
@@ -491,11 +488,11 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
-	const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
-	const double k0 = 0.9996;	//scale factor for the projection
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
+	static const double k0 = 0.9996;	//scale factor for the projection
 
 	//getting posistion parameters
 	std::string zone;
@@ -518,13 +515,13 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 	const double p = (Long-long0);
 
 	//calculating first the coefficients of the series, then the Meridional Arc M itself
-	const double n = (a-b)/(a+b);
-	const double n2=n*n, n3=n*n*n, n4=n2*n2, n5=n2*n3, n6=n3*n3;
-	const double A = a           * (1. - n + 5./4.*(n2 - n3) + 81./64.*(n4 - n5));
-	const double B = (3./2.*a)   * (n - n2 + 7./8.*(n3 - n4) + 55./64.*(n5 - n6));
-	const double C = (15./16.*a) * (n2 - n3 + 3./4.*(n4 - n5));
-	const double D = (35./48.*a) * (n3 - n4 + 11./16.*(n5 - n6));
-	const double E = (315./512.*a) * (n4 - n5); //correction of ~0.03mm
+	static const double n = (a-b)/(a+b);
+	static const double n2=n*n, n3=n*n*n, n4=n2*n2, n5=n2*n3, n6=n3*n3;
+	static const double A = a           * (1. - n + 5./4.*(n2 - n3) + 81./64.*(n4 - n5));
+	static const double B = (3./2.*a)   * (n - n2 + 7./8.*(n3 - n4) + 55./64.*(n5 - n6));
+	static const double C = (15./16.*a) * (n2 - n3 + 3./4.*(n4 - n5));
+	static const double D = (35./48.*a) * (n3 - n4 + 11./16.*(n5 - n6));
+	static const double E = (315./512.*a) * (n4 - n5); //correction of ~0.03mm
 	const double M = A*Lat - B*sin(2.*Lat) + C*sin(4.*Lat) - D*sin(6.*Lat) + E*sin(8.*Lat);
 
 	//calculating the coefficients for the series
@@ -556,11 +553,11 @@ void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
-	const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
-	const double k0 = 0.9996;		//scale factor for the projection
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
+	static const double k0 = 0.9996;		//scale factor for the projection
 
 	//UTM Zone information
 	short int zoneNumber;
@@ -578,11 +575,11 @@ void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::
 	//calculating footprint latitude fp (it should be done using a few iterations)
 	const double arc = north_in/k0; //Meridional arc
 	const double mu = arc / (a*(1.-e2/4.-3.*e2*e2/64.-5.*e2*e2*e2/256.));
-	const double e1 = (1.-b/a) / (1.+b/a); //simplification of [1 - (1 - e2)1/2]/[1 + (1 - e2)1/2]
-	const double J1 = (3./2.*e1 - 27./32.*e1*e1*e1);
-	const double J2 = (21./16.*e1*e1 - 55./32.*e1*e1*e1*e1);
-	const double J3 = (151./96.*e1*e1*e1);
-	const double J4 = (1097./512.*e1*e1*e1*e1);
+	static const double e1 = (1.-b/a) / (1.+b/a); //simplification of [1 - (1 - e2)1/2]/[1 + (1 - e2)1/2]
+	static const double J1 = (3./2.*e1 - 27./32.*e1*e1*e1);
+	static const double J2 = (21./16.*e1*e1 - 55./32.*e1*e1*e1*e1);
+	static const double J3 = (151./96.*e1*e1*e1);
+	static const double J4 = (1097./512.*e1*e1*e1*e1);
 	const double fp = mu + J1*sin(2.*mu) + J2*sin(4.*mu) + J3*sin(6.*mu) + J4*sin(8.*mu);
 
 	//calculating the parameters
@@ -621,15 +618,15 @@ void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::
 */
 void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
-	const double k0 = 0.994;		//scale factor for the projection
-	const double FN = 2000000.;		//false northing
-	const double FE = 2000000.;		//false easting
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double k0 = 0.994;		//scale factor for the projection
+	static const double FN = 2000000.;		//false northing
+	static const double FE = 2000000.;		//false easting
 
-	const double e = sqrt(e2);
-	const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
+	static const double e = sqrt(e2);
+	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
 	const double tan_Zz = pow( (1.+e*sin(lat_in*Cst::to_rad))/(1.-e*sin(lat_in*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_in*Cst::to_rad/2.);
 	const double R = k0*C0*tan_Zz;
 
@@ -655,12 +652,12 @@ void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in,
 */
 void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
-	const double k0 = 0.994;		//scale factor for the projection
-	const double FN = 2000000.;		//false northing
-	const double FE = 2000000.;		//false easting
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	static const double k0 = 0.994;		//scale factor for the projection
+	static const double FN = 2000000.;		//false northing
+	static const double FE = 2000000.;		//false easting
 
 	const double Delta_N = north_in - FN;
 	const double Delta_E = east_in - FE;
@@ -692,15 +689,15 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 	} else {
 		R = (Delta_N>Delta_E)? fabs( Delta_N / cos(long_out*Cst::to_rad)) : fabs( Delta_E / sin(long_out*Cst::to_rad) );
 	}
-	const double e = sqrt(e2), e4=e2*e2;
-	const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
+	static const double e = sqrt(e2), e4=e2*e2;
+	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
 	const double tan_Zz = R / (k0*C0); //isometric colatitude
 	const double chi = Cst::PI/2. - atan( tan_Zz )*2.;
 
-	const double A = e2/2. + 5.*e4/24. + e4*e2/12. + 13.*e4*e4/360.;
-	const double B = 7.*e4/48. + 29.*e4*e2/240. + 811.*e4*e4/11520.;
-	const double C = 7.*e4*e2/120. + 81.*e4*e4/1120.;
-	const double D = 4279.*e4*e4/161280.;
+	static const double A = e2/2. + 5.*e4/24. + e4*e2/12. + 13.*e4*e4/360.;
+	static const double B = 7.*e4/48. + 29.*e4*e2/240. + 811.*e4*e4/11520.;
+	static const double C = 7.*e4*e2/120. + 81.*e4*e4/1120.;
+	static const double D = 4279.*e4*e4/161280.;
 	lat_out = chi + A*sin(2.*chi) + B*sin(4.*chi) + C*sin(6.*chi) + D*sin(8.*chi);
 	lat_out *= Cst::to_deg;
 
@@ -896,11 +893,11 @@ double CoordsAlgorithms::cosineDistance(const double& lat1, const double& lon1, 
 */
 double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
-	const double thresh = 1.e-12;	//convergence absolute threshold
-	const int n_max = 100;		//maximum number of iterations
-	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
-	const double f = (a - b) / a;	//ellispoid flattening
+	static const double thresh = 1.e-12;	//convergence absolute threshold
+	static const int n_max = 100;		//maximum number of iterations
+	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	static const double f = (a - b) / a;	//ellispoid flattening
 
 	const double L = (lon1 - lon2)*Cst::to_rad;
 	const double U1 = atan( (1.-f)*tan(lat1*Cst::to_rad) );
@@ -968,10 +965,10 @@ double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1
 */
 void CoordsAlgorithms::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
 {//well, actually this is the DIRECT Vincenty formula
-	const double thresh = 1.e-12;	//convergence absolute threshold
-	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
-	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
-	const double f = (a - b) / a;	//ellispoid flattening
+	static const double thresh = 1.e-12;	//convergence absolute threshold
+	static const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
+	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
+	static const double f = (a - b) / a;	//ellispoid flattening
 
 	const double alpha1 = bearing*Cst::to_rad;
 	const double tanU1 = (1.-f)*tan(lat_ref*Cst::to_rad);
