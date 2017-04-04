@@ -154,11 +154,11 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
                             double& R_direct, double& R_diffuse) const
 {
 	//these pow cost us a lot here, but replacing them by fastPow() has a large impact on accuracy (because of the exp())
-	const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
-	const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
-	const double fc = 0.84;    //fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
-	const double alpha = 1.3;  //wavelength exponent (Iqbal(1983) p.118). Good average value: 1.3+/-0.5. Related to the size distribution of the particules
-	const double beta = 0.03;  //amount of particules index (Iqbal(1983) p.118). Between 0 & .5 and above.
+	static const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
+	static const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
+	static const double fc = 0.84;    //fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
+	static const double alpha = 1.3;  //wavelength exponent (Iqbal(1983) p.118). Good average value: 1.3+/-0.5. Related to the size distribution of the particules
+	static const double beta = 0.03;  //amount of particules index (Iqbal(1983) p.118). Between 0 & .5 and above.
 	const double zenith = 90. - sun_elevation; //this is the TRUE zenith because the elevation is the TRUE elevation
 	const double cos_zenith = cos(zenith*Cst::to_rad); //this uses true zenith angle
 
@@ -208,11 +208,11 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
 	// using Angstroem's turbidity formula Angstroem (1929, 1930) for the aerosol thickness
 	// in Iqbal (1983), pp.117-119
 	// aerosol optical depth at wavelengths 0.38 and 0.5 micrometer
-	const double ka1 = beta * pow(0.38, -alpha);
-	const double ka2 = beta * pow(0.5, -alpha);
+	static const double ka1 = beta * pow(0.38, -alpha);
+	static const double ka2 = beta * pow(0.5, -alpha);
 
 	// broadband aerosol optical depth:
-	const double ka  = 0.2758 * ka1 + 0.35 * ka2;
+	static const double ka  = 0.2758 * ka1 + 0.35 * ka2;
 
 	// total aerosol transmittance function for the two wavelengths 0.38 and 0.5 micrometer:
 	const double taua = exp( -pow(ka, 0.873) * (1. + ka - pow(ka, 0.7088)) * pow(ma, 0.9108) );
@@ -319,7 +319,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	} else {
 		// clear sky index (ratio global measured to top of atmosphere radiation)
 		const double Mt = iswr_measured / iswr_modeled; // should be <=1.2, aka clearness index Kt
-		const double clear_sky = 0.147;
+		static const double clear_sky = 0.147;
 
 		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
 		// splitting according to a combination of Reindl et al.(1990)'s models (Mt-model and Mt&Psolar->elev-model):
@@ -359,7 +359,7 @@ double SunObject::getSplittingBoland(const double& iswr_modeled, const double& i
 	if (iswr_measured==IOUtils::nodata)
 		throw NoDataException("measured ISWR can not be nodata", AT);
 	
-	const double clear_sky = 0.147;
+	static const double clear_sky = 0.147;
 	double splitting_coef;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
@@ -372,10 +372,10 @@ double SunObject::getSplittingBoland(const double& iswr_modeled, const double& i
 	} else {
 		// clear sky index (ratio global measured to top of atmosphere radiation)
 		const double kt = iswr_measured / iswr_modeled; // should be <=1.2, aka clearness index Kt
-		const double beta_0 = -8.769;
-		const double beta_1 = 7.325;
-		const double beta_2 = 0.377;
-		const double c = -0.039;
+		static const double beta_0 = -8.769;
+		static const double beta_1 = 7.325;
+		static const double beta_2 = 0.377;
+		static const double c = -0.039;
 		
 		splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) ); //complex fit
 		//splitting_coef = 1. / (1 + exp(7.997*(kt-0.586))); //simple fit

@@ -102,7 +102,7 @@ double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, cons
 	if (cloudiness>1.) cloudiness=1.;
 	if (cloudiness<0.) cloudiness=0.;
 
-	const double b1 = 0.75, b2 = 3.4;
+	static const double b1 = 0.75, b2 = 3.4;
 	const double karsten_Si = 1. - (b1 * pow(cloudiness, b2));
 	return karsten_Si;
 }

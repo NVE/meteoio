@@ -194,8 +194,8 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecEastings.size();
 	double parameter = 0., norm = 0.;
-	const double scale = 1.e3;
-	const double alpha = 1.;
+	static const double scale = 1.e3;
+	static const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double DX = x-vecEastings[ii];
@@ -213,8 +213,8 @@ double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vec
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecDistance_sq.size();
 	double parameter = 0., norm = 0.;
-	const double scale = 1.e3;
-	const double alpha = 1.;
+	static const double scale = 1.e3;
+	static const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double dist = Optim::invSqrt( vecDistance_sq[ii] + scale*scale ); //use the optimized 1/sqrt approximation
@@ -378,8 +378,8 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 	const double omega_c_range=(dem->max_curvature-omega_c_min);
 
 	//compute modified VW and DW
-	const double gamma_s = 0.58; //speed weighting factor
-	const double gamma_c = 0.42; //direction weighting factor
+	static const double gamma_s = 0.58; //speed weighting factor
+	static const double gamma_c = 0.42; //direction weighting factor
 	for (size_t ii=0; ii<VW.size(); ii++) {
 		const double vw = VW(ii);
 		if (vw==0. || vw==IOUtils::nodata) continue; //we can not apply any correction factor!
@@ -424,7 +424,7 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 	const double orig_mean = grid.grid2D.getMean();
 
 	for (size_t ii=0; ii<grid.size(); ii++) {
-		if (ta(ii)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
+		if (ta(ii)>Cst::t_water_freezing_pt) continue; //modify the grid of precipitations only if air temperature is below or at freezing
 
 		const double slope = dem.slope(ii);
 		const double curvature = dem.curvature(ii);
@@ -609,7 +609,7 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
 
-	const double shade_factor = 5.;
+	static const double shade_factor = 5.;
 	const double cellsize = dem.cellsize;
 	const double max_alt = dem.grid2D.getMax();
 
@@ -664,7 +664,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	const double inv_dmax = 1./dmax;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
-	const double altitude_thresh = 1.;
+	static const double altitude_thresh = 1.;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
@@ -713,9 +713,9 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 {
 	grid.set(dem, IOUtils::nodata);
 
-	const double dmin = 0.;
-	const double bearing_inc = 5.;
-	const double bearing_width = 30.;
+	static const double dmin = 0.;
+	static const double bearing_inc = 5.;
+	static const double bearing_width = 30.;
 	double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
 	double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
 	if (bearing1>bearing2) std::swap(bearing1, bearing2);
@@ -744,9 +744,9 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const Grid
 	
 	grid.set(dem, IOUtils::nodata);
 
-	const double dmin = 0.;
-	const double bearing_inc = 5.;
-	const double bearing_width = 30.;
+	static const double dmin = 0.;
+	static const double bearing_inc = 5.;
+	static const double bearing_width = 30.;
 
 	const size_t ncols = dem.getNx(), nrows = dem.getNy();
 	for (size_t jj = 0; jj<nrows; jj++) {
@@ -837,7 +837,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 
 void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
 {
-	const double vw_thresh = 5.; //m/s
+	static const double vw_thresh = 5.; //m/s
 	//compute wind exposure factor
 	Grid2DObject Sx;
 	WinstralSX(dem, dmax, DW, Sx);

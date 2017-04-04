@@ -542,7 +542,7 @@ double Interpol1D::pt_line_distance(const double& x, const double& y, const doub
 	if (a==0.) return abs(y-c); //horizontal line
 
 	//for ax+by+c=0; for us, b=-1
-	const double b = -1.;
+	static const double b = -1.;
 	const double d = abs(a*x +b*y + c) * Optim::invSqrt( a*a + b*b );
 	return d;
 }
@@ -598,7 +598,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	}
 
 	//computing the regression line
-	const double epsilon = 1e-6;
+	static const double epsilon = 1e-6;
 	if (sx <= abs(x_avg)*epsilon) { //sx and sy are always positive
 		//all points have same X -> we return a constant value that is the average
 		a = 0.;
@@ -683,7 +683,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::string& mesg, const bool& fixed_rate)
 {
 	//finds the linear regression for points (x,y,z,Value)
-	const double r_thres = 0.7;
+	static const double r_thres = 0.7;
 	const size_t nb_pts = in_X.size();
 	//we want at least 4 points AND 75% of the initial data set kept in the regression
 	const size_t min_dataset = (size_t)Optim::floor( 0.75*(double)nb_pts );

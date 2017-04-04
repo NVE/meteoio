@@ -28,8 +28,7 @@ ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
 		  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(),
 		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), als_mean(IOUtils::nodata), inputIsAllZeroes(false)
 {
-	const Config cfg( gridsmanager.getConfig() );
-	cfg.getValue("GRID2DPATH", "Input", grid2d_path);
+	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 
 	const size_t nr_args = vecArgs.size();
 	if (nr_args<2 || nr_args>3)

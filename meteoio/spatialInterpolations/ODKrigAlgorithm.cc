@@ -52,18 +52,17 @@ void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> 
 		Interpol1D::equalCountBin(10, distData, variData);
 }
 
-size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::vector< std::vector<double> > &vecVecData) const
+std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data) const
 {
 	//get all the data between "date" and "date-daysBefore"
-	const double daysBefore = 1.5;
-	const double Tstep = 1./24.;
+	static const double daysBefore = 1.5;
+	static const double Tstep = 1./24.;
 	Date d1 = date - daysBefore;
 
-	vecVecData.clear();
 	std::vector<MeteoData> Meteo;
 	tsmanager.getMeteoData(d1, Meteo);
 	const size_t nrStations = Meteo.size();
-	vecVecData.insert(vecVecData.begin(), nrStations, std::vector<double>()); //allocation for the vectors
+	std::vector< std::vector<double> > vecVecData(nrStations, std::vector<double>());
 
 	//get the stations altitudes
 	std::vector<double> vecAltitudes;
@@ -110,7 +109,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 		}
 	}
 
-	return nrStations;
+	return vecVecData;
 }
 
 //this gets the full data over a preceeding period
@@ -121,8 +120,9 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 	distData.clear();
 	variData.clear();
 
-	std::vector< std::vector<double> > vecTimeSeries;
-	const size_t nrStations = getTimeSeries(detrend_data, vecTimeSeries);
+	const std::vector< std::vector<double> > vecTimeSeries = getTimeSeries(detrend_data);
+	const size_t nrStations = vecTimeSeries.size();
+
 
 	//for each station, compute distance to other stations and
 	// variance of ( Y(current) - Y(other station) )

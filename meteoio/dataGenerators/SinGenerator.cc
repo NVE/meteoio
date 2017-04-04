@@ -60,7 +60,7 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 			throw InvalidArgumentException(ss.str(), AT);
 		}
 
-		const double w = 2.*Cst::PI;
+		static const double w = 2.*Cst::PI;
 		value = amplitude * sin(w*t) + offset;
 	}
 

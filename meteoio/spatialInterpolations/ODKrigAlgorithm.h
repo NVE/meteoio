@@ -54,7 +54,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	protected:
-		size_t getTimeSeries(const bool& detrend_data, std::vector< std::vector<double> > &vecVecData) const;
+		std::vector< std::vector<double> > getTimeSeries(const bool& detrend_data) const;
 		void getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData) const;
 		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data=false) const;
 		bool computeVariogram(const bool& detrend_data=false);

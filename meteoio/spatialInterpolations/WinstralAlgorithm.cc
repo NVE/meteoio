@@ -130,7 +130,7 @@ bool WinstralAlgorithm::isExposed(const DEMObject& dem, Coords location)
 	const size_t ii_ref = static_cast<size_t>(i_ref);
 	const size_t jj_ref = static_cast<size_t>(j_ref);
 
-	const double shade_factor = 5.;
+	static const double shade_factor = 5.;
 	const double cellsize = dem.cellsize;
 	const double min_dh = cellsize/shade_factor; //min_dist=cellsize -> min_dh
 	const double search_dist = (dem.grid2D.getMax() - alt_ref) * shade_factor;

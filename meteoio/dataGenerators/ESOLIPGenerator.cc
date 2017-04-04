@@ -84,7 +84,7 @@ double ESOLIPGenerator::newSnowDensity(const MeteoData& md) const
 	const double vw = std::max(2., md(MeteoData::VW));
 	const double rh = md(MeteoData::RH);
 	const double ta = md(MeteoData::TA) - Cst::t_water_triple_pt;
-	const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
+	static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
 
 	double arg = beta01 + beta1*ta + beta2*asin(sqrt(rh)) + beta3*log10(vw);
 	if (ta>=-14.)

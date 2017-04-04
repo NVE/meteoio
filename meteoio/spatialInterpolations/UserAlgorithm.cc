@@ -40,10 +40,8 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	filename = getGridFileName();
 
-	if (grid2d_path.empty()) {
-		const Config cfg( gridsmanager.getConfig() );
-		cfg.getValue("GRID2DPATH", "Input", grid2d_path);
-	}
+	if (grid2d_path.empty())
+		gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
