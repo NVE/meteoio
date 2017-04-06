@@ -221,9 +221,9 @@ bool Grid2DObject::gridify(Coords& point) const {
 	}
 }
 
-bool Grid2DObject::grid_to_WGS84(Coords& point) const {
+bool Grid2DObject::grid_to_WGS84(Coords& point) const
+{
 	int i = point.getGridI(), j = point.getGridJ();
-
 	if (i==IOUtils::inodata || j==IOUtils::inodata) {
 		//the point is invalid (outside the grid or contains nodata)
 		point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
@@ -232,6 +232,7 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 
 	const int ncols = (signed)getNx();
 	const int nrows = (signed)getNy();
+
 	if (i>ncols || i<0 || j>nrows || j<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
@@ -246,7 +247,7 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 	//easting and northing in the grid's projection
 	const double easting = ((double)i) * cellsize + llcorner.getEasting();
 	const double northing = ((double)j) * cellsize + llcorner.getNorthing();
-
+	
 	if (point.isSameProj(llcorner)==true) {
 		//same projection between the grid and the point -> precise, simple and efficient arithmetics
 		point.setXY(easting, northing, IOUtils::nodata);
@@ -263,7 +264,8 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 	return true;
 }
 
-bool Grid2DObject::WGS84_to_grid(Coords& point) const {
+bool Grid2DObject::WGS84_to_grid(Coords& point) const
+{
 	if (point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata) {
 			//if the point is invalid, there is nothing we can do
 			point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid

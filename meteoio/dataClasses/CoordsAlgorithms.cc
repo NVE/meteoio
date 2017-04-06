@@ -982,7 +982,7 @@ void CoordsAlgorithms::VincentyInverse(const double& lat_ref, const double& lon_
 	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
 
 	double sigma = distance / (b*A);
-	double sigma_p = 2.*Cst::PI;
+	static double sigma_p = 2.*Cst::PI;
 	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
 	while (fabs(sigma - sigma_p) > thresh) {

@@ -60,6 +60,10 @@ void get_unlimited_dimname(const int& ncid, std::string& dimname)
 	const int status = nc_inq_unlimdim(ncid, &unlim_id);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve unlimited dimension: " + std::string(nc_strerror(status)), AT);
+	if (unlim_id==-1) { //no unlimited dimension has been defined
+		dimname="";
+		return;
+	}
 
 	char name[NC_MAX_NAME+1];
 	const int status2 = nc_inq_dimname (ncid, unlim_id, name);
@@ -436,7 +440,7 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 	return dimlen;
 }
 
-std::vector<Date> get_wrf_Time(const int& ncid, const int& dimid, const size_t& dimlen)
+std::vector<Date> read_wrf_Time(const int& ncid, const int& dimid, const size_t& dimlen)
 {
 	static const size_t DateStrLen = 19; //HACK DateStrLen = 19, defined in Dimensions
 
@@ -482,7 +486,7 @@ bool get_wrf_dimensionMinMax(const int& ncid, const std::string& varname, double
 	if (dimlen<=0) return false;
 
 	if (varname=="Time") {
-		const std::vector<Date> dates( get_wrf_Time(ncid, dimid, dimlen) );
+		const std::vector<Date> dates( read_wrf_Time(ncid, dimid, dimlen) );
 		min = dates.front().getJulian();
 		max = dates.back().getJulian();
 	} else {
@@ -549,7 +553,7 @@ size_t find_wrf_record(const int& ncid, const std::string& varname, const double
 	if (dimlen<=0) return IOUtils::npos; // data not found
 
 	if (varname=="Time") {
-		const std::vector<Date> dates( get_wrf_Time(ncid, dimid, dimlen) );
+		const std::vector<Date> dates( read_wrf_Time(ncid, dimid, dimlen) );
 
 		for (size_t ii=0; ii<dimlen; ii++) {
 			if (dates[ii].getJulian() == data) return ii;
@@ -706,14 +710,11 @@ void close_file(const std::string& filename, const int& ncid)
 void copy_grid(const std::string& coordin, const std::string& coordinparam, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
                          const double * const grid, const double& nodata, mio::Grid2DObject& grid_out)
 {
+	mio::Coords llcorner(coordin, coordinparam);
+	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
-	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
-	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
-	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
-
-	mio::Coords cntr(coordin, coordinparam);
-	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata); //it will be moved to llcorner later, after correcting the aspect ratio
-	grid_out.set(lonlen, latlen, cellsize, cntr);
+	const double cellsize = calculate_cellsize(llcorner, latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
+	grid_out.set(lonlen, latlen, cellsize, llcorner);
 	
 	//Handle the case of llcorner/urcorner swapped
 	if (lat[0]<=lat[latlen-1]) {
@@ -740,12 +741,9 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 		}
 	}
 	
-	if (resampling_factor_x != mio::IOUtils::nodata) {
+	if (resampling_factor_x != mio::IOUtils::nodata || resampling_factor_y != mio::IOUtils::nodata) {
 		grid_out.grid2D = mio::ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
 	}
-	
-	//computing lower left corner by using the center point as reference, AFTER we corrected for the aspect ratio
-	grid_out.llcorner.moveByXY(-.5*(double)grid_out.getNx()*cellsize, -.5*(double)grid_out.getNy()*cellsize);
 }
 
 /* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file
@@ -755,20 +753,24 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
  * determine a factor that will be used for resampling the grid to likewise consist of
  * quadratic cells.
  */
-double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+double calculate_cellsize(const mio::Coords& llcorner, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
                                     double& factor_x, double& factor_y)
 {
 	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
 	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
-	double alpha;
 
-	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
-	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
+	Coords tmp1(llcorner), tmp2(llcorner);
+	tmp1.setLatLon(cntr_lat, lon[0], IOUtils::nodata);
+	tmp2.setLatLon(cntr_lat, lon[lonlen-1], IOUtils::nodata);
+	const double distanceX = tmp2.getEasting() - tmp1.getEasting();
 
-	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
+	tmp1.setLatLon(lat[0], cntr_lon, IOUtils::nodata);
+	tmp2.setLatLon(lat[latlen-1], cntr_lon, IOUtils::nodata);
+	const double distanceY = tmp2.getNorthing() - tmp1.getNorthing();
+
+	//n linearly connected points have (n-1) connections
 	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);
 	const double cellsize_y = distanceY / static_cast<double>(latlen-1);
-
 	// round to 1cm precision for numerical stability
 	const double cellsize = static_cast<double>(Optim::round( std::min(cellsize_x, cellsize_y)*100. )) / 100.;
 
@@ -787,18 +789,23 @@ double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const doub
  */
 void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, double*& lon_array)
 {
+	const double cntr_x = .5*static_cast<double>(grid.getNx())*grid.cellsize;
+	const double cntr_y = .5*static_cast<double>(grid.getNy())*grid.cellsize;
+
+	//the idea is to perform the calculation around the center of the domain
+	Coords tmp1(grid.llcorner), tmp2(grid.llcorner);
+	tmp1.moveByXY(0, cntr_y);
+	tmp2.moveByXY(static_cast<double>(grid.getNx())*grid.cellsize, cntr_y);
+	const double lon_interval = (tmp2.getLon() - tmp1.getLon()) / static_cast<double>(grid.getNx()-1);
+
+	tmp1 = grid.llcorner;
+	tmp2 = grid.llcorner;
+	tmp1.moveByXY(cntr_x, 0);
+	tmp2.moveByXY(cntr_x, static_cast<double>(grid.getNy())*grid.cellsize);
+	const double lat_interval = (tmp2.getLat() - tmp1.getLat()) / static_cast<double>(grid.getNy()-1);
+
 	lat_array[0] = grid.llcorner.getLat();
 	lon_array[0] = grid.llcorner.getLon();
-
-	// The idea is to use the difference in coordinates of the upper right and the lower left
-	// corner to calculate the lat/lon intervals between cells
-	Coords urcorner(grid.llcorner);
-	urcorner.setGridIndex(static_cast<int>(grid.getNx() - 1), static_cast<int>(grid.getNy() - 1), IOUtils::nodata, true);
-	if (grid.gridify(urcorner) )
-		throw IndexOutOfBoundsException("URcorner not within the grid... This should never happen!", AT);
-
-	const double lat_interval = (urcorner.getLat() - lat_array[0]) / static_cast<double>(grid.getNy()-1);
-	const double lon_interval = (urcorner.getLon() - lon_array[0]) / static_cast<double>(grid.getNx()-1);
 
 	// The method to use interval*ii is consistent with the corresponding
 	// calculation of the Grid2DObject::gridify method -> numerical stability

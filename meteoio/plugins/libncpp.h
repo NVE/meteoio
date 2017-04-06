@@ -101,7 +101,7 @@ namespace ncpp {
 	//Wrappers to MeteoIO's data classes
 	void copy_grid(const std::string& coordin, const std::string& coordinparam, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
 	                          const double * const grid, const double& nodata, mio::Grid2DObject& grid_out);
-	double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+	double calculate_cellsize(const mio::Coords& llcorner, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
 	                                          double& factor_x, double& factor_y);
 	void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, double*& lon_array);
 	void fill_grid_data(const mio::Grid2DObject& grid, double*& data);
