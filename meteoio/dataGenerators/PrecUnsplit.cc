@@ -24,10 +24,10 @@ bool PrecUnsplit::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		if (!md.param_exists("RAIN") || !md.param_exists("SNOW")) return false;
+		if (!md.param_exists("RAINF") || !md.param_exists("SNOWF")) return false;
 
-		const double rain = md("RAIN");
-		const double snow = md("SNOW");
+		const double rain = md("RAINF");
+		const double snow = md("SNOWF");
 		if (rain==IOUtils::nodata || snow==IOUtils::nodata) return false;
 
 		const double PSUM = rain+snow;

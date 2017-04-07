@@ -856,7 +856,7 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 * @brief Calculate the relative Humidity (RH) from specific humidity.
 * @param altitude altitude over sea level (m)
 * @param TA air temperature (K)
-* @param qi specific humidity
+* @param qi specific humidity between 0 and 1
 * @return relative humidity between 0 and 1
 */
 double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, const double& qi)
