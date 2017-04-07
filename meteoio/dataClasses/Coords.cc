@@ -230,7 +230,7 @@ const std::string Coords::toString(const FORMATS& type) const
 		os << "<Coords>\n";
 		os << "Altitude\t" << altitude << "\n";
 		os << "Lat/Long\t" << CoordsAlgorithms::printLatLon(latitude, longitude) << "\n";
-		os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
+		os << "Lat/Long\t" <<std::fixed << std::setprecision(10) << "(" << getLat() << " , " << getLon() << ")" << "\n";
 		os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 		os.precision(p);

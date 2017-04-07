@@ -713,7 +713,7 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 	mio::Coords llcorner(coordin, coordinparam);
 	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
-	const double cellsize = calculate_cellsize(llcorner, latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
+	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
 	grid_out.set(lonlen, latlen, cellsize, llcorner);
 	
 	//Handle the case of llcorner/urcorner swapped
@@ -753,33 +753,28 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
  * determine a factor that will be used for resampling the grid to likewise consist of
  * quadratic cells.
  */
-double calculate_cellsize(const mio::Coords& llcorner, const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat_array, const double * const lon_array,
                                     double& factor_x, double& factor_y)
 {
-	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
-	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
+	double alpha;
+	const double cntr_lat = .5*(lat_array[0]+lat_array[latlen-1]);
+	const double cntr_lon = .5*(lon_array[0]+lon_array[lonlen-1]);
+	const double lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
+	const double lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
 
-	Coords tmp1(llcorner), tmp2(llcorner);
-	tmp1.setLatLon(cntr_lat, lon[0], IOUtils::nodata);
-	tmp2.setLatLon(cntr_lat, lon[lonlen-1], IOUtils::nodata);
-	const double distanceX = tmp2.getEasting() - tmp1.getEasting();
+	const double distanceX = (lon_array[lonlen-1] - lon_array[0]) * lon_length;
+	const double distanceY = (lat_array[latlen-1] - lat_array[0]) * lat_length;
 
-	tmp1.setLatLon(lat[0], cntr_lon, IOUtils::nodata);
-	tmp2.setLatLon(lat[latlen-1], cntr_lon, IOUtils::nodata);
-	const double distanceY = tmp2.getNorthing() - tmp1.getNorthing();
-
-	//n linearly connected points have (n-1) connections
-	const double cellsize_x = distanceX / static_cast<double>(lonlen-1);
-	const double cellsize_y = distanceY / static_cast<double>(latlen-1);
-	// round to 1cm precision for numerical stability
-	const double cellsize = static_cast<double>(Optim::round( std::min(cellsize_x, cellsize_y)*100. )) / 100.;
+	//round to 1cm precision for numerical stability
+	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(lonlen)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(latlen)*100. )) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {
+		const double cellsize = std::min(cellsize_x, cellsize_y);
 		factor_x =  cellsize_x / cellsize;
 		factor_y =  cellsize_y / cellsize;
-
 		return cellsize;
 	}
 }
@@ -789,32 +784,30 @@ double calculate_cellsize(const mio::Coords& llcorner, const size_t& latlen, con
  */
 void calculate_dimensions(const mio::Grid2DObject& grid, double*& lat_array, double*& lon_array)
 {
-	const double cntr_x = .5*static_cast<double>(grid.getNx())*grid.cellsize;
-	const double cntr_y = .5*static_cast<double>(grid.getNy())*grid.cellsize;
-
-	//the idea is to perform the calculation around the center of the domain
-	Coords tmp1(grid.llcorner), tmp2(grid.llcorner);
-	tmp1.moveByXY(0, cntr_y);
-	tmp2.moveByXY(static_cast<double>(grid.getNx())*grid.cellsize, cntr_y);
-	const double lon_interval = (tmp2.getLon() - tmp1.getLon()) / static_cast<double>(grid.getNx()-1);
-
-	tmp1 = grid.llcorner;
-	tmp2 = grid.llcorner;
-	tmp1.moveByXY(cntr_x, 0);
-	tmp2.moveByXY(cntr_x, static_cast<double>(grid.getNy())*grid.cellsize);
-	const double lat_interval = (tmp2.getLat() - tmp1.getLat()) / static_cast<double>(grid.getNy()-1);
-
-	lat_array[0] = grid.llcorner.getLat();
-	lon_array[0] = grid.llcorner.getLon();
-
-	// The method to use interval*ii is consistent with the corresponding
-	// calculation of the Grid2DObject::gridify method -> numerical stability
-	for (size_t ii=1; ii<grid.getNy(); ++ii) {
-		lat_array[ii] = lat_array[0] + lat_interval*static_cast<double>(ii);
+	//There is a trick here: walking along a line of constant northing does NOT lead to a constant latitude. Both grids
+	//are shifted (even if a little), which means that the center of lat/lon is != center of east./north..
+	//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonnable approximation
+	double alpha;
+	double lat_length, lon_length, cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
+	for(size_t ii=0; ii<5; ii++) {
+		lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
+		lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
+		cntr_lat = (.5*static_cast<double>(grid.getNy())*grid.cellsize) / lat_length + grid.llcorner.getLat();
+		cntr_lon = (.5*static_cast<double>(grid.getNx())*grid.cellsize) / lon_length + grid.llcorner.getLon();
 	}
 
-	for (size_t ii=1; ii<grid.getNx(); ++ii) {
-		lon_array[ii] = lon_array[0] + lon_interval*static_cast<double>(ii);
+	const double min_lat =  cntr_lat - (0.5*static_cast<double>(grid.getNy())*grid.cellsize) / lat_length;
+	const double min_lon = cntr_lon - (0.5*static_cast<double>(grid.getNx())*grid.cellsize) / lon_length;
+	const double max_lat = cntr_lat + (0.5*static_cast<double>(grid.getNy())*grid.cellsize) / lat_length;
+	const double max_lon = cntr_lon + (0.5*static_cast<double>(grid.getNx())*grid.cellsize) / lon_length;
+	const double lat_interval = abs(max_lat - min_lat);
+	const double lon_interval = abs(max_lon - min_lon);
+
+	for (size_t ii=0; ii<grid.getNy(); ++ii) {
+		lat_array[ii] = min_lat + (lat_interval * static_cast<double>(ii)) / (static_cast<double>(grid.getNy())-1);
+	}
+	for (size_t ii=0; ii<grid.getNx(); ++ii) {
+		lon_array[ii] = min_lon + (lon_interval * static_cast<double>(ii)) / (static_cast<double>(grid.getNx()-1));
 	}
 }
 
