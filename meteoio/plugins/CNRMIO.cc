@@ -64,6 +64,10 @@ namespace mio {
  * <A HREF="http://www.cnrm-game-meteo.fr/spip.php?article555&lang=en">Crocus</A> does not accept nodata values (and re-accumulating
  * the precipitation can still lead to nodata values).
  *
+ * When using data from <A HREF="http://www.cen.ulaval.ca/nordicanad/en_index.aspx">Nordicana D</A>, it is advised to use an RhGenerator in
+ * order to convert the dew point temperatures into relative humidities (and make sure the units are correct, following the steps
+ * given in \ref netcdf_tricks "NetCDF tricks").
+ *
  * @section cnrm_compilation Compilation
  * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
  * their development files in your package manager.
@@ -110,13 +114,14 @@ bool CNRMIO::initStaticData()
 {
 	//Associate unsigned int value and a string representation of a meteo parameter
 	paramname[cnrm_ta] = MeteoData::TA;
-	paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname[cnrm_iswr] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_td] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_rh] = MeteoData::RH;
 	paramname[cnrm_vw] = MeteoData::VW;
 	paramname[cnrm_dw] = MeteoData::DW;
+	paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_iswr] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_rainf] = IOUtils::npos;
 	paramname[cnrm_snowf] = IOUtils::npos;
 	paramname[cnrm_swr_direct] = MeteoData::ISWR;
@@ -219,11 +224,11 @@ void CNRMIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 		location.setLatLon(lat[ii], lon[ii], alt[ii]);
 
 		ss << (ii+1);
-		const string id( ss.str() );
+		const std::string id( ss.str() );
 		ss.str("");
 
 		ss << "Station " << (ii +1);
-		const string name( ss.str() );
+		const std::string name( ss.str() );
 		ss.str("");
 
 		StationData tmp(location, id, name);
@@ -240,7 +245,7 @@ void CNRMIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 	vecMeteo.clear();
 	const string path = cfg.get("METEOPATH", "Input");
 	const string filename = cfg.get("METEOFILE", "Input");
-	const string file_and_path = path + "/" + filename;
+	const string file_and_path( path + "/" + filename );
 
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException(file_and_path, AT); //prevent invalid filenames
 	int ncid;
@@ -320,17 +325,17 @@ void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map
 				int varid;
 				ncpp::get_variable(ncid, cnrm_timestep, varid);
 				ncpp::read_value(ncid, cnrm_timestep, varid, multiplier);
-
 				if (multiplier <= 0) throw InvalidArgumentException("The variable '" + cnrm_timestep + "' is invalid", AT);
 
 				psum_measurement = true;
-			} else if ((varname == cnrm_swr_diffuse) || (varname == cnrm_swr_direct)) {
-				sw_measurement = true;
 			} else {
 				throw IOException("Don't know how to deal with parameter " + varname, AT);
 			}
 		} else {
-			if (varname == cnrm_rh) {
+			if ((varname == cnrm_swr_diffuse) || (varname == cnrm_swr_direct)) {
+				sw_measurement = true;
+				simple_copy = false;
+			} else if (varname == cnrm_rh) {
 				mutiply_copy = true;
 				multiplier = 0.01;
 			} else {
@@ -357,7 +362,7 @@ void CNRMIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map
 					} else {
 						vecMeteo[ii][jj](param) = value * multiplier;
 					}
-				} else if (psum_measurement) {
+				} else if (psum_measurement) { //HACK we do not handle PSUM_PH when we could use rainf / snowf
 					if (!nodata) {
 						double& psum = vecMeteo[ii][jj](MeteoData::PSUM);
 						if (psum == IOUtils::nodata) psum = 0.0;
@@ -390,14 +395,14 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 	ncpp::get_variables(ncid, dimensions, parameters_present);
 
 	for (vector<string>::const_iterator it = parameters_present.begin(); it != parameters_present.end(); ++it) {
-		const string& name( *it );
+		const string name( *it );
 
 		// Check if parameter exists in paramname, which holds strict CNRM parameters
 		const map<string, size_t>::const_iterator strict_it = paramname.find(name);
 		if (strict_it != paramname.end()) { // parameter is a part of the CNRM specification
 			size_t index = strict_it->second;
 
-			if (name==cnrm_qair) 
+			if (name==cnrm_qair)
 				index = meteo_data.addParameter( "SH" );
 			if (name==cnrm_td)
 				index = meteo_data.addParameter( "TD" );

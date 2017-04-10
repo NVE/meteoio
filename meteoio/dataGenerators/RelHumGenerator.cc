@@ -26,25 +26,28 @@ bool RhGenerator::generate(const size_t& param, MeteoData& md)
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
 		const double TA = md(MeteoData::TA);
-		if (TA==IOUtils::nodata) //nothing else we can do here
-			return false;
+		if (TA==IOUtils::nodata) return false;//nothing else we can do here
 
 		//first chance to compute RH
 		if (md.param_exists("TD")) {
 			const double TD = md("TD");
-			if (TD!=IOUtils::nodata)
+			if (TD!=IOUtils::nodata) {
 				value = Atmosphere::DewPointtoRh(TD, TA, false);
+				return true;
+			}
 		}
 
 		//second chance to try to compute RH
-		if (value==IOUtils::nodata && md.param_exists("SH")) {
+		if (md.param_exists("SH")) {
 			const double SH = md("SH");
 			const double altitude = md.meta.position.getAltitude();
-			if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata)
+			if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata) {
 				value = Atmosphere::specToRelHumidity(altitude, TA, SH);
+				return true;
+			}
 		}
 
-		if (value==IOUtils::nodata) return false;
+		return false;
 	}
 
 	return true; //all missing values could be filled
@@ -69,18 +72,22 @@ bool RhGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 			//first chance to compute RH
 			if (vecMeteo[ii].param_exists("TD")) {
 				const double TD = vecMeteo[ii]("TD");
-				if (TD!=IOUtils::nodata)
+				if (TD!=IOUtils::nodata) {
 					value = Atmosphere::DewPointtoRh(TD, TA, false);
+					continue;
+				}
 			}
 
 			//second chance to try to compute RH
-			if (value==IOUtils::nodata && vecMeteo[ii].param_exists("SH")) {
+			if (vecMeteo[ii].param_exists("SH")) {
 				const double SH = vecMeteo[ii]("SH");
-				if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata)
+				if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata) {
 					value = Atmosphere::specToRelHumidity(altitude, TA, SH);
+					continue;
+				}
 			}
 
-			if (value==IOUtils::nodata) all_filled=false;
+			all_filled=false;
 		}
 	}
 
