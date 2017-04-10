@@ -47,7 +47,7 @@ namespace mio {
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] sections
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] sections
  * - METEOPATH: where to find the meteofiles as refered to here below; [Input] and [Output] sections
- * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] sections
+ * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output (within METEOPATH); [Input] and [Output] sections
  * - UREF: height of wind measurements (in m, default 10m); [Output] section
  * - ZREF: height of air temperature measurements (in m, default 2m); [Output] section
  * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
@@ -57,7 +57,8 @@ namespace mio {
  * @code
  * [Input]
  * METEO     = CNRM
- * METEOFILE = ./input/meteo/forcing.nc
+ * METEOPATH = ./input/meteo
+ * METEOFILE = forcing.nc
  * @endcode
  * It is also recommended to use a dataGenerator on PSUM (for example, a constant generator set at 0) since
  * <A HREF="http://www.cnrm-game-meteo.fr/spip.php?article555&lang=en">Crocus</A> does not accept nodata values (and re-accumulating
@@ -85,6 +86,7 @@ const std::string CNRMIO::cnrm_slope = "slope";
 const std::string CNRMIO::cnrm_uref = "UREF";
 const std::string CNRMIO::cnrm_zref = "ZREF";
 const std::string CNRMIO::cnrm_ta = "Tair";
+const std::string CNRMIO::cnrm_td = "d2m";
 const std::string CNRMIO::cnrm_rh = "HUMREL";
 const std::string CNRMIO::cnrm_vw = "Wind";
 const std::string CNRMIO::cnrm_dw = "Wind_DIR";
@@ -397,6 +399,8 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 
 			if (name==cnrm_qair) 
 				index = meteo_data.addParameter( "SH" );
+			if (name==cnrm_td)
+				index = meteo_data.addParameter( "TD" );
 			
 			if ((name == cnrm_swr_diffuse) || (name == cnrm_swr_direct) || (name == cnrm_co2air) || (name == cnrm_neb)) {
 			 	index = meteo_data.addParameter( name );

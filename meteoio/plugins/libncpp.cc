@@ -357,10 +357,16 @@ void read_data(const int& ncid, const std::string& varname, const int& varid, do
 
 void read_wrf_latlon(const int& ncid, const int& latid, const int& lonid, const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon)
 {
-	const size_t start[] = {0, 0, 0};
+	int ndims;
+	int status = nc_inq_var (ncid, latid, 0, 0, &ndims, 0, 0);
+	if ( status != NC_NOERR)
+		throw IOException("Could not retrieve number of dimensions of latitudes: " + std::string(nc_strerror(status)), AT);
+	if (ndims!=3)
+		throw IOException("The WRF schema has been selected, but it seems that the NetCDF file does not follow this schema", AT);
 
+	const size_t start[] = {0, 0, 0};
 	const size_t count_lat[] = {1, latlen, 1};
-	int status = nc_get_vara_double(ncid, latid, start, count_lat, lat);
+	status = nc_get_vara_double(ncid, latid, start, count_lat, lat);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
 
