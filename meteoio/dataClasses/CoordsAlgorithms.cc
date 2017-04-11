@@ -31,14 +31,18 @@
 
 namespace mio {
 
-const struct CoordsAlgorithms::ELLIPSOID CoordsAlgorithms::ellipsoids[8] = {
+const struct CoordsAlgorithms::ELLIPSOID CoordsAlgorithms::ellipsoids[12] = {
 	{ 6378137.,        6356752.3142 }, ///< E_WGS84
+	{ 6378135.,        6356750.52 }, /// E_WGS72
 	{ 6378137.,        6356752.3141 }, ///< E_GRS80
 	{ 6377563.396,  6356256.909 }, ///< E_AIRY
 	{ 6378388.,        6356911.946 }, ///< E_INTL1924
 	{ 6378249.145,  6356514.86955 }, ///< E_CLARKE1880
 	{ 6378206.4,      6356583.8 }, ///< E_CLARKE1866
 	{ 6378160.,        6356774.719 }, ///< E_GRS67
+	{ 6377299.365,  6356098.359 }, ///<E_EVEREST1830
+	{ 6378136.6,      6356751.9 }, ///< E_IERS2003
+	{ 6378245.,        6356863.019 }, ///< E_KRASSOVSKY
 	{ 6370000.,        6370000. } ///< spherical earth
 };
 
@@ -261,7 +265,7 @@ void CoordsAlgorithms::trueLatLonToRotated(const double& lat_N, const double& lo
 * @param[in] delta_y Origin shift, y coordinate (default: 0)
 * @param[in] delta_z Origin shift, z coordinate (default: 0)
 */
-void CoordsAlgorithms::Molodensky(const double& lat_in, const double& lon_in, const double& alt_in, const unsigned char& ellipsoid_in, double &lat_out, double &lon_out, double &alt_out, const unsigned char& ellipsoid_out, const double& delta_x, const double& delta_y, const double& delta_z)
+void CoordsAlgorithms::Molodensky(const double& lat_in, const double& lon_in, const double& alt_in, const ELLIPSOIDS_NAMES& ellipsoid_in, double &lat_out, double &lon_out, double &alt_out, const ELLIPSOIDS_NAMES& ellipsoid_out, const double& delta_x, const double& delta_y, const double& delta_z)
 {
 	//FROM datum parameters
 	const double from_h = alt_in;
@@ -529,8 +533,10 @@ int CoordsAlgorithms::getUTMZone(const double& i_latitude, const double& i_longi
 }
 
 /**
-* @brief Coordinate conversion: from WGS84 Lat/Long to UTM grid
-* See http://www.oc.nps.edu/oc2902w/maps/utmups.pdf for more.
+* @brief Coordinate conversion: from WGS84 Lat/Long to UTM grid.
+* For more, see http://www.oc.nps.edu/oc2902w/maps/utmups.pdf, USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf,
+* http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM or
+* Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/).
 * @param[in] lat_in Decimal Latitude
 * @param[in] long_in Decimal Longitude
 * @param[in] coordparam UTM zone to convert to
@@ -538,10 +544,7 @@ int CoordsAlgorithms::getUTMZone(const double& i_latitude, const double& i_longi
 * @param[out] north_out northing coordinate (Swiss system)
 */
 void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const std::string& coordparam, double& east_out, double& north_out)
-{//converts WGS84 coordinates (lat,long) to UTM coordinates.
-//See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
-//also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
-//also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
+{
 	//Geometric constants
 	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
@@ -594,8 +597,10 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 }
 
 /**
-* @brief Coordinate conversion: from UTM grid to WGS84 Lat/Long
-* See http://www.oc.nps.edu/oc2902w/maps/utmups.pdf for more.
+* @brief Coordinate conversion: from UTM grid to WGS84 Lat/Long.
+* For more, see http://www.oc.nps.edu/oc2902w/maps/utmups.pdf, USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf,
+* http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM or
+* Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/).
 * @param[in] east_in easting coordinate (UTM)
 * @param[in] north_in northing coordinate (UTM)
 * @param[in] coordparam UTM zone of the easting/northing
@@ -603,10 +608,7 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 * @param[out] long_out Decimal Longitude
 */
 void CoordsAlgorithms::UTM_to_WGS84(double east_in, double north_in, const std::string& coordparam, double& lat_out, double& long_out)
-{//converts UTM coordinates to WGS84 coordinates (lat,long).
-//See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
-//also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
-//also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
+{
 	//Geometric constants
 	static const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	static const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
