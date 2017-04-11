@@ -66,7 +66,7 @@ namespace mio {
  * - METEO_EXT: only the files containing this pattern in their filename will be used; [Input] section
  * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the METEO_EXT extension, provides
  * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
- * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF); [Input] and [Output] section
+ * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF or WRF); [Input] and [Output] section
  * - NETCDF::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
@@ -113,6 +113,14 @@ namespace mio {
  * <A HREF="http://www.meteoswiss.admin.ch/home.html?tab=overview">MeteoSwiss</A> provides <A HREF="http://www.ifu.ethz.ch/hydrologie/research/research_data/proddoc.pdf">reanalysis</A> of precipitation and other meteo fields from 1961 to present over Switzerland for different time scales: daily, monthly, yearly, as well as hourly (CPC dataset). The DEM are also provided, either in lat/lon, 
  * Swiss coordinates, rotated lat/lon, ... These data sets must be requested from MeteoSwiss and are available with a specific license for research. 
  * 
+ * @section netcdf_wrf WRF output files
+ * While <A HREF="http://www.wrf-model.org/index.php">WRF</A> can write its <A HREF="http://www2.mmm.ucar.edu/wrf/users/docs/user_guide_V3/users_guide_chap5.htm#fields">outputs in NetCDF</A>, unfortunately
+ * it does not follow the CF1 convention and relies on lots of idiosyncracies (see http://www.ncl.ucar.edu/Applications/wrfnetcdf.shtml) that break lots of
+ * applications dealing with NetCDF. If some fields are not read by MeteoIO,
+ * please follow the tips given \ref netcdf_tricks "below". Moreover, WRF assumes that latitudes / longitudes are given on an ideal sphere while standard
+ * coordinates systems assume an ellipsoid. This may lead to trouble when converting model coordinates to real world coordinates (see
+ * http://www.pkrc.net/wrf-lambert.html).
+ *
  * @section netcdf_ecmwf ECMWF Era Interim
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A> 
  * after creating an account and login in. 
