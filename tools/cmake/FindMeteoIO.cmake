@@ -1,8 +1,13 @@
 INCLUDE(LibFindMacros)
 
-# Finally the library itself
-GET_FILENAME_COMPONENT(SRC_DIR ${CMAKE_SOURCE_DIR} PATH) #ie goes up one level
-STRING(REPLACE " " "\\ " SRC_DIR ${SRC_DIR})
+# Where can we find something that looks like a MeteoIO source tree?
+FILE(GLOB mio_local_src LIST_DIRECTORIES TRUE  ../../../[mM]eteo[iI][oO] ../[mM]eteo[iI][oO] ../../../[mM]eteo[iI][oO]-* ../[mM]eteo[iI][oO]-*)
+LIST(LENGTH mio_local_src mio_local_src_nr)
+IF(mio_local_src_nr>0)
+	LIST(GET mio_local_src 0 SRC_DIR) #only keep the first match
+ELSE(mio_local_src_nr>0)
+	SET(SRC_DIR "")
+ENDIF(mio_local_src_nr>0)
 
 IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT1 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MeteoIO;UninstallString]" PATH CACHE INTERNAL)
@@ -11,8 +16,7 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT4 "C:/Progra~1/MeteoI*" ABSOLUTE CACHE INTERNAL)
 	SET(SEARCH_PATH
 		ENV LIB
-		${SRC_DIR}/meteoio/lib
-		${SRC_DIR}/../../meteoio/lib
+		${SRC_DIR}/lib
 		${METEOIO_ROOT1}/lib
 		${METEOIO_ROOT2}/lib
 		${METEOIO_ROOT3}/lib
@@ -37,8 +41,7 @@ ELSE(WIN32)
 		PATHS
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
-			${SRC_DIR}/meteoio/lib
-			${SRC_DIR}/../../meteoio/lib
+			${SRC_DIR}/lib
 			"~/usr/lib"
 			"/Applications/MeteoIO/lib"
 			"/usr/local/lib"
@@ -51,8 +54,7 @@ ELSE(WIN32)
 		NAMES meteoio
 		PATHS
 			ENV LD_LIBRARY_PATH
-			${SRC_DIR}/meteoio/lib
-			${SRC_DIR}/../../meteoio/lib
+			${SRC_DIR}/lib
 			"~/usr/lib"
 			"/usr/local/lib"
 			"/usr/lib"
