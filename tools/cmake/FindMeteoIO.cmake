@@ -1,13 +1,13 @@
 INCLUDE(LibFindMacros)
 
 # Where can we find something that looks like a MeteoIO source tree?
-FILE(GLOB mio_local_src LIST_DIRECTORIES TRUE  ../../../[mM]eteo[iI][oO] ../[mM]eteo[iI][oO] ../../../[mM]eteo[iI][oO]-* ../[mM]eteo[iI][oO]-*)
-LIST(LENGTH mio_local_src mio_local_src_nr)
-IF(mio_local_src_nr>0)
+FILE(GLOB mio_local_src LIST_DIRECTORIES TRUE  ../../../[mM]eteo[iI][oO] ../[mM]eteo[iI][oO] ../../../[mM]eteo[iI][oO]-[0-9]* ../[mM]eteo[iI][oO]-[0-9]*)
+LIST(LENGTH mio_local_src n)
+IF("${n}" EQUAL "0")
+	SET(SRC_DIR ".")
+ELSE("${n}" EQUAL "0")
 	LIST(GET mio_local_src 0 SRC_DIR) #only keep the first match
-ELSE(mio_local_src_nr>0)
-	SET(SRC_DIR "")
-ENDIF(mio_local_src_nr>0)
+ENDIF("${n}" EQUAL "0")
 
 IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT1 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MeteoIO;UninstallString]" PATH CACHE INTERNAL)
