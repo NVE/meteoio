@@ -29,7 +29,7 @@ DataGenerator::DataGenerator(const Config& cfg)
 	std::set<std::string> set_of_used_parameters;
 	getParameters(cfg, key_pattern, set_of_used_parameters);
 
-	set<string>::const_iterator it;
+	std::set<string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
 		std::vector<std::string> tmpAlgorithms;
 		const std::string parname( *it );
@@ -87,7 +87,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 			if (param==IOUtils::npos) continue;
 
 			#ifdef DATA_QA
-			double old_val = vecMeteo[station](param);
+			const double old_val = vecMeteo[station](param);
 			const std::string statName( vecMeteo[station].meta.getStationName() );
 			const std::string statID( vecMeteo[station].meta.getStationID() );
 			const std::string stat = (!statID.empty())? statID : statName;
@@ -131,7 +131,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			if (param==IOUtils::npos) continue;
 
 			#ifdef DATA_QA
-			METEO_SET old_val = vecVecMeteo[station];
+			const METEO_SET old_val = vecVecMeteo[station];
 			const std::string statName( old_val[0].meta.getStationName() );
 			const std::string statID( old_val[0].meta.getStationID() );
 			const std::string stat = (!statID.empty())? statID : statName;
@@ -165,7 +165,7 @@ void DataGenerator::getParameters(const Config& cfg, const std::string& key_patt
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const string tmp( vec_keys[ii].substr(0,found) );
+			const std::string tmp( vec_keys[ii].substr(0,found) );
 			set_parameters.insert( IOUtils::strToUpper(tmp) );
 		}
 	}
@@ -180,14 +180,10 @@ size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::st
 	std::vector<std::string> vecKeys;
 	cfg.findKeys(vecKeys, parname+key_pattern, "Generators");
 
-	if (vecKeys.size() > 1)
-		throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;
-
-	if (vecKeys.empty())
-		return 0;
+	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;
+	if (vecKeys.empty()) return 0;
 
 	cfg.getValue(vecKeys.at(0), "Generators", vecAlgorithms, IOUtils::nothrow);
-
 	return vecAlgorithms.size();
 }
 

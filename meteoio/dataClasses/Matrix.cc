@@ -227,7 +227,7 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	}
 
 	//create new matrix
-	Matrix result(nrows,rhs.ncols);
+	Matrix result(nrows, rhs.ncols);
 
 	//fill product matrix
 	for (size_t i=1; i<=result.nrows; i++) {

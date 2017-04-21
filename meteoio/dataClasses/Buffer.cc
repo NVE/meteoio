@@ -331,7 +331,7 @@ bool GridBuffer::get(Grid2DObject& grid, const std::string& grid_hash, std::stri
 
 bool GridBuffer::get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const
 {
-	const string grid_hash = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+	const std::string grid_hash( date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter) );
 	return get(grid, grid_hash);
 }
 
@@ -369,7 +369,7 @@ void GridBuffer::push(const DEMObject& grid, const std::string& grid_hash)
 	if (max_grids==0) return;
 
 	if (IndexBufferedDEMs.size() >= max_grids) { //we need to remove the oldest grid
-		const string tmp_hash = IndexBufferedDEMs.front();
+		const std::string tmp_hash( IndexBufferedDEMs.front() );
 		mapBufferedDEMs.erase( mapBufferedDEMs.find( tmp_hash ) );
 		//swap followed by pop_back is faster than erase()
 		swap( IndexBufferedDEMs.front(), IndexBufferedDEMs.back() );
@@ -384,7 +384,7 @@ void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, co
 	if (max_grids==0) return;
 
 	if (IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
-		const string tmp_hash = IndexBufferedGrids.front();
+		const std::string tmp_hash( IndexBufferedGrids.front() );
 		mapBufferedGrids.erase( mapBufferedGrids.find( tmp_hash ) );
 		mapBufferedInfos.erase( mapBufferedInfos.find( tmp_hash ) );
 		//swap followed by pop_back is faster than erase()
@@ -399,7 +399,6 @@ void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, co
 void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash)
 {
 	if (max_grids==0) return;
-	
 	push(grid, grid_hash, "");
 }
 
@@ -407,7 +406,7 @@ void GridBuffer::push(const Grid2DObject& grid, const MeteoGrids::Parameters& pa
 {
 	if (max_grids==0) return;
 	
-	const string grid_hash = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+	const std::string grid_hash( date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter) );
 	push(grid, grid_hash, "");
 }
 

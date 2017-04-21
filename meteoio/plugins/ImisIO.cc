@@ -58,7 +58,7 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0).
- * - USE_IMIS_PSUM: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedPSUM to detect snow melting in the rain gauge.
+ * - USE_IMIS_PSUM: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedPSUM to detect snow melting in the rain gauge. ANETZ stations are unaffected (their precipitation is always used).
  * - USE_SNOWPACK_PSUM: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged psum while all data that can properly be computed will <b>overwrite</b> psum. (default=false)
  *
  * It is possible to use both USE_IMIS_PSUM and USE_SNOWPACK_PSUM to create composite PSUM (from SNOWPACK in the snow season and from IMIS otherwise).
@@ -584,20 +584,20 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	//get data for one specific station
 	std::vector<std::string> vecHTS1;
-	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
+	parseStationID(vecStationIDs[stationindex].getStationID(), stat_abk, stao_nr);
 	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHTS1, stmt);
 	bool fullStation = getStationData(stat_abk, stao_nr, dateS, dateE, vecHTS1, vecResult, env, stmt);
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
-	for (size_t ii=0; ii<vecResult.size(); ii++){
+	for (size_t ii=0; ii<vecResult.size(); ii++) {
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd);
 
 		//For IMIS stations the psum value is a rate (kg m-2 h-1), therefore we need to
 		//divide it by two to conjure the accumulated value for the half hour
-		if (tmpmd.meta.stationID.length() > 0){
-			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
+		if (tmpmd.meta.stationID.length() > 0) {
+			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ which simply go through)
 				if (use_imis_psum==false) {
 					tmpmd(MeteoData::PSUM) = IOUtils::nodata;
 				} else {
@@ -609,7 +609,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 			}
 		}
 
-		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd
+		vecMeteo[stationindex].push_back(tmpmd); //Now insert tmpmd
 	}
 }
 
@@ -1002,11 +1002,8 @@ void ImisIO::convertUnits(MeteoData& meteo)
 		hs /= 100.0;
 	
 	double& p = meteo(MeteoData::P);
-	if (p != IOUtils::nodata) {
-		p *= 100.0;
-		if (ta==IOUtils::nodata) p=IOUtils::nodata;
-		else p *= Atmosphere::stdAirPressure(meteo.meta.position.getAltitude()) / Cst::std_press;
-	}
+	if (p != IOUtils::nodata)
+		p *= 100. * Atmosphere::stdAirPressure(meteo.meta.position.getAltitude()) / Cst::std_press;
 
 	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
 	convertSnowTemperature(meteo, "TS1");

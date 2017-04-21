@@ -151,8 +151,7 @@ bool MeteoData::param_exists(const std::string& i_paramname) const
 			return true;
 	}
 	
-	const size_t current_size = extra_param_name.size();
-	for (size_t ii = 0; ii<current_size; ii++) {
+	for (size_t ii = 0; ii<extra_param_name.size(); ii++) {
 		if (extra_param_name[ii] == i_paramname)
 			return true;
 	}
@@ -267,8 +266,7 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 			return ii;
 	}
 	
-	const size_t current_size = extra_param_name.size();
-	for (size_t ii=0; ii<current_size; ii++) {
+	for (size_t ii=0; ii<extra_param_name.size(); ii++) {
 		if (extra_param_name[ii] == parname)
 			return ii+MeteoData::nrOfParameters;
 	}

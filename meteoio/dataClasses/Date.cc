@@ -121,9 +121,9 @@ void Date::setUndef(const bool& flag) {
 * @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	const time_t curr = time(NULL);// current time in UTC
+	const time_t curr( time(NULL) );// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
-	const time_t utc = mktime(&local);// convert GMT tm to GMT time_t
+	const time_t utc( mktime(&local) );// convert GMT tm to GMT time_t
 #ifndef __MINGW32__
 	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
 #else //workaround for Mingw bug 2152
@@ -246,7 +246,8 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
+void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst)
+{
 	setTimeZone(in_timezone, in_dst);
 	gmt_julian = rnd( localToGMT(julian_in), (unsigned)1); //round to internal precision of 1 second
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second);
@@ -290,7 +291,7 @@ void Date::setRFC868Date(const double& julian_in, const double& i_timezone, cons
 * @param in_dst is it DST? (default: no)
 */
 void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
-	const double in_julian = (double)(in_time)/(24.*60.*60.) + Unix_offset;
+	const double in_julian = (double)(in_time)/(24.*3600.) + Unix_offset;
 	setDate(in_julian, 0., in_dst);
 }
 
@@ -802,7 +803,7 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
 
 	double integral;
 	const double fractional = modf(julian-.5, &integral);
-	const double rnd_factor = (3600*24)/(double)precision;
+	const double rnd_factor = (3600.*24.)/(double)precision;
 
 	if (type==CLOSEST)
 		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor + .5;
@@ -1077,9 +1078,9 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 * @return string containing a human readable time
 */
 std::string Date::printFractionalDay(const double& fractional) {
-	const double hours=floor(fractional*24.);
-	const double minutes=floor((fractional*24.-hours)*60.);
-	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
+	const double hours = floor(fractional*24.);
+	const double minutes = floor((fractional*24.-hours)*60.);
+	const double seconds = fractional*24.*3600.-hours*3600.-minutes*60.;
 
 	std::ostringstream tmp;
 	tmp << std::fixed << std::setfill('0') << std::setprecision(0);

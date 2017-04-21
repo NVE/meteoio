@@ -683,8 +683,8 @@ void IOHandler::create_exclude_map()
 		try {
 			const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
-			vector<string> tmpvec;
-			string line;
+			std::vector<std::string> tmpvec;
+			std::string line;
 
 			while (!fin.eof()) { //Go through file
 				getline(fin, line, eoln); //read complete line meta information
@@ -692,7 +692,7 @@ void IOHandler::create_exclude_map()
 				const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ' ');
 
 				if (ncols > 1) {
-					for (vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+					for (std::vector<std::string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
 						IOUtils::toUpper( *it );
 					}
 
@@ -759,8 +759,8 @@ void IOHandler::create_keep_map()
 		try {
 			const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
-			vector<string> tmpvec;
-			string line;
+			std::vector<std::string> tmpvec;
+			std::string line;
 
 			while (!fin.eof()) { //Go through file
 				getline(fin, line, eoln); //read complete line meta information

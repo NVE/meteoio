@@ -80,36 +80,6 @@ void StationData::merge(const StationData& sd2) {
 	position.merge(sd2.position);
 }
 
-
-//Specific Getter Functions for stationName, stationID and position
-Coords StationData::getPosition() const {
-	return position;
-}
-
-std::string StationData::getStationID() const {
-	return stationID;
-}
-
-std::string StationData::getStationName() const {
-	return stationName;
-}
-
-std::string StationData::getHash() const {
-	return stationID+"::"+stationName;
-}
-
-double StationData::getAltitude() const {
-	return position.getAltitude();
-}
-
-double StationData::getSlopeAngle() const {
-	return slope;
-}
-
-double StationData::getAzimuth() const {
-	return azi;
-}
-
 const std::string StationData::toString() const {
 	std::ostringstream os;
 	os << "<station>" << "\n"
