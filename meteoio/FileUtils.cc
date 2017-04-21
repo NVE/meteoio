@@ -85,7 +85,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 		errno = 0;
 		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
 		if (real_path!=NULL) {
-			const std::string tmp(real_path);
+			const std::string tmp( real_path );
 			free(real_path);
 			return tmp;
 		} else {
@@ -103,7 +103,7 @@ std::string getExtension(const std::string& filename)
 	if ( startpos==std::string::npos ) return std::string();
 	if ( start_basename!=std::string::npos && startpos<start_basename ) return std::string();
 
-	const std::string whitespaces(" \t\f\v\n\r");
+	static const std::string whitespaces(" \t\f\v\n\r");
 	const size_t endpos = filename.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	return filename.substr(startpos+1, endpos-startpos);
@@ -121,7 +121,7 @@ std::string removeExtension(const std::string& filename)
 
 std::string getPath(const std::string& filename, const bool& resolve)
 {
-	const std::string clean_filename = cleanPath(filename, resolve);
+	const std::string clean_filename( cleanPath(filename, resolve) );
 	const size_t end_path = clean_filename.find_last_of("/");
 	if (end_path!=std::string::npos) {
 		return clean_filename.substr(0, end_path);
@@ -166,14 +166,14 @@ bool isAbsolutePath(const std::string& in_path)
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
-	const std::string sub_path( "." );
+	static const std::string sub_path( "." );
 	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
 }
 
 std::list<std::string> readDirectory(const std::string& path, const std::string& pattern, const bool& isRecursive)
 {
 	std::list<std::string> dirlist;
-	const std::string sub_path( "." );
+	static const std::string sub_path( "." );
 	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
 	return dirlist;
 }
@@ -208,15 +208,15 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 		throw AccessException("Error opening directory " + path, AT);
 	}
 
-	const std::string inpath = path+"\\\\*";
+	const std::string inpath( path+"\\\\*" );
 	WIN32_FIND_DATA ffd;
-	const HANDLE hFind = FindFirstFileA(inpath.c_str(), &ffd);
+	const HANDLE hFind( FindFirstFileA(inpath.c_str(), &ffd) );
 	if (INVALID_HANDLE_VALUE == hFind)
 		throw AccessException("Error opening directory " + path, AT);
 
 	do {
-		const std::string filename(ffd.cFileName);
-		const std::string full_path = path+"/"+filename;
+		const std::string filename( ffd.cFileName );
+		const std::string full_path( path+"/"+filename );
 		
 		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
 			continue; //skip "." and ".."
@@ -239,7 +239,7 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 	}
 	while (FindNextFile(hFind, &ffd) != 0);
 
-	const DWORD dwError = GetLastError();
+	const DWORD dwError( GetLastError() );
 	if (dwError != ERROR_NO_MORE_FILES)
 		throw AccessException("Error listing files in directory " + path, AT);
 
@@ -278,8 +278,8 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 
 	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
-		const std::string filename(dirp->d_name);
-		const std::string full_path = path+"/"+filename;
+		const std::string filename( dirp->d_name );
+		const std::string full_path( path+"/"+filename );
 		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
 			continue; //skip "." and ".."
 		

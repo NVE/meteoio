@@ -167,14 +167,13 @@ namespace IOUtils {
 	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
 	* @return true if everything went fine, false otherwise
 	*/
-	template <class T> bool convertString(T& t, const std::string& str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
-		std::string s(str);
-		trim(s); //delete trailing and leading whitespaces and tabs
-		if (s.empty()) {
+	template <class T> bool convertString(T& t, std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
+		trim(str); //delete trailing and leading whitespaces and tabs
+		if (str.empty()) {
 			t = static_cast<T> (nodata);
 			return true;
 		} else {
-			std::istringstream iss(s);
+			std::istringstream iss(str);
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 			iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
@@ -193,13 +192,13 @@ namespace IOUtils {
 		}
 	}
 	// fully specialized template functions (implementation must not be in header)
-	template<> bool convertString<double>(double& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<double>(double& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<bool>(bool& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<unsigned int>(unsigned int& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 
-	bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
+	bool convertString(Date& t, std::string str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
