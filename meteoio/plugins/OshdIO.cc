@@ -29,7 +29,7 @@ namespace mio {
  * @page oshd OshdIO
  * This plugin reads the meteorological forecast data downscaled for each of the Swiss meteorological networks IMIS/ANETZ stations
  * as preprocessed by the <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A> 
- * of the <A HREF="www.wsl.ch">WSL</A>. The data is written as Matlab 
+ * of the <A HREF="www.wsl.ch">WSL/SLF</A>. The data is written as Matlab
  * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per meteorological parameter and per timestep, 
  * available on an access-controlled server after each new <A HREF="www.cosmo-model.org/">COSMO</A> run. It therefore requires a third party 
  * library to read this file format: the Open Source <A HREF="https://sourceforge.net/projects/matio/">MatIO</A> library. This can be installed directly from
@@ -42,7 +42,7 @@ namespace mio {
  * 
  * @section oshd_data_structure Data structure
  * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_F_{run time}.mat</i> with the following possible values:
- *     + *parameter* is one of idif, idir, albd, ilwr, pair, prec, rhum, tcor, wcor, wdir;
+ *     + *parameter* is one of idfc, idrc, albd, ilwc, pair, prec, rcor, tcor, wcor, wdir;
  *     + *timestep* is written as purely numeric ISO with minute resolution;
  *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1, cosmoE;
  *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
@@ -290,10 +290,10 @@ void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recur
 {
 	meteo_files.clear();
 
-	std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "prec", is_recursive) ); //we consider that if we have found one parameter, the others are also there
+	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "prec", is_recursive) ); //we consider that if we have found one parameter, the others are also there
 
 	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
-	for (std::list<std::string>::iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
 		const std::string file_and_path( *it );
 		const std::string filename( FileUtils::getFilename(file_and_path) );
 
@@ -440,7 +440,7 @@ void OshdIO::readPPhase(const Date& station_date, const std::string& path, const
 	const std::string filename( path + "/" + "snfl" + file_suffix );
 
 	if (FileUtils::fileExists(filename)) {
-		const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
+		static const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
 		std::vector<double> vecSnowLine;
 		vecSnowLine.resize( nrIDs, IOUtils::nodata );
 		readFromFile(filename, MeteoData::PSUM_PH, station_date, vecSnowLine);
