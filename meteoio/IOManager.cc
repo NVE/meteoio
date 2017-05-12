@@ -56,22 +56,6 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 	}
 }
 
-void IOManager::setMinBufferRequirements(const double& buffer_size, const double& buff_before)
-{
-	tsmanager.setMinBufferRequirements(buffer_size, buff_before);
-}
-
-double IOManager::getAvgSamplingRate() const
-{
-	return tsmanager.getAvgSamplingRate();
-}
-
-void IOManager::push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
-                                const std::vector< METEO_SET >& vecMeteo)
-{
-	tsmanager.push_meteo_data(level, date_start, date_end, vecMeteo);
-}
-
 size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	vecStation.clear();
@@ -83,21 +67,10 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 	}
 }
 
-//for an interval of data: decide whether data should be filtered or raw
-size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo)
-{
-	return tsmanager.getMeteoData(dateStart, dateEnd, vecVecMeteo); //equivalent with the number of stations that have data
-}
-
 void IOManager::clear_cache()
 {
 	tsmanager.clear_cache();
 	gridsmanager.clear_cache();
-}
-
-void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo)
-{
-	tsmanager.add_to_points_cache(i_date, vecMeteo);
 }
 
 //This is small helper method to call the spatial interpolations when dealing with virtual stations or downsampling
@@ -141,11 +114,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	return vecMeteo.size();
 }
 
-void IOManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
-{
-	tsmanager.writeMeteoData(vecMeteo, name);
-}
-
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
 {
@@ -166,7 +134,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
 {
-	string info_string;
+	std::string info_string;
 	interpolate(date, dem, meteoparam, in_coords, result, info_string);
 	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cerr << " (" << info_string << ") " << endl;

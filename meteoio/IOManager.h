@@ -78,7 +78,7 @@ class IOManager {
 		* @return            Number of stations for which data has been found in the interval
 		*/
 		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                    std::vector< METEO_SET >& vecVecMeteo);
+		                    std::vector< METEO_SET >& vecVecMeteo) {return tsmanager.getMeteoData(dateStart, dateEnd, vecVecMeteo);}
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -115,7 +115,7 @@ class IOManager {
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
 		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_SET >& vecMeteo);
+		                     const std::vector< METEO_SET >& vecMeteo) {tsmanager.push_meteo_data(level, date_start, date_end, vecMeteo);}
 
 		/**
 		 * @brief Fill Grid2DObject with spatial data.
@@ -175,7 +175,7 @@ class IOManager {
 		 * @param buffer_size buffer size in days
 		 * @param buff_before buffer centering in days
 		 */
-		void setMinBufferRequirements(const double& buffer_size, const double& buff_before);
+		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsmanager.setMinBufferRequirements(buffer_size, buff_before);}
 
 		/**
 		 * @brief Returns the average sampling rate in the data.
@@ -186,9 +186,9 @@ class IOManager {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate() const;
+		double getAvgSamplingRate() const {return tsmanager.getAvgSamplingRate();}
 
-		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="");
+		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="") {tsmanager.writeMeteoData(vecMeteo, name);}
 
 		/**
 		 * @brief Returns a copy of the internal Config object.
@@ -207,7 +207,7 @@ class IOManager {
 		 * @param i_date Representing a point in time
 		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
 		 */
-		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
+		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo) {tsmanager.add_to_points_cache(i_date, vecMeteo);}
 
 		/**
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.

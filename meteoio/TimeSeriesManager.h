@@ -118,7 +118,7 @@ class TimeSeriesManager {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate() const;
+		double getAvgSamplingRate() const {return raw_buffer.getAvgSamplingRate();}
 
 		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="");
 

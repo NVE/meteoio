@@ -183,7 +183,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	//The first case: we are looking at raw data directly, only unresampled values are considered, exact date match
 	if (processing_level == IOUtils::raw) {
 		std::vector< std::vector<MeteoData> > vec_cache;
-		const Duration eps(1./(24.*3600.), 0.);
+		static const Duration eps(1./(24.*3600.), 0.);
 		iohandler.readMeteoData(i_date-eps, i_date+eps, vec_cache);
 		for (size_t ii=0; ii<vec_cache.size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
@@ -241,11 +241,6 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 void TimeSeriesManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
 {
 	iohandler.writeMeteoData(vecMeteo, name);
-}
-
-double TimeSeriesManager::getAvgSamplingRate() const
-{
-	return raw_buffer.getAvgSamplingRate();
 }
 
 /**
