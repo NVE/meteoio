@@ -61,14 +61,14 @@ class MeteoProcessor {
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
-		bool resample(const Date& date, const std::vector<MeteoData>& ivec, MeteoData& md);
+		bool resample(const Date& date, const std::vector<MeteoData>& ivec, MeteoData& md) {return mi1d.resampleData(date, ivec, md);}
 
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
 
  	private:
-		static void getParameters(const Config& cfg, std::set<std::string>& set_parameters);
+		static std::set<std::string> getParameters(const Config& cfg);
 		static void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current);
 
 		Meteo1DInterpolator mi1d;

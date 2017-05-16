@@ -56,18 +56,12 @@ void GridsManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
-void GridsManager::clear_cache()
-{
-	buffer.clear();
-}
-
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
 {
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, filename);
 	} else {
-		if (buffer.get(grid2D, filename))
-			return;
+		if (buffer.get(grid2D, filename)) return;
 
 		iohandler.read2DGrid(grid2D, filename);
 		buffer.push(grid2D, filename);
@@ -79,8 +73,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, parameter, date);
 	} else {
-		if (buffer.get(grid2D, parameter, date))
-			return;
+		if (buffer.get(grid2D, parameter, date)) return;
 
 		iohandler.read2DGrid(grid2D, parameter, date);
 		buffer.push(grid2D, parameter, date);

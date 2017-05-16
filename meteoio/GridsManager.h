@@ -44,8 +44,8 @@ class GridsManager {
 		//end legacy support
 
 		void setProcessingLevel(const unsigned int& i_level);
-		void clear_cache();
-		
+		void clear_cache() {buffer.clear();}
+
 		/**
 		 * @brief Returns a copy of the internal Config object.
 		 * This is convenient to clone an iomanager

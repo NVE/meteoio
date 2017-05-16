@@ -17,8 +17,6 @@
 */
 #include <meteoio/MeteoProcessor.h>
 
-#include <algorithm>
-
 using namespace std;
 
 namespace mio {
@@ -26,8 +24,7 @@ namespace mio {
 MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack()
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
-	set<string> set_of_used_parameters;
-	getParameters(cfg, set_of_used_parameters);
+	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
 	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
@@ -42,18 +39,21 @@ MeteoProcessor::~MeteoProcessor()
 		delete it->second;
 }
 
-void MeteoProcessor::getParameters(const Config& cfg, std::set<std::string>& set_parameters)
+std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
+	std::set<std::string> set_parameters;
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, std::string(), "Filters");
 
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const string tmp = vec_keys[ii].substr(0,found);
+			const std::string tmp( vec_keys[ii].substr(0,found) );
 			set_parameters.insert(tmp);
 		}
 	}
+
+	return set_parameters;
 }
 
 void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties) const
@@ -99,11 +99,6 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 	if (processing_stack.empty())
 		ovec = ivec;
-}
-
-bool MeteoProcessor::resample(const Date& date, const std::vector<MeteoData>& ivec, MeteoData& md)
-{
-	return mi1d.resampleData(date, ivec, md);
 }
 
 const std::string MeteoProcessor::toString() const {

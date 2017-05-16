@@ -22,6 +22,7 @@
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <iomanip>
 
@@ -528,6 +529,65 @@ double Interpol1D::corr(const std::vector<double>& X, const std::vector<double>&
 	if (cov==IOUtils::nodata) return IOUtils::nodata;
 	
 	return ( cov / (sigma_x*sigma_y));
+}
+
+/**
+* @brief Computes the R2 coefficient of determination
+* See https://en.wikipedia.org/wiki/Coefficient_of_determination and https://en.wikipedia.org/wiki/Fraction_of_variance_unexplained
+* @param obs vector of observed data
+* @param sim vector of simulated data
+* @return coefficient of determination
+*/
+double Interpol1D::R2(const std::vector<double>& obs, const std::vector<double>& sim)
+{
+	const size_t n = obs.size();
+	if (n!=sim.size())
+		throw IOException("Vectors should have the same size for the R2 coefficient of determination!", AT);
+	if (n==0) return IOUtils::nodata;
+
+	//no special processing for the nodata values
+	const double ObsMean = arithmeticMean( obs );
+	if (ObsMean==IOUtils::nodata) return IOUtils::nodata;
+
+	double ss_err = 0., ss_tot = 0.;
+	for (size_t ii=0; ii<n; ii++) {
+		if (obs[ii]==IOUtils::nodata) continue;
+		ss_err += Optim::pow2( obs[ii] - sim[ii] );
+		ss_tot += Optim::pow2( obs[ii] - ObsMean );
+	}
+
+	if (ss_tot==0. && ss_err==0) return 1.;
+	if (ss_tot==0.) return IOUtils::nodata; //this can happen if the vector is filled with constant values
+	return 1. - ss_err / ss_tot;
+}
+
+/**
+* @brief Computes the Nash-Suttcliffe correlation coefficient for two vectors
+* It is assumed that the same indices contain the same timesteps. A value of 1
+* means a perfect match, a value of zero that no variance is reproduced (see https://en.wikipedia.org/wiki/Nash%E2%80%93Sutcliffe_model_efficiency_coefficient)
+* @param obs vector of observed data
+* @param sim vector of simulated data
+* @return Nash-Suttcliffe correlation coefficient, between ]-∞, 1]
+*/
+double NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim)
+{
+	const size_t n = obs.size();
+	if (n!=sim.size())
+		throw IOException("Vectors should have the same size for Nash-Suttcliffe!", AT);
+	if (n==0) return IOUtils::nodata;
+
+	//no special processing is performed on nodata values
+	const double mean =  std::accumulate(obs.begin(), obs.end(), 0.0) / static_cast<double>(n);
+
+	//now compute the numerator and denominator
+	double denominator = 0., numerator = 0.;
+	for (size_t ii=0; ii<n; ii++) {
+		numerator += Optim::pow2(obs[ii] - sim[ii]);
+		denominator += Optim::pow2(obs[ii] - mean);
+	}
+
+	if (denominator==0.) return IOUtils::nodata; //this can happen if the vector is filled with constant values
+	return 1. - numerator / denominator;
 }
 
 /**
