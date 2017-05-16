@@ -18,6 +18,12 @@ if [ $# -ge 4 ]; then
 fi
 files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
 
+#on osX, it is necessary to force using gawk, if available
+local_awk="awk"
+if [ `command -v gawk` ]; then
+	local_awk="gawk"
+fi
+
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
 		NAME=`basename "${SMET}" .smet`
@@ -30,7 +36,7 @@ if [ "${param}" = "time" ]; then
 		full_nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
 		nr_lines=`expr ${full_nr_lines} - ${header_nr_lines}`
 
-		echo "${start} ${end} ${nr_lines}" | awk '
+		echo "${start} ${end} ${nr_lines}" | ${local_awk} '
 				function getISO(ts){
 					return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
 				}
@@ -75,7 +81,7 @@ for SMET in ${files}; do
 	NODATA=`head -100 ${SMET} | grep nodata | tr -s ' \t' | cut -d' ' -f3`
 	JULIAN=`head -100 "${SMET}" | grep fields | grep julian`
 
-	awk '
+	${local_awk} '
 	function toJul(ts){
 		gsub(/\-|\:|T/," ", ts); split(ts,d," ");
 		date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]);
