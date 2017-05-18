@@ -24,6 +24,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
 
 namespace mio {
 
@@ -315,13 +317,13 @@ template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D,
 
 	//Copy by value subspace
 	for (size_t ii=i_nz; ii<(i_nz+i_sizeZ); ii++) {
+		const size_t iz = ii-i_nz;
 		for (size_t jj=i_ny; jj<(i_ny+i_sizeY); jj++) {
+			const size_t iy = jj-i_ny;
 			for (size_t kk=i_nx; kk<(i_nx+i_sizeX); kk++) {
+				const size_t ix = kk-i_nx;
 				for (size_t ll=i_nw; ll<(i_nw+i_sizeW); ll++) {
 					const size_t iw = ll-i_nw;
-					const size_t ix = kk-i_nx;
-					const size_t iy = jj-i_ny;
-					const size_t iz = ii-i_nz;
 					operator()(ll,kk,jj,ii) = i_array4D(iw,ix, iy, iz);
 				}
 			}
@@ -453,11 +455,9 @@ template<class T> T Array4D<T>::getMin() const {
 	const size_t nwyz = nwnxny*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nwyz; jj++) {
-			const T val = vecData[jj];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
@@ -474,11 +474,9 @@ template<class T> T Array4D<T>::getMax() const {
 	const size_t nwyz = nwnxny*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nwyz; jj++) {
-			const T val = vecData[jj];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
@@ -495,12 +493,8 @@ template<class T> T Array4D<T>::getMean() const {
 	const size_t nwyz = nwnxny*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nwyz; jj++) {
-			const T val = vecData[jj];
-			mean += val;
-		}
-		if (nwyz>0) return mean/(T)(nwyz);
-		else return (T)0;
+		if (nwyz>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nwyz);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t jj=0; jj<nwyz; jj++) {

@@ -323,8 +323,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 			}
 		}
 		//the date was not found
-		std::string in_grid2d_path;
-		cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
+		const std::string in_grid2d_path = cfg.get("GRID2DPATH", "Input");
 		throw InvalidArgumentException("No Gridded data found for "+date.toString(Date::ISO)+"in '"+in_grid2d_path+"'", AT);
 	} else {
 		const std::string filename = cfg.get("GRID2DFILE", "Input");
@@ -463,8 +462,8 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 			read2DGrid_internal(p, filename, MeteoGrids::P) && 
 			read2DGrid_internal(ta, filename, MeteoGrids::TA)) {
 				dem_out.set(p, IOUtils::nodata);
-				const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
-				const double k_inv = 1./k;
+				static const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+				static const double k_inv = 1./k;
 				for (size_t ii=0; ii<(dem_out.getNx()*dem_out.getNy()); ii++) {
 					const double K = pow(p(ii)/p_sea(ii), k_inv);
 					dem_out(ii) = ta(ii)*Cst::earth_R0*(1.-K) / (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 - ta(ii)*(1.-K));
@@ -518,7 +517,7 @@ void NetCDFIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std:
 	meteo_files.clear();
 
 	const std::string meteo_ext = cfg.get("METEO_EXT", "INPUT", IOUtils::nothrow);
-	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
+	std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, meteo_ext) );
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();
 
@@ -787,13 +786,13 @@ void NetCDFIO::write2DGrid_internal(Grid2DObject grid_in, const std::string& fil
 void NetCDFIO::getTimeTransform(const int& ncid, double &time_offset, double &time_multiplier) const
 {
 	if (time_dimension.empty()) throw IOException("time_dimension has not been initialized!", AT);
-	const std::string time_units = ncpp::get_DimAttribute(ncid, time_dimension, "units");
+	const std::string time_units( ncpp::get_DimAttribute(ncid, time_dimension, "units") );
 
 	std::vector<std::string> vecString;
 	const size_t nrWords = IOUtils::readLineToVec(time_units, vecString);
 	if (nrWords<3 || nrWords>4) throw InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
-	const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
+	static const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
 	
 	if (vecString[0]=="years") time_multiplier = equinox_year;
 	else if (vecString[0]=="months") time_multiplier = equinox_year/12.;

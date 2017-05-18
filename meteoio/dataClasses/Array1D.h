@@ -21,7 +21,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
-#include <iterator>
+#include <numeric>
+#include <algorithm>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/IOExceptions.h>
@@ -292,11 +293,9 @@ template<class T> T Array1D<T>::getMin() const {
 	T min = std::numeric_limits<T>::max();
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
@@ -312,11 +311,9 @@ template<class T> T Array1D<T>::getMax() const {
 	T max = -std::numeric_limits<T>::max();
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
@@ -332,13 +329,8 @@ template<class T> T Array1D<T>::getMean() const {
 	T mean = 0;
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			mean += val;
-		}
-		const size_t count = nx;
-		if (count>0) return mean/(T)(count);
-		else return (T)0;
+		if (nx>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nx);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t ii=0; ii<nx; ii++) {

@@ -24,6 +24,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
 
 //forward declaration
 namespace mio { template <class T> class Array3D; template <class T> class Array3DProxy2; }
@@ -372,11 +374,11 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 
 	//Copy by value subspace
 	for (size_t ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
+		const size_t iz = ii-i_nz;
 		for (size_t jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+			const size_t iy = jj-i_ny;
 			for (size_t kk=i_nx; kk<(i_nx+i_ncols); kk++) {
 				const size_t ix = kk-i_nx;
-				const size_t iy = jj-i_ny;
-				const size_t iz = ii-i_nz;
 				operator()(kk,jj,ii) = i_array3D(ix, iy, iz);
 			}
 		}
@@ -515,11 +517,9 @@ template<class T> T Array3D<T>::getMin() const {
 	const size_t nxyz = ny*nx*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxyz; jj++) {
-			const T val = vecData[jj];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
@@ -536,11 +536,9 @@ template<class T> T Array3D<T>::getMax() const {
 	const size_t nxyz = ny*nx*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxyz; jj++) {
-			const T val = vecData[jj];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
@@ -557,12 +555,8 @@ template<class T> T Array3D<T>::getMean() const {
 	const size_t nxyz = nx*ny*nz;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxyz; jj++) {
-			const T val = vecData[jj];
-			mean += val;
-		}
-		if (nxyz>0) return mean/(T)(nxyz);
-		else return (T)0;
+		if (nxyz>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nxyz);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t jj=0; jj<nxyz; jj++) {

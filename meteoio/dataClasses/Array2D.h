@@ -24,6 +24,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
 
 //forward declaration
 namespace mio { template <class T> class Array2D; }
@@ -338,9 +340,9 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const size_
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	for (size_t jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+		const size_t iy = jj-i_ny;
 		for (size_t ii=i_nx; ii<(i_nx+i_ncols); ii++) {
 			const size_t ix = ii-i_nx;
-			const size_t iy = jj-i_ny;
 			operator()(ii,jj) = i_array2D(ix, iy);
 		}
 	}
@@ -437,11 +439,9 @@ template<class T> T Array2D<T>::getMin() const {
 
 	const size_t nxy = ny*nx;
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxy; jj++) {
 			const T val = vecData[jj];
@@ -458,11 +458,9 @@ template<class T> T Array2D<T>::getMax() const {
 
 	const size_t nxy = ny*nx;
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxy; jj++) {
 			const T val = vecData[jj];
@@ -479,12 +477,8 @@ template<class T> T Array2D<T>::getMean() const {
 	const size_t nxy = nx*ny;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			mean += val;
-		}
-		if (nxy>0) return mean/(T)(nxy);
-		else return (T)0;
+		if (nxy>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nxy);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t jj=0; jj<nxy; jj++) {
