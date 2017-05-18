@@ -428,13 +428,17 @@ void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 
 	const std::string stationName = (sd.stationName != "" ? sd.stationName : sd.stationID);
 
+	const short int epsg = sd.position.getEPSG();
+	if (epsg==IOUtils::snodata)
+		throw InvalidArgumentException("Station '"+stationName+"' does not have a EPSG code", AT);
+	
 	stringstream values;
 	values << "(" << index << ","
 		  << "'" << stationName << "'," << fixed
 		  << setprecision(2) << sd.position.getEasting() << ","
 		  << sd.position.getNorthing() << ","
 		  << sd.position.getAltitude() << ","
-		  << sd.position.getEPSG() << ")";
+		  << epsg << ")";
 
 	const std::string query( "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES " + values.str() + ";" );
 	sql_exec(query, false);

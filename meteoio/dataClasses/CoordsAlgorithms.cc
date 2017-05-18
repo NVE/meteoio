@@ -303,7 +303,7 @@ void CoordsAlgorithms::Molodensky(const double& lat_in, const double& lon_in, co
 
 /**
 * @brief returns the epsg code matching a provided string representation
-* For example, when given "CH1903" with empty coordparam, it will return "21781"
+* For example, when given "CH1903" with empty coordparam, it will return "21781". For "LOCAL" coordinates, it returns IOUtils::snodata.
 * @param[in] coordsystem string representation of the coordinate system
 * @param[in] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
 * @return epsg code
@@ -346,7 +346,7 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 	}
 
 	//all others have no associated EPSG code
-	return -1;
+	return IOUtils::snodata;
 }
 
 /**

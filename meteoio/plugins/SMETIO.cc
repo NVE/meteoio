@@ -501,10 +501,14 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	if (isConsistent) {
 		mywriter.set_header_value("latitude", sd.position.getLat());
 		mywriter.set_header_value("longitude", sd.position.getLon());
-		mywriter.set_header_value("easting", sd.position.getEasting());
-		mywriter.set_header_value("northing", sd.position.getNorthing());
+		const double easting = sd.position.getEasting(), northing = sd.position.getNorthing();
+		if (easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
+			mywriter.set_header_value("easting", easting);
+			mywriter.set_header_value("northing", northing);
+		}
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
-		mywriter.set_header_value("epsg", (double)sd.position.getEPSG());
+		const short int epsg = sd.position.getEPSG();
+		if (epsg!=IOUtils::snodata) mywriter.set_header_value("epsg", static_cast<double>(epsg));
 
 		if (timezone != IOUtils::nodata)
 			mywriter.set_header_value("tz", timezone);
