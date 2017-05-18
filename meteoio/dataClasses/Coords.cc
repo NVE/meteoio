@@ -44,9 +44,9 @@ namespace mio {
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
- * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
- * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
- * - <a href="https://en.wikipedia.org/wiki/Universal_polar_stereographic_coordinate_system">UPS</a> for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
+ * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf] (epsg codes, respectively 21781 and 2056)
+ * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates, the zone must be specified in the parameters, for example 31T [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf] (epsg codes as 32600+zoneNumber in the northern hemisphere or as 32700+zoneNumber in the southern hemisphere)
+ * - <a href="https://en.wikipedia.org/wiki/Universal_polar_stereographic_coordinate_system">UPS</a> for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2] (epsg codes as 32661 for the north pole and 32761 for the south pole)
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
  *
  * Such an example of use is the following:

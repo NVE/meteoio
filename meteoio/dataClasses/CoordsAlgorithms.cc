@@ -327,12 +327,12 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 	}
 	if (coordsystem=="UPS") {
 		//UPS Zone
-		if (coordparam == "S") {
-			//southern hemisphere
-			return (32761);
-		} else {
+		if (coordparam == "N") {
 			//northern hemisphere
 			return (32661);
+		} else {
+			//southern hemisphere
+			return (32761);
 		}
 	}
 	if (coordsystem=="PROJ4") {
