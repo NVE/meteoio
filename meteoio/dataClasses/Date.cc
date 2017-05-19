@@ -1260,7 +1260,7 @@ std::iostream& operator>>(std::iostream& is, Date& date) {
 }
 
 // PRIVATE METHODS
-double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second) const
+double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second)
 {
 	const long julday = getJulianDayNumber(i_year, i_month, i_day);
 	const double frac = (i_hour-12.)/24. + i_minute/(24.*60.) + i_second/(24.*3600.); //the julian date reference is at 12:00
@@ -1268,7 +1268,7 @@ double Date::calculateJulianDate(const int& i_year, const int& i_month, const in
 	return (((double)julday) + frac);
 }
 
-void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute, int& o_second) const
+void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute, int& o_second)
 { //given a julian day, calculate the year, month, day, hours and minutes
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	//we round the given julian date to the closest second since this is our current resolution
@@ -1299,14 +1299,14 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 	o_second = sec - 3600*o_hour - 60*o_minute;
 }
 
-bool Date::isLeapYear(const int& i_year) const {
+bool Date::isLeapYear(const int& i_year) {
 	//Using the leap year rule: years that can be divided by 4 if they are not centuries
 	//For centuries, they are leap years only if they can be divided by 400
 	const bool is_leapYear = (i_year%4 == 0 && (i_year %100 != 0 || i_year%400 == 0));
 	return is_leapYear;
 }
 
-long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day) const
+long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day)
 { //given year, month, day, calculate the matching julian day
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	const long lmonth = (long) i_month, lday = (long) i_day;
@@ -1323,7 +1323,7 @@ long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& 
 	return jdn;
 }
 
-void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) const {
+void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) {
 	if ((in_year < -4713) || (in_year >3000)
 	    || (in_month < 1) || (in_month > 12)
 	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year))

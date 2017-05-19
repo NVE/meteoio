@@ -197,11 +197,11 @@ class Date {
 	protected:
 		double localToGMT(const double& in_julian) const;
 		double GMTToLocal(const double& in_gmt_julian) const;
-		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& i_second) const;
-		void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute, int& o_second) const;
-		long getJulianDayNumber(const int&, const int&, const int&) const;
-		bool isLeapYear(const int&) const;
-		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) const;
+		static double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& i_second);
+		static void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute, int& o_second);
+		static long getJulianDayNumber(const int&, const int&, const int&);
+		static bool isLeapYear(const int&);
+		static void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second);
 
 		static const double epsilon;
 		double timezone;
