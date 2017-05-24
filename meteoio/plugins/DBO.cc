@@ -40,14 +40,14 @@ namespace mio {
  *
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
- * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730/osper-api
+ * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
  * @code
  * METEO	= DBO
- * DBO_URL	= http://developwis.wsl.ch:8730/osper-api
+ * DBO_URL	= http://developwis.wsl.ch:8730
  * STATION1	= WFJ2
  * STATION2	= DAV3
  * @endcode
@@ -327,7 +327,7 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 
 					const picojson::value::object& obj = array[jj].get<picojson::object>();
 					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
-						if (it->first=="code" && it->second.is<std::string>()) code = it->second.get<std::string>();
+						if (it->first=="measurandCode" && it->second.is<std::string>()) code = it->second.get<std::string>();
 						if (it->first=="deviceCode" && it->second.is<std::string>()) device_code = it->second.get<std::string>();
 						if (it->first=="id" && it->second.is<double>()) id = it->second.get<double>();
 						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
@@ -352,8 +352,8 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 
 /*************************************************************************************************/
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string DBO::metadata_endpoint = "/osper-api/osper/stations/";
-const std::string DBO::data_endpoint = "/osper-api/osper/timeseries/";
+const std::string DBO::metadata_endpoint = "/data-api/data/stations/";
+const std::string DBO::data_endpoint = "/data-api/data/timeseries/";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
@@ -419,18 +419,26 @@ void DBO::fillStationMeta()
 	vecTsMeta.resize( vecStationName.size() );
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
-		std::string station_id( vecStationName[ii] );
-		if (station_id.find(':')==std::string::npos) station_id = "IMIS::" + station_id;
-		const std::string request( metadata_endpoint + "name=" + IOUtils::strToLower( station_id ) );
+		const std::string user_string( IOUtils::strToUpper(vecStationName[ii]) );
+		const size_t pos_marker = user_string.find("::");
+		const std::string station_id = (pos_marker==std::string::npos)? user_string : user_string.substr(pos_marker+2);
+		const std::string network =  (pos_marker==std::string::npos)? "IMIS" : user_string.substr(0, pos_marker);
+		const std::string request( metadata_endpoint + network + "/" + station_id );
 
 		std::stringstream ss;
 		if (curl_read(request, ss)) {
+			//handling possible errors
 			if (ss.str().empty()) throw UnknownValueException("Station not found: '"+station_id+"'", AT);
-
 			picojson::value v;
 			const std::string err( picojson::parse(v, ss.str()) );
 			if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
+			const std::string type( getString("$.type", v) );
+			if (type!="Feature") {
+				const std::string error( getString("$.error", v) );
+				throw UnknownValueException("Station '"+station_id+"' returned with error: "+error, AT);
+			}
 
+			//processing metadata
 			const std::vector<double> coordinates( getDoubles("$.geometry.coordinates", v) );
 			if (coordinates.size()!=3) throw InvalidFormatException("Wrong coordinates specification!", AT);
 
