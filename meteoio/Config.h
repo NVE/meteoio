@@ -83,12 +83,6 @@ class Config {
 		void addFile(const std::string& filename_in);
 
 		/**
-		 * @brief Add the content of the given command line to the internal key/value map object
-		 * @param[in] cmd_line string representing the command line to be parsed for key/value pairs or switches
-		 */
-		void addCmdLine(const std::string& cmd_line);
-
-		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
@@ -310,10 +304,9 @@ class Config {
 		               const std::string& keymatch, std::string section, const bool& anywhere=false) const;
 
 	private:
-		void parseCmdLine(const std::string& cmd_line);
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
-		std::string extract_section(std::string key) const;
+		static std::string extract_section(std::string key);
 		std::string clean_import_path(const std::string& in_path) const;
 
 		std::map<std::string, std::string> properties; //Save key value pairs
@@ -334,7 +327,7 @@ class ConfigProxy {
 		            const std::string& i_section, const IOUtils::ThrowOptions& i_opt)
 		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
-		template<typename T> operator T() {
+		template<typename T> operator T() const {
 			T tmp;
 			proxycfg.getValue(key, section, tmp, opt);
 			return tmp;
