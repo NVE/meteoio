@@ -276,7 +276,7 @@ void NetCDFIO::initAttributesMap(const std::string& schema, std::map<MeteoGrids:
 	} else
 		throw InvalidArgumentException("Invalid schema selected for NetCDF: \""+schema+"\"", AT);
 	
-	const std::vector<std::string> custom_attr( cfg.findKeys("NETCDF::", "Input") );
+	const std::vector<std::string> custom_attr( cfg.getKeys("NETCDF::", "Input") );
 	const size_t nrOfCustoms = custom_attr.size();
 	for (size_t ii=0; ii<nrOfCustoms; ++ii) {
 		const size_t found = custom_attr[ii].find_last_of(":");

@@ -99,7 +99,7 @@ void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 void DataCreator::getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters)
 {
 	set_parameters.clear();
-	const std::vector<std::string> vec_keys( cfg.findKeys(key_pattern, "Input", true) ); //search anywhere in key
+	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, "Input", true) ); //search anywhere in key
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
@@ -116,7 +116,7 @@ size_t DataCreator::getAlgorithmsForParameter(const Config& cfg, const std::stri
 {
 	vecAlgorithms.clear();
 
-	const std::vector<std::string> vecKeys( cfg.findKeys(parname+key_pattern, "Input") );
+	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, "Input") );
 
 	if (vecKeys.size() > 1)
 		throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;

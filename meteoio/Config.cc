@@ -36,7 +36,7 @@ Config::Config(const std::string& i_filename) : properties(), imported(), source
 	addFile(i_filename);
 }
 
-ConfigProxy Config::get(const std::string& key, const std::string& section, const IOUtils::ThrowOptions& opt) const
+ConfigProxy Config::get(const std::string& key, std::string section, const IOUtils::ThrowOptions& opt) const
 {
 	return ConfigProxy(*this, key, section, opt);
 }
@@ -49,28 +49,30 @@ void Config::addFile(const std::string& i_filename)
 	parseFile(i_filename);
 }
 
-void Config::addKey(const std::string& key, const std::string& section, const std::string& value)
+void Config::addKey(const std::string& key, std::string section, const std::string& value)
 {
-	properties[ IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) ] = value;
+	IOUtils::toUpper(section);
+	properties[ section + "::" + IOUtils::strToUpper(key) ] = value;
 }
 
-void Config::deleteKey(const std::string& key, const std::string& section)
+void Config::deleteKey(const std::string& key, std::string section)
 {
-	properties.erase( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) );
+	IOUtils::toUpper(section);
+	properties.erase( section + "::" + IOUtils::strToUpper(key) );
 }
 
-void Config::deleteKeys(const std::string& keymatch, const std::string& section, const bool& anywhere)
+void Config::deleteKeys(const std::string& keymatch, std::string section, const bool& anywhere)
 {
+	IOUtils::toUpper(section);
 	const size_t section_len = section.length();
 
 	//Loop through keys, look for match - delete matches
 	if (anywhere) {
 		const std::string key_pattern( IOUtils::strToUpper(keymatch) );
-		const std::string section_pattern( IOUtils::strToUpper(section) );
 
 		std::map<std::string,std::string>::iterator it = properties.begin();
 		while (it != properties.end()) {
-			const size_t found_section = (it->first).find(section_pattern, 0);
+			const size_t found_section = (it->first).find(section, 0);
 
 			if ( found_section!=string::npos && (it->first).find(key_pattern, section_len)!=string::npos )
 				properties.erase( it++ ); // advance before iterator become invalid
@@ -79,7 +81,7 @@ void Config::deleteKeys(const std::string& keymatch, const std::string& section,
 		}
 
 	} else {
-		const std::string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
+		const std::string key_pattern( section + "::" + IOUtils::strToUpper(keymatch) );
 
 		std::map<std::string,std::string>::iterator it = properties.begin();
 		while (it != properties.end()) {
@@ -91,9 +93,10 @@ void Config::deleteKeys(const std::string& keymatch, const std::string& section,
 	}
 }
 
-bool Config::keyExists(const std::string& key, const std::string& section) const
+bool Config::keyExists(const std::string& key, std::string section) const
 {
-	const std::string full_key( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) );
+	IOUtils::toUpper(section);
+	const std::string full_key( section + "::" + IOUtils::strToUpper(key) );
 	const std::map<string,string>::const_iterator it = properties.find(full_key);
 	return (it!=properties.end());
 }
@@ -265,30 +268,54 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 
 }
 
-//Return key/value filename
-std::string Config::getSourceName() const
+std::vector< std::pair<std::string, std::string> > Config::getValues(const std::string& keymatch, std::string section, const bool& anywhere) const
 {
-	return sourcename;
-}
-
-std::string Config::getConfigRootDir() const
-{
-	return configRootDir;
-}
-
-std::vector<std::string> Config::findKeys(const std::string& keymatch,
-                        std::string section, const bool& anywhere) const
-{
-	std::vector<std::string> vecResult;
+	IOUtils::toUpper(section);
 	const size_t section_len = section.length();
+	std::vector< std::pair<std::string, std::string> > vecResult;
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
 		const std::string key_pattern( IOUtils::strToUpper(keymatch) );
-		const std::string section_pattern( IOUtils::strToUpper(section) );
 
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_section = (it->first).find(section_pattern, 0);
+			const size_t found_section = (it->first).find(section, 0);
+			if (found_section==string::npos) continue; //not in the right section
+
+			const size_t found_pos = (it->first).find(key_pattern, section_len);
+			if (found_pos!=string::npos) { //found it!
+				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
+				vecResult.push_back( make_pair(key, it->second));
+			}
+		}
+	} else {
+		const std::string key_pattern( section + "::" + IOUtils::strToUpper(keymatch) );
+
+		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
+			const size_t found_pos = (it->first).find(key_pattern, 0);
+			if (found_pos==0) { //found it!
+				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
+				vecResult.push_back( make_pair(key, it->second));
+			}
+		}
+	}
+
+	return vecResult;
+}
+
+std::vector<std::string> Config::getKeys(const std::string& keymatch,
+                        std::string section, const bool& anywhere) const
+{
+	IOUtils::toUpper(section);
+	const size_t section_len = section.length();
+	std::vector<std::string> vecResult;
+
+	//Loop through keys, look for match - push it into vecResult
+	if (anywhere) {
+		const std::string key_pattern( IOUtils::strToUpper(keymatch) );
+
+		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
+			const size_t found_section = (it->first).find(section, 0);
 			if (found_section==string::npos) continue; //not in the right section
 
 			const size_t found_pos = (it->first).find(key_pattern, section_len);
@@ -298,7 +325,7 @@ std::vector<std::string> Config::findKeys(const std::string& keymatch,
 			}
 		}
 	} else {
-		const std::string key_pattern( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch) );
+		const std::string key_pattern( section + "::" + IOUtils::strToUpper(keymatch) );
 
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(key_pattern, 0);

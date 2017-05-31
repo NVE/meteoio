@@ -42,7 +42,7 @@ MeteoProcessor::~MeteoProcessor()
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
 	std::set<std::string> set_parameters;
-	const std::vector<std::string> vec_keys( cfg.findKeys(std::string(), "Filters") );
+	const std::vector<std::string> vec_keys( cfg.getKeys(std::string(), "Filters") );
 
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");

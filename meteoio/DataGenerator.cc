@@ -159,7 +159,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 void DataGenerator::getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters)
 {
 	set_parameters.clear();
-	const std::vector<std::string> vec_keys( cfg.findKeys(key_pattern, "Generators", true) ); //search anywhere in key
+	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, "Generators", true) ); //search anywhere in key
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
@@ -176,7 +176,7 @@ size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::st
 {
 	vecAlgorithms.clear();
 
-	const std::vector<std::string> vecKeys( cfg.findKeys(parname+key_pattern, "Generators") );
+	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, "Generators") );
 
 	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;
 	if (vecKeys.empty()) return 0;
