@@ -547,8 +547,8 @@ void IOHandler::create_merge_map()
 {
 	merge_ready = true;
 	
-	std::vector<std::string> merge_keys;
-	const size_t nrOfStations = cfg.findKeys(merge_keys, "::MERGE", "Input", true);
+	const std::vector<std::string> merge_keys( cfg.findKeys("::MERGE", "Input", true) );
+	const size_t nrOfStations = merge_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = merge_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
@@ -708,8 +708,8 @@ void IOHandler::create_exclude_map()
 		fin.close();
 	}
 
-	std::vector<std::string> exclude_keys;
-	const size_t nrOfStations = cfg.findKeys(exclude_keys, "::EXCLUDE", "Input", true);
+	const std::vector<std::string> exclude_keys( cfg.findKeys("::EXCLUDE", "Input", true) );
+	const size_t nrOfStations = exclude_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = exclude_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
@@ -784,8 +784,8 @@ void IOHandler::create_keep_map()
 		fin.close();
 	}
 
-	std::vector<std::string> keep_keys;
-	const size_t nrOfStations = cfg.findKeys(keep_keys, "::KEEP", "Input", true);
+	const std::vector<std::string> keep_keys( cfg.findKeys("::KEEP", "Input", true) );
+	const size_t nrOfStations = keep_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = keep_keys[ii].find_first_of(":");
 		if (found==std::string::npos) continue;
@@ -887,8 +887,8 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 */
 void IOHandler::create_move_map()
 {
-	std::vector<std::string> move_keys;
-	const size_t nrOfMatches = cfg.findKeys(move_keys, "::MOVE", "Input", true); //search anywhere in key
+	const std::vector<std::string> move_keys( cfg.findKeys("::MOVE", "Input", true) );
+	const size_t nrOfMatches = move_keys.size();
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const std::string dest_param( move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") ) );
@@ -950,8 +950,8 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 */
 void IOHandler::create_copy_map()
 {
-	std::vector<std::string> copy_keys;
-	const size_t nrOfMatches = cfg.findKeys(copy_keys, "::COPY", "Input", true); //search anywhere in key
+	const std::vector<std::string> copy_keys( cfg.findKeys("::COPY", "Input", true) );
+	const size_t nrOfMatches = copy_keys.size();
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const std::string dest_param( copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") ) );

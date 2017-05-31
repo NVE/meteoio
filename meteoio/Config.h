@@ -248,16 +248,15 @@ class Config {
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
 		 * @param[in] keystart std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
-		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
+		 * @return a vector of class T into which the values for the corresponding keys are saved
 		 */
 		template <typename T> void getValues(const std::string& keystart, const std::string& section, std::vector<T>& vecT) const
 		{
 			vecT.clear();
-			std::vector< std::string > vecKeys;
 			const std::string new_section( IOUtils::strToUpper(section) );
-			const size_t nr_keys = findKeys(vecKeys, keystart, new_section);
+			const std::vector< std::string > vecKeys( findKeys(keystart, new_section) );
 
-			for (size_t ii=0; ii<nr_keys; ++ii) {
+			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
 				const std::string full_key = new_section + "::" + vecKeys[ii];
 				T tmp;
 				try {
@@ -273,9 +272,9 @@ class Config {
 		{
 			vecT.clear();
 			const std::string new_section( IOUtils::strToUpper(section) );
-			const size_t nr_keys = findKeys(vecKeys, keystart, new_section);
+			vecKeys = findKeys(keystart, new_section);
 
-			for (size_t ii=0; ii<nr_keys; ++ii) {
+			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
 				const std::string full_key = new_section + "::" + vecKeys[ii];
 				T tmp;
 				try {
@@ -291,17 +290,15 @@ class Config {
 		 * @brief Function that searches for a given string within the keys of section (default: GENERAL)
 		 *         it returns the number of matches (partial matches are considered) and writes all the keys
 		 *         into a vector\<string\> that is handed to the function as reference
-		 * @param[out] vecResult A vector that will hold all keys that partially match keystart
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @return a vector that holds all keys that partially match keystart
 		 * @code
-		 *  vector<string> myVec;
-		 *  size_t nrOfMatches = cfg.findKeys(myVec, "TA::", "Filters");
+		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
 		 * @endcode
 		 */
-		size_t findKeys(std::vector<std::string>& vecResult,
-		               const std::string& keymatch, std::string section, const bool& anywhere=false) const;
+		std::vector<std::string> findKeys(const std::string& keymatch, std::string section, const bool& anywhere=false) const;
 
 	private:
 		void parseFile(const std::string& filename);

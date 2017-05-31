@@ -276,10 +276,10 @@ std::string Config::getConfigRootDir() const
 	return configRootDir;
 }
 
-size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& keymatch,
+std::vector<std::string> Config::findKeys(const std::string& keymatch,
                         std::string section, const bool& anywhere) const
 {
-	vecResult.clear();
+	std::vector<std::string> vecResult;
 	const size_t section_len = section.length();
 
 	//Loop through keys, look for match - push it into vecResult
@@ -309,7 +309,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 		}
 	}
 
-	return vecResult.size();
+	return vecResult;
 }
 
 std::string Config::extract_section(std::string key)

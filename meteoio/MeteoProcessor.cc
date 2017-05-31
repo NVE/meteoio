@@ -26,7 +26,7 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack(
 	//Parse [Filters] section, create processing stack for each configured parameter
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
-	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
+	for (std::set<std::string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
 		processing_stack[*it] = tmp;
 	}
@@ -42,8 +42,7 @@ MeteoProcessor::~MeteoProcessor()
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
 	std::set<std::string> set_parameters;
-	std::vector<std::string> vec_keys;
-	cfg.findKeys(vec_keys, std::string(), "Filters");
+	const std::vector<std::string> vec_keys( cfg.findKeys(std::string(), "Filters") );
 
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");
