@@ -399,18 +399,17 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	const double dem_easting = dem.llcorner.getEasting();
 	const double dem_northing = dem.llcorner.getNorthing();
 
-	std::vector<std::string> vecStation, vecKeys;
-	cfg.getValues("Vstation", "INPUT", vecStation, vecKeys);
+	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
-		Coords curr_point(coordin, coordinparam, vecStation[ii]);
+		Coords curr_point(coordin, coordinparam, vecStation[ii].first);
 
 		if (!curr_point.isNodata()) {
 			v_coords.push_back( curr_point ); //so we can check for duplicates
 
 			if (!dem.gridify(curr_point)) {
 				ostringstream ss;
-				ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM " << dem.toString(DEMObject::SHORT);
+				ss << "Virtual station \"" << vecStation[ii].first << "\" is not contained is provided DEM " << dem.toString(DEMObject::SHORT);
 				throw NoDataException(ss.str(), AT);
 			}
 
@@ -435,7 +434,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 			}
 			if (!is_duplicate) {
 				//extract vstation number, build the station name and station ID
-				const std::string id_num( vecKeys[ii].substr(string("Vstation").length()) );
+				const std::string id_num( vecStation[ii].second.substr(string("Vstation").length()) );
 				StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
 				sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 				v_stations.push_back( sd );

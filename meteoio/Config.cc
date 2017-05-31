@@ -199,13 +199,6 @@ void Config::parseFile(const std::string& filename)
 		addFile(file_name);
 		import_after.pop_back();
 	}
-
-	//HACK: since HNW is now obsolete, check for keys related to HNW to warn the user
-	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-		const size_t found_obsoleteHNW = (it->first).find("HNW", 0);
-		if (found_obsoleteHNW!=string::npos)
-			throw InvalidArgumentException("Parameter name \"HNW\" has been replaced by \"PSUM\". Please update your ini file!", AT);
-	}
 }
 
 void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
