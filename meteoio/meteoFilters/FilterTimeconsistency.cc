@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-FilterTimeconsistency::FilterTimeconsistency(const std::vector<std::string>& vec_args, const std::string& name)
+FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
           : WindowedFilter(name)
 {
 	parse_args(vec_args);
@@ -32,9 +32,11 @@ FilterTimeconsistency::FilterTimeconsistency(const std::vector<std::string>& vec
 void FilterTimeconsistency::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	const double std_factor = 4.;
+	static const double std_factor = 4.;
+	const size_t nr_points = ivec.size();
+
 	ovec = ivec;
-	for (size_t ii=0; ii<ovec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		double& value = ovec[ii](param);
 		if (value==IOUtils::nodata) continue;
 
@@ -45,7 +47,7 @@ void FilterTimeconsistency::process(const unsigned int& param, const std::vector
 			
 			const double std_dev = Interpol1D::std_dev( data );
 			if (std_dev==IOUtils::nodata) continue;
-			if (ii==0 || ii==(ovec.size()-1)) continue;
+			if (ii==0 || ii==(nr_points-1)) continue;
 			const double local_diff = fabs(value - ivec[ii-1](param)) + fabs(value - ivec[ii+1](param));
 			if (local_diff > std_factor*std_dev) value = IOUtils::nodata;
 			
@@ -54,25 +56,9 @@ void FilterTimeconsistency::process(const unsigned int& param, const std::vector
 }
 
 
-void FilterTimeconsistency::parse_args(std::vector<std::string> vec_args)
+void FilterTimeconsistency::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	vector<double> filter_args;
-
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
-	}
-
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(2, 2, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
+	setWindowFParams(vec_args); //this also reads SOFT
 }
 
 } //end namespace

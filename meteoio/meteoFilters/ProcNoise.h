@@ -27,33 +27,37 @@ namespace mio {
 
 /**
  * @class ProcNoise
+ * @ingroup processing
  * @brief Generate a noise signal to modify the input. 
- * The noise signal is either added ("add")  to the input or used as a fraction and multiplied by the input signal ("mult"). This filter
- * always takes three arguments: a <i>type</i> specifying if the noise is added or multiplied, a <i>distribution</i> specifying
- * the random numbers distribution and a <i>range</i> that is the scaling factor to apply.
- * The following random distributions are supported:
- *    + "uniform": the range represents the maximum amplitude of the noise;
- *    + "normal": the range represents the standard deviation of the noise.
- * 
+ * @details
+ * The noise signal is either added ("add")  to the input or used as a fraction and multiplied by the input signal ("mult").
+ * This filter always takes three arguments:
+ *  - RANGE: the scaling factor to apply;
+ *  - TYPE: to specify if the noise is added (ADD) or multiplied (MULT);
+ *  - DISTRIBUTION: to specify the random numbers distribution as either
+ *      + uniform: the range represents the maximum amplitude of the noise;
+ *      + normal: the range represents the standard deviation of the noise.
+ *
  * @note When multiplying the input signal by the noise, the range is interpreted as a fraction. For example, to modify the input by
  * +/-10%, select "mult" with "uniform" and "0.1" as a range.
- * @ingroup processing
- * @author Mathias Bavay
- * @date   2015-06-12
  * @code
  *  #add a normally distributed noise (mean=0) of standard deviation 5 to TA
- * TA::filter1		= Noise
- * TA::arg1		= add normal 5
+ * TA::filter1            = Noise
+ * TA::arg1::type         = add
+ * TA::arg1::distribution = normal
+ * TA::arg1::range        = 5
  * 
  * #add +/-10% of variation, uniformly distributed to HS
- * HS::filter1		= Noise
- * HS::arg1		= mult uniform 0.1
+ * HS::filter1            = Noise
+ * HS::arg1::type         = mult
+ * HS::arg1::distribution = uniform
+ * HS::arg1::range        = 0.1
  * @endcode
  */
 
 class ProcNoise : public ProcessingBlock {
 	public:
-		ProcNoise(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcNoise(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -64,7 +68,7 @@ class ProcNoise : public ProcessingBlock {
 		void normal_add(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void normal_mult(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		double getBoxMuller() const;
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 		
 		double range;
 		char distribution, type;

@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-FilterRate::FilterRate(const std::vector<std::string>& vec_args, const std::string& name)
+FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
            : FilterBlock(name), min_rate_of_change(0.), max_rate_of_change(0.)
 {
 	parse_args(vec_args);
@@ -66,22 +66,22 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 	}
 }
 
-void FilterRate::parse_args(const std::vector<std::string>& vec_args) {
-	vector<double> filter_args;
-	convert_args(1, 2, vec_args, filter_args);
+void FilterRate::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+{
+	bool has_max=false, has_min=false;
 
-	const size_t nb_args = filter_args.size();
-	if (nb_args == 2) {
-		const double arg1 = filter_args[0];
-		const double arg2 = filter_args[1];
-		min_rate_of_change = std::min(arg1, arg2);
-		max_rate_of_change = std::max(arg1, arg2);
-	} else if (nb_args == 1) {
-		min_rate_of_change = -filter_args[0];
-		max_rate_of_change = filter_args[0];
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 1 or 2 arguments!", AT);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="MIN") {
+			parseArg(vec_args[ii], min_rate_of_change);
+			has_min = true;
+		} else if (vec_args[ii].first=="MAX") {
+			parseArg(vec_args[ii], max_rate_of_change);
+			has_max = true;
+		}
+	}
 
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
+	if (has_max && !has_min) min_rate_of_change = -max_rate_of_change;
 }
 
 }

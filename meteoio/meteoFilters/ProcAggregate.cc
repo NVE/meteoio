@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-ProcAggregate::ProcAggregate(const std::vector<std::string>& vec_args, const std::string& name) 
+ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
               : WindowedFilter(name), type(mean_agg)
 {
 	parse_args(vec_args);
@@ -146,34 +146,29 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 	}
 }
 
-void ProcAggregate::parse_args(std::vector<std::string> vec_args)
+void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	if (vec_args.empty())
-		throw InvalidArgumentException("Invalid number of arguments for filter " + getName(), AT);
-	
-	const string str_type = IOUtils::strToUpper( vec_args[0] );
-	if (str_type=="MIN") type=min_agg;
-	else if (str_type=="MAX") type=max_agg;
-	else if (str_type=="MEAN") type=mean_agg;
-	else if (str_type=="MEDIAN") type=median_agg;
-	else if (str_type=="WIND_AVG") type=wind_avg_agg;
-	else
-		throw InvalidArgumentException("Unknown type '"+str_type+"' for filter " + getName(), AT);
-	vec_args.erase( vec_args.begin() );
+	setWindowFParams(vec_args); //this also reads SOFT
+	bool has_type=false;
 
-	if (vec_args.size() > 2)
-		is_soft = ProcessingBlock::is_soft(vec_args);
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
+		} else if (vec_args[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+			if (type_str=="MIN") type=min_agg;
+			else if (type_str=="MAX") type=max_agg;
+			else if (type_str=="MEAN") type=mean_agg;
+			else if (type_str=="MEDIAN") type=median_agg;
+			else if (type_str=="WIND_AVG") type=wind_avg_agg;
+			else
+				throw InvalidArgumentException("Unknown type '"+type_str+"' for filter " + getName(), AT);
 
-	vector<double> filter_args;
-	convert_args(2, 2, vec_args, filter_args);
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
+			has_type = true;
+		}
 	}
 
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for filter "+getName(), AT);
 }
 
 } //namespace

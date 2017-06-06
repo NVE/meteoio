@@ -25,7 +25,7 @@ namespace mio {
 const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
-ProcUnventilatedT::ProcUnventilatedT(const std::vector<std::string>& vec_args, const std::string& name)
+ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
                   : ProcessingBlock(name), usr_albedo(dflt_albedo),
                     usr_vw_thresh(IOUtils::nodata), nakamura(false)
 {
@@ -75,13 +75,13 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 				continue;
 
 			if (vw<vw_thresh) vw = vw_thresh; //this should be around the minimum measurable wind speed on regular instruments
-			const double rho = 1.2; // in kg/m3
-			const double Cp = 1004.;
+			static const double rho = 1.2; // in kg/m3
+			static const double Cp = 1004.;
 			const double X = iswr / (rho*Cp*ta*vw);
 			if (X<1e-4) continue; //the correction does not work well for small X values
 
-			const double C0 = 0.13;
-			const double C1 = 373.40;
+			static const double C0 = 0.13;
+			static const double C1 = 373.40;
 			const double RE = C0 + C1*X;
 			ta -= RE; //substracting the radiative error
 		}
@@ -104,8 +104,8 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 				continue;
 
 			if (vw<vw_thresh) vw = vw_thresh; //this should be around the minimum measurable wind speed on regular instruments
-			const double rho = 1.2; // in kg/m3
-			const double Cp = 1004.;
+			static const double rho = 1.2; // in kg/m3
+			static const double Cp = 1004.;
 			const double X = rswr / (rho*Cp*ta*vw) * 1e3;
 			if (X<0.05) continue; //the correction does not work well for small X values
 
@@ -115,51 +115,29 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 	}
 }
 
-void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args)
+void ProcUnventilatedT::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	const size_t nrArgs = vec_args.size();
+	bool has_vw_thresh=false, has_usr_albedo=false, suppr_filter=false;
 
-	//no args -> simple correction with default albedo
-	if (nrArgs==0) return;
-
-	const bool arg0_is_num = IOUtils::isNumeric(vec_args[0]);
-
-	if (nrArgs==1) { //either nakamura or default albedo
-		if ( arg0_is_num ) {
-			IOUtils::convertString(usr_albedo, vec_args[0]);
-		} else {
-			const string strArg( IOUtils::strToUpper(vec_args[0]) );
-			if (strArg=="NAKAMURA")
-				nakamura = true;
-			else if (strArg=="HUWALD")
-				nakamura = false;
-			else if (strArg=="SUPPR")
-				throw InvalidArgumentException("Invalid use of the SUPPR option for filter " + getName(), AT);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+			if (type_str=="NAKAMURA") nakamura = true;
+			else if (type_str=="HUWALD") nakamura = false;
+			else if (type_str=="SUPPR") suppr_filter = true;
 			else
-				throw InvalidArgumentException("Unknown argument \""+strArg+"\" for filter " + getName(), AT);
+				throw InvalidArgumentException("Invalid type \""+vec_args[ii].second+"\" for filter \""+getName()+"\"", AT);
+		} else if (vec_args[ii].first=="THRESH_VW") {
+			parseArg(vec_args[ii], usr_vw_thresh);
+			has_vw_thresh = true;
+		} else if (vec_args[ii].first=="SOIL_ALB") {
+			parseArg(vec_args[ii], usr_albedo);
+			has_usr_albedo = true;
 		}
-	} else if (nrArgs==2) {
-		const string strArg = (!arg0_is_num)? IOUtils::strToUpper(vec_args[0]) : IOUtils::strToUpper(vec_args[1]);
-		double dblArg;
-		if (arg0_is_num)
-			IOUtils::convertString(dblArg, vec_args[0]);
-		else
-			IOUtils::convertString(dblArg, vec_args[1]);
+	}
 
-		if (strArg=="NAKAMURA") {
-			nakamura = true;
-			usr_albedo = dblArg;
-		} else if (strArg=="HUWALD") {
-			nakamura = false;
-			usr_albedo = dblArg;
-		} else if (strArg=="SUPPR") {
-			usr_vw_thresh = dblArg;
-		} else
-			throw InvalidArgumentException("Unknown argument \""+strArg+"\" for filter " + getName(), AT);
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
-	if (usr_albedo<0. || usr_albedo>1.)
+	if (suppr_filter && !has_vw_thresh) throw InvalidArgumentException("Please provide a wind velocity threshold for filter "+getName(), AT);
+	if (has_usr_albedo && (usr_albedo<0. || usr_albedo>1.) )
 		throw InvalidArgumentException("Albedo value should be between 0 and 1 for filter " + getName(), AT);
 }
 

@@ -283,7 +283,6 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(const std::
 		}
 	} else {
 		const std::string key_pattern( section + "::" + IOUtils::strToUpper(keymatch) );
-
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(key_pattern, 0);
 			if (found_pos==0) { //found it!

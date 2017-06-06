@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector<std::string>& vec_args, const std::string& name)
-                  : FilterBlock(name), thresh_rh(0.), thresh_Dt(0.), soft(true)
+FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+                  : FilterBlock(name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -51,32 +51,24 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;
-                        if (!soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+                        if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
                                 tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }
 
 
-void FilterUnheatedPSUM::parse_args(std::vector<std::string> vec_args) {
-	vector<double> filter_args;
-
-	soft = false;
-	if (!vec_args.empty()){
-		soft = is_soft(vec_args);
+void FilterUnheatedPSUM::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+{
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
+		} else if (vec_args[ii].first=="THRESH_RH") {
+			parseArg(vec_args[ii], thresh_rh);
+		} else if (vec_args[ii].first=="THRESH_DT") {
+			parseArg(vec_args[ii], thresh_Dt);
+		}
 	}
-
-	convert_args(0, 2, vec_args, filter_args);
-
-	const size_t nb_args = filter_args.size();
-	if (nb_args == 0) {
-		thresh_rh = 0.5;
-		thresh_Dt = 3.0;
-	} else if (nb_args == 2) {
-		thresh_rh = filter_args[0];
-		thresh_Dt = filter_args[1];
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 0 or 2 arguments!", AT);
 }
 
 } //end namespace

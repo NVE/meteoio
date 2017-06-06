@@ -27,20 +27,27 @@ namespace mio {
 /**
  * @class  ProcMult
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-02-06
  * @brief Multiply values.
+ * @details
  * This multiplies all values by a given factor. Either a fixed value is given as single argument or a period
  * (hourly/daily/monthly) as well as a filename (and absolute or relative path) containing the factors to apply.
  * This file must contain in the first column the indices (months from 1 to 12 or days from 1 to 366 or hours from 0 to 23)
  * and the matching factor in the second column (<a href="http://www.cplusplus.com/reference/cctype/isspace/">whitespace</a> delimited).
  * Comments following the same syntax as in the ini file are accepted, missing indices are treated as 1.
- * @code
- * PSUM::filter1	= mult
- * PSUM::arg1	= 1.3
  *
- * ISWR::filter1	= mult
- * ISWR::arg1		= monthly input/ISWR_corr.dat
+ * It takes the following arguments:
+ *  - CST: a factor to multiply the data with (optional);
+ *  - PERIOD: when reading corrections from a file, the period over which the corrections apply, either
+ * HOURLY, DAILY or MONTHLY (optional);
+ *  - CORRECTIONS: the file and path containing the corrections to apply (mandatory when using PERIOD).
+ *
+ * @code
+ * TA::filter1   = mult
+ * TA::arg1::cst = 2.5
+ *
+ * TSG::filter1           = mult
+ * TSG::arg1::period      = daily
+ * TSG::arg1::corrections = input/TSG_corr.dat
  * @endcode
  *
  * Example of correction file (monthly correction, August will receive a correction of 1):
@@ -61,13 +68,13 @@ namespace mio {
 
 class ProcMult : public ProcessingBlock {
 	public:
-		ProcMult(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path);
+		ProcMult(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector<std::string>& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 
 		std::vector<double> vecFactors;
 		std::string root_path;

@@ -27,20 +27,27 @@ namespace mio {
 /**
  * @class  ProcAdd
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-02-06
  * @brief Add an offset to the values.
+ * @details
  * This adds to all values a given offset. Either a fixed value is given as single argument or a period
  * (hourly/daily/monthly) as well as a filename (and absolute or relative path) containing the offsets to apply.
  * This file must contain in the first column the indices (months from 1 to 12 or days from 1 to 366 or hours from 0 to 23)
  * and the matching offset in the second column (<a href="http://www.cplusplus.com/reference/cctype/isspace/">whitespace</a> delimited).
  * Comments following the same syntax as in the ini file are accepted, missing indices are treated as 0.
- * @code
- * TA::filter1	= add
- * TA::arg1	= 2.5
  *
- * TSG::filter1	= add
- * TSG::arg1	= daily input/TSG_corr.dat
+ * It takes the following arguments:
+ *  - CST: a constant to add to the data (optional);
+ *  - PERIOD: when reading corrections from a file, the period over which the corrections apply, either
+ * HOURLY, DAILY or MONTHLY (optional);
+ *  - CORRECTIONS: the file and path containing the corrections to apply (mandatory when using PERIOD).
+ *
+ * @code
+ * TA::filter1   = add
+ * TA::arg1::cst = 2.5
+ *
+ * TSG::filter1           = add
+ * TSG::arg1::period      = daily
+ * TSG::arg1::corrections = input/TSG_corr.dat
  * @endcode
  *
  * Example of correction file (monthly correction, December will receive a correction of 0):
@@ -60,7 +67,7 @@ namespace mio {
 
 class ProcAdd : public ProcessingBlock {
 	public:
-		ProcAdd(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path);
+		ProcAdd(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -69,7 +76,7 @@ class ProcAdd : public ProcessingBlock {
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, std::vector<double> &corrections);
 
 	private:
-		void parse_args(const std::vector<std::string>& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 
 		std::vector<double> vecOffsets;
 		std::string root_path;

@@ -63,13 +63,13 @@ namespace mio {
 
 class FilterOffsetsnowdepth : public WindowedFilter {
 	public:
-		FilterOffsetsnowdepth(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterOffsetsnowdepth(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 };
 
 } //end namespace

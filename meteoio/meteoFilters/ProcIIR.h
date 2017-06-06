@@ -29,15 +29,17 @@ namespace mio {
  * @ingroup processing
  * @brief Infinite Impulse Response (IIR) filter.
  * This filter can either be used as a low pass or high pass filter. It is based on a Critically Damped, 2 poles filter (considering that
- * it is better avoid overshooting even at the cost of a gentler falloff). It is possible to use it as a Low Pass (**LP**) or High Pass (**HP**)
- *
- * The cutoff <b>period</b> (defined as the frequency at a -3dB gain) is given in seconds as argument. The phase is removed by
- * bidirectional filtering, ie. running the filter twice, first backward and then forward (this also squares the amplitude response). But
- * it is possible to disable this bidirectional filtering by adding the "single_pass" argument.
+ * it is better avoid overshooting even at the cost of a gentler falloff). It takes the following arguments:
+ *  - TYPE: either LP (for *Low Pass*) or HP (for *High Pass*);
+ *  - CUTOFF: The cutoff <b>period</b> (defined as the frequency at a -3dB gain) given in seconds;
+ *  - SINGLE_PASS: Normally, the phase is removed by bidirectional filtering, ie. running the filter twice,
+ * first backward and then forward (this also squares the amplitude response). If set to TRUE, this bidirectional filtering
+ * is disabled.
  *
  * @code
- * HS::filter1	= IIR
- * HS::arg1	= LP 10800 ;3 hours
+ * HS::filter1      = IIR
+ * HS::arg1::type   = LP
+ * HS::arg1::cutoff = 10800 ;ie. 3 hours
  * @endcode
  *
  * To know more: http://unicorn.us.com/trading/allpolefilters.html and http://www.dspguide.com/ch19/4.htm.
@@ -45,7 +47,7 @@ namespace mio {
 
 class ProcIIR : public ProcessingBlock {
 	public:
-		ProcIIR(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcIIR(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -61,7 +63,7 @@ class ProcIIR : public ProcessingBlock {
 		static double filterPoint(const double& raw_val, const double A[3], const double B[3], std::vector<double> &X, std::vector<double> &Y);
 		void computeCoefficients(const double& fs, const double& f0, double A[3], double B[3]) const;
 
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 
 		double cutoff;
 		double g, p, c; ///< filter definition: number of passes, polynomial coefficients, 3dB cutoff correction

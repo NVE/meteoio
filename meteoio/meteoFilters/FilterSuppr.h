@@ -27,24 +27,24 @@ namespace mio {
 /**
  * @class  FilterSuppr
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2013-12-06
  * @brief Suppression filter.
+ * @details
  * Normally, this filter simply reject all values. This is convenient to quickly turn a parameter off
- * without modifying the original data. It is also possible to provide a list of station ID's and timesteps
- * where the parameter should be suppressed.
- * 
- * Finally, it is also possible to suppress a given fraction of the data at random by providing
- * such fraction as an argument. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
+ * without modifying the original data. It is also possible to suppress some values based on
+ * specific criterias, with the following arguments:
+ *  - SUPPR: provide a file that contains a list of station ID's and timesteps
+ * specifying where the parameter should be suppressed;
+ *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set contains <i>nodata</i> for this parameter.
+ *
  * @code
  * ILWR::filter1     = suppr
  * 
- * PSUM::filter1    = suppr
- * PSUM::arg1      = ./input/meteo/psum_suppr.dat
+ * PSUM::filter1     = suppr
+ * PSUM::arg1::suppr = ./input/meteo/psum_suppr.dat
  * 
  * TA::filter1       = suppr
- * TA::arg1          = 0.5
+ * TA::arg1::FRAC    = 0.5
  * @endcode
  * 
  * In the second example (PSUM), the file <i>psum_suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -58,14 +58,14 @@ namespace mio {
 
 class FilterSuppr : public FilterBlock {
 	public:
-		FilterSuppr(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path, const double& i_TZ);
+		FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path, const double& i_TZ);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void fillSuppr_dates(const std::string& filename);
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 		
 		std::map< std::string, std::set<Date> > suppr_dates;
 		std::string root_path;

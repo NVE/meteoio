@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-FilterOffsetsnowdepth::FilterOffsetsnowdepth(const std::vector<std::string>& vec_args, const std::string& name)
+FilterOffsetsnowdepth::FilterOffsetsnowdepth(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
           : WindowedFilter(name)
 {
 	parse_args(vec_args);
@@ -45,27 +45,11 @@ void FilterOffsetsnowdepth::process(const unsigned int& param, const std::vector
 }
 
 
-void FilterOffsetsnowdepth::parse_args(std::vector<std::string> vec_args)
+void FilterOffsetsnowdepth::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
 	//for a filter that does not take any arguments
 	if ( !vec_args.empty() ) //ie if there are arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
-	/*
-	//for a filter taking one or two arguments
-	vector<double> filter_args;
-	 //parse the vector of strings and extract a vector of double
-	//at least (1) argument is expected, maximum (2)
-	convert_args(1, 2, vec_args, filter_args);
-
-	arg1 = filter_args[0];
-
-	if (filter_args.size() == 2){
-		arg2 = filter_args[1];
-	} else {
-		arg2 = arg2_default_value;
-	}
-	*/
 }
 
 } //end namespace

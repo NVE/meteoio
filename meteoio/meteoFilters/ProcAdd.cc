@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-ProcAdd::ProcAdd(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path)
+ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path)
         : ProcessingBlock(name), vecOffsets(), root_path(i_root_path), offset(0.), type('c')
 {
 	parse_args(vec_args);
@@ -69,30 +69,43 @@ void ProcAdd::process(const unsigned int& param, const std::vector<MeteoData>& i
 	}
 }
 
-void ProcAdd::parse_args(const std::vector<std::string>& vec_args)
+void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	const size_t nrArgs = vec_args.size();
-	if (nrArgs==1) {
-		type='c'; //constant
-		if (!IOUtils::convertString(offset, vec_args[0]))
-			throw InvalidArgumentException("Invalid offset \""+vec_args[0]+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
-	} else if (nrArgs==2) {
-		const std::string type_str( IOUtils::strToUpper( vec_args[0] ) );
-		if (type_str=="MONTHLY") type='m';
-		else if (type_str=="DAILY") type='d';
-		else if (type_str=="HOURLY") type='h';
-		else
-			throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+getName()+" filter", AT);
+	bool has_type=false, is_cst=false;
+	std::string filename;
 
-		//if this is a relative path, prefix the path with the current path
-		const std::string in_filename( vec_args[1] );
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
-		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="CST") {
+			type='c'; //constant
+			if (!IOUtils::convertString(offset, vec_args[ii].second))
+				throw InvalidArgumentException("Invalid offset \""+vec_args[ii].second+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
+			is_cst = true;
+		} else if (vec_args[ii].first=="PERIOD") {
+			const std::string period( IOUtils::strToUpper(vec_args[ii].second) );
+			if (period=="MONTHLY") {
+				type='m';
+			} else if (period=="DAILY") {
+				type='d';
+			} else if (period=="HOURLY") {
+				type='h';
+			} else
+				throw InvalidArgumentException("Invalid period \""+period+"\" specified for the "+getName()+" filter", AT);
+			has_type = true;
+		} else if (vec_args[ii].first=="CORRECTIONS") {
+			//if this is a relative path, prefix the path with the current path
+			const std::string in_filename( vec_args[ii].second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+			filename = path + "/" + FileUtils::getFilename(in_filename);
+		}
+	}
+
+	if (!has_type && !is_cst) throw InvalidArgumentException("Please provide a filter type (or a constant) for filter "+getName(), AT);
+	if (has_type) {
+		if (filename.empty())
+			throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
 		ProcessingBlock::readCorrections(getName(), filename, type, 0., vecOffsets);
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
+	}
 }
 
 } //end namespace

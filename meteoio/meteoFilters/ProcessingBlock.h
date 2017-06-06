@@ -67,17 +67,18 @@ class ProcessingBlock {
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
-		std::string getName() const;
-		const ProcessingProperties& getProperties() const;
+		std::string getName() const {return block_name;}
+		const ProcessingProperties& getProperties() const {return properties;}
 		const std::string toString() const;
 
 	protected:
 		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
-
-		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
-		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const;
-		static bool is_soft(std::vector<std::string>& vec_args);
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
+
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for filter " + block_name, AT);
+		}
 
 		ProcessingProperties properties;
 		const std::string block_name;
@@ -87,7 +88,7 @@ class ProcessingBlock {
 
 class BlockFactory {
 	public:
-		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg);
+		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vec_args, const Config& cfg);
 };
 
 } //end namespace

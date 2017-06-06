@@ -45,7 +45,7 @@ class WindowedFilter : public FilterBlock {
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
-		static unsigned int get_centering(std::vector<std::string>& vec_args);
+		void setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vec_args);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,
 		                                                const std::vector<MeteoData>& ivec);
 		bool get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec,

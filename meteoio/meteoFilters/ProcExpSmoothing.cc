@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-ProcExpSmoothing::ProcExpSmoothing(const std::vector<std::string>& vec_args, const std::string& name)
+ProcExpSmoothing::ProcExpSmoothing(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
                  : WindowedFilter(name), alpha(.5)
 {
 	parse_args(vec_args);
@@ -86,26 +86,19 @@ double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, co
 	return expavg;
 }
 
-void ProcExpSmoothing::parse_args(std::vector<std::string> vec_args)
+void ProcExpSmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	vector<double> filter_args;
+	setWindowFParams(vec_args); //this also reads SOFT
+	bool has_alpha=false;
 
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="ALPHA") {
+			parseArg(vec_args[ii], alpha);
+			has_alpha = true;
+		}
 	}
 
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(3, 3, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-	alpha = filter_args[2];
+	if (!has_alpha) throw InvalidArgumentException("Please provide an alpha value for filter "+getName(), AT);
 	if (alpha<0. || alpha>1.) {
 		throw InvalidArgumentException("The alpha parameter for filter " + getName() + " must be between 0 and 1!", AT);
 	}

@@ -85,7 +85,11 @@ namespace mio {
  * @section pngio_compilation
  * In order to compile this plugin, you need libpng and zlib. For Linux, please select both the libraries and their development files in your package manager.
  *
- * For Mac, you can either install using <A href="http://www.finkproject.org/">Fink</A> or directly from <a href="http://www.libpng.org">source</a>. 
+ * For Mac, starting with Sierra, you can use the system png library: from a terminal window, run
+ * <i>/Library/Frameworks/UnixImageIO.framework/Programs/libpng-config --libdir</i> and provide this path with <i>libpng.dylib</i> appended
+ * to cmake as <i>PNG_LIBRARY_RELEASE</i> (you might have to press <i>t</i> in cmake in order to show the advanced options.).
+ * Otherwise (ie if you are not using Sierra or do not want to use the system version), you can either install
+ * using <A href="http://www.finkproject.org/">Fink</A> or directly from <a href="http://www.libpng.org">source</a>.
  * In this case, please install first <a href="http://zlib.net/">zlib</a> at the prefix of your choice (with the <i>prefix</i> option of its configure script, for
  * example <i>"./configure --prefix=/usr/local"</i>, then build with <i>"make"</i> and install with <i>"sudo make install"</i>). Then run the
  * libpng configure script with the <i>--enable-shared</i> and <i>prefix</i> options, for example <i>"./configure --enable-shared --prefix=/usr/local"</i>

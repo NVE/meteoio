@@ -28,22 +28,48 @@ WindowedFilter::WindowedFilter(const std::string& name)
                  last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
 {}
 
-unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
+/**
+ * @brief Parse the arguments in order to retrieve the user parameters for the data window.
+ * The following parameters are recognized:
+ *  - CENTERING: the time-centering of the data window  can be either left, right or center;
+ *  - MIN_PTS: minimum number of points that the window must contain;
+ *  - MIN_SPAN: minimum time width of the data window (in seconds).
+ *
+ * @param[in] vec_args Vector containing all the filter's arguments
+ * NOTE: the "soft" argument is also processed.
+ */
+void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	if (!vec_args.empty()){
-		if (vec_args.front() == "left"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::left;
-		} else if (vec_args.front() == "right"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::right;
-		} else if (vec_args.front() == "center"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::center;
+	bool has_min_span = false, has_min_pts = false;
+
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="CENTERING") {
+			const std::string cntr_spec( IOUtils::strToUpper(vec_args[ii].second) );
+			if (cntr_spec=="LEFT")
+				centering = WindowedFilter::left;
+			else if (cntr_spec=="CENTER")
+				centering = WindowedFilter::center;
+			else if (cntr_spec=="RIGHT")
+				centering = WindowedFilter::right;
+			else
+				throw InvalidArgumentException("Invalid window specification for filter "+getName(), AT);
+		} else if (vec_args[ii].first=="MIN_PTS") {
+			if (!IOUtils::convertString(min_data_points, vec_args[ii].second))
+				throw InvalidArgumentException("Can not parse MIN_PTS for filter "+getName(), AT);
+			has_min_pts = true;
+		} else if (vec_args[ii].first=="MIN_SPAN") {
+			double min_span;
+			if (!IOUtils::convertString(min_span, vec_args[ii].second))
+				throw InvalidArgumentException("Can not parse MIN_SPAN for filter "+getName(), AT);
+			min_time_span = Duration(min_span / 86400.0, 0.);
+			has_min_span = true;
+		} else if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
 		}
 	}
 
-	return WindowedFilter::center; //the default
+	if (!has_min_span && !has_min_pts)
+		throw InvalidArgumentException("Please provide a window width specification (either MIN_PTS or MIN_SPAN) for filter "+getName(), AT);
 }
 
 /**

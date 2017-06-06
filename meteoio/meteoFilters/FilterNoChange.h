@@ -29,20 +29,22 @@ namespace mio {
  * @class FilterNoChange
  * @ingroup processing
  * @brief This filter removes periods showing insufficient changes. 
+ * @details
  * It searches for time periods in which the value of the certain variable doesn't change by looking at the variance. 
- * It expects the following arguments, in order to define the data window where the variance will be computed: 
- * - the optional keyword "soft"
- * - the optional window centering option (left, center or right)
- * - the minimal number of points in window
- * - the minimal time interval spanning the window (in seconds)
+ * It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams();
  * 
  * For example:
  * @code
- *          HS::filter1 = NO_CHANGE
- *          HS::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
+ * HS::filter1         = NO_CHANGE
+ * HS::arg1::soft      = true
+ * HS::arg1::centering = left
+ * HS::arg1::min_pts   = 1
+ * HS::arg1::min_span  = 1800 ;ie left centered window spanning 1800 seconds and at least 1 points
  * 
- *          TA::filter1 = NO_CHANGE
- *          TA::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
+ * TA::filter1         = NO_CHANGE
+ * TA::arg1::soft      = false
+ * TA::arg1::min_pts   = 10
+ * TA::arg1::min_span  = 600 ;ie strictly centered window spanning 600 seconds and at least 10 points
  * @endcode
  * 
  * @author Anna-Maria Tilg
@@ -51,13 +53,13 @@ namespace mio {
 
 class FilterNoChange : public WindowedFilter {
 	public:
-		FilterNoChange(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 };
 
 } //end namespace

@@ -28,30 +28,32 @@ namespace mio {
  * @class  ProcAggregate
  * @ingroup processing
  * @brief Data aggregation.
- * This aggregates the input data over the defined window with the defined aggregation algorithm. The aggregation
- * algorithm must be declared first and can be any of the following:
+ * @details
+ * This aggregates the input data over the defined window with the defined aggregation algorithm. It takes as arguments
+ * all the window parameters as defined in WindowedFilter::setWindowFParams() as well as the following:
+ *  - SOFT: the keyword "soft" maybe added (this is highly recommended), if the window position is allowed to be adjusted to the data present (boolean, optional);
+ *  - TYPE: the type of filter to use, one of the following:
  *    + min: return the minimum value of the whole window;
  *    + max: return the maximum value of the whole window;
  *    + mean: return the mean of the whole window;
  *    + median: return the median of the whole window;
  *    + wind_avg: Wind vector averaging. CURRENTLY, THIS FILTER DOES NOT WORK PROPERLY (the first parameter is correctly calculated but the second one uses the modified output of the first one and therefore is WRONG).
- * 
- * Remarks:
- * - nodata values are excluded from the aggregation
- * - Two other arguments are expected (both have to be fullfilled for the filter to start operating):
- *   - minimal number of points in window
- *   - minimal time interval spanning the window (in seconds)
- * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
- * - the keyword "soft" maybe added (this is highly recommended), if the window position is allowed to be adjusted to the data present
+ *
+ * Remarks: nodata values are excluded from the aggregation
+ *
  * @code
- *          VW::filter3 = AGGREGATE
- *          VW::arg3    = MEAN soft left 4 14400 ;(14400 seconds time span for the left leaning window)
+ * VW::filter3    = AGGREGATE
+ * VW::arg3::TYPE = MEAN
+ * VW::arg3::soft = TRUE
+ * VW::arg3::centering = left
+ * VW::arg3::MIN_PTS = 4
+ * VW::arg3::MIN_SPAN = 14400 ;ie 14400 seconds time span, at least 4 points, for a left leaning window
  * @endcode
  */
 
 class ProcAggregate : public WindowedFilter {
 	public:
-		ProcAggregate(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -65,7 +67,7 @@ class ProcAggregate : public WindowedFilter {
 			wind_avg_agg
 		} aggregate_type;
 		
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 		double calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
 		double calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
 		double calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;

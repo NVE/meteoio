@@ -25,32 +25,36 @@
 namespace mio {
 
 /**
- * @class  FilterPotentialSW
+ * @class FilterPotentialSW
  * @ingroup processing
  * @brief Checks for physically reallistic incoming short wave radiation (ISWR) values.
+ * @details
  * For each data point, the measured value must be:
  *     + more than the horizontal top of atmosphere potential radiation multiplied by the *min_coeff* coefficient;
  *     + less than the global horizontal potential radiation multiplied by the *max_coeff* coefficient.
  *
- * Either no arguments are provided and these coefficients have the default values of 0.03 and 1.1 respectively or both
- * must be provided. The default values come from Moradi, I., <i>"Quality control of global solar radiation using
- * sunshine duration hours"</i>, 2009, Energy 34, <b>no. 1</b>, 1-6.
+ * It takes the following arguments:
+ *  - MIN_COEFF: minimum coefficient (default: 0.03);
+ *  - MAX_COEFF: maximum coefficient (default: 1.1).
  *
+ * The default values come from Moradi, I., <i>"Quality control of global solar radiation using
+ * sunshine duration hours"</i>, 2009, Energy 34, <b>no. 1</b>, 1-6.
  * @code
- * ISWR::filter1	= PotentialSW
- * ISWR::arg1	= 0.03 1.1
+ * ISWR::filter1         = PotentialSW
+ * ISWR::arg1::MIN_COEFF = 0.03
+ * ISWR::arg1::MAX_COEFF = 1.1
  * @endcode
  */
 
 class FilterPotentialSW : public FilterBlock {
 	public:
-		FilterPotentialSW(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 
 		double min_coeff, max_coeff;
 };

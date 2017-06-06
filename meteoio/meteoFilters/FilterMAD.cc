@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-FilterMAD::FilterMAD(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
+FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name) : WindowedFilter(name), min_sigma(0.)
 {
 	parse_args(vec_args);
 
@@ -49,9 +49,9 @@ void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>&
 	}
 }
 
-void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value)
+void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value) const
 {
-	const double K = 1. / 0.6745;
+	static const double K = 1. / 0.6745;
 
 	std::vector<double> data( end-start+1 );
 	for (size_t ii=start; ii<=end; ii++) data[ii-start] = ivec[ii](param);
@@ -62,7 +62,7 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 
 	if ( median==IOUtils::nodata || mad==IOUtils::nodata ) return;
 
-	const double sigma = mad * K;
+	const double sigma = std::max( mad * K , min_sigma);
 	const double upper_lim = median + 3.*sigma;
 	const double lower_lim = median - 3.*sigma;
 
@@ -71,25 +71,15 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 	}
 }
 
-void FilterMAD::parse_args(std::vector<std::string> vec_args)
+void FilterMAD::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	vector<double> filter_args;
+	setWindowFParams(vec_args); //this also reads SOFT
 
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="MIN_SIGMA") {
+			parseArg(vec_args[ii], min_sigma);
+		}
 	}
-
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(2, 2, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
 }

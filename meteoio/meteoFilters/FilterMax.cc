@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMax::FilterMax(const std::vector<std::string>& vec_args, const std::string& name)
-          : FilterBlock(name), max_val(0.), max_soft(0.), is_soft(true)
+FilterMax::FilterMax(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+          : FilterBlock(name), max_val(0.), max_soft(0.), is_soft(false)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -47,26 +47,24 @@ void FilterMax::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
-void FilterMax::parse_args(std::vector<std::string> vec_args) {
-	vector<double> filter_args;
+void FilterMax::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+{
+	bool has_max=false, has_max_reset=false;
 
-	is_soft = false;
-	if (vec_args.size() > 1){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
+		} else if (vec_args[ii].first=="MAX") {
+			parseArg(vec_args[ii], max_val);
+			has_max = true;
+		} else if (vec_args[ii].first=="MAX_RESET") {
+			parseArg(vec_args[ii], max_soft);
+			has_max_reset = true;
+		}
 	}
 
-	convert_args(1, 2, vec_args, filter_args);
-
-	if (filter_args.size() > 2)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
-	max_val = filter_args[0];
-
-	if (filter_args.size() == 2){
-		max_soft = filter_args[1];
-	} else {
-		max_soft = max_val;
-	}
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
+	if (is_soft && !has_max_reset) max_soft = max_val;
 }
 
 } //end namespace

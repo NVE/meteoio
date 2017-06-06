@@ -121,7 +121,7 @@ namespace mio {
  *
  */
 
-ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const Config& cfg)
+ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vec_args, const Config& cfg)
 {
 	//the indenting is a little weird, this is in order to show the same groups as in the documentation above
 	
@@ -199,35 +199,6 @@ const double ProcessingBlock::snow_thresh = .1; //if snow height greater than th
 ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_name(name)
 {}
 
-void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_nargs,
-                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const
-{
-	const size_t nr_of_args = vec_args.size();
-	if ((nr_of_args < min_nargs) || (nr_of_args > max_nargs))
-		throw InvalidArgumentException("Wrong number of arguments for filter/processing element \"" + getName() + "\"", AT);
-
-	for (size_t ii=0; ii<nr_of_args; ii++){
-		double tmp = IOUtils::nodata;
-		IOUtils::convertString(tmp, vec_args[ii]);
-		dbl_args.push_back(tmp);
-	}
-}
-
-bool ProcessingBlock::is_soft(std::vector<std::string>& vec_args) {
-	for (size_t ii=0; ii<vec_args.size(); ++ii) {
-		if (IOUtils::strToUpper( vec_args[ii] ) == "SOFT") {
-			vec_args.erase( vec_args.begin() + ii );
-			return true;
-		}
-	}
-
-	return false;
-}
-
-std::string ProcessingBlock::getName() const {
-	return block_name;
-}
-
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
 {
 	std::ifstream fin( filename.c_str() );
@@ -292,10 +263,6 @@ const std::string ProcessingBlock::toString() const {
 	os << properties.toString();
 	os << "]";
 	return os.str();
-}
-
-const ProcessingProperties& ProcessingBlock::getProperties() const {
-	return properties;
 }
 
 const std::string ProcessingProperties::toString() const

@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector<std::string>& vec_args, const std::string& name)
+ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
                      : ProcessingBlock(name), type(sh)
 {
 	parse_args(vec_args);
@@ -70,24 +70,27 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 	}
 }
 
-void ProcUndercatch_Hamon::parse_args(std::vector<std::string> filter_args)
+void ProcUndercatch_Hamon::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	if (filter_args.size()!=1)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + ", please provide the rain gauge type!", AT);
+	bool has_type=false;
 
-	for (size_t ii=0; ii<filter_args.size(); ii++) {
-		IOUtils::toLower(filter_args[ii]);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+			if (type_str=="SH") {
+				type=sh;
+			} else if (type_str=="UNSH") {
+				type=unsh;
+			} else if (type_str=="HELLMANNSH") {
+				type=hellmannsh;
+			} else {
+				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for filter "+getName(), AT);
+			}
+			has_type = true;
+		}
 	}
 
-	if (filter_args[0]=="sh") {
-		type=sh;
-	} else if (filter_args[0]=="unsh") {
-		type=unsh;
-	} else if (filter_args[0]=="hellmannsh") {
-		type=hellmannsh;
-	} else {
-		throw InvalidArgumentException("Rain gauge type \""+ filter_args[0] +"\" unknown for filter "+getName(), AT);
-	}
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for filter "+getName(), AT);
 }
 
 } //end namespace

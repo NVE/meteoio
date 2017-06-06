@@ -29,7 +29,7 @@ using namespace std;
 
 namespace mio {
 
-FilterSuppr::FilterSuppr(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path, const double& i_TZ)
+FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path, const double& i_TZ)
           : FilterBlock(name), suppr_dates(), root_path(i_root_path), TZ(i_TZ), range(IOUtils::nodata)
 {
 	parse_args(vec_args);
@@ -43,7 +43,7 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 	if (ovec.empty()) return;
 	
 	if (!suppr_dates.empty()) {
-		const std::string station_ID = ivec[0].meta.stationID;
+		const std::string station_ID( ivec[0].meta.stationID );
 		const std::map< std::string, std::set<Date> >::const_iterator station_it = suppr_dates.find( station_ID );
 		if (station_it==suppr_dates.end()) return;
 		
@@ -121,7 +121,7 @@ void FilterSuppr::fillSuppr_dates(const std::string& filename)
 	}
 }
 
-void FilterSuppr::parse_args(std::vector<std::string> vec_args) 
+void FilterSuppr::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
 	const size_t nrArgs = vec_args.size();
 
@@ -129,19 +129,20 @@ void FilterSuppr::parse_args(std::vector<std::string> vec_args)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 	
 	if (nrArgs==1) {
-		if (IOUtils::isNumeric(vec_args[0])) {
-			if (!IOUtils::convertString(range, vec_args[0]))
-				throw InvalidArgumentException("Invalid range \""+vec_args[0]+"\" specified for the "+getName()+" filter.", AT);
+		if (vec_args[0].first=="FRAC") {
+			if (!IOUtils::convertString(range, vec_args[0].second))
+				throw InvalidArgumentException("Invalid range \""+vec_args[0].second+"\" specified for the "+getName()+" filter.", AT);
 			if (range<0. || range>1.)
 				throw InvalidArgumentException("Wrong range for filter " + getName() + ", it should be between 0 and 1", AT);
-		} else {
-			const std::string in_filename( vec_args[0] );
+		} else if (vec_args[0].first=="SUPPR") {
+			const std::string in_filename( vec_args[0].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
 			const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
-		
+
 			fillSuppr_dates(filename);
-		}
+		} else
+			throw UnknownValueException("Unknown option '"+vec_args[0].first+"' for filter "+getName(), AT);
 	}
 }
 

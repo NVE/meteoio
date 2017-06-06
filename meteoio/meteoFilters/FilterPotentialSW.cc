@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-FilterPotentialSW::FilterPotentialSW(const std::vector<std::string>& vec_args, const std::string& name)
+FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
           : FilterBlock(name), min_coeff(0.03), max_coeff(1.1)
 {
 	parse_args(vec_args);
@@ -71,17 +71,14 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 }
 
 
-void FilterPotentialSW::parse_args(std::vector<std::string> vec_args)
+void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	vector<double> filter_args;
-	convert_args(0, 2, vec_args, filter_args);
-
-	const size_t nrArgs = filter_args.size();
-	if (nrArgs==1) {
-		throw InvalidArgumentException("Wrong number of arguments for filter \"" + getName() + "\"", AT);
-	} else if (nrArgs==2) {
-		min_coeff = filter_args[0];
-		max_coeff = filter_args[1];
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="MAX_COEFF") {
+			parseArg(vec_args[ii], max_coeff);
+		} else if (vec_args[ii].first=="MIN_COEFF") {
+			parseArg(vec_args[ii], min_coeff);
+		}
 	}
 }
 

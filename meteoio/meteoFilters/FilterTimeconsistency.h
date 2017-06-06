@@ -28,7 +28,9 @@ namespace mio {
 /**
  * @class FilterTimeconsistency
  * @ingroup processing
- * @brief Compare sum of differences between snow depth (HS) value and HS value before and HS value afterwards, respectively, 
+ * @brief Check that the time evolution of a given parameter is consistent with its past evolution
+ * @details
+ * Compare sum of differences between snow depth (HS) value and HS value before and HS value afterwards, respectively,
  *  with 4 times of the standard deviation of HS in a defined time period (something like MAD)
  * First, the standard deviation of HS is calculated for a certain time period. Afterwards, the difference between the value and 
  * the value before and the difference between the value and the following value are calculated. Then, the sum of the two 
@@ -36,22 +38,19 @@ namespace mio {
  * the HS value is accepted. Otherwise the HS value gets invalid. 
  * References/Literature:  Zahumensky, Igor, 2004: Guidelines on Quality Control Procedures for Data from Automatic Weather Stations, World Meteorological Organisation 
  * 
- * Remarks:
- * - nodata values are excluded from the calculation of the standard deviation ?????? => checken  
- * - Two arguments expected (both have to be fullfilled for the filter to start operating):
- *   - minimal number of points in window
- *   - minimal time interval spanning the window (in seconds)
- * - only window position "center" possible
- * - keyword "soft" not allowed 
-	* - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position ?????? => checken
-	* - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present ?????? => checken
+ * It takes as arguments the window parameters as defined in WindowedFilter::setWindowFParams().
  *
  * @code
  * Valid examples for the io.ini file:
- *          HS::filter1 = time_consistency
- *          HS::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
- *          TA::filter1 = time_consistency
- *          TA::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
+ * HS::filter1         = time_consistency
+ * HS::arg1::soft      = true
+ * HS::arg1::centering = left
+ * HS::arg1::min_pts   = 1
+ * HS::arg1::min_span  = 1800 ;ie left centered window spanning 1800 seconds and at least 1 points
+ *
+ * TA::filter1         = time_consistency
+ * TA::arg1::min_pts   = 10
+ * TA::arg1::min_span  = 600 ;ie strictly centered window spanning 600 seconds and at least 10 points
  * @endcode
  * 
  * @author Anna-Maria Tilg
@@ -60,13 +59,13 @@ namespace mio {
 
 class FilterTimeconsistency : public WindowedFilter {
 	public:
-		FilterTimeconsistency(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 };
 
 } //end namespace

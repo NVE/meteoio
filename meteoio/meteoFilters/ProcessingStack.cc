@@ -25,21 +25,39 @@ namespace mio {
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
-	std::vector<std::string> vecFilters;
-	cfg.getValues(parname+"::filter", "Filters", vecFilters);
+	static const  char NUM[] = "0123456789";
+	static const std::string filter_key( "::FILTER" );
+	static const std::string arg_key( "::ARG" );
 
-	const size_t nr_of_filters = vecFilters.size();
-	for (size_t ii=0; ii<nr_of_filters; ii++){
-		//create a processing block for each filter
-		const std::string block_name( IOUtils::strToUpper( vecFilters[ii] ) );
+	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
+	for (size_t ii=0; ii<vecFilters.size(); ii++) {
+		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
-		std::ostringstream tmp;
-		tmp << param_name << "::arg" << (ii+1);
 
-		//Read arguments
-		std::vector<std::string> vec_args;
-		cfg.getValue(tmp.str(), "Filters", vec_args, IOUtils::nothrow);
-		filter_stack.push_back( BlockFactory::getBlock(block_name, vec_args, cfg) );
+		//extract the filter number andf perform basic checks on the syntax
+		const std::string key( vecFilters[ii].first );
+		const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
+		const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
+		const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
+		if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
+
+		unsigned int filter_nr;
+		const std::string filter_nr_str( key.substr(start_filter_nr) );
+		if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
+
+		//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
+		std::ostringstream arg_str;
+		arg_str << param_name << arg_key << filter_nr;
+		std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
+		for (size_t jj=0; jj<vecArgs.size(); jj++) {
+			const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+			if (beg_arg_name==std::string::npos)
+				throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
+			vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+		}
+
+		//construct the filter with its name and arguments
+		filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 	}
 }
 

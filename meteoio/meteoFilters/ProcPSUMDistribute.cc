@@ -25,7 +25,7 @@ namespace mio {
 const double ProcPSUMDistribute::thresh_rh = .7;
 const double ProcPSUMDistribute::thresh_Dt = 3.;
 
-ProcPSUMDistribute::ProcPSUMDistribute(const std::vector<std::string>& vec_args, const std::string& name)
+ProcPSUMDistribute::ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
                   : ProcessingBlock(name), measured_period(IOUtils::nodata), is_soft(false)
 {
 	parse_args(vec_args);
@@ -138,20 +138,16 @@ void ProcPSUMDistribute::fillInterval(const unsigned int& param, std::vector<Met
 }
 
 
-void ProcPSUMDistribute::parse_args(std::vector<std::string> vec_args)
+void ProcPSUMDistribute::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	if (vec_args.size() == 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
+		} else if (vec_args[ii].first=="MEAS_PERIOD") {
+			parseArg(vec_args[ii], measured_period);
+			measured_period /= 86400.;
+		}
 	}
-
-	if (vec_args.size()>1)
-		throw InvalidArgumentException("Too many arguments provided for filter "+getName(), AT);
-
-	if (vec_args.size()<1)
-		throw InvalidArgumentException("Please at least provide the measured accumulation period for filter "+getName(), AT);
-
-	IOUtils::convertString(measured_period, vec_args[0]);
-	measured_period /= 86400.;
 }
 
 //distribute the precipitation equally on all time steps in [start_idx ; end_idx]

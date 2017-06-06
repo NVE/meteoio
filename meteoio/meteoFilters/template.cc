@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::vector<std::string>& vec_args, const std::string& name)
+TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
           : FilterBlock(name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
 {
 	parse_args(vec_args);
@@ -50,26 +50,33 @@ void TEMPLATE::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
-void TEMPLATE::parse_args(std::vector<std::string> vec_args)
+void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
 	//for a filter that does not take any arguments
 	if ( !vec_args.empty() ) //ie if there are arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
 	/*
-	//for a filter taking one or two arguments
-	vector<double> filter_args;
-	 //parse the vector of strings and extract a vector of double
-	//at least (1) argument is expected, maximum (2)
-	convert_args(1, 2, vec_args, filter_args);
+	//for a filter taking one or more arguments
 
-	arg1 = filter_args[0];
+	//if the filter is based on WindowedFilter, this reads the window parameters as well as the "soft" argument
+	//setWindowFParams(vec_args); //this also reads SOFT
 
-	if (filter_args.size() == 2){
-		arg2 = filter_args[1];
-	} else {
-		arg2 = arg2_default_value;
+	//to perform syntax checks (see after the "for" loop)
+	bool has_max=false;
+
+	//parse the arguments (the keys are all upper case)
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SOFT") {
+			parseArg(vec_args[ii], is_soft);
+		} else if (vec_args[ii].first=="MAX") {
+			parseArg(vec_args[ii], max_val);
+			has_max = true;
+		}
 	}
+
+	//second part of the syntax check
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
 	*/
 }
 

@@ -26,7 +26,7 @@ using namespace std;
 
 namespace mio {
 
-ProcNoise::ProcNoise(const std::vector<std::string>& vec_args, const std::string& name)
+ProcNoise::ProcNoise(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
           : ProcessingBlock(name), range(IOUtils::nodata), distribution(), type()
 {
 	parse_args(vec_args);
@@ -99,30 +99,39 @@ double ProcNoise::getBoxMuller() const
 	return  Optim::fastSqrt_Q3(-2.*log(U)) * cos(2.*Cst::PI*V);
 }
 
-void ProcNoise::parse_args(std::vector<std::string> vec_args)
+void ProcNoise::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	if (vec_args.size()!=3){
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + ": it requires a type, a distribution and a range", AT);
+	bool has_type=false, has_distribution=false, has_value=false;
+
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper(vec_args[ii].second) );
+			if (type_str=="ADD")
+				type='a';
+			else if (type_str=="MULT")
+				type='m';
+			else
+				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+getName()+" filter", AT);
+			has_type = true;
+		} else if (vec_args[ii].first=="DISTRIBUTION") {
+			const std::string distribution_str( IOUtils::strToUpper(vec_args[ii].second) );
+			if (distribution_str=="UNIFORM") {
+				distribution='u';
+			} else if (distribution_str=="NORMAL") {
+				distribution='n';
+			} else
+				throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for the "+getName()+" filter", AT);
+			has_distribution = true;
+		} else if (vec_args[ii].first=="RANGE") {
+			if (!IOUtils::convertString(range, vec_args[ii].second))
+				throw InvalidArgumentException("Invalid range specified for the "+getName()+" filter", AT);
+			has_value = true;
+		}
 	}
-	
-	const string type_str=IOUtils::strToUpper( vec_args[0] );
-	if (type_str=="ADD") 
-		type='a';
-	else if (type_str=="MULT") 
-		type='m';
-	else
-		throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+getName()+" filter", AT);
-		
-	const string distribution_str=IOUtils::strToUpper( vec_args[1] );
-	if (distribution_str=="UNIFORM")
-		distribution='u';
-	else if (distribution_str=="NORMAL")
-		distribution='n';
-	else
-		throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for the "+getName()+" filter", AT);
-	
-	if (!IOUtils::convertString(range, vec_args[2]))
-		throw InvalidArgumentException("Invalid range specified for the "+getName()+" filter", AT);
+
+	if (!has_type) throw InvalidArgumentException("Please provide a type for filter "+getName(), AT);
+	if (!has_distribution) throw InvalidArgumentException("Please provide a distribution for filter "+getName(), AT);
+	if (!has_value) throw InvalidArgumentException("Please provide a range for filter "+getName(), AT);
 }
 
 } //end namespace

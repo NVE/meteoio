@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-ProcIIR::ProcIIR(const std::vector<std::string>& vec_args, const std::string& name)
+ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
                   : ProcessingBlock(name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
 {
 	parse_args(vec_args);
@@ -63,32 +63,28 @@ void ProcIIR::process(const unsigned int& param, const std::vector<MeteoData>& i
 	}
 }
 
-void ProcIIR::parse_args(std::vector<std::string> vec_args)
+void ProcIIR::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	const size_t nrArgs = vec_args.size();
-	bool period_read = false;
+	bool has_type=false, has_cutoff=false;
 
-	for (size_t ii=0; ii<nrArgs; ii++) {
-		if (IOUtils::isNumeric(vec_args[ii])) {
-			if (period_read==true)
-				throw InvalidArgumentException("Cutoff period has been provided more than once", AT);
-			if (!IOUtils::convertString(cutoff, vec_args[ii]))
-				throw InvalidArgumentException("Could not parse cutoff period '"+vec_args[ii]+"'", AT);
-			period_read = true;
-		} else {
-			const std::string arg( IOUtils::strToUpper(vec_args[ii]) );
-			if (arg=="SINGLE_PASS")
-				bidirectional = false;
-			else if (arg=="LP")
-				low_pass = true;
-			else if (arg=="HP")
-				low_pass=false;
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="SINGLE_PASS") {
+			parseArg(vec_args[ii], bidirectional);
+		} else if (vec_args[ii].first=="CUTOFF") {
+			parseArg(vec_args[ii], cutoff);
+			has_cutoff = true;
+		} else if (vec_args[ii].first=="TYPE") {
+			const std::string type_str( vec_args[ii].second );
+			if (type_str=="LP") low_pass = true;
+			else if (type_str=="HP") low_pass = false;
 			else
-				throw InvalidArgumentException("Invalid argument \""+vec_args[ii]+"\" for filter \""+getName()+"\"", AT);
+				throw InvalidArgumentException("Invalid type \""+vec_args[ii].second+"\" for filter \""+getName()+"\"", AT);
+			has_type = true;
 		}
 	}
-	if (!period_read)
-		throw InvalidArgumentException("Please provide the cutoff period for filter " + getName(), AT);
+
+	if (!has_type) throw InvalidArgumentException("Please provide a type for filter "+getName(), AT);
+	if (!has_cutoff) throw InvalidArgumentException("Please provide a cutoff period for filter "+getName(), AT);
 }
 
 double ProcIIR::filterPoint(const double& raw_val, const double A[3], const double B[3], std::vector<double> &X, std::vector<double> &Y)

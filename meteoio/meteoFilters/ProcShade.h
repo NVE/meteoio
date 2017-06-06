@@ -30,11 +30,12 @@ namespace mio {
  * @class  ProcShade
  * @ingroup processing
  * @brief Apply a shading mask to the Incoming or Reflected Short Wave Radiation
+ * @details
  * A shading mask that is either computed from the DEM or read from a separate file will be applied to the radiation
  * and combined with the radiation splitting model in order to properly compute the shading effects on the measurement point. 
  * This mask will be linearly interpolated between the provided points in order to be applied to the true sun position.
  * 
- * When providing thge shading mask in a separate file, the same mask will be applied to all stations. It simply need to 
+ * When providing the shading mask in a separate file, the same mask will be applied to all stations. It simply need to
  * contain the horizon elevation (in deg.) as a function of azimuth (in deg.):
  * @code
  * 0	5
@@ -43,11 +44,15 @@ namespace mio {
  * 180	30
  * 270	20
  * @endcode
+ *
+ * Therefore, the filter supports the following arguments:
+ *  - FILE: file (and path) to read the mask from (optional);
+ *  - DUMP_MASK: if set to TRUE, each mask will be printed on the screen as it is computed (optional).
  * 
  * Then the filter is declared with the file name containing the horizon mask as argument:
  * @code
- * ISWR::filter1 = SHADE
- * ISWR::arg1    = ../input/iswr_mask.dat
+ * ISWR::filter1    = SHADE
+ * ISWR::arg1::file = ../input/iswr_mask.dat
  * @endcode
  *
  * If no arguments are provided, then it will compute the mask from the Digital Elevation Model. In such as case, 
@@ -57,7 +62,7 @@ namespace mio {
 
 class ProcShade : public ProcessingBlock {
 	public:
-		ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg);
+		ProcShade(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const Config &i_cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -66,12 +71,13 @@ class ProcShade : public ProcessingBlock {
 
 	private:
 		static void readMask(const std::string& filter, const std::string& filename, std::vector< std::pair<double,double> > &o_mask);
-		void parse_args(const std::vector<std::string>& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
 		double getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const;
 
 		const Config &cfg;
 		DEMObject dem;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
+		bool write_mask_out;
 
 		static const double diffuse_thresh;
 };

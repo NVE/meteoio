@@ -39,8 +39,8 @@ struct sort_pred {
 
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 
-ProcShade::ProcShade(const std::vector<std::string>& vec_args, const std::string& name, const Config &i_cfg)
-        : ProcessingBlock(name), cfg(i_cfg), dem(), masks()
+ProcShade::ProcShade(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const Config &i_cfg)
+        : ProcessingBlock(name), cfg(i_cfg), dem(), masks(), write_mask_out(false)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -62,7 +62,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		mask = masks.find( stationHash );
 		if (mask==masks.end()) {
 			std::vector< std::pair<double,double> > tmp_mask;
-			computeMask(dem, ovec[0].meta, tmp_mask);
+			computeMask(dem, ovec[0].meta, tmp_mask, write_mask_out);
 			masks[ stationHash ] = tmp_mask;
 			mask = masks.find( stationHash);
 		}
@@ -150,7 +150,7 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 		throw AccessException(ss.str(), AT);
 	}
 
-	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	try {
 		size_t lcount=0;
@@ -214,26 +214,32 @@ void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::
 	}
 }
 
-void ProcShade::parse_args(const std::vector<std::string>& vec_args)
+void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
 {
-	const size_t nrArgs = vec_args.size();
-	if (nrArgs==0) { //compute from DEM
+	bool from_dem=true;
+
+	for (size_t ii=0; ii<vec_args.size(); ii++) {
+		if (vec_args[ii].first=="FILE") {
+			const std::string root_path( cfg.getConfigRootDir() );
+			//if this is a relative path, prefix the path with the current path
+			const std::string in_filename( vec_args[ii].second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+			std::vector< std::pair<double,double> > mask;
+			readMask(getName(), filename, mask);
+			masks["*"] = mask; //this mask is valid for ALL stations
+			from_dem = false;
+		} else if (vec_args[ii].first=="DUMP_MASK") {
+			parseArg(vec_args[ii], write_mask_out);
+		}
+	}
+
+	if (from_dem) {
 		IOHandler io(cfg);
 		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
 		io.readDEM(dem);
-	} else if (nrArgs==1) {
-		const std::string root_path( cfg.getConfigRootDir() );
-		//if this is a relative path, prefix the path with the current path
-		const std::string in_filename( vec_args[0] );
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
-		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
-		std::vector< std::pair<double,double> > mask;
-		readMask(getName(), filename, mask);
-		masks["*"] = mask; //this mask is valid for ALL stations
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
+	}
 }
 
 } //end namespace
