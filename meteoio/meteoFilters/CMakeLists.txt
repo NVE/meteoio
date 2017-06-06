@@ -30,6 +30,5 @@ SET(meteoFilters_sources
 	meteoFilters/ProcessingStack.cc
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
-	meteoFilters/FilterOffsetsnowdepth.cc
 	meteoFilters/FilterDeGrass.cc
 )

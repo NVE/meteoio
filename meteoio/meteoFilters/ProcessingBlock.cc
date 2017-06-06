@@ -47,7 +47,6 @@
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
-#include <meteoio/meteoFilters/FilterOffsetsnowdepth.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 
 namespace mio {
@@ -146,8 +145,6 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterNoChange(vec_args, blockname);
 	} else if (blockname == "TIME_CONSISTENCY"){
 		return new FilterTimeconsistency(vec_args, blockname);
-	} else if (blockname == "OFFSNOW"){
-		return new FilterOffsetsnowdepth(vec_args, blockname);
 	} else if (blockname == "DETECT_GRASS"){
 		return new FilterDeGrass(vec_args, blockname);
 	} else if (blockname == "POTENTIALSW"){
