@@ -21,6 +21,7 @@
 
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/DataCreator.h>
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 
 #include <vector>
@@ -40,11 +41,10 @@ namespace mio {
  * @author Mathias Bavay
  */
 
-class DataGenerator {
+class DataGenerator : public DataCreator {
 	public:
 		DataGenerator(const Config& cfg);
-		DataGenerator(const DataGenerator& c) : mapGenerators(c.mapGenerators) {}
-		~DataGenerator();
+		DataGenerator(const DataGenerator& c) : DataCreator(c) {}
 
 		void fillMissing(METEO_SET& vecMeteo) const;
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -52,15 +52,6 @@ class DataGenerator {
 		DataGenerator& operator=(const DataGenerator& source);
 
 		const std::string toString() const;
-
-	private:
-		static void getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters);
-		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		static size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
-		                                const std::string& algorithm,
-		                                std::vector<std::string>& vecArgs);
-
-		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapGenerators; //per parameter data generators algorithms
 };
 
 } //end namespace

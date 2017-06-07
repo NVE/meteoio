@@ -43,22 +43,21 @@ namespace mio {
 class DataCreator {
 	public:
 		DataCreator(const Config& cfg);
-		DataCreator(const DataCreator& c) : mapCreators(c.mapCreators) {}
-		~DataCreator();
+		DataCreator(const DataCreator& c) : mapAlgorithms(c.mapAlgorithms) {}
+		virtual ~DataCreator();
 
 		void createParameters(std::vector<METEO_SET>& vecVecMeteo) const;
 
 		DataCreator& operator=(const DataCreator& source);
 		const std::string toString() const;
 
-	private:
-		static void getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters);
-		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		static size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
-		                                const std::string& algorithm,
-		                                std::vector<std::string>& vecArgs);
+	protected:
+		static std::set<std::string> getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section);
+		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname);
+		static std::vector<std::string> getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
+		                                const std::string& algorithm, const std::string& section);
 
-		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapCreators; //per parameter data creators algorithms
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data creators algorithms
 };
 
 } //end namespace

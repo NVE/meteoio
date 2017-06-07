@@ -23,27 +23,26 @@ using namespace std;
 namespace mio {
 
 DataCreator::DataCreator(const Config& cfg)
-              : mapCreators()
+              : mapAlgorithms()
 {
+	const std::string section( "Input" );
 	const std::string key_pattern( "::create" );
-	std::set<std::string> set_of_used_parameters;
-	getParameters(cfg, key_pattern, set_of_used_parameters);
+	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
 
 	std::set<std::string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
-		std::vector<std::string> tmpAlgorithms;
 		const std::string parname( *it );
-		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, key_pattern, parname, tmpAlgorithms);
+		const std::vector<std::string> tmpAlgorithms( getAlgorithmsForParameter(cfg, key_pattern, section, parname) );
+		const size_t nrOfAlgorithms = tmpAlgorithms.size();
 
-		std::vector<GeneratorAlgorithm*> vecGenerators(nrOfAlgorithms);
+		std::vector<GeneratorAlgorithm*> vecGenerators( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			std::vector<std::string> vecArgs;
-			getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], vecArgs);
+			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
 			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
 		}
 
 		if (nrOfAlgorithms>0) {
-			mapCreators[parname] = vecGenerators;
+			mapAlgorithms[parname] = vecGenerators;
 		}
 	}
 }
@@ -52,7 +51,7 @@ DataCreator::~DataCreator()
 { //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
 
-	for (it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		std::vector<GeneratorAlgorithm*> &vec( it->second );
 		for (size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
@@ -62,7 +61,7 @@ DataCreator::~DataCreator()
 DataCreator& DataCreator::operator=(const DataCreator& source)
 {
 	if (this != &source) {
-		mapCreators = source.mapCreators;
+		mapAlgorithms = source.mapAlgorithms;
 	}
 	return *this;
 }
@@ -76,10 +75,10 @@ DataCreator& DataCreator::operator=(const DataCreator& source)
  */
 void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 {
-	if (mapCreators.empty()) return; //no creators defined by the end user
+	if (mapAlgorithms.empty()) return; //no creators defined by the end user
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for (it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
 
 		for (size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
@@ -96,58 +95,54 @@ void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 	}
 }
 
-void DataCreator::getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters)
+std::set<std::string> DataCreator::getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section)
 {
-	set_parameters.clear();
-	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, "Input", true) ); //search anywhere in key
+	std::set<std::string> set_parameters;
+	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, section, true) ); //search anywhere in key
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const std::string tmp( vec_keys[ii].substr(0,found) );
-			set_parameters.insert( IOUtils::strToUpper(tmp) );
+			std::string tmp( vec_keys[ii].substr(0,found) );
+			IOUtils::toUpper( tmp );
+			set_parameters.insert( tmp );
 		}
 	}
+
+	return set_parameters;
 }
 
 // This function retrieves the user defined generator algorithms for
 // parameter 'parname' by querying the Config object
-size_t DataCreator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& parname, std::vector<std::string>& vecAlgorithms)
+std::vector<std::string> DataCreator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname)
 {
-	vecAlgorithms.clear();
+	std::vector<std::string> vecAlgorithms;
 
-	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, "Input") );
+	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, section) );
 
-	if (vecKeys.size() > 1)
-		throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;
+	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + key_pattern + " in config file", AT);;
+	if (vecKeys.empty()) return vecAlgorithms;
 
-	if (vecKeys.empty())
-		return 0;
-
-	cfg.getValue(vecKeys.at(0), "Input", vecAlgorithms, IOUtils::nothrow);
-
-	return vecAlgorithms.size();
+	cfg.getValue(vecKeys.at(0), section, vecAlgorithms, IOUtils::nothrow);
+	return vecAlgorithms;
 }
 
-size_t DataCreator::getArgumentsForAlgorithm(const Config& cfg,
-                                               const std::string& parname,
-                                               const std::string& algorithm,
-                                               std::vector<std::string>& vecArgs)
+std::vector<std::string> DataCreator::getArgumentsForAlgorithm(const Config& cfg,
+                                               const std::string& parname, const std::string& algorithm, const std::string& section)
 {
-	vecArgs.clear();
-	cfg.getValue(parname+"::"+algorithm, "Input", vecArgs, IOUtils::nothrow);
+	std::vector<std::string> vecArgs;
+	cfg.getValue(parname+"::"+algorithm, section, vecArgs, IOUtils::nothrow);
 
-	return vecArgs.size();
+	return vecArgs;
 }
 
 const std::string DataCreator::toString() const {
 	std::ostringstream os;
 	os << "<DataCreator>\n";
-
-	os << "Creators defined: " << std::boolalpha << !mapCreators.empty() << std::noboolalpha << "\n";
-	if (!mapCreators.empty()) {
+	os << "Creators defined: " << std::boolalpha << !mapAlgorithms.empty() << std::noboolalpha << "\n";
+	if (!mapAlgorithms.empty()) {
 		os << "User list of creators:\n";
-		for (std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapCreators.begin(); iter != mapCreators.end(); ++iter) {
+		for (std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 			os << setw(10) << iter->first << " :: ";
 			for (size_t jj=0; jj<iter->second.size(); jj++) {
 				os << iter->second[jj]->getAlgo() << " ";

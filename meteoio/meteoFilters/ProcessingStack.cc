@@ -109,7 +109,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 			//Now call the filters one after another for the current station and parameter
 			bool appliedFilter = false;
 			for (size_t jj=0; jj<nr_of_filters; jj++){
-				const ProcessingProperties::proc_stage& filter_stage = filter_stack[jj]->getProperties().stage;
+				const ProcessingProperties::proc_stage filter_stage = filter_stack[jj]->getProperties().stage;
 				if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
 					continue;
 
@@ -125,10 +125,10 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 						const double orig = tmp[kk](param);
 						const double filtered = ovec[ii][kk](param);
 						if (orig!=filtered) {
-							const string statName = ovec[ii][kk].meta.getStationName();
-							const string statID = ovec[ii][kk].meta.getStationID();
-							const string stat = (!statID.empty())? statID : statName;
-							const string filtername = (*filter_stack[jj]).getName();
+							const std::string statName( ovec[ii][kk].meta.getStationName() );
+							const std::string statID( ovec[ii][kk].meta.getStationID() );
+							const std::string stat = (!statID.empty())? statID : statName;
+							const std::string filtername( (*filter_stack[jj]).getName() );
 							cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << " [" << tmp[kk].date.toString(Date::ISO_WEEK) << "]\n";
 						}
 					}
