@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class TsGenerator
+ * @ingroup parametrizations
  * @brief Surface temperature generator.
  * @details
  * Generate the surface temperature from the outgoing long wave (OLWR).

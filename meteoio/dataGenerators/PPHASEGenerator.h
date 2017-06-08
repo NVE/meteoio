@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class PPhaseGenerator
+ * @ingroup parametrizations
  * @brief Generate precipitation splitting according to the selected method
  * @details
  * It takes the following arguments:
@@ -31,14 +32,14 @@ namespace mio {
  *     - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
  *     - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
- *  - THRESH: when using a fixed air temperature threshold, this gives the threshold (in K);
- *  - SNOW: when using two air temperature thresholds, this provides the temperature below which only solid precipitation is found (in K);
- *  - RAIN: when using two air temperature thresholds, this provides the temperature above which only liquid precipitation is found (in K);
+ *  - SNOW: when using a fixed air temperature threshold, this gives the snow/rain threshold (in K). When using two air temperatures
+ * thresholds, this provides the temperature below which only solid precipitation is found (in K);
+ *  - RAIN: when using two air temperatures thresholds, this provides the temperature above which only liquid precipitation is found (in K);
  *
  * @code
  * PSUM_PH::generators     = PPHASE
  * PSUM_PH::PPHASE::type   = THRESH
- * PSUM_PH::PPHASE::thresh = 274.35
+ * PSUM_PH::PPHASE::snow   = 274.35
  * @endcode
  */
 class PPhaseGenerator : public GeneratorAlgorithm {

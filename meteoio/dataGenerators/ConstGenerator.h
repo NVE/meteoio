@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class ConstGenerator
+ * @ingroup parametrizations
  * @brief Constant value generator.
  * @details
  * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).

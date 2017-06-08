@@ -25,6 +25,7 @@ namespace mio {
 
 /**
  * @class AllSkySWGenerator
+ * @ingroup parametrizations
  * @brief ISWR all sky parametrization
  * @details
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
@@ -35,10 +36,10 @@ namespace mio {
  * (basically doing like UnsworthGenerator in reverse), otherwise this assumes clear sky!
  * If no TA or RH is available, average values will be used (in order to get an average value
  * for the precipitable water vapor).
- * @note This relies on SunObject to perform the heavy duty computation.
  * @code
  * ISWR::generators = allsky_SW
  * @endcode
+ * @note This relies on SunObject to perform the heavy duty computation.
  */
 class AllSkySWGenerator : public GeneratorAlgorithm {
 	public:

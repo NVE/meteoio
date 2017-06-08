@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class TEMPLATE
+ * @ingroup parametrizations
  * @brief Here document your data generator.
  * @details
  * It is also recommended to provide an example of its usage.

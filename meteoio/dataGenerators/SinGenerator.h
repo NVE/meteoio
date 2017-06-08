@@ -24,11 +24,14 @@ namespace mio {
 
 /**
  * @class SinGenerator
+ * @ingroup parametrizations
  * @brief Sinusoid generator.
  * @details
  * Generate a sinusoidal variation for this parameter, as provided in argument (please remember that it must be in SI units).
  * The arguments that must be provided are the following:
- *  - TYPE: the sinusoidal period (either "yearly" or "daily", mandatory);
+ *  - TYPE: the sinusoidal period, either
+ *       - yearly
+ *       - daily
  *  - MIN: the minimum value (SI units, mandatory);
  *  - MAX: the maximum value (SI units, mandatory);
  *  - PHASE: the time offset specifying when the minimum value should be reached, within one period (expressed as fraction of such period, defaults to zero);

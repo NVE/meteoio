@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class RhGenerator
+ * @ingroup parametrizations
  * @brief Relative humidity generator.
  * @details
  * Generate the relative humidity from either dew point temperature or specific humidity and air temperature.

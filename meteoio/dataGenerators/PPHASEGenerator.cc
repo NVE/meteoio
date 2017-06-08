@@ -22,8 +22,8 @@ namespace mio {
 
 void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	bool has_type=false, has_thresh=false, has_thresh1=false, has_thresh2=false;
-	double range_thresh1, range_thresh2;
+	bool has_type=false, has_snow=false, has_rain=false;
+	double snow_thresh, rain_thresh;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
@@ -35,24 +35,21 @@ void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
 
 			has_type = true;
-		} else if(vecArgs[ii].first=="THRESH") {
-			parseArg(vecArgs[ii], fixed_thresh);
-			has_thresh = true;
 		} else if(vecArgs[ii].first=="SNOW") {
-			parseArg(vecArgs[ii], range_thresh1);
-			has_thresh1 = true;
+			parseArg(vecArgs[ii], snow_thresh);
+			has_snow = true;
 		} else if(vecArgs[ii].first=="RAIN") {
-			parseArg(vecArgs[ii], range_thresh2);
-			has_thresh2 = true;
+			parseArg(vecArgs[ii], rain_thresh);
+			has_rain = true;
 		}
 	}
 
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
-	if (model == THRESH && !has_thresh) throw InvalidArgumentException("Please provide a threshold for algorithm "+algo, AT);
+	if (model == THRESH && !snow_thresh) throw InvalidArgumentException("Please provide a snow/rain threshold for algorithm "+algo, AT);
 	if (model == RANGE) {
-		if (!has_thresh1 || !has_thresh2) throw InvalidArgumentException("Please provide a a snow and a rain threshold for algorithm "+algo, AT);
-		range_start = range_thresh1;
-		range_norm = 1. / (range_thresh2-range_thresh1);
+		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for algorithm "+algo, AT);
+		range_start = snow_thresh;
+		range_norm = 1. / (rain_thresh-snow_thresh);
 	}
 }
 

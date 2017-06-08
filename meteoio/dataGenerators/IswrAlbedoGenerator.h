@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class IswrAlbedoGenerator
+ * @ingroup parametrizations
  * @brief Incoming or reflected short wave generator.
  * @details
  * Generate the incoming short wave radiation from the reflected short wave radiation or the opposite. The albedo

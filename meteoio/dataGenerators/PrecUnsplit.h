@@ -24,15 +24,16 @@ namespace mio {
 
 /**
  * @class PrecUnsplit
+ * @ingroup parametrizations
  * @brief Convert split precipitation into amount/phase.
  * @details
- * This generator converts split precipitation (as provided by the "RAINF" and "SNOWF" parameters)  into amount/phase.It therefore
+ * This generator converts split precipitation (as provided by the "RAINF" and "SNOWF" parameters)  into amount/phase. It therefore
  * builds either PSUM (if it is attached to PSUM) or PSUM_PH (for any other parameter it is attached to). Please note that
  * when either "RAINF" or "SNOWF" is nodata, no value is generated.
  *
  * @code
  * PSUM_PH::generators = PrecUnsplit
- * PSUM::generators = PrecUnsplit
+ * PSUM::generators    = PrecUnsplit
  * @endcode
  */
 class PrecUnsplit : public GeneratorAlgorithm {

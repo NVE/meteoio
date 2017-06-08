@@ -29,17 +29,19 @@ namespace mio {
 
 /**
  * @class AllSkyLWGenerator
+ * @ingroup parametrizations
  * @brief ILWR all sky parametrization
  * @details
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
- * this offers the choice of several all-sky parametrizations, with the TYPE argument:
- *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
+ * this offers the choice of several all-sky parametrizations, with the following arguments:
+ *  - TYPE: specify which parametrization should be used, from the following:
+ *      - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
- *  - KONZELMANN -- from Konzelmann et al., <i>"Parameterization of global and longwave incoming radiation
+ *      - KONZELMANN -- from Konzelmann et al., <i>"Parameterization of global and longwave incoming radiation
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
- *  - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
+ *      - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
- *  - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ *      - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using

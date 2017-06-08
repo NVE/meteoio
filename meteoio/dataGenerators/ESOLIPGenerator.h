@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @class ESOLIPGenerator
+ * @ingroup parametrizations
  * @brief Generate precipitation from changes in snow height.
  * @details
  * This implements the approach laid out in

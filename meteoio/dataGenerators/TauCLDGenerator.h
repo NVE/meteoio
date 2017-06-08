@@ -27,6 +27,7 @@ namespace mio {
 
 /**
  * @class TauCLDGenerator
+ * @ingroup parametrizations
  * @brief Atmospheric transmissivity generator.
  * @details
  * Generate the atmospheric transmissivity (or clearness index, see \ref meteoparam) from other parameters. If a parameter

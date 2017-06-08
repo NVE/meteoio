@@ -36,6 +36,10 @@ namespace mio {
    Documentation for available data processing components. These can be used on incoming meteorological data. See \ref processing "Available data processing elements".
 */
 
+ /*! \defgroup parametrizations Parametrizations
+   Documentation for available parametrizations components that compute given parameters from other parameters. These used for DataCreator and DataGenerator.
+*/
+
 /*! \defgroup data_str Data classes
    Documentation for available data classes.
 */

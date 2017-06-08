@@ -24,19 +24,22 @@ namespace mio {
 
 /**
  * @class ClearSkyLWGenerator
+ * @ingroup parametrizations
  * @brief ILWR clear sky parametrization
  * @details
- * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations, with the TYPE argument:
- *  - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
+ * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations with the
+ * following arguments:
+ *  - TYPE: specify the parametrization that should be used, any of the following:
+ *      - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
  * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.
- *  - DILLEY -- from Dilley and O'Brien, <i>"Estimating downward clear sky
+ *      - DILLEY -- from Dilley and O'Brien, <i>"Estimating downward clear sky
  * long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
- *  - PRATA -- from Prata, <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
- *  - CLARK -- from Clark & Allen, <i>"The estimation of atmospheric radiation for clear and
+ *      - PRATA -- from Prata, <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
+ *      - CLARK -- from Clark & Allen, <i>"The estimation of atmospheric radiation for clear and
  * cloudy skies"</i>, Proceedings of the second national passive solar conference, <b>2</b>, 1978, p 676.
- *  - TANG -- from Tang et al., <i>"Estimates of clear night sky emissivity in the
+ *      - TANG -- from Tang et al., <i>"Estimates of clear night sky emissivity in the
  * Negev Highlands, Israel"</i>, Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
- *  - IDSO -- from Idso, <i>"A set of equations for full spectrum and 8 to 14 um and
+ *      - IDSO -- from Idso, <i>"A set of equations for full spectrum and 8 to 14 um and
  * 10.5 to 12.5 um thermal radiation from cloudless skies"</i>, Water Resources Research, <b>17</b>, 1981, pp 295-304.
  *
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
