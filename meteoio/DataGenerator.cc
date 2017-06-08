@@ -37,7 +37,7 @@ DataGenerator::DataGenerator(const Config& cfg)
 
 		std::vector<GeneratorAlgorithm*> vecGenerators( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
 			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
 		}
 

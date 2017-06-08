@@ -20,38 +20,40 @@
 
 namespace mio {
 
-void PPhaseGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const size_t nArgs = vecArgs.size();
-	
-	if (nArgs<1 || IOUtils::isNumeric(vecArgs[0]))
-		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" generator. Please provide the method to use and its arguments!", AT);
-	
-	const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
-	if (user_algo=="THRESH") {
-		if (nArgs!=2)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
-		const bool status = IOUtils::convertString(fixed_thresh, vecArgs[1]);
-		if (!status)
-			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: can not parse provided threshold", AT);
-		model = THRESH;
-	} else if (user_algo=="RANGE") {
-		if (nArgs!=3)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" generator for the "+user_algo+" method", AT);
-		double range_thresh1, range_thresh2;
-		const bool status1 = IOUtils::convertString(range_thresh1, vecArgs[1]);
-		const bool status2 = IOUtils::convertString(range_thresh2, vecArgs[2]);
-		if (!status1 || !status2)
-			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: can not parse provided thresholds", AT);
-		if (range_thresh1==range_thresh2)
-			throw InvalidArgumentException(algo+" generator, "+user_algo+" method: the two provided threshold must be different", AT);
-		if (range_thresh1>range_thresh2) 
-			std::swap(range_thresh1, range_thresh2);
+	bool has_type=false, has_thresh=false, has_thresh1=false, has_thresh2=false;
+	double range_thresh1, range_thresh2;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_algo=="THRESH") model = THRESH;
+			else if (user_algo=="RANGE") model = RANGE;
+			else
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+
+			has_type = true;
+		} else if(vecArgs[ii].first=="THRESH") {
+			parseArg(vecArgs[ii], fixed_thresh);
+			has_thresh = true;
+		} else if(vecArgs[ii].first=="SNOW") {
+			parseArg(vecArgs[ii], range_thresh1);
+			has_thresh1 = true;
+		} else if(vecArgs[ii].first=="RAIN") {
+			parseArg(vecArgs[ii], range_thresh2);
+			has_thresh2 = true;
+		}
+	}
+
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
+	if (model == THRESH && !has_thresh) throw InvalidArgumentException("Please provide a threshold for algorithm "+algo, AT);
+	if (model == RANGE) {
+		if (!has_thresh1 || !has_thresh2) throw InvalidArgumentException("Please provide a a snow and a rain threshold for algorithm "+algo, AT);
 		range_start = range_thresh1;
 		range_norm = 1. / (range_thresh2-range_thresh1);
-		model = RANGE;
-	} else
-		throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied to the "+algo+" generator", AT);
+	}
 }
 
 bool PPhaseGenerator::generate(const size_t& param, MeteoData& md)

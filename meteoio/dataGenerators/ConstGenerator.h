@@ -25,20 +25,20 @@ namespace mio {
 /**
  * @class ConstGenerator
  * @brief Constant value generator.
- * Generate a constant value for this parameter, as provided in argument (please remember that it must be in SI units).
+ * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).
  * @code
  * RH::generators = Cst
- * RH::Cst = .7
+ * RH::Cst::value = .7
  * @endcode
  */
 class ConstGenerator : public GeneratorAlgorithm {
 	public:
-		ConstGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ConstGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), constant(IOUtils::nodata) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double constant;
 };
 

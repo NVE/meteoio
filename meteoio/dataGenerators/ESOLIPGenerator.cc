@@ -22,13 +22,6 @@
 
 namespace mio {
 
-void ESOLIPGenerator::parse_args(const std::vector<std::string>& vecArgs)
-{
-	if (vecArgs.size()>0) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
-}
-
 bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 {//HACK: modify prototype so we can get the full vector + the index of the replacement
 	return false; //all missing values could be filled

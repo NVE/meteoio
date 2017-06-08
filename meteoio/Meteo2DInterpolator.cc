@@ -443,7 +443,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	}
 
 	if (v_stations.empty())
-		throw NoDataException("No suitable virtual stations found", AT);
+		throw NoDataException("No virtual stations provided", AT);
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsMeta(const Date& /*date*/, STATIONS_SET& vecStation)

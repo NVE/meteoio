@@ -22,14 +22,6 @@
 
 namespace mio {
 
-void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
-{
-	//Get the optional arguments for the algorithm: constant value to use
-	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
-}
-
 bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);

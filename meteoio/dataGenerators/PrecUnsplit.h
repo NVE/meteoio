@@ -35,7 +35,7 @@ namespace mio {
  */
 class PrecUnsplit : public GeneratorAlgorithm {
 	public:
-		PrecUnsplit(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		PrecUnsplit(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo) {}
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);

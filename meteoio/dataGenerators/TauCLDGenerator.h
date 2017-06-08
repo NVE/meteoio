@@ -48,7 +48,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 			CLF_CRAWFORD
 		} clf_parametrization;
 
-		TauCLDGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);

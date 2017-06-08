@@ -21,23 +21,28 @@
 
 namespace mio {
 
-void ClearSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void ClearSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	//Get the optional arguments for the algorithm: constant value to use
-	if (vecArgs.size()==1) {
-		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
+	bool has_type=false;
 
-		if (user_algo=="BRUTSAERT") model = BRUTSAERT;
-		else if (user_algo=="DILLEY") model = DILLEY;
-		else if (user_algo=="PRATA") model = PRATA;
-		else if (user_algo=="CLARK") model = CLARK;
-		else if (user_algo=="TANG") model = TANG;
-		else if (user_algo=="IDSO") model = IDSO;
-		else
-			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_algo=="BRUTSAERT") model = BRUTSAERT;
+			else if (user_algo=="DILLEY") model = DILLEY;
+			else if (user_algo=="PRATA") model = PRATA;
+			else if (user_algo=="CLARK") model = CLARK;
+			else if (user_algo=="TANG") model = TANG;
+			else if (user_algo=="IDSO") model = IDSO;
+			else
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+
+			has_type = true;
+		}
 	}
+
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
 }
 
 bool ClearSkyLWGenerator::generate(const size_t& param, MeteoData& md)

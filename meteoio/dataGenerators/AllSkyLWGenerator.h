@@ -31,7 +31,7 @@ namespace mio {
  * @class AllSkyLWGenerator
  * @brief ILWR all sky parametrization
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
- * this offers the choice of several all-sky parametrizations:
+ * this offers the choice of several all-sky parametrizations, with the TYPE argument:
  *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
  *  - KONZELMANN -- from Konzelmann et al., <i>"Parameterization of global and longwave incoming radiation
@@ -52,20 +52,20 @@ namespace mio {
  * Finally, it is recommended to also use a clear sky generator (declared after this one)
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
- * ILWR::generators = allsky_LW
- * ILWR::allsky_lw = Omstedt
+ * ILWR::generators      = allsky_LW
+ * ILWR::allsky_lw::type = Omstedt
  * @endcode
  *
  */
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
 		                 last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		typedef enum PARAMETRIZATION {
 			OMSTEDT,

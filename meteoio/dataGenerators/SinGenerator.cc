@@ -21,27 +21,37 @@
 
 namespace mio {
 
-void SinGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	//Get the optional arguments for the algorithm: constant value to use
-	if (vecArgs.size()==4) {
-		const std::string type_str=IOUtils::strToUpper(vecArgs[0]);
-		if ( type_str=="YEARLY" ) type='y';
-		else if ( type_str=="DAILY" ) type='d';
-		else
-			throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+algo+" generator", AT);
+	bool has_type=false, has_min=false, has_max=false;
+	double min, max;
 
-		double min, max;
-		const bool status1 = IOUtils::convertString(min, vecArgs[1]);
-		const bool status2 = IOUtils::convertString(max, vecArgs[2]);
-		amplitude = 0.5*(max-min); //the user provides min, max
-		offset = min+amplitude;
-		const bool status3 = IOUtils::convertString(phase, vecArgs[3]);
-		if (!status1 || !status2 || !status3)
-			throw InvalidArgumentException("Can not parse the arguments supplied for the "+algo+" generator", AT);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (type_str=="YEARLY") type='y';
+			else if (type_str=="DAILY") type='d';
+			else
+				throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+algo+" generator", AT);
+
+			has_type = true;
+		} else if(vecArgs[ii].first=="MIN") {
+			parseArg(vecArgs[ii], min);
+			has_min = true;
+		} else if(vecArgs[ii].first=="MAX") {
+			parseArg(vecArgs[ii], max);
+			has_max = true;
+		} else if(vecArgs[ii].first=="PHASE") {
+			parseArg(vecArgs[ii], phase);
+		}
 	}
+
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
+	if (!has_min || !has_max) throw InvalidArgumentException("Please provide a MIN and MAX for algorithm "+algo, AT);
+
+	amplitude = 0.5*(max-min); //the user provides min, max
+	offset = min+amplitude;
 }
 
 bool SinGenerator::generate(const size_t& param, MeteoData& md)

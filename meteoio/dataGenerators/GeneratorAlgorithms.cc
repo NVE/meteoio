@@ -122,7 +122,7 @@ const double GeneratorAlgorithm::soil_albedo = .23; //grass
 const double GeneratorAlgorithm::snow_albedo = .85; //snow
 const double GeneratorAlgorithm::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*/, const std::string& i_algoname, const std::vector<std::string>& vecArgs)
+GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*/, const std::string& i_algoname, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	std::string algoname(i_algoname);
 	IOUtils::toUpper(algoname);
@@ -160,11 +160,7 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 	}
 }
 
-std::string GeneratorAlgorithm::getAlgo() const {
-	return algo;
-}
-
-void GeneratorAlgorithm::parse_args(const std::vector<std::string>& vecArgs)
+void GeneratorAlgorithm::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);

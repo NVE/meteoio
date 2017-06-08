@@ -24,23 +24,28 @@
 
 namespace mio {
 
-void AllSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	//Get the optional arguments for the algorithm: constant value to use
-	if (vecArgs.size()==1) {
-		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
+	bool has_type=false;
 
-		if (user_algo=="OMSTEDT") model = OMSTEDT;
-		else if (user_algo=="KONZELMANN") model = KONZELMANN;
-		else if (user_algo=="UNSWORTH") model = UNSWORTH;
-		else if (user_algo=="CRAWFORD") model = CRAWFORD;
-		else
-			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
 
-		if (model==CRAWFORD) clf_model = TauCLDGenerator::CLF_CRAWFORD;
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+			if (user_algo=="OMSTEDT") model = OMSTEDT;
+			else if (user_algo=="KONZELMANN") model = KONZELMANN;
+			else if (user_algo=="UNSWORTH") model = UNSWORTH;
+			else if (user_algo=="CRAWFORD") {
+				model = CRAWFORD;
+				clf_model = TauCLDGenerator::CLF_CRAWFORD;
+			} else
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+
+			has_type = true;
+		}
 	}
+
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
 }
 
 bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)

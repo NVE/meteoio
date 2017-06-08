@@ -20,16 +20,21 @@
 
 namespace mio {
 
-void TEMPLATE::parse_args(const std::vector<std::string>& vecArgs)
+void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	//Get the optional arguments for the algorithm. For example, process 1 argument
-	/*if (vecArgs.size()==1) {
-		const bool status = IOUtils::convertString(constant, vecArgs[0]);
-		if (!status)
-			throw InvalidArgumentException("Can not parse the argument of the "+algo+" generator", AT);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}*/
+	/*bool has_val=false; //so we can check the syntax
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VALUE") {
+			parseArg(vecArgs[ii], value);
+			has_val = true;
+		}
+	}
+
+	//now we check that we have the necessary arguments
+	if (!has_val) throw InvalidArgumentException("Please provide a VALUE for algorithm "+algo, AT);
+	*/
 }
 
 bool TEMPLATE::generate(const size_t& param, MeteoData& md)

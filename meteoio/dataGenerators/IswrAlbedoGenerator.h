@@ -26,20 +26,21 @@ namespace mio {
  * @class IswrAlbedoGenerator
  * @brief Incoming or reflected short wave generator.
  * Generate the incoming short wave radiation from the reflected short wave radiation or the opposite. The albedo
- * ie either a grassy soil albedo or a snow albedo depending on the snow height. If no snow height is available, the generator
- * will simply return unless the "FORCE" argument is provided.
+ * ie either a grassy soil albedo or a snow albedo depending on the snow height. It has the following optional arguments:
+ *  - FORCE:  If no snow height is available, the generator will simply return unless the "FORCE" argument is set to TRUE
+ * 
  * @code
  * ISWR::generators = ISWR_ALBEDO
  * @endcode
  */
 class IswrAlbedoGenerator : public GeneratorAlgorithm {
 	public:
-		IswrAlbedoGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		IswrAlbedoGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), force(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		bool force; ///< forces to convert radiation even when no HS is present
 };
 

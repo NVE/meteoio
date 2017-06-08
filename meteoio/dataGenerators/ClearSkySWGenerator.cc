@@ -22,7 +22,7 @@
 
 namespace mio {
 
-void ClearSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void ClearSkySWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if (!vecArgs.empty()) { //incorrect arguments, throw an exception

@@ -68,7 +68,7 @@ namespace mio {
  * start by making a copy of the dataGenerators/template.cc (or .h) that you rename according to your generator. Please make sure
  * to update the header guard (the line "#ifndef GENERATORTEMPLATE_H" in the header) to reflect your generator name.
  * Three methods need to be implemented:
- * - the constructor with (const std::vector<std::string>& vecArgs, const std::string& i_algo)
+ * - the constructor with (const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
  * - bool generate(const size_t& param, MeteoData& md)
  * - bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
  *
@@ -110,15 +110,20 @@ namespace mio {
 class GeneratorAlgorithm {
 
 	public:
-		GeneratorAlgorithm(const std::vector<std::string>& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {}
+		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {}
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station. This is used by the dataGenerators
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
 		//fill one time series of MeteoData for one station. This is used by the dataCreators
 		virtual bool create(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
-		std::string getAlgo() const;
+		std::string getAlgo() const {return algo;}
  	protected:
-		virtual void parse_args(const std::vector<std::string>& i_vecArgs);
+		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& i_vecArgs);
+
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
+		}
 		const std::string algo;
 		
 		//These are used by several generators in order work with radiation data by looking at HS and deciding which albedo should be used
@@ -127,7 +132,7 @@ class GeneratorAlgorithm {
 
 class GeneratorAlgorithmFactory {
 	public:
-		static GeneratorAlgorithm* getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::vector<std::string>& vecArgs);
+		static GeneratorAlgorithm* getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace mio

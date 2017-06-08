@@ -20,16 +20,18 @@
 
 namespace mio {
 
-void ConstGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void ConstGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	//Get the optional arguments for the algorithm: constant value to use
-	if (vecArgs.size()==1) {
-		const bool status = IOUtils::convertString(constant, vecArgs[0]);
-		if (!status)
-			throw InvalidArgumentException("Can not parse the argument of the "+algo+" generator", AT);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	bool has_cst=false;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VALUE") {
+			parseArg(vecArgs[ii], constant);
+			has_cst = true;
+		}
 	}
+
+	if (!has_cst) throw InvalidArgumentException("Please provide a VALUE for algorithm "+algo, AT);
 }
 
 bool ConstGenerator::generate(const size_t& param, MeteoData& md)

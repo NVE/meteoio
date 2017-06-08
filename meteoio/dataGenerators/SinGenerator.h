@@ -26,23 +26,30 @@ namespace mio {
  * @class SinGenerator
  * @brief Sinusoid generator.
  * Generate a sinusoidal variation for this parameter, as provided in argument (please remember that it must be in SI units).
- * The arguments that must be provided are the following: the sinusoidal period (either "yearly" or "daily"), the minimum value,
- * the maximum value and the offset specifying when the minimum value should be reached, within one period (expressed as fraction of such period).
+ * The arguments that must be provided are the following:
+ *  - TYPE: the sinusoidal period (either "yearly" or "daily", mandatory);
+ *  - MIN: the minimum value (SI units, mandatory);
+ *  - MAX: the maximum value (SI units, mandatory);
+ *  - PHASE: the time offset specifying when the minimum value should be reached, within one period (expressed as fraction of such period, defaults to zero);
+ *
  * The example below generates a yearly sinusoidal variation for the air temperature, the minimum being 268.26 K and occuring at 1/12
  * of the period (which practically means, at the end of the first month).
  * @code
  * TA::generators = Sin
- * TA::Sin = yearly 268.26 285.56 0.0833
+ * TA::Sin::type  = yearly
+ * TA::Sin::min   = 268.26
+ * TA::Sin::max   = 285.56
+ * TA::Sin::phase = 0.0833
  * @endcode
  */
 class SinGenerator : public GeneratorAlgorithm {
 	public:
-		SinGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(IOUtils::nodata), type(' ') { parse_args(vecArgs); }
+		SinGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(0.), type(' ') { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double amplitude, offset, phase;
 		char type;
 };

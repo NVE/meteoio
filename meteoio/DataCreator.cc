@@ -37,7 +37,7 @@ DataCreator::DataCreator(const Config& cfg)
 
 		std::vector<GeneratorAlgorithm*> vecGenerators( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
 			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
 		}
 
@@ -117,21 +117,28 @@ std::set<std::string> DataCreator::getParameters(const Config& cfg, const std::s
 std::vector<std::string> DataCreator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname)
 {
 	std::vector<std::string> vecAlgorithms;
-
 	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, section) );
 
 	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + key_pattern + " in config file", AT);;
 	if (vecKeys.empty()) return vecAlgorithms;
 
-	cfg.getValue(vecKeys.at(0), section, vecAlgorithms, IOUtils::nothrow);
+	cfg.getValue(vecKeys[0], section, vecAlgorithms, IOUtils::nothrow);
 	return vecAlgorithms;
 }
 
-std::vector<std::string> DataCreator::getArgumentsForAlgorithm(const Config& cfg,
+std::vector< std::pair<std::string, std::string> > DataCreator::getArgumentsForAlgorithm(const Config& cfg,
                                                const std::string& parname, const std::string& algorithm, const std::string& section)
 {
-	std::vector<std::string> vecArgs;
-	cfg.getValue(parname+"::"+algorithm, section, vecArgs, IOUtils::nothrow);
+	const std::string key_prefix( parname+"::"+algorithm+"::" );
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, section) );
+
+	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
+		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	}
 
 	return vecArgs;
 }

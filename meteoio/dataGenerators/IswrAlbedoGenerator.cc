@@ -21,16 +21,12 @@
 
 namespace mio {
 
-void IswrAlbedoGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void IswrAlbedoGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args==1) {
-		if (IOUtils::strToUpper(vecArgs[0])== "FORCE") {
-			force = true;
-		} else
-			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied for the "+algo+" generator", AT);
-	} else if (nr_args>1) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="FORCE") {
+			parseArg(vecArgs[ii], force);
+		}
 	}
 }
 

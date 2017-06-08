@@ -25,7 +25,7 @@ namespace mio {
 /**
  * @class ClearSkyLWGenerator
  * @brief ILWR clear sky parametrization
- * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations:
+ * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations, with the TYPE argument:
  *  - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
  * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.
  *  - DILLEY -- from Dilley and O'Brien, <i>"Estimating downward clear sky
@@ -40,19 +40,19 @@ namespace mio {
  *
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
- * ILWR::generators = clearsky_LW
- * ILWR::clearsky_lw = Dilley
+ * ILWR::generators        = clearsky_LW
+ * ILWR::clearsky_lw::type = Dilley
  * @endcode
  *
  */
 class ClearSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		ClearSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ClearSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), model(BRUTSAERT) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		typedef enum PARAMETRIZATION {
 			BRUTSAERT,
 			DILLEY,

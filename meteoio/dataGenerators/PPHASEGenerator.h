@@ -25,19 +25,25 @@ namespace mio {
 /**
  * @class PPhaseGenerator
  * @brief Generate precipitation splitting according to the selected method
- * The methods that are offered are currently the following:
- * - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
- * - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
+ * @details
+ * It takes the following arguments:
+ *  - TYPE: the splitting method to use, any of the following:
+ *     - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
+ *     - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
+ *  - THRESH: when using a fixed air temperature threshold, this gives the threshold (in K);
+ *  - SNOW: when using two air temperature thresholds, this provides the temperature below which only solid precipitation is found (in K);
+ *  - RAIN: when using two air temperature thresholds, this provides the temperature above which only liquid precipitation is found (in K);
  *
  * @code
- * PSUM_PH::generators = PPHASE
- * PSUM_PH::PPHASE = THRESH 274.35
+ * PSUM_PH::generators     = PPHASE
+ * PSUM_PH::PPHASE::type   = THRESH
+ * PSUM_PH::PPHASE::thresh = 274.35
  * @endcode
  */
 class PPhaseGenerator : public GeneratorAlgorithm {
 	public:
-		PPhaseGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		PPhaseGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
@@ -45,7 +51,7 @@ class PPhaseGenerator : public GeneratorAlgorithm {
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		typedef enum PARAMETRIZATION {
 			THRESH,

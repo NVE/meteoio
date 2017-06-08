@@ -54,7 +54,7 @@ class DataCreator {
 	protected:
 		static std::set<std::string> getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section);
 		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname);
-		static std::vector<std::string> getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
+		static std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
 		                                const std::string& algorithm, const std::string& section);
 
 		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data creators algorithms

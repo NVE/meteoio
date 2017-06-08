@@ -40,12 +40,12 @@ namespace mio {
  */
 class ClearSkySWGenerator : public GeneratorAlgorithm {
 	public:
-		ClearSkySWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ClearSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		SunObject sun;
 };
 
