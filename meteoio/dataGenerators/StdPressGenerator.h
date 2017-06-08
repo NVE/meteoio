@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class StandardPressureGenerator
  * @brief Standard atmospheric pressure generator.
+ * @details
  * Generate a standard atmosphere's pressure, depending on the local elevation.
  * @code
  * P::generators = STD_PRESS

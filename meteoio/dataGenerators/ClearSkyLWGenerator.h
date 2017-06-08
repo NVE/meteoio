@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class ClearSkyLWGenerator
  * @brief ILWR clear sky parametrization
+ * @details
  * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations, with the TYPE argument:
  *  - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
  * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.

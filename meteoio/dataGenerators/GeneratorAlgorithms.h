@@ -98,6 +98,7 @@ namespace mio {
 /**
  * @class GeneratorAlgorithm
  * @brief Interface class for the generator models.
+ * @details
  * These models generate data for a specific parameter when all other options failed (the resampling could not help).
  * Therefore, there is nothing more that could be done with the temporal history of the data, we have to use
  * a totally different approach: either generic data (constant value, etc) or generate the data from other

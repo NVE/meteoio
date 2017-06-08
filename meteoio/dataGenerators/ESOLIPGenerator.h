@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class ESOLIPGenerator
  * @brief Generate precipitation from changes in snow height.
+ * @details
  * This implements the approach laid out in
  * Mair et al., <i>"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height
  * and rain gauge measurements"</i>, Hydrology and Earth System Sciences Discussions, <b>10(7)</b>, 8683-8714, 2013. or

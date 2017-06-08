@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class ConstGenerator
  * @brief Constant value generator.
+ * @details
  * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).
  * @code
  * RH::generators = Cst

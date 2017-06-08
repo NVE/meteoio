@@ -30,6 +30,7 @@ namespace mio {
 /**
  * @class AllSkyLWGenerator
  * @brief ILWR all sky parametrization
+ * @details
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
  * this offers the choice of several all-sky parametrizations, with the TYPE argument:
  *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,

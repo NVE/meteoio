@@ -26,7 +26,7 @@ namespace mio {
 /**
  * @class AllSkySWGenerator
  * @brief ISWR all sky parametrization
- *
+ * @details
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
  * this computes the potential incoming solar radiation, based on the position of the sun in the sky
  * (as a function of the location and the date) on the horizontal at ground level.

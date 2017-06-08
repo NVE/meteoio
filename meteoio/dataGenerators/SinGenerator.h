@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class SinGenerator
  * @brief Sinusoid generator.
+ * @details
  * Generate a sinusoidal variation for this parameter, as provided in argument (please remember that it must be in SI units).
  * The arguments that must be provided are the following:
  *  - TYPE: the sinusoidal period (either "yearly" or "daily", mandatory);

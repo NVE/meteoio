@@ -25,6 +25,7 @@ namespace mio {
 /**
  * @class TEMPLATE
  * @brief Here document your data generator.
+ * @details
  * It is also recommended to provide an example of its usage.
  */
 class TEMPLATE : public GeneratorAlgorithm {

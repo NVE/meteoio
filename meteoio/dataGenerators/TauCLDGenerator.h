@@ -28,6 +28,7 @@ namespace mio {
 /**
  * @class TauCLDGenerator
  * @brief Atmospheric transmissivity generator.
+ * @details
  * Generate the atmospheric transmissivity (or clearness index, see \ref meteoparam) from other parameters. If a parameter
  * named "CLD" is available, it will be interpreted as cloud cover / cloudiness: in okta between
  * 0 (fully clear) and 8 (fully cloudy). For synop reports, it is possible to include a value of exactly 9 (sky obstructed
