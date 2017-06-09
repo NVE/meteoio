@@ -52,8 +52,7 @@ void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
-	Fit1D trend;
-	getTrend(vecAltitudes, vecData, trend);
+	const Fit1D trend( getTrend(vecAltitudes, vecData) );
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::IDW(vecData, vecMeta, dem, grid); //the meta should NOT be used for elevations!

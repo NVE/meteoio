@@ -79,8 +79,7 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	}
 
 	if (nrOfMeasurments>=2) {
-		Fit1D trend;
-		getTrend(vecAltitudes, vecTd, trend);
+		const Fit1D trend( getTrend(vecAltitudes, vecTd) );
 		info << trend.getInfo();
 		detrend(trend, vecAltitudes, vecTd);
 		Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!

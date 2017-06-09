@@ -60,8 +60,7 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
-	Fit1D trend;
-	getTrend(vecAltitudes, vecDataEA, trend);
+	const Fit1D trend( getTrend(vecAltitudes, vecDataEA) );
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecDataEA);
 	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid); //the meta should NOT be used for elevations!

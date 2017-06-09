@@ -51,8 +51,7 @@ void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
-	Fit1D trend;
-	getTrend(vecAltitudes, vecData, trend);
+	const Fit1D trend( getTrend(vecAltitudes, vecData) );
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);

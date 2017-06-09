@@ -279,8 +279,10 @@ std::string InterpolationAlgorithm::getInfo() const
  * @param vecDat data for the interpolated parameter
  * @param trend object containing the fitted trend to be used for detrending/retrending
 */
-void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const
+Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const
 {
+	Fit1D trend;
+
 	bool status;
 	if (vecArgs.empty()) {
 		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
@@ -320,6 +322,7 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 
 	if (!status)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
+	return trend;
 }
 
 
@@ -376,15 +379,13 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 		throw IOException("Not enough data for spatially interpolating wind", AT);
 
 	if (vecDataVW.size()>=4) { //at least for points to perform detrending
-		Fit1D trend;
-
-		getTrend(vecAltitudes, Ve, trend);
+		Fit1D trend( getTrend(vecAltitudes, Ve) );
 		info << trend.getInfo();
 		detrend(trend, vecAltitudes, Ve);
 		Interpol2D::IDW(Ve, vecMeta, dem, VW);
 		retrend(dem, trend, VW);
 
-		getTrend(vecAltitudes, Vn, trend);
+		trend = getTrend(vecAltitudes, Vn);
 		info << trend.getInfo();
 		detrend(trend, vecAltitudes, Vn);
 		Interpol2D::IDW(Vn, vecMeta, dem, DW);
