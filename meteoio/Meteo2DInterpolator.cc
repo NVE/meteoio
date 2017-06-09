@@ -160,19 +160,17 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 */
 void Meteo2DInterpolator::setAlgorithms()
 {
-	std::set<std::string> set_of_used_parameters;
-	get_parameters(cfg, set_of_used_parameters);
+	const std::set<std::string> set_of_used_parameters( get_parameters(cfg) );
 
 	std::set<std::string>::const_iterator it  = set_of_used_parameters.begin();
 	for (; it != set_of_used_parameters.end(); ++it) {
 		const std::string parname( *it );
-		std::vector<std::string> tmpAlgorithms;
-		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
+		const std::vector<std::string> tmpAlgorithms( getAlgorithmsForParameter(cfg, parname) );
+		const size_t nrOfAlgorithms = tmpAlgorithms.size();
 
-		std::vector<InterpolationAlgorithm*> vecAlgorithms(nrOfAlgorithms);
+		std::vector<InterpolationAlgorithm*> vecAlgorithms( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			std::vector<std::string> vecArgs;
-			getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], vecArgs);
+			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(parname, tmpAlgorithms[jj]) );
 			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *tsmanager, *gridsmanager);
 		}
 
@@ -184,19 +182,48 @@ void Meteo2DInterpolator::setAlgorithms()
 }
 
 //get a list of all meteoparameters referenced in the Interpolations2D section
-size_t Meteo2DInterpolator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
+std::set<std::string> Meteo2DInterpolator::get_parameters(const Config& cfg)
 {
 	const std::vector<std::string> vec_keys( cfg.getKeys("::algorithms", "Interpolations2D", true) );
 
+	std::set<std::string> set_parameters;
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const std::string tmp( vec_keys[ii].substr(0,found) );
-			set_parameters.insert( IOUtils::strToUpper(tmp) );
+			std::string tmp( vec_keys[ii].substr(0,found) );
+			IOUtils::toUpper( tmp );
+			set_parameters.insert( tmp );
 		}
 	}
 
-	return set_parameters.size();
+	return set_parameters;
+}
+
+
+std::vector<std::string> Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname)
+{
+	// This function retrieves the user defined interpolation algorithms for
+	// parameter 'parname' by querying the Config object
+	std::vector<std::string> vecAlgorithms;
+	const std::vector<std::string> vecKeys( cfg.getKeys(parname+"::algorithms", "Interpolations2D") );
+
+	if (vecKeys.size() > 1)
+		throw IOException("Multiple definitions of " + parname + "::algorithms in config file", AT);;
+
+	if (vecKeys.empty()) return vecAlgorithms;
+
+	cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
+	return vecAlgorithms;
+}
+
+std::vector<std::string> Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
+                                                     const std::string& algorithm) const
+{
+	std::vector<std::string> vecArgs;
+	const std::string keyname( param +"::"+ algorithm );
+	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
+
+	return vecArgs;
 }
 
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
@@ -304,33 +331,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			result.push_back(result_grid(0,0));
 		}
 	}
-}
-
-size_t Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms)
-{
-	// This function retrieves the user defined interpolation algorithms for
-	// parameter 'parname' by querying the Config object
-	vecAlgorithms.clear();
-	const std::vector<std::string> vecKeys( cfg.getKeys(parname+"::algorithms", "Interpolations2D") );
-
-	if (vecKeys.size() > 1)
-		throw IOException("Multiple definitions of " + parname + "::algorithms in config file", AT);;
-
-	if (vecKeys.empty()) return 0;
-
-	cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
-	return vecAlgorithms.size();
-}
-
-size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
-                                                     const std::string& algorithm,
-                                                     std::vector<std::string>& vecArgs) const
-{
-	vecArgs.clear();
-	const std::string keyname( param +"::"+ algorithm );
-	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
-
-	return vecArgs.size();
 }
 
 void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj)

@@ -35,6 +35,7 @@ double ILWREpsAlgorithm::getQualityRating(const Date& i_date, const MeteoData::P
 	vecDataEA.clear();
 
 	nrOfMeasurments = 0;
+	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::ILWR) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
 			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii](MeteoData::ILWR), vecMeteo[ii](MeteoData::TA)) );

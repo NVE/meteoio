@@ -148,9 +148,8 @@ class Meteo2DInterpolator {
 		 * @param algorithm the desired algorithm
 		 * @param vecArgs a vector of strings containing the arguments
 		 */
-		size_t getArgumentsForAlgorithm(const std::string& param,
-		                                const std::string& algorithm,
-		                                std::vector<std::string>& vecArgs) const;
+		std::vector<std::string> getArgumentsForAlgorithm(const std::string& param,
+		                                const std::string& algorithm) const;
 
 		/**
 		 * @brief Returns the metadata associated with the configured virtual stations
@@ -173,8 +172,8 @@ class Meteo2DInterpolator {
 		static Config stripVirtualConfig(const Config& cfg);
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
-		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
-		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
+		static std::set<std::string> get_parameters(const Config& cfg);
+		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& parname);
 
 		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
 		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);

@@ -80,8 +80,7 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	std::vector<std::string> vecArgs2;
-	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
+	const std::vector<std::string> vecArgs2( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo) );
 	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
