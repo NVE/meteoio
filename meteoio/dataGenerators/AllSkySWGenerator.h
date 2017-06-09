@@ -48,7 +48,7 @@ class AllSkySWGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		double getSolarIndex(const double& ta, const double& rh, const double& ilwr);
+		static double getSolarIndex(const double& ta, const double& rh, const double& ilwr);
 		SunObject sun;
 };
 

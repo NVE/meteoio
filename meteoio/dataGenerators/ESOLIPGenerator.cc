@@ -71,7 +71,7 @@ bool ESOLIPGenerator::create(const size_t& param, std::vector<MeteoData>& vecMet
 	return all_filled;
 }
 
-double ESOLIPGenerator::newSnowDensity(const MeteoData& md) const
+double ESOLIPGenerator::newSnowDensity(const MeteoData& md)
 { //C. Zwart, "Significance of new-snow properties for snowcover development",
 //master's thesis, 2007, Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp.
 	const double vw = std::max(2., md(MeteoData::VW));

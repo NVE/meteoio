@@ -50,7 +50,7 @@ class ESOLIPGenerator : public GeneratorAlgorithm {
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 
 	private:
-		double newSnowDensity(const MeteoData& md) const;
+		static double newSnowDensity(const MeteoData& md);
 };
 
 } //end namespace mio
