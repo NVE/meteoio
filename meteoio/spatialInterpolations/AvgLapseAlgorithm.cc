@@ -47,8 +47,7 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoDa
 void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	std::vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 

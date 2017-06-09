@@ -37,6 +37,7 @@ double RHListonAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 
 	nrOfMeasurments = 0;
 	tsmanager.getMeteoData(date, vecMeteo);
+
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::RH) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
 			vecDataTA.push_back(vecMeteo[ii](MeteoData::TA));
@@ -57,8 +58,7 @@ double RHListonAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	std::vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
@@ -67,7 +67,7 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	//RH->Td, interpolations, Td->RH
 	//Compute dew point temperatures at stations
-	std::vector<double> vecTd(vecDataRH.size());
+	std::vector<double> vecTd( vecDataRH.size() );
 	for (size_t ii=0; ii<vecDataRH.size(); ii++){
 		const double rh = vecDataRH[ii];
 		if (rh<0. || rh>1.) {

@@ -56,10 +56,10 @@ class InterpolationAlgorithm {
 		const std::string algo;
 
  	protected:
-		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param, std::vector<double>& o_vecData);
+		std::vector<double> getData(const Date& i_date, const MeteoData::Parameters& i_param);
 		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
-		static size_t getStationAltitudes(const std::vector<StationData>& i_vecMeta, std::vector<double>& o_vecData);
+		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
 		void getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const;
 		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
 		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);

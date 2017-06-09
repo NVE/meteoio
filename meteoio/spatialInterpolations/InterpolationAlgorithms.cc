@@ -210,19 +210,19 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 	}
 }
 
-size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
-                                       std::vector<double>& o_vecData)
+std::vector<double> InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param)
 {
 	tsmanager.getMeteoData(i_date, vecMeteo);
-	o_vecData.clear();
+
+	std::vector<double> o_vecData;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		const double& val = vecMeteo[ii](i_param);
+		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata) {
 			o_vecData.push_back( val );
 		}
 	}
 
-	return o_vecData.size();
+	return o_vecData;
 }
 
 size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
@@ -232,7 +232,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 	o_vecData.clear();
 	o_vecMeta.clear();
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		const double& val = vecMeteo[ii](i_param);
+		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
 			o_vecData.push_back( val );
 			o_vecMeta.push_back( vecMeteo[ii].meta );
@@ -242,18 +242,18 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 	return o_vecData.size();
 }
 
-size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta,
-                                                   std::vector<double>& o_vecData)
+std::vector<double> InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta)
 {
-	o_vecData.clear();
+	std::vector<double> o_vecData;
+
 	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
-		const double& alt = i_vecMeta[ii].position.getAltitude();
+		const double alt = i_vecMeta[ii].position.getAltitude();
 		if (alt != IOUtils::nodata) {
 			o_vecData.push_back( alt );
 		}
 	}
 
-	return o_vecData.size();
+	return o_vecData;
 }
 
 /**
@@ -371,8 +371,7 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 	}
 
 	//spatially interpolate U,V
-	std::vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating wind", AT);
 
