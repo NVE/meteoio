@@ -59,11 +59,11 @@ class InterpolationAlgorithm {
 		std::vector<double> getData(const Date& i_date, const MeteoData::Parameters& i_param);
 		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
-		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
+		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
 		Fit1D getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const;
+		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
 		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
 		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);
-		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
 
 		Meteo2DInterpolator& mi;
 		TimeSeriesManager& tsmanager;
