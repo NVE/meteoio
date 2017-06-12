@@ -45,7 +45,10 @@ void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::
 	}
 
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
-	if (model == THRESH && !snow_thresh) throw InvalidArgumentException("Please provide a snow/rain threshold for algorithm "+algo, AT);
+	if (model == THRESH) {
+		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for algorithm "+algo, AT);
+		fixed_thresh = snow_thresh;
+	}
 	if (model == RANGE) {
 		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for algorithm "+algo, AT);
 		range_start = snow_thresh;
