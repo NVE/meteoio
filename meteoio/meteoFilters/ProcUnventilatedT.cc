@@ -25,11 +25,11 @@ namespace mio {
 const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
-ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                   : ProcessingBlock(name), usr_albedo(dflt_albedo),
                     usr_vw_thresh(IOUtils::nodata), nakamura(false)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -115,23 +115,23 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 	}
 }
 
-void ProcUnventilatedT::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcUnventilatedT::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_vw_thresh=false, has_usr_albedo=false, suppr_filter=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="NAKAMURA") nakamura = true;
 			else if (type_str=="HUWALD") nakamura = false;
 			else if (type_str=="SUPPR") suppr_filter = true;
 			else
-				throw InvalidArgumentException("Invalid type \""+vec_args[ii].second+"\" for filter \""+getName()+"\"", AT);
-		} else if (vec_args[ii].first=="THRESH_VW") {
-			parseArg(vec_args[ii], usr_vw_thresh);
+				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for filter \""+getName()+"\"", AT);
+		} else if (vecArgs[ii].first=="THRESH_VW") {
+			parseArg(vecArgs[ii], usr_vw_thresh);
 			has_vw_thresh = true;
-		} else if (vec_args[ii].first=="SOIL_ALB") {
-			parseArg(vec_args[ii], usr_albedo);
+		} else if (vecArgs[ii].first=="SOIL_ALB") {
+			parseArg(vecArgs[ii], usr_albedo);
 			has_usr_albedo = true;
 		}
 	}

@@ -22,10 +22,10 @@ using namespace std;
 
 namespace mio {
 
-FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : WindowedFilter(name)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
 
@@ -56,9 +56,9 @@ void FilterTimeconsistency::process(const unsigned int& param, const std::vector
 }
 
 
-void FilterTimeconsistency::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterTimeconsistency::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vec_args); //this also reads SOFT
+	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 } //end namespace

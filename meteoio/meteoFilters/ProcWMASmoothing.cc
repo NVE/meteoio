@@ -23,9 +23,9 @@ using namespace std;
 
 namespace mio {
 
-ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name) : WindowedFilter(name)
+ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(name)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
@@ -85,9 +85,9 @@ double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, co
 		return IOUtils::nodata;
 }
 
-void ProcWMASmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcWMASmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vec_args); //this also reads SOFT
+	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 } //namespace

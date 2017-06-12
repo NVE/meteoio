@@ -21,10 +21,10 @@ using namespace std;
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : FilterBlock(name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
 	//or after the temporal resampling (second stage, ProcessingProperties::second) or both (ProcessingProperties::both)
 	//filters that do not depend on past data can safely use "both" (such as min/max filters) while
@@ -50,27 +50,27 @@ void TEMPLATE::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
-void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	//for a filter that does not take any arguments
-	if ( !vec_args.empty() ) //ie if there are arguments, throw an exception
+	if ( !vecArgs.empty() ) //ie if there are arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
 	/*
 	//for a filter taking one or more arguments
 
 	//if the filter is based on WindowedFilter, this reads the window parameters as well as the "soft" argument
-	//setWindowFParams(vec_args); //this also reads SOFT
+	//setWindowFParams(vecArgs); //this also reads SOFT
 
 	//to perform syntax checks (see after the "for" loop)
 	bool has_max=false;
 
 	//parse the arguments (the keys are all upper case)
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="MAX") {
-			parseArg(vec_args[ii], max_val);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="MAX") {
+			parseArg(vecArgs[ii], max_val);
 			has_max = true;
 		}
 	}

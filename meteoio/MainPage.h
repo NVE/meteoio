@@ -338,7 +338,7 @@ namespace mio {
  * method by adding three lines similar to:
  *    @code
  *     else if (blockname == "MIN_MAX"){
- *     		return new FilterMinMax(vec_args, blockname);
+ *     		return new FilterMinMax(vecArgs, blockname);
  * 	}
  *    @endcode
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
@@ -350,7 +350,7 @@ namespace mio {
  *    the block name, for example for printing in an error message from which filter/block it comes). The constructor
  *    would therefore have a declaration similar to:
  *    @code
- *    FilterMax::FilterMax(const std::vector<std::string>& vec_args, const std::string& name)
+ *    FilterMax::FilterMax(const std::vector<std::string>& vecArgs, const std::string& name)
  *    @endcode
  *    -# The <b>process</b> method applies the element to the provided vector of values, for a meteo parameter pointed to by index.
  *    This index is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
@@ -362,7 +362,7 @@ namespace mio {
  *    @endcode
  *    -# The private <b>parse_args</b> method reads the arguments from a vector of strings, with the following declaration:
  *    @code
- *    parse_args(std::vector<std::string> vec_args)
+ *    parse_args(std::vector<std::string> vecArgs)
  *    @endcode
  *
  * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteoFilters subdirectory),

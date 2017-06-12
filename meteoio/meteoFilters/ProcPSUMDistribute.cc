@@ -25,10 +25,10 @@ namespace mio {
 const double ProcPSUMDistribute::thresh_rh = .7;
 const double ProcPSUMDistribute::thresh_Dt = 3.;
 
-ProcPSUMDistribute::ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcPSUMDistribute::ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                   : ProcessingBlock(name), measured_period(IOUtils::nodata), is_soft(false)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 }
 
 /** 
@@ -138,13 +138,13 @@ void ProcPSUMDistribute::fillInterval(const unsigned int& param, std::vector<Met
 }
 
 
-void ProcPSUMDistribute::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcPSUMDistribute::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="MEAS_PERIOD") {
-			parseArg(vec_args[ii], measured_period);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="MEAS_PERIOD") {
+			parseArg(vecArgs[ii], measured_period);
 			measured_period /= 86400.;
 		}
 	}

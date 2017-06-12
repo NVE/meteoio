@@ -88,7 +88,7 @@ class ProcessingBlock {
 
 class BlockFactory {
 	public:
-		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vec_args, const Config& cfg);
+		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 };
 
 } //end namespace

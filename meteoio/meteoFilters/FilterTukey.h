@@ -47,13 +47,13 @@ namespace mio {
  */
 class FilterTukey : public WindowedFilter {
 	public:
-		FilterTukey(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static double getStdDev(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
 		static double getU3(const std::vector<MeteoData>& ivec, const size_t& i, const unsigned int& param);
 		static const double k; ///<How many times the stddev allowed as deviation to the smooth signal for valid points

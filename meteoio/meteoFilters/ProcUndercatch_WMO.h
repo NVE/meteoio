@@ -72,7 +72,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
 
 class ProcUndercatch_WMO : public ProcessingBlock {
 	public:
-		ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -97,7 +97,7 @@ class ProcUndercatch_WMO : public ProcessingBlock {
 			snow
 		} precip_type;
 
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
 		double factor_snow, factor_mixed;

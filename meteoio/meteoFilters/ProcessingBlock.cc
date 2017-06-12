@@ -120,69 +120,69 @@ namespace mio {
  *
  */
 
-ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vec_args, const Config& cfg)
+ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	//the indenting is a little weird, this is in order to show the same groups as in the documentation above
 	
 	//normal filters
 	if (blockname == "MIN"){
-		return new FilterMin(vec_args, blockname);
+		return new FilterMin(vecArgs, blockname);
 	} else if (blockname == "MAX"){
-		return new FilterMax(vec_args, blockname);
+		return new FilterMax(vecArgs, blockname);
 	} else if (blockname == "MIN_MAX"){
-		return new FilterMinMax(vec_args, blockname);
+		return new FilterMinMax(vecArgs, blockname);
 	} else if (blockname == "RATE"){
-		return new FilterRate(vec_args, blockname);
+		return new FilterRate(vecArgs, blockname);
 	} else if (blockname == "STD_DEV"){
-		return new FilterStdDev(vec_args, blockname);
+		return new FilterStdDev(vecArgs, blockname);
 	} else if (blockname == "MAD"){
-		return new FilterMAD(vec_args, blockname);
+		return new FilterMAD(vecArgs, blockname);
 	} else if (blockname == "TUKEY"){
-		return new FilterTukey(vec_args, blockname);
+		return new FilterTukey(vecArgs, blockname);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
-		return new FilterUnheatedPSUM(vec_args, blockname);
+		return new FilterUnheatedPSUM(vecArgs, blockname);
 	} else if (blockname == "NO_CHANGE"){
-		return new FilterNoChange(vec_args, blockname);
+		return new FilterNoChange(vecArgs, blockname);
 	} else if (blockname == "TIME_CONSISTENCY"){
-		return new FilterTimeconsistency(vec_args, blockname);
+		return new FilterTimeconsistency(vecArgs, blockname);
 	} else if (blockname == "DETECT_GRASS"){
-		return new FilterDeGrass(vec_args, blockname);
+		return new FilterDeGrass(vecArgs, blockname);
 	} else if (blockname == "POTENTIALSW"){
-		return new FilterPotentialSW(vec_args, blockname);
+		return new FilterPotentialSW(vecArgs, blockname);
 	}
 	
 	//general data transformations
 	else if (blockname == "SUPPR"){
-		return new FilterSuppr(vec_args, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+		return new FilterSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "ADD"){
-		return new ProcAdd(vec_args, blockname, cfg.getConfigRootDir());
+		return new ProcAdd(vecArgs, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "MULT"){
-		return new ProcMult(vec_args, blockname, cfg.getConfigRootDir());
+		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "NOISE"){
-		return new ProcNoise(vec_args, blockname);
+		return new ProcNoise(vecArgs, blockname);
 	}
 	
 	//more specific data transformations
 	else if (blockname == "EXP_SMOOTHING"){
-		return new ProcExpSmoothing(vec_args, blockname);
+		return new ProcExpSmoothing(vecArgs, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
-		return new ProcWMASmoothing(vec_args, blockname);
+		return new ProcWMASmoothing(vecArgs, blockname);
 	} else if (blockname == "IIR"){
-		return new ProcIIR(vec_args, blockname);
+		return new ProcIIR(vecArgs, blockname);
 	} else if (blockname == "AGGREGATE"){
-		return new ProcAggregate(vec_args, blockname);
+		return new ProcAggregate(vecArgs, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
-		return new ProcUndercatch_WMO(vec_args, blockname);
+		return new ProcUndercatch_WMO(vecArgs, blockname);
 	} else if (blockname == "UNDERCATCH_FORLAND"){
-		return new ProcUndercatch_Forland(vec_args, blockname);
+		return new ProcUndercatch_Forland(vecArgs, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
-		return new ProcUndercatch_Hamon(vec_args, blockname);
+		return new ProcUndercatch_Hamon(vecArgs, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
-		return new ProcUnventilatedT(vec_args, blockname);
+		return new ProcUnventilatedT(vecArgs, blockname);
 	} else if (blockname == "PSUM_DISTRIBUTE"){
-		return new ProcPSUMDistribute(vec_args, blockname);
+		return new ProcPSUMDistribute(vecArgs, blockname);
 	} else if (blockname == "SHADE"){
-		return new ProcShade(vec_args, blockname, cfg);
+		return new ProcShade(vecArgs, blockname, cfg);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}

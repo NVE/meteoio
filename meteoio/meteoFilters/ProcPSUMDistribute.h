@@ -47,7 +47,7 @@ namespace mio {
 
 class ProcPSUMDistribute : public ProcessingBlock {
 	public:
-		ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -55,7 +55,7 @@ class ProcPSUMDistribute : public ProcessingBlock {
 		static void SmartDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 		static void CstDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static size_t findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii);
 		static void fillInterval(const unsigned int& param, std::vector<MeteoData>& ivec, const size_t& start, const size_t& end, const double value);
 

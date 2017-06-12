@@ -47,7 +47,7 @@ namespace mio {
 
 class ProcIIR : public ProcessingBlock {
 	public:
-		ProcIIR(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -63,7 +63,7 @@ class ProcIIR : public ProcessingBlock {
 		static double filterPoint(const double& raw_val, const double A[3], const double B[3], std::vector<double> &X, std::vector<double> &Y);
 		void computeCoefficients(const double& fs, const double& f0, double A[3], double B[3]) const;
 
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double cutoff;
 		double g, p, c; ///< filter definition: number of passes, polynomial coefficients, 3dB cutoff correction

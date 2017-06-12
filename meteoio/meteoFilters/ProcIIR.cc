@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                   : ProcessingBlock(name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.points_before = 2;
 	properties.stage = ProcessingProperties::first;
 	getFilterParameters(CRITICALLY_DAMPED, low_pass, 2., g, p, c);
@@ -63,22 +63,22 @@ void ProcIIR::process(const unsigned int& param, const std::vector<MeteoData>& i
 	}
 }
 
-void ProcIIR::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcIIR::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, has_cutoff=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SINGLE_PASS") {
-			parseArg(vec_args[ii], bidirectional);
-		} else if (vec_args[ii].first=="CUTOFF") {
-			parseArg(vec_args[ii], cutoff);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SINGLE_PASS") {
+			parseArg(vecArgs[ii], bidirectional);
+		} else if (vecArgs[ii].first=="CUTOFF") {
+			parseArg(vecArgs[ii], cutoff);
 			has_cutoff = true;
-		} else if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( vec_args[ii].second );
+		} else if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( vecArgs[ii].second );
 			if (type_str=="LP") low_pass = true;
 			else if (type_str=="HP") low_pass = false;
 			else
-				throw InvalidArgumentException("Invalid type \""+vec_args[ii].second+"\" for filter \""+getName()+"\"", AT);
+				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for filter \""+getName()+"\"", AT);
 			has_type = true;
 		}
 	}

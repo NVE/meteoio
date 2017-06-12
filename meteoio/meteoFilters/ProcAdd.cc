@@ -22,10 +22,10 @@ using namespace std;
 
 namespace mio {
 
-ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path)
+ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
         : ProcessingBlock(name), vecOffsets(), root_path(i_root_path), offset(0.), type('c')
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -69,19 +69,19 @@ void ProcAdd::process(const unsigned int& param, const std::vector<MeteoData>& i
 	}
 }
 
-void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, is_cst=false;
 	std::string filename;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="CST") {
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="CST") {
 			type='c'; //constant
-			if (!IOUtils::convertString(offset, vec_args[ii].second))
-				throw InvalidArgumentException("Invalid offset \""+vec_args[ii].second+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
+			if (!IOUtils::convertString(offset, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid offset \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
 			is_cst = true;
-		} else if (vec_args[ii].first=="PERIOD") {
-			const std::string period( IOUtils::strToUpper(vec_args[ii].second) );
+		} else if (vecArgs[ii].first=="PERIOD") {
+			const std::string period( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (period=="MONTHLY") {
 				type='m';
 			} else if (period=="DAILY") {
@@ -91,9 +91,9 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			} else
 				throw InvalidArgumentException("Invalid period \""+period+"\" specified for the "+getName()+" filter", AT);
 			has_type = true;
-		} else if (vec_args[ii].first=="CORRECTIONS") {
+		} else if (vecArgs[ii].first=="CORRECTIONS") {
 			//if this is a relative path, prefix the path with the current path
-			const std::string in_filename( vec_args[ii].second );
+			const std::string in_filename( vecArgs[ii].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			filename = path + "/" + FileUtils::getFilename(in_filename);

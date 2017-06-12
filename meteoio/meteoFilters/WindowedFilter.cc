@@ -35,16 +35,16 @@ WindowedFilter::WindowedFilter(const std::string& name)
  *  - MIN_PTS: minimum number of points that the window must contain;
  *  - MIN_SPAN: minimum time width of the data window (in seconds).
  *
- * @param[in] vec_args Vector containing all the filter's arguments
+ * @param[in] vecArgs Vector containing all the filter's arguments
  * NOTE: the "soft" argument is also processed.
  */
-void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_min_span = false, has_min_pts = false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="CENTERING") {
-			const std::string cntr_spec( IOUtils::strToUpper(vec_args[ii].second) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="CENTERING") {
+			const std::string cntr_spec( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (cntr_spec=="LEFT")
 				centering = WindowedFilter::left;
 			else if (cntr_spec=="CENTER")
@@ -53,18 +53,18 @@ void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, 
 				centering = WindowedFilter::right;
 			else
 				throw InvalidArgumentException("Invalid window specification for filter "+getName(), AT);
-		} else if (vec_args[ii].first=="MIN_PTS") {
-			if (!IOUtils::convertString(min_data_points, vec_args[ii].second))
+		} else if (vecArgs[ii].first=="MIN_PTS") {
+			if (!IOUtils::convertString(min_data_points, vecArgs[ii].second))
 				throw InvalidArgumentException("Can not parse MIN_PTS for filter "+getName(), AT);
 			has_min_pts = true;
-		} else if (vec_args[ii].first=="MIN_SPAN") {
+		} else if (vecArgs[ii].first=="MIN_SPAN") {
 			double min_span;
-			if (!IOUtils::convertString(min_span, vec_args[ii].second))
+			if (!IOUtils::convertString(min_span, vecArgs[ii].second))
 				throw InvalidArgumentException("Can not parse MIN_SPAN for filter "+getName(), AT);
 			min_time_span = Duration(min_span / 86400.0, 0.);
 			has_min_span = true;
-		} else if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
+		} else if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
 		}
 	}
 

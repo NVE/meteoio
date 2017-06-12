@@ -53,7 +53,7 @@ namespace mio {
 
 class ProcAggregate : public WindowedFilter {
 	public:
-		ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -67,7 +67,7 @@ class ProcAggregate : public WindowedFilter {
 			wind_avg_agg
 		} aggregate_type;
 		
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
 		double calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
 		double calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;

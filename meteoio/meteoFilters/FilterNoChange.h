@@ -53,13 +53,13 @@ namespace mio {
 
 class FilterNoChange : public WindowedFilter {
 	public:
-		FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace

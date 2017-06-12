@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
            : FilterBlock(name), min_rate_of_change(0.), max_rate_of_change(0.)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -66,16 +66,16 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 	}
 }
 
-void FilterRate::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterRate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_max=false, has_min=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="MIN") {
-			parseArg(vec_args[ii], min_rate_of_change);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MIN") {
+			parseArg(vecArgs[ii], min_rate_of_change);
 			has_min = true;
-		} else if (vec_args[ii].first=="MAX") {
-			parseArg(vec_args[ii], max_rate_of_change);
+		} else if (vecArgs[ii].first=="MAX") {
+			parseArg(vecArgs[ii], max_rate_of_change);
 			has_max = true;
 		}
 	}

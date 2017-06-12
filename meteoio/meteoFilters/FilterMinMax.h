@@ -55,13 +55,13 @@ namespace mio {
 
 class FilterMinMax : public FilterBlock {
 	public:
-		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_val, max_val;
 		double min_soft, max_soft;

@@ -44,7 +44,7 @@ namespace mio {
 
 class ProcUndercatch_Hamon : public ProcessingBlock {
 	public:
-		ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -56,7 +56,7 @@ class ProcUndercatch_Hamon : public ProcessingBlock {
 			hellmannsh
 		} sensor_type;
 
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
 };

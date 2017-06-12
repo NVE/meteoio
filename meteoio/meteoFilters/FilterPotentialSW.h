@@ -48,13 +48,13 @@ namespace mio {
 
 class FilterPotentialSW : public FilterBlock {
 	public:
-		FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_coeff, max_coeff;
 };

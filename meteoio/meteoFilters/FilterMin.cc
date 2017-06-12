@@ -21,10 +21,10 @@ using namespace std;
 
 namespace mio {
 
-FilterMin::FilterMin(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterMin::FilterMin(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : FilterBlock(name), min_val(0.), min_soft(0.), is_soft(false)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -46,18 +46,18 @@ void FilterMin::process(const unsigned int& param, const std::vector<MeteoData>&
 	}
 }
 
-void FilterMin::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterMin::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_min=false, has_min_reset=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="MIN") {
-			parseArg(vec_args[ii], min_val);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="MIN") {
+			parseArg(vecArgs[ii], min_val);
 			has_min = true;
-		} else if (vec_args[ii].first=="MIN_RESET") {
-			parseArg(vec_args[ii], min_soft);
+		} else if (vecArgs[ii].first=="MIN_RESET") {
+			parseArg(vecArgs[ii], min_soft);
 			has_min_reset = true;
 		}
 	}

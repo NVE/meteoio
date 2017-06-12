@@ -52,14 +52,14 @@ namespace mio {
 
 class FilterMAD : public WindowedFilter {
 	public:
-		FilterMAD(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value) const;
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_sigma; //to avoid rejecting all points after a period of constant signal
 };

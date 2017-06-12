@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                      : ProcessingBlock(name), type(sh)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -70,13 +70,13 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 	}
 }
 
-void ProcUndercatch_Hamon::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcUndercatch_Hamon::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="SH") {
 				type=sh;
 			} else if (type_str=="UNSH") {

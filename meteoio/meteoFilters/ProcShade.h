@@ -62,7 +62,7 @@ namespace mio {
 
 class ProcShade : public ProcessingBlock {
 	public:
-		ProcShade(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const Config &i_cfg);
+		ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -71,7 +71,7 @@ class ProcShade : public ProcessingBlock {
 
 	private:
 		static void readMask(const std::string& filter, const std::string& filename, std::vector< std::pair<double,double> > &o_mask);
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const;
 
 		const Config &cfg;

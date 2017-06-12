@@ -57,7 +57,7 @@ namespace mio {
 
 class ProcNoise : public ProcessingBlock {
 	public:
-		ProcNoise(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcNoise(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -68,7 +68,7 @@ class ProcNoise : public ProcessingBlock {
 		void normal_add(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void normal_mult(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		double getBoxMuller() const;
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		
 		double range;
 		char distribution, type;

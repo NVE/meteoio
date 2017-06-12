@@ -27,9 +27,9 @@ namespace mio {
 
 const double FilterTukey::k = 1.5; ///<How many times the stddev allowed as deviation to the smooth signal for valid points
 
-FilterTukey::FilterTukey(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name) : WindowedFilter(name)
+FilterTukey::FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(name)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
@@ -144,9 +144,9 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const size_t& i, c
 		return IOUtils::nodata;
 }
 
-void FilterTukey::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterTukey::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vec_args); //this also reads SOFT
+	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 }

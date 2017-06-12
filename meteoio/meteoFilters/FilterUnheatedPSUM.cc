@@ -21,10 +21,10 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                   : FilterBlock(name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -58,15 +58,15 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 }
 
 
-void FilterUnheatedPSUM::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterUnheatedPSUM::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="THRESH_RH") {
-			parseArg(vec_args[ii], thresh_rh);
-		} else if (vec_args[ii].first=="THRESH_DT") {
-			parseArg(vec_args[ii], thresh_Dt);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="THRESH_RH") {
+			parseArg(vecArgs[ii], thresh_rh);
+		} else if (vecArgs[ii].first=="THRESH_DT") {
+			parseArg(vecArgs[ii], thresh_Dt);
 		}
 	}
 }

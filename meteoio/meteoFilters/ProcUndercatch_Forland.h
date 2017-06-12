@@ -49,7 +49,7 @@ namespace mio {
 
 class ProcUndercatch_Forland : public ProcessingBlock {
 	public:
-		ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -68,7 +68,7 @@ class ProcUndercatch_Forland : public ProcessingBlock {
 
 		double solidPrecipitation(double TA, double VW) const;
 		double liquidPrecipitation(const double& Pint, double VW) const;
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
 		static const double Tsnow_WMO, Train_WMO;

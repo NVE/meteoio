@@ -27,10 +27,10 @@ namespace mio {
 //WMO values from Yan et al (2001)
 const double ProcUndercatch_Forland::Tsnow_WMO=-2.+Cst::t_water_freezing_pt, ProcUndercatch_Forland::Train_WMO=2.+Cst::t_water_freezing_pt;
 
-ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                        : ProcessingBlock(name), type(wfj)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -136,13 +136,13 @@ double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW
 	return exp( -0.00101*lnI - 0.012177*VW*lnI + 0.034331*VW + 0.007697 + c );
 }
 
-void ProcUndercatch_Forland::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcUndercatch_Forland::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="WFJ") {
 				type=wfj;
 			} else if (type_str=="HELLMANN") {

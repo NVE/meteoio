@@ -67,7 +67,7 @@ namespace mio {
 
 class ProcAdd : public ProcessingBlock {
 	public:
-		ProcAdd(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path);
+		ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -76,7 +76,7 @@ class ProcAdd : public ProcessingBlock {
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, std::vector<double> &corrections);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		std::vector<double> vecOffsets;
 		std::string root_path;

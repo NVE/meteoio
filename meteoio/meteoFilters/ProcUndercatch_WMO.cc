@@ -25,11 +25,11 @@ namespace mio {
 
 const double ProcUndercatch_WMO::Tsnow_WMO=-2., ProcUndercatch_WMO::Train_WMO=2.; //WMO values from Yan et al (2001)
 
-ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                    : ProcessingBlock(name), type(cst),
                      factor_snow(1.3), factor_mixed(1.1), Tsnow(Tsnow_WMO), Train(Train_WMO)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -137,13 +137,13 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 	}
 }
 
-void ProcUndercatch_WMO::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcUndercatch_WMO::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="CST") {
 				type=cst;
 			} else if (type_str=="NIPHER") {
@@ -168,14 +168,14 @@ void ProcUndercatch_WMO::parse_args(const std::vector< std::pair<std::string, st
 				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for filter "+getName(), AT);
 			}
 			has_type = true;
-		} else if (vec_args[ii].first=="SNOW") {
-			IOUtils::convertString(factor_snow, vec_args[ii].second);
-		} else if (vec_args[ii].first=="MIXED") {
-			IOUtils::convertString(factor_mixed, vec_args[ii].second);
-		} else if (vec_args[ii].first=="T_SNOW") {
-			IOUtils::convertString(Tsnow, vec_args[ii].second);
-		} else if (vec_args[ii].first=="T_RAIN") {
-			IOUtils::convertString(Train, vec_args[ii].second);
+		} else if (vecArgs[ii].first=="SNOW") {
+			IOUtils::convertString(factor_snow, vecArgs[ii].second);
+		} else if (vecArgs[ii].first=="MIXED") {
+			IOUtils::convertString(factor_mixed, vecArgs[ii].second);
+		} else if (vecArgs[ii].first=="T_SNOW") {
+			IOUtils::convertString(Tsnow, vecArgs[ii].second);
+		} else if (vecArgs[ii].first=="T_RAIN") {
+			IOUtils::convertString(Train, vecArgs[ii].second);
 		}
 	}
 

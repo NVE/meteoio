@@ -22,10 +22,10 @@ using namespace std;
 
 namespace mio {
 
-FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : FilterBlock(name), min_coeff(0.03), max_coeff(1.1)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -71,13 +71,13 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 }
 
 
-void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="MAX_COEFF") {
-			parseArg(vec_args[ii], max_coeff);
-		} else if (vec_args[ii].first=="MIN_COEFF") {
-			parseArg(vec_args[ii], min_coeff);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MAX_COEFF") {
+			parseArg(vecArgs[ii], max_coeff);
+		} else if (vecArgs[ii].first=="MIN_COEFF") {
+			parseArg(vecArgs[ii], min_coeff);
 		}
 	}
 }

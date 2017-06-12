@@ -29,10 +29,10 @@ using namespace std;
 
 namespace mio {
 
-FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name, const std::string& i_root_path, const double& i_TZ)
+FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path, const double& i_TZ)
           : FilterBlock(name), suppr_dates(), root_path(i_root_path), TZ(i_TZ), range(IOUtils::nodata)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -121,28 +121,28 @@ void FilterSuppr::fillSuppr_dates(const std::string& filename)
 	}
 }
 
-void FilterSuppr::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterSuppr::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const size_t nrArgs = vec_args.size();
+	const size_t nrArgs = vecArgs.size();
 
 	if (nrArgs>1)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 	
 	if (nrArgs==1) {
-		if (vec_args[0].first=="FRAC") {
-			if (!IOUtils::convertString(range, vec_args[0].second))
-				throw InvalidArgumentException("Invalid range \""+vec_args[0].second+"\" specified for the "+getName()+" filter.", AT);
+		if (vecArgs[0].first=="FRAC") {
+			if (!IOUtils::convertString(range, vecArgs[0].second))
+				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for the "+getName()+" filter.", AT);
 			if (range<0. || range>1.)
 				throw InvalidArgumentException("Wrong range for filter " + getName() + ", it should be between 0 and 1", AT);
-		} else if (vec_args[0].first=="SUPPR") {
-			const std::string in_filename( vec_args[0].second );
+		} else if (vecArgs[0].first=="SUPPR") {
+			const std::string in_filename( vecArgs[0].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path = FileUtils::getPath(prefix+in_filename, true);  //clean & resolve path
 			const std::string filename = path + "/" + FileUtils::getFilename(in_filename);
 
 			fillSuppr_dates(filename);
 		} else
-			throw UnknownValueException("Unknown option '"+vec_args[0].first+"' for filter "+getName(), AT);
+			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for filter "+getName(), AT);
 	}
 }
 

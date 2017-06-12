@@ -63,7 +63,7 @@ namespace mio {
 
 class ProcUnventilatedT : public ProcessingBlock {
 	public:
-		ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name);
+		ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -71,7 +71,7 @@ class ProcUnventilatedT : public ProcessingBlock {
 	private:
 		void filterTA(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void correctTA(const unsigned int& param, std::vector<MeteoData>& ovec) const;
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double usr_albedo, usr_vw_thresh;
 		static const double dflt_albedo, vw_thresh;

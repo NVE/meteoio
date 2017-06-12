@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
               : WindowedFilter(name), type(mean_agg)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
@@ -146,16 +146,16 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 	}
 }
 
-void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vec_args); //this also reads SOFT
+	setWindowFParams(vecArgs); //this also reads SOFT
 	bool has_type=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper( vec_args[ii].second ) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="MIN") type=min_agg;
 			else if (type_str=="MAX") type=max_agg;
 			else if (type_str=="MEAN") type=mean_agg;

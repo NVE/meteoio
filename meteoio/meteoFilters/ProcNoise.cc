@@ -26,10 +26,10 @@ using namespace std;
 
 namespace mio {
 
-ProcNoise::ProcNoise(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+ProcNoise::ProcNoise(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : ProcessingBlock(name), range(IOUtils::nodata), distribution(), type()
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
 
@@ -99,13 +99,13 @@ double ProcNoise::getBoxMuller() const
 	return  Optim::fastSqrt_Q3(-2.*log(U)) * cos(2.*Cst::PI*V);
 }
 
-void ProcNoise::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void ProcNoise::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, has_distribution=false, has_value=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="TYPE") {
-			const std::string type_str( IOUtils::strToUpper(vec_args[ii].second) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (type_str=="ADD")
 				type='a';
 			else if (type_str=="MULT")
@@ -113,8 +113,8 @@ void ProcNoise::parse_args(const std::vector< std::pair<std::string, std::string
 			else
 				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+getName()+" filter", AT);
 			has_type = true;
-		} else if (vec_args[ii].first=="DISTRIBUTION") {
-			const std::string distribution_str( IOUtils::strToUpper(vec_args[ii].second) );
+		} else if (vecArgs[ii].first=="DISTRIBUTION") {
+			const std::string distribution_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (distribution_str=="UNIFORM") {
 				distribution='u';
 			} else if (distribution_str=="NORMAL") {
@@ -122,8 +122,8 @@ void ProcNoise::parse_args(const std::vector< std::pair<std::string, std::string
 			} else
 				throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for the "+getName()+" filter", AT);
 			has_distribution = true;
-		} else if (vec_args[ii].first=="RANGE") {
-			if (!IOUtils::convertString(range, vec_args[ii].second))
+		} else if (vecArgs[ii].first=="RANGE") {
+			if (!IOUtils::convertString(range, vecArgs[ii].second))
 				throw InvalidArgumentException("Invalid range specified for the "+getName()+" filter", AT);
 			has_value = true;
 		}

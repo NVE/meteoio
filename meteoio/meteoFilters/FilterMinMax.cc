@@ -21,11 +21,11 @@ using namespace std;
 
 namespace mio {
 
-FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vec_args, const std::string& name)
+FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
              : FilterBlock(name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
 
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -53,25 +53,25 @@ void FilterMinMax::process(const unsigned int& param, const std::vector<MeteoDat
 	}
 }
 
-void FilterMinMax::parse_args(const std::vector< std::pair<std::string, std::string> >& vec_args)
+void FilterMinMax::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_min=false, has_min_reset=false;
 	bool has_max=false, has_max_reset=false;
 
-	for (size_t ii=0; ii<vec_args.size(); ii++) {
-		if (vec_args[ii].first=="SOFT") {
-			parseArg(vec_args[ii], is_soft);
-		} else if (vec_args[ii].first=="MAX") {
-			parseArg(vec_args[ii], max_val);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="MAX") {
+			parseArg(vecArgs[ii], max_val);
 			has_max = true;
-		} else if (vec_args[ii].first=="MAX_RESET") {
-			parseArg(vec_args[ii], max_soft);
+		} else if (vecArgs[ii].first=="MAX_RESET") {
+			parseArg(vecArgs[ii], max_soft);
 			has_max_reset = true;
-		} else if (vec_args[ii].first=="MIN") {
-			parseArg(vec_args[ii], min_val);
+		} else if (vecArgs[ii].first=="MIN") {
+			parseArg(vecArgs[ii], min_val);
 			has_min = true;
-		} else if (vec_args[ii].first=="MIN_RESET") {
-			parseArg(vec_args[ii], min_soft);
+		} else if (vecArgs[ii].first=="MIN_RESET") {
+			parseArg(vecArgs[ii], min_soft);
 			has_min_reset = true;
 		}
 	}
