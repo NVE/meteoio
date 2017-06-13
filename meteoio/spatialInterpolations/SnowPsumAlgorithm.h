@@ -24,8 +24,10 @@ namespace mio {
 
 /**
  * @class SnowPSUMInterpolation
+ * @ingroup spatialization
  * @brief Precipitation distribution according to the local slope and curvature.
- * The precipitation distribution is initialized using a specified algorithm (IDW_LAPSE by default, see IDWLapseAlgorithm).
+ * @details
+ * The precipitation distribution is initialized using a specified algorithm ("BASE" option, set to IDW_LAPSE by default, see IDWLapseAlgorithm).
  * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
  * Please do not forget to provide the arguments of the chosen algorithm itself if necessary!
  *
@@ -41,21 +43,21 @@ namespace mio {
  *
  * An example using this algorithm, initializing the grid with a constant lapse rate fill using +0.05% precipitation increase per meter of elevation, is given below:
  * @code
- * PSUM::algorithms = PSUM_SNOW
- * PSUM::psum_snow = avg_lapse
- * PSUM::avg_lapse = 0.0005 frac
+ * PSUM::algorithms      = PSUM_SNOW
+ * PSUM::psum_snow::base = avg_lapse
+ * PSUM::avg_lapse::frac = true
+ * PSUM::avg_lapse::rate = 0.0005
  * @endcode
- *
- * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
  */
 class SnowPSUMInterpolation : public InterpolationAlgorithm {
 	public:
 		SnowPSUMInterpolation(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		std::string base_algo_user;
 };
 
 } //end namespace mio

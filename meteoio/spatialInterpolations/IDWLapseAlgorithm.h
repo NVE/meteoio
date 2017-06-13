@@ -24,27 +24,28 @@ namespace mio {
 
 /**
  * @class IDWLapseAlgorithm
+ * @ingroup spatialization
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
+ * @details
  * The input data is detrended and the residuals are spatially interpolated using an Inverse Distance
  * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
- * elevation of the relative cell (re-trending). The lapse rate is either calculated from the data
- * (if no extra argument is provided), or given by the user-provided the optional argument <i>"idw_lapse"</i>.
- * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
- * unsuccessful or too bad (r^2<0.6), then the user provided lapse rate is used as a fallback.
- * If the optional user given lapse rate is
- * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
- * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
- * the fractional lapse from the data is made.
+ * elevation of the relative cell (re-trending).
+ *
+ * The lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported.
+ *
+ * @code
+ * TA::algorithms      = IDW_LAPSE
+ * TA::idw_lapse::soft = true
+ * TA::idw_lapse::rate = -0.008
+ * @endcode
  */
 class IDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWLapseAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
-	private:
-		bool lapse_rate_provided; ///< when giving a lapse rate, the requirements on the number of stations are relaxed
 };
 
 } //end namespace mio

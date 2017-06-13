@@ -24,11 +24,14 @@ namespace mio {
 
 /**
  * @class RyanAlgorithm
+ * @ingroup spatialization
  * @brief DEM-based wind direction interpolation algorithm.
+ * @details
  * This is an implementation of the method described in Ryan,
  * <i>"a mathematical model for diagnosis and prediction of surface winds in mountainous terrain"</i>,
  * 1977, journal of applied meteorology, <b>16</b>, 6.
- * The DEM is used to compute wind drection changes that are used to alter the wind direction fields.
+ * The DEM is used to compute wind direction changes that are used to alter the wind direction fields.
+ *
  * @code
  * DW::algorithms    = RYAN
  * @endcode
@@ -36,9 +39,9 @@ namespace mio {
 class RyanAlgorithm : public InterpolationAlgorithm {
 	public:
 		RyanAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

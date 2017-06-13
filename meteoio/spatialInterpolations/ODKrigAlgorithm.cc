@@ -22,34 +22,22 @@
 
 namespace mio {
 
-//since this uses vecData, the optional detrending has already been done
-void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData) const
+OrdinaryKrigingAlgorithm::OrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                            const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                            : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), variogram(), vario_types()
 {
-	distData.clear();
-	variData.clear();
+	//setTrendParams(vecArgs);
 
-	for (size_t j=0; j<nrOfMeasurments; j++) {
-		const Coords& st1 = vecMeta[j].position;
-		const double x1 = st1.getEasting();
-		const double y1 = st1.getNorthing();
-		const double val1 = vecData[j];
-
-		for (size_t i=0; i<j; i++) {
-			//compute distance between stations
-			const Coords& st2 = vecMeta[i].position;
-			const double val2 = vecData[i];
-			const double DX = x1-st2.getEasting();
-			const double DY = y1-st2.getNorthing();
-			//const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
-			const double inv_distance = Optim::invSqrt( Optim::pow2(DX) + Optim::pow2(DY) );
-
-			distData.push_back( 1./inv_distance );
-			variData.push_back( inv_distance*Optim::pow2(val1-val2) );
+	bool has_linvario = false;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VARIO") {
+			const std::string vario_model( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (vario_model=="LINVARIO") has_linvario=true;
+			vario_types.push_back( vario_model );
 		}
 	}
 
-	if (distData.size()>40)
-		Interpol1D::equalCountBin(10, distData, variData);
+	if (!has_linvario) vario_types.push_back("LINVARIO");
 }
 
 std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data) const
@@ -62,7 +50,7 @@ std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const
 	std::vector<MeteoData> Meteo;
 	tsmanager.getMeteoData(d1, Meteo);
 	const size_t nrStations = Meteo.size();
-	std::vector< std::vector<double> > vecVecData(nrStations, std::vector<double>());
+	std::vector< std::vector<double> > vecVecData(nrStations);
 
 	//get the stations altitudes
 	std::vector<double> vecAltitudes;
@@ -89,8 +77,7 @@ std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const
 			for (size_t ii=0; ii<nrStations; ii++)
 				vecDat.push_back( Meteo[ii](param) );
 
-			Fit1D trend;
-			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+			Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 			const bool status = trend.fit();
 			if (!status)
 				throw InvalidArgumentException("Could not fit variogram model to the data", AT);
@@ -112,6 +99,36 @@ std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const
 	return vecVecData;
 }
 
+//since this uses vecData, the optional detrending has already been done
+void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData) const
+{
+	distData.clear();
+	variData.clear();
+
+	for (size_t j=0; j<vecMeta.size(); j++) {
+		const Coords& st1 = vecMeta[j].position;
+		const double x1 = st1.getEasting();
+		const double y1 = st1.getNorthing();
+		const double val1 = vecData[j];
+
+		for (size_t i=0; i<j; i++) {
+			//compute distance between stations
+			const Coords& st2 = vecMeta[i].position;
+			const double val2 = vecData[i];
+			const double DX = x1-st2.getEasting();
+			const double DY = y1-st2.getNorthing();
+			//const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
+			const double inv_distance = Optim::invSqrt( Optim::pow2(DX) + Optim::pow2(DY) );
+
+			distData.push_back( 1./inv_distance );
+			variData.push_back( inv_distance*Optim::pow2(val1-val2) );
+		}
+	}
+
+	if (distData.size()>40)
+		Interpol1D::equalCountBin(10, distData, variData);
+}
+
 //this gets the full data over a preceeding period
 //we can not rely on the data in vecData/vecMeta since they filter nodata points
 //and we need to do our own nodata handling here (to keep stations' indices constant)
@@ -120,7 +137,7 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 	distData.clear();
 	variData.clear();
 
-	const std::vector< std::vector<double> > vecTimeSeries = getTimeSeries(detrend_data);
+	const std::vector< std::vector<double> > vecTimeSeries( getTimeSeries(detrend_data) );
 	const size_t nrStations = vecTimeSeries.size();
 
 
@@ -159,20 +176,16 @@ bool OrdinaryKrigingAlgorithm::computeVariogram(const bool& /*detrend_data*/)
 	getDataForEmpiricalVariogram(distData, variData);
 	//getDataForVariogram(distData, variData, detrend_data);
 
-	std::vector<std::string> vario_types( vecArgs );
-	if (vario_types.empty()) vario_types.push_back("LINVARIO");
-
-	size_t args_index=0;
+	size_t vario_index=0;
 	do {
-		const std::string vario_model( IOUtils::strToUpper( vario_types[args_index] ) );
-		const bool status = variogram.setModel(vario_model, distData, variData);
+		const bool status = variogram.setModel(vario_types[vario_index], distData, variData);
 		if (status) {
-			info << " - " << vario_model;
+			info << " - " << vario_types[vario_index];
 			return true;
 		}
 
-		args_index++;
-	} while (args_index<vario_types.size());
+		vario_index++;
+	} while (vario_index<vario_types.size());
 
 	return false;
 }

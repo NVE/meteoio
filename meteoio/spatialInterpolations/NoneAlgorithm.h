@@ -24,17 +24,23 @@ namespace mio {
 
 /**
  * @class NoneAlgorithm
+ * @ingroup spatialization
  * @brief Returns a nodata filled grid
+ * @details
  * This allows to tolerate missing data, which can be usefull if an alternate strategy could
  * later be used to generate the data (ie. a parametrization). This algorithm will only run
  * after all others failed.
+ *
+ * @code
+ * ILWR::algorithms = IDW_LAPSE AVG NONE
+ * @endcode
  */
 class NoneAlgorithm : public InterpolationAlgorithm {
 	public:
 		NoneAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };

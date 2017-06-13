@@ -20,7 +20,6 @@ SET(spatialInterpolations_sources
 	spatialInterpolations/SnowPsumAlgorithm.cc
 	spatialInterpolations/StdPressAlgorithm.cc
 	spatialInterpolations/SwRadAlgorithm.cc
-	spatialInterpolations/template.cc
 	spatialInterpolations/UserAlgorithm.cc
 	spatialInterpolations/WinstralAlgorithm.cc
 	spatialInterpolations/WinstralListonAlgorithm.cc

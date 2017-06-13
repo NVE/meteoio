@@ -24,16 +24,23 @@ namespace mio {
 
 /**
  * @class LocalIDWLapseAlgorithm
+ * @ingroup spatialization
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
- * The closest n stations (n being given as an extra argument of <i>"lidw_lapse"</i>) to each pixel are
+ * @details
+ * The closest n stations (n being given as "NEIGHBORS" argument of <i>"lidw_lapse"</i>) to each pixel are
  * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
  * local pixel with an inverse distance weight. Beware, this method sometimes produces very sharp transitions
  * as it spatially moves from one station's area of influence to another one!
+ *
+ * @code
+ * TA::algorithms           = LIDW_LAPSE
+ * TA::idw_lapse::neighbors = 6
+ * @endcode
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
 		LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);

@@ -24,20 +24,26 @@ namespace mio {
 
 /**
  * @class ListonWindAlgorithm
+ * @ingroup spatialization
  * @brief Curvature/slope influenced wind interpolation algorithm.
+ * @details
  * This is an implementation of the method described in G. E. Liston and K. Elder,
  * <i>"A meteorological distribution system for high-resolution terrestrial modeling (MicroMet)"</i>, Journal of Hydrometeorology, <b>7.2</b>, 2006.
  * The wind speed and direction are spatially interpolated using IDWLapseAlgorithm. Then, the wind speed and
  * direction fields are altered by wind weighting factors and wind diverting factors (respectively) calculated
  * from the local curvature and slope (as taken from the DEM, see DEMObject). The wind diverting factor is
  * actually the same as in RyanAlgorithm.
+ *
+ * @code
+ * VW::algorithms = LISTON_WIND
+ * @endcode
  */
 class ListonWindAlgorithm : public InterpolationAlgorithm {
 	public:
 		ListonWindAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

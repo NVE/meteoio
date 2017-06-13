@@ -25,21 +25,24 @@ namespace mio {
 
 /**
  * @class LapseOrdinaryKrigingAlgorithm
+ * @ingroup spatialization
  * @brief Ordinary kriging with detrending.
- * This is very similar to OrdinaryKrigingAlgorithm but performs detrending on the data.
- * @code
- * TA::algorithms = ODKRIG_LAPSE
- * TA::odkrig_lapse = SPHERICVARIO
- * @endcode
+ * @details
+ * This is very similar to OrdinaryKrigingAlgorithm but performs detrending on the data and therefore also accepts
+ * the lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams.
  *
- * @author Mathias Bavay
+ * @code
+ * TA::algorithms    = ODKRIG_LAPSE
+ * TA::odkrig::vario = SPHERICVARIO linvario
+ * TA::odkrig::soft  = true
+ * TA::odkrig::rate  = -0.008
+ * @endcode
  */
 class LapseOrdinaryKrigingAlgorithm : public OrdinaryKrigingAlgorithm {
 	public:
 		LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
 

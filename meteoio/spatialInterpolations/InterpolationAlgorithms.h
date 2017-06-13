@@ -44,10 +44,10 @@ class InterpolationAlgorithm {
 
 	public:
 		InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
-		                       const std::vector<std::string>& i_vecArgs,
+		                       const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/,
 		                       const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager) :
-		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecArgs(i_vecArgs), vecMeteo(), vecData(),
-		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0) {}
+		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecMeteo(), vecData(),
+		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), user_lapse(IOUtils::nodata), is_frac(false), is_soft(false) {}
 		virtual ~InterpolationAlgorithm() {}
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param) = 0;
@@ -61,29 +61,36 @@ class InterpolationAlgorithm {
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
 		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
 		Fit1D getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const;
+		void setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
 		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
 		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);
+
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
+		}
 
 		Meteo2DInterpolator& mi;
 		TimeSeriesManager& tsmanager;
 		GridsManager& gridsmanager;
 		Date date;
-		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
 
 		std::vector<MeteoData> vecMeteo;
 		std::vector<double> vecData; ///<store the measurement for the given parameter
 		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
 		std::ostringstream info; ///<to store some extra information about the interplation process
 		MeteoData::Parameters param; ///<the parameter that we will interpolate
-		size_t nrOfMeasurments; ///<the available number of measurements
+		size_t nrOfMeasurments; ///<Number of stations that have been used, so this can be reported to the user
+		double user_lapse; ///<when detrending the data, this is a user provided lapse_rate
+		bool is_frac, is_soft; ///<is the lapse rate to be interpreted as fractional? Should it be used as fallback (is_soft) or it is mandatory?
 };
 
 class AlgorithmFactory {
 	public:
 		static InterpolationAlgorithm* getAlgorithm(const std::string& i_algoname,
 		                                            Meteo2DInterpolator& i_mi,
-		                                            const std::vector<std::string>& i_vecArgs, TimeSeriesManager& tsm, GridsManager& gdm);
+		                                            const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm);
 };
 
 } //end namespace mio

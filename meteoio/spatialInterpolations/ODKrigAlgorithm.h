@@ -25,32 +25,32 @@ namespace mio {
 
 /**
  * @class OrdinaryKrigingAlgorithm
+ * @ingroup spatialization
  * @brief Ordinary kriging.
+ * @details
  * This implements ordinary krigging (see https://secure.wikimedia.org/wikipedia/en/wiki/Kriging)
  * with user-selectable variogram model (see https://secure.wikimedia.org/wikipedia/en/wiki/Variogram).
  * More details about the specific computation steps of kriging are provided in Interpol2D::ODKriging.
  *
- * The variogram is currently computed with the current data (as 1/2*(X1-X2)^2), which makes it quite
- * uninteresting... The next improvement will consist in calculating the covariances (used to build the
- * variogram) from time series (thus reflecting the time-correlation between stations).
+ * The variogram is currently computed with the current data (as ½*(X1-X2)²), which makes it quite
+ * uninteresting... However, calculating the covariances (used to build the variogram) from time series
+ * (thus reflecting the time-correlation between stations) has not brought any significant improvements, so it is currently
+ * not used (although implemented).
  *
  * Please note that the variogram and krigging coefficients are re-computed fresh for each new grid (or time step).
- * The available variogram models are found in Fit1D::regression and given as optional arguments
+ * The available variogram models are found in Fit1D::regression and given as optional VARIO argument
  * (by default, LINVARIO is used). Several models can be given, the first that can fit the data will be used
  * for the current timestep:
  * @code
- * TA::algorithms = ODKRIG
- * TA::odkrig = SPHERICVARIO linvario
+ * TA::algorithms    = ODKRIG
+ * TA::odkrig::vario = SPHERICVARIO linvario
  * @endcode
- *
- * @author Mathias Bavay
  */
 class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 	public:
 		OrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), variogram() {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	protected:
@@ -59,6 +59,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data=false) const;
 		bool computeVariogram(const bool& detrend_data=false);
 		Fit1D variogram;
+		std::vector<std::string> vario_types;
 };
 
 } //end namespace mio

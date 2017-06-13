@@ -25,32 +25,25 @@ namespace mio {
 
 const double WinstralAlgorithm::dmax = 300.;
 
-WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo("IDW_LAPSE"), ref_station(),
+                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo_user("IDW_LAPSE"), ref_station(),
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args==1) {
-		if (IOUtils::isNumeric(vecArgs[0]))
-			IOUtils::convertString(user_synoptic_bearing, vecArgs[0]);
-		else
-			throw InvalidArgumentException("Please provide both the base interpolation method and the station_id to use for wind direction for the "+algo+" algorithm", AT);
-		return;
-	} else if (nr_args==2) {
-		if (IOUtils::isNumeric(vecArgs[0])) {
-			IOUtils::convertString(user_synoptic_bearing, vecArgs[0]);
-			base_algo = IOUtils::strToUpper( vecArgs[1] );
-		} else if (IOUtils::isNumeric(vecArgs[1]))  {
-			IOUtils::convertString(user_synoptic_bearing, vecArgs[1]);
-			base_algo = IOUtils::strToUpper( vecArgs[0] );
-		} else {
-			base_algo = IOUtils::strToUpper( vecArgs[0] );
-			ref_station = vecArgs[1];
+	bool has_ref=false, has_synop=false;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="REF") {
+			ref_station = vecArgs[ii].second;
+			has_ref = true;
+		} else if(vecArgs[ii].first=="BASE") {
+			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
+		} else if(vecArgs[ii].first=="DW_SYNOP") {
+			parseArg(vecArgs[ii], user_synoptic_bearing);
+			has_synop = true;
 		}
-		return;
-	} else if (nr_args>2)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	}
+
+	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for the "+algo+" algorithm", AT);
 }
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
@@ -64,10 +57,6 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 
 	if (nrOfMeasurments==0) return 0.0;
 
-	if (nrOfMeasurments==1 && ref_station.empty()) { //ie: still using default base_algo
-		base_algo = "AVG";
-	}
-
 	//check that the necessary wind data is available
 	if (user_synoptic_bearing==IOUtils::nodata) {
 		if (!windIsAvailable(vecMeteo, ref_station))
@@ -80,8 +69,10 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	const std::vector<std::string> vecArgs2( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo) );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
+	const std::string base_algo = (nrOfMeasurments==1)? "AVG" : base_algo_user; //if there is only one station, revert to a safe default
+
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();

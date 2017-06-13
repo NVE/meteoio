@@ -25,15 +25,17 @@ namespace mio {
 
 /**
  * @class SWRadInterpolation
+ * @ingroup spatialization
  * @brief %Solar radiation interpolation with optional terrain shading.
+ * @details
  * The splitting coefficients and an atmospheric losses factors are computed at each station that provides ISWR and spatially interpolated
  * with an Inverse Distance Weighting scheme. Then the potential radiation is computed at each pixel and scaled appropriately with the
  * atmospheric loss factor for this pixel. When applying topographic shading (default), the local splitting coefficient is used. The global, horizontal
- * short wave radiation is then returned. To turn off the topographic shading, provide the "no_shading" argument.
+ * short wave radiation is then returned. To turn off the topographic shading, set the "shading" argument to "false".
  *
  * @code
- * ISWR::algorithms = SWRad
- * ISWR::SWRad = no_shading
+ * ISWR::algorithms     = SWRad
+ * ISWR::SWRad::shading = true
  * @endcode
  *
  * @note For this method to work, you also need to define spatial interpolations algorithms for TA, RH and P (a basic STD_PRESS algorithm
@@ -43,9 +45,8 @@ namespace mio {
 class SWRadInterpolation : public InterpolationAlgorithm {
 	public:
 		SWRadInterpolation(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), shading(true) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

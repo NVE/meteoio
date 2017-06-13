@@ -21,15 +21,17 @@
 
 namespace mio {
 
-LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                      : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), nrOfNeighbors(0)
+                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), nrOfNeighbors(0)
 {
-	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
-		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+algo+" algorithm", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="NEIGHBORS") {
+			parseArg(vecArgs[ii], nrOfNeighbors);
+		}
 	}
+
+	if (nrOfNeighbors==0) throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+algo+" algorithm", AT);
 }
 
 double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)

@@ -24,7 +24,9 @@ namespace mio {
 
 /**
  * @class IDWAlgorithm
+ * @ingroup spatialization
  * @brief Inverse Distance Weighting interpolation algorithm.
+ * @details
  * Each cell receives the weighted average of the whole data set with weights being 1/r²
  * (r being the distance of the current cell to the contributing station) and renormalized
  * (so that the sum of the weights is equal to 1.0).
@@ -32,9 +34,9 @@ namespace mio {
 class IDWAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };

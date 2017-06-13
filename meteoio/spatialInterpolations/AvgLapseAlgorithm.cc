@@ -22,6 +22,14 @@
 
 namespace mio {
 
+AvgLapseRateAlgorithm::AvgLapseRateAlgorithm(Meteo2DInterpolator& i_mi,
+                                         const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                         const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                         : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager)
+{
+	setTrendParams(vecArgs);
+}
+
 double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
@@ -31,7 +39,7 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoDa
 	if (nrOfMeasurments == 0){
 		return 0.0;
 	} else if (nrOfMeasurments == 1){
-		if (!vecArgs.empty())
+		if (user_lapse!=IOUtils::nodata)
 			return 0.9; //the laspe rate is provided
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed

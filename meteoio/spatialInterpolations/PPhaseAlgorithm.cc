@@ -19,38 +19,51 @@
 #include <meteoio/spatialInterpolations/PPhaseAlgorithm.h>
 
 namespace mio {
+PPHASEInterpolation::PPHASEInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager),
+                                      model(THRESH), fixed_thresh(IOUtils::nodata), range_start(IOUtils::nodata), range_norm(IOUtils::nodata)
+{
+	bool has_type=false, has_snow=false, has_rain=false;
+	double snow_thresh, rain_thresh;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_algo=="THRESH") model = THRESH;
+			else if (user_algo=="RANGE") model = RANGE;
+			else
+				throw InvalidArgumentException("Unknown algorithm \""+user_algo+"\" supplied for the "+algo+" interpolation", AT);
+
+			has_type = true;
+		} else if(vecArgs[ii].first=="SNOW") {
+			parseArg(vecArgs[ii], snow_thresh);
+			has_snow = true;
+		} else if(vecArgs[ii].first=="RAIN") {
+			parseArg(vecArgs[ii], rain_thresh);
+			has_rain = true;
+		}
+	}
+
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for interpolation algorithm "+algo, AT);
+	if (model == THRESH) {
+		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for interpolation algorithm "+algo, AT);
+		fixed_thresh = snow_thresh;
+	}
+	if (model == RANGE) {
+		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for interpolation algorithm "+algo, AT);
+		if (snow_thresh==rain_thresh) throw InvalidArgumentException(algo+" interpolation: the two provided threshold must be different", AT);
+		if (snow_thresh>rain_thresh) std::swap(snow_thresh, rain_thresh);
+		range_start = snow_thresh;
+		range_norm = 1. / (rain_thresh-snow_thresh);
+	}
+}
 
 double PPHASEInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
-
-	const size_t nArgs = vecArgs.size();
-
-	if (nArgs<1 || IOUtils::isNumeric(vecArgs[0]))
-		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" interpolation. Please provide the method to use and its arguments!", AT);
-
-	const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
-	if (user_algo=="THRESH") {
-		if (nArgs!=2)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" interpolation for the "+user_algo+" method", AT);
-		IOUtils::convertString(fixed_thresh, vecArgs[1]);
-		model = THRESH;
-	} else if (user_algo=="RANGE") {
-		if (nArgs!=3)
-			throw InvalidArgumentException("Wrong number of arguments supplied to the "+algo+" interpolation for the "+user_algo+" method", AT);
-		double range_thresh1, range_thresh2;
-		IOUtils::convertString(range_thresh1, vecArgs[1]);
-		IOUtils::convertString(range_thresh2, vecArgs[2]);
-		if (range_thresh1==range_thresh2)
-			throw InvalidArgumentException(algo+" interpolation, "+user_algo+" method: the two provided threshold must be different", AT);
-		if (range_thresh1>range_thresh2)
-			std::swap(range_thresh1, range_thresh2);
-		range_start = range_thresh1;
-		range_norm = 1. / (range_thresh2-range_thresh1);
-		model = RANGE;
-	} else
-		throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied to the "+algo+" interpolation", AT);
 
 	return 0.1;
 }

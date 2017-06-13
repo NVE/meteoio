@@ -24,7 +24,9 @@ namespace mio {
 
 /**
  * @class RHListonAlgorithm
+ * @ingroup spatialization
  * @brief Relative humidity interpolation algorithm.
+ * @details
  * This is an implementation of the method described in (Liston & Elder, 2006): for each input point, the dew
  * point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm
  * (if only one station is available, no altitudinal trends will be applied).
@@ -32,13 +34,17 @@ namespace mio {
  *
  * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for dew
  * point to RH conversion)
+ *
+ * @code
+ * RH::algorithms = LISTON_RH
+ * @endcode
  */
 class RHListonAlgorithm : public InterpolationAlgorithm {
 	public:
 		RHListonAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataTA(), vecDataRH() {}
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataTA(), vecDataRH() {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

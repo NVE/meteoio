@@ -24,27 +24,25 @@ namespace mio {
 
 /**
  * @class AvgLapseRateAlgorithm
+ * @ingroup spatialization
  * @brief Average filling with elevation lapse rate interpolation algorithm.
+ * @details
  * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it
- * differently, the following operations are performed: detrending - averaging - re-trending.
- * The lapse rate is either calculated from the data
- * (if no extra argument is provided), or given by the user-provided the optional argument <i>"avg_lapse"</i>.
- * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
- * unsuccessful, then user provided lapse rate is used as a fallback. If the optional user given lapse rate is
- * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
- * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
- * the fractional lapse from the data is made.
+ * differently, the following operations are performed: detrending - averaging - re-trending. The
+ * lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported.
+ *
  * @code
- * PSUM::algorithms = AVG_LAPSE
- * PSUM::avg_lapse   = soft 0.05 frac
+ * PSUM::algorithms      = AVG_LAPSE
+ * PSUM::avg_lapse::soft = true
+ * PSUM::avg_lapse::frac = true
+ * PSUM::avg_lapse::rate = 0.05
  * @endcode
  */
 class AvgLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:
 		AvgLapseRateAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };

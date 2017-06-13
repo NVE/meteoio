@@ -41,8 +41,7 @@ double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 
 	if (nrOfMeasurments==0) return 0.0;
 
-	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
-	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
+	if (Interpol2D::allZeroes(vecDataVW)) {
 		inputIsAllZeroes = true;
 		return 0.9;
 	}

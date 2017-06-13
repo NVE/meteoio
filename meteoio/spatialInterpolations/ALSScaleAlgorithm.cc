@@ -23,43 +23,39 @@
 namespace mio {
 
 ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-		  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(),
+		  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(),
 		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), als_mean(IOUtils::nodata), inputIsAllZeroes(false)
 {
 	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
+	bool has_grid=false, has_base=false;
 
-	const size_t nr_args = vecArgs.size();
-	if (nr_args<2 || nr_args>3)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-
-	for (size_t ii=0; ii<nr_args; ii++) {
-		if (IOUtils::isNumeric(vecArgs[ii])) {
-			if (ta_thresh!=IOUtils::nodata)
-				throw InvalidArgumentException("Only one threshold temperature can be provided to the "+algo+" algorithm", AT);
-			IOUtils::convertString(ta_thresh, vecArgs[ii]);
-		} else {
-			if (base_algo_user.empty())
-				base_algo_user = IOUtils::strToUpper( vecArgs[ii] );
-			else if (filename.empty())
-				filename = vecArgs[ii];
-			else
-				throw InvalidArgumentException("Wrong arguments for the "+algo+" algorithm: ta_thresh, base_algo and filename are required", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="GRID") {
+			filename = vecArgs[ii].second;
+			has_grid = true;
+		} else if(vecArgs[ii].first=="BASE") {
+			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
+			has_base = true;
+		} else if(vecArgs[ii].first=="TA_THRESH") {
+			parseArg(vecArgs[ii], ta_thresh);
 		}
 	}
+
+	if (!has_grid) throw InvalidArgumentException("Please provide a grid filename for the "+algo+" algorithm", AT);
+	if (!has_base) throw InvalidArgumentException("Please provide a base algorithm for the "+algo+" algorithm", AT);
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		throw InvalidNameException("[E] Invalid grid filename for "+algo+" interpolation algorithm: "+grid2d_path+"/"+filename, AT);
 	}
 }
 
-
 void ALS_Interpolation::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	const std::vector<std::string> vecArgs2( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo) );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();

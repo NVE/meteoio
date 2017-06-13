@@ -75,7 +75,7 @@ class ProcessingBlock {
 		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
 
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) {
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))
 				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for filter " + block_name, AT);
 		}

@@ -24,19 +24,24 @@ namespace mio {
 
 /**
  * @class ILWREpsAlgorithm
+ * @ingroup spatialization
  * @brief Incoming Long Wave Radiation interpolation algorithm.
- * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using AVG_LAPSE or IDW_LAPSE with
- * a fixed lapse rate and reconverted to ILWR.
+ * @details
+ * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using IDW_LAPSE and reconverted to ILWR. As
+ * a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for emissivity to ILWR conversion).
+ * The lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported.
  *
- * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for
- * emissivity to ILWR conversion)
+ * @code
+ * ILWR::algorithms = ILWR_EPS
+ * ILWR::ilwr_eps::soft = true
+ * ILWR::ilwr_eps::rate = -0.03125
+ * @endcode
  */
 class ILWREpsAlgorithm : public InterpolationAlgorithm {
 	public:
 		ILWREpsAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA() {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

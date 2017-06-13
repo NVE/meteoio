@@ -121,7 +121,7 @@ class GeneratorAlgorithm {
  	protected:
 		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& i_vecArgs);
 
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) {
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))
 				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
 		}

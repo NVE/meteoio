@@ -26,16 +26,11 @@ namespace mio {
 
 double RHListonAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for RH
-	if (in_param != MeteoData::RH)
-		return 0.0;
-
 	date = i_date;
 	param = in_param;
 	vecData.clear(); vecMeta.clear();
 	vecDataTA.clear(); vecDataRH.clear();
 
-	nrOfMeasurments = 0;
 	tsmanager.getMeteoData(date, vecMeteo);
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
@@ -43,10 +38,10 @@ double RHListonAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 			vecDataTA.push_back(vecMeteo[ii](MeteoData::TA));
 			vecDataRH.push_back(vecMeteo[ii](MeteoData::RH));
 			vecMeta.push_back(vecMeteo[ii].meta);
-			nrOfMeasurments++;
 		}
 	}
 
+	nrOfMeasurments = vecMeta.size();
 	if (nrOfMeasurments==0)
 		return 0.0;
 	if ( (nrOfMeasurments<vecDataRH.size()/2) || ( nrOfMeasurments<2 ) )

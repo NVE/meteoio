@@ -21,6 +21,17 @@
 
 namespace mio {
 
+SnowPSUMInterpolation::SnowPSUMInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo_user("IDW_LAPSE")
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if(vecArgs[ii].first=="BASE") {
+			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
+		}
+	}
+}
+
 double SnowPSUMInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
@@ -36,19 +47,8 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 
-	//retrieve optional arguments
-	std::string base_algo("IDW_LAPSE");
-	const size_t nrArgs = vecArgs.size();
-	if (nrArgs == 1){
-		IOUtils::convertString(base_algo, vecArgs[0]);
-	} else if (nrArgs>1){ //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-	}
-
-	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	IOUtils::toUpper(base_algo);
-	const std::vector<std::string> vecArgs2( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo) );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo_user, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();

@@ -21,6 +21,24 @@
 
 namespace mio {
 
+LapseOrdinaryKrigingAlgorithm::LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                                      : OrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager)
+{
+	setTrendParams(vecArgs);
+
+	bool has_linvario = false;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VARIO") {
+			const std::string vario_model( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (vario_model=="LINVARIO") has_linvario=true;
+			vario_types.push_back( vario_model );
+		}
+	}
+
+	if (!has_linvario) vario_types.push_back("LINVARIO");
+}
+
 void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");

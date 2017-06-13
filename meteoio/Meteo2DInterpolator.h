@@ -144,12 +144,13 @@ class Meteo2DInterpolator {
 
 		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm
-		 * @param param the meteorological parameter that is concerned
-		 * @param algorithm the desired algorithm
-		 * @param vecArgs a vector of strings containing the arguments
+		 * @param[in] parname the meteorological parameter that is concerned
+		 * @param[in] algorithm the desired algorithm
+		 * @param[in] section the section into which to look for the arguments
+		 * @return a vector containing the arguments
 		 */
-		std::vector<std::string> getArgumentsForAlgorithm(const std::string& param,
-		                                const std::string& algorithm) const;
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname,
+		                                const std::string& algorithm, const std::string& section) const;
 
 		/**
 		 * @brief Returns the metadata associated with the configured virtual stations

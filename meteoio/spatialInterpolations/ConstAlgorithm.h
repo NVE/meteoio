@@ -24,19 +24,20 @@ namespace mio {
 
 /**
  * @class ConstAlgorithm
+ * @ingroup spatialization
  * @brief Constant filling interpolation algorithm.
+ * @details
  * Fill the grid with a user provided constant.
  * @code
  * PSUM::algorithms = CST
- * PSUM::cst        = 0.
+ * PSUM::cst::value = 0.
  * @endcode
  */
 class ConstAlgorithm : public InterpolationAlgorithm {
 	public:
 		ConstAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:

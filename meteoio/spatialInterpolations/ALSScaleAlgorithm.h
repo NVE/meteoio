@@ -24,22 +24,28 @@ namespace mio {
 
 /**
  * @class ALS_Interpolation
+ * @ingroup spatialization
  * @brief Scale and distribute the precipitation according to Airborn Laser Scans (ALS) grids.
- * This needs two arguments: first the base method to fill the grid (for example, idw_lapse) and
- * then the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin).
- * If there are some time steps when only one station provides the necessary parameter, the base method will
- * automatically switch to "AVG". A third (optional) argument can be provided that is the air temperature
- * threshold (in K) below which such redistribution occurs (so liquid precipitation is not redistributed).
+ * @details
+ * It takes the following arguments:
+ *  - BASE: the base method to fill the grid (for example, idw_lapse (default));
+ *  - GRID: the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin);
+ *  - TA_THRESH: an optional air temperature threshold (in K) below which such redistribution occurs
+ * (so liquid precipitation is not redistributed)
+ *
+ * @note If there are some time steps when only one station provides the necessary parameter, the base method will
+ * automatically switch to "AVG".
  *
  * @code
- * PSUM::algorithms = ALS_SCALING
- * PSUM::als_scaling = idw_lapse als_20150213.asc
+ * PSUM::algorithms        = ALS_SCALING
+ * PSUM::als_scaling::base = idw_lapse
+ * PSUM::als_scaling::grid = als_20150213.asc
  * @endcode
  */
 class ALS_Interpolation : public InterpolationAlgorithm {
 	public:
 		ALS_Interpolation(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);

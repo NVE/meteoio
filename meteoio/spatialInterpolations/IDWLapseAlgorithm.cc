@@ -21,16 +21,11 @@
 
 namespace mio {
 
-IDWLapseAlgorithm::IDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+IDWLapseAlgorithm::IDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), lapse_rate_provided(false)
+			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager)
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args>2)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-	if (nr_args>=1) {
-		if ( IOUtils::isNumeric(vecArgs[0])) lapse_rate_provided = true;
-	}
+	setTrendParams(vecArgs);
 }
 
 double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
@@ -40,7 +35,7 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0) return 0.0;
-	if (!lapse_rate_provided && nrOfMeasurments<2) return 0.0;
+	if (user_lapse==IOUtils::nodata && nrOfMeasurments<2) return 0.0;
 
 	return 0.7;
 }

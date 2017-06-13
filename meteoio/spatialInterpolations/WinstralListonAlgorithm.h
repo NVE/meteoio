@@ -25,7 +25,7 @@ namespace mio {
 class WinstralListonAlgorithm : public InterpolationAlgorithm {
 	public:
 		WinstralListonAlgorithm(Meteo2DInterpolator& i_mi,
-		                  const std::vector<std::string>& i_vecArgs,
+		                  const std::vector< std::pair<std::string, std::string> >& vecArgs,
 		                  const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
@@ -34,7 +34,7 @@ class WinstralListonAlgorithm : public InterpolationAlgorithm {
 		static bool windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
 		static void getSynopticWind(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, double& VW, double& DW);
 
-		std::string base_algo, ref_station;
+		std::string base_algo_user, ref_station;
 		bool inputIsAllZeroes;
 		static const double dmax;
 };

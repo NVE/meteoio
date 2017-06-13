@@ -21,27 +21,29 @@
 
 namespace mio {
 
-std::string USERInterpolation::getGridFileName() const
+USERInterpolation::USERInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename(), grid2d_path(), subdir(), file_ext()
 {
-	const size_t nrArgs = vecArgs.size();
-	if (nrArgs > 2) {
-		throw InvalidArgumentException("Too many arguments for the "+algo+" interpolation algorithm", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SUBDIR") {
+			subdir = vecArgs[ii].second;
+		} else if (vecArgs[ii].first=="EXT") {
+			file_ext = vecArgs[ii].second;
+		}
 	}
-	const std::string prefix = (nrArgs==1)? vecArgs[0] + "/" : "";
-	const std::string ext = (nrArgs==2)? vecArgs[1] : ".asc";
-	const std::string gridname(  prefix + date.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + ext );
 
-	return gridname;
+	if (!subdir.empty()) subdir += "/";
+	if (file_ext.empty()) file_ext = ".dat";
+
+	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 }
 
 double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
-	filename = getGridFileName();
-
-	if (grid2d_path.empty())
-		gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
+	filename = subdir + date.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + file_ext;
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";

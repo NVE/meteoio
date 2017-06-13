@@ -157,54 +157,52 @@ namespace mio {
 
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
                                                        Meteo2DInterpolator& i_mi,
-                                                       const std::vector<std::string>& i_vecArgs, TimeSeriesManager& tsm, GridsManager& gdm)
+                                                       const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm)
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
 
 	if (algoname == "NONE") {// return a nodata grid
-		return new NoneAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new NoneAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "STD_PRESS") {// standard air pressure interpolation
-		return new StandardPressureAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new StandardPressureAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "CST") {// constant fill
-		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new ConstAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "AVG") {// average fill
-		return new AvgAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new AvgAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "AVG_LAPSE") {// average fill with an elevation lapse rate
-		return new AvgLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new AvgLapseRateAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW") {// Inverse Distance Weighting fill
-		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new IDWAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill
-		return new IDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new IDWLapseAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "LIDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
-		return new LocalIDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new LocalIDWLapseAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "LISTON_RH") {// relative humidity interpolation
-		return new RHListonAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new RHListonAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ILWR_EPS") {// long wave radiation interpolation
-		return new ILWREpsAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new ILWREpsAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "LISTON_WIND") {// wind velocity interpolation (using a heuristic terrain effect)
-		return new ListonWindAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new ListonWindAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "RYAN") {// RYAN wind direction
-		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new RyanAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "WINSTRAL") {// Winstral wind exposure factor
-		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new WinstralAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "WINSTRAL++") {// Winstral/Liston wind exposure factor
-		return new WinstralListonAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new WinstralListonAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ODKRIG") {// ordinary kriging
-		return new OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new OrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ODKRIG_LAPSE") {// ordinary kriging with lapse rate
-		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new LapseOrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "USER") {// read user provided grid
-		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new USERInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ALS_SCALING") {// scale from ALS grid
-		return new ALS_Interpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new ALS_Interpolation(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "PPHASE") {// precipitation phase parametrization
-		return new PPHASEInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new PPHASEInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "PSUM_SNOW") {// precipitation interpolation according to (Magnusson, 2010)
-		return new SnowPSUMInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
+		return new SnowPSUMInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "SWRAD") {// terrain shadding interpolation
-		return new SWRadInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
-	} else if (algoname == "RH") {//HACK deprecated
-		throw IOException("The 'RH' interpolation algorithm has been renamed as 'LISTON_RH' for consistency" , AT);
+		return new SWRadInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -277,52 +275,71 @@ std::string InterpolationAlgorithm::getInfo() const
  *
  * @param vecAltitudes altitudes sorted similarly as the data in vecDat
  * @param vecDat data for the interpolated parameter
- * @param trend object containing the fitted trend to be used for detrending/retrending
+ * @return object containing the fitted trend to be used for detrending/retrending
 */
 Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const
 {
 	Fit1D trend;
 
-	bool status;
-	if (vecArgs.empty()) {
+	bool status=false;
+	if (user_lapse==IOUtils::nodata) {
 		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 		status = trend.fit();
-	} else if (vecArgs.size() == 1) {
-		double lapse_rate;
-		IOUtils::convertString(lapse_rate, vecArgs.front());
-		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-		trend.setLapseRate(lapse_rate);
-		status = trend.fit();
-	} else if (vecArgs.size() == 2) {
-		const std::string extraArg( vecArgs[1]);
-		if (extraArg=="soft") { //soft
+	} else {
+		if (is_soft) {
 			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 			status = trend.fit();
 			if (!status) {
-				double lapse_rate;
-				IOUtils::convertString(lapse_rate, vecArgs[0]);
 				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-				trend.setLapseRate(lapse_rate);
+				trend.setLapseRate(user_lapse);
 				status = trend.fit();
 			}
-		} else if (extraArg=="frac") {
-			double lapse_rate;
-			IOUtils::convertString(lapse_rate, vecArgs[0]);
-			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-			const double avgData = Interpol1D::arithmeticMean(vecDat);
-			trend.setLapseRate(lapse_rate*avgData);
-			status = trend.fit();
-			if (lapse_rate*avgData==0.) trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
 		} else {
-			throw InvalidArgumentException("Unknown argument \""+extraArg+"\" supplied for the "+algo+" algorithm", AT);
+			if (is_frac) { //forced FRAC
+				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+				const double avgData = Interpol1D::arithmeticMean(vecDat);
+				trend.setLapseRate(user_lapse*avgData);
+				status = trend.fit();
+				if (user_lapse*avgData==0.) trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
+			} else { //forced user lapse rate
+				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+				trend.setLapseRate(user_lapse);
+				status = trend.fit();
+			}
 		}
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
 	if (!status)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
 	return trend;
+}
+
+/**
+* @brief Parse the detrending arguments
+* @details The following arguments are recognized:
+*  - RATE: to provide a user-defined lapse rate (SI units);
+*  - SOFT: if set to true, the user provided lapse rate is only used when no lapse rate could be computed from the data (or if it was too bad, ie r²<0.6);
+*  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
+ * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
+ * the fractional lapse from the data is made.
+ *
+* @param[in] vecArgs a vector containing all the arguments
+*/
+void InterpolationAlgorithm::setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="RATE") {
+			parseArg(vecArgs[ii], user_lapse);
+		} else if (vecArgs[ii].first=="FRAC") {
+			parseArg(vecArgs[ii], is_frac);
+		} else if (vecArgs[ii].first=="SOFT") {
+			parseArg(vecArgs[ii], is_soft);
+		}
+	}
+
+	if (is_frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for the "+algo+" algorithm", AT);
+	if (is_soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for the "+algo+" algorithm", AT);
+	if (is_soft && is_frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for the "+algo+" algorithm", AT);
 }
 
 

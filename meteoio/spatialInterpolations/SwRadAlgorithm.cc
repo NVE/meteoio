@@ -25,20 +25,21 @@ const double SWRadInterpolation::soil_albedo = .23; //grass
 const double SWRadInterpolation::snow_albedo = .85; //snow
 const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
+SWRadInterpolation::SWRadInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), shading(true)
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SHADING") {
+			parseArg(vecArgs[ii], shading);
+		}
+	}
+}
+
 double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
-
-	const size_t nr_args = vecArgs.size();
-	if ( nr_args>1 ) {
-		throw InvalidArgumentException("Wrong arguments supplied to the "+algo+" interpolation.", AT);
-	} else if (nr_args==1) {
-		if (IOUtils::strToUpper(vecArgs[0])=="NO_SHADING") {
-			shading = false;
-		} else
-			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
-	}
 
 	vecIdx.clear(); vecMeta.clear();
 	tsmanager.getMeteoData(i_date, vecMeteo);

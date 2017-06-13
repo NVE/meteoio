@@ -24,21 +24,25 @@ namespace mio {
 
 /**
  * @class USERInterpolation
+ * @ingroup spatialization
  * @brief Reads user provided gridded data on the disk.
- * The grids are all in the GRID2DPATH directory given in the [Input] section or in one of
- * its sub-directories that is given as the algorithm's argument (optional). By default, the file extension is assumed to
- * be ".asc" but it is possible to provide as second argument another file extension (then it is mandatory to
- * also provide a sub-directory argument in first position).
+ * @details
+ * By default, the grids are all in the GRID2DPATH directory given in the [Input] section and the file extension is assumed to
+ * be ".asc". But the following arguments allow overriding it:
+ *  - SUBDIR: look for grids in the provided subdirectory of GRID2DPATH;
+ *  - EXT: use another file extension.
+ *
  * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
  * @code
  * TA::algorithms = USER	# read grids from GRID2DPATH using the GRID2D plugin
  *
- * VW::algorithms = USER	# read grids from GRID2DPATH/wind
- * VW::user       = wind
+ * VW::algorithms   = USER	# read grids from GRID2DPATH/wind
+ * VW::user::subdir = wind
  *
- * HNW::algorithms = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
- * HNW::user       = precip .dat
+ * PSUM::algorithms   = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
+ * PSUM::user::subdir = precip
+ * PSUM::user::ext    = .dat
  * @endcode
  *
  * If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
@@ -48,14 +52,14 @@ namespace mio {
 class USERInterpolation : public InterpolationAlgorithm {
 	public:
 		USERInterpolation(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename(), grid2d_path() {nrOfMeasurments=0;}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::string getGridFileName() const;
 		std::string filename, grid2d_path;
+		std::string subdir, file_ext;
 };
 
 } //end namespace mio

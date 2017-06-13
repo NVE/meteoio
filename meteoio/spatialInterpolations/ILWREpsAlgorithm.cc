@@ -23,29 +23,30 @@
 
 namespace mio {
 
+ILWREpsAlgorithm::ILWREpsAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                 const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA()
+{
+	setTrendParams(vecArgs);
+}
+
 double ILWREpsAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for ILWR
-	if (in_param != MeteoData::ILWR)
-		return 0.0;
-
 	date = i_date;
 	param = in_param;
 	vecData.clear(); vecMeta.clear();
 	vecDataEA.clear();
 
-	nrOfMeasurments = 0;
 	tsmanager.getMeteoData(date, vecMeteo); //getData has not been called, so manually fill vecMeteo
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::ILWR) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
 			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii](MeteoData::ILWR), vecMeteo[ii](MeteoData::TA)) );
 			vecMeta.push_back(vecMeteo[ii].meta);
-			nrOfMeasurments++;
 		}
 	}
 
-	if (nrOfMeasurments==0)
-		return 0.0;
+	nrOfMeasurments = vecDataEA.size();
+	if (nrOfMeasurments==0) return 0.0;
 
 	return 0.9;
 }
@@ -66,7 +67,7 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid); //the meta should NOT be used for elevations!
 	retrend(dem, trend, grid);
 
-	//Recompute Rh from the interpolated td
+	//Recompute ILWR from the interpolated ea
 	for (size_t ii=0; ii<grid.size(); ii++) {
 		double &value = grid(ii);
 		value = Atmosphere::blkBody_Radiation(value, ta(ii));

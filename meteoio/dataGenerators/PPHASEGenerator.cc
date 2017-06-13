@@ -51,6 +51,8 @@ void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::
 	}
 	if (model == RANGE) {
 		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for algorithm "+algo, AT);
+		if (snow_thresh==rain_thresh) throw InvalidArgumentException(algo+" interpolation: the two provided threshold must be different", AT);
+		if (snow_thresh>rain_thresh) std::swap(snow_thresh, rain_thresh);
 		range_start = snow_thresh;
 		range_norm = 1. / (rain_thresh-snow_thresh);
 	}

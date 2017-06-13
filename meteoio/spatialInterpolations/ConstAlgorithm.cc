@@ -21,17 +21,27 @@
 
 namespace mio {
 
+ConstAlgorithm::ConstAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.)
+{
+	bool has_cst=false;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VALUE") {
+			parseArg(vecArgs[ii], user_cst);
+			has_cst = true;
+		}
+	}
+
+	if (!has_cst) throw InvalidArgumentException("Please provide a value for the "+algo+" algorithm", AT);
+}
+
 double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
-	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	const size_t nr_args = vecArgs.size();
-	if (nr_args!=1)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-
-	IOUtils::convertString(user_cst, vecArgs[0]);
 	return 0.01;
 }
 

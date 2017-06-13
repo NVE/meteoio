@@ -36,8 +36,13 @@ namespace mio {
    Documentation for available data processing components. These can be used on incoming meteorological data. See \ref processing "Available data processing elements".
 */
 
- /*! \defgroup parametrizations Parametrizations
+/*! \defgroup parametrizations Parametrizations
    Documentation for available parametrizations components that compute given parameters from other parameters. These used for DataCreator and DataGenerator.
+*/
+
+/*! \defgroup spatialization Spatial interpolations
+   Documentation for available spatial interpolations algorithms components that compute the spatial distribution of a given parameter. These are mostly wrappers
+   around \ref interpol2d "2D interpolations".
 */
 
 /*! \defgroup data_str Data classes

@@ -22,23 +22,23 @@
 
 namespace mio {
 
+StandardPressureAlgorithm::StandardPressureAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), use_residuals(false)
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="USE_RESIDUALS") {
+			parseArg(vecArgs[ii], use_residuals);
+		}
+	}
+}
+
 double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	const size_t nr_args = vecArgs.size();
-	if (nr_args>1)
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-	if (nr_args==1) {
-		if (IOUtils::strToUpper(vecArgs[0])=="USE_RESIDUALS") {
-			use_residuals = true;
-		} else
-			throw InvalidArgumentException("Unknown argument \""+vecArgs[0]+"\" supplied to the "+algo+" interpolation", AT);
-	}
-
-	if (param != MeteoData::P) return 0.0;
 	if (nrOfMeasurments <=1 || use_residuals) return 1.0;
 	return 0.1;
 }

@@ -170,7 +170,7 @@ void Meteo2DInterpolator::setAlgorithms()
 
 		std::vector<InterpolationAlgorithm*> vecAlgorithms( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(parname, tmpAlgorithms[jj]) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], "Interpolations2D") );
 			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *tsmanager, *gridsmanager);
 		}
 
@@ -216,12 +216,19 @@ std::vector<std::string> Meteo2DInterpolator::getAlgorithmsForParameter(const Co
 	return vecAlgorithms;
 }
 
-std::vector<std::string> Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
-                                                     const std::string& algorithm) const
+std::vector< std::pair<std::string, std::string> > Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& parname,
+                                                     const std::string& algorithm, const std::string& section) const
 {
-	std::vector<std::string> vecArgs;
-	const std::string keyname( param +"::"+ algorithm );
-	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
+	const std::string key_prefix( parname+"::"+algorithm+"::" );
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, section) );
+
+	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
+		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	}
 
 	return vecArgs;
 }

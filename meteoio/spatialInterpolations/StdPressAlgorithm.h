@@ -24,26 +24,27 @@ namespace mio {
 
 /**
  * @class StandardPressureAlgorithm
+ * @ingroup spatialization
  * @brief Standard atmospheric pressure interpolation algorithm.
+ * @details
  * This first fills the grid with the standard atmosphere's pressure, depending on the local elevation. Then, depending on the available data:
  *     - if there are no measured atmospheric pressure, nothing else happens;
  *     - if one station has measured local atmospheric pressure, its offset to the standard atmospheric pressure is computed and applied to
  *       the computed grid;
  *     - if multiple stations have measured local atmospheric pressure:
  *                - default: the average offset will be applied to the computed grid;
- *                - USE_RESIDUALS option: the residuals are computed at each station, spatially distributed (with IDW) and applied to the computed grid;
+ *                - USE_RESIDUALS option set to TRUE: the residuals are computed at each station, spatially distributed (with IDW) and applied to the computed grid;
  *
  * @code
- * P::algorithms = STD_PRESS
- * P::Std_Press = USE_RESIDUALS
+ * P::algorithms               = STD_PRESS
+ * P::Std_Press::USE_RESIDUALS = true
  * @endcode
  */
 class StandardPressureAlgorithm : public InterpolationAlgorithm {
 	public:
 		StandardPressureAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), use_residuals(false) {}
+					const std::vector< std::pair<std::string, std::string> >& vecArgs,
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
