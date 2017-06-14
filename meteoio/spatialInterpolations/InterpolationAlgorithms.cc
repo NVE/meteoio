@@ -319,9 +319,11 @@ Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, 
 *  - RATE: to provide a user-defined lapse rate (SI units);
 *  - SOFT: if set to true, the user provided lapse rate is only used when no lapse rate could be computed from the data (or if it was too bad, ie r²<0.6);
 *  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
- * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
- * the fractional lapse from the data is made.
- *
+* of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
+* the fractional lapse from the data is made.
+*  - TREND_MIN_ALT: all points at elevations less than this will be detrended/retrended as if at this provided elevation (optional);
+*  - TREND_MAX_ALT: all points at elevations more than this will be detrended/retrended as if at this provided elevation (optional);
+*
 * @param[in] vecArgs a vector containing all the arguments
 */
 void InterpolationAlgorithm::setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
@@ -333,6 +335,10 @@ void InterpolationAlgorithm::setTrendParams(const std::vector< std::pair<std::st
 			parseArg(vecArgs[ii], is_frac);
 		} else if (vecArgs[ii].first=="SOFT") {
 			parseArg(vecArgs[ii], is_soft);
+		} else if (vecArgs[ii].first=="TREND_MIN_ALT") {
+			parseArg(vecArgs[ii], trend_min_alt);
+		} else if (vecArgs[ii].first=="TREND_MAX_ALT") {
+			parseArg(vecArgs[ii], trend_max_alt);
 		}
 	}
 
@@ -342,7 +348,7 @@ void InterpolationAlgorithm::setTrendParams(const std::vector< std::pair<std::st
 }
 
 
-void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt, const double& max_alt)
+void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const
 {
 	if (vecDat.size() != vecAltitudes.size()) {
 		std::ostringstream ss;
@@ -351,14 +357,15 @@ void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<doubl
 	}
 
 	for (size_t ii=0; ii<vecAltitudes.size(); ii++) {
-		const double altitude = std::min( std::max(vecAltitudes[ii], min_alt), max_alt );
 		double &val = vecDat[ii];
-		if (val!=IOUtils::nodata)
+		if (val!=IOUtils::nodata) {
+			const double altitude = std::min( std::max(vecAltitudes[ii], trend_min_alt), trend_max_alt );
 			val -= trend( altitude );
+		}
 	}
 }
 
-void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt, const double& max_alt)
+void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid) const
 {
 	const size_t nxy = grid.size();
 	if (dem.size() != nxy) {
@@ -369,10 +376,11 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	}
 
 	for (size_t ii=0; ii<nxy; ii++) {
-		const double altitude = std::min( std::max(dem(ii), min_alt), max_alt );
 		double &val = grid(ii);
-		if (val!=IOUtils::nodata)
-			val += trend.f( altitude );
+		if (val!=IOUtils::nodata) {
+			const double altitude = std::min( std::max(dem(ii), trend_min_alt), trend_max_alt );
+			val += trend( altitude );
+		}
 	}
 }
 

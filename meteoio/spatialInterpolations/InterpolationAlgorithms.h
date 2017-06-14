@@ -47,7 +47,7 @@ class InterpolationAlgorithm {
 		                       const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/,
 		                       const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager) :
 		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecMeteo(), vecData(),
-		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), user_lapse(IOUtils::nodata), is_frac(false), is_soft(false) {}
+		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), user_lapse(IOUtils::nodata), trend_min_alt(-1e4), trend_max_alt(1e4), is_frac(false), is_soft(false) {}
 		virtual ~InterpolationAlgorithm() {}
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param) = 0;
@@ -63,8 +63,8 @@ class InterpolationAlgorithm {
 		Fit1D getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const;
 		void setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
-		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
-		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);
+		void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const;
+		void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid) const;
 
 		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))
@@ -83,6 +83,7 @@ class InterpolationAlgorithm {
 		MeteoData::Parameters param; ///<the parameter that we will interpolate
 		size_t nrOfMeasurments; ///<Number of stations that have been used, so this can be reported to the user
 		double user_lapse; ///<when detrending the data, this is a user provided lapse_rate
+		double trend_min_alt, trend_max_alt; ///<if these are provided, the detrending/retrending will be bound by a minimum and/or maximum altitude
 		bool is_frac, is_soft; ///<is the lapse rate to be interpreted as fractional? Should it be used as fallback (is_soft) or it is mandatory?
 };
 
