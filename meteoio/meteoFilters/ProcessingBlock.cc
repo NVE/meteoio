@@ -70,18 +70,23 @@ namespace mio {
  * optional parameters.The filters are applied serialy, in the order they are given in. An example of such section is given below:
  * @code
  * [Filters]
- * TA::filter1	= min_max
- * TA::arg1	= 230 330
+ * TA::filter1   = min_max
+ * TA::arg1::min = 230
+ * TA::arg1::max = 330
  *
- * RH::filter1	= min_max
- * RH::arg1	= -0.2 1.2
- * RH::filter2	= min_max
- * RH::arg2	= soft 0.0 1.0
+ * RH::filter1   = min_max
+ * RH::arg1::min = -0.2
+ * RH::arg1::max = 1.2
+ * RH::filter2    = min_max
+ * RH::arg2::soft = true
+ * RH::arg2::min  = 0.0
+ * RH::arg2::max  = 1.0
  *
- * PSUM::filter1	= min
- * PSUM::arg1	= -0.1
- * PSUM::filter2	= min
- * PSUM::arg2	= soft 0.
+ * PSUM::filter1    = min
+ * PSUM::arg1::min  = -0.1
+ * PSUM::filter2    = min
+ * PSUM::arg2::soft = true
+ * PSUM::arg2::min  = 0.
  * @endcode
  *
  * @section processing_available Available processing elements

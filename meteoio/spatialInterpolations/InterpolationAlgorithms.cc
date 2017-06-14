@@ -73,19 +73,20 @@ namespace mio {
  * An example of such section is given below:
  * @code
  * [Interpolations2D]
- * TA::algorithms = IDW_LAPSE AVG_LAPSE
- * TA::avg_lapse = -0.008
+ * TA::algorithms      = IDW_LAPSE AVG_LAPSE
+ * TA::avg_lapse::rate = -0.008
  *
  * RH::algorithms = RH IDW_LAPSE AVG_LAPSE AVG
  *
- * PSUM::algorithms = PSUM_SNOW IDW_LAPSE AVG_LAPSE AVG CST
- * PSUM::psum_snow = avg_lapse
- * PSUM::avg_lapse = 0.0005 frac
- * PSUM::cst        = 0
+ * PSUM::algorithms      = PSUM_SNOW IDW_LAPSE AVG_LAPSE AVG CST
+ * PSUM::psum_snow::base = avg_lapse
+ * PSUM::avg_lapse::rate = 0.0005
+ * PSUM::avg_lapse::frac = true
+ * PSUM::cst::value      = 0
  *
  * VW::algorithms = IDW_LAPSE AVG_LAPSE
  *
- * P::algorithms = STD_PRESS
+ * P::algorithms  = STD_PRESS
  * @endcode
  *
  * @section interpol2D_keywords Available algorithms
@@ -151,8 +152,6 @@ namespace mio {
  * - <i>"Geostatistics for Natural Resources Evaluation"</i>, Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
  * - <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, 900 p.
  *
- * @author Mathias Bavay
- * @date   2010-04-12
  */
 
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,

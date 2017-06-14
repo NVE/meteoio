@@ -56,17 +56,16 @@ class InterpolationAlgorithm;
  * @section implementation_2Dinterpol Implementation
  * It is therefore necessary to create in InterpolationAlgorithms.cc (and declared in the .h) a new class,
  * nammed after the algorithm that will be implemented and inheriting InterpolationAlgorithm. Three methods need
- * to be implemented (the constructor being inherited from InterpolationAlgorithm and automatically called
- * by an object factory):
- * - void initialize(const MeteoData::Parameters& in_param)
+ * to be implemented:
+ * - a constructor that does the arguments parsing (if any);
  * - double getQualityRating()
  * - void calculate(Grid2DObject& grid)
  *
- * The initialize method takes the meteorological parameter that will be interpolated and set the param
+ * The getQualityRating() method takes the meteorological parameter that will be interpolated and set the param
  * private member to it. It then computes the private member nrOfMeasurments that contains the number of
- * stations that have this meteorological parameter available by calling getData(param, vecData, vecMeta), which
- * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData).
- * Custom data preparation can obviously be done in this method.
+ * stations that have this meteorological parameter available by either calling getData(param, vecData, vecMeta), which
+ * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData) or
+ * directly filling veMeteo and vecMeta. Custom data preparation can obviously be done in this method.
  *
  * The calculate method must properly erase and reste the grid that it receives before filling it. If necessary,
  * (as is the case for precipitation, relative humidity and snow height, for example) the grid can be checked for min/max by
@@ -92,8 +91,6 @@ class InterpolationAlgorithm;
  * @brief A class to spatially interpolate meteo parameters. For more, see \ref interpol2d
  *
  * @ingroup stats
- * @author Mathias Bavay and Thomas Egger
- * @date   2010-01-14
  */
 
 class Meteo2DInterpolator {

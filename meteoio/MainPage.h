@@ -184,14 +184,15 @@ namespace mio {
  *
  * [Filters]
  * TA::filter1	= min_max	#first filter to use on the parameter TA
- * TA::arg1	= 230 330	#arguments for this first filter
+ * TA::arg1::min	= 230	#arguments for this first filter
+ * TA::arg1::max	= 330	#arguments for this first filter
  * TA::filter2	= rate		#second filter to use (in chronological order)
- * TA::arg2	= 0.01		#arguments for this second filter
+ * TA::arg2::max	= 0.01	#arguments for this second filter
  * #add any extra filter that you want to use. They will be applied serially
  *
  * [Interpolations2D]
  * TA::algorithms = IDW_LAPSE CST_LAPSE	#list of algorithms to consider for use for spatially interpolating parameter TA
- * TA::cst_lapse = -0.008 		#parameter for a specific interpolation algorithm for parameter TA
+ * TA::cst_lapse::rate = -0.008 		#parameter for a specific interpolation algorithm for parameter TA
  *
  * @endcode
  *
@@ -355,7 +356,7 @@ namespace mio {
  *    the block name, for example for printing in an error message from which filter/block it comes). The constructor
  *    would therefore have a declaration similar to:
  *    @code
- *    FilterMax::FilterMax(const std::vector<std::string>& vecArgs, const std::string& name)
+ *    FilterMax::FilterMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
  *    @endcode
  *    -# The <b>process</b> method applies the element to the provided vector of values, for a meteo parameter pointed to by index.
  *    This index is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
@@ -365,9 +366,9 @@ namespace mio {
  *    @code
  *    process(const unsigned int& index, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
  *    @endcode
- *    -# The private <b>parse_args</b> method reads the arguments from a vector of strings, with the following declaration:
+ *    -# The private <b>parse_args</b> method reads the arguments from a vector of pairs of strings, with the following declaration:
  *    @code
- *    parse_args(std::vector<std::string> vecArgs)
+ *    parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
  *    @endcode
  *
  * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteoFilters subdirectory),
@@ -378,16 +379,19 @@ namespace mio {
  * to the Config could look like this:
  * @code
  * [Filters]
- * TA::filter1 = max
- * TA::arg1    = soft 280
+ * TA::filter1    = max
+ * TA::arg1::soft = true
+ * TA::arg1::max  = 280
  * @endcode
  * Which has the following interpretation: Apply filter max (max-value-filter) to the parameter TA (air temperature)
  * in case that a value is greater than 280 degrees Kelvin change that value to 280.
  * A more customized operation could be:
  * @code
  * [Filters]
- * TA::filter1 = max
- * TA::arg1    = soft 280 260
+ * TA::filter1         = max
+ * TA::arg1::soft      = true
+ * TA::arg1::max       = 280
+ * TA::arg1::max_reset = 260
  * @endcode
  * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
  *

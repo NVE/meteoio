@@ -105,8 +105,6 @@ namespace mio {
  * meteorological parameters (relying on a parametrization, like clear sky for ILWR).
  *
  * @ingroup meteoLaws
- * @author Mathias Bavay
- * @date   2013-03-20
 */
 class GeneratorAlgorithm {
 
