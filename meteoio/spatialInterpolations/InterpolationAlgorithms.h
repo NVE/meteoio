@@ -59,7 +59,7 @@ class InterpolationAlgorithm {
 		std::vector<double> getData(const Date& i_date, const MeteoData::Parameters& i_param);
 		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
-		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
+		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW, const double& scale, const double& alpha);
 		Fit1D getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const;
 		void setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);

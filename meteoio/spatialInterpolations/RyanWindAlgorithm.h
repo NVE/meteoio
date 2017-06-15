@@ -27,10 +27,12 @@ namespace mio {
  * @ingroup spatialization
  * @brief DEM-based wind direction interpolation algorithm.
  * @details
- * This is an implementation of the method described in Ryan,
+ * This is an implementation of a method that alters a wind field (that is first computed with IDW)) based on the DEM, as described in Ryan,
  * <i>"a mathematical model for diagnosis and prediction of surface winds in mountainous terrain"</i>,
- * 1977, journal of applied meteorology, <b>16</b>, 6.
- * The DEM is used to compute wind direction changes that are used to alter the wind direction fields.
+ * 1977, journal of applied meteorology, <b>16</b>, 6. It takes the following arguments:
+ *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
  * @code
  * DW::algorithms    = RYAN
@@ -40,12 +42,12 @@ class RyanAlgorithm : public InterpolationAlgorithm {
 	public:
 		RyanAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		bool inputIsAllZeroes;
 };
 

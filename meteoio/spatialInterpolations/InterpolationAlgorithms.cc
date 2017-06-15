@@ -385,7 +385,7 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 }
 
 //this interpolates VW, DW by converting to u,v and then doing IDW_LAPSE before reconverting to VW, DW
-void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW)
+void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW, const double& scale, const double& alpha)
 {
 	if (vecDataVW.size() != vecDataDW.size())
 		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
@@ -406,17 +406,17 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 		Fit1D trend( getTrend(vecAltitudes, Ve) );
 		info << trend.getInfo();
 		detrend(trend, vecAltitudes, Ve);
-		Interpol2D::IDW(Ve, vecMeta, dem, VW);
+		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
 		retrend(dem, trend, VW);
 
 		trend = getTrend(vecAltitudes, Vn);
 		info << trend.getInfo();
 		detrend(trend, vecAltitudes, Vn);
-		Interpol2D::IDW(Vn, vecMeta, dem, DW);
+		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
 		retrend(dem, trend, DW);
 	} else {
-		Interpol2D::IDW(Ve, vecMeta, dem, VW);
-		Interpol2D::IDW(Vn, vecMeta, dem, DW);
+		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
+		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
 	}
 
 	//recompute VW, DW in each cell

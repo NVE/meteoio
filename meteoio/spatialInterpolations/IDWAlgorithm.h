@@ -30,15 +30,20 @@ namespace mio {
  * Each cell receives the weighted average of the whole data set with weights being 1/r²
  * (r being the distance of the current cell to the contributing station) and renormalized
  * (so that the sum of the weights is equal to 1.0).
+ * It takes the following arguments:
+ *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  */
 class IDWAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 };
 
 } //end namespace mio

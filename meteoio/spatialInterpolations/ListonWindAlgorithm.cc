@@ -21,6 +21,19 @@
 
 namespace mio {
 
+ListonWindAlgorithm::ListonWindAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
+                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), scale(1e3), alpha(1.), inputIsAllZeroes(false)
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SCALE") {
+			parseArg(vecArgs[ii], scale);
+		} else if (vecArgs[ii].first=="ALPHA") {
+			parseArg(vecArgs[ii], alpha);
+		}
+	}
+}
+
 double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
@@ -65,12 +78,12 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	if (param==MeteoData::VW) {
 		Grid2DObject DW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW, scale, alpha);
 		Interpol2D::ListonWind(dem, grid, DW);
 	}
 	if (param==MeteoData::DW) {
 		Grid2DObject VW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid);
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid, scale, alpha);
 		Interpol2D::ListonWind(dem, VW, grid);
 	}
 }

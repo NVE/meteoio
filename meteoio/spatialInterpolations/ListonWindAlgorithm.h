@@ -32,7 +32,10 @@ namespace mio {
  * The wind speed and direction are spatially interpolated using IDWLapseAlgorithm. Then, the wind speed and
  * direction fields are altered by wind weighting factors and wind diverting factors (respectively) calculated
  * from the local curvature and slope (as taken from the DEM, see DEMObject). The wind diverting factor is
- * actually the same as in RyanAlgorithm.
+ * actually the same as in RyanAlgorithm. It takes the following arguments:
+ *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
  * @code
  * VW::algorithms = LISTON_WIND
@@ -42,12 +45,12 @@ class ListonWindAlgorithm : public InterpolationAlgorithm {
 	public:
 		ListonWindAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		bool inputIsAllZeroes;
 };
 

@@ -30,10 +30,12 @@ namespace mio {
  * This is an implementation of the method described in (Liston & Elder, 2006): for each input point, the dew
  * point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm
  * (if only one station is available, no altitudinal trends will be applied).
- * Finally, each local dew point temperature is converted back to a local relative humidity.
- *
- * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for dew
- * point to RH conversion)
+ * Finally, each local dew point temperature is converted back to a local relative humidity. As a side effect, the user must
+ * have defined algorithms to be used for air temperature (since this is needed for dew point to RH conversion).
+ * It takes the following arguments:
+ *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
  * @code
  * RH::algorithms = LISTON_RH
@@ -43,12 +45,12 @@ class RHListonAlgorithm : public InterpolationAlgorithm {
 	public:
 		RHListonAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-			: InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataTA(), vecDataRH() {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataTA, vecDataRH; ///<vectors of extracted TA and RH
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 };
 
 

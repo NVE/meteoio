@@ -27,11 +27,15 @@ const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than
 
 SWRadInterpolation::SWRadInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                    const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), shading(true)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SHADING") {
 			parseArg(vecArgs[ii], shading);
+		} else if (vecArgs[ii].first=="SCALE") {
+			parseArg(vecArgs[ii], scale);
+		} else if (vecArgs[ii].first=="ALPHA") {
+			parseArg(vecArgs[ii], alpha);
 		}
 	}
 }
@@ -102,9 +106,9 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	//compute the distributed  splitting and correction coefficient fields
 	Grid2DObject Md;
-	Interpol2D::IDW(vecMd, vecMeta, dem, Md);
+	Interpol2D::IDW(vecMd, vecMeta, dem, Md, scale, alpha);
 	Grid2DObject Corr;
-	Interpol2D::IDW(vecCorr, vecMeta, dem, Corr);
+	Interpol2D::IDW(vecCorr, vecMeta, dem, Corr, scale, alpha);
 
 	//get TA, RH and P interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;

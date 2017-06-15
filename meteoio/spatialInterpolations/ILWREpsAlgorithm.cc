@@ -25,9 +25,17 @@ namespace mio {
 
 ILWREpsAlgorithm::ILWREpsAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                  const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA()
+                                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA(), scale(1e3), alpha(1.)
 {
 	setTrendParams(vecArgs);
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SCALE") {
+			parseArg(vecArgs[ii], scale);
+		} else if (vecArgs[ii].first=="ALPHA") {
+			parseArg(vecArgs[ii], alpha);
+		}
+	}
 }
 
 double ILWREpsAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
@@ -64,7 +72,7 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	const Fit1D trend( getTrend(vecAltitudes, vecDataEA) );
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecDataEA);
-	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid, scale, alpha); //the meta should NOT be used for elevations!
 	retrend(dem, trend, grid);
 
 	//Recompute ILWR from the interpolated ea

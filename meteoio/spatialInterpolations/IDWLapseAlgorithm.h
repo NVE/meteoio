@@ -31,7 +31,11 @@ namespace mio {
  * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
  * elevation of the relative cell (re-trending).
  *
- * The lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported.
+ * The lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported as
+ * well as the following arguments:
+ *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
  * @code
  * TA::algorithms      = IDW_LAPSE
@@ -46,6 +50,8 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 };
 
 } //end namespace mio

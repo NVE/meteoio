@@ -189,13 +189,11 @@ void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObjec
 }
 
 double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<double>& vecData_in,
-                           const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings)
+                           const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings, const double& scale, const double& alpha)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecEastings.size();
 	double parameter = 0., norm = 0.;
-	static const double scale = 1.e3;
-	static const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double DX = x-vecEastings[ii];
@@ -208,13 +206,11 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	return (parameter/norm); //normalization
 }
 
-double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vector<double>& vecDistance_sq)
+double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vector<double>& vecDistance_sq, const double& scale, const double& alpha)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecDistance_sq.size();
 	double parameter = 0., norm = 0.;
-	static const double scale = 1.e3;
-	static const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double dist = Optim::invSqrt( vecDistance_sq[ii] + scale*scale ); //use the optimized 1/sqrt approximation
@@ -232,10 +228,12 @@ double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vec
 * @param dem array of elevations (dem)
 * @param nrOfNeighbors number of neighboring stations to use for each pixel
 * @param grid 2D array to fill
+* @param scale The scale factor is used to smooth the grid. It is added to the distance before applying the weights in order to come into the tail of "1/d".
+* @param alpha The weights are computed as 1/dist^alpha, so give alpha=1 for standards 1/dist weights.
 */
 void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors,
-                               Grid2DObject& grid)
+                               Grid2DObject& grid, const double& scale, const double& alpha)
 {
 	grid.set(dem, IOUtils::nodata);
 
@@ -243,7 +241,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 	for (size_t j=0; j<grid.getNy(); j++) {
 		for (size_t i=0; i<grid.getNx(); i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors);
+			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors, scale, alpha);
 		}
 	}
 }
@@ -251,7 +249,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors)
+                               const DEMObject& dem, const size_t& nrOfNeighbors, const double& scale, const double& alpha)
 {
 	const double cell_altitude = dem(i,j);
 	if (cell_altitude==IOUtils::nodata)
@@ -264,7 +262,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	getNeighbors(x, y, vecStations_in, sorted_neighbors);
 
 	//build the vectors of valid data, with max nrOfNeighbors
-	std::vector<double> altitudes, values, distances;
+	std::vector<double> altitudes, values, distances_sq;
 	for (size_t st=0; st<sorted_neighbors.size(); st++) {
 		const size_t st_index = sorted_neighbors[st].second;
 		const double value = vecData_in[st_index];
@@ -272,7 +270,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 		if ((value != IOUtils::nodata) && (altitude != IOUtils::nodata)) {
 			altitudes.push_back( altitude );
 			values.push_back( value );
-			distances.push_back( sorted_neighbors[st].first );
+			distances_sq.push_back( sorted_neighbors[st].first );
 			if (altitudes.size()>=nrOfNeighbors) break;
 		}
 
@@ -286,7 +284,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	}
 
 	//compute the local pixel value, retrend
-	const double pixel_value = IDWCore(values, distances);
+	const double pixel_value = IDWCore(values, distances_sq, scale, alpha);
 	if (pixel_value!=IOUtils::nodata)
 		return pixel_value + trend(cell_altitude);
 	else
@@ -302,9 +300,11 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem). This is needed in order to know if a point is "nodata"
 * @param grid 2D array to fill
+* @param scale The scale factor is used to smooth the grid. It is added to the distance before applying the weights in order to come into the tail of "1/d".
+* @param alpha The weights are computed as 1/dist^alpha, so give alpha=1 for standards 1/dist weights.
 */
 void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                     const DEMObject& dem, Grid2DObject& grid)
+                     const DEMObject& dem, Grid2DObject& grid, const double& scale, const double& alpha)
 {
 	if (allZeroes(vecData_in)) { //if all data points are zero, simply fill the grid with zeroes
 		constant(0., dem, grid);
@@ -327,7 +327,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			if (dem(ii,jj)!=IOUtils::nodata) {
 				grid(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
-				                           vecData_in, vecEastings, vecNorthings);
+				                           vecData_in, vecEastings, vecNorthings, scale, alpha);
 			}
 		}
 	}

@@ -24,11 +24,15 @@ namespace mio {
 
 StandardPressureAlgorithm::StandardPressureAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                                 const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), use_residuals(false)
+                                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), scale(1e3), alpha(1.), use_residuals(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="USE_RESIDUALS") {
 			parseArg(vecArgs[ii], use_residuals);
+		} else if (vecArgs[ii].first=="SCALE") {
+			parseArg(vecArgs[ii], scale);
+		} else if (vecArgs[ii].first=="ALPHA") {
+			parseArg(vecArgs[ii], alpha);
 		}
 	}
 }
@@ -72,7 +76,7 @@ void StandardPressureAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gr
 			throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 		Grid2DObject offset;
-		Interpol2D::IDW(residuals, vecMeta, dem, offset);
+		Interpol2D::IDW(residuals, vecMeta, dem, offset, scale, alpha);
 		grid += offset;
 	}
 }

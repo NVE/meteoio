@@ -33,7 +33,11 @@ namespace mio {
  *       the computed grid;
  *     - if multiple stations have measured local atmospheric pressure:
  *                - default: the average offset will be applied to the computed grid;
- *                - USE_RESIDUALS option set to TRUE: the residuals are computed at each station, spatially distributed (with IDW) and applied to the computed grid;
+ *                - USE_RESIDUALS option set to TRUE: the residuals are computed at each station, spatially distributed (with IDW)
+ * and applied to the computed grid. Therefore the following extra arguments are supported:
+ *                       - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
+ * to move into the tail of the 1/d distribution (default: 1000m);
+ *                       - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
  * @code
  * P::algorithms               = STD_PRESS
@@ -48,6 +52,7 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
+		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		bool use_residuals; ///< should we compute residuals ate each station and distribute them spatially?
 };
 
