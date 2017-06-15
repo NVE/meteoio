@@ -265,6 +265,24 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
 	return vec_data.size();
 }
 
+size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString)
+{
+	setString.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+
+	std::string tmp_string;
+	while (!iss.eof()) {
+		iss >> std::skipws >> tmp_string;
+
+		if (!tmp_string.empty()) {
+			setString.insert(tmp_string);
+			tmp_string.clear();
+		}
+	}
+
+	return setString.size();
+}
+
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();

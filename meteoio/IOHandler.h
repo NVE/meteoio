@@ -87,8 +87,8 @@ class IOHandler : public IOInterface {
 		const Config& cfg;
 		DataCreator dataCreator;
 		std::map<std::string, IOInterface*> mapPlugins;
-		std::map< std::string, std::set<std::string> > excluded_params;
-		std::map< std::string, std::set<std::string> > kept_params;
+		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
+		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params
 		std::map< std::string, std::vector<std::string> > merge_commands;
 		std::map< std::string, std::string > copy_commands;
 		std::map< std::string, std::set<std::string> > move_commands;

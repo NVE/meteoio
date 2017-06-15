@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 #include <cstdlib>
 #include <limits>
 #include <cmath>
@@ -155,6 +156,7 @@ namespace IOUtils {
 	std::string strToLower(std::string str);
 	bool isNumeric(std::string input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
+	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 

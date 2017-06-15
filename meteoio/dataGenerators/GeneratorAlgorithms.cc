@@ -52,6 +52,9 @@ namespace mio {
  * cases, even fully arbitrary data might be helpful (replacing missing value by a given constant so a model can
  * run over the data gap).
  *
+ * Finally, it is possible to disable a given data generator / creator for specific stations, using the <i>exclude</i> or <i>only</i>
+ * options followed by a list of station IDs (see example below). This is supported automatically by all generators.
+ *
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
  * off and let the spatial interpolations algorithms adjust to the amount of measured data.
@@ -75,7 +78,9 @@ namespace mio {
  *
  * P::generators  = STD_PRESS
  *
- * ILWR::generators = AllSky_LW ClearSky_LW
+ * ILWR::generators         = AllSky_LW ClearSky_LW
+ * ILWR::AllSky_LW::exclude = DAV3 DAV5
+ * ILWR::ClearSky_LW::only  = *WFJ *DAV
  * @endcode
  *
  * @section generators_keywords Available generators
@@ -158,11 +163,31 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 	}
 }
 
+GeneratorAlgorithm::GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
+                                   : excluded_stations(), kept_stations(), algo(i_algo)
+{
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="EXCLUDE") {
+			IOUtils::readLineToSet(vecArgs[ii].second, excluded_stations);
+		} else if(vecArgs[ii].first=="ONLY") {
+			IOUtils::readLineToSet(vecArgs[ii].second, kept_stations);
+		}
+	}
+}
+
 void GeneratorAlgorithm::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
+}
+
+bool GeneratorAlgorithm::skipStation(const std::string& station_id) const
+{
+	if (excluded_stations.count(station_id)!=0) return true; //the station is in the excluded list -> skip
+	if (kept_stations.empty()) return false; //there are no kept stations -> do not skip
+
+	return (kept_stations.count(station_id)==0);
 }
 
 } //namespace
