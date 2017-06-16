@@ -295,11 +295,16 @@ Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, 
 			}
 		} else {
 			if (is_frac) { //forced FRAC
-				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 				const double avgData = Interpol1D::arithmeticMean(vecDat);
-				trend.setLapseRate(user_lapse*avgData);
-				status = trend.fit();
-				if (user_lapse*avgData==0.) trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
+				if (avgData!=0.) {
+					trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+					trend.setLapseRate(user_lapse*avgData);
+					status = trend.fit();
+				} else { //since we only have zeroes, we should generate zeroes...
+					trend.setModel(Fit1D::ZERO, vecAltitudes, vecDat, false);
+					status = trend.fit();
+					trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
+				}
 			} else { //forced user lapse rate
 				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 				trend.setLapseRate(user_lapse);
@@ -320,7 +325,8 @@ Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, 
 *  - SOFT: if set to true, the user provided lapse rate is only used when no lapse rate could be computed from the data (or if it was too bad, ie r²<0.6);
 *  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
 * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
-* the fractional lapse from the data is made.
+* the fractional lapse from the data is made. The lapse rate that might be reported to the user will be computed as {data average}*{user-defined rate}
+* and is therefore NOT directly the suer-defined lapse rate.
 *  - TREND_MIN_ALT: all points at elevations less than this will be detrended/retrended as if at this provided elevation (optional);
 *  - TREND_MAX_ALT: all points at elevations more than this will be detrended/retrended as if at this provided elevation (optional);
 *

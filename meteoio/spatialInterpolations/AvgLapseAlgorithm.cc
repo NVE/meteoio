@@ -36,16 +36,16 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoDa
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if (nrOfMeasurments == 0){
+	if (nrOfMeasurments == 0) {
 		return 0.0;
-	} else if (nrOfMeasurments == 1){
+	} else if (nrOfMeasurments == 1) {
 		if (user_lapse!=IOUtils::nodata)
 			return 0.9; //the laspe rate is provided
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed
-	} else if (nrOfMeasurments == 2){
+	} else if (nrOfMeasurments == 2) {
 		return 0.7; // as good as IDW_LAPSE
-	} else if (nrOfMeasurments>2){
+	} else if (nrOfMeasurments>2) {
 		return 0.2;
 	}
 
