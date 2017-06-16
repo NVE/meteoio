@@ -64,7 +64,7 @@ void ProcAggregate::process(const unsigned int& param, const std::vector<MeteoDa
 	}
 }
 
-double ProcAggregate::calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const
+double ProcAggregate::calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
 	double min = Cst::dbl_max;
 	for (size_t ii=start; ii<=end; ii++){
@@ -76,7 +76,7 @@ double ProcAggregate::calc_min(const std::vector<MeteoData>& ivec, const unsigne
 	return min;
 }
 
-double ProcAggregate::calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const
+double ProcAggregate::calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
 	double max = Cst::dbl_min;
 	for (size_t ii=start; ii<=end; ii++){
@@ -88,7 +88,7 @@ double ProcAggregate::calc_max(const std::vector<MeteoData>& ivec, const unsigne
 	return max;
 }
 
-double ProcAggregate::calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const
+double ProcAggregate::calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
 	double sum = 0;
 	size_t counter = 0;
@@ -104,9 +104,9 @@ double ProcAggregate::calc_mean(const std::vector<MeteoData>& ivec, const unsign
 	return (sum / (double)counter);
 }
 
-double ProcAggregate::calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const
+double ProcAggregate::calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
-	vector<double> vecTemp;
+	std::vector<double> vecTemp;
 	vecTemp.reserve( end-start+1 );
 	for (size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
 		const double& value = ivec[ii](param);
@@ -117,7 +117,7 @@ double ProcAggregate::calc_median(const std::vector<MeteoData>& ivec, const unsi
 	return Interpol1D::getMedian(vecTemp, false);
 }
 
-double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const
+double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
 	//calculate ve and vn
 	double ve=0.0, vn=0.0;
@@ -148,13 +148,11 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 
 void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vecArgs); //this also reads SOFT
+	//"soft" is already read with the window parameters by the constructor of WindowedFilter
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
-		} else if (vecArgs[ii].first=="TYPE") {
+		if (vecArgs[ii].first=="TYPE") {
 			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
 			if (type_str=="MIN") type=min_agg;
 			else if (type_str=="MAX") type=max_agg;

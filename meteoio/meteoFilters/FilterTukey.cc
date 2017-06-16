@@ -29,8 +29,6 @@ const double FilterTukey::k = 1.5; ///<How many times the stddev allowed as devi
 
 FilterTukey::FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
 {
-	parse_args(vecArgs);
-
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
@@ -142,11 +140,6 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const size_t& i, c
 		return u3/((double)count);
 	else
 		return IOUtils::nodata;
-}
-
-void FilterTukey::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 }

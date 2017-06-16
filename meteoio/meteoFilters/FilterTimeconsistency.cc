@@ -25,7 +25,6 @@ namespace mio {
 FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : WindowedFilter(vecArgs, name)
 {
-	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
 
@@ -53,12 +52,6 @@ void FilterTimeconsistency::process(const unsigned int& param, const std::vector
 			
 		} else if (!is_soft) value = IOUtils::nodata;
 	}
-}
-
-
-void FilterTimeconsistency::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 } //end namespace

@@ -58,17 +58,15 @@ void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string>
 
 	/*
 	//for a filter taking one or more arguments
-
-	//if the filter is based on WindowedFilter, this reads the window parameters as well as the "soft" argument
-	//setWindowFParams(vecArgs); //this also reads SOFT
+	//if the filter is based on WindowedFilter, its constructor will automatically read the window parameters as well as the "soft" argument
 
 	//to perform syntax checks (see after the "for" loop)
 	bool has_max=false;
 
 	//parse the arguments (the keys are all upper case)
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+		if (vecArgs[ii].first=="TYPE") {
+			parseArg(vecArgs[ii], type);
 		} else if (vecArgs[ii].first=="MAX") {
 			parseArg(vecArgs[ii], max_val);
 			has_max = true;

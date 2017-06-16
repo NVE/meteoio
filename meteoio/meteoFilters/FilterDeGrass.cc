@@ -26,7 +26,6 @@ FilterDeGrass::FilterDeGrass(const std::vector< std::pair<std::string, std::stri
           : FilterBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
 		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), month(7)
 {
-	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
 
@@ -278,13 +277,6 @@ Date FilterDeGrass::getDailyStart(const Date& resampling_date)
 		Start -= 1.;
 	
 	return Start;
-}
-
-
-void FilterDeGrass::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	if ( !vecArgs.empty() ) //ie if there are arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 }
 
 } //end namespace

@@ -44,13 +44,13 @@ void ProcExpSmoothing::process(const unsigned int& param, const std::vector<Mete
 
 		size_t start, end;
 		if ( get_window_specs(ii, ivec, start, end) ) {
-			value = calcExpSmoothing(ivec, param, start, end, ii);
+			value = calcExpSmoothing(ivec, param, start, end, ii, alpha);
 		} else if (!is_soft) value = IOUtils::nodata;
 	}
 
 }
 
-double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
+double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& alpha)
 {
 	const size_t max_len = max(pos-start, end-pos);
 	bool initCompleted = false;
@@ -88,7 +88,6 @@ double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, co
 
 void ProcExpSmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	setWindowFParams(vecArgs); //this also reads SOFT
 	bool has_alpha=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {

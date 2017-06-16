@@ -43,6 +43,9 @@ class ProcessingProperties {
 		                         points_before(0), points_after(0),
 		                         stage(first) {}
 
+		ProcessingProperties(const Duration& t_before, const Duration& t_after, const size_t& pt_before, const size_t& pt_after, const proc_stage& i_stage)
+		: time_before(t_before), time_after(t_after), points_before(pt_before), points_after(pt_after), stage(i_stage) {}
+
 		const std::string toString() const;
 
 		Duration time_before;

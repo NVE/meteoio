@@ -59,7 +59,6 @@ class FilterMAD : public WindowedFilter {
 
 	private:
 		void MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value) const;
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_sigma; //to avoid rejecting all points after a period of constant signal
 };

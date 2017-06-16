@@ -23,9 +23,15 @@ using namespace std;
 
 namespace mio {
 
-FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name), min_sigma(0.)
+FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                  : WindowedFilter(vecArgs, name), min_sigma(0.)
 {
-	parse_args(vecArgs);
+	//parse the arguments that have not been already parsed by WindowedFilter
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MIN_SIGMA") {
+			parseArg(vecArgs[ii], min_sigma);
+		}
+	}
 
 	//This is safe, but maybe too imprecise
 	properties.time_before = min_time_span;
@@ -68,17 +74,6 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 
 	if ( (value>upper_lim) || (value<lower_lim) ) {
 		value = IOUtils::nodata;
-	}
-}
-
-void FilterMAD::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	setWindowFParams(vecArgs); //this also reads SOFT
-
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="MIN_SIGMA") {
-			parseArg(vecArgs[ii], min_sigma);
-		}
 	}
 }
 

@@ -68,11 +68,11 @@ class ProcAggregate : public WindowedFilter {
 		} aggregate_type;
 		
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		double calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
-		double calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
-		double calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
-		double calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
-		double calc_wind_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end) const;
+		static double calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		static double calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		static double calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		static double calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		static double calc_wind_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
 		
 		aggregate_type type;
 };

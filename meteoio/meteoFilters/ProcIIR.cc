@@ -27,6 +27,7 @@ ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecAr
                   : ProcessingBlock(vecArgs, name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
 {
 	parse_args(vecArgs);
+
 	properties.points_before = 2;
 	properties.stage = ProcessingProperties::first;
 	getFilterParameters(CRITICALLY_DAMPED, low_pass, 2., g, p, c);
@@ -108,7 +109,7 @@ void ProcIIR::computeCoefficients(const double& fs, const double& f0, double A[3
 	const double w_0 = tan(Cst::PI*f_star); //warp cutoff frequency
 
 	if ((low_pass && f_star>=0.25) || (!low_pass && f_star<=0.25)) {
-		std::cerr << "[W] in the '" << getName() << "' filter, the chosen cutoff frequency is incompatible with the sampling rate (unstable behavior): ";
+		std::cerr << "[W] in the '" << getName() << "' filter, the chosen cutoff period is incompatible with the sampling rate (unstable behavior): ";
 		std::cerr << "f* = " << f_star << " 1/f0 = " << 1./f0 << " 1/fs = " << 1./fs << "\n";
 	}
 

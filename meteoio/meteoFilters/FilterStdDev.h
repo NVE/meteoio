@@ -53,7 +53,6 @@ class FilterStdDev : public WindowedFilter {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static void getStat(const std::vector<MeteoData>& ivec, const unsigned int& param,
 		             const size_t& start, const size_t& end, double& stddev, double& mean);
 		static const double sigma; ///<How many times the stddev allowed for valid points

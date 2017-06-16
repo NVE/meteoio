@@ -69,7 +69,6 @@ class FilterDeGrass : public FilterBlock {
 	private:
 		void filterOnTsg(const unsigned int& param, const size_t& ii, std::vector<MeteoData>& ovec);
 		void filterOnTss(const unsigned int& param, const size_t& ii, const double& tss_offset, std::vector<MeteoData>& ovec);
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		
 		static double getTssTsgCorrelation(const std::vector<MeteoData>& ovec, const size_t& firstWarmDay_idx);
 		static void findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx);

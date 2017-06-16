@@ -25,7 +25,6 @@ namespace mio {
 FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : WindowedFilter(vecArgs, name)
 {
-	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 	
 	properties.time_before = min_time_span;
@@ -53,12 +52,6 @@ void FilterNoChange::process(const unsigned int& param, const std::vector<MeteoD
 				value = IOUtils::nodata;
 		} else if (!is_soft) value = IOUtils::nodata;
 	}
-}
-
-
-void FilterNoChange::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 } //end namespace

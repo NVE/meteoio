@@ -63,9 +63,6 @@ class FilterTimeconsistency : public WindowedFilter {
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
-
-	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace

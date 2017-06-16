@@ -28,8 +28,6 @@ const double FilterStdDev::sigma = 2.; ///<How many times the stddev allowed for
 
 FilterStdDev::FilterStdDev(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
 {
-	parse_args(vecArgs);
-
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
@@ -100,11 +98,6 @@ void FilterStdDev::getStat(const std::vector<MeteoData>& ivec, const unsigned in
 		const double variance = (sum2 - sum3*sum3/static_cast<double>(count)) / static_cast<double>(count - 1);
 		stddev = sqrt(variance);
 	}
-}
-
-void FilterStdDev::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	setWindowFParams(vecArgs); //this also reads SOFT
 }
 
 }
