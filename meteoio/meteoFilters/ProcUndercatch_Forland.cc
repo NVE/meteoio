@@ -28,7 +28,7 @@ namespace mio {
 const double ProcUndercatch_Forland::Tsnow_WMO=-2.+Cst::t_water_freezing_pt, ProcUndercatch_Forland::Train_WMO=2.+Cst::t_water_freezing_pt;
 
 ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                       : ProcessingBlock(name), type(wfj)
+                       : ProcessingBlock(vecArgs, name), type(wfj)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

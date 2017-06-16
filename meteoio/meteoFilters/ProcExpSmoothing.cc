@@ -24,7 +24,7 @@ using namespace std;
 namespace mio {
 
 ProcExpSmoothing::ProcExpSmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                 : WindowedFilter(name), alpha(.5)
+                 : WindowedFilter(vecArgs, name), alpha(.5)
 {
 	parse_args(vecArgs);
 

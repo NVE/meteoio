@@ -57,12 +57,10 @@ namespace mio {
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
  *
- * Several filter take arguments describing a processing window (for example, FilterStdDev). In such a case, two values are given:
- * - the minimum time span of the window
- * - the minimum number of points in the window
- *
- * The ProcessingBlock will walk through the data, starting at the current point and adding points to the processing window.  When both of these criterias are met,
- * the window is accepted. This means that a window defined as "6 21600" is a window that contains 6 points minimum AND spans at least 21600 seconds.
+ * It is possible to disable a given Processing Element for specific stations, using the <i>exclude</i> or <i>only</i>
+ * options followed by a list of station IDs (see example below). This is supported automatically by all Processing Elements. Several Processing Elements
+ * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
+ * defined in WindowedFilter::setWindowFParams().
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
@@ -87,6 +85,9 @@ namespace mio {
  * PSUM::filter2    = min
  * PSUM::arg2::soft = true
  * PSUM::arg2::min  = 0.
+ * PSUM::filter3    = undercatch_wmo
+ * PSUM::arg3::type = Hellmannsh
+ * PSUM::arg3::exclude = DAV3 WFJ2
  * @endcode
  *
  * @section processing_available Available processing elements
@@ -198,8 +199,32 @@ const double ProcessingBlock::soil_albedo = .23; //grass
 const double ProcessingBlock::snow_albedo = .85; //snow
 const double ProcessingBlock::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_name(name)
-{}
+ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                            : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), properties(), block_name(name) {}
+
+std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
+{
+	std::set<std::string> results;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results.insert(word);
+			}
+		}
+	}
+
+	return results;
+}
+
+bool ProcessingBlock::skipStation(const std::string& station_id) const
+{
+	if (excluded_stations.count(station_id)!=0) return true; //the station is in the excluded list -> skip
+	if (kept_stations.empty()) return false; //there are no kept stations -> do not skip
+
+	return (kept_stations.count(station_id)==0);
+}
 
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
 {
@@ -256,8 +281,6 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 		throw;
 	}
 }
-
-ProcessingBlock::~ProcessingBlock() {}
 
 const std::string ProcessingBlock::toString() const {
 	std::ostringstream os;

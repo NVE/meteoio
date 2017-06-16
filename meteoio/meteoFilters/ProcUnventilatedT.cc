@@ -26,7 +26,7 @@ const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
 ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(name), usr_albedo(dflt_albedo),
+                  : ProcessingBlock(vecArgs, name), usr_albedo(dflt_albedo),
                     usr_vw_thresh(IOUtils::nodata), nakamura(false)
 {
 	parse_args(vecArgs);

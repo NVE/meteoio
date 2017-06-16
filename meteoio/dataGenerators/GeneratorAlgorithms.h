@@ -110,7 +110,6 @@ namespace mio {
 class GeneratorAlgorithm {
 
 	public:
-		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo);
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station. This is used by the dataGenerators
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
@@ -120,14 +119,16 @@ class GeneratorAlgorithm {
 		bool skipStation(const std::string& station_id) const;
 		std::string getAlgo() const {return algo;}
  	protected:
-		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& i_vecArgs);
+		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo); ///< protected constructor only to be called by children
+		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {};
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
 		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))
 				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
 		}
 
-		std::set<std::string> excluded_stations, kept_stations;
+		const std::set<std::string> excluded_stations, kept_stations;
 		const std::string algo;
 		
 		//These are used by several generators in order work with radiation data by looking at HS and deciding which albedo should be used

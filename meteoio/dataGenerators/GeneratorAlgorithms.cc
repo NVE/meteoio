@@ -164,22 +164,22 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 }
 
 GeneratorAlgorithm::GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-                                   : excluded_stations(), kept_stations(), algo(i_algo)
+                                   : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), algo(i_algo) {}
+
+std::set<std::string> GeneratorAlgorithm::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {
+	std::set<std::string> results;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="EXCLUDE") {
-			IOUtils::readLineToSet(vecArgs[ii].second, excluded_stations);
-		} else if(vecArgs[ii].first=="ONLY") {
-			IOUtils::readLineToSet(vecArgs[ii].second, kept_stations);
+		if (vecArgs[ii].first==keyword) {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results.insert(word);
+			}
 		}
 	}
-}
 
-void GeneratorAlgorithm::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
+	return results;
 }
 
 bool GeneratorAlgorithm::skipStation(const std::string& station_id) const

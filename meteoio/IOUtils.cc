@@ -270,14 +270,9 @@ size_t readLineToSet(const std::string& line_in, std::set<std::string>& setStrin
 	setString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	std::string tmp_string;
-	while (!iss.eof()) {
-		iss >> std::skipws >> tmp_string;
-
-		if (!tmp_string.empty()) {
-			setString.insert(tmp_string);
-			tmp_string.clear();
-		}
+	std::string word;
+	while (iss >> word){
+		setString.insert(word);
 	}
 
 	return setString.size();
@@ -288,14 +283,9 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 	vecString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	std::string tmp_string;
-	while (!iss.eof()) {
-		iss >> std::skipws >> tmp_string;
-
-		if (!tmp_string.empty()) {
-			vecString.push_back(tmp_string);
-			tmp_string.clear();
-		}
+	std::string word;
+	while (iss >> word){
+		vecString.push_back(word);
 	}
 
 	return vecString.size();
@@ -304,11 +294,11 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
-	std::string tmp_string;
+	std::string word;
 	std::istringstream iss(line_in);
 
-	while (getline(iss, tmp_string, delim)){
-		vecString.push_back(tmp_string);
+	while (getline(iss, word, delim)){
+		vecString.push_back(word);
 	}
 
 	return vecString.size();

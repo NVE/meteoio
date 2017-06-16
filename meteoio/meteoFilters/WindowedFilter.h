@@ -39,12 +39,12 @@ class WindowedFilter : public FilterBlock {
 			right   ///< right centered window
 		};
 
-		WindowedFilter(const std::string& name);
-
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
+		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+
 		void setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,
 		                                                const std::vector<MeteoData>& ivec);

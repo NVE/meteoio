@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(name), min_sigma(0.)
+FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name), min_sigma(0.)
 {
 	parse_args(vecArgs);
 

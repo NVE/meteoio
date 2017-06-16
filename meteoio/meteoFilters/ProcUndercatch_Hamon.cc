@@ -24,7 +24,7 @@ using namespace std;
 namespace mio {
 
 ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                     : ProcessingBlock(name), type(sh)
+                     : ProcessingBlock(vecArgs, name), type(sh)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

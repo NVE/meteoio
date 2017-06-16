@@ -23,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-WindowedFilter::WindowedFilter(const std::string& name)
-               : FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
+WindowedFilter::WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+               : FilterBlock(vecArgs, name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
                  last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
 {}
 

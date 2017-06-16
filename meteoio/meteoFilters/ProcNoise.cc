@@ -27,7 +27,7 @@ using namespace std;
 namespace mio {
 
 ProcNoise::ProcNoise(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(name), range(IOUtils::nodata), distribution(), type()
+          : ProcessingBlock(vecArgs, name), range(IOUtils::nodata), distribution(), type()
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;

@@ -62,7 +62,7 @@ class ProcessingProperties {
  */
 class ProcessingBlock {
 	public:
-		virtual ~ProcessingBlock();
+		virtual ~ProcessingBlock() {};
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
@@ -70,16 +70,19 @@ class ProcessingBlock {
 		std::string getName() const {return block_name;}
 		const ProcessingProperties& getProperties() const {return properties;}
 		const std::string toString() const;
+		bool skipStation(const std::string& station_id) const;
 
 	protected:
-		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
+		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
 		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
 		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))
 				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for filter " + block_name, AT);
 		}
 
+		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;
 		const std::string block_name;
 

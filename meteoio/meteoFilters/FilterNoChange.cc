@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : WindowedFilter(name)
+          : WindowedFilter(vecArgs, name)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;

@@ -40,7 +40,7 @@ struct sort_pred {
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 
 ProcShade::ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg)
-        : ProcessingBlock(name), cfg(i_cfg), dem(), masks(), write_mask_out(false)
+        : ProcessingBlock(vecArgs, name), cfg(i_cfg), dem(), masks(), write_mask_out(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

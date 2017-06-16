@@ -29,12 +29,13 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 	static const std::string filter_key( "::FILTER" );
 	static const std::string arg_key( "::ARG" );
 
+	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
 
-		//extract the filter number andf perform basic checks on the syntax
+		//extract the filter number and perform basic checks on the syntax
 		const std::string key( vecFilters[ii].first );
 		const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
 		const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
@@ -67,7 +68,7 @@ ProcessingStack::~ProcessingStack()
 		delete filter_stack[ii];
 }
 
-void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
+void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 {
 	o_properties.points_before = 0;
 	o_properties.points_after = 0;
@@ -75,10 +76,10 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
 	o_properties.time_before = Duration(0.0, 0.);
 
 	for (size_t jj=0; jj<filter_stack.size(); jj++){
-		const ProcessingProperties& properties = (*filter_stack[jj]).getProperties();
+		const ProcessingProperties properties( (*filter_stack[jj]).getProperties() );
 
-		o_properties.points_before = max(o_properties.points_before, properties.points_before);
-		o_properties.points_after = max(o_properties.points_after, properties.points_after);
+		o_properties.points_before = std::max(o_properties.points_before, properties.points_before);
+		o_properties.points_after = std::max(o_properties.points_after, properties.points_after);
 
 		if (properties.time_before > o_properties.time_before)
 			o_properties.time_before = properties.time_before;
@@ -97,52 +98,53 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	const size_t nr_stations = ivec.size();
 	ovec.resize( nr_stations );
 
-	for (size_t ii=0; ii<nr_stations; ii++){ //for every station
+	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
 
 		//pick one element and check whether the param_name parameter exists
 		const size_t param = ivec[ii].front().getParameterIndex(param_name);
-		if (param != IOUtils::npos){
-			//since all filters start with ovec=ivec, maybe we could just swap pointers instead for copying
+		if (param != IOUtils::npos) {
+			const std::string statID( ivec[ii][0].meta.getStationID() ); //we know there is at least 1 element (see above)
 			std::vector<MeteoData> tmp( ivec[ii] );
 
 			//Now call the filters one after another for the current station and parameter
 			bool appliedFilter = false;
-			for (size_t jj=0; jj<nr_of_filters; jj++){
-				const ProcessingProperties::proc_stage filter_stage = filter_stack[jj]->getProperties().stage;
-				if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+			for (size_t jj=0; jj<nr_of_filters; jj++) {
+				if ((*filter_stack[jj]).skipStation( statID ))
 					continue;
 
+				const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
+				if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+					continue;
 				if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
 					continue;
 
 				appliedFilter = true;
 				(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
 
-				if (tmp.size() == ovec[ii].size()){
-					#ifdef DATA_QA
-					for (size_t kk=0; kk<ovec[ii].size(); kk++) {
-						const double orig = tmp[kk](param);
-						const double filtered = ovec[ii][kk](param);
-						if (orig!=filtered) {
-							const std::string statName( ovec[ii][kk].meta.getStationName() );
-							const std::string statID( ovec[ii][kk].meta.getStationID() );
-							const std::string stat = (!statID.empty())? statID : statName;
-							const std::string filtername( (*filter_stack[jj]).getName() );
-							cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << " [" << tmp[kk].date.toString(Date::ISO_WEEK) << "]\n";
-						}
-					}
-					#endif
-					if ((jj+1) != nr_of_filters){//after the last filter not necessary
-						for (size_t kk=0; kk<ovec[ii].size(); kk++){
-							tmp[kk](param) = ovec[ii][kk](param);
-						}
-					}
-				} else {
+				if (tmp.size() != ovec[ii].size()) {
 					ostringstream ss;
 					ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << tmp.size();
 					ss << " timestamps and returned " << ovec[ii].size() << " timestamps!";
 					throw IndexOutOfBoundsException(ss.str(), AT);
+				}
+
+				#ifdef DATA_QA
+				for (size_t kk=0; kk<ovec[ii].size(); kk++) {
+					const double orig = tmp[kk](param);
+					const double filtered = ovec[ii][kk](param);
+					if (orig!=filtered) {
+						const std::string statName( ovec[ii][kk].meta.getStationName() );
+						const std::string stat = (!statID.empty())? statID : statName;
+						const std::string filtername( (*filter_stack[jj]).getName() );
+						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << " [" << tmp[kk].date.toString(Date::ISO_WEEK) << "]\n";
+					}
+				}
+				#endif
+				if ((jj+1) != nr_of_filters) {//not necessary after the last filter
+					for (size_t kk=0; kk<ovec[ii].size(); kk++) {
+						tmp[kk](param) = ovec[ii][kk](param);
+					}
 				}
 			}
 

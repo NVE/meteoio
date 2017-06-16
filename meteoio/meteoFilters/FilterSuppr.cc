@@ -30,7 +30,7 @@ using namespace std;
 namespace mio {
 
 FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path, const double& i_TZ)
-          : FilterBlock(name), suppr_dates(), root_path(i_root_path), TZ(i_TZ), range(IOUtils::nodata)
+          : FilterBlock(vecArgs, name), suppr_dates(), root_path(i_root_path), TZ(i_TZ), range(IOUtils::nodata)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

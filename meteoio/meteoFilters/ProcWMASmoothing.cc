@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(name)
+ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
 {
 	parse_args(vecArgs);
 

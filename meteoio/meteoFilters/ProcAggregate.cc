@@ -24,7 +24,7 @@ using namespace std;
 namespace mio {
 
 ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-              : WindowedFilter(name), type(mean_agg)
+              : WindowedFilter(vecArgs, name), type(mean_agg)
 {
 	parse_args(vecArgs);
 

@@ -24,7 +24,7 @@ using namespace std;
 namespace mio {
 
 ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
+                  : ProcessingBlock(vecArgs, name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
 {
 	parse_args(vecArgs);
 	properties.points_before = 2;

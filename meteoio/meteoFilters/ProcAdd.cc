@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-        : ProcessingBlock(name), vecOffsets(), root_path(i_root_path), offset(0.), type('c')
+        : ProcessingBlock(vecArgs, name), vecOffsets(), root_path(i_root_path), offset(0.), type('c')
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
