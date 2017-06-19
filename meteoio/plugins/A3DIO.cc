@@ -632,7 +632,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 
 	for (size_t ii=4; ii<columns; ii++) {
 		const size_t stationnr = hashStations[vec_names.at(ii)];
-		double altitude, easting, northing;
+		double altitude=0., easting=0., northing=0.; //to silence a warning
 		std::string stationName;
 		if ((!IOUtils::convertString(altitude, vec_altitude.at(ii), std::dec))
 		    || (!IOUtils::convertString(easting, vec_xcoord.at(ii), std::dec))

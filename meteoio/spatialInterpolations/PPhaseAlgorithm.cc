@@ -25,7 +25,7 @@ PPHASEInterpolation::PPHASEInterpolation(Meteo2DInterpolator& i_mi, const std::v
                                       model(THRESH), fixed_thresh(IOUtils::nodata), range_start(IOUtils::nodata), range_norm(IOUtils::nodata)
 {
 	bool has_type=false, has_snow=false, has_rain=false;
-	double snow_thresh, rain_thresh;
+	double snow_thresh=273.15, rain_thresh=273.15; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {

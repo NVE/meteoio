@@ -569,7 +569,7 @@ double Interpol1D::R2(const std::vector<double>& obs, const std::vector<double>&
 * @param sim vector of simulated data
 * @return Nash-Suttcliffe correlation coefficient, between ]-∞, 1]
 */
-double NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim)
+double Interpol1D::NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim)
 {
 	const size_t n = obs.size();
 	if (n!=sim.size())
