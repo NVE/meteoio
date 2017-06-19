@@ -23,7 +23,7 @@ namespace mio {
 void PPhaseGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, has_snow=false, has_rain=false;
-	double snow_thresh, rain_thresh;
+	double snow_thresh=273.15, rain_thresh=273.15; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {

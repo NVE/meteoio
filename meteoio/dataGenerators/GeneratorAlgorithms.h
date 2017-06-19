@@ -120,7 +120,7 @@ class GeneratorAlgorithm {
 		std::string getAlgo() const {return algo;}
  	protected:
 		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo); ///< protected constructor only to be called by children
-		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {};
+		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {}
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
 		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {

@@ -24,7 +24,7 @@ namespace mio {
 void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, has_min=false, has_max=false;
-	double min, max;
+	double min=0., max=0.; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {

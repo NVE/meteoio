@@ -65,7 +65,7 @@ class ProcessingProperties {
  */
 class ProcessingBlock {
 	public:
-		virtual ~ProcessingBlock() {};
+		virtual ~ProcessingBlock() {}
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
