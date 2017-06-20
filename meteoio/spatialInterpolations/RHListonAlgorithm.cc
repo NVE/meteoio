@@ -25,8 +25,8 @@
 namespace mio {
 
 RHListonAlgorithm::RHListonAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataTA(), vecDataRH(), scale(1e3), alpha(1.)
+                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), vecDataTA(), vecDataRH(), scale(1e3), alpha(1.)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
@@ -37,10 +37,9 @@ RHListonAlgorithm::RHListonAlgorithm(Meteo2DInterpolator& i_mi, const std::vecto
 	}
 }
 
-double RHListonAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double RHListonAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	vecData.clear(); vecMeta.clear();
 	vecDataTA.clear(); vecDataRH.clear();
 
@@ -68,7 +67,7 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator

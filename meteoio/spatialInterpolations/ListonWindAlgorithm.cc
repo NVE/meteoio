@@ -22,8 +22,9 @@
 namespace mio {
 
 ListonWindAlgorithm::ListonWindAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), scale(1e3), alpha(1.), inputIsAllZeroes(false)
+                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), vecDataVW(), vecDataDW(),
+                                   scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
@@ -34,14 +35,14 @@ ListonWindAlgorithm::ListonWindAlgorithm(Meteo2DInterpolator& i_mi, const std::v
 	}
 }
 
-double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double ListonWindAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	vecMeta.clear();
 	vecDataVW.clear(); vecDataDW.clear();
 
 	tsmanager.getMeteoData(date, vecMeteo);
+	if (!vecMeteo.empty()) param_idx = vecMeteo[0].getParameterIndex( param );
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
@@ -54,8 +55,7 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData
 
 	if (nrOfMeasurments==0) return 0.0;
 
-	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
-	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
+	if (Interpol2D::allZeroes(vecDataVW)) {
 		inputIsAllZeroes = true;
 		return 0.9;
 	}
@@ -76,12 +76,12 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		return;
 	}
 
-	if (param==MeteoData::VW) {
+	if (param_idx==MeteoData::VW) {
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW, scale, alpha);
 		Interpol2D::ListonWind(dem, grid, DW);
 	}
-	if (param==MeteoData::DW) {
+	if (param_idx==MeteoData::DW) {
 		Grid2DObject VW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid, scale, alpha);
 		Interpol2D::ListonWind(dem, VW, grid);

@@ -23,8 +23,8 @@
 namespace mio {
 
 OrdinaryKrigingAlgorithm::OrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                            const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                            : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), variogram(), vario_types()
+                                            const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                            : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), variogram(), vario_types()
 {
 	//setTrendParams(vecArgs);
 
@@ -190,10 +190,9 @@ bool OrdinaryKrigingAlgorithm::computeVariogram(const bool& /*detrend_data*/)
 	return false;
 }
 
-double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments==0) return 0.;
@@ -208,7 +207,7 @@ void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gri
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
 	if (!computeVariogram(false)) //only refresh once a month, or once a week, etc
-		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
+		throw IOException("The variogram for parameter " + param + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
 

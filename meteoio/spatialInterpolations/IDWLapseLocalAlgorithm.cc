@@ -22,8 +22,8 @@
 namespace mio {
 
 LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                               const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), scale(1e3), alpha(1.), nrOfNeighbors(0)
+                                               const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), scale(1e3), alpha(1.), nrOfNeighbors(0)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="NEIGHBORS") {
@@ -38,10 +38,9 @@ LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const 
 	if (nrOfNeighbors==0) throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+algo+" algorithm", AT);
 }
 
-double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0)
@@ -54,7 +53,7 @@ void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 	if (nrOfMeasurments == 0)
-		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
+		throw IOException("Interpolation FAILED for parameter " + param, AT);
 
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, scale, alpha);
 	info << "using nearest " << nrOfNeighbors << " neighbors";

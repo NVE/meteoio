@@ -20,7 +20,7 @@
 
 namespace mio {
 
-double NoneAlgorithm::getQualityRating(const Date& /*i_date*/, const MeteoData::Parameters& /*in_param*/)
+double NoneAlgorithm::getQualityRating(const Date& /*i_date*/)
 {
 	return 1e-6;
 }

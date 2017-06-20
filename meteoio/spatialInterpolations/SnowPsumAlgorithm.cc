@@ -22,8 +22,8 @@
 namespace mio {
 
 SnowPSUMInterpolation::SnowPSUMInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo_user("IDW_LAPSE")
+                                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), base_algo_user("IDW_LAPSE")
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if(vecArgs[ii].first=="BASE") {
@@ -32,10 +32,9 @@ SnowPSUMInterpolation::SnowPSUMInterpolation(Meteo2DInterpolator& i_mi, const st
 	}
 }
 
-double SnowPSUMInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double SnowPSUMInterpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0) return 0.0;
@@ -47,9 +46,9 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 
-	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo_user, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gridsmanager));
-	algorithm->getQualityRating(date, param);
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo_user, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gridsmanager, param));
+	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 

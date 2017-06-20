@@ -171,7 +171,7 @@ void Meteo2DInterpolator::setAlgorithms()
 		std::vector<InterpolationAlgorithm*> vecAlgorithms( nrOfAlgorithms );
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], "Interpolations2D") );
-			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *tsmanager, *gridsmanager);
+			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *tsmanager, *gridsmanager, parname);
 		}
 
 		if (nrOfAlgorithms>0) {
@@ -264,7 +264,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	double maxQualityRating = -1.;
 	size_t bestalgorithm = 0;
 	for (size_t ii=0; ii < vecAlgs.size(); ++ii){
-		const double rating = vecAlgs[ii]->getQualityRating(date, meteoparam);
+		const double rating = vecAlgs[ii]->getQualityRating(date);
 		if ((rating != 0.0) && (rating > maxQualityRating)) { //we use ">" so that in case of equality, the first choice will be kept
 			bestalgorithm = ii;
 			maxQualityRating = rating;

@@ -22,8 +22,8 @@
 namespace mio {
 
 LapseOrdinaryKrigingAlgorithm::LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                                      : OrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager)
+                                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                                      : OrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param)
 {
 	setTrendParams(vecArgs);
 
@@ -46,16 +46,16 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 	//or, get max range from io.ini, build variogram from this user defined max range
 	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
 	Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecData, false);
 	if (!trend.fit())
-		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
+		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend.getInfo(), AT);
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 
 	if (!computeVariogram(true)) //only refresh once a month, or once a week, etc
-		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
+		throw IOException("The variogram for parameter " + param + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 
 	retrend(dem, trend, grid);

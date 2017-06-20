@@ -24,8 +24,8 @@ namespace mio {
 
 ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-		  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), ALS_scan(), filename(),
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+		  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), ALS_scan(), filename(),
 		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), als_mean(IOUtils::nodata), inputIsAllZeroes(false)
 {
 	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
@@ -54,17 +54,16 @@ ALS_Interpolation::ALS_Interpolation(Meteo2DInterpolator& i_mi,
 void ALS_Interpolation::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager));
-	algorithm->getQualityRating(date, param);
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager, param));
+	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 }
 
-double ALS_Interpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double ALS_Interpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
 

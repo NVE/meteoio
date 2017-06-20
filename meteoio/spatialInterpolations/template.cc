@@ -21,8 +21,8 @@
 namespace mio {
 
 TEMPLATE::TEMPLATE(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                     : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager)
+                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                     : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param)
 {
 	/*parse the arguments, for example:
 
@@ -43,10 +43,9 @@ TEMPLATE::TEMPLATE(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::
 	*/
 }
 
-double TEMPLATE::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double TEMPLATE::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta); //this is important since the user will see how many stations could be used
 
 	//depending on the arguments and the available data, return a quality rating.

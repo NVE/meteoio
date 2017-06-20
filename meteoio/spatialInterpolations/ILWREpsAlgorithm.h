@@ -44,8 +44,8 @@ class ILWREpsAlgorithm : public InterpolationAlgorithm {
 	public:
 		ILWREpsAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
-		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param);
+		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataEA; ///<vectors of extracted emissivities

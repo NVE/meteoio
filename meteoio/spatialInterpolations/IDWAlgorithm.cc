@@ -22,8 +22,8 @@
 namespace mio {
 
 IDWAlgorithm::IDWAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                         const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                         : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), scale(1e3), alpha(1.)
+                         const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                         : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), scale(1e3), alpha(1.)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
@@ -34,10 +34,9 @@ IDWAlgorithm::IDWAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pa
 	}
 }
 
-double IDWAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double IDWAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0){

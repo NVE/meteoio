@@ -26,8 +26,8 @@ const double SWRadInterpolation::snow_albedo = .85; //snow
 const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 SWRadInterpolation::SWRadInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true)
+                                   const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SHADING") {
@@ -40,10 +40,9 @@ SWRadInterpolation::SWRadInterpolation(Meteo2DInterpolator& i_mi, const std::vec
 	}
 }
 
-double SWRadInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double SWRadInterpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 
 	vecIdx.clear(); vecMeta.clear();
 	tsmanager.getMeteoData(i_date, vecMeteo);

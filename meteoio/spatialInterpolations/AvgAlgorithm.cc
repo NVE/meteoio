@@ -22,10 +22,9 @@
 
 namespace mio {
 
-double AvgAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double AvgAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 1) {

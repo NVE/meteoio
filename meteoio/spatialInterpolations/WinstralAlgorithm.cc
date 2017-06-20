@@ -26,8 +26,8 @@ namespace mio {
 const double WinstralAlgorithm::dmax = 300.;
 
 WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo_user("IDW_LAPSE"), ref_station(),
+                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), base_algo_user("IDW_LAPSE"), ref_station(),
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
 {
 	bool has_ref=false, has_synop=false;
@@ -46,10 +46,9 @@ WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vecto
 	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for the "+algo+" algorithm", AT);
 }
 
-double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double WinstralAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
 
@@ -71,9 +70,9 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	const std::string base_algo = (nrOfMeasurments==1)? "AVG" : base_algo_user; //if there is only one station, revert to a safe default
 
-	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager));
-	algorithm->getQualityRating(date, param);
+	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo, "Interpolations2D") );
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager, param));
+	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 }

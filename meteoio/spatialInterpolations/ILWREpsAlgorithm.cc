@@ -24,8 +24,8 @@
 namespace mio {
 
 ILWREpsAlgorithm::ILWREpsAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                 const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA(), scale(1e3), alpha(1.)
+                                 const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), vecDataEA(), scale(1e3), alpha(1.)
 {
 	setTrendParams(vecArgs);
 
@@ -38,10 +38,9 @@ ILWREpsAlgorithm::ILWREpsAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<
 	}
 }
 
-double ILWREpsAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double ILWREpsAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	vecData.clear(); vecMeta.clear();
 	vecDataEA.clear();
 
@@ -64,7 +63,7 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator

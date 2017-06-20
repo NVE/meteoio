@@ -22,8 +22,8 @@
 namespace mio {
 
 USERInterpolation::USERInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename(), grid2d_path(), subdir(), file_ext()
+                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), filename(), grid2d_path(), subdir(), file_ext()
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SUBDIR") {
@@ -39,11 +39,10 @@ USERInterpolation::USERInterpolation(Meteo2DInterpolator& i_mi, const std::vecto
 	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 }
 
-double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double USERInterpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
-	filename = subdir + date.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + file_ext;
+	filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";

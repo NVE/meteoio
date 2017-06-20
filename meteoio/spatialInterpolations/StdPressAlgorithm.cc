@@ -23,8 +23,8 @@
 namespace mio {
 
 StandardPressureAlgorithm::StandardPressureAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), scale(1e3), alpha(1.), use_residuals(false)
+                                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), scale(1e3), alpha(1.), use_residuals(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="USE_RESIDUALS") {
@@ -37,10 +37,9 @@ StandardPressureAlgorithm::StandardPressureAlgorithm(Meteo2DInterpolator& i_mi, 
 	}
 }
 
-double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double StandardPressureAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments <=1 || use_residuals) return 1.0;
@@ -73,7 +72,7 @@ void StandardPressureAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gr
 				residuals.push_back( vecData[ii] - Atmosphere::stdAirPressure( altitude ) );
 		}
 		if (residuals.empty())
-			throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+			throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
 		Grid2DObject offset;
 		Interpol2D::IDW(residuals, vecMeta, dem, offset, scale, alpha);

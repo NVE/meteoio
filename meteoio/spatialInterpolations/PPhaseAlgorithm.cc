@@ -20,8 +20,8 @@
 
 namespace mio {
 PPHASEInterpolation::PPHASEInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager),
+                                      const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                                      : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param),
                                       model(THRESH), fixed_thresh(IOUtils::nodata), range_start(IOUtils::nodata), range_norm(IOUtils::nodata)
 {
 	bool has_type=false, has_snow=false, has_rain=false;
@@ -60,10 +60,9 @@ PPHASEInterpolation::PPHASEInterpolation(Meteo2DInterpolator& i_mi, const std::v
 	}
 }
 
-double PPHASEInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double PPHASEInterpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 
 	return 0.1;
 }

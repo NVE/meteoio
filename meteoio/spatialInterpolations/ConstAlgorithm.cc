@@ -22,8 +22,8 @@
 namespace mio {
 
 ConstAlgorithm::ConstAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
-                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.)
+                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
+                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), user_cst(0.)
 {
 	bool has_cst=false;
 
@@ -37,10 +37,9 @@ ConstAlgorithm::ConstAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std
 	if (!has_cst) throw InvalidArgumentException("Please provide a value for the "+algo+" algorithm", AT);
 }
 
-double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double ConstAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-	param = in_param;
 
 	return 0.01;
 }
