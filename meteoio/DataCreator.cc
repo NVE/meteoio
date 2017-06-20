@@ -82,12 +82,13 @@ void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
 
 		for (size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
+			if (vecVecMeteo[station].empty()) continue; //the station does not have any data
+
 			//create the new parameter
 			for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
 				vecVecMeteo[station][ii].addParameter( it->first );
 			}
 			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
-
 			const std::string statID( vecVecMeteo[station][0].meta.getStationID() );
 
 			//fill the new parameter

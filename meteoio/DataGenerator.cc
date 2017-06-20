@@ -117,6 +117,8 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
 
 		for (size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
+			if (vecVecMeteo[station].empty()) continue; //the station does not have any data
+			
 			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
 			if (param==IOUtils::npos) continue;
 

@@ -48,6 +48,7 @@ class InterpolationAlgorithm {
 		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecMeteo(), vecData(),
 		                      vecMeta(), info(), param(i_param), nrOfMeasurments(0), user_lapse(IOUtils::nodata), trend_min_alt(-1e4), trend_max_alt(1e4), is_frac(false), is_soft(false) {}
 		virtual ~InterpolationAlgorithm() {}
+		
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date) = 0;
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) = 0;
