@@ -63,7 +63,6 @@ PPHASEInterpolation::PPHASEInterpolation(Meteo2DInterpolator& i_mi, const std::v
 double PPHASEInterpolation::getQualityRating(const Date& i_date)
 {
 	date = i_date;
-
 	return 0.1;
 }
 

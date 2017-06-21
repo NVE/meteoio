@@ -37,7 +37,7 @@ class FitModel {
 		virtual double f(const double& x) const = 0;
 		void getParams(std::vector<double>& o_coefficients) const;
 		std::string getName() const {return regname;}
-		std::string getInfo() const;
+		std::string getInfo() const {return infoString;}
 		void setInfo(const std::string& info) {infoString=info;}
 		FitModel& operator =(const FitModel& source);
 		std::string toString() const;

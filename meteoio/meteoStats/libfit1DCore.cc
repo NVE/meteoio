@@ -26,18 +26,16 @@ using namespace std;
 
 namespace mio {
 
-void FitModel::getParams(std::vector<double>& o_coefficients) const {
+void FitModel::getParams(std::vector<double>& o_coefficients) const
+{
 	if (fit_ready!=true) {
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);
 	}
 	o_coefficients = Lambda;
 }
 
-std::string FitModel::getInfo() const {
-	return infoString;
-}
-
-void FitModel::setGuess(const std::vector<double>& lambda_in) {
+void FitModel::setGuess(const std::vector<double>& lambda_in)
+{
 	const size_t nGuess = lambda_in.size();
 	if (nGuess!=nParam) {
 		ostringstream ss;
@@ -50,7 +48,8 @@ void FitModel::setGuess(const std::vector<double>& lambda_in) {
 	fit_ready = true;
 }
 
-FitModel& FitModel::operator =(const FitModel& source) {
+FitModel& FitModel::operator =(const FitModel& source)
+{
 	if (this != &source) {
 		nPts = source.nPts;
 		regname = source.regname;
@@ -87,7 +86,8 @@ bool FitModel::checkInputs()
 }
 
 
-std::string FitModel::toString() const {
+std::string FitModel::toString() const
+{
 	std::ostringstream os;
 	os << "<FitModel>\n";
 	os << regname << " model with " << nParam << " parameters (nr_data_points >= " << min_nb_pts << ")\n";
@@ -120,7 +120,8 @@ const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
 const double FitLeastSquare::eps_conv = 1e-6; //convergence criteria
 const unsigned int FitLeastSquare::max_iter = 50; //maximum number of iterations
 
-void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) {
+void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y)
+{
 	X = in_X;
 	Y = in_Y;
 	Interpol1D::sort(X, Y); //sort the data by increasing X
@@ -128,13 +129,15 @@ void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<
 	fit_ready = false;
 }
 
-void FitLeastSquare::setDefaultGuess() {
+void FitLeastSquare::setDefaultGuess()
+{
 	for (size_t i=0; i<nParam; i++) {
 		Lambda.push_back( lambda_init );
 	}
 }
 
-bool FitLeastSquare::fit() {
+bool FitLeastSquare::fit()
+{
 	if (!checkInputs())
 		return false;
 	return computeFit();
@@ -144,7 +147,8 @@ bool FitLeastSquare::fit() {
 //// End of public methods
 
 //see http://mathworld.wolfram.com/NonlinearLeastSquaresFitting.html
-bool FitLeastSquare::computeFit() {
+bool FitLeastSquare::computeFit()
+{
 	double max_delta;
 	initLambda();
 	Matrix dLambda; //parameters variations
@@ -202,12 +206,14 @@ bool FitLeastSquare::computeFit() {
 	}
 }
 
-void FitLeastSquare::initLambda() {
+void FitLeastSquare::initLambda()
+{
 	if (Lambda.empty()) //else, setGuess has been called
 		Lambda.resize(nParam, lambda_init);
 }
 
-void FitLeastSquare::initDLambda(Matrix& dLambda) const {
+void FitLeastSquare::initDLambda(Matrix& dLambda) const
+{
 	dLambda.resize(nParam,1);
 	for (size_t m=1; m<=nParam; m++) {
 		const double var = Lambda[m-1]; //Lambda is a vector
@@ -219,7 +225,8 @@ void FitLeastSquare::initDLambda(Matrix& dLambda) const {
 	}
 }
 
-double FitLeastSquare::getDelta(const double& var) const {
+double FitLeastSquare::getDelta(const double& var) const
+{
 //calculate a sensible delta for the partial derivative
 	if (var==0) {
 		return (delta_init_abs * 0.5);
@@ -228,7 +235,8 @@ double FitLeastSquare::getDelta(const double& var) const {
 	}
 }
 
-double FitLeastSquare::DDer(const double& x, const size_t& index) {
+double FitLeastSquare::DDer(const double& x, const size_t& index)
+{
 	const double var = Lambda[index-1]; //Lambda is a vector
 	const double delta = getDelta(var);
 	const double v1 = var - delta;
