@@ -88,6 +88,9 @@ class Matrix {
 		*/
 		void size(size_t& rows, size_t& cols) const;
 
+		size_t getNx() const {return ncols;}
+		size_t getNy() const {return nrows;}
+
 		/**
 		* @brief free the memory and set the matrix dimensions to (0,0)
 		*/
