@@ -98,13 +98,13 @@ namespace mio {
  * of the I/O routines that are costly to properly implement. Therefore the I/O routines often lack flexibility and robustness. When using
  * numerical models in operational applications, this becomes a major drawback and a regular source of problems.
  *
- * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model, handling the retrieval of data
- * from various data sources as well as the data pre-processing.
+ * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model,
+ * handling the retrieval of data from various data sources as well as the data pre-processing.
  *
  * It is built as a library, which means that it can be transparently integrated within other softwares along other libraries. This would be similar to
  * the way a car is made of several components: there is a frame (for example, for us it could be the MeteoIO library), there is an engine (for a model
- * such as Snowpack, it could be its "libSnowpack" library that does all the heavy work) and on top there is the whole bodywork (for Snowpack, it
- * would be all the "glue" that is needed to make the libSnowpack usable by an end user as a standalone application). Therefore the same components
+ * such as Snowpack, it could be its "libSnowpack" library that does all the heavy work) and on top there is the whole bodywork (all the "glue" that
+ * is needed to make the libSnowpack usable by an end user as a standalone application, here called "snowpack-app"). Therefore the same components
  * can be used in other models (the same engine might be used in several cars while the same bodywork might contain different engines).
  *
  * \image html library_analogy.png "Software library analogy: a software is made of several components (libraries)"
