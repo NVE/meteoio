@@ -31,8 +31,9 @@ namespace mio {
  * The splitting coefficients and an atmospheric losses factors are computed at each station that provides ISWR and spatially interpolated
  * with an Inverse Distance Weighting scheme. Then the potential radiation is computed at each pixel and scaled appropriately with the
  * atmospheric loss factor for this pixel. When applying topographic shading (default), the local splitting coefficient is used. The global, horizontal
- * short wave radiation is then returned. To turn off the topographic shading, set the "shading" argument to "false". It also supports
- * the following arguments:
+ * (except when using the PROJECT_ON_SLOPE option) short wave radiation is then returned. It supports the following arguments:
+ *  - SHADING: if set to FALSE, turns off topographic shading (default: TRUE);
+ *  - PROJECT_ON_SLOPE: if set to TRUE, the computed radiation will be projected on the slopes (default: FALSE so it returns an horizontal radiation field);
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
@@ -57,7 +58,7 @@ class SWRadInterpolation : public InterpolationAlgorithm {
 		SunObject Sun;
 		std::vector<size_t> vecIdx;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
-		bool shading; ///<sould we also compute the shading?
+		bool shading, project_on_slope; ///<sould we also compute the shading? should we project the computed fields on the slopes?
 		static const double soil_albedo, snow_albedo, snow_thresh;
 };
 

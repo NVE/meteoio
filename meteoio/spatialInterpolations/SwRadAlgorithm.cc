@@ -27,11 +27,13 @@ const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than
 
 SWRadInterpolation::SWRadInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
                                    const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
-                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true)
+                                   : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true), project_on_slope(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SHADING") {
 			parseArg(vecArgs[ii], shading);
+		} else if (vecArgs[ii].first=="PROJECT_ON_SLOPE") {
+			parseArg(vecArgs[ii], project_on_slope);
 		} else if (vecArgs[ii].first=="SCALE") {
 			parseArg(vecArgs[ii], scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
@@ -141,6 +143,9 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 				cell_diffuse = global * Md(ii,jj);
 
 				if ( tan_sun_elev<tan_horizon ) cell_direct = 0.;//cell is shaded
+			}
+			if (project_on_slope && glob_day && cell_direct>0.) {
+				cell_direct = SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, dem.azi(ii,jj), dem.slope(ii,jj), cell_direct );
 			}
 			grid(ii,jj) = Corr(ii,jj) * (cell_direct+cell_diffuse);
 		}

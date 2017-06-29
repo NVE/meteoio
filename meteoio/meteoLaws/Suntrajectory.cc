@@ -182,7 +182,7 @@ double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const doub
 double SunTrajectory::getSolarTime() const
 {
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && SolarNoon!=IOUtils::nodata)
-		return julian_gmt + (SolarNoon - .5) + TZ/24.;
+		return julian_gmt + (SolarNoon - .5) + TZ*1./24.;
 	else
 		return IOUtils::nodata;
 }
@@ -258,7 +258,7 @@ void SunMeeus::private_init()
 void SunMeeus::setDate(const double& i_julian, const double& i_TZ)
 {
 	TZ = i_TZ;
-	julian_gmt = i_julian - TZ/24.;
+	julian_gmt = i_julian - TZ*1./24.;
 	private_init();
 	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		update();
@@ -280,7 +280,7 @@ void SunMeeus::setAll(const double& i_latitude, const double& i_longitude, const
 	TZ = i_TZ;
 	latitude = i_latitude;
 	longitude = i_longitude;
-	julian_gmt = i_julian - TZ/24.;
+	julian_gmt = i_julian - TZ*1./24.;
 	update();
 }
 
@@ -307,8 +307,8 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 
 void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight) {
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
-		sunrise = SunRise - longitude*1./15.*1./24. + TZ*1./24.; //back to TZ, in days
-		sunset = SunSet - longitude*1./15.*1./24. + TZ*1./24.; //back to TZ, in days
+		sunrise = SunRise - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
+		sunset = SunSet - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
 		daylight = SunlightDuration;
 	} else {
 		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
