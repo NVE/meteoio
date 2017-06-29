@@ -47,9 +47,7 @@ namespace mio {
  */
 class PPHASEInterpolation : public InterpolationAlgorithm {
 	public:
-		PPHASEInterpolation(Meteo2DInterpolator& i_mi,
-					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param);
+		PPHASEInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm, Meteo2DInterpolator& i_mi);
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -57,6 +55,8 @@ class PPHASEInterpolation : public InterpolationAlgorithm {
 				THRESH,
 				RANGE
 			} parametrization;
+		
+		Meteo2DInterpolator& mi;
 		parametrization model;
 		double fixed_thresh, range_start, range_norm;
 };

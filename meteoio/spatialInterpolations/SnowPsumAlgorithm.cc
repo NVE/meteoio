@@ -21,9 +21,9 @@
 
 namespace mio {
 
-SnowPSUMInterpolation::SnowPSUMInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                           const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
-                                           : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), base_algo_user("IDW_LAPSE")
+SnowPSUMInterpolation::SnowPSUMInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
+                                                                                     GridsManager& i_gdm, Meteo2DInterpolator& i_mi)
+                                           : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE")
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if(vecArgs[ii].first=="BASE") {
@@ -47,7 +47,7 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo_user, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gridsmanager, param));
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gdm, param));
 	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();

@@ -154,54 +154,54 @@ namespace mio {
  *
  */
 
-InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
-                                                       Meteo2DInterpolator& i_mi,
-                                                       const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm, const std::string& i_param)
+InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
+                                                       Meteo2DInterpolator& mi,
+                                                       const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm, const std::string& param)
 {
-	const std::string algoname( IOUtils::strToUpper(i_algoname) );
+	IOUtils::toUpper(algoname);
 
 	if (algoname == "NONE") {// return a nodata grid
-		return new NoneAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new NoneAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "STD_PRESS") {// standard air pressure interpolation
-		return new StandardPressureAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new StandardPressureAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "CST") {// constant fill
-		return new ConstAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new ConstAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "AVG") {// average fill
-		return new AvgAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new AvgAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "AVG_LAPSE") {// average fill with an elevation lapse rate
-		return new AvgLapseRateAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new AvgLapseRateAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "IDW") {// Inverse Distance Weighting fill
-		return new IDWAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new IDWAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "IDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill
-		return new IDWLapseAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new IDWLapseAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "LIDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
-		return new LocalIDWLapseAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new LocalIDWLapseAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "LISTON_RH") {// relative humidity interpolation
-		return new RHListonAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new RHListonAlgorithm(vecArgs, algoname, param, tsm, mi);
 	} else if (algoname == "ILWR_EPS") {// long wave radiation interpolation
-		return new ILWREpsAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new ILWREpsAlgorithm(vecArgs, algoname, param, tsm, mi);
 	} else if (algoname == "LISTON_WIND") {// wind velocity interpolation (using a heuristic terrain effect)
-		return new ListonWindAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new ListonWindAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "RYAN") {// RYAN wind direction
-		return new RyanAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new RyanAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "WINSTRAL") {// Winstral wind exposure factor
-		return new WinstralAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new WinstralAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "WINSTRAL++") {// Winstral/Liston wind exposure factor
-		return new WinstralListonAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new WinstralListonAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "ODKRIG") {// ordinary kriging
-		return new OrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new OrdinaryKrigingAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "ODKRIG_LAPSE") {// ordinary kriging with lapse rate
-		return new LapseOrdinaryKrigingAlgorithm(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new LapseOrdinaryKrigingAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "USER") {// read user provided grid
-		return new USERInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new USERInterpolation(vecArgs, algoname, param, tsm, gdm);
 	} else if (algoname == "ALS_SCALING") {// scale from ALS grid
-		return new ALS_Interpolation(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new ALS_Interpolation(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "PPHASE") {// precipitation phase parametrization
-		return new PPHASEInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new PPHASEInterpolation(vecArgs, algoname, param, tsm, mi);
 	} else if (algoname == "PSUM_SNOW") {// precipitation interpolation according to (Magnusson, 2010)
-		return new SnowPSUMInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new SnowPSUMInterpolation(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "SWRAD") {// terrain shadding interpolation
-		return new SWRadInterpolation(i_mi, vecArgs, i_algoname, tsm, gdm, i_param);
+		return new SWRadInterpolation(vecArgs, algoname, param, tsm, mi);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}

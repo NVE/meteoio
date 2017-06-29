@@ -42,12 +42,12 @@ namespace mio {
  */
 class ILWREpsAlgorithm : public InterpolationAlgorithm {
 	public:
-		ILWREpsAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param);
+		ILWREpsAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
+		                                 Meteo2DInterpolator& i_mi);
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
+		Meteo2DInterpolator& mi;
 		std::vector<double> vecDataEA; ///<vectors of extracted emissivities
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 };

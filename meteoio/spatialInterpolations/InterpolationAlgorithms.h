@@ -42,10 +42,9 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
 */
 class InterpolationAlgorithm {
 	public:
-		InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
-		                       const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/,
-		                       const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param) :
-		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecMeteo(), vecData(),
+		InterpolationAlgorithm(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/,
+		                       const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm) :
+		                      algo(i_algo), tsmanager(i_tsm), date(0., 0), vecMeteo(), vecData(),
 		                      vecMeta(), info(), param(i_param), nrOfMeasurments(0), user_lapse(IOUtils::nodata), trend_min_alt(-1e4), trend_max_alt(1e4), is_frac(false), is_soft(false) {}
 		virtual ~InterpolationAlgorithm() {}
 		
@@ -71,11 +70,8 @@ class InterpolationAlgorithm {
 				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
 		}
 
-		Meteo2DInterpolator& mi;
 		TimeSeriesManager& tsmanager;
-		GridsManager& gridsmanager;
 		Date date;
-
 		std::vector<MeteoData> vecMeteo;
 		std::vector<double> vecData; ///<store the measurement for the given parameter
 		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
@@ -89,9 +85,9 @@ class InterpolationAlgorithm {
 
 class AlgorithmFactory {
 	public:
-		static InterpolationAlgorithm* getAlgorithm(const std::string& i_algoname,
-		                                            Meteo2DInterpolator& i_mi,
-		                                            const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm, const std::string& i_param);
+		static InterpolationAlgorithm* getAlgorithm(std::string algoname,
+		                                            Meteo2DInterpolator& mi,
+		                                            const std::vector< std::pair<std::string, std::string> >& vecArgs, TimeSeriesManager& tsm, GridsManager& gdm, const std::string& param);
 };
 
 } //end namespace mio

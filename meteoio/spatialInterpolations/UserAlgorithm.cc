@@ -21,9 +21,9 @@
 
 namespace mio {
 
-USERInterpolation::USERInterpolation(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
-                                : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), filename(), grid2d_path(), subdir(), file_ext()
+USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
+                                                                 GridsManager& i_gdm)
+                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext()
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SUBDIR") {
@@ -36,7 +36,7 @@ USERInterpolation::USERInterpolation(Meteo2DInterpolator& i_mi, const std::vecto
 	if (!subdir.empty()) subdir += "/";
 	if (file_ext.empty()) file_ext = ".dat";
 
-	gridsmanager.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
+	gdm.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 }
 
 double USERInterpolation::getQualityRating(const Date& i_date)
@@ -55,7 +55,7 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	gridsmanager.read2DGrid(grid, filename);
+	gdm.read2DGrid(grid, filename);
 	if (!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that does not have the same georeferencing as the DEM!", AT);
 	} else {

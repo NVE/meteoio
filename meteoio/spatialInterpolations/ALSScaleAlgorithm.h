@@ -44,13 +44,15 @@ namespace mio {
  */
 class ALS_Interpolation : public InterpolationAlgorithm {
 	public:
-		ALS_Interpolation(Meteo2DInterpolator& i_mi,
-					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param);
+		ALS_Interpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
+		                               GridsManager& i_gdm, Meteo2DInterpolator& i_mi);
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+
+		Meteo2DInterpolator& mi;
+		GridsManager& gdm;
 		Grid2DObject ALS_scan;
 		std::string filename, grid2d_path, base_algo, base_algo_user;
 		double ta_thresh, als_mean; ///< the air temperature must be below a given threshold for the scaling to be applied

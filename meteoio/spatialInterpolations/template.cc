@@ -20,9 +20,8 @@
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
-                                     : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param)
+TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
+                                     : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm)
 {
 	/*parse the arguments, for example:
 

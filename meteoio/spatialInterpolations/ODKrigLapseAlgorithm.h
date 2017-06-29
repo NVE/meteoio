@@ -40,9 +40,7 @@ namespace mio {
  */
 class LapseOrdinaryKrigingAlgorithm : public OrdinaryKrigingAlgorithm {
 	public:
-		LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector< std::pair<std::string, std::string> >& vecArgs,
-					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param);
+		LapseOrdinaryKrigingAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
 

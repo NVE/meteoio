@@ -24,9 +24,9 @@ namespace mio {
 
 const double WinstralListonAlgorithm::dmax = 300.;
 
-WinstralListonAlgorithm::WinstralListonAlgorithm(Meteo2DInterpolator& i_mi, const std::vector< std::pair<std::string, std::string> >& vecArgs,
-                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager, const std::string& i_param)
-                  : InterpolationAlgorithm(i_mi, vecArgs, i_algo, i_tsmanager, i_gridsmanager, i_param), base_algo_user("IDW_LAPSE"), ref_station(),
+WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
+		                               GridsManager& i_gdm, Meteo2DInterpolator& i_mi)
+                  : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
                     inputIsAllZeroes(false)
 {
 	bool has_base=false, has_ref=false;
@@ -69,7 +69,7 @@ void WinstralListonAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	const std::string base_algo = (nrOfMeasurments==1)? "AVG" : base_algo_user; //if there is only one station, revert to a safe default
 
 	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gridsmanager, param));
+	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gdm, param));
 	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
