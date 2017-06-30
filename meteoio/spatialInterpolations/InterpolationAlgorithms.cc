@@ -269,58 +269,11 @@ std::string InterpolationAlgorithm::getInfo() const
 	return os.str();
 }
 
-/**
- * @brief Read the interpolation arguments and compute the trend accordingly
- *
- * @param vecAltitudes altitudes sorted similarly as the data in vecDat
- * @param vecDat data for the interpolated parameter
- * @return object containing the fitted trend to be used for detrending/retrending
-*/
-Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat) const
-{
-	Fit1D trend;
-
-	bool status=false;
-	if (user_lapse==IOUtils::nodata) {
-		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-		status = trend.fit();
-	} else {
-		if (is_soft) {
-			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-			status = trend.fit();
-			if (!status) {
-				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-				trend.setLapseRate(user_lapse);
-				status = trend.fit();
-			}
-		} else {
-			if (is_frac) { //forced FRAC
-				const double avgData = Interpol1D::arithmeticMean(vecDat);
-				if (avgData!=0.) {
-					trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-					trend.setLapseRate(user_lapse*avgData);
-					status = trend.fit();
-				} else { //since we only have zeroes, we should generate zeroes...
-					trend.setModel(Fit1D::ZERO, vecAltitudes, vecDat, false);
-					status = trend.fit();
-					trend.setInfo(trend.getInfo() + " (null average input for frac lapse rate)");
-				}
-			} else { //forced user lapse rate
-				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-				trend.setLapseRate(user_lapse);
-				status = trend.fit();
-			}
-		}
-	}
-
-	if (!status)
-		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend.getInfo(), AT);
-	return trend;
-}
 
 /**
-* @brief Parse the detrending arguments
-* @details The following arguments are recognized:
+* @brief Build a Trend object
+* @details This object is responsible for detrending / retrending the meteorological data.
+* The following arguments are recognized:
 *  - RATE: to provide a user-defined lapse rate (SI units);
 *  - SOFT: if set to true, the user provided lapse rate is only used when no lapse rate could be computed from the data (or if it was too bad, ie r²<0.6);
 *  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
@@ -331,30 +284,38 @@ Fit1D InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, 
 *  - TREND_MAX_ALT: all points at elevations more than this will be detrended/retrended as if at this provided elevation (optional);
 *
 * @param[in] vecArgs a vector containing all the arguments
+* @param[in] algo the name of the algorithm calling it, for user-friendly error messages
+* @param[in] i_param the meteorological parameter that is handled, for user-friendly error messages
 */
-void InterpolationAlgorithm::setTrendParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& algo, const std::string& i_param)
+          : trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min_alt(-1e12), trend_max_alt(1e12),
+          frac(false), soft(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="RATE") {
-			parseArg(vecArgs[ii], user_lapse);
+			parseArg(vecArgs[ii], algo, user_lapse);
 		} else if (vecArgs[ii].first=="FRAC") {
-			parseArg(vecArgs[ii], is_frac);
+			parseArg(vecArgs[ii], algo, frac);
 		} else if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			parseArg(vecArgs[ii], algo, soft);
 		} else if (vecArgs[ii].first=="TREND_MIN_ALT") {
-			parseArg(vecArgs[ii], trend_min_alt);
+			parseArg(vecArgs[ii], algo, trend_min_alt);
 		} else if (vecArgs[ii].first=="TREND_MAX_ALT") {
-			parseArg(vecArgs[ii], trend_max_alt);
+			parseArg(vecArgs[ii], algo, trend_max_alt);
 		}
 	}
 
-	if (is_frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for the "+algo+" algorithm", AT);
-	if (is_soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for the "+algo+" algorithm", AT);
-	if (is_soft && is_frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for the "+algo+" algorithm", AT);
+	if (frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for the "+algo+" algorithm", AT);
+	if (soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for the "+algo+" algorithm", AT);
+	if (soft && frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for the "+algo+" algorithm", AT);
 }
 
-
-void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const
+/**
+ * @brief Compute the trend according to the provided data and detrend vecDat
+ * @param[in] vecAltitudes altitudes sorted similarly as the data in vecDat
+ * @param vecDat data for the interpolated parameter
+*/
+void Trend::detrend(const std::vector<double>& vecAltitudes, std::vector<double> &vecDat)
 {
 	if (vecDat.size() != vecAltitudes.size()) {
 		std::ostringstream ss;
@@ -362,16 +323,23 @@ void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<doubl
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
+	initTrendModel(vecAltitudes, vecDat); //This must be done before using the trend model
+
 	for (size_t ii=0; ii<vecAltitudes.size(); ii++) {
 		double &val = vecDat[ii];
 		if (val!=IOUtils::nodata) {
 			const double altitude = std::min( std::max(vecAltitudes[ii], trend_min_alt), trend_max_alt );
-			val -= trend( altitude );
+			val -= trend_model( altitude );
 		}
 	}
 }
 
-void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid) const
+/**
+ * @brief Re-apply the trend computed in a previous call to detrend() to the gridded results
+ * @param dem[in] digital elevation model (DEM)
+ * @param grid matching grid filled with data that has to be re-trended
+*/
+void Trend::retrend(const DEMObject& dem, Grid2DObject &grid) const
 {
 	const size_t nxy = grid.size();
 	if (dem.size() != nxy) {
@@ -385,57 +353,53 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 		double &val = grid(ii);
 		if (val!=IOUtils::nodata) {
 			const double altitude = std::min( std::max(dem(ii), trend_min_alt), trend_max_alt );
-			val += trend( altitude );
+			val += trend_model( altitude );
 		}
 	}
 }
 
-//this interpolates VW, DW by converting to u,v and then doing IDW_LAPSE before reconverting to VW, DW
-void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW, const double& scale, const double& alpha)
+/**
+ * @brief Read the interpolation arguments and set the trend properties accordingly
+ * @param vecAltitudes altitudes sorted similarly as the data in vecDat
+ * @param vecDat data for the interpolated parameter
+*/
+void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat)
 {
-	if (vecDataVW.size() != vecDataDW.size())
-		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
-
-	//compute U,v
-	std::vector<double> Ve, Vn;
-	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
-		Ve.push_back( vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad) );
-		Vn.push_back( vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad) );
-	}
-
-	//spatially interpolate U,V
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating wind", AT);
-
-	if (vecDataVW.size()>=4) { //at least for points to perform detrending
-		Fit1D trend( getTrend(vecAltitudes, Ve) );
-		info << trend.getInfo();
-		detrend(trend, vecAltitudes, Ve);
-		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
-		retrend(dem, trend, VW);
-
-		trend = getTrend(vecAltitudes, Vn);
-		info << trend.getInfo();
-		detrend(trend, vecAltitudes, Vn);
-		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
-		retrend(dem, trend, DW);
+	bool status=false;
+	if (user_lapse==IOUtils::nodata) {
+		trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+		status = trend_model.fit();
 	} else {
-		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
-		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
-	}
-
-	//recompute VW, DW in each cell
-	const size_t nrCells = VW.size();
-	for (size_t ii=0; ii<nrCells; ii++) {
-		const double ve = VW(ii);
-		const double vn = DW(ii);
-
-		if (ve!=IOUtils::nodata && vn!=IOUtils::nodata) {
-			VW(ii) = Optim::fastSqrt_Q3(ve*ve + vn*vn);
-			DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		if (soft) {
+			trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+			status = trend_model.fit();
+			if (!status) {
+				trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+				trend_model.setLapseRate(user_lapse);
+				status = trend_model.fit();
+			}
+		} else {
+			if (frac) { //forced FRAC
+				const double avgData = Interpol1D::arithmeticMean(vecDat);
+				if (avgData!=0.) {
+					trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+					trend_model.setLapseRate(user_lapse*avgData);
+					status = trend_model.fit();
+				} else { //since we only have zeroes, we should generate zeroes...
+					trend_model.setModel(Fit1D::ZERO, vecAltitudes, vecDat, false);
+					status = trend_model.fit();
+					trend_model.setInfo(trend_model.getInfo() + " (null average input for frac lapse rate)");
+				}
+			} else { //forced user lapse rate
+				trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+				trend_model.setLapseRate(user_lapse);
+				status = trend_model.fit();
+			}
 		}
 	}
+
+	if (!status)
+		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend_model.getInfo(), AT);
 }
 
 } //namespace

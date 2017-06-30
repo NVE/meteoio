@@ -46,7 +46,10 @@ class ListonWindAlgorithm : public InterpolationAlgorithm {
 		ListonWindAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm);
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
-	private:
+
+	protected:
+		void simpleWindInterpolate(const DEMObject& dem, Grid2DObject &VW, Grid2DObject &DW);
+		Trend trend;
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		size_t param_idx;

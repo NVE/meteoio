@@ -49,6 +49,7 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
+		Trend trend;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 };
 

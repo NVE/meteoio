@@ -22,10 +22,8 @@
 namespace mio {
 
 IDWLapseAlgorithm::IDWLapseAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-			: InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), scale(1e3), alpha(1.)
+			: InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), scale(1e3), alpha(1.)
 {
-	setTrendParams(vecArgs);
-
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
 			parseArg(vecArgs[ii], scale);
@@ -41,7 +39,7 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date)
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0) return 0.0;
-	if (user_lapse==IOUtils::nodata && nrOfMeasurments<2) return 0.0;
+	if (!trend.has_user_lapse() && nrOfMeasurments<2) return 0.0;
 
 	return 0.7;
 }
@@ -53,11 +51,10 @@ void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
-	const Fit1D trend( getTrend(vecAltitudes, vecData) );
+	trend.detrend(vecAltitudes, vecData);
 	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::IDW(vecData, vecMeta, dem, grid, scale, alpha); //the meta should NOT be used for elevations!
-	retrend(dem, trend, grid);
+	trend.retrend(dem, grid);
 }
 
 } //namespace

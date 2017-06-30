@@ -47,6 +47,7 @@ class ILWREpsAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
+		Trend trend;
 		Meteo2DInterpolator& mi;
 		std::vector<double> vecDataEA; ///<vectors of extracted emissivities
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent

@@ -21,19 +21,6 @@
 
 namespace mio {
 
-RyanAlgorithm::RyanAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), vecDataVW(), vecDataDW(),
-                                scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
-{
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="SCALE") {
-			parseArg(vecArgs[ii], scale);
-		} else if (vecArgs[ii].first=="ALPHA") {
-			parseArg(vecArgs[ii], alpha);
-		}
-	}
-}
-
 double RyanAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
@@ -76,12 +63,12 @@ void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	if (param_idx==MeteoData::VW) {
 		Grid2DObject DW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW, scale, alpha);
+		simpleWindInterpolate(dem, grid, DW);
 		Interpol2D::RyanWind(dem, grid, DW);
 	}
 	if (param_idx==MeteoData::DW) {
 		Grid2DObject VW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid, scale, alpha);
+		simpleWindInterpolate(dem, VW, grid);
 		Interpol2D::RyanWind(dem, VW, grid);
 	}
 }

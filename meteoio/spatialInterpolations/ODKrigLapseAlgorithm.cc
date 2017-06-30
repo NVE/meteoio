@@ -22,10 +22,8 @@
 namespace mio {
 
 LapseOrdinaryKrigingAlgorithm::LapseOrdinaryKrigingAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                                                      : OrdinaryKrigingAlgorithm(vecArgs, i_algo, i_param, i_tsm)
+                                                      : OrdinaryKrigingAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param)
 {
-	setTrendParams(vecArgs);
-
 	bool has_linvario = false;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="VARIO") {
@@ -47,17 +45,14 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
-	Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecData, false);
-	if (!trend.fit())
-		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend.getInfo(), AT);
+	trend.detrend(vecAltitudes, vecData);
 	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecData);
 
 	if (!computeVariogram(true)) //only refresh once a month, or once a week, etc
 		throw IOException("The variogram for parameter " + param + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 
-	retrend(dem, trend, grid);
+	trend.retrend(dem, grid);
 }
 
 } //namespace

@@ -42,6 +42,8 @@ class LapseOrdinaryKrigingAlgorithm : public OrdinaryKrigingAlgorithm {
 	public:
 		LapseOrdinaryKrigingAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		Trend trend;
 };
 
 } //end namespace mio

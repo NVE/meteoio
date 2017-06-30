@@ -22,12 +22,6 @@
 
 namespace mio {
 
-AvgLapseRateAlgorithm::AvgLapseRateAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                                         : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm)
-{
-	setTrendParams(vecArgs);
-}
-
 double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date)
 {
 	date = i_date;
@@ -36,7 +30,7 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date)
 	if (nrOfMeasurments == 0) {
 		return 0.0;
 	} else if (nrOfMeasurments == 1) {
-		if (user_lapse!=IOUtils::nodata)
+		if (trend.has_user_lapse())
 			return 0.9; //the laspe rate is provided
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed
@@ -56,11 +50,10 @@ void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
-	const Fit1D trend( getTrend(vecAltitudes, vecData) );
+	trend.detrend(vecAltitudes, vecData);
 	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
-	retrend(dem, trend, grid);
+	trend.retrend(dem, grid);
 }
 
 } //namespace

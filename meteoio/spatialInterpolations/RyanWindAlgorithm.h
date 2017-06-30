@@ -18,7 +18,7 @@
 #ifndef RYANALGORITHM_H
 #define RYANALGORITHM_H
 
-#include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
+#include <meteoio/spatialInterpolations/ListonWindAlgorithm.h>
 
 namespace mio {
 
@@ -38,16 +38,12 @@ namespace mio {
  * DW::algorithms    = RYAN
  * @endcode
  */
-class RyanAlgorithm : public InterpolationAlgorithm {
+class RyanAlgorithm : public ListonWindAlgorithm {
 	public:
-		RyanAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm);
+		RyanAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
+		                         : ListonWindAlgorithm(vecArgs, i_algo, i_param, i_tsm) {}
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
-	private:
-		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
-		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
-		size_t param_idx;
-		bool inputIsAllZeroes;
 };
 
 } //end namespace mio

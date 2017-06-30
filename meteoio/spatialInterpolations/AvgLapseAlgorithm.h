@@ -40,9 +40,12 @@ namespace mio {
  */
 class AvgLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:
-		AvgLapseRateAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm);
+		AvgLapseRateAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
+		                                        : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param) {}
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		Trend trend;
 };
 
 } //end namespace mio

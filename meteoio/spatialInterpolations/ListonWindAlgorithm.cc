@@ -18,11 +18,12 @@
 
 #include <meteoio/spatialInterpolations/ListonWindAlgorithm.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
+#include <meteoio/MathOptim.h>
 
 namespace mio {
 
 ListonWindAlgorithm::ListonWindAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), vecDataVW(), vecDataDW(),
+                                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), vecDataVW(), vecDataDW(),
                                    scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -77,13 +78,59 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	if (param_idx==MeteoData::VW) {
 		Grid2DObject DW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW, scale, alpha);
+		simpleWindInterpolate(dem, grid, DW);
 		Interpol2D::ListonWind(dem, grid, DW);
 	}
 	if (param_idx==MeteoData::DW) {
 		Grid2DObject VW;
-		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid, scale, alpha);
+		simpleWindInterpolate(dem, VW, grid);
 		Interpol2D::ListonWind(dem, VW, grid);
+	}
+}
+
+//this interpolates VW, DW by converting to u,v and then doing IDW_LAPSE before reconverting to VW, DW
+void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObject &VW, Grid2DObject &DW)
+{
+	if (vecDataVW.size() != vecDataDW.size())
+		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
+
+	//compute U,v
+	std::vector<double> Ve, Vn;
+	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
+		Ve.push_back( vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad) );
+		Vn.push_back( vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad) );
+	}
+
+	//spatially interpolate U,V
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
+	if (vecAltitudes.empty())
+		throw IOException("Not enough data for spatially interpolating wind", AT);
+
+	if (vecDataVW.size()>=4) { //at least for points to perform detrending
+		trend.detrend(vecAltitudes, Ve);
+		info << trend.getInfo();
+		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
+		trend.retrend(dem, VW);
+
+		trend.detrend(vecAltitudes, Vn);
+		info << trend.getInfo();
+		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
+		trend.retrend(dem, DW);
+	} else {
+		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
+		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
+	}
+
+	//recompute VW, DW in each cell
+	const size_t nrCells = VW.size();
+	for (size_t ii=0; ii<nrCells; ii++) {
+		const double ve = VW(ii);
+		const double vn = DW(ii);
+
+		if (ve!=IOUtils::nodata && vn!=IOUtils::nodata) {
+			VW(ii) = Optim::fastSqrt_Q3(ve*ve + vn*vn);
+			DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		}
 	}
 }
 

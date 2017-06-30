@@ -22,7 +22,7 @@
 namespace mio {
 
 LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                      : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), scale(1e3), alpha(1.), nrOfNeighbors(0)
+                      : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), scale(1e3), alpha(1.), nrOfNeighbors(0)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="NEIGHBORS") {
@@ -51,11 +51,14 @@ double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date)
 void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	if (nrOfMeasurments == 0)
-		throw IOException("Interpolation FAILED for parameter " + param, AT);
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
+	if (vecAltitudes.empty())
+		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
+	trend.detrend(vecAltitudes, vecData);
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, scale, alpha);
 	info << "using nearest " << nrOfNeighbors << " neighbors";
+	trend.retrend(dem, grid);
 }
 
 } //namespace
