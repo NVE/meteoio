@@ -336,7 +336,7 @@ void Trend::detrend(const std::vector<double>& vecAltitudes, std::vector<double>
 
 /**
  * @brief Re-apply the trend computed in a previous call to detrend() to the gridded results
- * @param dem[in] digital elevation model (DEM)
+ * @param[in] dem digital elevation model (DEM)
  * @param grid matching grid filled with data that has to be re-trended
 */
 void Trend::retrend(const DEMObject& dem, Grid2DObject &grid) const
@@ -360,8 +360,8 @@ void Trend::retrend(const DEMObject& dem, Grid2DObject &grid) const
 
 /**
  * @brief Read the interpolation arguments and set the trend properties accordingly
- * @param vecAltitudes altitudes sorted similarly as the data in vecDat
- * @param vecDat data for the interpolated parameter
+ * @param[in] vecAltitudes altitudes sorted similarly as the data in vecDat
+ * @param[in] vecDat data for the interpolated parameter
 */
 void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat)
 {

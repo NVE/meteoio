@@ -29,7 +29,7 @@ namespace mio {
  * @details
  * The grid is filled with the average of the detrended measured values and then re-trended. Or to put it
  * differently, the following operations are performed: detrending - averaging - re-trending. The
- * lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported.
+ * lapse rate definition arguments as parsed by Trend::Trend() are supported.
  *
  * @code
  * PSUM::algorithms      = AVG_LAPSE

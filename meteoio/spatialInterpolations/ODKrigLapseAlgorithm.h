@@ -29,7 +29,7 @@ namespace mio {
  * @brief Ordinary kriging with detrending.
  * @details
  * This is very similar to OrdinaryKrigingAlgorithm but performs detrending on the data and therefore also accepts
- * the lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams.
+ * the lapse rate definition arguments as parsed by Trend::Trend().
  *
  * @code
  * TA::algorithms    = ODKRIG_LAPSE

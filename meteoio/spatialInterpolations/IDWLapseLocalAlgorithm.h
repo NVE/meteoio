@@ -34,6 +34,7 @@ namespace mio {
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
+ *  - all the trend-controlling arguments supported by Trend::Trend().
  *
  * @note Beware, this method sometimes produces very sharp transitions
  * as it spatially moves from one station's area of influence to another one!

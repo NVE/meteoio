@@ -31,7 +31,7 @@ namespace mio {
  * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
  * elevation of the relative cell (re-trending).
  *
- * The lapse rate definition arguments as parsed by InterpolationAlgorithm::setTrendParams are supported as
+ * The lapse rate definition arguments as parsed by Trend::Trend() are supported as
  * well as the following arguments:
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
