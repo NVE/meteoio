@@ -64,9 +64,6 @@ double RHListonAlgorithm::getQualityRating(const Date& i_date)
 void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
@@ -85,7 +82,7 @@ void RHListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	}
 
 	if (nrOfMeasurments>=2) {
-		trend.detrend(vecAltitudes, vecTd);
+		trend.detrend(vecMeta, vecTd);
 		info << trend.getInfo();
 		Interpol2D::IDW(vecTd, vecMeta, dem, grid, scale, alpha); //the meta should NOT be used for elevations!
 		trend.retrend(dem, grid);

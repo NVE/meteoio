@@ -46,11 +46,7 @@ double AvgLapseRateAlgorithm::getQualityRating(const Date& i_date)
 void AvgLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
-
-	trend.detrend(vecAltitudes, vecData);
+	trend.detrend(vecMeta, vecData);
 	info << trend.getInfo();
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 	trend.retrend(dem, grid);

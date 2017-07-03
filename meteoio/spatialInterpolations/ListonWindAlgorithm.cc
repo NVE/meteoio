@@ -102,17 +102,13 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 	}
 
 	//spatially interpolate U,V
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating wind", AT);
-
 	if (vecDataVW.size()>=4) { //at least for points to perform detrending
-		trend.detrend(vecAltitudes, Ve);
+		trend.detrend(vecMeta, Ve);
 		info << trend.getInfo();
 		Interpol2D::IDW(Ve, vecMeta, dem, VW, scale, alpha);
 		trend.retrend(dem, VW);
 
-		trend.detrend(vecAltitudes, Vn);
+		trend.detrend(vecMeta, Vn);
 		info << trend.getInfo();
 		Interpol2D::IDW(Vn, vecMeta, dem, DW, scale, alpha);
 		trend.retrend(dem, DW);

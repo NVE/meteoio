@@ -36,7 +36,7 @@ class Trend {
 	public:
 		Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& algo, const std::string& i_param);
 
-		void detrend(const std::vector<double>& vecAltitudes, std::vector<double> &vecDat);
+		void detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat);
 		void retrend(const DEMObject& dem, Grid2DObject &grid) const;
 
 		std::string getInfo() const {return trend_model.getInfo();}
@@ -44,6 +44,7 @@ class Trend {
 		bool is_soft() const {return soft;}
 	private:
 		void initTrendModel(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat);
+		static std::vector<double> getStationAltitudes(const std::vector<StationData>& vecMeta);
 
 		template <class T> static void parseArg(const std::pair< std::string, std::string>& arg, const std::string& algo, T& val) {
 			if (!IOUtils::convertString(val, arg.second))
@@ -84,7 +85,6 @@ class InterpolationAlgorithm {
 		std::vector<double> getData(const Date& i_date, const std::string& i_param);
 		size_t getData(const Date& i_date, const std::string& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
-		static std::vector<double> getStationAltitudes(const std::vector<StationData>& i_vecMeta);
 
 		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
 			if (!IOUtils::convertString(val, arg.second))

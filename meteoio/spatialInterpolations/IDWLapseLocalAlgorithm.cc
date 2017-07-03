@@ -51,11 +51,7 @@ double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date)
 void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
-
-	trend.detrend(vecAltitudes, vecData);
+	trend.detrend(vecMeta, vecData);
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, scale, alpha);
 	info << "using nearest " << nrOfNeighbors << " neighbors";
 	trend.retrend(dem, grid);

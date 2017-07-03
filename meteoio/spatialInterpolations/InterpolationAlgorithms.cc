@@ -239,20 +239,6 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const std::string& i_
 	return o_vecData.size();
 }
 
-std::vector<double> InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta)
-{
-	std::vector<double> o_vecData;
-
-	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
-		const double alt = i_vecMeta[ii].position.getAltitude();
-		if (alt != IOUtils::nodata) {
-			o_vecData.push_back( alt );
-		}
-	}
-
-	return o_vecData;
-}
-
 /**
  * @brief Return an information string about the interpolation process
  * @return string containing some information (algorithm used, number of stations)
@@ -310,13 +296,32 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
 	if (soft && frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for the "+algo+" algorithm", AT);
 }
 
+std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& vecMeta)
+{
+	std::vector<double> o_vecData;
+
+	for (size_t ii=0; ii<vecMeta.size(); ii++){
+		const double alt = vecMeta[ii].position.getAltitude();
+		if (alt != IOUtils::nodata) {
+			o_vecData.push_back( alt );
+		}
+	}
+
+	return o_vecData;
+}
+
 /**
  * @brief Compute the trend according to the provided data and detrend vecDat
  * @param[in] vecAltitudes altitudes sorted similarly as the data in vecDat
  * @param vecDat data for the interpolated parameter
 */
-void Trend::detrend(const std::vector<double>& vecAltitudes, std::vector<double> &vecDat)
+void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)
 {
+	//extract the altitudes
+	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
+	if (vecAltitudes.empty())
+		throw IOException("Not enough altitude data for spatially interpolating parameter " + param, AT);
+
 	if (vecDat.size() != vecAltitudes.size()) {
 		std::ostringstream ss;
 		ss << "Number of station data (" << vecDat.size() << ") and number of elevations (" << vecAltitudes.size() << ") don't match!";

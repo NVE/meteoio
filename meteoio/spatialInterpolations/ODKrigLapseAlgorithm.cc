@@ -41,11 +41,7 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 	info.clear(); info.str("");
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
-	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + param, AT);
-
-	trend.detrend(vecAltitudes, vecData);
+	trend.detrend(vecMeta, vecData);
 	info << trend.getInfo();
 
 	if (!computeVariogram(true)) //only refresh once a month, or once a week, etc
