@@ -58,18 +58,16 @@ namespace mio {
 
 class FilterSuppr : public FilterBlock {
 	public:
-		FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path, const double& i_TZ);
+		FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void fillSuppr_dates(const std::string& filename);
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void fillSuppr_dates(const std::string& filename, const double& TZ);
 		
 		std::map< std::string, std::set<Date> > suppr_dates;
-		std::string root_path;
-		double TZ, range;
+		double range;
 };
 
 } //end namespace
