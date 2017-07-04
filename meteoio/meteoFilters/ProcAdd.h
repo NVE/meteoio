@@ -39,7 +39,8 @@ namespace mio {
  *  - CST: a constant to add to the data (optional);
  *  - PERIOD: when reading corrections from a file, the period over which the corrections apply, either
  * HOURLY, DAILY or MONTHLY (optional);
- *  - CORRECTIONS: the file and path containing the corrections to apply (mandatory when using PERIOD).
+ *  - CORRECTIONS: the file and path containing the corrections to apply (mandatory when using PERIOD);
+ *  - COLUMN: when using a corrections file, which column should be used if this is a multi-column file (knowing that the indices is column 1. Default: 2).
  *
  * @code
  * TA::filter1   = add

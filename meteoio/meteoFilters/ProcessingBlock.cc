@@ -226,7 +226,7 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
 	return (kept_stations.count(station_id)==0);
 }
 
-void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
+void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init, std::vector<double> &corrections)
 {
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
@@ -264,13 +264,19 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 				ss << "Invalid index in file " << filename << " at line " << lcount;
 				throw InvalidArgumentException(ss.str(), AT);
 			}
-			iss >> std::skipws >> value;
-			if ( !iss ){
-				std::ostringstream ss;
-				ss << "Invalid value in file " << filename << " at line " << lcount;
-				throw InvalidArgumentException(ss.str(), AT);
-			}
 
+			for (size_t ii=2; ii<=col_idx; ii++) {
+				iss >> std::skipws >> value;
+				if ( !iss ){
+					std::ostringstream ss;
+					ss << "In file " << filename << " at line " << lcount;
+					if (!iss.eof())
+						ss << ": invalid value";
+					else
+						ss << ": trying to read column " << col_idx << " of " << ii-1 << " columns";
+					throw InvalidArgumentException(ss.str(), AT);
+				}
+			}
 			corrections.at( index-minIndex ) = value;
 		} while (!fin.eof());
 		fin.close();

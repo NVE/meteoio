@@ -72,6 +72,7 @@ void ProcAdd::process(const unsigned int& param, const std::vector<MeteoData>& i
 void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_type=false, is_cst=false;
+	size_t column=2; //default: use second column, ie one column after the date index
 	std::string filename;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -97,6 +98,9 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			filename = path + "/" + FileUtils::getFilename(in_filename);
+		} else if (vecArgs[ii].first=="COLUMN") {
+			if (!IOUtils::convertString(column, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid column index \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter", AT);
 		}
 	}
 
@@ -104,7 +108,7 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 	if (has_type) {
 		if (filename.empty())
 			throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
-		ProcessingBlock::readCorrections(getName(), filename, type, 0., vecOffsets);
+		ProcessingBlock::readCorrections(getName(), filename, column, type, 0., vecOffsets);
 	}
 }
 

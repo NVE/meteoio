@@ -312,7 +312,7 @@ std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& v
 
 /**
  * @brief Compute the trend according to the provided data and detrend vecDat
- * @param[in] vecAltitudes altitudes sorted similarly as the data in vecDat
+ * @param[in] vecMeta Location informations sorted similarly as the data in vecDat
  * @param vecDat data for the interpolated parameter
 */
 void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)
