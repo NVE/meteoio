@@ -32,8 +32,7 @@ namespace mio {
  * Normally, this filter simply reject all values. This is convenient to quickly turn a parameter off
  * without modifying the original data. It is also possible to suppress some values based on
  * specific criterias, with the following arguments:
- *  - SUPPR: provide a file that contains a list of station ID's and timesteps
- * specifying where the parameter should be suppressed;
+ *  - SUPPR: provide a file that contains a list of station ID's and timesteps specifying where the parameter should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set contains <i>nodata</i> for this parameter.
  *
@@ -52,8 +51,12 @@ namespace mio {
  * *WFJ 2015-10-01T12:00
  * *DAV 2015-10-02T15:00
  * *WFJ 2015-11-10T06:00
+ * *WFJ 2015-12-25T01:00 2015-12-27T13:30
+ * *WFJ 2015-09-01T07:15 - 2015-09-10T20:30
  * STB2 2015-10-01T21:30
  * @endcode
+ * Time ranges are declared by providing two dates on the same line. For more visibility, the said two dates can be separated by " - " (which a white
+ * space character on both sides, as shown in the example above).
  */
 
 class FilterSuppr : public FilterBlock {
@@ -65,8 +68,20 @@ class FilterSuppr : public FilterBlock {
 
 	private:
 		void fillSuppr_dates(const std::string& filename, const double& TZ);
+		void supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const;
+		void supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
+
+		typedef struct SUPPR_SPEC {
+			SUPPR_SPEC() : start(), end() {}
+			SUPPR_SPEC(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+			bool operator<(const SUPPR_SPEC& a) const { //needed for "sort"
+				return start < a.start;
+			}
+
+			Date start, end;
+		} suppr_spec;
 		
-		std::map< std::string, std::set<Date> > suppr_dates;
+		std::map< std::string, std::vector<suppr_spec> > suppr_dates;
 		double range;
 };
 
