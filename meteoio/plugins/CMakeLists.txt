@@ -73,7 +73,7 @@ IF(PLUGIN_OSHDIO)
 	FIND_PACKAGE(Matio REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM ${Matio_INCLUDE_DIR})
 	SET(plugin_libs ${plugin_libs} ${Matio_LIBRARY})
-	SET(plugins_sources ${plugins_sources} plugins/OshdIO.cc)
+	SET(plugins_sources ${plugins_sources} plugins/libMatioWrapper.cc plugins/OshdIO.cc)
 ENDIF(PLUGIN_OSHDIO)
 
 IF(PLUGIN_PGMIO)

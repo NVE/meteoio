@@ -43,7 +43,10 @@ class OshdIO : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
-		static const double in_dflt_TZ;     //default time zone, should be visible to matio for debugging
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& filename="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void readDEM(DEMObject& dem_out);
+
 	private:
 		struct file_index {
 			file_index(const Date& i_date, const std::string& i_path, const std::string& i_file_suffix, const std::string& i_run_date)
@@ -54,6 +57,9 @@ class OshdIO : public IOInterface {
 			bool operator>(const file_index& a) const {
 				return date > a.date;
 			}
+			std::string toString() const {
+				return "<"+date.toString(Date::ISO)+" - "+run_date+" "+path+" "+file_suffix+">";
+			}
 			Date date;
 			std::string run_date;
 			std::string path;
@@ -62,25 +68,31 @@ class OshdIO : public IOInterface {
 		void parseInputOutputSection();
 		void readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
 		void readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
-		void readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const;
+		std::vector<double> readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep) const;
 		void buildVecIdx(const std::vector<std::string>& vecAcro);
 		void fillStationMeta();
 		
-		size_t getFileIdx(const Date& start_date) const;
-		static void scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< struct file_index > &meteo_files);
+		static size_t getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date);
+		static std::vector< struct file_index > scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive);
 		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
 		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param);
 		
 		const Config cfg;
 		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH
+		std::vector< struct file_index > cache_grid_files; //cache of meteo files in METEOPATH
 		std::vector<StationData> vecMeta;
 		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
-		std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files
 		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
-		std::string in_meteopath, in_metafile;
+		std::string coordin, coordinparam; //projection parameters
+		std::string grid2dpath_in, in_meteopath, in_metafile;
 		bool debug; ///< write out extra information to help understand what is being read
 		
 		static const char* meteo_ext; //for the file naming scheme
+		static std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files
+		static std::map< MeteoGrids::Parameters, std::string > grids_map; ///< parameters to extract from the gridded data
+		static const double in_dflt_TZ;     //default time zone, should be visible to matio for debugging
+		static const bool __init;    ///<helper variable to enable the init of static collection data
+		static bool initStaticData();///<initialize the static map meteoparamname
 };
 
 } //namespace

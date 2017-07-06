@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/OshdIO.h>
+#include <meteoio/plugins/libMatioWrapper.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/FileUtils.h>
 
@@ -27,8 +28,9 @@ using namespace std;
 namespace mio {
 /**
  * @page oshd OshdIO
- * This plugin reads the meteorological forecast data downscaled for each of the Swiss meteorological networks IMIS/ANETZ stations
- * as preprocessed by the <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A> 
+ * This plugin reads the meteorological forecast data from COSMO either as gridded data or downscaled for each of the Swiss meteorological
+ * networks IMIS/ANETZ stations as preprocessed by the
+ * <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A>
  * of the <A HREF="www.wsl.ch">WSL/SLF</A>. The data is written as Matlab
  * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per meteorological parameter and per timestep, 
  * available on an access-controlled server after each new <A HREF="www.cosmo-model.org/">COSMO</A> run. It therefore requires a third party 
@@ -41,13 +43,14 @@ namespace mio {
  * ommitting the 'UTF8' option) to the (<A HREF="http://blog.omega-prime.co.uk/?p=150">partial</A>) UTF-8  encoding of Matlab.
  * 
  * @section oshd_data_structure Data structure
- * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_F_{run time}.mat</i> with the following possible values:
+ * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_{mode}_{run time}.mat</i> with the following possible values:
  *     + *parameter* is one of idfc, idrc, albd, ilwc, pair, prec, rcor, tcor, wcor, wdir;
  *     + *timestep* is written as purely numeric ISO with minute resolution;
  *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1, cosmoE;
+ *     + *mode* is a one letter code (F for Forecast, A for Analysis);
  *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
  * 
- * The files have the following internal data structure (represented as "name {data type}"):
+ * The station data files have the following internal data structure (represented as "name {data type}"):
  * @verbatim
       stat {1x1 struct}
         ├── time {1x1 array of doubles}
@@ -69,6 +72,19 @@ namespace mio {
         └── z {1x623 array of doubles}
   @endverbatim
  *
+ * The gridded data have the following structure:
+ * @verbatim
+      grid {1x1 struct}
+        ├── ncols {1x1 array of doubles}
+        ├── nrows {1x1 array of doubles}
+        ├── xllcorner {1x1 array of doubles}
+        ├── yllcorner {1x1 array of doubles}
+        ├── cellsize {1x1 array of doubles}
+        ├── NODATA_value {1x1 array of doubles}
+        ├── data {nrows x ncols array of double}
+        └── desc {array of char}
+  @endverbatim
+ *
  *
  * @section oshd_keywords Keywords
  * This plugin uses the following keywords:
@@ -79,6 +95,9 @@ namespace mio {
  * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
  * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
  provided or within the provided path)
+ * - DEMFILE: for reading the data as a DEMObject
+ * - GRID2DPATH: meteo grids directory where to read/write the grids; [Input] and [Output] sections
+ * - GRIDPATH_RECURSIVE: if set to true, grids will be searched recursively in GRID2DPATH (default: false)
  * - OSHD_DEBUG: write out extra information to better show what is in the files
  *
  * @section oshd_example Example use
@@ -94,168 +113,20 @@ namespace mio {
  *
  */
 
-/**********************************************************************************
- * Here we define some wrappers around libmatio. These are not declared as class methods in
- * order to avoid having to expose matio.h when including OshdIO.h
- **********************************************************************************/
-void listFields(matvar_t *matvar)
-{
-	const unsigned int nrFields = Mat_VarGetNumberOfFields(matvar);
-	char * const *fields = Mat_VarGetStructFieldnames(matvar);
-	for (unsigned int ii=0; ii<nrFields; ii++) 
-		printf("field[%d] = %s\n", ii, fields[ii]);
-}
-
-void printStructure(matvar_t *matvar)
-{
-	//Mat_VarPrint(field, 0);
-	printf("name=%s class_type=%d data_type=%d rank=%d", matvar->name, matvar->class_type, matvar->data_type, matvar->rank);
-	for (int ii=0; ii<matvar->rank; ii++) 
-		printf("\tdims[%d]=%d", ii, (int)matvar->dims[ii]);
-	printf("\n");
-}
-
-
-std::string readString(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
-{
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==NULL) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (Mat_VarReadDataAll(matfp, field)) 
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (field->class_type!=MAT_C_CHAR) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type string", AT);
-	
-	return std::string( static_cast<char*>(field->data) );
-}
-
-void readStringVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar, std::vector<std::string> &vecString)
-{
-	vecString.clear();
-	
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==NULL) 	throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (Mat_VarReadDataAll(matfp, field)) 
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	if (field->class_type!=MAT_C_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell type", AT);
-	if (field->data_type!=MAT_T_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell array data type", AT);
-	
-	matvar_t *cell = Mat_VarGetCell(matvar, 0);
-	if (cell==NULL) throw InvalidFormatException("could not read data in field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	const size_t nrows = field->dims[0];
-	const size_t ncols = field->dims[1];
-	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	vecString.resize( ncols );
-	for (size_t ii=0; ii<ncols; ii++) {
-		cell = Mat_VarGetCell(field, static_cast<int>(ii));
-		if (cell->rank!=2) throw InvalidFormatException("invalid cell rank in file '"+filename+"'", AT);
-		if (cell->class_type!=MAT_C_CHAR) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type string", AT);
-		vecString[ii] = static_cast<char*>(cell->data);
-	}
-}
-
-void readDoubleVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar, std::vector<double> &vecData)
-{
-	vecData.clear();
-	
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==NULL) 	throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (Mat_VarReadDataAll(matfp, field)) 
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a double type", AT);
-	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	const size_t nrows = field->dims[0];
-	const size_t ncols = field->dims[1];
-	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
-	
-	const double* matData( static_cast<double*>( field->data ) );
-	vecData.resize( ncols );
-	for (size_t ii=0; ii<ncols; ii++) {
-		vecData[ii] = matData[ii];
-	}
-}
-
-void printFileStructure(const std::string& filename)
-{
-	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
-	if ( NULL == matfp ) throw AccessException(filename, AT);
-
-	std::cout << "<" << FileUtils::getFilename( filename ) << ">\n";
-	matvar_t *matvar;
-	while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
-		std::cout << "\t" << matvar->name << " [";
-		for (int ii=0; ii<matvar->rank; ii++) {
-			std::cout << (int)matvar->dims[ii];
-			if (ii<(matvar->rank-1)) std::cout << "x";
-		}
-		std::cout << "]\n";
-
-		const unsigned int nrFields = Mat_VarGetNumberOfFields(matvar);
-		char * const *fields = Mat_VarGetStructFieldnames(matvar);
-		for (unsigned int ii=0; ii<nrFields; ii++) {
-			const std::string field_name( fields[ii] );
-			matvar_t *field = Mat_VarGetStructFieldByName(matvar, field_name.c_str(), 0);
-			const std::string prefix = (ii<(nrFields-1))? "├──" : "└──";
-			std::cout << "\t" << prefix << field_name;
-			if (field->class_type==MAT_C_CHAR)
-				std::cout << " = \"" << readString(filename, field_name, matfp, matvar) << "\"";
-			if (field->class_type==MAT_C_DOUBLE) {
-				std::cout << " [";
-				size_t count=1;
-				for (int jj=0; jj<field->rank; jj++) {
-					std::cout << field->dims[jj];
-					if (jj<(field->rank-1)) std::cout << "x";
-					count *= field->dims[jj];
-				}
-				std::cout << "]";
-				if (count==1) {
-					if (Mat_VarReadDataAll(matfp, field))
-						throw InvalidFormatException("could not read field '"+field_name+"' in file '"+filename+"'", AT);
-					const double val = static_cast<double*>(field->data)[0];
-					if (field_name=="time") {
-						Date timestep;
-						timestep.setMatlabDate( val, OshdIO::in_dflt_TZ );
-						std::cout << " = " << timestep.toString(Date::ISO_TZ);
-					} else
-						std::cout << " = " << val;
-				}
-			}
-			if (field->class_type==MAT_C_CELL) {
-				std::cout << " [";
-				for (int jj=0; jj<field->rank; jj++) {
-					std::cout << field->dims[jj];
-					if (jj<(field->rank-1)) std::cout << "x";
-				}
-				std::cout << "]";
-			}
-
-			std::cout << "\n";
-		}
-	}
-	std::cout << "</" << FileUtils::getFilename( filename ) << ">\n\n";
-	Mat_VarFree(matvar);
-	matvar = NULL;
-	Mat_Close(matfp);
-}
-
-/**********************************************************************************
- * Now really implementing the OshdIO class
- **********************************************************************************/
 const char* OshdIO::meteo_ext = ".mat";
 const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
+std::vector< std::pair<MeteoData::Parameters, std::string> > OshdIO::params_map;
+std::map< MeteoGrids::Parameters, std::string > OshdIO::grids_map;
+const bool OshdIO::__init = OshdIO::initStaticData();
 
-OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), vecMeta(), vecIDs(), params_map(), vecIdx(), 
-               in_meteopath(), in_metafile(), debug(false)
+OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), debug(false)
 {
 	parseInputOutputSection();
 }
 
-OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), vecMeta(), vecIDs(), params_map(), vecIdx(), 
-               in_meteopath(), in_metafile(), debug(false)
+OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), debug(false)
 {
 	parseInputOutputSection();
 }
@@ -263,20 +134,35 @@ OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), v
 void OshdIO::parseInputOutputSection()
 {
 	cfg.getValue("OSHD_DEBUG", "INPUT", debug, IOUtils::nothrow);
-	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValue("COORDSYS", "Input", coordin);
+	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
 	
-	cfg.getValues("STATION", "INPUT", vecIDs);
-	cfg.getValue("METEOPATH", "Input", in_meteopath);
-	bool is_recursive = false;
-	cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-	scanMeteoPath(in_meteopath, is_recursive, cache_meteo_files);
-	
-	cfg.getValue("METAFILE", "INPUT", in_metafile);
-	if (FileUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
-		in_metafile = in_meteopath + "/" + in_metafile;
+	const std::string meteo_in = cfg.get("METEO", "Input", IOUtils::nothrow);
+	if (meteo_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValues("STATION", "INPUT", vecIDs);
+		cfg.getValue("METEOPATH", "Input", in_meteopath);
+		bool is_recursive = false;
+		cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+		cache_meteo_files = scanMeteoPath(in_meteopath, is_recursive);
+
+		cfg.getValue("METAFILE", "INPUT", in_metafile);
+		if (FileUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
+			in_metafile = in_meteopath + "/" + in_metafile;
+		}
 	}
-	
-	//fill the params mapping vector
+
+	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	if (grid_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
+		grid2dpath_in.clear();
+		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+		bool is_recursive = false;
+		cfg.getValue("GRIDPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+		cache_grid_files = scanMeteoPath(grid2dpath_in, is_recursive);
+	}
+}
+
+bool OshdIO::initStaticData()
+{
 	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwc") );
 	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
 	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") ); //in mm/ts
@@ -284,12 +170,23 @@ void OshdIO::parseInputOutputSection()
 	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
 	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") ); //old: wind
 	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
+
+	grids_map[ MeteoGrids::ILWR ] = "ilwc";
+	grids_map[ MeteoGrids::P ] = "pair";
+	grids_map[ MeteoGrids::PSUM ] = "prec"; //in mm/ts
+	grids_map[ MeteoGrids::RH ] = "rcor"; //old: rhum
+	grids_map[ MeteoGrids::TA ] = "tcor"; //old:tair
+	grids_map[ MeteoGrids::VW ] = "wcor"; //old: wind
+	grids_map[ MeteoGrids::DW ] = "wdir";
+
+	return true;
 }
 
-void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive,  std::vector< struct file_index > &meteo_files)
+//This builds an index of which timesteps are provided by which files, always keeping the most recent run when
+//multiple files provide the same timesteps. The file names are read as: {prec}_{timestep}_XXX_{runtime}.{meteo_ext}
+std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive)
 {
-	meteo_files.clear();
-
+	std::vector< struct OshdIO::file_index > data_files;
 	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "prec", is_recursive) ); //we consider that if we have found one parameter, the others are also there
 
 	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
@@ -298,6 +195,10 @@ void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recur
 		const std::string filename( FileUtils::getFilename(file_and_path) );
 
 		//we need to split the file name into its components: parameter, date, run_date
+		const std::string::size_type rundate_end = filename.rfind('.');
+		if (rundate_end==string::npos) continue;
+		const std::string ext( filename.substr(rundate_end) );
+		if (ext!=meteo_ext) continue;
 		const std::string::size_type pos_param = filename.find('_');
 		if (pos_param==string::npos) continue;
 		const std::string::size_type date_start = filename.find_first_of("0123456789");
@@ -306,8 +207,6 @@ void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recur
 		if (date_end==string::npos) continue;
 		const std::string::size_type rundate_start = filename.rfind('_');
 		if (rundate_start==string::npos) continue;
-		const std::string::size_type rundate_end = filename.rfind('.');
-		if (rundate_end==string::npos) continue;
 
 		const std::string date_str( filename.substr(date_start, date_end-date_start) );
 		const std::string run_date( filename.substr(rundate_start+1, rundate_end-rundate_start-1) );
@@ -317,7 +216,7 @@ void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recur
 		const std::map<std::string, size_t>::const_iterator it_map = mapIdx.find( date_str );
 		if (it_map!=mapIdx.end()) {
 			idx = it_map->second;
-			if (meteo_files[idx].run_date>run_date) continue;
+			if (data_files[idx].run_date>run_date) continue;
 		}
 
 		//we don't have an entry or it is too old -> create new entry / replace existing one
@@ -326,38 +225,33 @@ void OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recur
 		IOUtils::convertString(date, date_str, in_dflt_TZ);
 		const file_index elem(date, path, filename.substr(pos_param), run_date);
 		if (idx==IOUtils::npos) {
-			meteo_files.push_back( elem );
-			mapIdx[ date_str ] = meteo_files.size()-1;
+			data_files.push_back( elem );
+			mapIdx[ date_str ] = data_files.size()-1;
 		} else {
-			meteo_files[ idx] = elem;
+			data_files[ idx] = elem;
 			mapIdx[ date_str ] = idx;
 		}
 	}
 
-	std::sort(meteo_files.begin(), meteo_files.end());
+	std::sort(data_files.begin(), data_files.end());
+	return data_files;
 }
 
-size_t OshdIO::getFileIdx(const Date& start_date) const
+size_t OshdIO::getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date)
 {
-	if (cache_meteo_files.empty())
-		throw InvalidArgumentException("No input files found or configured!", AT);
+	if (cache.empty()) throw InvalidArgumentException("No input files found or configured!", AT);
+	if (cache.size()==1) return 0; //no other possibility
 
-	//find which file we should open
-	if (cache_meteo_files.size()==1) {
-		return 0;
-	} else {
-		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
-			if (start_date>=cache_meteo_files[idx-1].date && start_date<cache_meteo_files[idx].date) {
-				return --idx;
-			}
+	//try to find a good match
+	for (size_t idx=1; idx<cache.size(); idx++) {
+		if (start_date>=cache[idx-1].date && start_date<cache[idx].date) {
+			return --idx;
 		}
-
-		//not found, we take the closest timestamp we have
-		if (start_date<cache_meteo_files.front().date)
-			return 0;
-		else
-			return cache_meteo_files.size()-1;
 	}
+
+	//not found, we take the closest timestamp we have (ie very begining or very end)
+	if (start_date<cache.front().date) return 0;
+	else return cache.size()-1;
 }
 
 void OshdIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
@@ -371,7 +265,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
-	size_t file_idx = getFileIdx( dateStart );
+	size_t file_idx = getFileIdx( cache_meteo_files, dateStart );
 	Date station_date( cache_meteo_files[file_idx].date );
 	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
 
@@ -390,12 +284,10 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		//read the data and fill vecMeteo
 		const std::string file_suffix( cache_meteo_files[ file_idx ].file_suffix );
 		const std::string path( in_meteopath + "/" + cache_meteo_files[ file_idx ].path );
-		std::vector<double> vecData;
 		for (size_t ii=0; ii<params_map.size(); ii++) {
 			const MeteoData::Parameters param( params_map[ii].first );
 			const std::string filename( path + "/" + params_map[ii].second + file_suffix );
-			vecData.resize( nrIDs, IOUtils::nodata );
-			readFromFile(filename, param, station_date, vecData);
+			const std::vector<double> vecData( readFromFile(filename, param, station_date) );
 
 			for (size_t jj=0; jj<nrIDs; jj++)
 				vecMeteo[jj].back()( param ) =  vecData[jj];
@@ -411,39 +303,32 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void OshdIO::readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
-	std::vector<double> vecDir;
-	vecDir.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_dir( path + "/" + "idrc" + file_suffix );
-	readFromFile(filename_dir, MeteoData::ISWR, station_date, vecDir);
+	const std::vector<double> vecDir( readFromFile(filename_dir, MeteoData::ISWR, station_date) );
 	
-	std::vector<double> vecDiff;
-	vecDiff.resize( nrIDs, IOUtils::nodata );
 	const std::string filename_diff( path + "/" + "idfc" + file_suffix );
-	readFromFile(filename_diff, MeteoData::ISWR, station_date, vecDiff);
+	const std::vector<double> vecDiff( readFromFile(filename_diff, MeteoData::ISWR, station_date) );
 
-	std::vector<double> vecAlbd;
 	const std::string filename_albd( path + "/" + "albd" + file_suffix );
 	if (FileUtils::fileExists(filename_albd)) {
-		vecAlbd.resize( nrIDs, IOUtils::nodata );
-		readFromFile(filename_albd, MeteoData::RSWR, station_date, vecAlbd); //We read ALBD and use it to build RSWR
-	}
-	
-	const double albedo = !vecAlbd.empty();
-	for (size_t jj=0; jj<nrIDs; jj++) {
-		vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
-		if (albedo) vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
+		const std::vector<double> vecAlbd( readFromFile(filename_albd, MeteoData::RSWR, station_date) ); //We read ALBD and use it to build RSWR
+		for (size_t jj=0; jj<nrIDs; jj++) {
+			vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
+			vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
+		}
+	} else {
+		for (size_t jj=0; jj<nrIDs; jj++) {
+			vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
+		}
 	}
 }
 
 void OshdIO::readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
 	const std::string filename( path + "/" + "snfl" + file_suffix );
-
 	if (FileUtils::fileExists(filename)) {
 		static const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
-		std::vector<double> vecSnowLine;
-		vecSnowLine.resize( nrIDs, IOUtils::nodata );
-		readFromFile(filename, MeteoData::PSUM_PH, station_date, vecSnowLine);
+		const std::vector<double> vecSnowLine( readFromFile(filename, MeteoData::PSUM_PH, station_date) );
 
 		for (size_t jj=0; jj<nrIDs; jj++) {
 			const double altitude = vecMeteo[jj].front().meta.getAltitude();
@@ -457,9 +342,9 @@ void OshdIO::readPPhase(const Date& station_date, const std::string& path, const
 	}
 }
 
-void OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep, std::vector<double> &vecData) const
+std::vector<double> OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep) const
 {
-	if (debug) printFileStructure(filename);
+	if (debug) matWrap::printFileStructure(filename, in_dflt_TZ);
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(filename, AT);
 
@@ -468,20 +353,18 @@ void OshdIO::readFromFile(const std::string& filename, const MeteoData::Paramete
 	if (matvar==NULL) throw NotFoundException("structure 'stat' not found in file '"+filename+"'", AT);
 	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
 	
-	const std::string type( readString(filename, "type", matfp, matvar) );
+	const std::string type( matWrap::readString(filename, "type", matfp, matvar) );
 	checkFieldType(param, type);
 
 	//check that the timestep is as expected
-	std::vector<double> vecTime;
-	readDoubleVector(filename, "time", matfp, matvar, vecTime);
+	const std::vector<double> vecTime( matWrap::readDoubleVector(filename, "time", matfp, matvar) );
 	if (vecTime.size()!=1) throw InvalidFormatException("one and only one time step must be present in the 'time' vector", AT);
 	Date timestep;
 	timestep.setMatlabDate( vecTime[0], in_dflt_TZ );
 	if (in_timestep!=timestep) throw InvalidArgumentException("the in-file timestep and the filename time step don't match for for '"+filename+"'", AT);
 	
 	//check that each station is still at the same index, build the index cache if necessary
-	std::vector<std::string> vecAcro;
-	readStringVector(filename, "acro", matfp, matvar, vecAcro);
+	const std::vector<std::string> vecAcro( matWrap::readStringVector(filename, "acro", matfp, matvar) );
 	const size_t nrIDs = vecIDs.size();
 	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
 		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
@@ -489,15 +372,17 @@ void OshdIO::readFromFile(const std::string& filename, const MeteoData::Paramete
 	}
 	
 	//extract the data for the selected stations
-	const std::string units( readString(filename, "dunit", matfp, matvar) );
-	std::vector<double> vecRaw;
-	readDoubleVector(filename, "data", matfp, matvar, vecRaw);
+	const std::string units( matWrap::readString(filename, "dunit", matfp, matvar) );
+	const std::vector<double> vecRaw( matWrap::readDoubleVector(filename, "data", matfp, matvar) );
 	if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+filename+"'", AT);
+
+	std::vector<double> vecData(nrIDs, IOUtils::nodata);
 	for (size_t ii=0; ii<nrIDs; ii++)
 		vecData[ii] = convertUnits( vecRaw[ vecIdx[ii] ], units, param);
 	
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
+	return vecData;
 }
 
 void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::string& type)
@@ -546,16 +431,11 @@ void OshdIO::fillStationMeta()
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "statlist");
 	if (matvar==NULL) throw NotFoundException("structure 'statlist' not found in file '"+in_metafile+"'", AT);
 	
-	std::vector<std::string> vecAcro;
-	readStringVector(in_metafile, "acro", matfp, matvar, vecAcro);
-	
-	std::vector<std::string> vecNames;
-	readStringVector(in_metafile, "name", matfp, matvar, vecNames);
-	
-	std::vector<double> easting, northing, altitude;
-	readDoubleVector(in_metafile, "x", matfp, matvar, easting);
-	readDoubleVector(in_metafile, "y", matfp, matvar, northing);
-	readDoubleVector(in_metafile, "z", matfp, matvar, altitude);
+	const std::vector<std::string> vecAcro( matWrap::readStringVector(in_metafile, "acro", matfp, matvar) );
+	const std::vector<std::string> vecNames( matWrap::readStringVector(in_metafile, "name", matfp, matvar) );
+	const std::vector<double> easting( matWrap::readDoubleVector(in_metafile, "x", matfp, matvar) );
+	const std::vector<double> northing( matWrap::readDoubleVector(in_metafile, "y", matfp, matvar) );
+	const std::vector<double> altitude( matWrap::readDoubleVector(in_metafile, "z", matfp, matvar) );
 	
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
@@ -569,8 +449,8 @@ void OshdIO::fillStationMeta()
 	buildVecIdx(vecAcro);
 	for (size_t ii=0; ii<vecIdx.size(); ii++) {
 		const size_t idx = vecIdx[ii];
-		Coords position("CH1903", "");
-		position.setXY(easting[idx], northing[idx], altitude[idx]);
+		Coords location(coordin, coordinparam);
+		location.setXY(easting[idx], northing[idx], altitude[idx]);
 		std::string name( vecNames[idx] );
 
 		//if the network name has been appended, remove it. We also remove spaces, just in case
@@ -578,7 +458,7 @@ void OshdIO::fillStationMeta()
 		if (netz_pos!=std::string::npos) name.erase(netz_pos);
 		std::replace( name.begin(), name.end(), ' ', '_');
 
-		const StationData sd(position, vecAcro[idx], name);
+		const StationData sd(location, vecAcro[idx], name);
 		vecMeta[ii] = sd;
 	}
 }
@@ -586,8 +466,7 @@ void OshdIO::fillStationMeta()
 void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
 {
 	const size_t nrIDs = vecIDs.size();
-	if (nrIDs==0)
-		throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
+	if (nrIDs==0) throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
 	vecIdx.resize( nrIDs, 0 );
 	
 	for (size_t ii=0; ii<nrIDs; ii++) {
@@ -602,6 +481,51 @@ void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
 		if (!found) 
 			throw NotFoundException("station ID '"+vecIDs[ii]+"' could not be found in the provided data", AT);
 	}
+}
+
+void OshdIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
+{
+	if (debug) matWrap::printFileStructure(filename, in_dflt_TZ);
+	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
+	if ( NULL == matfp ) throw AccessException(filename, AT);
+
+	matvar_t *matvar = Mat_VarReadInfo(matfp, "grid");
+	if (matvar==NULL) throw NotFoundException("structure 'grid' not found in file '"+filename+"'", AT);
+	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
+
+	const double xllcorner( matWrap::readDouble(filename, "xllcorner", matfp, matvar) );
+	const double yllcorner( matWrap::readDouble(filename, "yllcorner", matfp, matvar) );
+	Coords location(coordin, coordinparam);
+	location.setXY(xllcorner, yllcorner, IOUtils::nodata);
+
+	const double cellsize( matWrap::readDouble(filename, "cellsize", matfp, matvar) );
+	const double ncols( matWrap::readDouble(filename, "ncols", matfp, matvar) );
+	const double nrows( matWrap::readDouble(filename, "nrows", matfp, matvar) );
+
+	//Initialize the 2D grid
+	grid_out.set(static_cast<size_t>(ncols), static_cast<size_t>(nrows), cellsize, location);
+	matWrap::readDoubleArray(filename, "data", matfp, matvar, grid_out.grid2D);
+
+	Mat_Close(matfp);
+}
+
+void OshdIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	const size_t file_idx = getFileIdx( cache_grid_files, date );
+	Date grid_date( cache_grid_files[file_idx].date );
+	if (grid_date!=date) return; //the requested date is NOT in the available files
+
+	//build the proper file name
+	const std::string file_suffix( cache_grid_files[ file_idx ].file_suffix );
+	const std::string path( grid2dpath_in + "/" + cache_grid_files[ file_idx ].path );
+	const std::string filename( path + "/" + grids_map[parameter] +file_suffix );
+	read2DGrid(grid_out, filename);
+}
+
+void OshdIO::readDEM(DEMObject& dem_out)
+{
+	const std::string filename = cfg.get("DEMFILE", "Input");
+	read2DGrid(dem_out, filename);
 }
 
 } //namespace

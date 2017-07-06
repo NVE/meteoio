@@ -101,10 +101,10 @@ ARCIO::ARCIO(const Config& cfgreader)
 
 void ARCIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
-	const string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (grid_in == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	const string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
+	const std::string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
 	if (grid_out == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 
