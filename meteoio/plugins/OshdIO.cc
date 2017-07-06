@@ -518,8 +518,25 @@ void OshdIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	//build the proper file name
 	const std::string file_suffix( cache_grid_files[ file_idx ].file_suffix );
 	const std::string path( grid2dpath_in + "/" + cache_grid_files[ file_idx ].path );
-	const std::string filename( path + "/" + grids_map[parameter] +file_suffix );
-	read2DGrid(grid_out, filename);
+
+	if (grids_map.find(parameter)!=grids_map.end()) {
+		const std::string filename( path + "/" + grids_map[parameter] +file_suffix );
+		read2DGrid(grid_out, filename);
+	} else if (parameter==MeteoGrids::ISWR) {
+		const std::string filename_dir( path + "/" + "idrc" + file_suffix );
+		read2DGrid(grid_out, filename_dir);
+
+		Grid2DObject diff;
+		const std::string filename_diff( path + "/" + "idfc" + file_suffix );
+		read2DGrid(diff, filename_diff);
+
+		grid_out += diff;
+	} else
+		throw NotFoundException("Parameter "+MeteoGrids::getParameterName(parameter)+" currently not supported", AT);
+
+	//units corrections
+	if (parameter==MeteoGrids::TA) grid_out += Cst::t_water_freezing_pt;
+	else if (parameter==MeteoGrids::RH) grid_out /= 100.;
 }
 
 void OshdIO::readDEM(DEMObject& dem_out)
