@@ -28,9 +28,8 @@ namespace mio {
 
 void FitModel::getParams(std::vector<double>& o_coefficients) const
 {
-	if (fit_ready!=true) {
+	if (fit_ready!=true)
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
 	o_coefficients = Lambda;
 }
 
@@ -51,10 +50,6 @@ void FitModel::setGuess(const std::vector<double>& lambda_in)
 FitModel& FitModel::operator =(const FitModel& source)
 {
 	if (this != &source) {
-		nPts = source.nPts;
-		regname = source.regname;
-		nParam = source.nParam;
-		min_nb_pts = source.min_nb_pts;
 		fit_ready = source.fit_ready;
 		infoString = source.infoString;
 		Lambda = source.Lambda;
@@ -138,8 +133,7 @@ void FitLeastSquare::setDefaultGuess()
 
 bool FitLeastSquare::fit()
 {
-	if (!checkInputs())
-		return false;
+	if (!checkInputs()) return false;
 	return computeFit();
 }
 
@@ -174,8 +168,8 @@ bool FitLeastSquare::computeFit()
 		}
 
 		//calculate parameters deltas
-		const Matrix a = A.getT() * A;
-		const Matrix b = A.getT() * dBeta;
+		const Matrix a( A.getT() * A );
+		const Matrix b( A.getT() * dBeta );
 		if (!Matrix::solve(a, b, dLambda)) return false;
 
 		//apply the deltas to the parameters, record maximum delta

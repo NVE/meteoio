@@ -27,7 +27,7 @@ namespace mio {
 
 class Zero : public FitModel {
 	public:
-		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";}
+		Zero() : FitModel("Zero", 0, 0) {fit_ready=true;}
 		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { }
 		bool fit() { return true;}
 		double f(const double& /*x*/) const {return 0.;}
@@ -35,59 +35,60 @@ class Zero : public FitModel {
 
 class SimpleLinear : public FitModel {
 	public:
-		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "SimpleLinear";}
+		SimpleLinear() : FitModel("SimpleLinear", 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
+		SimpleLinear(const std::string& i_regname) : FitModel(i_regname, 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;}
+		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false;} //HACK min_Pts should be set to 1 for consistency
 	protected:
 		double fixed_lapse_rate;
 };
 
 class NoisyLinear : public SimpleLinear {
 	public:
-		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "NoisyLinear";}
+		NoisyLinear() : SimpleLinear("NoisyLinear") {fit_ready=false;}
 		bool fit();
 };
 
 class SphericVario : public FitLeastSquare {
 	public:
-		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";}
+		SphericVario() : FitLeastSquare("SphericVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinVario : public FitLeastSquare {
 	public:
-		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";}
+		LinVario() : FitLeastSquare("LinVario", 2, 3) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class ExpVario : public FitLeastSquare {
 	public:
-		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";}
+		ExpVario() : FitLeastSquare("ExpVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class RatQuadVario : public FitLeastSquare {
 	public:
-		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";}
+		RatQuadVario() : FitLeastSquare("RatQuadVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinearLS : public FitLeastSquare {
 	public:
-		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";}
+		LinearLS() : FitLeastSquare("LinearLS", 2, 3) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class Quadratic : public FitLeastSquare {
 	public:
-		Quadratic() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "Quadratic";}
+		Quadratic() : FitLeastSquare("Quadratic", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };

@@ -42,11 +42,11 @@ Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const 
 		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) { //HACK: the pointer could not be valid anymore
+Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) {
 	*this = i_fit;
 }
 
-Fit1D& Fit1D::operator=(const Fit1D& source) { //HACK: the pointer could not be valid anymore
+Fit1D& Fit1D::operator=(const Fit1D& source) {
 	if (this != &source) {
 		model = new SimpleLinear; //this is only for memory allocation
 		*model = *(source.model); //copy what is pointed to
@@ -74,7 +74,7 @@ bool Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 }
 
 bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
-{
+{//HACK: if model is already the right type, do not delete but reset
 	if (model!=NULL) delete model;
 
 	if (regType==ZERO) model=new Zero;
@@ -150,8 +150,7 @@ bool SimpleLinear::fit()
 
 bool NoisyLinear::fit()
 {
-	if (!checkInputs())
-		return false;
+	if (!checkInputs()) return false;
 
 	Lambda.clear();
 	double a,b,r;
@@ -182,12 +181,11 @@ bool NoisyLinear::fit()
 
 //regression models using the standard least square algorithm
 double SphericVario::f(const double& x) const {
+	if (x==0) return 0;
 	//c0>=0, cs>=0, as>=0
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
-
-	if (x==0) return 0;
 
 	const double abs_x = fabs(x);
 	if (abs_x>0 && abs_x<=as) {
@@ -206,13 +204,12 @@ void SphericVario::setDefaultGuess() {
 }
 
 double LinVario::f(const double& x) const {
-	//c0>=0, b1>=0
-	const double c0 = Lambda.at(0);
-	const double bl = Lambda.at(1);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, b1>=0
+		const double c0 = Lambda.at(0);
+		const double bl = Lambda.at(1);
 		const double y = c0 + bl * abs(x);
 		return y;
 	}
@@ -230,14 +227,13 @@ void LinVario::setDefaultGuess() {
 }
 
 double ExpVario::f(const double& x) const {
-	//c0>=0, ce>=0, ae>=0
-	const double c0 = Lambda.at(0);
-	const double ce = Lambda.at(1);
-	const double ae = Lambda.at(2);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, ce>=0, ae>=0
+		const double c0 = Lambda.at(0);
+		const double ce = Lambda.at(1);
+		const double ae = Lambda.at(2);
 		const double y = c0 + ce * (1. - exp(-abs(x)/ae) );
 		return y;
 	}
@@ -255,14 +251,13 @@ void ExpVario::setDefaultGuess() {
 }
 
 double RatQuadVario::f(const double& x) const {
-	//c0>=0, cr>=0, ar>=0
-	const double c0 = Lambda.at(0);
-	const double cr = Lambda.at(1);
-	const double ar = Lambda.at(2);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, cr>=0, ar>=0
+		const double c0 = Lambda.at(0);
+		const double cr = Lambda.at(1);
+		const double ar = Lambda.at(2);
 		const double y = c0 + cr*x*x / (1. + x*x/ar);
 		return y;
 	}
@@ -302,7 +297,7 @@ double Quadratic::f(const double& x) const {
 }
 
 void Quadratic::setDefaultGuess() {
-	std::vector<double> der( Interpol1D::derivative(X, Y) );
+	const std::vector<double> der( Interpol1D::derivative(X, Y) );
 	const double acc = 0.5 * Interpol1D::arithmeticMean( Interpol1D::derivative(X, der) );
 	double xzero=der[0];
 	size_t xzero_idx=0;
