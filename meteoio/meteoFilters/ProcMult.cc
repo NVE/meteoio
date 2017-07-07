@@ -105,7 +105,7 @@ void ProcMult::parse_args(const std::vector< std::pair<std::string, std::string>
 		}
 	}
 
-	if (!has_type && !is_cst) throw InvalidArgumentException("Please provide a filter type (or a constant) for filter "+getName(), AT);
+	if (!has_type && !is_cst) throw InvalidArgumentException("Please provide either a constant or a period for filter "+getName(), AT);
 	if (has_type) {
 		if (filename.empty())
 			throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);

@@ -216,7 +216,6 @@ namespace IOUtils {
 			throw InvalidArgumentException("Empty key", AT);
 
 		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
-
 		if (it == properties.end()){
 			if (options == IOUtils::nothrow)
 				return;

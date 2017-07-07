@@ -265,9 +265,10 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 
-			for (size_t ii=2; ii<=col_idx; ii++) {
+			size_t ii=2;
+			do {
 				iss >> std::skipws >> value;
-				if ( !iss ){
+				if ( iss.fail() ){
 					std::ostringstream ss;
 					ss << "In file " << filename << " at line " << lcount;
 					if (!iss.eof())
@@ -276,7 +277,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 						ss << ": trying to read column " << col_idx << " of " << ii-1 << " columns";
 					throw InvalidArgumentException(ss.str(), AT);
 				}
-			}
+			} while ((ii++) < col_idx);
 			corrections.at( index-minIndex ) = value;
 		} while (!fin.eof());
 		fin.close();
