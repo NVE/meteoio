@@ -110,8 +110,6 @@ void ProcMult::parse_args(const std::vector< std::pair<std::string, std::string>
 		if (filename.empty())
 			throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
 		ProcessingBlock::readCorrections(getName(), filename, column, type, 0., vecFactors);
-		for (size_t ii=0; ii<vecFactors.size(); ii++) std::cout << ii << "\t" << vecFactors[ii] << "\n";
-		exit(0);
 	}
 }
 
