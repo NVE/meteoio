@@ -26,11 +26,11 @@ using namespace std;
 
 namespace mio {
 
-void FitModel::getParams(std::vector<double>& o_coefficients) const
+std::vector<double> FitModel::getParams() const
 {
 	if (fit_ready!=true)
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	o_coefficients = Lambda;
+	return Lambda;
 }
 
 void FitModel::setGuess(const std::vector<double>& lambda_in)

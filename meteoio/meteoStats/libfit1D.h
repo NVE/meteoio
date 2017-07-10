@@ -96,6 +96,7 @@ class Quadratic : public FitLeastSquare {
 /**
  * @class Fit1D
  * @brief A class to perform 1D regressions
+ * @details
  * It works on a time serie and uses either ad-hoc methods or matrix arithmetic to perform an arbitrary fit.
  * Currently, the following models are supported:
  * - Specific fits:
@@ -216,9 +217,9 @@ class Fit1D {
 		/**
 		* @brief Calculate the parameters of the fit.
 		* The fit has to be computed before.
-		* @param coefficients vector containing the coefficients
+		* @return vector containing the coefficients
 		*/
-		void getParams(std::vector<double>& coefficients) const {model->getParams(coefficients);}
+		std::vector<double> getParams() const { return model->getParams();}
 
 		/**
 		* @brief Return the name of the fit model.
@@ -255,6 +256,29 @@ class Fit1D {
 
 	private:
 		FitModel *model;
+};
+
+/**
+ * @class FitMult
+ * @brief A class to perform multiple linear regressions.
+ * @details This class performs linear regressions with multiple predictors. For example,
+ * to compute air temperature trends based on elevation, easting, northing (ie predictors).
+ * See www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
+ * @ingroup stats
+ */
+class FitMult {
+	public:
+		FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y);
+
+		double f(const std::vector<double>& x) const;
+		double operator ()(const std::vector<double>& x) const { return f(x);}
+		std::vector<double> getParams() const;
+		std::string getInfo() const;
+		std::string toString() const;
+	private:
+		Matrix Z, Y, Beta;
+		const std::string regname; //model name
+		double R2; ///< coefficient of multiple determination
 };
 
 } //end namespace

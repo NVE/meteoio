@@ -313,4 +313,93 @@ void Quadratic::setDefaultGuess() {
 		Lambda.push_back( *( std::max_element( Y.begin(), Y.end() ) ) );
 }
 
+
+/**
+* @brief Constructor.
+* The observations vector contains for each observation point a vector of predictors. The
+* matching in_Y vector contains the measurements at these observation points (in the same order).
+* 
+* @param[in] in_X observations
+* @param[out] in_Y measurements at the observation points
+*/
+FitMult::FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y)
+            : Z(), Y(), Beta(), regname("MULI-LINEAR"), R2(IOUtils::nodata)
+{
+	const size_t nObs = in_X.size();
+	if (nObs==0)
+		throw NoDataException("No data has been provided for computing the multiple linear regression!", AT);
+
+	//build the Z matrix
+	const size_t nPreds = in_X.front().size();
+	Z.resize(nObs, nPreds);
+	for (size_t jj=0; jj<nObs; jj++) {
+		if (in_X[jj].size() != nPreds)
+			throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
+
+		for (size_t ii=0; ii<nPreds; ii++)
+			Z(jj+1, ii+1) = in_X[jj][ii];
+	}
+
+	//build the Y matrix
+	Y.resize(nObs, 1);
+	for (size_t jj=0; jj<nObs; jj++) {
+		Y(jj+1, 1) = in_Y[jj];
+	}
+
+	//compute the Betas
+	const Matrix Z_T( Z.getT() );
+	Beta.resize(nPreds, 1);
+	Beta = (Z_T * Z).getInv() * Z_T * Y;
+
+	//compute R2
+	const double y_avg = Interpol1D::arithmeticMean( in_Y );
+	double sum_meas = 0., sum_mod = 0.;
+	for (size_t ii=0; ii<nObs; ii++) {
+		const double y_mod = f( in_X[ii] );
+		sum_mod += Optim::pow2( y_mod - y_avg );
+		sum_meas += Optim::pow2( in_Y[ii] - y_avg );
+	}
+
+	if (sum_meas!=0.) R2 = sum_mod / sum_meas;
+}
+
+double FitMult::f(const std::vector<double>& x) const
+{
+	//since this is only a matrix x vector, we do a quick, ad-hoc implementation
+	const size_t nObs = x.size();
+	double sum = 0;
+	for (size_t ii=0; ii<nObs; ii++) sum += Beta(ii+1, 1) * x[ii];
+	return sum;
+}
+
+std::vector<double> FitMult::getParams() const
+{
+	std::vector<double> coefficients;
+	for (size_t ii=1; ii<=Beta.getNy(); ii++)
+		coefficients.push_back( Beta(ii, 1) );
+
+	return coefficients;
+}
+
+std::string FitMult::getInfo() const
+{
+	ostringstream ss;
+	ss << "Computed regression with " << regname << " model ";
+	ss << "- Sum of square residuals = " << std::setprecision(2) << R2;
+	return ss.str();
+}
+
+std::string FitMult::toString() const
+{
+	std::ostringstream os;
+	os << "<FitMult>\n";
+	os << regname << " model with " << Beta.getNy() << " predictors (R2=" << R2 << ")\n";
+	os << "Model parameters:       \t";
+	for (size_t ii=1; ii<=Beta.getNy(); ii++) os << Beta(ii, 1) << " ";
+	os << "\n";
+	os << "</FitMult>\n";
+
+	return os.str();
+}
+
 } //namespace
