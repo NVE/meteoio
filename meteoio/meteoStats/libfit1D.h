@@ -264,6 +264,7 @@ class Fit1D {
  * @details This class performs linear regressions with multiple predictors. For example,
  * to compute air temperature trends based on elevation, easting, northing (ie predictors).
  * See www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
+ *
  * @ingroup stats
  */
 class FitMult {
@@ -279,6 +280,7 @@ class FitMult {
 		Matrix Z, Y, Beta;
 		const std::string regname; //model name
 		double R2; ///< coefficient of multiple determination
+		size_t nPreds; ///< number of predictors
 };
 
 } //end namespace

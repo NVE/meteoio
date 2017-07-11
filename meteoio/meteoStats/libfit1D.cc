@@ -318,57 +318,66 @@ void Quadratic::setDefaultGuess() {
 * @brief Constructor.
 * The observations vector contains for each observation point a vector of predictors. The
 * matching in_Y vector contains the measurements at these observation points (in the same order).
-* 
+*
+* To prepare in_X, you can for example loop over the stations making the observations and collect all
+* of the predictors in a vector that is then pushed_back into in_X before moving to the next station..
+*
 * @param[in] in_X observations
 * @param[out] in_Y measurements at the observation points
 */
 FitMult::FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y)
-            : Z(), Y(), Beta(), regname("MULI-LINEAR"), R2(IOUtils::nodata)
+            : Z(), Y(), Beta(), regname("MULI-LINEAR"), R2(IOUtils::nodata), nPreds(0)
 {
+	//The Beta0 is handled by considering that it is B0*Z_j where Z_j=1 for all j
 	const size_t nObs = in_X.size();
 	if (nObs==0)
 		throw NoDataException("No data has been provided for computing the multiple linear regression!", AT);
+	nPreds = in_X.front().size();
+	if (nPreds==0)
+		throw NoDataException("No predictors have been provided for computing the multiple linear regression!", AT);
 
 	//build the Z matrix
-	const size_t nPreds = in_X.front().size();
-	Z.resize(nObs, nPreds);
+	Z.resize(nObs, nPreds+1);
 	for (size_t jj=0; jj<nObs; jj++) {
 		if (in_X[jj].size() != nPreds)
 			throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
 
+		Z(jj+1, 1) = 1.;
 		for (size_t ii=0; ii<nPreds; ii++)
-			Z(jj+1, ii+1) = in_X[jj][ii];
+			Z(jj+1, ii+2) = in_X[jj][ii];
 	}
 
 	//build the Y matrix
 	Y.resize(nObs, 1);
-	for (size_t jj=0; jj<nObs; jj++) {
+	for (size_t jj=0; jj<nObs; jj++)
 		Y(jj+1, 1) = in_Y[jj];
-	}
 
 	//compute the Betas
 	const Matrix Z_T( Z.getT() );
-	Beta.resize(nPreds, 1);
+	Beta.resize(nPreds+1, 1);
 	Beta = (Z_T * Z).getInv() * Z_T * Y;
 
 	//compute R2
-	const double y_avg = Interpol1D::arithmeticMean( in_Y );
-	double sum_meas = 0., sum_mod = 0.;
+	const double ObsMean = Interpol1D::arithmeticMean( in_Y );
+	double ss_err = 0., ss_tot = 0.;
 	for (size_t ii=0; ii<nObs; ii++) {
-		const double y_mod = f( in_X[ii] );
-		sum_mod += Optim::pow2( y_mod - y_avg );
-		sum_meas += Optim::pow2( in_Y[ii] - y_avg );
+		const double y_sim = f( in_X[ii] );
+		ss_err += Optim::pow2( in_Y[ii] - y_sim );
+		ss_tot += Optim::pow2( in_Y[ii] - ObsMean );
 	}
 
-	if (sum_meas!=0.) R2 = sum_mod / sum_meas;
+	if (ss_tot==0. && ss_err==0) R2 = 1.;
+	if (ss_tot!=0.) R2 = 1. - ss_err / ss_tot;
 }
 
 double FitMult::f(const std::vector<double>& x) const
 {
-	//since this is only a matrix x vector, we do a quick, ad-hoc implementation
-	const size_t nObs = x.size();
-	double sum = 0;
-	for (size_t ii=0; ii<nObs; ii++) sum += Beta(ii+1, 1) * x[ii];
+	if (x.size() != nPreds)
+		throw InvalidArgumentException("Wrong number of predictors provided", AT);
+
+	double sum = Beta(1,1); //this is Beta0
+	for (size_t ii=0; ii<nPreds; ii++)
+		sum += Beta(ii+2, 1) * x[ii]; //Beta starts at 1 and we only need to apply from Beta1 = (2,1)
 	return sum;
 }
 
@@ -395,7 +404,7 @@ std::string FitMult::toString() const
 	os << "<FitMult>\n";
 	os << regname << " model with " << Beta.getNy() << " predictors (R2=" << R2 << ")\n";
 	os << "Model parameters:       \t";
-	for (size_t ii=1; ii<=Beta.getNy(); ii++) os << Beta(ii, 1) << " ";
+	for (size_t ii=Beta.getNy(); ii>=1; ii--) os << Beta(ii, 1) << " ";
 	os << "\n";
 	os << "</FitMult>\n";
 
