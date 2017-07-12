@@ -322,35 +322,36 @@ void Quadratic::setDefaultGuess() {
 * To prepare in_X, you can for example loop over the stations making the observations and collect all
 * of the predictors in a vector that is then pushed_back into in_X before moving to the next station..
 *
+* @note the IOUtils::nodata values MUST be removed from the in_X and in_Y vector before!
 * @param[in] in_X observations
 * @param[out] in_Y measurements at the observation points
 */
 FitMult::FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y)
-            : Z(), Y(), Beta(), regname("MULI-LINEAR"), R2(IOUtils::nodata), nPreds(0)
+            : Z(), Y(), Beta(), regname("MULTILINEAR"), R2(IOUtils::nodata), nPreds(0)
 {
 	//The Beta0 is handled by considering that it is B0*Z_j where Z_j=1 for all j
 	const size_t nObs = in_X.size();
 	if (nObs==0)
 		throw NoDataException("No data has been provided for computing the multiple linear regression!", AT);
-	nPreds = in_X.front().size();
+	if (in_Y.size()!=nObs)
+		throw NoDataException("Wrong number of observations provided to the multiple linear regression!", AT);
+	nPreds = in_X.front().size(); //we know there is at least one element
 	if (nPreds==0)
 		throw NoDataException("No predictors have been provided for computing the multiple linear regression!", AT);
 
-	//build the Z matrix
+	//build the Y and Z matrix
 	Z.resize(nObs, nPreds+1);
+	Y.resize(nObs, 1);
 	for (size_t jj=0; jj<nObs; jj++) {
 		if (in_X[jj].size() != nPreds)
 			throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
+
+		Y(jj+1, 1) = in_Y[jj];
 
 		Z(jj+1, 1) = 1.;
 		for (size_t ii=0; ii<nPreds; ii++)
 			Z(jj+1, ii+2) = in_X[jj][ii];
 	}
-
-	//build the Y matrix
-	Y.resize(nObs, 1);
-	for (size_t jj=0; jj<nObs; jj++)
-		Y(jj+1, 1) = in_Y[jj];
 
 	//compute the Betas
 	const Matrix Z_T( Z.getT() );
@@ -384,7 +385,7 @@ double FitMult::f(const std::vector<double>& x) const
 std::vector<double> FitMult::getParams() const
 {
 	std::vector<double> coefficients;
-	for (size_t ii=1; ii<=Beta.getNy(); ii++)
+	for (size_t ii=1; ii<=Beta.getNy(); ii++) //for consistency with the other models, we give them in reverse order
 		coefficients.push_back( Beta(ii, 1) );
 
 	return coefficients;

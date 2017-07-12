@@ -265,6 +265,64 @@ class Fit1D {
  * to compute air temperature trends based on elevation, easting, northing (ie predictors).
  * See www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
  *
+ * It solves the multiple linear regression as
+ * \f[
+ * \bm{Y = Z\beta + \epsilon}
+ * \f]
+ * where \f$ \bm{Y} \f$ is the matrix of the observations, \f$ \bm{Z} \f$ the matrix of the predictors, \f$ \bm{\beta} \f$ the matrix of the regression
+ * coefficients and \f$ \bm{\epsilon} \f$ the matrix of errors. The \f$ \bm{Y} \f$ and \f$ \bm{Z} \f$ matrices are filled with the \f$ \bm{n} \f$ observations
+ * and \f$ \bm{r} \f$ predictors (for example with 3 predictors, altitude, easting and northing) so the previous equation becomes:
+ * \f[
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * obs_1 \\
+ * obs_2 \\
+ * \vdots \\
+ * obs_n
+ * \end{array}
+ * \right)
+ * }_{Y}
+ * \qquad
+ * =
+ * \qquad
+ * \underbrace{
+ * \left(
+ * \begin{array}{cccc}
+ * 1 & alt_1 & east_1 & north_1 \\
+ * 1 & alt_2 & east_2 & north_2 \\
+ * \vdots & \vdots & \vdots & \vdots \\
+ * 1 & alt_n & east_n & north_n
+ * \end{array}
+ * \right)
+ * }_{Z}
+ * \cdot
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * \beta_0 \\
+ * \beta_1  \\
+ * \vdots \\
+ * \beta_r
+ * \end{array}
+ * \right)
+ * }_{\beta}
+ * +
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * \epsilon_1 \\
+ * \epsilon_2 \\
+ * \vdots \\
+ * \epsilon_n
+ * \end{array}
+ * \right)
+ * }_{\epsilon}
+ * \f]
+ *
+ * If we write \f$ \bm{\hat{\beta}} \f$ the least square estimate of \f$ \bm{\beta} \f$, then \f$ \bm{ \hat{\beta} = (Z^\top Z)^{-1}Z^\top Y} \f$
+ * and the predicted values are computed as \f$ \bm{ \hat{Y} = Z\hat{\beta} } \f$.
+ *
  * @ingroup stats
  */
 class FitMult {
