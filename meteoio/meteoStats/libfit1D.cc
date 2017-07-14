@@ -315,42 +315,51 @@ void Quadratic::setDefaultGuess() {
 
 
 /**
-* @brief Constructor.
-* The observations vector contains for each observation point a vector of predictors. The
-* matching in_Y vector contains the measurements at these observation points (in the same order).
+* @brief Add one data point to the model
+* @details Before running the fit, it needs to be provided the data it will be fitted against. This is done by calling
+* multiple times this method, each time for a new data point.
 *
-* To prepare in_X, you can for example loop over the stations making the observations and collect all
-* of the predictors in a vector that is then pushed_back into in_X before moving to the next station..
-*
-* @note the IOUtils::nodata values MUST be removed from the in_X and in_Y vector before!
-* @param[in] in_X observations
-* @param[out] in_Y measurements at the observation points
+* @param[in] vecPreds predictors (for example, altitude, easting, northing)
+* @param[out] obs observed value
 */
-FitMult::FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y)
-            : Z(), Y(), Beta(), regname("MULTILINEAR"), R2(IOUtils::nodata), nPreds(0)
+void FitMult::addData(const std::vector<double>& vecPreds, const double& obs)
+{
+	const size_t nrInputPreds = vecPreds.size();
+	if (nPreds!=0 && nPreds!=nrInputPreds)
+		throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
+
+	//check for nodata in obs and vecPreds
+	if (obs==IOUtils::nodata) return;
+	for (size_t ii=0; ii<nrInputPreds; ii++)
+		if (vecPreds[ii]==IOUtils::nodata) return;
+
+	if (nPreds==0) nPreds=nrInputPreds;
+
+	//append to the predictors and observations vectors
+	predictors.push_back( vecPreds );
+	observations.push_back( obs );
+}
+
+bool FitMult::fit()
 {
 	//The Beta0 is handled by considering that it is B0*Z_j where Z_j=1 for all j
-	const size_t nObs = in_X.size();
-	if (nObs==0)
-		throw NoDataException("No data has been provided for computing the multiple linear regression!", AT);
-	if (in_Y.size()!=nObs)
-		throw NoDataException("Wrong number of observations provided to the multiple linear regression!", AT);
-	nPreds = in_X.front().size(); //we know there is at least one element
+	const size_t nObs = predictors.size();
 	if (nPreds==0)
 		throw NoDataException("No predictors have been provided for computing the multiple linear regression!", AT);
+	if (nObs<=nPreds) { // <= since there is also Beta0 that is added afterwards
+		std::cerr << "Not enough data available to compute the fit: " << nObs << " observations for " << nPreds << " predictors\n";
+		return false;
+	}
 
 	//build the Y and Z matrix
 	Z.resize(nObs, nPreds+1);
 	Y.resize(nObs, 1);
 	for (size_t jj=0; jj<nObs; jj++) {
-		if (in_X[jj].size() != nPreds)
-			throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
-
-		Y(jj+1, 1) = in_Y[jj];
+		Y(jj+1, 1) = observations[jj];
 
 		Z(jj+1, 1) = 1.;
 		for (size_t ii=0; ii<nPreds; ii++)
-			Z(jj+1, ii+2) = in_X[jj][ii];
+			Z(jj+1, ii+2) = predictors[jj][ii];
 	}
 
 	//compute the Betas
@@ -359,20 +368,25 @@ FitMult::FitMult(const std::vector< std::vector<double> >& in_X, const std::vect
 	Beta = (Z_T * Z).getInv() * Z_T * Y;
 
 	//compute R2
-	const double ObsMean = Interpol1D::arithmeticMean( in_Y );
+	const double ObsMean = Interpol1D::arithmeticMean( observations );
 	double ss_err = 0., ss_tot = 0.;
 	for (size_t ii=0; ii<nObs; ii++) {
-		const double y_sim = f( in_X[ii] );
-		ss_err += Optim::pow2( in_Y[ii] - y_sim );
-		ss_tot += Optim::pow2( in_Y[ii] - ObsMean );
+		const double y_sim = f( predictors[ii] );
+		ss_err += Optim::pow2( observations[ii] - y_sim );
+		ss_tot += Optim::pow2( observations[ii] - ObsMean );
 	}
 
 	if (ss_tot==0. && ss_err==0) R2 = 1.;
 	if (ss_tot!=0.) R2 = 1. - ss_err / ss_tot;
+
+	fit_ready = true;
+	return true;
 }
 
 double FitMult::f(const std::vector<double>& x) const
 {
+	if (!fit_ready)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
 	if (x.size() != nPreds)
 		throw InvalidArgumentException("Wrong number of predictors provided", AT);
 
@@ -384,6 +398,9 @@ double FitMult::f(const std::vector<double>& x) const
 
 std::vector<double> FitMult::getParams() const
 {
+	if (!fit_ready)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
+
 	std::vector<double> coefficients;
 	for (size_t ii=1; ii<=Beta.getNy(); ii++) //for consistency with the other models, we give them in reverse order
 		coefficients.push_back( Beta(ii, 1) );
@@ -393,6 +410,9 @@ std::vector<double> FitMult::getParams() const
 
 std::string FitMult::getInfo() const
 {
+	if (!fit_ready)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
+	
 	ostringstream ss;
 	ss << "Computed regression with " << regname << " model ";
 	ss << "- Sum of square residuals = " << std::setprecision(2) << R2;

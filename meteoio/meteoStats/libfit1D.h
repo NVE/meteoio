@@ -327,18 +327,24 @@ class Fit1D {
  */
 class FitMult {
 	public:
-		FitMult(const std::vector< std::vector<double> >& in_X, const std::vector<double>& in_Y);
+		FitMult() : predictors(), observations(), Z(), Y(), Beta(), regname("MULTILINEAR"), R2(IOUtils::nodata), nPreds(0), fit_ready(false) {};
 
+		void addData(const std::vector<double>& vecPreds, const double& obs);
+		bool fit();
 		double f(const std::vector<double>& x) const;
 		double operator ()(const std::vector<double>& x) const { return f(x);}
 		std::vector<double> getParams() const;
+		double getR2() const {return R2;}
 		std::string getInfo() const;
 		std::string toString() const;
 	private:
+		std::vector< std::vector<double> > predictors;
+		std::vector<double> observations;
 		Matrix Z, Y, Beta;
 		const std::string regname; //model name
 		double R2; ///< coefficient of multiple determination
 		size_t nPreds; ///< number of predictors
+		bool fit_ready;
 };
 
 } //end namespace

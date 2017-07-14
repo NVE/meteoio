@@ -29,7 +29,7 @@ namespace mio {
 std::vector<double> FitModel::getParams() const
 {
 	if (fit_ready!=true)
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
 	return Lambda;
 }
 
