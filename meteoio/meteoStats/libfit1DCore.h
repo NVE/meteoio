@@ -42,6 +42,7 @@ class FitModel {
 		std::string getInfo() const {return infoString;}
 		void setInfo(const std::string& info) {infoString=info;}
 		FitModel& operator =(const FitModel& source);
+		bool isReady() const {return fit_ready;}
 		std::string toString() const;
 	protected:
 		virtual bool checkInputs();

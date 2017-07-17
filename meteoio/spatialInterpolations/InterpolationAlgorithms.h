@@ -46,6 +46,8 @@ class Trend {
 		std::string toString() const;
 	private:
 		void initTrendModel(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat);
+		bool multilinearDetrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat);
+		void multilinearRetrend(const DEMObject& dem, Grid2DObject &grid) const;
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& vecMeta);
 
 		template <class T> static void parseArg(const std::pair< std::string, std::string>& arg, const std::string& algo, T& val) {
@@ -53,11 +55,12 @@ class Trend {
 				throw InvalidArgumentException("Can not parse trend argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
 		}
 
+		FitMult multi_trend;
 		Fit1D trend_model;
 		const std::string param;
 		double user_lapse; ///<when detrending the data, this is a user provided lapse_rate
 		double trend_min_alt, trend_max_alt; ///<if these are provided, the detrending/retrending will be bound by a minimum and/or maximum altitude
-		bool frac, soft; ///<is the lapse rate to be interpreted as fractional? Should it be used as fallback (is_soft) or it is mandatory?
+		bool frac, soft, multilinear; ///<is the lapse rate to be interpreted as fractional? Should it be used as fallback (is_soft) or it is mandatory?
 };
 
 /**

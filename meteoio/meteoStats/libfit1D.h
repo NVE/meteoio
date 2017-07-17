@@ -338,6 +338,7 @@ class FitMult {
 		std::string getInfo() const {return infoString;}
 		void setInfo(const std::string& info) {infoString=info;}
 		FitMult& operator =(const FitMult& source);
+		bool isReady() const {return fit_ready;}
 		std::string toString() const;
 	private:
 		std::vector< std::vector<double> > predictors;

@@ -355,6 +355,7 @@ bool FitMult::fit()
 	}
 
 	//build the Y and Z matrix
+	//we know that observations and predictors do not contain nodata values
 	Matrix Z(nObs, nPreds+1);
 	Matrix Y(nObs, static_cast<size_t>(1));
 	for (size_t jj=0; jj<nObs; jj++) {
@@ -398,8 +399,11 @@ double FitMult::f(const std::vector<double>& x) const
 		throw InvalidArgumentException("Wrong number of predictors provided", AT);
 
 	double sum = Beta(1,1); //this is Beta0
-	for (size_t ii=0; ii<nPreds; ii++)
+	for (size_t ii=0; ii<nPreds; ii++) {
+		const double pred = x[ii];
+		if (pred==IOUtils::nodata) return IOUtils::nodata;
 		sum += Beta(ii+2, 1) * x[ii]; //Beta starts at 1 and we only need to apply from Beta1 = (2,1)
+	}
 	return sum;
 }
 

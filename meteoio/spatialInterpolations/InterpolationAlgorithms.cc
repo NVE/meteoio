@@ -260,6 +260,8 @@ std::string InterpolationAlgorithm::getInfo() const
 * @brief Build a Trend object
 * @details This object is responsible for detrending / retrending the meteorological data.
 * The following arguments are recognized:
+*  - MULTILINEAR: use a multiple linear regression (on altitude, easting and northing) if possible, otherwise a "standard", simple linear
+* regression will be used as fallback (default: false);
 *  - RATE: to provide a user-defined lapse rate (SI units);
 *  - SOFT: if set to true, the user provided lapse rate is only used when no lapse rate could be computed from the data (or if it was too bad, ie r²<0.6);
 *  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
@@ -274,8 +276,8 @@ std::string InterpolationAlgorithm::getInfo() const
 * @param[in] i_param the meteorological parameter that is handled, for user-friendly error messages
 */
 Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& algo, const std::string& i_param)
-          : trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min_alt(-1e12), trend_max_alt(1e12),
-          frac(false), soft(false)
+          : multi_trend(), trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min_alt(-1e12), trend_max_alt(1e12),
+          frac(false), soft(false), multilinear(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="RATE") {
@@ -288,6 +290,8 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
 			parseArg(vecArgs[ii], algo, trend_min_alt);
 		} else if (vecArgs[ii].first=="TREND_MAX_ALT") {
 			parseArg(vecArgs[ii], algo, trend_max_alt);
+		} else if (vecArgs[ii].first=="MULTILINEAR") {
+			parseArg(vecArgs[ii], algo, multilinear);
 		}
 	}
 
@@ -309,6 +313,50 @@ std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& v
 	return o_vecData;
 }
 
+bool Trend::multilinearDetrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)
+{
+	if (vecDat.size() != vecMeta.size()) {
+		std::ostringstream ss;
+		ss << "Number of station data (" << vecDat.size() << ") and number of metadata (" << vecMeta.size() << ") don't match!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	//set the trend data
+	//HACK the positions MUST be in the same coordsys as the dem!
+	for (size_t ii=0; ii<vecMeta.size(); ii++) {
+		std::vector<double> predictors(3);
+		predictors[0] = vecMeta[ii].position.getAltitude();
+		predictors[1] = vecMeta[ii].position.getEasting();
+		predictors[2] = vecMeta[ii].position.getNorthing();
+		multi_trend.addData(predictors, vecDat[ii]);
+	}
+
+	//compute the trend
+	const bool status = multi_trend.fit();
+
+	//detrend the data if successful
+	if (status==true) {
+		for (size_t ii=0; ii<vecMeta.size(); ii++) {
+			double &val = vecDat[ii];
+			if (val==IOUtils::nodata) continue;
+
+			std::vector<double> predictors(3);
+			predictors[0] = vecMeta[ii].position.getAltitude();
+			predictors[1] = vecMeta[ii].position.getEasting();
+			predictors[2] = vecMeta[ii].position.getNorthing();
+			const double trend_offset = multi_trend( predictors );
+
+			if (trend_offset!=IOUtils::nodata) {
+				val -= trend_offset;
+			} else {
+				val = IOUtils::nodata;
+			}
+		}
+	}
+
+	return status;
+}
+
 /**
  * @brief Compute the trend according to the provided data and detrend vecDat
  * @param[in] vecMeta Location informations sorted similarly as the data in vecDat
@@ -316,7 +364,11 @@ std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& v
 */
 void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)
 {
-	//extract the altitudes
+	if (multilinear) {
+		if (multilinearDetrend(vecMeta, vecDat)==true) return;
+	}
+
+	//simple, linear fit
 	const std::vector<double> vecAltitudes( getStationAltitudes(vecMeta) );
 	if (vecAltitudes.empty())
 		throw IOException("Not enough altitude data for spatially interpolating parameter " + param, AT);
@@ -338,6 +390,27 @@ void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double>
 	}
 }
 
+void Trend::multilinearRetrend(const DEMObject& dem, Grid2DObject &grid) const
+{
+	const double xllcorner = dem.llcorner.getEasting();
+	const double yllcorner = dem.llcorner.getNorthing();
+	const double cellsize = dem.cellsize;
+
+	for (size_t jj=0; jj<dem.getNy(); jj++) {
+		for (size_t ii=0; ii<dem.getNx(); ii++) {
+			double &val = grid(ii, jj);
+			if (val==IOUtils::nodata) continue;
+
+			std::vector<double> predictors(3);
+			predictors[0] = dem(ii, jj);
+			predictors[1] = xllcorner + static_cast<double>(ii)*cellsize;
+			predictors[2] = yllcorner + static_cast<double>(jj)*cellsize;
+			const double trend_offset = multi_trend( predictors );
+			val += trend_offset;
+		}
+	}
+}
+
 /**
  * @brief Re-apply the trend computed in a previous call to detrend() to the gridded results
  * @param[in] dem digital elevation model (DEM)
@@ -353,12 +426,17 @@ void Trend::retrend(const DEMObject& dem, Grid2DObject &grid) const
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
+	if (multi_trend.isReady()) { //ie the fit could be computed during the detrend stage
+		multilinearRetrend(dem, grid);
+		return;
+	}
+
 	for (size_t ii=0; ii<nxy; ii++) {
 		double &val = grid(ii);
-		if (val!=IOUtils::nodata) {
-			const double altitude = std::min( std::max(dem(ii), trend_min_alt), trend_max_alt );
-			val += trend_model( altitude );
-		}
+		if (val==IOUtils::nodata) continue;
+
+		const double altitude = std::min( std::max(dem(ii), trend_min_alt), trend_max_alt );
+		val += trend_model( altitude );
 	}
 }
 
