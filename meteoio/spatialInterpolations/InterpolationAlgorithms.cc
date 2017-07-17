@@ -299,8 +299,7 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
 std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& vecMeta)
 {
 	std::vector<double> o_vecData;
-
-	for (size_t ii=0; ii<vecMeta.size(); ii++){
+	for (size_t ii=0; ii<vecMeta.size(); ii++) {
 		const double alt = vecMeta[ii].position.getAltitude();
 		if (alt != IOUtils::nodata) {
 			o_vecData.push_back( alt );

@@ -347,13 +347,16 @@ bool FitMult::fit()
 	if (nPreds==0)
 		throw NoDataException("No predictors have been provided for computing the multiple linear regression!", AT);
 	if (nObs<=nPreds) { // <= since there is also Beta0 that is added afterwards
-		std::cerr << "Not enough data available to compute the fit: " << nObs << " observations for " << nPreds << " predictors\n";
+		ostringstream ss;
+		ss << "Only " << nObs << " data points for " << regname << " regression model.";
+		ss << " Expecting at least " << nPreds+1 << " for this model!\n";
+		infoString = ss.str();
 		return false;
 	}
 
 	//build the Y and Z matrix
-	Z.resize(nObs, nPreds+1);
-	Y.resize(nObs, 1);
+	Matrix Z(nObs, nPreds+1);
+	Matrix Y(nObs, static_cast<size_t>(1));
 	for (size_t jj=0; jj<nObs; jj++) {
 		Y(jj+1, 1) = observations[jj];
 
@@ -376,9 +379,13 @@ bool FitMult::fit()
 		ss_tot += Optim::pow2( observations[ii] - ObsMean );
 	}
 
+	double R2 = IOUtils::nodata;
 	if (ss_tot==0. && ss_err==0) R2 = 1.;
 	if (ss_tot!=0.) R2 = 1. - ss_err / ss_tot;
 
+	std::ostringstream ss;
+	ss << "Computed regression with " << regname << " model - r2=" << std::setprecision(2) << R2;
+	infoString = ss.str();
 	fit_ready = true;
 	return true;
 }
@@ -408,28 +415,34 @@ std::vector<double> FitMult::getParams() const
 	return coefficients;
 }
 
-std::string FitMult::getInfo() const
-{
-	if (!fit_ready)
-		throw InvalidArgumentException("The regression has not yet been computed!", AT);
-
-	ostringstream ss;
-	ss << "Computed regression with " << regname << " model ";
-	ss << "- Sum of square residuals = " << std::setprecision(2) << R2;
-	return ss.str();
-}
-
 std::string FitMult::toString() const
 {
 	std::ostringstream os;
 	os << "<FitMult>\n";
-	os << regname << " model with " << Beta.getNy() << " predictors (R2=" << R2 << ")\n";
-	os << "Model parameters:       \t";
-	for (size_t ii=Beta.getNy(); ii>=1; ii--) os << Beta(ii, 1) << " ";
-	os << "\n";
+	if (!fit_ready) {
+		os << regname << " model, not initialized\n";
+	} else {
+		os << infoString << " - " << Beta.getNy() << " predictors\n";
+		os << "Model parameters:       \t";
+		for (size_t ii=Beta.getNy(); ii>=1; ii--) os << Beta(ii, 1) << " ";
+		os << "\n";
+	}
 	os << "</FitMult>\n";
 
 	return os.str();
+}
+
+FitMult& FitMult::operator =(const FitMult& source)
+{
+	if (this != &source) {
+		predictors = source.predictors;
+		observations = source.observations;
+		Beta = source.Beta;
+		infoString = source.infoString;
+		nPreds = source.nPreds;
+		fit_ready = source.fit_ready;
+	}
+	return *this;
 }
 
 } //namespace

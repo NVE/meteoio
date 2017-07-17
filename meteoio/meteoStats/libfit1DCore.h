@@ -36,6 +36,7 @@ class FitModel {
 		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);}
 		virtual bool fit() = 0;
 		virtual double f(const double& x) const = 0;
+		double operator ()(const double& x) const { return f(x);}
 		std::vector<double> getParams() const;
 		std::string getName() const {return regname;}
 		std::string getInfo() const {return infoString;}
