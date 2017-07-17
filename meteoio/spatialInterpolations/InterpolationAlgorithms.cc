@@ -407,4 +407,16 @@ void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::v
 		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend_model.getInfo(), AT);
 }
 
+std::string Trend::toString() const
+{
+	std::ostringstream os;
+	os << "<Trend>\n";
+	os << "Parameter: " << param << " user_lapse: " << user_lapse << " min_alt: " << trend_min_alt << " max_alt: " << trend_max_alt << "\n";
+	os << "frac: " << std::boolalpha << frac << " soft: " << soft << "\n";
+	os << trend_model.toString() << "\n";
+	os << "</Trend>\n";
+
+	return os.str();
+}
+
 } //namespace

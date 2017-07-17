@@ -42,6 +42,8 @@ class Trend {
 		std::string getInfo() const {return trend_model.getInfo();}
 		bool has_user_lapse() const {return (user_lapse!=IOUtils::nodata);}
 		bool is_soft() const {return soft;}
+
+		std::string toString() const;
 	private:
 		void initTrendModel(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat);
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& vecMeta);
