@@ -29,7 +29,8 @@ namespace mio {
  * @details
  * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using IDW_LAPSE and reconverted to ILWR. As
  * a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for emissivity to ILWR conversion).
- * The lapse rate definition arguments as parsed by Trend::Trend() are supported as well as the following arguments:
+ * The lapse rate definition arguments as parsed by Trend::Trend() are supported (but keep in mind <b><i>these apply to the emissivity</i></b>, not to the ILWR!)
+ * as well as the following arguments:
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);

@@ -53,7 +53,7 @@ class FitModel {
 		const std::string regname; //model name
 		size_t nPts; //number of data points
 		const size_t nParam; //number of parameters
-		const size_t min_nb_pts; //minimum number of data points
+		size_t min_nb_pts; //minimum number of data points
 		bool fit_ready; //set to false if fit() must be called before using the fit
 };
 

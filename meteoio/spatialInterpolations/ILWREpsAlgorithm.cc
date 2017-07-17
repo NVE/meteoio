@@ -59,9 +59,9 @@ double ILWREpsAlgorithm::getQualityRating(const Date& i_date)
 void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	
-	Grid2DObject ta;
-	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
+
+	Grid2DObject ta_grid;
+	mi.interpolate(date, dem, MeteoData::TA, ta_grid); //get TA interpolation from call back to Meteo2DInterpolator
 
 	trend.detrend(vecMeta, vecDataEA);
 	info << trend.getInfo();
@@ -71,7 +71,8 @@ void ILWREpsAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//Recompute ILWR from the interpolated ea
 	for (size_t ii=0; ii<grid.size(); ii++) {
 		double &value = grid(ii);
-		value = Atmosphere::blkBody_Radiation(value, ta(ii));
+		const double ta = ta_grid(ii);
+		if (value!=IOUtils::nodata && ta!=IOUtils::nodata) value = Atmosphere::blkBody_Radiation(value, ta);
 	}
 }
 

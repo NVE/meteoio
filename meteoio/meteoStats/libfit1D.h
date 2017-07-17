@@ -28,7 +28,7 @@ namespace mio {
 class Zero : public FitModel {
 	public:
 		Zero() : FitModel("Zero", 0, 0) {fit_ready=true;}
-		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { }
+		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) {}
 		bool fit() { return true;}
 		double f(const double& /*x*/) const {return 0.;}
 };
@@ -40,7 +40,7 @@ class SimpleLinear : public FitModel {
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false;} //HACK min_Pts should be set to 1 for consistency
+		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts--;}
 	protected:
 		double fixed_lapse_rate;
 };

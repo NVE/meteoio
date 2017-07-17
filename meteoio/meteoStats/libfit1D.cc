@@ -412,7 +412,7 @@ std::string FitMult::getInfo() const
 {
 	if (!fit_ready)
 		throw InvalidArgumentException("The regression has not yet been computed!", AT);
-	
+
 	ostringstream ss;
 	ss << "Computed regression with " << regname << " model ";
 	ss << "- Sum of square residuals = " << std::setprecision(2) << R2;
