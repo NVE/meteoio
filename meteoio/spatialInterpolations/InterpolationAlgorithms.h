@@ -39,7 +39,7 @@ class Trend {
 		void detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat);
 		void retrend(const DEMObject& dem, Grid2DObject &grid) const;
 
-		std::string getInfo() const {return trend_model.getInfo();}
+		std::string getInfo() const;
 		bool has_user_lapse() const {return (user_lapse!=IOUtils::nodata);}
 		bool is_soft() const {return soft;}
 

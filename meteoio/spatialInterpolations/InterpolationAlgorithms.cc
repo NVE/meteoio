@@ -484,7 +484,15 @@ void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::v
 		throw IOException("Interpolation FAILED for parameter " + param + ": " + trend_model.getInfo(), AT);
 }
 
-std::string Trend::toString() const
+std::string Trend::getInfo() const
+{
+	if (multi_trend.isReady()) //ie the fit could be computed during the detrend stage
+		return multi_trend.getInfo();
+	else
+		return trend_model.getInfo();
+}
+
+std::string Trend::toString() const //HACK include multi_trend
 {
 	std::ostringstream os;
 	os << "<Trend>\n";
