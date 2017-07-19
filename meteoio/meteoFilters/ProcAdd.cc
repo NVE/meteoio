@@ -17,13 +17,17 @@
 */
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
+
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
 namespace mio {
 
 ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-        : ProcessingBlock(vecArgs, name), vecOffsets(), root_path(i_root_path), offset(0.), type('c')
+        : ProcessingBlock(vecArgs, name), vecCorrections(), root_path(i_root_path), correction(0.), range(0.), type('N'), distribution('N'), period('N')
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -34,64 +38,101 @@ void ProcAdd::process(const unsigned int& param, const std::vector<MeteoData>& i
 {
 	ovec = ivec;
 
-	if (type=='c') {
+	if (type=='c') { //constant offset
 		for (size_t ii=0; ii<ovec.size(); ii++){
 			double& tmp = ovec[ii](param);
 			if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			tmp += offset;
+			tmp += correction;
 		}
-	} else if (type=='m') {
-		int year, month, day;
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
+	} else if (type=='f') { //corrections from file
+		if (period=='m') {
+			int year, month, day;
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			ovec[ii].date.getDate(year, month, day);
-			tmp += vecOffsets[ month-1 ]; //indices start at 0
-		}
-	} else if (type=='d') {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
+				ovec[ii].date.getDate(year, month, day);
+				tmp += vecCorrections[ month-1 ]; //indices start at 0
+			}
+		} else if (period=='d') {
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			tmp += vecOffsets[ ovec[ii].date.getJulianDayNumber()-1 ]; //indices start at 0 while day numbers start at 1
-		}
-	} else if (type=='h') {
-		int year, month, day, hour;
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
+				tmp += vecCorrections[ ovec[ii].date.getJulianDayNumber()-1 ]; //indices start at 0 while day numbers start at 1
+			}
+		} else if (period=='h') {
+			int year, month, day, hour;
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			ovec[ii].date.getDate(year, month, day, hour);
-			tmp += vecOffsets[ hour ];
+				ovec[ii].date.getDate(year, month, day, hour);
+				tmp += vecCorrections[ hour ];
+			}
 		}
+	} else if (type=='n') { //noise
+		srand( static_cast<unsigned int>(time(NULL)) );
+		if (distribution=='u') {
+			uniform_noise(param, ovec);
+		} else if (distribution=='n') {
+			normal_noise(param, ovec);
+		}
+	}
+}
+
+void ProcAdd::uniform_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const
+{
+	for (size_t ii=0; ii<ovec.size(); ii++){
+		double& tmp = ovec[ii](param);
+		if (tmp == IOUtils::nodata) continue; //preserve nodata values
+
+		tmp += (2.*static_cast<double>(rand())/(RAND_MAX) - 1.) * range;
+	}
+}
+
+void ProcAdd::normal_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const
+{
+	for (size_t ii=0; ii<ovec.size(); ii++){
+		double& tmp = ovec[ii](param);
+		if (tmp == IOUtils::nodata) continue; //preserve nodata values
+
+		tmp += Interpol1D::getBoxMuller() * range;
 	}
 }
 
 void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	bool has_type=false, is_cst=false;
+	const std::string corr_name = (block_name=="ADD")? "offset" : "factor";
+	bool has_type=false, has_cst=false, has_period=false, has_distribution=false, has_range=false;
 	size_t column=2; //default: use second column, ie one column after the date index
 	std::string filename;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="CST") {
-			type='c'; //constant
-			if (!IOUtils::convertString(offset, vecArgs[ii].second))
-				throw InvalidArgumentException("Invalid offset \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
-			is_cst = true;
-		} else if (vecArgs[ii].first=="PERIOD") {
-			const std::string period( IOUtils::strToUpper(vecArgs[ii].second) );
-			if (period=="MONTHLY") {
-				type='m';
-			} else if (period=="DAILY") {
-				type='d';
-			} else if (period=="HOURLY") {
-				type='h';
-			} else
-				throw InvalidArgumentException("Invalid period \""+period+"\" specified for the "+getName()+" filter", AT);
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
+			if (type_str=="CST") type = 'c';
+			else if (type_str=="FILE") type = 'f';
+			else if (type_str=="NOISE") type = 'n';
+			else
+				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+getName()+" filter", AT);
 			has_type = true;
+		} else if (vecArgs[ii].first=="CST") {
+			if (!IOUtils::convertString(correction, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid "+corr_name+" \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter.", AT);
+			has_cst = true;
+		} else if (vecArgs[ii].first=="PERIOD") {
+			const std::string period_str( IOUtils::strToUpper(vecArgs[ii].second) );
+			if (period_str=="MONTHLY") {
+				period='m';
+			} else if (period_str=="DAILY") {
+				period='d';
+			} else if (period_str=="HOURLY") {
+				period='h';
+			} else
+				throw InvalidArgumentException("Invalid period \""+period_str+"\" specified for the "+getName()+" filter", AT);
+			has_period = true;
 		} else if (vecArgs[ii].first=="CORRECTIONS") {
 			//if this is a relative path, prefix the path with the current path
 			const std::string in_filename( vecArgs[ii].second );
@@ -101,14 +142,32 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 		} else if (vecArgs[ii].first=="COLUMN") {
 			if (!IOUtils::convertString(column, vecArgs[ii].second))
 				throw InvalidArgumentException("Invalid column index \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter", AT);
+		} else if (vecArgs[ii].first=="DISTRIBUTION") {
+			const std::string distribution_str( IOUtils::strToUpper(vecArgs[ii].second) );
+			if (distribution_str=="UNIFORM") {
+				distribution='u';
+			} else if (distribution_str=="NORMAL") {
+				distribution='n';
+			} else
+				throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for the "+getName()+" filter", AT);
+			has_distribution = true;
+		} else if (vecArgs[ii].first=="RANGE") {
+			if (!IOUtils::convertString(range, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid range specified for the "+getName()+" filter", AT);
+			has_range = true;
 		}
 	}
 
-	if (!has_type && !is_cst) throw InvalidArgumentException("Please provide either a constant or a period for filter "+getName(), AT);
-	if (has_type) {
-		if (filename.empty())
-			throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
-		ProcessingBlock::readCorrections(getName(), filename, column, type, 0., vecOffsets);
+	if (!has_type) throw InvalidArgumentException("Please provide a type for filter "+getName(), AT);
+	if (type=='c' && !has_cst) throw InvalidArgumentException("Please provide "+corr_name+" for filter "+getName(), AT);
+	if (type=='f') {
+		if (!has_period) throw InvalidArgumentException("Please provide a period for filter "+getName(), AT);
+		if (filename.empty()) throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
+		ProcessingBlock::readCorrections(getName(), filename, column, period, 0., vecCorrections);
+	}
+	if (type=='n') {
+		if (!has_distribution) throw InvalidArgumentException("Please provide a noise distribution for filter "+getName(), AT);
+		if (!has_range) throw InvalidArgumentException("Please provide a noise range for filter "+getName(), AT);
 	}
 }
 

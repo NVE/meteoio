@@ -42,7 +42,6 @@
 #include <meteoio/meteoFilters/ProcShade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
-#include <meteoio/meteoFilters/ProcNoise.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
@@ -110,7 +109,6 @@ namespace mio {
  * - SUPPR: delete all or some data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
- * - NOISE: add to (or multiply by) randomly distributed noise, see ProcNoise
  *
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -164,8 +162,6 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcAdd(vecArgs, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "MULT"){
 		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
-	} else if (blockname == "NOISE"){
-		return new ProcNoise(vecArgs, blockname);
 	}
 	
 	//more specific data transformations

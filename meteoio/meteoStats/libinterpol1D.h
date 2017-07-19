@@ -52,6 +52,7 @@ class Interpol1D {
 		static double corr(const std::vector<double>& z1, const std::vector<double>& z2);
 		static double R2(const std::vector<double>& obs, const std::vector<double>& sim);
 		static double NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim);
+		static double getBoxMuller();
 
 		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg, const bool& fixed_rate=false);
 		static void NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::string& mesg, const bool& fixed_rate=false);

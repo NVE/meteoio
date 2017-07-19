@@ -591,6 +591,21 @@ double Interpol1D::NashSuttcliffe(const std::vector<double>& obs, const std::vec
 }
 
 /**
+* @brief Box–Muller method for normally distributed random numbers.
+* @details This generate a normally distributed signal of mean=0 and std_dev=1.
+* For numerical reasons, the extremes will always be less than 7 * std_dev from the mean.
+* See https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+* @note Do not forget to initialize the (pseudo) random number generator! Something like "srand( static_cast<unsigned int>(time(NULL)) );"
+* @return normally distributed number
+*/
+double Interpol1D::getBoxMuller()
+{
+	const double U = static_cast<double>(rand())/(RAND_MAX);
+	const double V = static_cast<double>(rand())/(RAND_MAX);
+	return  Optim::fastSqrt_Q3(-2.*log(U)) * cos(2.*Cst::PI*V);
+}
+
+/**
 * @brief Computes the distance between a point (x,y) and a line y=ax+b
 * @param x x coordinates of the point
 * @param y y coordinates of the point
