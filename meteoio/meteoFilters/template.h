@@ -29,6 +29,7 @@ namespace mio {
 /**
  * @class TEMPLATE
  * @brief This (empty) class is to be used as a template for developing new filters
+ * @details
  * Here, write a description of how the filter operates, references to papers, etc
  * @ingroup processing
  * @author Mathias Bavay

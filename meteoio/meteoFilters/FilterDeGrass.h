@@ -27,7 +27,8 @@ namespace mio {
 /**
  * @class FilterDeGrass
  * @ingroup processing
- * @brief This filter is used to distinguish if snow (HS) is on the ground or not, because the 
+ * @brief This filter is used to distinguish if snow (HS) is on the ground or not
+ * @details This is useful because the
  * ultrasonic sensor cannot distinguish between snow or vegetation/grass on the ground. 
  * The filter is based on total snow depth (HS), snow surface temperature (TSS), ground surface temperature (TSG)
  * and reflected shortwave radiation (RSWR). 

@@ -28,6 +28,7 @@ namespace mio {
  * @class  ProcIIR
  * @ingroup processing
  * @brief Infinite Impulse Response (IIR) filter.
+ * @details
  * This filter can either be used as a low pass or high pass filter. It is based on a Critically Damped, 2 poles filter (considering that
  * it is better avoid overshooting even at the cost of a gentler falloff). It takes the following arguments:
  *  - TYPE: either LP (for *Low Pass*) or HP (for *High Pass*);
