@@ -35,10 +35,14 @@ namespace mio {
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
  *
+ * @note the emissivity variation is not linear with elevation, but it is possible to derive some approximate lapse rate for the elevation on interest, for example from
+ * Centeno, M. <i>"New formulae for the equivalent night sky emissivity"</i>, 1982, Solar Energy, <b>28(6)</b>, 489-498 (watch out, an exponent is wrong in quation 13 page 491).
+ * A better approach would be to use a power function to fit the emissivity as a function of the elevation...
+ *
  * @code
  * ILWR::algorithms = ILWR_EPS
  * ILWR::ilwr_eps::soft = true
- * ILWR::ilwr_eps::rate = -0.03125
+ * ILWR::ilwr_eps::rate = -1.8e-5 ;around 2000m elevation
  * @endcode
  */
 class ILWREpsAlgorithm : public InterpolationAlgorithm {

@@ -56,7 +56,7 @@ namespace mio {
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
  *
- * It is possible to disable a given Processing Element for specific stations, using the <i>exclude</i> or <i>only</i>
+ * It is possible to disable a given Processing Element for specific stations, using the **exclude** or **only**
  * options followed by a list of station IDs (see example below). This is supported automatically by all Processing Elements. Several Processing Elements
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
