@@ -46,10 +46,10 @@ namespace mio {
  *       - CORRECTIONS: the file and path containing the corrections to apply (mandatory when using PERIOD);
  *       - COLUMN: when using a corrections file, which column should be used if this is a multi-column file (knowing that the indices is column 1. Default: 2).
  *  - when adding noise:
- *       - RANGE: the scaling factor to apply to the random values;
+ *       - RANGE: the scaling factor to apply to the random values (see below);
  *       - DISTRIBUTION: to specify the random numbers distribution as either
- *           + uniform: the range represents the maximum amplitude of the noise;
- *           + normal: the range represents the standard deviation of the noise.
+ *           + uniform: the range represents the *maximum amplitude* of the noise;
+ *           + normal: the range represents the *standard deviation* of the noise.
  *
  * @code
  * TA::filter1    = add
