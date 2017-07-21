@@ -41,7 +41,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string parname( MeteoData::getParameterName(ii) ); //Current parameter name
 		const std::string algo_name( getAlgorithmsForParameter(parname) );
-		const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+		const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
 
 		mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 	}
@@ -109,7 +109,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 			it->second->resample(index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			const std::string algo_name( getAlgorithmsForParameter(parname) );
-			const std::vector<std::string> vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
 			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
@@ -140,15 +140,23 @@ std::string Meteo1DInterpolator::getAlgorithmsForParameter(const std::string& pa
  * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
  * The potential arguments are also extracted.
  * @param parname meteo parameter to deal with
- * @param algo_name algorithm name
- * @return vector of arguments
+ * @param algorithm algorithm name
+ * @return vector of named arguments
  */
-std::vector<std::string> Meteo1DInterpolator::getArgumentsForAlgorithm(const std::string& parname, const std::string& algo_name) const
+std::vector< std::pair<std::string, std::string> > Meteo1DInterpolator::getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm) const
 {
-	std::vector<std::string> vecArguments;
-	cfg.getValue(parname+"::"+algo_name, "Interpolations1D", vecArguments, IOUtils::nothrow);
+	const std::string key_prefix( parname+"::"+algorithm+"::" );
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, "Interpolations1D") );
 
-	return vecArguments;
+	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
+		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	}
+
+	return vecArgs;
 }
 
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {

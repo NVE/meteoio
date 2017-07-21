@@ -23,35 +23,28 @@
 
 namespace mio {
 
-Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs),
              accumulate_period(IOUtils::nodata), strict(false)
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args<1 || nr_args>2)
-		throw InvalidArgumentException("Please at least provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
+	bool has_period=false;
 
-	bool period_read = false;
-	for (size_t ii=0; ii<nr_args; ii++) {
-		if (IOUtils::isNumeric(vecArgs[ii])) {
-			if (period_read==true)
-				throw InvalidArgumentException("Two arguments "+i_algoname+" resampling has been deprecated! Please use the \"PSUM_Distribute\" Processing Element instead!", AT);
-
-			IOUtils::convertString(accumulate_period, vecArgs[ii]);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="PERIOD") {
+			parseArg(vecArgs[ii], accumulate_period);
 			accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 			if (accumulate_period<=0.) {
 				std::ostringstream ss;
 				ss << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
-			period_read = true;
-		} else if (vecArgs[ii]=="strict") {
-			if (strict) //do not set strict more than once!
-				throw InvalidArgumentException("Do not provide \"strict\" more than once for \""+i_parname+"::"+i_algoname+"\"", AT);
-			strict = true;
-		} else
-			throw InvalidArgumentException("Invalid argument \""+vecArgs[ii]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
+			has_period = true;
+		} else if (vecArgs[ii].first=="STRICT") {
+			parseArg(vecArgs[ii], strict);
+		}
 	}
+
+	if (!has_period) throw InvalidArgumentException("Please provide a PERIOD for resampling algorithm "+i_algoname, AT);
 }
 
 std::string Accumulate::toString() const

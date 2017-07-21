@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @brief Generate solar radiation out of daily sums.
+ * @details
  * Daily sums of solar radiation (once, per day, any time during the day). Data provided at midnight is considered to belong to the day that just finished)
  * are compared to the potential radiation, leading to an atmospheric loss factor.
  * This loss factor is then applied to the potential solar radiation calculated at the requested time.
@@ -35,7 +36,7 @@ namespace mio {
  */
 class Daily_solar : public ResamplingAlgorithms {
 	public:
-		Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+		Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);

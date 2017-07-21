@@ -27,7 +27,7 @@
 
 namespace mio {
 
-ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
 
@@ -109,7 +109,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 	indexP1=IOUtils::npos;
 	indexP2=IOUtils::npos;
 
-	const Date dateStart = resampling_date - window_size;
+	const Date dateStart( resampling_date - window_size );
 	for (size_t ii=pos; ii-- >0; ) { //because idx gets decremented right away
 		if (vecM[ii].date < dateStart) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {

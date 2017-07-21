@@ -22,7 +22,7 @@
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+TEMPLATE::TEMPLATE(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
              : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
 {
 	//implement here the arguments parsing

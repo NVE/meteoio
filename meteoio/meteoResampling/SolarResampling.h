@@ -27,6 +27,7 @@ namespace mio {
 
 /**
  * @brief Interpolate solar radiation.
+ * @details
  * The available solar radiation data is compared to the potential radiation, leading to atmospheric loss
  * factors. At the point that has to be interpolated, the loss factor is linearly interpolated and
  * applied to the potential radiation. When extrapolating the data as well as at the start/end of the day (ie
@@ -36,13 +37,19 @@ namespace mio {
  * When using this algorithm for RSWR, an albedo is required. A default value of 0.5 is used. If the snow
  * height is available and greater than a 10cm threshold, a snow albedo is used. Below this threshold,
  * a soil albedo is used.
+ *
+ * It takes the following arguments:
+ *  - WINDOW_SIZE: This represents how big a data gap can be and still be interpolated. This allows to overwrite the global WINDOW_SIZE (in ResamplingAlgorithms) for
+ * this parameter and resampling algorithm (optional);
+ *  - EXTRAPOLATE: If set to TRUE, points *outside* of available measurements will be interpolated (otherwise, there need to be values before and after a missing point for it to
+ * be interpolated. Optional).
  * @code
  * ISWR::resample   = solar
  * @endcode
  */
 class Solar : public ResamplingAlgorithms {
 	public:
-		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);

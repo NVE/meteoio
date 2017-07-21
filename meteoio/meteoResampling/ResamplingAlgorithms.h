@@ -19,6 +19,7 @@
 #define RESAMPLINGALGORITHMS_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/IOUtils.h>
 
 #include <string>
 #include <vector>
@@ -43,14 +44,14 @@ namespace mio {
  * WINDOW_SIZE     = 86400
  * TA::resample    = linear
  *
- * RH::resample    = linear
- * RH::linear      = 172800
+ * RH::resample            = linear
+ * RH::linear::window_size = 172800
  *
- * VW::resample    = n_neighbor
- * VW::n_neighbor  = extrapolate
+ * VW::resample             = nearest
+ * VW::nearest::extrapolate = true
  *
- * PSUM::resample   = accumulate
- * PSUM::accumulate = 3600
+ * PSUM::resample           = accumulate
+ * PSUM::accumulate::period = 3600
  * @endcode
  *
  * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the WINDOW_SIZE. Otherwise, the section's WINDOW_SIZE is
@@ -79,6 +80,7 @@ namespace mio {
 /**
  * @class ResamplingAlgorithms
  * @brief Interface class for the temporal resampling algorithms
+ * @details
  * These models generate data points that are missing based on neighbouring points in a time series.
  *
  * @ingroup stats
@@ -96,7 +98,7 @@ class ResamplingAlgorithms {
 			end
 		};
 
-		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& /*vecArgs*/)
+		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
 		                    : algo(i_algoname), parname(i_parname), window_size(dflt_window_size) {}
 
 		virtual ~ResamplingAlgorithms() {}
@@ -120,6 +122,11 @@ class ResamplingAlgorithms {
 		static Date getDailyStart(const Date& resampling_date);
 		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, size_t pos, const Date& intervalStart, const Date& intervalEnd);
 
+		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for resampling algorithm " + algo, AT);
+		}
+
 		const std::string algo, parname;
 		double window_size;
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< These thresholds are used to handle solar radiation
@@ -127,7 +134,7 @@ class ResamplingAlgorithms {
 
 class ResamplingAlgorithmsFactory {
 	public:
-		static ResamplingAlgorithms* getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& window_size, const std::vector<std::string>& vecArgs);
+		static ResamplingAlgorithms* getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace

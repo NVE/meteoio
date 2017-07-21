@@ -25,20 +25,22 @@
 
 namespace mio {
 
-DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), range(IOUtils::nodata), phase(0.)
 {
-	const size_t nr_args = vecArgs.size();
+	bool has_range=false;
 
-	if (nr_args==1) {
-		IOUtils::convertString(range, vecArgs[0]);
-	} else if (nr_args==2) {
-		IOUtils::convertString(range, vecArgs[0]);
-		IOUtils::convertString(phase, vecArgs[1]);
-		phase *= -1; //shift the minimum *later* in the day
-	} else if (nr_args>2) {
-		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="RANGE") {
+			parseArg(vecArgs[ii], range);
+			has_range = true;
+		} else if (vecArgs[ii].first=="PHASE") {
+			parseArg(vecArgs[ii], phase);
+			phase *= -1; //shift the minimum *later* in the day
+		}
 	}
+
+	if (!has_range) throw InvalidArgumentException("Please provide a RANGE for resampling algorithm "+i_algoname, AT);
 }
 
 std::string DailyAverage::toString() const
@@ -56,16 +58,16 @@ std::string DailyAverage::toString() const
 
 double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& dayStart, const double& frac_day) const
 {
-	const Date dayEnd = dayStart+1.;
+	const Date dayEnd( dayStart+1. );
 	const size_t indexP = getDailyValue(vecM, paramindex, index, dayStart, dayEnd);
 	if (indexP==IOUtils::npos) return IOUtils::nodata;
 
 	const double avg = vecM[indexP](paramindex); //from getDailyValue we are guaranteed to have a value
 
 	//search for min or max or both
-	const std::string param_name = vecM[indexP].getNameForParameter(paramindex);
-	const std::string min_name = param_name+"_MIN";
-	const std::string max_name = param_name+"_MAX";
+	const std::string param_name( vecM[indexP].getNameForParameter(paramindex) );
+	const std::string min_name( param_name+"_MIN" );
+	const std::string max_name( param_name+"_MAX" );
 	const double min = (vecM[indexP].param_exists( min_name ))?  vecM[indexP](min_name) : IOUtils::nodata;
 	const double max = (vecM[indexP].param_exists( max_name ))?  vecM[indexP](max_name) : IOUtils::nodata;
 	double A = range; //fallback: user provided range
@@ -97,7 +99,7 @@ void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*pos
 	double frac_day = (julian+.5 - Optim::intPart(julian+.5)); // julian day starts at noon and we want the fraction of the day, from 0 to 1!
 	if (frac_day==0.) frac_day = 1.; //because we considere here that midnight belongs to the day before
 
-	const Date dayStart = getDailyStart(md.date);
+	const Date dayStart( getDailyStart(md.date) );
 	const double val1 = getValue(vecM, paramindex, index, dayStart, frac_day);
 	if (val1==IOUtils::nodata)
 		return; //we could also decide to use val0 & val2

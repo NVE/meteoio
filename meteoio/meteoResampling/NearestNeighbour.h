@@ -24,20 +24,27 @@ namespace mio {
 
 /**
  * @brief Nearest Neighbour data resampling
+ * @details
  * Find the nearest neighbour of a desired data point that is not IOUtils::nodata and copy that value into the desired data point
  *        - If the data point itself is not IOUtils::nodata, nothing needs to be done
  *        - If two points have the same distance from the data point to be resampled, calculate mean and return it
- *        - if the argument extrapolate is provided, points within WINDOW_SIZE seconds of only one valid point will receive the value of this point
- * The window size can be specified as argument but must appear in first position.
+ *
+ * It takes the following arguments:
+ *  - WINDOW_SIZE: This represents how big a data gap can be and still be interpolated. This allows to overwrite the global WINDOW_SIZE (in ResamplingAlgorithms) for
+ * this parameter and resampling algorithm (optional);
+ *  - EXTRAPOLATE: If set to TRUE, points *outside* of available measurements will be interpolated (otherwise, there need to be values before and after a missing point for it to
+ * be interpolated. Optional).
+ *
  * @code
  * [Interpolations1D]
- * TA::resample   = nearest
- * TA::nearest = 86400 extrapolate
+ * TA::resample             = nearest
+ * TA::nearest::window_size = 86400
+ * TA::nearest::extrapolate = true
  * @endcode
  */
 class NearestNeighbour : public ResamplingAlgorithms {
 	public:
-		NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+		NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);

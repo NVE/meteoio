@@ -72,9 +72,9 @@ class Meteo1DInterpolator {
 		const std::string toString() const;
 
  	private:
-		std::vector<std::string> getArgumentsForAlgorithm(const std::string& parname, const std::string& algo_name) const;
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm) const;
 		std::string getAlgorithmsForParameter(const std::string& parname) const;
-		
+
 		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
 		double window_size; ///< In seconds

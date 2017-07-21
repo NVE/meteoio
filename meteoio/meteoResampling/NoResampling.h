@@ -24,6 +24,7 @@ namespace mio {
 
 /**
  * @brief No resampling: do not resample parameter but keep original sampling rate
+ * @details
  * It is enabled either with the "none" or "no" key.
  * @code
  * [Interpolations1D]
@@ -32,7 +33,7 @@ namespace mio {
  */
 class NoResampling : public ResamplingAlgorithms {
 	public:
-		NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+		NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);

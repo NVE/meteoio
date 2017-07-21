@@ -24,19 +24,20 @@ namespace mio {
 
 /**
  * @brief Accumulation over a user given period.
+ * @details
  * The input data is accumulated over a given time interval (given as filter argument, in seconds).
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
- * hourly precipitation measurements. Remarks:
- * - the accumulation period has to be provided as an argument (in seconds)
- * - if giving the argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
+ * hourly precipitation measurements. It takes the following arguments:
+ * - PERIOD: the accumulation period in seconds (mandatory);
+ * - STRICT: if setting the argument "strict" to "true", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
  * @code
  * PSUM::resample   = accumulate
- * PSUM::accumulate = 3600
+ * PSUM::accumulate::period = 3600
  * @endcode
  */
 class Accumulate : public ResamplingAlgorithms {
 	public:
-		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);

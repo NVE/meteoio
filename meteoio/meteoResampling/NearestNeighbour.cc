@@ -24,27 +24,21 @@
 
 namespace mio {
 
-NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args==0) return;
-	if (nr_args==1) {
-		if (vecArgs[0]=="extrapolate")
-			extrapolate=true;
-		else {
-			IOUtils::convertString(window_size, vecArgs[0]);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="WINDOW_SIZE") {
+			parseArg(vecArgs[ii], window_size);
 			window_size /= 86400.; //user uses seconds, internally julian day is used
+			if (window_size<=0.) {
+				std::ostringstream ss;
+				ss << "Invalid accumulation period (" << window_size << ") for \"" << i_parname << "::" << i_algoname << "\"";
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+		} else if (vecArgs[ii].first=="EXTRAPOLATE") {
+			parseArg(vecArgs[ii], extrapolate);
 		}
-	} else if (nr_args==2) {
-		IOUtils::convertString(window_size, vecArgs[0]);
-		window_size /= 86400.; //user uses seconds, internally julian day is used
-		if (vecArgs[1]=="extrapolate")
-			extrapolate=true;
-		else
-			throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
-	} else {
-		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
 }
 
@@ -75,15 +69,15 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
 		return;
 
-	const Date resampling_date = md.date;
+	const Date resampling_date( md.date );
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
 	if (foundP1 && foundP2) { //standard behavior
-		const Duration diff1 = resampling_date - vecM[indexP1].date; //calculate time interval to element at index
-		const Duration diff2 = vecM[indexP2].date - resampling_date; //calculate time interval to element at index
+		const Duration diff1( resampling_date - vecM[indexP1].date ); //calculate time interval to element at index
+		const Duration diff2( vecM[indexP2].date - resampling_date ); //calculate time interval to element at index
 		const double val1 = vecM[indexP1](paramindex);
 		const double val2 = vecM[indexP2](paramindex);
 

@@ -29,11 +29,10 @@ namespace mio {
 
 const size_t Daily_solar::samples_per_day = 24*3; //every 20 minutes
 
-Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
             : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), radiation(), station_index(), dateStart(), dateEnd(), loss_factor()
 {
-	const size_t nr_args = vecArgs.size();
-	if (nr_args>0) {
+	if (!vecArgs.empty()) {
 		throw InvalidArgumentException("Too many arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
 }
@@ -110,9 +109,6 @@ void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*posi
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
-
-	if (paramindex!=MeteoData::ISWR && paramindex!=MeteoData::RSWR)
-		throw IOException("This method only applies to short wave radiation! (either ISWR or RSWR)", AT);
 
 	const double lat = md.meta.position.getLat();
 	const double lon = md.meta.position.getLon();
