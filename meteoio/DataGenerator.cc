@@ -25,8 +25,8 @@ namespace mio {
 DataGenerator::DataGenerator(const Config& cfg)
               : DataCreator(cfg)
 {
-	const std::string section( "Generators" );
-	const std::string key_pattern( "::generators" );
+	static const std::string section( "Generators" );
+	static const std::string key_pattern( "::generators" );
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
 
 	std::set<std::string>::const_iterator it;
