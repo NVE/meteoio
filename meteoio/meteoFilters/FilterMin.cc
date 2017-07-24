@@ -48,21 +48,22 @@ void FilterMin::process(const unsigned int& param, const std::vector<MeteoData>&
 
 void FilterMin::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_min=false, has_min_reset=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		} else if (vecArgs[ii].first=="MIN") {
-			parseArg(vecArgs[ii], min_val);
+			IOUtils::parseArg(vecArgs[ii], where, min_val);
 			has_min = true;
 		} else if (vecArgs[ii].first=="MIN_RESET") {
-			parseArg(vecArgs[ii], min_soft);
+			IOUtils::parseArg(vecArgs[ii], where, min_soft);
 			has_min_reset = true;
 		}
 	}
 
-	if (!has_min) throw InvalidArgumentException("Please provide a MIN value for filter "+getName(), AT);
+	if (!has_min) throw InvalidArgumentException("Please provide a MIN value for "+where, AT);
 	if (is_soft && !has_min_reset) min_soft = min_val;
 }
 

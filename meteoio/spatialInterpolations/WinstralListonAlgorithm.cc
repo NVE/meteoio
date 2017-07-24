@@ -29,6 +29,7 @@ WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<st
                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
                     inputIsAllZeroes(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_base=false, has_ref=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -41,7 +42,7 @@ WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<st
 		}
 	}
 
-	if (!has_ref || !has_base) throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	if (!has_ref || !has_base) throw InvalidArgumentException("Wrong number of arguments supplied for "+where, AT);
 }
 
 double WinstralListonAlgorithm::getQualityRating(const Date& i_date)

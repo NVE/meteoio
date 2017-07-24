@@ -73,11 +73,12 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 
 void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MAX_COEFF") {
-			parseArg(vecArgs[ii], max_coeff);
+			IOUtils::parseArg(vecArgs[ii], where, max_coeff);
 		} else if (vecArgs[ii].first=="MIN_COEFF") {
-			parseArg(vecArgs[ii], min_coeff);
+			IOUtils::parseArg(vecArgs[ii], where, min_coeff);
 		}
 	}
 }

@@ -27,24 +27,25 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs),
              accumulate_period(IOUtils::nodata), strict(false)
 {
+	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 	bool has_period=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="PERIOD") {
-			parseArg(vecArgs[ii], accumulate_period);
+			IOUtils::parseArg(vecArgs[ii], where, accumulate_period);
 			accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 			if (accumulate_period<=0.) {
 				std::ostringstream ss;
-				ss << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
+				ss << "Invalid accumulation period (" << accumulate_period << ") for \"" << where << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			has_period = true;
 		} else if (vecArgs[ii].first=="STRICT") {
-			parseArg(vecArgs[ii], strict);
+			IOUtils::parseArg(vecArgs[ii], where, strict);
 		}
 	}
 
-	if (!has_period) throw InvalidArgumentException("Please provide a PERIOD for resampling algorithm "+i_algoname, AT);
+	if (!has_period) throw InvalidArgumentException("Please provide a PERIOD for "+where, AT);
 }
 
 std::string Accumulate::toString() const

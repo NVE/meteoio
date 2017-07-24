@@ -280,6 +280,18 @@ namespace IOUtils {
 	}
 
 	/**
+	* @brief Parse a given named argument
+	* @tparam T[in] The type wanted for the return value (template type parameter).
+	* @param[in] arg  key/value pair to be parsed
+	* @param[in] algo  the name of the filter or algorithm (for error messages)
+	* @param[out] val the parsed value
+	*/
+	template <class T> static void parseArg(const std::pair< std::string, std::string>& arg, const std::string& algo, T& val) {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument '"+arg.first+"::"+arg.second+"' for " + algo, AT);
+		}
+
+	/**
 	* @brief A function that parses a Config object for COORSYS, COORDPARAM keywords in [Input] and [Output]
 	*        section and sets the respective strings to the values of those keywords
 	* @param[in] cfg  A Config object

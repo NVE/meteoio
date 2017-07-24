@@ -60,13 +60,14 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 
 void FilterUnheatedPSUM::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		} else if (vecArgs[ii].first=="THRESH_RH") {
-			parseArg(vecArgs[ii], thresh_rh);
+			IOUtils::parseArg(vecArgs[ii], where, thresh_rh);
 		} else if (vecArgs[ii].first=="THRESH_DT") {
-			parseArg(vecArgs[ii], thresh_Dt);
+			IOUtils::parseArg(vecArgs[ii], where, thresh_Dt);
 		}
 	}
 }

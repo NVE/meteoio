@@ -148,6 +148,7 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 
 void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	//"soft" is already read with the window parameters by the constructor of WindowedFilter
 	bool has_type=false;
 
@@ -160,13 +161,13 @@ void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::st
 			else if (type_str=="MEDIAN") type=median_agg;
 			else if (type_str=="WIND_AVG") type=wind_avg_agg;
 			else
-				throw InvalidArgumentException("Unknown type '"+type_str+"' for filter " + getName(), AT);
+				throw InvalidArgumentException("Unknown type '"+type_str+"' for " + where, AT);
 
 			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for filter "+getName(), AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 } //namespace

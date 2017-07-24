@@ -24,16 +24,17 @@ namespace mio {
 ConstAlgorithm::ConstAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                            : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), user_cst(0.)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_cst=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="VALUE") {
-			parseArg(vecArgs[ii], user_cst);
+			IOUtils::parseArg(vecArgs[ii], where, user_cst);
 			has_cst = true;
 		}
 	}
 
-	if (!has_cst) throw InvalidArgumentException("Please provide a value for the "+algo+" algorithm", AT);
+	if (!has_cst) throw InvalidArgumentException("Please provide a value for the "+where, AT);
 }
 
 double ConstAlgorithm::getQualityRating(const Date& i_date)

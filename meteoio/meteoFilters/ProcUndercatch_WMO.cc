@@ -139,6 +139,7 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 
 void ProcUndercatch_WMO::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -165,21 +166,21 @@ void ProcUndercatch_WMO::parse_args(const std::vector< std::pair<std::string, st
 			} else if (type_str=="HELLMANNSH") {
 				type=hellmannsh;
 			} else {
-				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for filter "+getName(), AT);
+				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for "+where, AT);
 			}
 			has_type = true;
 		} else if (vecArgs[ii].first=="SNOW") {
-			IOUtils::convertString(factor_snow, vecArgs[ii].second);
+			IOUtils::parseArg(vecArgs[ii], where, factor_snow);
 		} else if (vecArgs[ii].first=="MIXED") {
-			IOUtils::convertString(factor_mixed, vecArgs[ii].second);
+			IOUtils::parseArg(vecArgs[ii], where, factor_mixed);
 		} else if (vecArgs[ii].first=="T_SNOW") {
-			IOUtils::convertString(Tsnow, vecArgs[ii].second);
+			IOUtils::parseArg(vecArgs[ii], where, Tsnow);
 		} else if (vecArgs[ii].first=="T_RAIN") {
-			IOUtils::convertString(Train, vecArgs[ii].second);
+			IOUtils::parseArg(vecArgs[ii], where, Train);
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for filter "+getName(), AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 } //end namespace

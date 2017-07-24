@@ -26,11 +26,12 @@ ListonWindAlgorithm::ListonWindAlgorithm(const std::vector< std::pair<std::strin
                                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), vecDataVW(), vecDataDW(),
                                    scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
-			parseArg(vecArgs[ii], scale);
+			IOUtils::parseArg(vecArgs[ii], where, scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
-			parseArg(vecArgs[ii], alpha);
+			IOUtils::parseArg(vecArgs[ii], where, alpha);
 		}
 	}
 }

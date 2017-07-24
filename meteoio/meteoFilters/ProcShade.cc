@@ -216,6 +216,7 @@ void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::
 
 void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool from_dem=true;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -231,7 +232,7 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 			masks["*"] = mask; //this mask is valid for ALL stations
 			from_dem = false;
 		} else if (vecArgs[ii].first=="DUMP_MASK") {
-			parseArg(vecArgs[ii], write_mask_out);
+			IOUtils::parseArg(vecArgs[ii], where, write_mask_out);
 		}
 	}
 

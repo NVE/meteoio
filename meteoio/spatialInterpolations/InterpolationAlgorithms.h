@@ -50,11 +50,6 @@ class Trend {
 		void multilinearRetrend(const DEMObject& dem, Grid2DObject &grid) const;
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& vecMeta);
 
-		template <class T> static void parseArg(const std::pair< std::string, std::string>& arg, const std::string& algo, T& val) {
-			if (!IOUtils::convertString(val, arg.second))
-				throw InvalidArgumentException("Can not parse trend argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
-		}
-
 		FitMult multi_trend;
 		Fit1D trend_model;
 		const std::string param;
@@ -90,11 +85,6 @@ class InterpolationAlgorithm {
 		std::vector<double> getData(const Date& i_date, const std::string& i_param);
 		size_t getData(const Date& i_date, const std::string& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta);
-
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
-			if (!IOUtils::convertString(val, arg.second))
-				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
-		}
 
 		TimeSeriesManager& tsmanager;
 		Date date;

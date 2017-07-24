@@ -24,6 +24,7 @@ PPHASEInterpolation::PPHASEInterpolation(const std::vector< std::pair<std::strin
                                       : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi),
                                       model(THRESH), fixed_thresh(IOUtils::nodata), range_start(IOUtils::nodata), range_norm(IOUtils::nodata)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_type=false, has_snow=false, has_rain=false;
 	double snow_thresh=273.15, rain_thresh=273.15; //to silence a warning
 
@@ -34,26 +35,26 @@ PPHASEInterpolation::PPHASEInterpolation(const std::vector< std::pair<std::strin
 			if (user_algo=="THRESH") model = THRESH;
 			else if (user_algo=="RANGE") model = RANGE;
 			else
-				throw InvalidArgumentException("Unknown algorithm \""+user_algo+"\" supplied for the "+algo+" interpolation", AT);
+				throw InvalidArgumentException("Unknown algorithm \""+user_algo+"\" supplied for "+where, AT);
 
 			has_type = true;
 		} else if(vecArgs[ii].first=="SNOW") {
-			parseArg(vecArgs[ii], snow_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, snow_thresh);
 			has_snow = true;
 		} else if(vecArgs[ii].first=="RAIN") {
-			parseArg(vecArgs[ii], rain_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, rain_thresh);
 			has_rain = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for interpolation algorithm "+algo, AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 	if (model == THRESH) {
-		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for interpolation algorithm "+algo, AT);
+		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
 		fixed_thresh = snow_thresh;
 	}
 	if (model == RANGE) {
-		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for interpolation algorithm "+algo, AT);
-		if (snow_thresh==rain_thresh) throw InvalidArgumentException(algo+" interpolation: the two provided threshold must be different", AT);
+		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for "+where, AT);
+		if (snow_thresh==rain_thresh) throw InvalidArgumentException(where+" : the two provided threshold must be different", AT);
 		if (snow_thresh>rain_thresh) std::swap(snow_thresh, rain_thresh);
 		range_start = snow_thresh;
 		range_norm = 1. / (rain_thresh-snow_thresh);

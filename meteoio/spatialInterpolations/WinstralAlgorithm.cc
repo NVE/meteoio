@@ -30,6 +30,7 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_ref=false, has_synop=false;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="REF") {
@@ -38,12 +39,12 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
 		} else if(vecArgs[ii].first=="BASE") {
 			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
 		} else if(vecArgs[ii].first=="DW_SYNOP") {
-			parseArg(vecArgs[ii], user_synoptic_bearing);
+			IOUtils::parseArg(vecArgs[ii], where, user_synoptic_bearing);
 			has_synop = true;
 		}
 	}
 
-	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for the "+algo+" algorithm", AT);
+	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for "+where, AT);
 }
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date)

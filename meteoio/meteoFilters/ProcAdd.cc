@@ -104,6 +104,7 @@ void ProcAdd::normal_noise(const unsigned int& param, std::vector<MeteoData>& ov
 
 void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	const std::string corr_name = (block_name=="ADD")? "offset" : "factor";
 	bool has_type=false, has_cst=false, has_period=false, has_distribution=false, has_range=false;
 	size_t column=2; //default: use second column, ie one column after the date index
@@ -116,11 +117,10 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			else if (type_str=="FILE") type = 'f';
 			else if (type_str=="NOISE") type = 'n';
 			else
-				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+getName()+" filter", AT);
+				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for the "+where, AT);
 			has_type = true;
 		} else if (vecArgs[ii].first=="CST") {
-			if (!IOUtils::convertString(correction, vecArgs[ii].second))
-				throw InvalidArgumentException("Invalid "+corr_name+" \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter.", AT);
+			IOUtils::parseArg(vecArgs[ii], where, correction);
 			has_cst = true;
 		} else if (vecArgs[ii].first=="PERIOD") {
 			const std::string period_str( IOUtils::strToUpper(vecArgs[ii].second) );
@@ -131,7 +131,7 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			} else if (period_str=="HOURLY") {
 				period='h';
 			} else
-				throw InvalidArgumentException("Invalid period \""+period_str+"\" specified for the "+getName()+" filter", AT);
+				throw InvalidArgumentException("Invalid period \""+period_str+"\" specified for "+where, AT);
 			has_period = true;
 		} else if (vecArgs[ii].first=="CORRECTIONS") {
 			//if this is a relative path, prefix the path with the current path
@@ -141,7 +141,7 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			filename = path + "/" + FileUtils::getFilename(in_filename);
 		} else if (vecArgs[ii].first=="COLUMN") {
 			if (!IOUtils::convertString(column, vecArgs[ii].second))
-				throw InvalidArgumentException("Invalid column index \""+vecArgs[ii].second+"\" specified for the "+getName()+" filter", AT);
+				throw InvalidArgumentException("Invalid column index \""+vecArgs[ii].second+"\" specified for "+where, AT);
 		} else if (vecArgs[ii].first=="DISTRIBUTION") {
 			const std::string distribution_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (distribution_str=="UNIFORM") {
@@ -149,25 +149,25 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 			} else if (distribution_str=="NORMAL") {
 				distribution='n';
 			} else
-				throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for the "+getName()+" filter", AT);
+				throw InvalidArgumentException("Invalid distribution \""+distribution_str+"\" specified for "+where, AT);
 			has_distribution = true;
 		} else if (vecArgs[ii].first=="RANGE") {
 			if (!IOUtils::convertString(range, vecArgs[ii].second))
-				throw InvalidArgumentException("Invalid range specified for the "+getName()+" filter", AT);
+				throw InvalidArgumentException("Invalid range specified for "+where, AT);
 			has_range = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a type for filter "+getName(), AT);
-	if (type=='c' && !has_cst) throw InvalidArgumentException("Please provide "+corr_name+" for filter "+getName(), AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a type for "+where, AT);
+	if (type=='c' && !has_cst) throw InvalidArgumentException("Please provide "+corr_name+" for "+where, AT);
 	if (type=='f') {
-		if (!has_period) throw InvalidArgumentException("Please provide a period for filter "+getName(), AT);
-		if (filename.empty()) throw InvalidArgumentException("Please provide a correction file for filter "+getName(), AT);
+		if (!has_period) throw InvalidArgumentException("Please provide a period for "+where, AT);
+		if (filename.empty()) throw InvalidArgumentException("Please provide a correction file for "+where, AT);
 		ProcessingBlock::readCorrections(getName(), filename, column, period, 0., vecCorrections);
 	}
 	if (type=='n') {
-		if (!has_distribution) throw InvalidArgumentException("Please provide a noise distribution for filter "+getName(), AT);
-		if (!has_range) throw InvalidArgumentException("Please provide a noise range for filter "+getName(), AT);
+		if (!has_distribution) throw InvalidArgumentException("Please provide a noise distribution for "+where, AT);
+		if (!has_range) throw InvalidArgumentException("Please provide a noise range for "+where, AT);
 	}
 }
 

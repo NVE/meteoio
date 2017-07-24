@@ -140,11 +140,12 @@ void ProcPSUMDistribute::fillInterval(const unsigned int& param, std::vector<Met
 
 void ProcPSUMDistribute::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		} else if (vecArgs[ii].first=="MEAS_PERIOD") {
-			parseArg(vecArgs[ii], measured_period);
+			IOUtils::parseArg(vecArgs[ii], where, measured_period);
 			measured_period /= 86400.;
 		}
 	}

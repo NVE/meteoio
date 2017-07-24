@@ -33,18 +33,19 @@ namespace mio {
 FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
           : FilterBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
 {
+	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
 
 	if (nrArgs>1)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
+		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 
 	if (nrArgs==1) {
 		if (vecArgs[0].first=="FRAC") {
 			if (!IOUtils::convertString(range, vecArgs[0].second))
-				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for the "+getName()+" filter.", AT);
+				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
 			if (range<0. || range>1.)
-				throw InvalidArgumentException("Wrong range for filter " + getName() + ", it should be between 0 and 1", AT);
+				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
 		} else if (vecArgs[0].first=="SUPPR") {
 			const std::string in_filename( vecArgs[0].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
@@ -53,7 +54,7 @@ FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> 
 
 			fillSuppr_dates(filename, TZ);
 		} else
-			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for filter "+getName(), AT);
+			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
 	}
 }
 

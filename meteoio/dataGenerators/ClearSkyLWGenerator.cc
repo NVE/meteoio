@@ -23,6 +23,7 @@ namespace mio {
 
 void ClearSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -36,13 +37,13 @@ void ClearSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, s
 			else if (user_algo=="TANG") model = TANG;
 			else if (user_algo=="IDSO") model = IDSO;
 			else
-				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
 			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 bool ClearSkyLWGenerator::generate(const size_t& param, MeteoData& md)

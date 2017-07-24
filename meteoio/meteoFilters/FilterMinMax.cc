@@ -55,29 +55,30 @@ void FilterMinMax::process(const unsigned int& param, const std::vector<MeteoDat
 
 void FilterMinMax::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_min=false, has_min_reset=false;
 	bool has_max=false, has_max_reset=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		} else if (vecArgs[ii].first=="MAX") {
-			parseArg(vecArgs[ii], max_val);
+			IOUtils::parseArg(vecArgs[ii], where, max_val);
 			has_max = true;
 		} else if (vecArgs[ii].first=="MAX_RESET") {
-			parseArg(vecArgs[ii], max_soft);
+			IOUtils::parseArg(vecArgs[ii], where, max_soft);
 			has_max_reset = true;
 		} else if (vecArgs[ii].first=="MIN") {
-			parseArg(vecArgs[ii], min_val);
+			IOUtils::parseArg(vecArgs[ii], where, min_val);
 			has_min = true;
 		} else if (vecArgs[ii].first=="MIN_RESET") {
-			parseArg(vecArgs[ii], min_soft);
+			IOUtils::parseArg(vecArgs[ii], where, min_soft);
 			has_min_reset = true;
 		}
 	}
 
-	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
-	if (!has_min) throw InvalidArgumentException("Please provide a MIN value for filter "+getName(), AT);
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
+	if (!has_min) throw InvalidArgumentException("Please provide a MIN value for "+where, AT);
 	if (is_soft && !has_max_reset) max_soft = max_val;
 	if (is_soft && !has_min_reset) min_soft = min_val;
 }

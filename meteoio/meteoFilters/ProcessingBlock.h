@@ -80,11 +80,6 @@ class ProcessingBlock {
 		static void readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init, std::vector<double> &corrections);
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
-			if (!IOUtils::convertString(val, arg.second))
-				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for filter " + block_name, AT);
-		}
-
 		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;
 		const std::string block_name;

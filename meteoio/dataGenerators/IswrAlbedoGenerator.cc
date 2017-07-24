@@ -23,9 +23,10 @@ namespace mio {
 
 void IswrAlbedoGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="FORCE") {
-			parseArg(vecArgs[ii], force);
+			IOUtils::parseArg(vecArgs[ii], where, force);
 		}
 	}
 }

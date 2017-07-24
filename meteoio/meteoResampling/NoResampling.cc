@@ -26,8 +26,9 @@ namespace mio {
 NoResampling::NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
              : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
 {
+	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 	if (!vecArgs.empty()) //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+		throw InvalidArgumentException("Wrong number of arguments for \""+where+"\"", AT);
 }
 
 std::string NoResampling::toString() const

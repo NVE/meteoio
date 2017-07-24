@@ -24,9 +24,10 @@ namespace mio {
 
 void ClearSkySWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	//Get the optional arguments for the algorithm: constant value to use
 	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for "+where, AT);
 	}
 }
 

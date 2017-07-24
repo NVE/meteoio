@@ -27,6 +27,7 @@ ALS_Interpolation::ALS_Interpolation(const std::vector< std::pair<std::string, s
 		  : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), ALS_scan(), filename(),
 		    grid2d_path(), base_algo(), base_algo_user(), ta_thresh(IOUtils::nodata), als_mean(IOUtils::nodata), inputIsAllZeroes(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	gdm.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 	bool has_grid=false, has_base=false;
 
@@ -38,15 +39,15 @@ ALS_Interpolation::ALS_Interpolation(const std::vector< std::pair<std::string, s
 			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
 			has_base = true;
 		} else if(vecArgs[ii].first=="TA_THRESH") {
-			parseArg(vecArgs[ii], ta_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, ta_thresh);
 		}
 	}
 
-	if (!has_grid) throw InvalidArgumentException("Please provide a grid filename for the "+algo+" algorithm", AT);
-	if (!has_base) throw InvalidArgumentException("Please provide a base algorithm for the "+algo+" algorithm", AT);
+	if (!has_grid) throw InvalidArgumentException("Please provide a grid filename for the "+where, AT);
+	if (!has_base) throw InvalidArgumentException("Please provide a base algorithm for the "+where, AT);
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
-		throw InvalidNameException("[E] Invalid grid filename for "+algo+" interpolation algorithm: "+grid2d_path+"/"+filename, AT);
+		throw InvalidNameException("[E] Invalid grid filename for "+where+" : "+grid2d_path+"/"+filename, AT);
 	}
 }
 

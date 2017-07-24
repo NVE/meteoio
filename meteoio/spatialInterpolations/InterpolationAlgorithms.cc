@@ -279,25 +279,26 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
           : multi_trend(), trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min_alt(-1e12), trend_max_alt(1e12),
           frac(false), soft(false), multilinear(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="RATE") {
-			parseArg(vecArgs[ii], algo, user_lapse);
+			IOUtils::parseArg(vecArgs[ii], where, user_lapse);
 		} else if (vecArgs[ii].first=="FRAC") {
-			parseArg(vecArgs[ii], algo, frac);
+			IOUtils::parseArg(vecArgs[ii], where, frac);
 		} else if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], algo, soft);
+			IOUtils::parseArg(vecArgs[ii], where, soft);
 		} else if (vecArgs[ii].first=="TREND_MIN_ALT") {
-			parseArg(vecArgs[ii], algo, trend_min_alt);
+			IOUtils::parseArg(vecArgs[ii], where, trend_min_alt);
 		} else if (vecArgs[ii].first=="TREND_MAX_ALT") {
-			parseArg(vecArgs[ii], algo, trend_max_alt);
+			IOUtils::parseArg(vecArgs[ii], where, trend_max_alt);
 		} else if (vecArgs[ii].first=="MULTILINEAR") {
-			parseArg(vecArgs[ii], algo, multilinear);
+			IOUtils::parseArg(vecArgs[ii], where, multilinear);
 		}
 	}
 
-	if (frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for the "+algo+" algorithm", AT);
-	if (soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for the "+algo+" algorithm", AT);
-	if (soft && frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for the "+algo+" algorithm", AT);
+	if (frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for "+where, AT);
+	if (soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for "+where, AT);
+	if (soft && frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for "+where, AT);
 }
 
 std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& vecMeta)

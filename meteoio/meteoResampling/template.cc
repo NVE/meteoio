@@ -25,9 +25,10 @@ namespace mio {
 TEMPLATE::TEMPLATE(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
              : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
 {
-	//implement here the arguments parsing
-	/*if (!vecArgs.empty()) //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);*/
+	/*implement here the arguments parsing
+	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
+	if (!vecArgs.empty()) //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments for \""+where+"\"", AT);*/
 }
 
 std::string TEMPLATE::toString() const

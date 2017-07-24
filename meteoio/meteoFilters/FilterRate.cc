@@ -68,19 +68,20 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 
 void FilterRate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_max=false, has_min=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MIN") {
-			parseArg(vecArgs[ii], min_rate_of_change);
+			IOUtils::parseArg(vecArgs[ii], where, min_rate_of_change);
 			has_min = true;
 		} else if (vecArgs[ii].first=="MAX") {
-			parseArg(vecArgs[ii], max_rate_of_change);
+			IOUtils::parseArg(vecArgs[ii], where, max_rate_of_change);
 			has_max = true;
 		}
 	}
 
-	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
 	if (has_max && !has_min) min_rate_of_change = -max_rate_of_change;
 }
 

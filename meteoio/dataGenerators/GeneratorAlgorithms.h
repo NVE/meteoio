@@ -123,11 +123,6 @@ class GeneratorAlgorithm {
 		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {}
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
-			if (!IOUtils::convertString(val, arg.second))
-				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for algorithm " + algo, AT);
-		}
-
 		const std::set<std::string> excluded_stations, kept_stations;
 		const std::string algo;
 		

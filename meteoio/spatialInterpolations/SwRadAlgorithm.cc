@@ -29,15 +29,16 @@ SWRadInterpolation::SWRadInterpolation(const std::vector< std::pair<std::string,
                                                                        Meteo2DInterpolator& i_mi)
                                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true), project_on_slope(false)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SHADING") {
-			parseArg(vecArgs[ii], shading);
+			IOUtils::parseArg(vecArgs[ii], where, shading);
 		} else if (vecArgs[ii].first=="PROJECT_ON_SLOPE") {
-			parseArg(vecArgs[ii], project_on_slope);
+			IOUtils::parseArg(vecArgs[ii], where, project_on_slope);
 		} else if (vecArgs[ii].first=="SCALE") {
-			parseArg(vecArgs[ii], scale);
+			IOUtils::parseArg(vecArgs[ii], where, scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
-			parseArg(vecArgs[ii], alpha);
+			IOUtils::parseArg(vecArgs[ii], where, alpha);
 		}
 	}
 }

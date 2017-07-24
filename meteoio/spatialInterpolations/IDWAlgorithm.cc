@@ -24,11 +24,12 @@ namespace mio {
 IDWAlgorithm::IDWAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                          : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), scale(1e3), alpha(1.)
 {
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SCALE") {
-			parseArg(vecArgs[ii], scale);
+			IOUtils::parseArg(vecArgs[ii], where, scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
-			parseArg(vecArgs[ii], alpha);
+			IOUtils::parseArg(vecArgs[ii], where, alpha);
 		}
 	}
 }

@@ -22,16 +22,17 @@ namespace mio {
 
 void ConstGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	bool has_cst=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="VALUE") {
-			parseArg(vecArgs[ii], constant);
+			IOUtils::parseArg(vecArgs[ii], where, constant);
 			has_cst = true;
 		}
 	}
 
-	if (!has_cst) throw InvalidArgumentException("Please provide a VALUE for algorithm "+algo, AT);
+	if (!has_cst) throw InvalidArgumentException("Please provide a VALUE for "+where, AT);
 }
 
 bool ConstGenerator::generate(const size_t& param, MeteoData& md)

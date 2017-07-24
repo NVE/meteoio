@@ -138,6 +138,7 @@ double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW
 
 void ProcUndercatch_Forland::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -160,12 +161,12 @@ void ProcUndercatch_Forland::parse_args(const std::vector< std::pair<std::string
 			} else if (type_str=="GEONOR") {
 				type=geonor;
 			} else
-				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for filter "+getName(), AT);
+				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for "+where, AT);
 			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for filter "+getName(), AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 } //end namespace

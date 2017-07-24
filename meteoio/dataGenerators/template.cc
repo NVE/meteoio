@@ -23,17 +23,18 @@ namespace mio {
 void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	//Get the optional arguments for the algorithm. For example, process 1 argument
-	/*bool has_val=false; //so we can check the syntax
+	/*const std::string where( "generators::"+algo );
+	bool has_val=false; //so we can check the syntax
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="VALUE") {
-			parseArg(vecArgs[ii], value);
+			IOUtils::parseArg(vecArgs[ii], where, value);
 			has_val = true;
 		}
 	}
 
 	//now we check that we have the necessary arguments
-	if (!has_val) throw InvalidArgumentException("Please provide a VALUE for algorithm "+algo, AT);
+	if (!has_val) throw InvalidArgumentException("Please provide a VALUE for "+where, AT);
 	*/
 }
 

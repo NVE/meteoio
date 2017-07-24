@@ -117,6 +117,7 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 
 void ProcUnventilatedT::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_vw_thresh=false, has_usr_albedo=false, suppr_filter=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -126,19 +127,19 @@ void ProcUnventilatedT::parse_args(const std::vector< std::pair<std::string, std
 			else if (type_str=="HUWALD") nakamura = false;
 			else if (type_str=="SUPPR") suppr_filter = true;
 			else
-				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for filter \""+getName()+"\"", AT);
+				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\"", AT);
 		} else if (vecArgs[ii].first=="THRESH_VW") {
-			parseArg(vecArgs[ii], usr_vw_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, usr_vw_thresh);
 			has_vw_thresh = true;
 		} else if (vecArgs[ii].first=="SOIL_ALB") {
-			parseArg(vecArgs[ii], usr_albedo);
+			IOUtils::parseArg(vecArgs[ii], where, usr_albedo);
 			has_usr_albedo = true;
 		}
 	}
 
-	if (suppr_filter && !has_vw_thresh) throw InvalidArgumentException("Please provide a wind velocity threshold for filter "+getName(), AT);
+	if (suppr_filter && !has_vw_thresh) throw InvalidArgumentException("Please provide a wind velocity threshold for "+where, AT);
 	if (has_usr_albedo && (usr_albedo<0. || usr_albedo>1.) )
-		throw InvalidArgumentException("Albedo value should be between 0 and 1 for filter " + getName(), AT);
+		throw InvalidArgumentException("Albedo value should be between 0 and 1 for "+where, AT);
 }
 
 } //end namespace

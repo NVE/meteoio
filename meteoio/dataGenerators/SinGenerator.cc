@@ -23,6 +23,7 @@ namespace mio {
 
 void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	bool has_type=false, has_min=false, has_max=false;
 	double min=0., max=0.; //to silence a warning
 
@@ -33,22 +34,22 @@ void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::str
 			if (type_str=="YEARLY") type='y';
 			else if (type_str=="DAILY") type='d';
 			else
-				throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+algo+" generator", AT);
+				throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for "+where, AT);
 
 			has_type = true;
 		} else if(vecArgs[ii].first=="MIN") {
-			parseArg(vecArgs[ii], min);
+			IOUtils::parseArg(vecArgs[ii], where, min);
 			has_min = true;
 		} else if(vecArgs[ii].first=="MAX") {
-			parseArg(vecArgs[ii], max);
+			IOUtils::parseArg(vecArgs[ii], where, max);
 			has_max = true;
 		} else if(vecArgs[ii].first=="PHASE") {
-			parseArg(vecArgs[ii], phase);
+			IOUtils::parseArg(vecArgs[ii], where, phase);
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
-	if (!has_min || !has_max) throw InvalidArgumentException("Please provide a MIN and MAX for algorithm "+algo, AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+	if (!has_min || !has_max) throw InvalidArgumentException("Please provide a MIN and MAX for "+where, AT);
 
 	amplitude = 0.5*(max-min); //the user provides min, max
 	offset = min+amplitude;

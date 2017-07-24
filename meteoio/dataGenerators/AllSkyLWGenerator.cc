@@ -27,6 +27,7 @@ namespace mio {
 
 void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "generators::"+algo );
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -40,13 +41,13 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 				model = CRAWFORD;
 				clf_model = TauCLDGenerator::CLF_CRAWFORD;
 			} else
-				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
 			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for algorithm "+algo, AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)

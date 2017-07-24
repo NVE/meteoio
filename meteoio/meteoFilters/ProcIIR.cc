@@ -66,26 +66,27 @@ void ProcIIR::process(const unsigned int& param, const std::vector<MeteoData>& i
 
 void ProcIIR::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_type=false, has_cutoff=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SINGLE_PASS") {
-			parseArg(vecArgs[ii], bidirectional);
+			IOUtils::parseArg(vecArgs[ii], where, bidirectional);
 		} else if (vecArgs[ii].first=="CUTOFF") {
-			parseArg(vecArgs[ii], cutoff);
+			IOUtils::parseArg(vecArgs[ii], where, cutoff);
 			has_cutoff = true;
 		} else if (vecArgs[ii].first=="TYPE") {
 			const std::string type_str( vecArgs[ii].second );
 			if (type_str=="LP") low_pass = true;
 			else if (type_str=="HP") low_pass = false;
 			else
-				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for filter \""+getName()+"\"", AT);
+				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\"", AT);
 			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a type for filter "+getName(), AT);
-	if (!has_cutoff) throw InvalidArgumentException("Please provide a cutoff period for filter "+getName(), AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a type for "+where, AT);
+	if (!has_cutoff) throw InvalidArgumentException("Please provide a cutoff period for "+where, AT);
 }
 
 double ProcIIR::filterPoint(const double& raw_val, const double A[3], const double B[3], std::vector<double> &X, std::vector<double> &Y)

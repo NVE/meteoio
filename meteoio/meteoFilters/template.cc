@@ -52,9 +52,10 @@ void TEMPLATE::process(const unsigned int& param, const std::vector<MeteoData>& 
 
 void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	//for a filter that does not take any arguments
 	if ( !vecArgs.empty() ) //ie if there are arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
+		throw InvalidArgumentException("Wrong number of arguments for "+where, AT);
 
 	/*
 	//for a filter taking one or more arguments
@@ -66,15 +67,15 @@ void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string>
 	//parse the arguments (the keys are all upper case)
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
-			parseArg(vecArgs[ii], type);
+			IOUtils::parseArg(vecArgs[ii], where, type);
 		} else if (vecArgs[ii].first=="MAX") {
-			parseArg(vecArgs[ii], max_val);
+			IOUtils::parseArg(vecArgs[ii], where, max_val);
 			has_max = true;
 		}
 	}
 
 	//second part of the syntax check
-	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for filter "+getName(), AT);
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
 	*/
 }
 

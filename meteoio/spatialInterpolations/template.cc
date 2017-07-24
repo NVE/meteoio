@@ -25,6 +25,7 @@ TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vec
 {
 	/*parse the arguments, for example:
 
+	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_file=false; //this is used to perform basic syntax checks
 	double thresh;
 
@@ -33,7 +34,7 @@ TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vec
 			filename = vecArgs[ii].second;
 			has_file = true;
 		} else if(vecArgs[ii].first=="THRESH") {
-			parseArg(vecArgs[ii], thresh);
+			IOUtils::parseArg(vecArgs[ii], where, thresh);
 		}
 	}
 

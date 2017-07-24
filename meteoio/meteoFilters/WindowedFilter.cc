@@ -42,6 +42,7 @@ WindowedFilter::WindowedFilter(const std::vector< std::pair<std::string, std::st
  */
 void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_min_span = false, has_min_pts = false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -54,24 +55,22 @@ void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, 
 			else if (cntr_spec=="RIGHT")
 				centering = WindowedFilter::right;
 			else
-				throw InvalidArgumentException("Invalid window specification for filter "+getName(), AT);
+				throw InvalidArgumentException("Invalid window specification for "+where, AT);
 		} else if (vecArgs[ii].first=="MIN_PTS") {
-			if (!IOUtils::convertString(min_data_points, vecArgs[ii].second))
-				throw InvalidArgumentException("Can not parse MIN_PTS for filter "+getName(), AT);
+			IOUtils::parseArg(vecArgs[ii], where, min_data_points);
 			has_min_pts = true;
 		} else if (vecArgs[ii].first=="MIN_SPAN") {
 			double min_span;
-			if (!IOUtils::convertString(min_span, vecArgs[ii].second))
-				throw InvalidArgumentException("Can not parse MIN_SPAN for filter "+getName(), AT);
+			IOUtils::parseArg(vecArgs[ii], where, min_span);
 			min_time_span = Duration(min_span / 86400.0, 0.);
 			has_min_span = true;
 		} else if (vecArgs[ii].first=="SOFT") {
-			parseArg(vecArgs[ii], is_soft);
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		}
 	}
 
 	if (!has_min_span && !has_min_pts)
-		throw InvalidArgumentException("Please provide a window width specification (either MIN_PTS or MIN_SPAN) for filter "+getName(), AT);
+		throw InvalidArgumentException("Please provide a window width specification (either MIN_PTS or MIN_SPAN) for "+where, AT);
 }
 
 /**

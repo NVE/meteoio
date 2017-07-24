@@ -122,11 +122,6 @@ class ResamplingAlgorithms {
 		static Date getDailyStart(const Date& resampling_date);
 		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, size_t pos, const Date& intervalStart, const Date& intervalEnd);
 
-		template <class T> void parseArg(const std::pair< std::string, std::string>& arg, T& val) const {
-			if (!IOUtils::convertString(val, arg.second))
-				throw InvalidArgumentException("Can not parse argument "+arg.first+"::"+arg.second+"' for resampling algorithm " + algo, AT);
-		}
-
 		const std::string algo, parname;
 		double window_size;
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< These thresholds are used to handle solar radiation

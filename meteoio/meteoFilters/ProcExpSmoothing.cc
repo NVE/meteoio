@@ -88,18 +88,19 @@ double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, co
 
 void ProcExpSmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	bool has_alpha=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="ALPHA") {
-			parseArg(vecArgs[ii], alpha);
+			IOUtils::parseArg(vecArgs[ii], where, alpha);
 			has_alpha = true;
 		}
 	}
 
-	if (!has_alpha) throw InvalidArgumentException("Please provide an alpha value for filter "+getName(), AT);
+	if (!has_alpha) throw InvalidArgumentException("Please provide an alpha value for "+where, AT);
 	if (alpha<0. || alpha>1.) {
-		throw InvalidArgumentException("The alpha parameter for filter " + getName() + " must be between 0 and 1!", AT);
+		throw InvalidArgumentException("The alpha parameter for " + where + " must be between 0 and 1!", AT);
 	}
 }
 
