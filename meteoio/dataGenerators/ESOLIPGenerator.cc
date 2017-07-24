@@ -31,9 +31,6 @@ bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 //run through a Cst=0 data generator afterward
 bool ESOLIPGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if (param!=MeteoData::PSUM)
-		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to PSUM!!", AT);
-
 	if (vecMeteo.empty()) return true;
 
 	//Find first point that is not IOUtils::nodata

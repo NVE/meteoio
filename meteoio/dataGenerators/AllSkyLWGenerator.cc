@@ -45,6 +45,9 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 
 			has_type = true;
 		}
+		if (vecArgs[ii].first=="USE_RSWR") {
+			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
+		}
 	}
 
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
@@ -71,7 +74,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			sun.setDate(julian_gmt, 0.);
 
 			bool is_night;
-			cloudiness = TauCLDGenerator::getCloudiness(clf_model, md, sun, is_night);
+			cloudiness = TauCLDGenerator::getCloudiness(clf_model, md, use_rswr, sun, is_night);
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night

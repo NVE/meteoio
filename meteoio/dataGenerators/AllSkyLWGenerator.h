@@ -42,6 +42,8 @@ namespace mio {
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
  *      - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
+ *      - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
+ * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
@@ -63,7 +65,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
-		                 last_cloudiness() { parse_args(vecArgs); }
+		                 last_cloudiness(), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -80,6 +82,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		SunObject sun;
 		TauCLDGenerator::clf_parametrization clf_model;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		bool use_rswr;
 };
 
 } //end namespace mio
