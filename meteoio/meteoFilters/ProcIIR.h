@@ -31,15 +31,20 @@ namespace mio {
  * @details
  * This filter can either be used as a low pass or high pass filter. It is based on a Critically Damped, 2 poles filter (considering that
  * it is better avoid overshooting even at the cost of a gentler falloff). It takes the following arguments:
- *  - TYPE: either LP (for *Low Pass*) or HP (for *High Pass*);
+ *  - FREQ_RESPONSE: frequency response, either LP (for *Low Pass*) or HP (for *High Pass*);
  *  - CUTOFF: The cutoff <b>period</b> (defined as the frequency at a -3dB gain) given in seconds;
+ *  - TYPE: either CRITICALLY_DAMPED (default), BUTTERWORTH or BESSEL (see figure below);
  *  - SINGLE_PASS: Normally, the phase is removed by bidirectional filtering, ie. running the filter twice,
  * first backward and then forward (this also squares the amplitude response). If set to TRUE, this bidirectional filtering
  * is disabled.
  *
+ * \image html IIR_filter.png "Infinite Impulse Response filter: step response, LP bidirectional filtering"
+ * \image latex IIR_filter.eps "Infinite Impulse Response filter: step response, LP bidirectional filtering" width=0.9\textwidth
+ *
  * @code
  * HS::filter1      = IIR
- * HS::arg1::type   = LP
+ * HS::arg1::freq_response   = LP
+ * HS::arg1::type   = CRITICALLY_DAMPED
  * HS::arg1::cutoff = 10800 ;ie. 3 hours
  * @endcode
  *
@@ -68,6 +73,7 @@ class ProcIIR : public ProcessingBlock {
 
 		double cutoff;
 		double g, p, c; ///< filter definition: number of passes, polynomial coefficients, 3dB cutoff correction
+		IIR_Type type;
 		bool bidirectional, low_pass;
 };
 

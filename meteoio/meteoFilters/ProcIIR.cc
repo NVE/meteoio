@@ -24,13 +24,13 @@ using namespace std;
 namespace mio {
 
 ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(vecArgs, name), cutoff(0.), g(0.), p(0.), c(0.), bidirectional(true), low_pass(true)
+                  : ProcessingBlock(vecArgs, name), cutoff(0.), g(0.), p(0.), c(0.), type(CRITICALLY_DAMPED), bidirectional(true), low_pass(true)
 {
 	parse_args(vecArgs);
 
 	properties.points_before = 2;
 	properties.stage = ProcessingProperties::first;
-	getFilterParameters(CRITICALLY_DAMPED, low_pass, 2., g, p, c);
+	getFilterParameters(type, low_pass, 2., g, p, c);
 }
 
 void ProcIIR::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -75,17 +75,24 @@ void ProcIIR::parse_args(const std::vector< std::pair<std::string, std::string> 
 		} else if (vecArgs[ii].first=="CUTOFF") {
 			IOUtils::parseArg(vecArgs[ii], where, cutoff);
 			has_cutoff = true;
+		} else if (vecArgs[ii].first=="FREQ_RESPONSE") {
+			const std::string frequency( vecArgs[ii].second );
+			if (frequency=="LP") low_pass = true;
+			else if (frequency=="HP") low_pass = false;
+			else
+				throw InvalidArgumentException("Invalid freq_response \""+vecArgs[ii].second+"\" for \""+where+"\"", AT);
+			has_type = true;
 		} else if (vecArgs[ii].first=="TYPE") {
 			const std::string type_str( vecArgs[ii].second );
-			if (type_str=="LP") low_pass = true;
-			else if (type_str=="HP") low_pass = false;
+			if (type_str=="BUTTERWORTH") type = BUTTERWORTH;
+			else if (type_str=="CRITICALLY_DAMPED") type = CRITICALLY_DAMPED;
+			else if (type_str=="BESSEL") type = BESSEL;
 			else
 				throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\"", AT);
-			has_type = true;
 		}
 	}
 
-	if (!has_type) throw InvalidArgumentException("Please provide a type for "+where, AT);
+	if (!has_type) throw InvalidArgumentException("Please provide a freq_response for "+where, AT);
 	if (!has_cutoff) throw InvalidArgumentException("Please provide a cutoff period for "+where, AT);
 }
 
