@@ -47,6 +47,7 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
  */
 double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& use_rswr, SunObject& sun, bool &is_night)
 {
+	static const double night_thresh = 5.; //threshold on iswr for night or day
 	//we know that TA and RH are available, otherwise we would not get called
 	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
 	double ISWR=md(MeteoData::ISWR);
@@ -60,16 +61,19 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
-		if (ISWR==IOUtils::nodata) { //try to compute ISWR
-			if (!use_rswr) return IOUtils::nodata;
+		if (ISWR==IOUtils::nodata) { //ISWR is missing, trying to compute it
+			if (RSWR!=IOUtils::nodata)
+				is_night = (RSWR / albedo) < night_thresh; //in any case, we use RSWR, at least to know if it's night
+			if (!use_rswr)
+				return IOUtils::nodata;
 			if (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)
 				ISWR = RSWR / albedo;
+			else
+				return IOUtils::nodata; //no way to get ISWR, aborting
 		}
-
-		if (ISWR==IOUtils::nodata) return IOUtils::nodata; //no way to get ISWR, aborting
 	}
 
-	if (ISWR<5.) {
+	if (ISWR<night_thresh) {
 		is_night = true;
 		return IOUtils::nodata;
 	}
@@ -80,7 +84,7 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 	const double iswr_clear_sky = direct+diffuse;
 
 	//at sunrise or sunset, we might get clf<0 or clf>1 -> return nodata in order to use interpolation instead
-	if (iswr_clear_sky<5. || iswr_clear_sky<ISWR) {
+	if (iswr_clear_sky<night_thresh || iswr_clear_sky<ISWR) {
 		is_night = true;
 		return IOUtils::nodata;
 	}
