@@ -464,14 +464,14 @@ void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::v
 		} else {
 			if (frac) { //forced FRAC
 				const double avgData = Interpol1D::arithmeticMean(vecDat);
-				if (avgData!=0.) {
-					trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
-					trend_model.setLapseRate(user_lapse*avgData);
-					status = trend_model.fit();
-				} else { //since we only have zeroes, we should generate zeroes...
+				if (avgData==0.) {//since we only have zeroes, we should generate zeroes...
 					trend_model.setModel(Fit1D::ZERO, vecAltitudes, vecDat, false);
 					status = trend_model.fit();
 					trend_model.setInfo(trend_model.getInfo() + " (null average input for frac lapse rate)");
+				} else {
+					trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+					trend_model.setLapseRate(user_lapse*avgData);
+					status = trend_model.fit();
 				}
 			} else { //forced user lapse rate
 				trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);

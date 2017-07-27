@@ -38,8 +38,8 @@ namespace mio {
  * first backward and then forward (this also squares the amplitude response). If set to TRUE, this bidirectional filtering
  * is disabled.
  *
- * \image html IIR_filter.png "Infinite Impulse Response filter: step response, LP bidirectional filtering"
- * \image latex IIR_filter.eps "Infinite Impulse Response filter: step response, LP bidirectional filtering" width=0.9\textwidth
+ * \image html IIR_filter.png "Infinite Impulse Response filter: step response, LP bidirectional filtering over 24 hours"
+ * \image latex IIR_filter.eps "Infinite Impulse Response filter: step response, LP bidirectional filtering over 24 hours" width=0.9\textwidth
  *
  * @code
  * HS::filter1      = IIR
