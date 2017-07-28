@@ -106,8 +106,9 @@ void Legend::smartLegend(const unsigned int &height, const double &minimum, cons
 
 	if (range>0.) {
 		const double decade = floor(log10(range));
-		decade_mult = pow(10.,decade);
-		min_norm = floor(minimum/decade_mult*10.)/10., max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
+		decade_mult = pow(10., decade);
+		min_norm = floor(minimum/decade_mult*10.)/10.; //between 0 & 10
+		max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
 		const double range_norm = max_norm-min_norm; //between 0 & 10
 		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
 
@@ -163,11 +164,11 @@ void Legend::writeLine(const double& val, const unsigned int& px_row)
 	if (ss.str().size()>text_chars_nb) {
 		//the generated text is too long, so putting another constraint (ie setw is brain dead)
 		ss.str(std::string());
-		const unsigned int precision = text_chars_nb-6;
+		static const unsigned int precision = text_chars_nb-6;
 		ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val;
 	}
 
-	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
+	static const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
 	//write legend colored square
 	for (unsigned int j=(px_row+interline); j<(px_row+label_height); j++) {
@@ -176,9 +177,9 @@ void Legend::writeLine(const double& val, const unsigned int& px_row)
 		}
 	}
 
-	for (size_t i=0; i<ss.str().size(); i++) {
-		const char c=ss.str()[i];
-		const unsigned int px_col = (unsigned int)i*(char_width+char_space)+x_offset;
+	for (size_t ii=0; ii<ss.str().size(); ii++) {
+		const char c = ss.str()[ii];
+		const unsigned int px_col = (unsigned int)ii * (char_width+char_space) + x_offset;
 		if (c=='0') writeChar(font_0, px_col, px_row);
 		if (c=='1') writeChar(font_1, px_col, px_row);
 		if (c=='2') writeChar(font_2, px_col, px_row);
@@ -245,8 +246,7 @@ void Color::RGBtoHSV(const double& r, const double& g, const double& b,
 		h = 4 + ( r - g ) / delta;	// between magenta & cyan
 
 	h *= 60;				// degrees
-	if ( h < 0 )
-		h += 360;
+	if ( h < 0 ) h += 360;
 }
 
 void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &r, double &g, double &b)
