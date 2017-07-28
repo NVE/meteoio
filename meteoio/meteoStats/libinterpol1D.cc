@@ -199,7 +199,7 @@ void Interpol1D::equalBin(const unsigned int k, std::vector<double> &X, std::vec
 	for (size_t ii=0; ii<Xsize; ii++) {
 		if (X[ii]==IOUtils::nodata || Y[ii]==IOUtils::nodata) continue;
 
-		const size_t index = (X[ii]!=Xmax)? Optim::floor( (X[ii]-Xmin) / width ) : k-1;
+		const size_t index = (X[ii]!=Xmax)? static_cast<size_t>(Optim::floor( (X[ii]-Xmin) / width )) : static_cast<size_t>(k-1);
 		bins[index] += Y[ii];
 		counts[index]++;
 	}

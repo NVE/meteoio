@@ -83,8 +83,10 @@ PGMIO::PGMIO(const Config& cfgreader)
 	getGridPaths();
 }
 
-void PGMIO::getGridPaths() {
-	grid2dpath_in.clear(), grid2dpath_out.clear();
+void PGMIO::getGridPaths()
+{
+	grid2dpath_in.clear();
+	grid2dpath_out.clear();
 	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (grid_in == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);

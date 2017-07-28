@@ -327,7 +327,7 @@ class Fit1D {
  */
 class FitMult {
 	public:
-		FitMult() : predictors(), observations(), Beta(), regname("MULTILINEAR"), infoString(), nPreds(0), fit_ready(false) {};
+		FitMult() : predictors(), observations(), Beta(), regname("MULTILINEAR"), infoString(), nPreds(0), fit_ready(false) {}
 
 		void addData(const std::vector<double>& vecPreds, const double& obs);
 		bool fit();

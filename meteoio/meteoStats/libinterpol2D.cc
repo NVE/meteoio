@@ -446,7 +446,8 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest)
 {
 	double max_slope = 0.;
-	d_i_dest = 0, d_j_dest = 0;
+	d_i_dest = 0;
+	d_j_dest = 0;
 
 	//loop around all adjacent cells to find the cell with the steepest downhill slope
 	for (short d_i=-1; d_i<=1; d_i++) {
