@@ -120,19 +120,11 @@ void ARCIO::getGridPaths()
 
 void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
 {
-	int i_ncols, i_nrows;
-	size_t ncols, nrows;
-	double xllcorner, yllcorner, cellsize, plugin_nodata;
-	double tmp;
-	std::string line;
-	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
-
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	if (!FileUtils::fileExists(full_name)) throw NotFoundException(full_name, AT);
 
-	std::ifstream fin;
 	errno = 0;
-	fin.open (full_name.c_str(), ifstream::in);
+	std::ifstream fin(full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
 		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
@@ -142,13 +134,18 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
+	int i_ncols, i_nrows;
+	double xllcorner, yllcorner, cellsize, plugin_nodata;
 	try {
-		FileUtils::readKeyValueHeader(header, fin, 6, " ");
+		const std::map<std::string, std::string> header( FileUtils::readKeyValueHeader(fin, 6, " ") ); //Read in 6 lines as header into a key/value map
 		IOUtils::getValueForKey(header, "ncols", i_ncols);
 		IOUtils::getValueForKey(header, "nrows", i_nrows);
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
 		IOUtils::getValueForKey(header, "yllcorner", yllcorner);
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
+		if (header.count("nodata_value")==0) {
+			throw IOException("Missing nodata_value in the header of file: " + full_name, AT);
+		}
 		IOUtils::getValueForKey(header, "nodata_value", plugin_nodata);
 
 		i_ncols = IOUtils::standardizeNodata(i_ncols, plugin_nodata);
@@ -163,8 +160,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		if ((i_ncols<0) || (i_nrows<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + full_name, AT);
 		}
-		ncols = (size_t)i_ncols;
-		nrows = (size_t)i_nrows;
+		const size_t ncols = static_cast<size_t>(i_ncols);
+		const size_t nrows = static_cast<size_t>(i_nrows);
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordin, coordinparam);
@@ -175,6 +172,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 
 		size_t nr_empty=0;
 		//Read one line after the other and parse values into Grid2DObject
+		std::string line;
+		double tmp;
 		for (size_t kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln);
 			if (line.empty()) { //so we can tolerate empty lines
@@ -216,7 +215,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 	if (a3d_view_in) {
 		// the A3D grid viewer looks for the following extensions:
 		//sdp, tss, swr, lwr, swe, alb, wet
-		string ext;
+		std::string ext;
 		if (parameter==MeteoGrids::HS)
 			ext="sdp";
 		else if (parameter==MeteoGrids::ISWR)
@@ -229,11 +228,11 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}
-		string dateStr( date.toString(Date::NUM) );
+		std::string dateStr( date.toString(Date::NUM) );
 		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
 		read2DGrid_internal(grid_out, grid2dpath_in + "/" + dateStr + "." + ext );
 	} else {
-		std::string date_str = date.toString(Date::ISO);
+		std::string date_str( date.toString(Date::ISO) );
 		std::replace( date_str.begin(), date_str.end(), ':', '.');
 		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_in);
 	}
@@ -241,32 +240,31 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 
 void ARCIO::readDEM(DEMObject& dem_out)
 {
-	const string filename = cfg.get("DEMFILE", "Input");
+	const std::string filename = cfg.get("DEMFILE", "Input");
 	read2DGrid_internal(dem_out, filename);
 }
 
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
-	const string filename = cfg.get("LANDUSEFILE", "Input");
+	const std::string filename = cfg.get("LANDUSEFILE", "Input");
 	read2DGrid_internal(landuse_out, filename);
 }
 
 void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
-	const string filepath = cfg.get("DAPATH", "Input");
+	const std::string filepath = cfg.get("DAPATH", "Input");
 
-	string dateStr( date_in.toString(Date::NUM) );
+	std::string dateStr( date_in.toString(Date::NUM) );
 	dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
 	read2DGrid_internal(da_out, filepath+"/"+dateStr+".sca");
 }
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	const std::string full_name = grid2dpath_out+"/"+name;
+	const std::string full_name( grid2dpath_out+"/"+name );
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
 	errno = 0;
-	std::ofstream fout;
-	fout.open(full_name.c_str(), ios::out);
+	std::ofstream fout(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		ostringstream ss;
 		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
@@ -312,7 +310,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	if (a3d_view_out) {
 		// the A3D grid viewer looks for the following extensions:
 		//sdp, tss, swr, lwr, swe, alb, wet
-		string ext;
+		std::string ext;
 		if (parameter==MeteoGrids::HS)
 			ext="sdp";
 		else if (parameter==MeteoGrids::ISWR)
@@ -325,7 +323,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}
-		string dateStr( date.toString(Date::NUM) );
+		std::string dateStr( date.toString(Date::NUM) );
 		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
 		write2DGrid(grid_in, dateStr+"."+ext );
 	} else {

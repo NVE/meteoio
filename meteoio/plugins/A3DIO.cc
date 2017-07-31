@@ -163,7 +163,6 @@ void A3DIO::read1DStation(StationData& sd)
 {
 	double latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 	double xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
-	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
 	if (!FileUtils::fileExists(meteo1d)) throw AccessException(meteo1d, AT); //prevent invalid filenames
 	std::ifstream fin(meteo1d.c_str(), std::ifstream::in);
@@ -174,7 +173,7 @@ void A3DIO::read1DStation(StationData& sd)
 	//read and parse the header
 	try {
 		//Read in station meta data
-		FileUtils::readKeyValueHeader(header, fin, 5, "="); //Read in 5 lines as header
+		const std::map<std::string, std::string> header( FileUtils::readKeyValueHeader(fin, 5, "=") ); //Read in 5 lines as header into a key/value map
 		IOUtils::getValueForKey(header, "latitude", latitude);
 		IOUtils::getValueForKey(header, "longitude", longitude);
 		IOUtils::getValueForKey(header, "x_coord", xcoord);

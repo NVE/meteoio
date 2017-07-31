@@ -211,11 +211,11 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-	                                       const std::string& key, T& t, const ThrowOptions& options=IOUtils::dothrow){
+	                                       const std::string& key, T& t, const ThrowOptions& options=IOUtils::dothrow) {
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
 
-		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
+		const std::map<std::string, std::string>::const_iterator it( properties.find(key) );
 		if (it == properties.end()){
 			if (options == IOUtils::nothrow)
 				return;
@@ -244,7 +244,7 @@ namespace IOUtils {
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
 
-		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
+		const std::map<std::string, std::string>::const_iterator it( properties.find(key) );
 		if (it == properties.end()) {
 			if (options == IOUtils::nothrow) {
 				return;

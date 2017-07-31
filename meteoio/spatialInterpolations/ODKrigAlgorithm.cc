@@ -25,14 +25,18 @@ namespace mio {
 OrdinaryKrigingAlgorithm::OrdinaryKrigingAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                                             : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), variogram(), vario_types()
 {
-	//setTrendParams(vecArgs);
-
 	bool has_linvario = false;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="VARIO") {
-			const std::string vario_model( IOUtils::strToUpper( vecArgs[ii].second ) );
-			if (vario_model=="LINVARIO") has_linvario=true;
-			vario_types.push_back( vario_model );
+			std::set<std::string> Varios;
+			IOUtils::readLineToSet(IOUtils::strToUpper( vecArgs[ii].second ), Varios);
+
+			std::set<std::string>::const_iterator it( Varios.begin() );
+			for (; it != Varios.end(); ++it) {
+				const std::string vario_model( *it );
+				if (vario_model=="LINVARIO") has_linvario=true;
+				vario_types.push_back( vario_model );
+			}
 		}
 	}
 

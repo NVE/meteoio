@@ -112,8 +112,7 @@ namespace FileUtils {
 
 	void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln='\n');
 
-	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
-	                        std::istream& bs,
+	std::map<std::string,std::string> readKeyValueHeader(std::istream& fin,
 	                        const size_t& linecount=1,
 	                        const std::string& delimiter="=", const bool& keep_case=false);
 

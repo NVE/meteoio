@@ -194,12 +194,8 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 		trim(key);
 		trim(value);
 
-		if (key.empty() || value.empty()) {
-			return false;
-		}
-
-		if (setToUpperCase)
-			toUpper(key);
+		if (key.empty() || value.empty()) return false;
+		if (setToUpperCase) toUpper(key);
 	} else {
 		key="";
 		value="";
@@ -209,7 +205,8 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 	return true;
 }
 
-std::string getLogName() {
+std::string getLogName()
+{
 	char *tmp;
 
 	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix

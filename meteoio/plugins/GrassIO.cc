@@ -70,13 +70,11 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
 	std::string line;
-	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
-	std::ifstream fin;
-	fin.open (filename.c_str(), ifstream::in);
+	std::ifstream fin(filename.c_str(), ifstream::in);
 	if (fin.fail()) {
 		throw AccessException(filename, AT);
 	}
@@ -85,7 +83,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 	//Go through file, save key value pairs
 	try {
-		FileUtils::readKeyValueHeader(header, fin, 6, ":");
+		const std::map<std::string, std::string> header( FileUtils::readKeyValueHeader(fin, 6, ":") ); //Read in 6 lines as header into a key/value map
 		IOUtils::getValueForKey(header, "cols",  _nx);
 		IOUtils::getValueForKey(header, "rows",  _ny);
 		IOUtils::getValueForKey(header, "north", north);

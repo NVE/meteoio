@@ -22,19 +22,7 @@
 namespace mio {
 
 LapseOrdinaryKrigingAlgorithm::LapseOrdinaryKrigingAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
-                                                      : OrdinaryKrigingAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param)
-{
-	bool has_linvario = false;
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="VARIO") {
-			const std::string vario_model( IOUtils::strToUpper( vecArgs[ii].second ) );
-			if (vario_model=="LINVARIO") has_linvario=true;
-			vario_types.push_back( vario_model );
-		}
-	}
-
-	if (!has_linvario) vario_types.push_back("LINVARIO");
-}
+                                                      : OrdinaryKrigingAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param) {}
 
 void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
