@@ -370,6 +370,7 @@ bool FitMult::fit()
 	const Matrix Z_T( Z.getT() );
 	Beta.resize(nPreds+1, 1);
 	Beta = (Z_T * Z).getInv() * Z_T * Y;
+	fit_ready = true;
 
 	//compute R2
 	const double ObsMean = Interpol1D::arithmeticMean( observations );
@@ -387,7 +388,6 @@ bool FitMult::fit()
 	std::ostringstream ss;
 	ss << "Computed regression with " << regname << " model - r2=" << std::setprecision(2) << R2;
 	infoString = ss.str();
-	fit_ready = true;
 	return true;
 }
 
