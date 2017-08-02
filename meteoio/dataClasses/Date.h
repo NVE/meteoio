@@ -42,14 +42,14 @@ namespace mio {
  * The maximal precision is 1 second (however with the limitation that leap seconds are currently not handled).
  *
  * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
- * the various date representation definitions. The following data representation are currently supported:
+ * the various date representation definitions. The following date representation are currently supported:
  * - julian date, see Date::getJulian
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *
- * When parsing a string to extract a date, various string representations are supported (the timezone term {TZ} is optional \em if a
+ * When parsing a string to extract a date (using IOUtils::convertString), various string representations are supported (the timezone term {TZ} is optional \em if a
  * fallback timezone is available, most probably as Input::TIME_ZONE in the configuration file):
  * - <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> variations:
  *     - YYYY-MM-DDThh:mm:ss{TZ}, for example 2017-02-02T12:35:00 in the fallback time zone
