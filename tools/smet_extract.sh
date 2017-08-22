@@ -4,6 +4,7 @@
 if [ $# -lt 1 ]; then
 	me=`basename $0`
 	printf "Usage: \n"
+	printf "\t$me .\n\t\t to show which fields are present for each files in the current directory\n"
 	printf "\t$me {smet_file} {parameter}\n\t\t to extract the given parameter out of the given file\n"
 	printf "\t$me {smet_file} {parameter} {aggregation}\n\t\t to extract the monthly aggregated given parameter out of the given file\n"
 	printf "\t\t where {aggregation} is any of (AVG, MIN, MAX)\n"
@@ -11,8 +12,48 @@ if [ $# -lt 1 ]; then
 fi
 
 INPUT=$1
+
 if [ $# -eq 1 ]; then
-	head -20 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s ' \t' '\t' | xargs -i echo "Available fields: {}"
+	if [ $1="." ]; then
+		head -20 *.smet | awk '
+			/station_id/ {
+				gsub(/\r/, "")
+				station=$3
+			}
+			/altitude/ {
+				gsub(/\r/, "")
+				altitude=$3
+			}
+			/fields/ {
+				gsub(/\r/, "")
+				altitudes[station]=altitude
+				for(ii=3; ii<=NF; ii++) {
+					if ($(ii)=="timestamp") continue
+					if ($(ii)=="julian") continue
+					field[station][$(ii)] = 1
+					all_fields[$(ii)]++
+				}
+				next
+			}
+			END {
+				nr_fields=asorti(all_fields, fields_idx)
+
+				for(station in altitudes) {
+					printf("%4.0f - %-20s\t", altitudes[station], station)
+					for(idx=1; idx<=nr_fields; idx++) {
+						if (field[station][fields_idx[idx]]>0)
+							printf("%5s ", fields_idx[idx])
+						else
+							printf("%5s ", " ")
+					}
+					printf("\n")
+				}
+			}
+		' | sort -n -k1
+		exit 0
+	fi
+
+	head -20 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s '  \t' '\t' | xargs -i echo "Available fields: {}"
 	exit 0
 fi
 
@@ -20,14 +61,6 @@ FIELD=$2
 if [ $# -eq 3 ]; then
 	AGG_TYPE=$3
 fi
-
-#get generic info
-stat_id=`head -20 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-stat_name=`head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lat=`head -20 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lon=`head -20 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-alt=`head -20 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-JULIAN=`head -25 "${INPUT}" | grep fields | grep julian`
 
 #create data sets metadata
 field_nr=$(head -20 ${INPUT} | grep "fields" | awk '
@@ -43,6 +76,14 @@ field_nr=$(head -20 ${INPUT} | grep "fields" | awk '
 if [ ${field_nr} -eq 1 ]; then
 	exit
 fi
+
+#get generic info
+stat_id=`head -20 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -20 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -20 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -20 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+JULIAN=`head -25 "${INPUT}" | grep fields | grep julian`
 
 #out_name="${stat_id}_${FIELD}.dat"
 #out_name="${stat_id}_${alt}.dat"
