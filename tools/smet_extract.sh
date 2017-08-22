@@ -16,9 +16,16 @@ INPUT=$1
 if [ $# -eq 1 ]; then
 	if [ $1="." ]; then
 		head -20 *.smet | awk '
+			BEGIN {
+				name_length=17
+			}
 			/station_id/ {
 				gsub(/\r/, "")
 				station=$3
+			}
+			/station_name/ {
+				gsub(/\r/, "")
+				station_name=$3
 			}
 			/altitude/ {
 				gsub(/\r/, "")
@@ -26,6 +33,8 @@ if [ $# -eq 1 ]; then
 			}
 			/fields/ {
 				gsub(/\r/, "")
+				station=sprintf("%s-%s", station, station_name)
+				if (length(station)>name_length) station=sprintf("%s…", substr(station, 1, name_length-1))
 				altitudes[station]=altitude
 				for(ii=3; ii<=NF; ii++) {
 					if ($(ii)=="timestamp") continue
@@ -38,13 +47,16 @@ if [ $# -eq 1 ]; then
 			END {
 				nr_fields=asorti(all_fields, fields_idx)
 
+				format=sprintf("%%4.0f - %%-%ds\t", name_length)
 				for(station in altitudes) {
-					printf("%4.0f - %-20s\t", altitudes[station], station)
+					printf(format, altitudes[station], station)
 					for(idx=1; idx<=nr_fields; idx++) {
-						if (field[station][fields_idx[idx]]>0)
-							printf("%5s ", fields_idx[idx])
+						field_name=fields_idx[idx]
+						field_format=sprintf("%%%ds  ", length(field_name))
+						if (field[station][field_name]>0)
+							printf(field_format, field_name)
 						else
-							printf("%5s ", " ")
+							printf(field_format, " ")
 					}
 					printf("\n")
 				}
