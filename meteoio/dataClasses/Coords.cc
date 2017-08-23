@@ -26,10 +26,6 @@
 #include <cstdio>
 #include <iomanip>
 
-#ifdef PROJ4
-	#include <proj_api.h>
-#endif
-
 using namespace std;
 
 namespace mio {

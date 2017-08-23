@@ -14,8 +14,8 @@ fi
 INPUT=$1
 
 if [ $# -eq 1 ]; then
-	if [ $1="." ]; then
-		head -20 *.smet | awk '
+	if [ -d ${1} ]; then
+		head -20 ${1}/*.smet | awk '
 			BEGIN {
 				name_length=17
 			}

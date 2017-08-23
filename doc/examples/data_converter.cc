@@ -25,7 +25,7 @@ void real_main(int argc, char** argv)
 	IOUtils::convertString(d_end, argv[2], TZ);
 
 	IOManager io(cfg);
-	std::cout << "Powered by " << getLibVersion() << "\n";
+	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
 	std::cout << "Reading data from " << d_start.toString(Date::ISO) << " to " << d_end.toString(Date::ISO) << "\n";
 
 	Timer timer;
@@ -35,10 +35,10 @@ void real_main(int argc, char** argv)
 	std::vector<MeteoData> Meteo; //we need some intermediate storage, for storing data sets for 1 timestep
 	std::vector< std::vector<MeteoData> > vecMeteo; //so we can keep and output the data that has been read
 
-	for(Date d=d_start; d<=d_end; d+=Tstep) { //time loop
+	size_t insert_position = 0;
+	for (Date d=d_start; d<=d_end; d+=Tstep) { //time loop
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
-		size_t insert_position = 0;
-		for(size_t ii=0; ii<Meteo.size(); ii++) {
+		for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
 			const std::string stationID( Meteo[ii].meta.stationID );
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = insert_position++;

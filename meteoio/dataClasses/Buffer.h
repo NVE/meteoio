@@ -90,6 +90,12 @@ class MeteoBuffer {
 		bool empty() const;
 
 		/**
+		* @brief Returns the number of stations present in the buffer
+		* @return number of stations in buffer
+		*/
+		size_t size() const { return ts_buffer.size();}
+
+		/**
 		* @brief Clear the buffer; the data is deleted and the start and end dates reset to <i>undef</i>
 		*/
 		void clear();
