@@ -28,6 +28,7 @@
 #include <meteoio/spatialInterpolations/IDWLapseLocalAlgorithm.h>
 #include <meteoio/spatialInterpolations/ILWREpsAlgorithm.h>
 #include <meteoio/spatialInterpolations/ListonWindAlgorithm.h>
+#include <meteoio/spatialInterpolations/NearestNeighbourAlgorithm.h>
 #include <meteoio/spatialInterpolations/NoneAlgorithm.h>
 #include <meteoio/spatialInterpolations/ODKrigAlgorithm.h>
 #include <meteoio/spatialInterpolations/ODKrigLapseAlgorithm.h>
@@ -94,6 +95,7 @@ namespace mio {
  * - NONE: returns a nodata filled grid (see NoneAlgorithm)
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
  * - CST: constant value in each cell (see ConstAlgorithm)
+ * - NEAREST: the value at the closest station is taken for each cell (see NearestNeighbourAlgorithm)
  * - AVG: average of the measurements in each cell (see AvgAlgorithm)
  * - AVG_LAPSE: constant value reprojected to the elevation of the cell (see AvgLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
@@ -125,6 +127,8 @@ namespace mio {
  * is not good enought (below 0.7, as defined in Interpol2D::LinRegression), the same regression will get re-calculated
  * with one point less (cycling throught all the points). The best result (ie: highest correlation coefficient) will be
  * kept. If the final correlation coefficient is less than 0.7, a warning is displayed.
+ *
+ * A list of supported options controlling the lapse rates is given in Trend::Trend().
  *
  * @section interpol2D_dev_use Developer usage
  * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
@@ -166,6 +170,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
 		return new StandardPressureAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "CST") {// constant fill
 		return new ConstAlgorithm(vecArgs, algoname, param, tsm);
+	} else if (algoname == "NEAREST") {// nearest neighbour
+		return new NearestNeighbourAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "AVG") {// average fill
 		return new AvgAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "AVG_LAPSE") {// average fill with an elevation lapse rate

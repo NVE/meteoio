@@ -26,7 +26,7 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack(
 	//Parse [Filters] section, create processing stack for each configured parameter
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
-	for (std::set<std::string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
+	for (std::set<std::string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
 		processing_stack[*it] = tmp;
 	}
@@ -41,9 +41,9 @@ MeteoProcessor::~MeteoProcessor()
 
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
-	std::set<std::string> set_parameters;
 	const std::vector<std::string> vec_keys( cfg.getKeys(std::string(), "Filters") );
 
+	std::set<std::string> set_parameters;
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
@@ -87,7 +87,7 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 	//call the different processing stacks
 	std::vector< std::vector<MeteoData> > vec_tmp;
 
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it){
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
 		if (it==processing_stack.begin()){
 			(*(it->second)).process(ivec, ovec, second_pass);
 		} else {

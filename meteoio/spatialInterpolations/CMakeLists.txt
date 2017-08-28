@@ -11,6 +11,7 @@ SET(spatialInterpolations_sources
 	spatialInterpolations/IDWLapseLocalAlgorithm.cc
 	spatialInterpolations/ILWREpsAlgorithm.cc
 	spatialInterpolations/ListonWindAlgorithm.cc
+	spatialInterpolations/NearestNeighbourAlgorithm.cc
 	spatialInterpolations/NoneAlgorithm.cc
 	spatialInterpolations/ODKrigAlgorithm.cc
 	spatialInterpolations/ODKrigLapseAlgorithm.cc
