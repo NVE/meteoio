@@ -416,7 +416,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 
 			if (!dem.gridify(curr_point)) {
 				ostringstream ss;
-				ss << "Virtual station \"" << vecStation[ii].first << "\" is not contained is provided DEM " << dem.toString(DEMObject::SHORT);
+				ss << "Virtual station \"" << vecStation[ii].second << "\" is not contained in provided DEM " << dem.toString(DEMObject::SHORT);
 				throw NoDataException(ss.str(), AT);
 			}
 
@@ -441,7 +441,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 			}
 			if (!is_duplicate) {
 				//extract vstation number, build the station name and station ID
-				const std::string id_num( vecStation[ii].second.substr(string("Vstation").length()) );
+				const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
 				StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
 				sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 				v_stations.push_back( sd );
