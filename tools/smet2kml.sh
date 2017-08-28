@@ -11,7 +11,7 @@ fi
 
 cs2cs=`which cs2cs`
 
-ls ${INPUT_DIR}/*.smet | xargs -i head -40 {} | awk '
+ls ${INPUT_DIR}/*.smet | xargs -i head -50 {} | awk '
 	BEGIN {
 		printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
 		printf("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
@@ -35,6 +35,7 @@ ls ${INPUT_DIR}/*.smet | xargs -i head -40 {} | awk '
 		printf("<name>%s (%d)</name>\n", station_id, altitude)
 		printf("<styleUrl>#sty0</styleUrl>\n")
 		printf("<description>%s (%d)</description>\n", station_name, altitude)
+		printf("<ExtendedData><Data name=\"fields\"><value>%s</value></Data></ExtendedData>\n", fields)
 		printf("<Point><coordinates>%f, %f, %d</coordinates></Point>\n", longitude, latitude, altitude)
 		printf("</Placemark>\n")
 		latitude=-99
@@ -66,6 +67,14 @@ ls ${INPUT_DIR}/*.smet | xargs -i head -40 {} | awk '
 	}
 	/epsg/ {
 		epsg = $3
+	}
+	/fields/ {
+		fields=""
+		for (ii=3; ii<=NF;ii++) {
+			if ($(ii)=="timestamp" || $(ii)=="julian") continue;
+			fields=sprintf("%s%s ", fields, $(ii))
+		}
+		fields=substr(fields, 1, length(fields)-1) #remove the last space
 	}
 	END {
 		printf("</Folder>\n</kml>\n")

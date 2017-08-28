@@ -15,7 +15,7 @@ INPUT=$1
 
 if [ $# -eq 1 ]; then
 	if [ -d ${1} ]; then
-		head -20 ${1}/*.smet | awk '
+		head -50 ${1}/*.smet | awk '
 			BEGIN {
 				name_length=17
 			}
@@ -65,7 +65,7 @@ if [ $# -eq 1 ]; then
 		exit 0
 	fi
 
-	head -20 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s '  \t' '\t' | xargs -i echo "Available fields: {}"
+	head -50 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s '  \t' ' ' | xargs -i echo "Available fields: {}"
 	exit 0
 fi
 
@@ -75,7 +75,7 @@ if [ $# -eq 3 ]; then
 fi
 
 #create data sets metadata
-field_nr=$(head -20 ${INPUT} | grep "fields" | awk '
+field_nr=$(head -50 ${INPUT} | grep "fields" | awk '
 	/fields/ {
 		found=3
 		for(i=1; i<=NF; i++) {
@@ -90,12 +90,12 @@ if [ ${field_nr} -eq 1 ]; then
 fi
 
 #get generic info
-stat_id=`head -20 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-stat_name=`head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lat=`head -20 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lon=`head -20 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-alt=`head -20 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-JULIAN=`head -25 "${INPUT}" | grep fields | grep julian`
+stat_id=`head -50 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -50 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -50 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -50 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -50 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+JULIAN=`head -50 "${INPUT}" | grep fields | grep julian`
 
 #out_name="${stat_id}_${FIELD}.dat"
 #out_name="${stat_id}_${alt}.dat"

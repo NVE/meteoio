@@ -409,7 +409,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
-		Coords curr_point(coordin, coordinparam, vecStation[ii].first);
+		Coords curr_point(coordin, coordinparam, vecStation[ii].second);
 
 		if (!curr_point.isNodata()) {
 			v_coords.push_back( curr_point ); //so we can check for duplicates

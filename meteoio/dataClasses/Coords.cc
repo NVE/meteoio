@@ -378,9 +378,9 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 {
 	char rest[32] = "";
 	double x, y;
-	if (sscanf(coord_spec.c_str(), "%lg %lg%31s", &x, &y, rest) < 2)
-	if (sscanf(coord_spec.c_str(), "(%lg,%lg,%31s)", &x, &y, rest) < 2)
-	if (sscanf(coord_spec.c_str(), "(%lg, %lg, %31s)", &x, &y, rest) < 2) {
+	if ((sscanf(coord_spec.c_str(), "%lg %lg%31s", &x, &y, rest) < 2) &&
+	     (sscanf(coord_spec.c_str(), "(%lg,%lg)%31s", &x, &y, rest) < 2) &&
+	     (sscanf(coord_spec.c_str(), "(%lg, %lg)%31s", &x, &y, rest) < 2)) {
 		return;
 	}
 
