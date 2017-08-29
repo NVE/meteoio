@@ -260,7 +260,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		throw IOException("No interpolation algorithms configured for parameter "+param_name, AT);
 
 	//look for algorithm with the highest quality rating
-	const vector<InterpolationAlgorithm*>& vecAlgs( it->second );
+	const std::vector<InterpolationAlgorithm*>& vecAlgs( it->second );
 	double maxQualityRating = -1.;
 	size_t bestalgorithm = 0;
 	for (size_t ii=0; ii < vecAlgs.size(); ++ii){
@@ -344,8 +344,7 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 {
 	for (size_t ii=0; ii<gridobj.size(); ii++){
 		double& value = gridobj(ii);
-		if (value == IOUtils::nodata)
-			continue;
+		if (value == IOUtils::nodata) continue;
 
 		if (value < minval) {
 			value = minval;
