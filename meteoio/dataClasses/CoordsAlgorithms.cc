@@ -562,8 +562,8 @@ void CoordsAlgorithms::WGS84_to_UTM(const double& lat_in, double long_in, const 
 	char in_zoneLetter;
 	parseUTMZone(coordparam, in_zoneLetter, in_zoneNumber);
 	if (in_zoneNumber!=zoneNumber) {
-		std::cerr << "[W] requested UTM zone is not appropriate for the given coordinates. Normally, It should be zone ";
-		std::cerr << zoneNumber << "\n";
+		/*std::cerr << "[W] requested UTM zone is not appropriate for the given coordinates. Normally, It should be zone ";
+		std::cerr << zoneNumber << "\n";*/
 		zoneNumber = in_zoneNumber;
 	}
 	const double long0 = (double)((zoneNumber - 1)*6 - 180 + 3) * Cst::to_rad; //+3 puts origin in middle of zone

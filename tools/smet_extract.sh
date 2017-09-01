@@ -97,9 +97,6 @@ lon=`head -50 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 alt=`head -50 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 JULIAN=`head -50 "${INPUT}" | grep fields | grep julian`
 
-#out_name="${stat_id}_${FIELD}.dat"
-#out_name="${stat_id}_${alt}.dat"
-
 awk '
 	BEGIN {
 		field="'"${field_nr}"'"
@@ -174,6 +171,6 @@ awk '
 			}
 		}
 	}
-' ${INPUT} #> ${out_name}
+' ${INPUT}
 
 

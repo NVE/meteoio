@@ -37,7 +37,7 @@ namespace mio {
  * @code
  * ISWR::generators = clearSky_SW
  * @endcode
- * @note This relies on SunObject to perform the heavy duty computation.
+ * @note This relies on SunObject to perform the heavy duty computation. If it is used on RSWR, then a snow or grassy soil albedo is used (depending on the snow height).
  */
 class ClearSkySWGenerator : public GeneratorAlgorithm {
 	public:
