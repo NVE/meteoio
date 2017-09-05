@@ -16,7 +16,7 @@ if [ $# -ge 4 ]; then
 	START_DATE=$3
 	END_DATE=$4
 fi
-files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`
+files=`find ${INPUT_DIR}/* -follow -maxdepth 0 -type f -name "*.smet"`
 
 #on osX, it is necessary to force using gawk, if available
 local_awk="awk"

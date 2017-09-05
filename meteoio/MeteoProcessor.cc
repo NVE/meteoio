@@ -47,6 +47,11 @@ std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
+			if (vec_keys[ii].length()<=(found+2))
+				throw InvalidFormatException("Invalid syntax: \""+vec_keys[ii]+"\"", AT);
+			if (vec_keys[ii][found+1]!=':')
+				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
+				
 			const std::string tmp( vec_keys[ii].substr(0,found) );
 			set_parameters.insert(tmp);
 		}

@@ -160,7 +160,7 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 */
 void Meteo2DInterpolator::setAlgorithms()
 {
-	const std::set<std::string> set_of_used_parameters( get_parameters(cfg) );
+	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
 	std::set<std::string>::const_iterator it  = set_of_used_parameters.begin();
 	for (; it != set_of_used_parameters.end(); ++it) {
@@ -182,7 +182,7 @@ void Meteo2DInterpolator::setAlgorithms()
 }
 
 //get a list of all meteoparameters referenced in the Interpolations2D section
-std::set<std::string> Meteo2DInterpolator::get_parameters(const Config& cfg)
+std::set<std::string> Meteo2DInterpolator::getParameters(const Config& cfg)
 {
 	const std::vector<std::string> vec_keys( cfg.getKeys("::algorithms", "Interpolations2D", true) );
 
@@ -190,6 +190,10 @@ std::set<std::string> Meteo2DInterpolator::get_parameters(const Config& cfg)
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
+			if (vec_keys[ii].length()<=(found+2))
+				throw InvalidFormatException("Invalid syntax: \""+vec_keys[ii]+"\"", AT);
+			if (vec_keys[ii][found+1]!=':')
+				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
 			std::string tmp( vec_keys[ii].substr(0,found) );
 			IOUtils::toUpper( tmp );
 			set_parameters.insert( tmp );
