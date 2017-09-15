@@ -86,8 +86,12 @@ double Timer::getElapsed() const {
 	return elapsed;
 }
 
+/**
+* @brief Get the current time
+* @return the current time as seconds since Unix Epoch
+*/
 #if defined _WIN32 || defined __MINGW32__
-long double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
 
@@ -103,7 +107,7 @@ long double Timer::getCurrentTime() const {
 	return static_cast<long double>(uli.QuadPart - offset_to_epoch*units_convert) / units_convert;
 }
 #else
-long double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() {
 	timeval tp;
 	gettimeofday(&tp,NULL);
 	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6L;
