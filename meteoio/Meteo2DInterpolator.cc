@@ -409,6 +409,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	const double dem_easting = dem.llcorner.getEasting();
 	const double dem_northing = dem.llcorner.getNorthing();
 
+	//read the provided coordinates, remove duplicates and generate metadata
 	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
@@ -454,6 +455,12 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 
 	if (v_stations.empty())
 		throw NoDataException("No virtual stations provided", AT);
+	
+	//cleaning up v_coords so it is still usable (ie no more duplicates)
+	v_coords.resize(v_stations.size());
+	for (size_t ii=0; ii<v_stations.size(); ii++) {
+		v_coords[ii] = v_stations[ii].position;
+	}
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsMeta(const Date& /*date*/, STATIONS_SET& vecStation)
@@ -494,8 +501,9 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	for (size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
 		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);
-		for (size_t ii=0; ii<v_coords.size(); ii++)
+		for (size_t ii=0; ii<v_coords.size(); ii++) {
 			vecMeteo[ii](v_params[param]) = result[ii];
+		}
 	}
 
 	return vecMeteo.size();

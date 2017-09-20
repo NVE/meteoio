@@ -24,14 +24,14 @@ namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                                       vstations_refresh_rate(IOUtils::unodata), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
+                                                       vstations_refresh_rate(1), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                            vstations_refresh_rate(IOUtils::unodata), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
+                                            vstations_refresh_rate(1), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
 {
 	initIOManager();
 }
