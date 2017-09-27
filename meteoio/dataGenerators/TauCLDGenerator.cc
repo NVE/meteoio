@@ -56,6 +56,10 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 
 	double albedo = .5;
 	if (RSWR!=IOUtils::nodata && ISWR!=IOUtils::nodata) {
+		if (ISWR<night_thresh) {
+			is_night = true;
+			return IOUtils::nodata;
+		}
 		albedo = std::min( 0.99, std::max(0.01, RSWR / ISWR) );
 	} else { //so some measurements are missing
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
