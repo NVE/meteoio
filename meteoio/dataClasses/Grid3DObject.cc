@@ -442,7 +442,7 @@ const std::string Grid3DObject::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
+std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os.write(reinterpret_cast<const char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 
@@ -455,7 +455,7 @@ std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Grid3DObject& grid) {
+std::istream& operator>>(std::istream& is, Grid3DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is.read(reinterpret_cast<char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 

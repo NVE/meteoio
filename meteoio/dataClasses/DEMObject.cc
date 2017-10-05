@@ -948,7 +948,7 @@ const std::string DEMObject::toString(const FORMATS& type) const
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
+std::ostream& operator<<(std::ostream& os, const DEMObject& dem) {
 	operator<<(os, *((Grid2DObject*)&dem));
 
 	os << dem.slope;
@@ -971,7 +971,7 @@ std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
+std::istream& operator>>(std::istream& is, DEMObject& dem) {
 	operator>>(is, *((Grid2DObject*)&dem));
 
 	is >> dem.slope;

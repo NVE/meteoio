@@ -86,8 +86,8 @@ class StationData {
 		void setSlope(const double& in_slope_angle, const double& in_azimuth);
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const StationData& station);
-		friend std::iostream& operator>>(std::iostream& is, StationData& station);
+		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
+		friend std::istream& operator>>(std::istream& is, StationData& station);
 
 		//Comparison operators
 		/**

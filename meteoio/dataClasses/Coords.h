@@ -126,8 +126,8 @@ public:
 	short int getEPSG() const;
 
 	const std::string toString(const FORMATS& type = DEBUG) const;
-	friend std::iostream& operator<<(std::iostream& os, const Coords& coord);
-	friend std::iostream& operator>>(std::iostream& is, Coords& coord);
+	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
+	friend std::istream& operator>>(std::istream& is, Coords& coord);
 
 	//Setter methods
 	void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);

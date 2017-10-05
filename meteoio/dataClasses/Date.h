@@ -165,8 +165,8 @@ class Date {
 		static std::string printFractionalDay(const double& fractional);
 		const std::string toString(const FORMATS& type, const bool& gmt=false) const;
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const Date& date);
-		friend std::iostream& operator>>(std::iostream& is, Date& date);
+		friend std::ostream& operator<<(std::ostream& os, const Date& date);
+		friend std::istream& operator>>(std::istream& is, Date& date);
 
 		//Operator Prototypes
 		bool operator==(const Date&) const;

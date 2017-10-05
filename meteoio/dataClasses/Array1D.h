@@ -106,8 +106,8 @@ template<class T> class Array1D {
 
 
 		const std::string toString() const;
-		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array1D<P>& array);
-		template<class P> friend std::iostream& operator>>(std::iostream& is, Array1D<P>& array);
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array1D<P>& array);
+		template<class P> friend std::istream& operator>>(std::istream& is, Array1D<P>& array);
 
 		bool checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon);
@@ -252,14 +252,14 @@ template<class T> const std::string Array1D<T>::toString() const {
 	return os.str();
 }
 
-template<class P> std::iostream& operator<<(std::iostream& os, const Array1D<P>& array) {
+template<class P> std::ostream& operator<<(std::ostream& os, const Array1D<P>& array) {
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
 	os.write(reinterpret_cast<const char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*sizeof(P)));
 	return os;
 }
 
-template<class P> std::iostream& operator>>(std::iostream& is, Array1D<P>& array) {
+template<class P> std::istream& operator>>(std::istream& is, Array1D<P>& array) {
 	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	array.vecData.resize(array.nx);

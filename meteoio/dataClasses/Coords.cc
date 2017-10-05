@@ -258,7 +258,7 @@ const std::string Coords::toString(const FORMATS& type) const
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Coords& coord) {
+std::ostream& operator<<(std::ostream& os, const Coords& coord) {
 	os.write(reinterpret_cast<const char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
 	os.write(reinterpret_cast<const char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
 	os.write(reinterpret_cast<const char*>(&coord.altitude), sizeof(coord.altitude));
@@ -282,7 +282,7 @@ std::iostream& operator<<(std::iostream& os, const Coords& coord) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Coords& coord) {
+std::istream& operator>>(std::istream& is, Coords& coord) {
 	is.read(reinterpret_cast<char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
 	is.read(reinterpret_cast<char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
 	is.read(reinterpret_cast<char*>(&coord.altitude), sizeof(coord.altitude));

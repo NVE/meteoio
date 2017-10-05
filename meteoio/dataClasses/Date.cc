@@ -1227,7 +1227,7 @@ const std::string Date::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Date& date) {
+std::ostream& operator<<(std::ostream& os, const Date& date) {
 	os.write(reinterpret_cast<const char*>(&date.timezone), sizeof(date.timezone));
 	os.write(reinterpret_cast<const char*>(&date.gmt_julian), sizeof(date.gmt_julian));
 
@@ -1243,7 +1243,7 @@ std::iostream& operator<<(std::iostream& os, const Date& date) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Date& date) {
+std::istream& operator>>(std::istream& is, Date& date) {
 	is.read(reinterpret_cast<char*>(&date.timezone), sizeof(date.timezone));
 	is.read(reinterpret_cast<char*>(&date.gmt_julian), sizeof(date.gmt_julian));
 

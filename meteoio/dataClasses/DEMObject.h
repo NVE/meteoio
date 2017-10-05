@@ -128,8 +128,8 @@ class DEMObject : public Grid2DObject {
 		bool operator!=(const DEMObject& in) const; ///<Operator that tests for inequality
 
 		const std::string toString(const FORMATS& type = FULL) const;
-		friend std::iostream& operator<<(std::iostream& os, const DEMObject& dem);
-		friend std::iostream& operator>>(std::iostream& is, DEMObject& dem);
+		friend std::ostream& operator<<(std::ostream& os, const DEMObject& dem);
+		friend std::istream& operator>>(std::istream& is, DEMObject& dem);
 
 	private:
 		double getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const;

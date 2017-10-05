@@ -291,7 +291,7 @@ const std::string MeteoData::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const MeteoData& data) {
+std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 	os << data.date;
 	os << data.meta;
 	const size_t s_vector = data.extra_param_name.size();
@@ -311,7 +311,7 @@ std::iostream& operator<<(std::iostream& os, const MeteoData& data) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, MeteoData& data) {
+std::istream& operator>>(std::istream& is, MeteoData& data) {
 	is >> data.date;
 	is >> data.meta;
 	size_t s_vector;

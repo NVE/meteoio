@@ -91,7 +91,7 @@ const std::string StationData::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const StationData& station) {
+std::ostream& operator<<(std::ostream& os, const StationData& station) {
 	os << station.position;
 
 	const size_t s_ID = station.stationID.size();
@@ -106,7 +106,7 @@ std::iostream& operator<<(std::iostream& os, const StationData& station) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, StationData& station) {
+std::istream& operator>>(std::istream& is, StationData& station) {
 	is >> station.position;
 
 	size_t s_ID, s_name;

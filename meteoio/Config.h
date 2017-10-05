@@ -136,8 +136,8 @@ class Config {
 		 */
 		const std::string toString() const;
 
-		friend std::iostream& operator<<(std::iostream& os, const Config& cfg);
-		friend std::iostream& operator>>(std::iostream& is, Config& cfg);
+		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
+		friend std::istream& operator>>(std::istream& is, Config& cfg);
 
 		template <typename T> std::vector<T> getValue(const std::string& key, std::string section,
 		                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const

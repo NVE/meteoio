@@ -112,7 +112,7 @@ const std::string Config::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Config& cfg) {
+std::ostream& operator<<(std::ostream& os, const Config& cfg) {
 	const size_t s_source = cfg.sourcename.size();
 	os.write(reinterpret_cast<const char*>(&s_source), sizeof(size_t));
 	os.write(reinterpret_cast<const char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
@@ -134,7 +134,7 @@ std::iostream& operator<<(std::iostream& os, const Config& cfg) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Config& cfg) {
+std::istream& operator>>(std::istream& is, Config& cfg) {
 	size_t s_source;
 	is.read(reinterpret_cast<char*>(&s_source), sizeof(size_t));
 	cfg.sourcename.resize(s_source);

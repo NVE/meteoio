@@ -276,8 +276,8 @@ class MeteoData {
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const MeteoData& data);
-		friend std::iostream& operator>>(std::iostream& is, MeteoData& data);
+		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
+		friend std::istream& operator>>(std::istream& is, MeteoData& data);
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality

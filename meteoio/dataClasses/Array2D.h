@@ -183,8 +183,8 @@ template<class T> class Array2D {
 		void abs();
 
 		const std::string toString() const;
-		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array2D<P>& array);
-		template<class P> friend std::iostream& operator>>(std::iostream& is, Array2D<P>& array);
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
+		template<class P> friend std::istream& operator>>(std::istream& is, Array2D<P>& array);
 
 		bool checkEpsilonEquality(const Array2D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon);
@@ -416,7 +416,7 @@ template<class T> const std::string Array2D<T>::toString() const {
 	return os.str();
 }
 
-template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>& array) {
+template<class P> std::ostream& operator<<(std::ostream& os, const Array2D<P>& array) {
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
 	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
@@ -424,7 +424,7 @@ template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>&
 	return os;
 }
 
-template<class P> std::iostream& operator>>(std::iostream& is, Array2D<P>& array) {
+template<class P> std::istream& operator>>(std::istream& is, Array2D<P>& array) {
 	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));

@@ -439,14 +439,14 @@ const std::string Grid2DObject::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid) {
+std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os << grid.llcorner;
 	os << grid.grid2D;
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
+std::istream& operator>>(std::istream& is, Grid2DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is >> grid.llcorner;
 	is >> grid.grid2D;

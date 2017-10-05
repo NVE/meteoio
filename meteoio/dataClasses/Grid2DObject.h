@@ -48,8 +48,8 @@ class Grid2DObject {
 		double operator ()(const size_t& i) const;
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid);
-		friend std::iostream& operator>>(std::iostream& is, Grid2DObject& grid);
+		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);
+		friend std::istream& operator>>(std::istream& is, Grid2DObject& grid);
 
 		/**
 		* @brief Default constructor.
