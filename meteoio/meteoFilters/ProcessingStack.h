@@ -48,6 +48,9 @@ class ProcessingStack {
 		const std::string toString() const;
 
 	private:
+		bool filterTime(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
+		bool filterParam(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& param, const size_t& stat_idx);
+		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		const std::string param_name;
 };

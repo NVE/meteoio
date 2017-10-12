@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <map>
 
 #ifdef _MSC_VER
 	#pragma warning(disable:4512) //we don't need any = operator!
@@ -76,8 +77,19 @@ class ProcessingBlock {
 		bool skipStation(const std::string& station_id) const;
 
 	protected:
+		typedef struct DATES_RANGE {
+			DATES_RANGE() : start(), end() {}
+			DATES_RANGE(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+			bool operator<(const DATES_RANGE& a) const { //needed for "sort"
+				return start < a.start;
+			}
+
+			Date start, end;
+		} dates_range;
+		
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
-		static void readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init, std::vector<double> &corrections);
+		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
+		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
 		const std::set<std::string> excluded_stations, kept_stations;
@@ -90,6 +102,7 @@ class ProcessingBlock {
 class BlockFactory {
 	public:
 		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
+		static ProcessingBlock* getTimeBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 };
 
 } //end namespace

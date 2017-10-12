@@ -21,59 +21,59 @@
 #include <errno.h>
 #include <algorithm>
 
-#include <meteoio/meteoFilters/FilterSuppr.h>
+#include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/FileUtils.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : FilterBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
+static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
+
+TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
 
-	if (nrArgs>1)
+	if (nrArgs!=1)
 		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 
-	if (nrArgs==1) {
-		if (vecArgs[0].first=="FRAC") {
-			if (!IOUtils::convertString(range, vecArgs[0].second))
-				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
-			if (range<0. || range>1.)
-				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
-		} else if (vecArgs[0].first=="SUPPR") {
-			const std::string in_filename( vecArgs[0].second );
-			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
-			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+	if (vecArgs[0].first=="FRAC") {
+		if (!IOUtils::convertString(range, vecArgs[0].second))
+			throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
+		if (range<0. || range>1.)
+			throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
+	} else if (vecArgs[0].first=="SUPPR") {
+		const std::string in_filename( vecArgs[0].second );
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
-		} else
-			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
-	}
+		suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+	} else
+		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
 }
 
-void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
+	if (param!=IOUtils::unodata)
+		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
+	
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
 	if (!suppr_dates.empty()) {
-		supprByDates(param, ovec);
-	} else if (range==IOUtils::nodata) { //remove all
-		for (size_t ii=0; ii<ovec.size(); ii++)
-			ovec[ii](param) = IOUtils::nodata;
+		supprByDates(ovec);
 	} else { //only remove a given fraction
-		supprFrac(param, ivec, ovec);
+		supprFrac(ovec);
 	}
 }
 
 //this assumes that the DATES_RANGEs in suppr_dates have been sorted by increasing starting dates
-void FilterSuppr::supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const
+void TimeSuppr::supprByDates(std::vector<MeteoData>& ovec) const
 {
 	const std::string station_ID( ovec[0].meta.stationID ); //we know it is not empty
 	const std::map< std::string, std::vector<dates_range> >::const_iterator station_it( suppr_dates.find( station_ID ) );
@@ -86,16 +86,19 @@ void FilterSuppr::supprByDates(const unsigned int& param, std::vector<MeteoData>
 		if (ovec[ii].date<suppr_specs[curr_idx].start) continue;
 
 		if (ovec[ii].date<=suppr_specs[curr_idx].end) { //suppress the interval
-			ovec[ii](param) = IOUtils::nodata;
+			ovec[ii].date.setUndef(true); //mark the point to be removed
 			continue;
 		} else { //look for the next interval
 			curr_idx++;
 			if (curr_idx>=Nset) break; //all the suppression points have been processed
 		}
 	}
+	
+	//now really remove the points from the vector
+	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
 
-void FilterSuppr::supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const
+void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 {
 	const size_t set_size = ovec.size();
 	const size_t nrRemove = static_cast<size_t>( round( (double)set_size*range ) );
@@ -104,11 +107,14 @@ void FilterSuppr::supprFrac(const unsigned int& param, const std::vector<MeteoDa
 	size_t ii=1;
 	while (ii<nrRemove) {
 		const size_t idx = rand() % set_size;
-		if (ivec[idx](param)!=IOUtils::nodata && ovec[idx](param)==IOUtils::nodata) continue; //the point was already removed
+		if (ovec[idx].date.isUndef()) continue; //the point was already removed
 
-		ovec[idx](param) = IOUtils::nodata;
+		ovec[idx].date.setUndef(true);
 		ii++;
 	}
+	
+	//now really remove the points from the vector
+	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
 
 } //end namespace
