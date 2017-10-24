@@ -23,7 +23,6 @@
 #include <string>
 
 namespace mio {
-
 /**
  * @class  TimeSuppr
  * @ingroup processing
@@ -51,7 +50,6 @@ namespace mio {
  * Time ranges are declared by providing two dates on the same line. For more visibility, the said two dates can be separated by " - " (which a white
  * space character on both sides, as shown in the example above).
  */
-	
 class TimeSuppr : public ProcessingBlock {
 	public:
 		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
@@ -64,6 +62,37 @@ class TimeSuppr : public ProcessingBlock {
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
 		double range;
+};
+
+/**
+ * @class  TimeUnDST
+ * @ingroup processing
+ * @brief Timesteps Daylight Saving Time correction.
+ * @details
+ * This filter removes the Daylight Saving Time in order to bring the timestamps back to Winter time only (as it should always be!). In order to
+ * do so, a correction file has to be provided that contains on each line an ISO formatted timestamp as well as an offset (in seconds) to apply
+ * to the timestamps starting at the provided time. 
+ *
+ * @code
+ * TIME::filter1     = UnDST
+ * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat
+ * @endcode
+ * 
+ * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE + DST):
+ * @code
+ * 2016-03-27T02:00 -3600
+ * 2016-10-30T03:00 0
+ * @endcode
+ * 
+ */
+class TimeUnDST : public ProcessingBlock {
+	public:
+		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+
+	private:
+		std::vector<offset_spec> dst_changes;
 };
 
 } //end namespace

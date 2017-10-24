@@ -28,7 +28,7 @@ namespace mio {
 
 /**
  * @class  ProcessingStack
- * @brief
+ * @brief This builds and runs through a filter stack for filtering a given parameter.
  * @author Thomas Egger
  * @date   2011-01-11
  */
@@ -38,7 +38,7 @@ class ProcessingStack {
 		 * @brief Constructor parses cfg and builds up a filter stack for param_name
 		 */
 		ProcessingStack(const Config& cfg, const std::string& param_name);
-		~ProcessingStack();
+		virtual ~ProcessingStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
@@ -46,13 +46,30 @@ class ProcessingStack {
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
-
+		
 	private:
-		bool filterTime(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
-		bool filterParam(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& param, const size_t& stat_idx);
+		virtual bool filterStation(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
+		
+	protected:
+		virtual void addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		const std::string param_name;
+};
+
+/**
+ * @class  TimeProcStack
+ * @brief Since the time filters are quite specific to TIME (and need to be applied before), they have their own
+ * ProcessingStack.
+ */
+class TimeProcStack : public ProcessingStack {
+	public:
+		TimeProcStack(const Config& cfg) : ProcessingStack(cfg, "TIME") {}
+		virtual ~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
+
+	private:
+		virtual void addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
+		virtual bool filterStation(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
 };
 
 } //end namespace

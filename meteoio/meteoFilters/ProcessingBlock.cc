@@ -198,6 +198,8 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 {
 	if (blockname == "SUPPR"){
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "UNDST"){
+		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
 	}
@@ -243,8 +245,6 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
-
-	
 	
 	size_t maxIndex = 0;
 	const size_t minIndex = (c_type=='h')? 0 : 1;
@@ -299,6 +299,74 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		throw;
 	}
 	
+	return corrections;
+}
+
+std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx)
+{
+	if (col_idx<2)
+		throw InvalidArgumentException("Filter "+filter+": the column index must be greater than 1!", AT);
+	
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	std::vector<offset_spec> corrections;
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+
+	try {
+		size_t lcount=0;
+		double value;
+		Date date;
+		std::string tmp;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss >> std::skipws >> tmp;
+			const bool status = IOUtils::convertString(date, tmp, TZ);
+			if ( !iss || !status) {
+				std::ostringstream ss;
+				ss << "Invalid date in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			size_t ii=2;
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			do {
+				iss >> std::skipws >> value;
+				if ( iss.fail() ){
+					std::ostringstream ss;
+					ss << "In file " << filename << " at line " << lcount;
+					if (!iss.eof())
+						ss << ": invalid value";
+					else
+						ss << ": trying to read column " << col_idx << " of " << ii-1 << " columns";
+					throw InvalidArgumentException(ss.str(), AT);
+				}
+			} while ((ii++) < col_idx);
+			corrections.push_back( offset_spec(date, value) );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+	
+	std::sort(corrections.begin(), corrections.end());
 	return corrections;
 }
 

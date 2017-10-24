@@ -117,4 +117,56 @@ void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
 
+
+TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
+        : ProcessingBlock(vecArgs, name), dst_changes()
+{
+	const std::string where( "Filters::"+block_name );
+	properties.stage = ProcessingProperties::first; //for the rest: default values
+	const size_t nrArgs = vecArgs.size();
+	
+	if (nrArgs!=1)
+		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+
+	if (vecArgs[0].first=="CORRECTIONS") {
+		const std::string in_filename( vecArgs[0].second );
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+
+		dst_changes = ProcessingBlock::readCorrections(block_name, filename, TZ, 2);
+		if (dst_changes.empty())
+			throw InvalidArgumentException("Please provide at least one DST correction for " + where, AT);
+	} else
+		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
+}
+
+void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
+{
+	if (param!=IOUtils::unodata)
+		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
+	
+	ovec = ivec;
+	if (ovec.empty()) return;
+	
+	const size_t Nset = dst_changes.size();
+	size_t ii=0, next_idx=0; //we know there is at least one
+	double offset = 0.;
+	for (; ii<ovec.size(); ii++) {
+		if (ovec[ii].date>=dst_changes[next_idx].date) {
+			offset = dst_changes[next_idx].offset * 1./(24.*3600.);
+			next_idx++;
+			if (next_idx==Nset) break; //no more new corrections to expect
+		}
+		if (offset!=0.) ovec[ii].date += offset;
+	}
+	
+	if (offset==0) return; //no more corrections to apply
+	
+	//if some points remained after the last DST correction date, process them
+	for (; ii<ovec.size(); ii++) {
+		ovec[ii].date += offset;
+	}
+}
+
 } //end namespace

@@ -87,8 +87,20 @@ class ProcessingBlock {
 			Date start, end;
 		} dates_range;
 		
+		typedef struct OFFSET_SPEC {
+			OFFSET_SPEC() : date(), offset(0.) {}
+			OFFSET_SPEC(const Date& d1, const double& i_offset) : date(d1), offset(i_offset) {}
+			bool operator<(const OFFSET_SPEC& a) const { //needed for "sort"
+				return date < a.date;
+			}
+
+			Date date;
+			double offset;
+		} offset_spec;
+		
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
+		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
 		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 

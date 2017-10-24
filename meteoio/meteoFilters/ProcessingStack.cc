@@ -28,7 +28,6 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 	static const char NUM[] = "0123456789";
 	static const std::string filter_key( "::FILTER" );
 	static const std::string arg_key( "::ARG" );
-	const bool normal_filter = (param_name!="TIME");
 
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
@@ -58,18 +57,14 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 			vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
 		}
 
-		//construct the filter with its name and arguments
-		if (normal_filter)
-			filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
-		else
-			filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
+		addFilter(block_name, vecArgs, cfg);
 	}
 }
 
-ProcessingStack::~ProcessingStack()
+void ProcessingStack::addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
-	for (size_t ii=0; ii<filter_stack.size(); ii++)
-		delete filter_stack[ii];
+	//construct the filter with its name and arguments
+	filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 }
 
 void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
@@ -94,44 +89,19 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 }
 
 //ivec is passed by value, so it makes an efficient copy
-bool ProcessingStack::filterTime(std::vector<MeteoData> ivec,
+bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
 {
+	bool appliedFilter = false;
+	
+	//pick one element and check whether the param_name parameter exists
+	const size_t param = ivec.front().getParameterIndex(param_name);
+	if (param == IOUtils::npos) return appliedFilter;
+	
 	const size_t nr_of_filters = filter_stack.size();
 	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
 
 	//Now call the filters one after another for the current station and parameter
-	bool appliedFilter = false;
-	for (size_t jj=0; jj<nr_of_filters; jj++) {
-		if ((*filter_stack[jj]).skipStation( statID ))
-			continue;
-
-		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
-		if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-
-		appliedFilter = true;
-		(*filter_stack[jj]).process(IOUtils::unodata, ivec, ovec[stat_idx]);
-
-		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-			ivec = ovec[stat_idx]; //we might have deleted points
-		}
-	}
-
-	return appliedFilter;
-}
-
-//ivec is passed by value, so it makes an efficient copy
-bool ProcessingStack::filterParam(std::vector<MeteoData> ivec,
-                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& param, const size_t& stat_idx)
-{
-	const size_t nr_of_filters = filter_stack.size();
-	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
-
-	//Now call the filters one after another for the current station and parameter
-	bool appliedFilter = false;
 	for (size_t jj=0; jj<nr_of_filters; jj++) {
 		if ((*filter_stack[jj]).skipStation( statID ))
 			continue;
@@ -184,24 +154,10 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
-
-		//filters on TIME are quite different so they are processed separately
-		if (param_name=="TIME") {
-			const bool appliedFilter = filterTime(ivec[ii], ovec, second_pass, ii);
-			if (!appliedFilter) //if not a single filter was applied
-				ovec[ii] = ivec[ii]; //just copy input to output
-			continue;
-		}
 		
-		//pick one element and check whether the param_name parameter exists
-		const size_t param = ivec[ii].front().getParameterIndex(param_name);
-		if (param != IOUtils::npos) {
-			const bool appliedFilter = filterParam(ivec[ii], ovec, second_pass, param, ii);
-			if (!appliedFilter) //if not a single filter was applied
-				ovec[ii] = ivec[ii]; //just copy input to output
-		} else {
-			ovec[ii] = ivec[ii]; //just copy input to output
-		}
+		const bool appliedFilter = filterStation(ivec[ii], ovec, second_pass, ii);
+		//if not even a single filter was applied, just copy input to output
+		if (!appliedFilter) ovec[ii] = ivec[ii];
 	}
 }
 
@@ -218,6 +174,43 @@ const std::string ProcessingStack::toString() const
 	//os << "</ProcessingStack>";
 	os << "\n";
 	return os.str();
+}
+
+
+void TimeProcStack::addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
+{
+	//construct the filter with its name and arguments
+	filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
+}
+
+//ivec is passed by value, so it makes an efficient copy
+bool TimeProcStack::filterStation(std::vector<MeteoData> ivec,
+                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
+{
+	const size_t nr_of_filters = filter_stack.size();
+	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
+
+	//Now call the filters one after another for the current station and parameter
+	bool appliedFilter = false;
+	for (size_t jj=0; jj<nr_of_filters; jj++) {
+		if ((*filter_stack[jj]).skipStation( statID ))
+			continue;
+
+		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
+		if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+			continue;
+		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
+			continue;
+
+		appliedFilter = true;
+		(*filter_stack[jj]).process(IOUtils::unodata, ivec, ovec[stat_idx]);
+
+		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
+			ivec = ovec[stat_idx]; //we might have deleted points
+		}
+	}
+
+	return appliedFilter;
 }
 
 } //end namespace
