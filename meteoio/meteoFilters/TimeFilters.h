@@ -88,7 +88,7 @@ class TimeSuppr : public ProcessingBlock {
  * @ingroup processing
  * @brief Timesteps Daylight Saving Time correction.
  * @details
- * This filter removes the Daylight Saving Time in order to bring the timestamps back to Winter time only (as it should always be!). In order to
+ * This filter removes the <A HREF="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight Saving Time</A> in order to bring the timestamps back to Winter time only (or "Standard Time", as it should always be!). In order to
  * do so, a correction file has to be provided that contains on each line an ISO formatted timestamp as well as an offset (in seconds) to apply
  * to the timestamps starting at the provided time. 
  *
@@ -97,11 +97,12 @@ class TimeSuppr : public ProcessingBlock {
  * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat
  * @endcode
  * 
- * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE + DST):
+ * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE, whit or without the DST):
  * @code
  * 2016-03-27T02:00 -3600
  * 2016-10-30T03:00 0
  * @endcode
+ * Where the first change point is in Winter time while the second one is in Summer time.
  * 
  */
 class TimeUnDST : public ProcessingBlock {

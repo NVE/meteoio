@@ -147,18 +147,32 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 	if (param!=IOUtils::unodata)
 		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
 	
+	static const double sec2Jul = 1./(24.*3600.);
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	const size_t Nset = dst_changes.size();
-	size_t ii=0, next_idx=0; //we know there is at least one
+	const size_t Nset = dst_changes.size(); //we know there is at least one
+	size_t next_idx=0;
 	double offset = 0.;
+	Date prev_date = ovec[0].date - 1.; //so we are sure to be < when checking if timestamps are increasing
+	size_t ii=0;
 	for (; ii<ovec.size(); ii++) {
-		if (ovec[ii].date>=dst_changes[next_idx].date) {
-			offset = dst_changes[next_idx].offset * 1./(24.*3600.);
+		bool apply_change = (ovec[ii].date>=dst_changes[next_idx].date);
+		
+		//when reverting back to winter time, timestamps are not in increasing order for an overlap period
+		if (ovec[ii].date<=prev_date) {
+			const double overlap = (dst_changes[next_idx].offset*sec2Jul-offset);
+			if (ovec[ii].date>=(dst_changes[next_idx].date - overlap))
+				apply_change = true;
+		}
+		
+		if (apply_change) {
+			offset = dst_changes[next_idx].offset * sec2Jul;
 			next_idx++;
 			if (next_idx==Nset) break; //no more new corrections to expect
 		}
+		
+		prev_date = ovec[ii].date;
 		if (offset!=0.) ovec[ii].date += offset;
 	}
 	
