@@ -66,17 +66,6 @@ class ProcessingProperties {
  */
 class ProcessingBlock {
 	public:
-		virtual ~ProcessingBlock() {}
-
-		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec) = 0;
-
-		std::string getName() const {return block_name;}
-		const ProcessingProperties& getProperties() const {return properties;}
-		const std::string toString() const;
-		bool skipStation(const std::string& station_id) const;
-
-	protected:
 		typedef struct DATES_RANGE {
 			DATES_RANGE() : start(), end() {}
 			DATES_RANGE(const Date& d1, const Date& d2) : start(d1), end(d2) {}
@@ -98,12 +87,24 @@ class ProcessingBlock {
 			double offset;
 		} offset_spec;
 		
-		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+		virtual ~ProcessingBlock() {}
+
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+		                     std::vector<MeteoData>& ovec) = 0;
+
+		std::string getName() const {return block_name;}
+		const ProcessingProperties& getProperties() const {return properties;}
+		const std::string toString() const;
+		bool skipStation(const std::string& station_id) const;
+
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
 		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
 		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
+	protected:
+		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+		
 		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;
 		const std::string block_name;

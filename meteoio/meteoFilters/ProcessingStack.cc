@@ -22,49 +22,47 @@
 using namespace std;
 
 namespace mio {
+const char ProcessingStack::NUM[] = "0123456789";
+const std::string ProcessingStack::filter_key( "::FILTER" );
+const std::string ProcessingStack::arg_key( "::ARG" );
+
+std::vector< std::pair<std::string, std::string> > ProcessingStack::parseArgs(const Config& cfg, const std::string& key, const std::string& parname)
+{
+	//extract the filter number and perform basic checks on the syntax
+	const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
+	const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
+	const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
+	if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
+
+	unsigned int filter_nr;
+	const std::string filter_nr_str( key.substr(start_filter_nr) );
+	if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
+
+	//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
+	std::ostringstream arg_str;
+	arg_str << parname << arg_key << filter_nr;
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
+	for (size_t jj=0; jj<vecArgs.size(); jj++) {
+		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
+		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+	}
+	
+	return vecArgs;
+}
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
-	static const char NUM[] = "0123456789";
-	static const std::string filter_key( "::FILTER" );
-	static const std::string arg_key( "::ARG" );
-
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
-
-		//extract the filter number and perform basic checks on the syntax
-		const std::string key( vecFilters[ii].first );
-		const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
-		const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
-		const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
-		if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
-
-		unsigned int filter_nr;
-		const std::string filter_nr_str( key.substr(start_filter_nr) );
-		if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
-
-		//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
-		std::ostringstream arg_str;
-		arg_str << param_name << arg_key << filter_nr;
-		std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
-		for (size_t jj=0; jj<vecArgs.size(); jj++) {
-			const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
-			if (beg_arg_name==std::string::npos)
-				throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-			vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
-		}
-
-		addFilter(block_name, vecArgs, cfg);
+		
+		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecFilters[ii].first, parname) );
+		filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 	}
-}
-
-void ProcessingStack::addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
-{
-	//construct the filter with its name and arguments
-	filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 }
 
 void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
@@ -174,43 +172,6 @@ const std::string ProcessingStack::toString() const
 	//os << "</ProcessingStack>";
 	os << "\n";
 	return os.str();
-}
-
-
-void TimeProcStack::addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
-{
-	//construct the filter with its name and arguments
-	filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
-}
-
-//ivec is passed by value, so it makes an efficient copy
-bool TimeProcStack::filterStation(std::vector<MeteoData> ivec,
-                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
-{
-	const size_t nr_of_filters = filter_stack.size();
-	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
-
-	//Now call the filters one after another for the current station and parameter
-	bool appliedFilter = false;
-	for (size_t jj=0; jj<nr_of_filters; jj++) {
-		if ((*filter_stack[jj]).skipStation( statID ))
-			continue;
-
-		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
-		if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-
-		appliedFilter = true;
-		(*filter_stack[jj]).process(IOUtils::unodata, ivec, ovec[stat_idx]);
-
-		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-			ivec = ovec[stat_idx]; //we might have deleted points
-		}
-	}
-
-	return appliedFilter;
 }
 
 } //end namespace

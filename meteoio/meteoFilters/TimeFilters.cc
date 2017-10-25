@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include <meteoio/meteoFilters/TimeFilters.h>
+#include <meteoio/meteoFilters/ProcessingStack.h>
 #include <meteoio/FileUtils.h>
 
 using namespace std;
@@ -166,6 +167,74 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 	//if some points remained after the last DST correction date, process them
 	for (; ii<ovec.size(); ii++) {
 		ovec[ii].date += offset;
+	}
+}
+
+
+const std::string TimeProcStack::timeParamName( "TIME" );
+TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
+{
+	//extract each filter and its arguments, then build the filter stack
+	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_key, "FILTERS") );
+	for (size_t ii=0; ii<vecFilters.size(); ii++) {
+		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
+		if (block_name=="NONE") continue;
+		
+		const std::vector< std::pair<std::string, std::string> > vecArgs( ProcessingStack::parseArgs(cfg, vecFilters[ii].first, timeParamName) );
+		filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
+	}
+}
+
+//ivec is passed by value, so it makes an efficient copy
+void TimeProcStack::process(std::vector< std::vector<MeteoData> >& ivec, const bool& second_pass)
+{
+	const size_t nr_of_filters = filter_stack.size();
+	const size_t nr_stations = ivec.size();
+
+	std::vector<MeteoData> ovec;
+	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
+		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
+		
+		const std::string statID( ivec[ii].front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
+		//Now call the filters one after another for the current station and parameter
+		for (size_t jj=0; jj<nr_of_filters; jj++) {
+			if ((*filter_stack[jj]).skipStation( statID ))
+				continue;
+
+			const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
+			if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+				continue;
+			if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
+				continue;
+
+			(*filter_stack[jj]).process(IOUtils::unodata, ivec[ii], ovec);
+			ivec[ii] = ovec;
+		}
+	}
+}
+
+/** 
+ * @brief check that timestamps are unique and in increasing order
+ * @param[in] vecVecMeteo all the data for all the stations
+*/
+void TimeProcStack::checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMeteo)
+{
+	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
+		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
+		if (nr_timestamps==0) continue;
+
+		Date previous_date( vecVecMeteo[stat_idx].front().date );
+		for (size_t ii=1; ii<nr_timestamps; ++ii) {
+			const Date current_date( vecVecMeteo[stat_idx][ii].date );
+			if (current_date<=previous_date) {
+				const StationData& station( vecVecMeteo[stat_idx][ii].meta );
+				if (current_date==previous_date)
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
+				else
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO), AT);
+			}
+			previous_date = current_date;
+		}
 	}
 }
 

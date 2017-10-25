@@ -40,36 +40,21 @@ class ProcessingStack {
 		ProcessingStack(const Config& cfg, const std::string& param_name);
 		virtual ~ProcessingStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 
+		static std::vector< std::pair<std::string, std::string> > parseArgs(const Config& cfg, const std::string& key, const std::string& parname);
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
-
 		void getWindowSize(ProcessingProperties& o_properties) const;
-
 		const std::string toString() const;
+		
+		static const std::string filter_key;
 		
 	private:
 		virtual bool filterStation(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
-		
-	protected:
-		virtual void addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		const std::string param_name;
-};
-
-/**
- * @class  TimeProcStack
- * @brief Since the time filters are quite specific to TIME (and need to be applied before), they have their own
- * ProcessingStack.
- */
-class TimeProcStack : public ProcessingStack {
-	public:
-		TimeProcStack(const Config& cfg) : ProcessingStack(cfg, "TIME") {}
-		virtual ~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
-
-	private:
-		virtual void addFilter(const std::string& block_name, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
-		virtual bool filterStation(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
+		static const std::string arg_key;
+		static const char NUM[];
 };
 
 } //end namespace

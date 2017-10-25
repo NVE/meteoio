@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/MeteoProcessor.h>
+#include <meteoio/meteoFilters/TimeFilters.h>
 
 using namespace std;
 
@@ -53,6 +54,7 @@ std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
 				
 			const std::string tmp( vec_keys[ii].substr(0,found) );
+			if (tmp==TimeProcStack::timeParamName) continue; //exclude the TIME filters (they are processed earlier)
 			set_parameters.insert(tmp);
 		}
 	}
@@ -89,23 +91,21 @@ void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, Proc
 void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
-	//call the different processing stacks
-	std::vector< std::vector<MeteoData> > vec_tmp( ivec );
-	
-	const map<string, ProcessingStack*>::const_iterator it_time = processing_stack.find("TIME");	
-	if (it_time!=processing_stack.end()) {
-		(*(it_time->second)).process(vec_tmp, ovec, second_pass);
-		vec_tmp = ovec;
-	}
-
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
-		if ((it->first)=="TIME") continue;
-		(*(it->second)).process(vec_tmp, ovec, second_pass);
-		vec_tmp = ovec;
-	}
-
-	if (processing_stack.empty())
+	if (processing_stack.empty()) {
 		ovec = ivec;
+		return;
+	}
+	
+	//call the different processing stacks
+	std::vector< std::vector<MeteoData> > vec_tmp;
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
+		if (it==processing_stack.begin()){
+			(*(it->second)).process(ivec, ovec, second_pass);
+		} else {
+			vec_tmp = ovec;
+			(*(it->second)).process(vec_tmp, ovec, second_pass);
+		}
+	}
 }
 
 const std::string MeteoProcessor::toString() const {

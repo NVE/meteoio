@@ -24,6 +24,25 @@
 
 namespace mio {
 /**
+ * @class  TimeProcStack
+ * @brief Since the time filters are quite specific to TIME (and need to be applied before), they have their own
+ * ProcessingStack.
+ */
+class TimeProcStack {
+	public:
+		TimeProcStack(const Config& cfg);
+		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
+		
+		void process(std::vector< std::vector<MeteoData> >& ivec, const bool& second_pass);
+		static void checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
+		static const std::string timeParamName;
+		
+	private:
+		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
+};
+
+
+/**
  * @class  TimeSuppr
  * @ingroup processing
  * @brief Timesteps suppression filter.
