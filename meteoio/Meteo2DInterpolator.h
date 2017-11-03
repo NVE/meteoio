@@ -107,7 +107,8 @@ class Meteo2DInterpolator {
 		///Keywords for virtual stations strategy
 		typedef enum VSTATIONS_POLICY {
 			VSTATIONS, ///< extract virtual stations as specified in the ini file
-			DOWNSCALING, ///< extract all grid points from a provided grid
+			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+			GRID_ALL, ///< extract all grid points from a provided grid
 			SMART_DOWNSCALING ///< extract all relevant grid points from a provided grid
 		} vstations_policy;
 

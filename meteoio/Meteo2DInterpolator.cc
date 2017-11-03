@@ -17,6 +17,7 @@
 */
 
 #include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/Timer.h>
 
 using namespace std;
 
@@ -380,10 +381,10 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy
 	if (strategy==VSTATIONS) {
 		//this reads station data, interpolates the stations and extract points from the interpolated grids
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (strategy==SMART_DOWNSCALING) {
-		//This reads already gridded data and extract points from the grids
+	} else if (strategy==GRID_EXTRACT) {
+		//This reads already gridded data and extract points from the grids at the provided locations
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
-	} else if (strategy==DOWNSCALING) {
+	} else if (strategy==GRID_ALL) {
 		//extract all grid points
 		return 0; //HACK
 	}
@@ -509,13 +510,18 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	return vecMeteo.size();
 }
 
+/**
+* @brief Extract time series from grids at the specified points (virtual stations).
+* @param i_date when to extract the virtual stations
+* @param vecMeteo a vector of meteodata for the configured virtual stations
+*/
 size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
 
 	if (v_params.empty()) { //get parameters to interpolate if not already done
 		std::vector<std::string> vecStr;
-		cfg.getValue("Virtual_parameters", "Input", vecStr);		
+		cfg.getValue("Virtual_parameters", "Input", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			const size_t param_idx = MeteoGrids::getParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
@@ -540,7 +546,7 @@ size_t Meteo2DInterpolator::getVirtualStationsFromGrid(const Date& i_date, METEO
 		gridsmanager->read2DGrid(grid, grid_param, i_date);
 		
 		if (!grid.isSameGeolocalization(dem))
-			throw InvalidArgumentException("In SMART_DOWNSCALING, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+i_date.toString(Date::ISO));
+			throw InvalidArgumentException("In GRID_EXTRACT, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+i_date.toString(Date::ISO));
 		
 		for (size_t ii=0; ii<v_stations.size(); ii++) { //loop over all virtual stations
 			const size_t grid_i = v_stations[ii].position.getGridI(); //this should work since invalid stations have been removed in init
