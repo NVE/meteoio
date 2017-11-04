@@ -55,7 +55,7 @@ void ALS_Interpolation::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo, "Interpolations2D") );
-	InterpolationAlgorithm* algorithm( AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gdm, param) );
+	InterpolationAlgorithm* algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gdm, param));
 	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
