@@ -183,6 +183,7 @@ class Meteo2DInterpolator {
 		TimeSeriesManager *tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
 		GridsManager *gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
 		GridBuffer grid_buffer;
+		DEMObject internal_dem; ///< With virtual stations & resampling, we must have a DEM, so we keep an internal copy
 
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 
