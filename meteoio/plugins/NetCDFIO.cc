@@ -70,7 +70,7 @@ namespace mio {
  * - NETCDF::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
- * When providing multiple files in one directory, in case of overlapping files, the file containing the newest data has priority. This is
+ * When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
  * 
  * @section netcdf_example Example use
