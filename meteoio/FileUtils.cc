@@ -262,7 +262,7 @@ bool fileExists(const std::string& filename)
 	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
 		return false;
 	}
- 	
+	
 	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
 		return true;
 	else
