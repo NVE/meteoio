@@ -262,7 +262,7 @@ bool fileExists(const std::string& filename)
 	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
 		return false;
 	}
-	
+ 	
 	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
 		return true;
 	else
@@ -292,7 +292,7 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 		}
 		
 	#if defined HAVE_STRUCT_STAT_ST_FLAGS
-		const bool hidden_flag = (filename.compare(0,1,".")==0) || (statbuf->st_flags & 0x8000); //for osX and BSD
+		const bool hidden_flag = (filename.compare(0,1,".")==0) || (statbuf.st_flags & UF_HIDDEN); //for osX and BSD
 	#else
 		const bool hidden_flag = (filename.compare(0,1,".")==0);
 	#endif
