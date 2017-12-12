@@ -424,6 +424,7 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 
 void OshdIO::fillStationMeta()
 {
+	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
 	vecMeta.resize( vecIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(in_metafile, AT);
