@@ -24,17 +24,25 @@ using namespace std;
 namespace mio {
 
 /**
- * @page virtual_stations Virtual stations handling
+ * @page spatial_resampling Spatial resampling handling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "virtual stations" since the data **will seem to originate from these virtual stations points** where no station is present. This obviously
- * comes at the cost of much higher run times.
+ * This is handled as "spatial resampling" and the data **will seem to originate from these virtual stations points** where no station is present. This obviously
+ * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword, after setting RESAMPLING to TRUE):
+ *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
+ *     + GRID_EXACT: gridded values are extracted for the cells containing the given locations;
+ *     + GRID_ALL: all grid points are extracted.
  * 
+ * Currently, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted point. This is described
+ * by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
+ * \image html vstations_sampling.png "Resampling workflow"
+ * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
  *
- * @section virtual_stations_from_interpolation From spatial interpolations
+ * @section vstations VSTATIONS
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
  * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
  * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
- *    + VIRTUAL_STATIONS set to *true*;
+ *    + RESAMPLING set to *true*;
+ *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
@@ -61,21 +69,20 @@ namespace mio {
  * STATION4	= *DAV
  * 
  * #here the locations where the data will be generated. The caller will only see these stations!
- * Virtual_stations = true
+ * RESAMPLING = true
+ * RESAMPLING_STRATEGY = VSTATIONS
  * VSTATION1 = 46.793029 9.821343
  * VSTATION2 = 46.793031 9.831572
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
  * VSTATIONS_REFRESH_OFFSET = 3600
  * @endcode
- *
- * \image html vstations_sampling.png "virtual stations workflow"
- * \image latex vstations_sampling.eps "virtual stations workflow" width=0.9\textwidth
  * 
- * @section virtual_stations_from_grids From gridded data
+ * @section grids_extract From gridded data
  * The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys control this downscaling process:
- *    + DOWNSCALING set to *true*;
+ *    + RESAMPLING set to *true*;
+ *    + RESAMPLING_STRATEGY set to either *GRID_EXACT* or *GRID_ALL*;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
@@ -83,13 +90,13 @@ namespace mio {
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * 
- * @section virtual_stations_behind_the_scene Behind the scene
+ * @section resampling_behind_the_scene Behind the scene
  * Behind the scene, this is a two stages setup: the IOManager that normally requests its data to its internal TimeSeriesManager will first ask the 
  * Meteo2DInterpolator to perform the spatial interpolations. Once this is done, the Meteo2DInterpolator (that used its own, internal TimeSeriesManager 
  * to get the real, measured data) pushes the computed timeseries into the raw data buffer of the IOManager's internal TimeSeriesManager. 
  * The IOManager then request the data as usual, from its TimeSeriesManager.
- * \image html vstations_workflow.png "Virtual stations internal workflow"
- * \image latex vstations_workflow.eps "Virtual stations internal workflow" width=0.9\textwidth
+ * \image html vstations_workflow.png "Resampling internal workflow"
+ * \image latex vstations_workflow.eps "Resampling internal workflow" width=0.9\textwidth
  * 
  */
 

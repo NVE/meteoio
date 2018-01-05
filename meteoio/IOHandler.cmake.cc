@@ -264,10 +264,9 @@ namespace mio {
  * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
  * @endcode
  *
- * @section virtual_stations_section Virtual stations
+ * @section spatial_resampling_section Spatial resampling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "virtual stations" since the data will seem to originate from points where no station is present. This is described in the 
- * \subpage virtual_stations "virtual stations" page.
+ * This is handled as "spatial resampling" and is described in the \subpage spatial_resampling "spatial resampling" page.
  * 
  */
 
