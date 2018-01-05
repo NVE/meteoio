@@ -105,12 +105,13 @@ class Meteo2DInterpolator {
 		~Meteo2DInterpolator();
 
 		///Keywords for virtual stations strategy
-		typedef enum VSTATIONS_POLICY {
+		enum RESAMPLING_STRATEGY {
+			NONE, ///< default: no resampling
 			VSTATIONS, ///< extract virtual stations as specified in the ini file
-			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+			GRID_EXACT, ///< extract data from grids at locations provided in the ini file
 			GRID_ALL, ///< extract all grid points from a provided grid
-			SMART_DOWNSCALING ///< extract all relevant grid points from a provided grid
-		} vstations_policy;
+			GRID_SMART ///< extract all relevant grid points from a provided grid
+		};
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
@@ -159,11 +160,10 @@ class Meteo2DInterpolator {
 
 		/**
 		 * @brief Compute point measurements from grids following a given computing strategy
-		 * @param strategy sampling/computing strategy
 		 * @param i_date when to compute the virtual stations
 		 * @param vecMeteo a vector of meteodata for the configured virtual stations
 		 */
-		size_t getVirtualMeteoData(const vstations_policy& strategy, const Date& i_date, METEO_SET& vecMeteo);
+		size_t getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo);
 
 		const std::string toString() const;
 
@@ -191,10 +191,10 @@ class Meteo2DInterpolator {
 		std::vector<size_t> v_params; ///< Parameters for virtual stations
 		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
+		RESAMPLING_STRATEGY resampling_strategy; ///< Should we perform resampling and with which strategy?
 		
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
-		bool use_internal_managers; ///< When using virtual stations or downsampling, the ts and grids managers need to be private
 };
 
 } //end namespace

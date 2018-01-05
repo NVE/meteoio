@@ -96,22 +96,23 @@ namespace mio {
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
                     : cfg(i_cfg), tsmanager(&i_tsmanager), gridsmanager(&i_gridsmanager),
                       grid_buffer(0), internal_dem(), mapAlgorithms(),
-                      v_params(), v_coords(), v_stations(),
-                     algorithms_ready(false), use_full_dem(false), use_internal_managers(false)
+                      v_params(), v_coords(), v_stations(), resampling_strategy(NONE),
+                     algorithms_ready(false), use_full_dem(false)
 {
-	bool virtual_stations = false; ///< compute the meteo values at virtual stations
-	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	if (virtual_stations) {
-		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
+	std::string resampling_strategy_str( "NONE" );
+	cfg.getValue("Resampling_strategy", "Input", resampling_strategy_str, IOUtils::nothrow);
+	IOUtils::toUpper( resampling_strategy_str );
+	if (resampling_strategy_str=="VSTATIONS") {
+		resampling_strategy = VSTATIONS;
+	} else if (resampling_strategy_str=="GRID_EXACT") {
+		resampling_strategy = GRID_EXACT;
+	} else if (resampling_strategy_str=="GRID_ALL") {
+		resampling_strategy = GRID_ALL;
+	} else if (resampling_strategy_str=="GRID_SMART") {
+		resampling_strategy = GRID_SMART;
 	}
-
-	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
-	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
-	if (virtual_stations && downscaling)
-		throw InvalidArgumentException("It is not possible to use both Virtual_stations and Downscaling!", AT);
-
-	use_internal_managers = (virtual_stations || downscaling);
-	if (use_internal_managers) {
+	
+	if (resampling_strategy!=NONE) {
 		tsmanager = new TimeSeriesManager(i_tsmanager.getIOHandler(), i_cfg);
 		gridsmanager = new GridsManager(i_gridsmanager.getIOHandler(), i_cfg);
 	}
@@ -126,8 +127,8 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& source)
            : cfg(source.cfg), tsmanager(source.tsmanager), gridsmanager(source.gridsmanager),
                       grid_buffer(source.grid_buffer), internal_dem(source.internal_dem), mapAlgorithms(source.mapAlgorithms),
-                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations),
-                     algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem), use_internal_managers(source.use_internal_managers)
+                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations), resampling_strategy(source.resampling_strategy),
+                     algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem)
 {}
 
 Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source) {
@@ -141,9 +142,9 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 		v_params = source.v_params;
 		v_coords = source.v_coords;
 		v_stations = source.v_stations;
+		resampling_strategy = source.resampling_strategy;
 		algorithms_ready = source.algorithms_ready;
 		use_full_dem = source.use_full_dem;
-		use_internal_managers = source.use_internal_managers;
 	}
 	return *this;
 }
@@ -156,7 +157,7 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
 	}
-	if (use_internal_managers) {
+	if (resampling_strategy!=NONE) {
 		delete tsmanager;
 		delete gridsmanager;
 	}
@@ -385,26 +386,26 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 
 //get the stations' data to use for downscaling (=true measurements)
 //HACK this structure must change: the strategy should be fixed in the constructor! The IOManager should not decide about it...
-size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy, const Date& i_date, METEO_SET& vecMeteo)
+size_t Meteo2DInterpolator::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	if (v_stations.empty()) {
-		if (strategy==GRID_ALL) {
+		if (resampling_strategy==GRID_ALL) {
 			initVirtualStationsAtAllGridPoints();
 		} else {
-			const bool adjust_coordinates = (strategy==GRID_EXTRACT);
+			const bool adjust_coordinates = (resampling_strategy==GRID_EXACT);
 			initVirtualStations(adjust_coordinates);
 		}
 	}
 	
-	if (strategy==VSTATIONS) {
+	if (resampling_strategy==VSTATIONS) {
 		//this reads station data, interpolates the stations and extract points from the interpolated grids
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (strategy==GRID_EXTRACT) {
+	} else if (resampling_strategy==GRID_EXACT || resampling_strategy==GRID_ALL) {
 		//This reads already gridded data and extract points from the grids at the provided locations
+		//(the virtual stations must have been initialized before, see above)
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
-	} else if (strategy==GRID_ALL) {
-		//extract all grid points, the virtual stations MUST have been initialized before!
-		return getVirtualStationsFromGrid(i_date, vecMeteo);
+	} else if (resampling_strategy==GRID_EXACT) {
+		
 	}
 
 	throw UnknownValueException("Unknown virtual station strategy", AT);
@@ -507,7 +508,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	if (v_stations.empty())
 		throw NoDataException("No virtual stations provided", AT);
 	
-	//cleaning up v_coords so it is still usable (ie no more duplicates)
+	//cleaning up v_coords so it is still usable for the VSTATIONS (ie no more duplicates)
 	v_coords.resize(v_stations.size());
 	for (size_t ii=0; ii<v_stations.size(); ii++) {
 		v_coords[ii] = v_stations[ii].position;
