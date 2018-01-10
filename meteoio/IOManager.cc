@@ -24,14 +24,14 @@ namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                                       vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling(false)
+                                                       resampling(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                            vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling(false)
+                                            resampling(false)
 {
 	initIOManager();
 }
@@ -42,8 +42,6 @@ void IOManager::initIOManager()
 	if (resampling) { //in this case, we do not want to re-apply the filters
 		tsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
 		gridsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
-		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
-		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
 	}
 }
 
@@ -76,30 +74,11 @@ void IOManager::clear_cache()
 size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
+	
+	if (resampling) 
+		interpolator.pushVirtualMeteoData(i_date, tsmanager);
 
-	if (!resampling) { //this is the usual case
-		tsmanager.getMeteoData(i_date, vecMeteo);
-	} else {
-		//find the nearest sampling points (vstations_refresh_rate apart) around the requested point
-		const Date i_date_down( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset );
-		const Date i_date_up( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::UP) + vstations_refresh_offset );
-		const Date buff_start( tsmanager.getRawBufferStart() );
-		const Date buff_end( tsmanager.getRawBufferEnd() );
-		const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
-
-		if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end) {
-			interpolator.getVirtualMeteoData(i_date_down, vecMeteo);
-			tsmanager.push_meteo_data(IOUtils::raw, i_date_down - half_range, i_date_down + half_range, vecMeteo);
-		}
-
-		if (i_date_down!=i_date_up && (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)) { //sometimes, up and down are rounded up to the same value...
-			interpolator.getVirtualMeteoData(i_date_up, vecMeteo);
-			tsmanager.push_meteo_data(IOUtils::raw, i_date_up - half_range, i_date_up + half_range, vecMeteo);
-		}
-
-		tsmanager.getMeteoData(i_date, vecMeteo);
-	}
-
+	tsmanager.getMeteoData(i_date, vecMeteo);
 	return vecMeteo.size();
 }
 

@@ -29,6 +29,7 @@
 #cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_ARPSIO
 #cmakedefine PLUGIN_CNRMIO
+#cmakedefine PLUGIN_CSVIO
 #cmakedefine PLUGIN_DBO
 #cmakedefine PLUGIN_GRASSIO
 #cmakedefine PLUGIN_GEOTOPIO
@@ -50,6 +51,7 @@
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/ARPSIO.h>
+#include <meteoio/plugins/CsvIO.h>
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/PGMIO.h>
@@ -283,6 +285,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_ARPSIO
 	if (plugin_name == "ARPS") return new ARPSIO(cfg);
+#endif
+#ifdef PLUGIN_CSVIO
+	if (plugin_name == "CSV") return new CsvIO(cfg);
 #endif
 #ifdef PLUGIN_GRASSIO
 	if (plugin_name == "GRASS") return new GrassIO(cfg);

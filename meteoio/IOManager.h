@@ -221,7 +221,6 @@ class IOManager {
 		TimeSeriesManager tsmanager;
 		GridsManager gridsmanager;
 		Meteo2DInterpolator interpolator;
-		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
 		bool resampling; ///< Are we performing resampling (grid extract, vstations, etc)?
 };
 } //end namespace
