@@ -49,7 +49,7 @@ bool isQuote(const char& c)
 }
 
 CsvIO::CsvIO(const std::string& configfile) 
-      : cfg(configfile), indexer(), vecStations(), vecFilenames(), units_offset(), units_multiplier(),
+      : cfg(configfile), indexer(), vecStations(), vecFilenames(), csv_fields(), units_offset(), units_multiplier(),
         datetime_idx(), coordin(), coordinparam(), coordout(), coordoutparam(), 
         meteopath(), datetime_format(), csv_tz(), header_lines(1), columns_headers(1), csv_delim(',')
 {
@@ -57,7 +57,7 @@ CsvIO::CsvIO(const std::string& configfile)
 }
 
 CsvIO::CsvIO(const Config& cfgreader)
-      : cfg(cfgreader), indexer(), vecStations(), vecFilenames(), units_offset(), units_multiplier(),
+      : cfg(cfgreader), indexer(), vecStations(), vecFilenames(), csv_fields(), units_offset(), units_multiplier(),
         datetime_idx(), coordin(), coordinparam(), coordout(), coordoutparam(), 
         meteopath(), datetime_format(), csv_tz(), header_lines(1), columns_headers(1), csv_delim(',')
 {
@@ -68,12 +68,14 @@ void CsvIO::parseInputOutputSection()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	
+	//HACK several of these should be per station!
 	cfg.getValue("CSV_DELIMITER", "Input", csv_delim, IOUtils::nothrow);
 	cfg.getValue("CSV_HEADER_LINES", "Input", header_lines, IOUtils::nothrow);
 	cfg.getValue("CSV_COLUMNS_HEADERS", "Input", columns_headers, IOUtils::nothrow);
+	cfg.getValue("CSV_FIELDS", "Input", csv_fields, IOUtils::nothrow);
 	std::vector<std::string> vecMetaSpec;
 	cfg.getValue("CSV_SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
-	cfg.getValue("CSV_UNITS_OFFSET", "Input", units_offset, IOUtils::nothrow); //HACK this should be per station!
+	cfg.getValue("CSV_UNITS_OFFSET", "Input", units_offset, IOUtils::nothrow);
 	cfg.getValue("CSV_UNITS_MULTIPLIER", "Input", units_multiplier, IOUtils::nothrow);
 	
 	cfg.getValue("TIME_ZONE", "Input", csv_tz);
@@ -90,22 +92,15 @@ void CsvIO::parseInputOutputSection()
 }
 
 struct sort_pred {
-    bool operator()(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) {
-        return left.first < right.first;
-    }
+	bool operator()(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) {
+		return left.first < right.first;
+	}
 };
-
+	
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
 //the indices are based on ISO timestamp, so year=0, month=1, etc
 std::string CsvIO::setDateParsing(const std::string& datetime_spec)
 {
-	/*const size_t year_pos = datetime_spec.find("YYYY");
-	const size_t month_pos = datetime_spec.find("MM");
-	const size_t day_pos = datetime_spec.find("DD");
-	const size_t hour_pos = datetime_spec.find("HH24");
-	const size_t minute_pos = datetime_spec.find("MI");
-	const size_t second_pos = datetime_spec.find("SS");*/
-	
 	static const char* keys[] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
 	for (size_t ii=0; ii<6; ii++) {
@@ -114,12 +109,6 @@ std::string CsvIO::setDateParsing(const std::string& datetime_spec)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
 	}
 	
-	/*sorting_vector.push_back( make_pair( datetime_spec.find("YYYY"), 1) );
-	sorting_vector.push_back( make_pair( datetime_spec.find("MM"), 2) );
-	sorting_vector.push_back( make_pair( datetime_spec.find("DD"), 3) );
-	sorting_vector.push_back( make_pair( datetime_spec.find("HH24"), 4) );
-	sorting_vector.push_back( make_pair( datetime_spec.find("MI"), 5) );
-	sorting_vector.push_back( make_pair( datetime_spec.find("SS"), 6) );*/
 	std::sort(sorting_vector.begin(), sorting_vector.end(), sort_pred());
 	for (size_t ii=0; ii<sorting_vector.size(); ii++)
 		datetime_idx.push_back( sorting_vector[ii].second );
@@ -135,9 +124,10 @@ std::string CsvIO::setDateParsing(const std::string& datetime_spec)
 	return format;
 }
 
-std::vector<StationData> CsvIO::initStations(const std::vector<std::string>& /*i_vecFilenames*/, const std::vector< std::pair<std::string, std::string> >& vecMeta, const std::vector<std::string>& vecMetaSpec) const
+std::vector<StationData> CsvIO::initStations(const std::vector<std::string>& i_vecFilenames, const std::vector< std::pair<std::string, std::string> >& vecMeta, const std::vector<std::string>& vecMetaSpec) const
 {
 	//HACK add special coding on how to extract meta information out of the header: like id:1:2 name:1:6 (as line:col)
+	//HACK: support multiple fields per line, ie use multimap
 	std::map< size_t, std::pair<size_t, std::string> > meta_spec;
 	for (size_t ii=0; ii<vecMetaSpec.size(); ii++) {
 		bool error = false;
@@ -163,6 +153,38 @@ std::vector<StationData> CsvIO::initStations(const std::vector<std::string>& /*i
 			throw InvalidFormatException("Wrong format for Metadata specification '"+vecMetaSpec[ii]+"'", AT);
 	}
 	
+	if (!meta_spec.empty()) {
+		std::vector<std::string> vecStr;
+		for (size_t ii=0; ii<i_vecFilenames.size(); ii++) {
+			const std::string filename( meteopath+"/"+i_vecFilenames[ii] );
+			if (!FileUtils::fileExists(filename)) throw AccessException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
+			errno = 0;
+			std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+			if (fin.fail()) {
+				ostringstream ss;
+				ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+				ss << " Please check file existence and permissions!";
+				throw AccessException(ss.str(), AT);
+			}
+			const char eoln = FileUtils::getEoln(fin);
+			size_t linenr=0;
+			std::string line;
+	
+			for (size_t jj=0; jj<header_lines; jj++) {
+				getline(fin, line, eoln); //read complete signature line
+				linenr++;
+				if (meta_spec.count(linenr)>0) {
+					IOUtils::readLineToVec(line, vecStr, csv_delim);
+					if (meta_spec[linenr].first>vecStr.size())
+						throw InvalidArgumentException("Metadata specification for '"+meta_spec[linenr].second+"' refers to a non-existent field for file '"+filename+"'", AT);
+					const std::string field_type( IOUtils::strToUpper(meta_spec[linenr].second) );
+					if (field_type=="NAME") std::cout << "found name='" << vecStr[meta_spec[linenr].first-1] << "\n";
+				}
+			}
+		}
+	}
+		
+		
 	std::vector<StationData> vecStats;
 	for (size_t ii=0; ii<vecMeta.size(); ii++) {
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
@@ -216,19 +238,13 @@ std::vector<std::string> CsvIO::readHeaders(std::ifstream& fin, const char& eoln
 	return vecNames;
 }
 
+void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
+{
+	vecStation = vecStations;
+}
+
 Date CsvIO::parseDate(const std::string& date_str, const std::string& /*time_str*/) const
 {
-	/*unsigned int year, month, day, hour, minute;
-	double second;
-	char rest[32] = "";
-	static const char format[] = "%u.%u.%u %u:%u:%lg%31s";
-	
-	Date t;
-	if (sscanf(date_str.c_str(), format, &day, &month, &year, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute, second, csv_tz);
-	}
-	
-	return t;*/
 	const size_t nrArgs = datetime_idx.size();
 	unsigned int args[6];
 	
@@ -244,10 +260,9 @@ Date CsvIO::parseDate(const std::string& date_str, const std::string& /*time_str
 
 std::vector<MeteoData> CsvIO::readCSVFile(const std::string& filename, const size_t& stat_idx, const Date& /*dateStart*/, const Date& /*dateEnd*/)
 {
-	std::ifstream fin; //Input file streams
 	if (!FileUtils::fileExists(filename)) throw AccessException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
@@ -260,18 +275,19 @@ std::vector<MeteoData> CsvIO::readCSVFile(const std::string& filename, const siz
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
 	size_t date_col, time_col;
-	const std::vector<std::string> vecColNames( readHeaders(fin, eoln, date_col, time_col) );
+	std::vector<std::string> vecColNames( readHeaders(fin, eoln, date_col, time_col) );
+	if (vecColNames.empty()) vecColNames = csv_fields;
+	if (vecColNames.empty())
+		throw InvalidArgumentException("No columns names could be retrieve, please provide them through the configuration file", AT);
+	
 	size_t nr_of_data_fields = vecColNames.size();
-	//const bool use_colnames = !vecColNames.empty(); //HACK if empty, it MUST be provided by the user!
-	const bool use_offset = !units_offset.empty(); //HACK: check size!
+	const bool use_offset = !units_offset.empty();
 	const bool use_multiplier = !units_multiplier.empty();
 	if ((use_offset && units_offset.size()!=nr_of_data_fields) || (use_multiplier && units_multiplier.size()!=nr_of_data_fields)) {
 		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
 	}
 	
 	size_t linenr=header_lines;
-	//streampos current_fpointer = static_cast<streampos>(-1);
-
 	while (!fin.eof()){
 		line.clear();
 		getline(fin, line, eoln);

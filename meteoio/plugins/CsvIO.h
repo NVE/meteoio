@@ -40,13 +40,11 @@ class CsvIO : public IOInterface {
 		CsvIO(const CsvIO&);
 		CsvIO(const Config& cfgreader);
 
-		//virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
-		//virtual void readPOI(std::vector<Coords>& pts);
-		
 	private:
 		void parseInputOutputSection();
 		void cleanup() throw();
@@ -59,7 +57,7 @@ class CsvIO : public IOInterface {
 		const Config cfg;
 		mio::FileUtils::FileIndexer indexer; //in order to save file pointers
 		std::vector<StationData> vecStations;
-		std::vector<std::string> vecFilenames;
+		std::vector<std::string> vecFilenames, csv_fields;
 		std::vector<double> units_offset, units_multiplier;
 		std::vector<size_t> datetime_idx;
 		
