@@ -101,41 +101,69 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	//read and parse the file's headers
 	file_and_path = i_file_and_path;
-	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File '"+file_and_path+"' does not exists", AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "Error opening file \"" << file_and_path << "\" for reading, possible reason: " << strerror(errno);
+		ss << "Error opening file " << file_and_path << " for reading, possible reason: " << strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}
-	eoln = FileUtils::getEoln(fin);
 	
 	size_t linenr=0;
 	std::string line;
 	std::vector<std::string> vecStr;
-	for (size_t ii=0; ii<header_lines; ii++) {
-		getline(fin, line, eoln); //read complete signature line
-		linenr++;
-		if (meta_spec.count(linenr)>0) {
-			IOUtils::readLineToVec(line, vecStr, csv_delim);
-			if (meta_spec[linenr].first>vecStr.size())
-				throw InvalidArgumentException("Metadata specification for '"+meta_spec[linenr].second+"' refers to a non-existent field for file '"+file_and_path+"'", AT);
-			const std::string field_type( IOUtils::strToUpper(meta_spec[linenr].second) );
-			//for the user, the first field is 1, not 0 -> "-1"
-			if (field_type=="NAME") name=vecStr[meta_spec[linenr].first-1]; 
-			if (field_type=="ID") id=vecStr[meta_spec[linenr].first-1];
+	double lat = IOUtils::nodata;
+	double lon = IOUtils::nodata;
+	try {
+		eoln = FileUtils::getEoln(fin);
+		for (size_t ii=0; ii<header_lines; ii++) {
+			getline(fin, line, eoln); //read complete signature line
+			if (fin.eof()) {
+				ostringstream ss;
+				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			linenr++;
+			if (meta_spec.count(linenr)>0) {
+				IOUtils::readLineToVec(line, vecStr, csv_delim);
+				if (meta_spec[linenr].first>vecStr.size())
+					throw InvalidArgumentException("Metadata specification for '"+meta_spec[linenr].second+"' refers to a non-existent field for file "+file_and_path, AT);
+				const std::string field_type( IOUtils::strToUpper(meta_spec[linenr].second) );
+				
+				//for the user, the first field is 1, not 0 -> "-1"
+				if (field_type=="NAME") {
+					name=vecStr[meta_spec[linenr].first-1]; 
+				} else if (field_type=="ID") {
+					id=vecStr[meta_spec[linenr].first-1];
+				} else {
+					double tmp;
+					if (!IOUtils::convertString(tmp, vecStr[meta_spec[linenr].first-1]))
+						throw InvalidArgumentException("Could not parse Metadata specification '"+meta_spec[linenr].second+"' for "+file_and_path, AT);
+					
+					if (field_type=="ALT") location.setAltitude( tmp, false);
+					if (field_type=="LON") lon=tmp;
+					if (field_type=="LAT") lat=tmp;
+				}
+			}
+			if (linenr==columns_headers) {
+				IOUtils::readLineToVec(line, csv_fields, csv_delim);
+			}
 		}
-		if (linenr==columns_headers) {
-			IOUtils::readLineToVec(line, csv_fields, csv_delim);
-		}
+	} catch (...) {
+		fin.close();
+		throw;
 	}
-	fin.close(); //HACK try/catch to close the file even after a throw
+	fin.close();
+	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
+		const double alt=location.getAltitude(); //so we don't change previously set altitude
+		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
+	}
 	
 	if (!csv_fields.empty()) { //cleanup potential '\r' char at the end of the line
 		std::string &tmp = csv_fields.back();
-		if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //BUG this should be \r\n ?! so \r second from last...
+		if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
 	}
 	
 	parseFields(csv_fields, date_col, time_col);
@@ -218,25 +246,30 @@ void CsvIO::parseInputOutputSection()
 	if (vecFilenames.size()!=vecCoords.size())
 		throw InvalidArgumentException("The declared stations and metadata must match!", AT);
 	
-	csvparam.resize(vecFilenames.size());
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-		csvparam[ii].location.setLatLon(vecCoords[ii].second, IOUtils::nodata);
+		CsvParameters tmp_csv;
+		
+		const Coords loc(coordin, coordinparam, vecCoords[ii].second);
+		const std::string name( FileUtils::removeExtension(vecFilenames[ii]) );
+		const std::string id( static_cast<ostringstream*>( &(ostringstream() << ii) )->str() ); //HACK use the user provided index
+		tmp_csv.setLocation(loc, name, id);
 		
 		//HACK several of these should be per station!
-		cfg.getValue("CSV_DELIMITER", "Input", csvparam[ii].csv_delim, IOUtils::nothrow);
-		cfg.getValue("CSV_HEADER_LINES", "Input", csvparam[ii].header_lines, IOUtils::nothrow);
-		cfg.getValue("CSV_COLUMNS_HEADERS", "Input", csvparam[ii].columns_headers, IOUtils::nothrow);
-		cfg.getValue("CSV_FIELDS", "Input", csvparam[ii].csv_fields, IOUtils::nothrow);
-		cfg.getValue("CSV_UNITS_OFFSET", "Input", csvparam[ii].units_offset, IOUtils::nothrow);
-		cfg.getValue("CSV_UNITS_MULTIPLIER", "Input", csvparam[ii].units_multiplier, IOUtils::nothrow);
+		cfg.getValue("CSV_DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
+		cfg.getValue("CSV_HEADER_LINES", "Input", tmp_csv.header_lines, IOUtils::nothrow);
+		cfg.getValue("CSV_COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
+		cfg.getValue("CSV_FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
+		cfg.getValue("CSV_UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
+		cfg.getValue("CSV_UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
 		
 		std::string datetime_spec;
 		cfg.getValue("CSV_DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
-		csvparam[ii].setDateTimeSpec(datetime_spec, in_TZ);
+		tmp_csv.setDateTimeSpec(datetime_spec, in_TZ);
 		
 		std::vector<std::string> vecMetaSpec;
 		cfg.getValue("CSV_SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
-		csvparam[ii].setFile(meteopath + "/" + vecFilenames[ii], vecMetaSpec);
+		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii], vecMetaSpec);
+		csvparam.push_back( tmp_csv );
 	}
 	
 }
@@ -283,7 +316,12 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
 	}
 	
-	StationData sd(params.location, params.id, params.name);
+	//build MeteoData template
+	MeteoData template_md( Date(0., 0.), params.getStation() );
+	for (size_t ii=0; ii<nr_of_data_fields; ii++)
+		template_md.addParameter( params.csv_fields[ii] );
+	
+	//and now, read the data and fill the vector vecMeteo
 	while (!fin.eof()){
 		line.clear();
 		getline(fin, line, params.eoln);
@@ -306,8 +344,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 			throw InvalidFormatException("Date could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
 		
-		//MeteoData md( dt, vecStations[stat_idx]);
-		MeteoData md( dt, sd);
+		MeteoData md(template_md);
+		md.setDate(dt);
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col) continue;
 			double tmp;

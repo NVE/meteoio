@@ -29,10 +29,11 @@ namespace mio {
 
 class CsvParameters {
 	public:
-		CsvParameters() : csv_fields(), units_offset(), units_multiplier(), location(), name(), id(), header_lines(1), columns_headers(1), date_col(0), time_col(0), csv_delim(','), eoln('\n'), datetime_idx(), file_and_path(), datetime_format(), csv_tz(0.) {}
+		CsvParameters() : csv_fields(), units_offset(), units_multiplier(), header_lines(1), columns_headers(1), date_col(0), time_col(0), csv_delim(','), eoln('\n'),  location(), datetime_idx(), file_and_path(), datetime_format(), name(), id(), csv_tz(0.) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec, const double& tz_in);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec);
+		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		Date parseDate(const std::string& datetime_str, const std::string& /*time_str*/) const;
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const {return StationData(location, id, name);}
@@ -41,8 +42,6 @@ class CsvParameters {
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		
-		Coords location;
-		std::string name, id;
 		size_t header_lines, columns_headers;
 		size_t date_col, time_col;
 		char csv_delim, eoln;
@@ -50,8 +49,10 @@ class CsvParameters {
 		static void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
 		std::map< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
 		
+		Coords location;
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate
 		std::string file_and_path, datetime_format; 		///< the scanf() format string for use in parseDate
+		std::string name, id;
 		double csv_tz;		///< timezone to apply to parsed dates
 		
 };
