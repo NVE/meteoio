@@ -47,7 +47,8 @@ class CsvParameters {
 		char csv_delim, eoln;
 	private:
 		static void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
-		std::map< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
+		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
+		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		
 		Coords location;
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate

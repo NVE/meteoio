@@ -155,6 +155,19 @@ void replace_all(std::string &input, const std::string& search, const std::strin
 	}
 }
 
+size_t count(std::string &input, const std::string& search)
+{
+	const size_t len = search.length();
+	size_t pos = input.find(search);
+	size_t count = 0;
+	while (pos!=std::string::npos) {
+		pos = input.find(search, pos+len);
+		count++;
+	}
+	
+	return count;
+}
+
 void toUpper(std::string& str) {
 	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }

@@ -43,9 +43,9 @@ namespace mio {
  */
 
 //parse the user provided special fields specification
-std::map< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const
+std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const
 {
-	std::map< size_t, std::pair<size_t, std::string> > meta_spec;
+	std::multimap< size_t, std::pair<size_t, std::string> > meta_spec;
 	for (size_t ii=0; ii<vecMetaSpec.size(); ii++) {
 		bool error = false;
 		const size_t count_delims = std::count(vecMetaSpec[ii].begin(), vecMetaSpec[ii].end(), ':');
@@ -56,7 +56,7 @@ std::map< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSp
 				const int linenr = atoi( vecMetaSpec[ii].substr(delim1+1, delim2-delim1-1).c_str() );
 				const int colnr = atoi( vecMetaSpec[ii].substr(delim2+1).c_str() );
 				if (linenr>0 && colnr>0)
-					meta_spec[ linenr ] = make_pair( colnr, vecMetaSpec[ii].substr(0, delim1));
+					meta_spec.insert( make_pair( linenr, make_pair( colnr, vecMetaSpec[ii].substr(0, delim1)) ) );
 				else
 					error = true;
 			} else {
@@ -93,14 +93,45 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 	}
 }
 
+void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon)
+{
+	std::vector<std::string> vecStr;
+	IOUtils::readLineToVec(line, vecStr, csv_delim);
+	
+	std::multimap<size_t, std::pair<size_t, std::string> >::const_iterator it;
+	for (it=meta_spec.equal_range(linenr).first; it!=meta_spec.equal_range(linenr).second; ++it) {
+		const size_t colnr = (*it).second.first;
+		const std::string field_type( IOUtils::strToUpper( (*it).second.second) );
+		if (colnr>vecStr.size() || colnr==0)
+			throw InvalidArgumentException("Metadata specification for '"+field_type+"' refers to a non-existent field for file (either 0 or too large) "+file_and_path, AT);
+		
+		//remove the quotes from the field
+		std::string field_val( vecStr[colnr-1] );
+		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
+		
+		if (field_type=="NAME") {
+			name = field_val;
+		} else if (field_type=="ID") {
+			id = field_val;
+		} else {
+			double tmp;
+			if (!IOUtils::convertString(tmp, field_val))
+				throw InvalidArgumentException("Could not parse Metadata specification '"+field_type+"' for "+file_and_path, AT);
+			
+			if (field_type=="ALT") location.setAltitude( tmp, false);
+			if (field_type=="LON") lon=tmp;
+			if (field_type=="LAT") lat=tmp;
+		}
+	}
+}
+
 //read and parse the file's headers in order to extract all possible information
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec)
 {
-	//HACK: support multiple fields per line, ie use multimap
-	std::map< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
+	file_and_path = i_file_and_path;
+	const std::multimap< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
 	
 	//read and parse the file's headers
-	file_and_path = i_file_and_path;
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
@@ -113,7 +144,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	size_t linenr=0;
 	std::string line;
-	std::vector<std::string> vecStr;
 	double lat = IOUtils::nodata;
 	double lon = IOUtils::nodata;
 	try {
@@ -121,43 +151,25 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		for (size_t ii=0; ii<header_lines; ii++) {
 			getline(fin, line, eoln); //read complete signature line
 			if (fin.eof()) {
-				ostringstream ss;
+				std::ostringstream ss;
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			linenr++;
-			if (meta_spec.count(linenr)>0) {
-				IOUtils::readLineToVec(line, vecStr, csv_delim);
-				if (meta_spec[linenr].first>vecStr.size())
-					throw InvalidArgumentException("Metadata specification for '"+meta_spec[linenr].second+"' refers to a non-existent field for file "+file_and_path, AT);
-				const std::string field_type( IOUtils::strToUpper(meta_spec[linenr].second) );
-				
-				//for the user, the first field is 1, not 0 -> "-1"
-				if (field_type=="NAME") {
-					name=vecStr[meta_spec[linenr].first-1]; 
-				} else if (field_type=="ID") {
-					id=vecStr[meta_spec[linenr].first-1];
-				} else {
-					double tmp;
-					if (!IOUtils::convertString(tmp, vecStr[meta_spec[linenr].first-1]))
-						throw InvalidArgumentException("Could not parse Metadata specification '"+meta_spec[linenr].second+"' for "+file_and_path, AT);
-					
-					if (field_type=="ALT") location.setAltitude( tmp, false);
-					if (field_type=="LON") lon=tmp;
-					if (field_type=="LAT") lat=tmp;
-				}
-			}
-			if (linenr==columns_headers) {
+			
+			if (meta_spec.count(linenr)>0) 
+				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
+			if (linenr==columns_headers) 
 				IOUtils::readLineToVec(line, csv_fields, csv_delim);
-			}
 		}
 	} catch (...) {
 		fin.close();
 		throw;
 	}
 	fin.close();
+	
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
-		const double alt=location.getAltitude(); //so we don't change previously set altitude
+		const double alt = location.getAltitude(); //so we don't change previously set altitude
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
@@ -198,6 +210,13 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec, const doub
 	IOUtils::replace_all(datetime_format, "HH24", "%u");
 	IOUtils::replace_all(datetime_format, "MI", "%u");
 	IOUtils::replace_all(datetime_format, "SS", "%u");
+	
+	//check that the format is usable (and prevent parameters injection / buffer overflows)
+	const size_t nr_percent = std::count(datetime_format.begin(), datetime_format.end(), '%');
+	const size_t nr_placeholders = IOUtils::count(datetime_format, "%u");
+	const size_t pos_pc_pc = datetime_format.find("%%");
+	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
+		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
 	
 	csv_tz = tz_in;
 }
@@ -251,7 +270,7 @@ void CsvIO::parseInputOutputSection()
 		
 		const Coords loc(coordin, coordinparam, vecCoords[ii].second);
 		const std::string name( FileUtils::removeExtension(vecFilenames[ii]) );
-		const std::string id( static_cast<ostringstream*>( &(ostringstream() << ii) )->str() ); //HACK use the user provided index
+		const std::string id( static_cast<ostringstream*>( &(ostringstream() << ii+1) )->str() ); //HACK use the user provided index
 		tmp_csv.setLocation(loc, name, id);
 		
 		//HACK several of these should be per station!
@@ -283,6 +302,9 @@ void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecS
 
 std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*dateStart*/, const Date& /*dateEnd*/)
 {
+	if (params.csv_fields.empty())
+		throw InvalidArgumentException("No columns names could be retrieve, please provide them through the configuration file", AT);
+	
 	const std::string filename( params.getFilename() );
 	if (!FileUtils::fileExists(filename)) throw AccessException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
@@ -297,17 +319,12 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 	std::string line;
 	size_t linenr=0;
 	
-	//skip the headers
+	//skip the headers (they have been read already, so we know this works)
 	while (!fin.eof() && linenr<params.header_lines){
 		line.clear();
 		getline(fin, line, params.eoln);
 		linenr++;
 	}
-	
-	std::vector<MeteoData> vecMeteo;
-	std::vector<std::string> tmp_vec;
-	if (params.csv_fields.empty())
-		throw InvalidArgumentException("No columns names could be retrieve, please provide them through the configuration file", AT);
 	
 	size_t nr_of_data_fields = params.csv_fields.size();
 	const bool use_offset = !params.units_offset.empty();
@@ -322,15 +339,15 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 		template_md.addParameter( params.csv_fields[ii] );
 	
 	//and now, read the data and fill the vector vecMeteo
+	std::vector<MeteoData> vecMeteo;
+	std::vector<std::string> tmp_vec;
 	while (!fin.eof()){
-		line.clear();
 		getline(fin, line, params.eoln);
 		linenr++;
-		
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 		
 		const size_t nr_curr_data_fields = IOUtils::readLineToVec(line, tmp_vec, params.csv_delim);
-		if (nr_of_data_fields==0) nr_of_data_fields=nr_curr_data_fields;
+		if (nr_of_data_fields==0) nr_of_data_fields = nr_curr_data_fields;
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
@@ -355,7 +372,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 			}
 			if (use_multiplier) tmp *= params.units_multiplier[ii];
 			if (use_offset) tmp += params.units_offset[ii];
-			md.addParameter( params.csv_fields[ii] );
 			md( params.csv_fields[ii] ) = tmp;
 		}
 		vecMeteo.push_back( md );
