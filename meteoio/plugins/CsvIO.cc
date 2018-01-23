@@ -173,10 +173,11 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
-	if (!csv_fields.empty()) { //cleanup potential '\r' char at the end of the line
-		std::string &tmp = csv_fields.back();
-		if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
-	}
+	if (csv_fields.empty())
+		throw InvalidArgumentException("No columns names could be retrieved, please provide them through the configuration file", AT);
+	//cleanup potential '\r' char at the end of the line
+	std::string &tmp = csv_fields.back();
+	if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
 	
 	parseFields(csv_fields, date_col, time_col);
 }
@@ -275,6 +276,7 @@ void CsvIO::parseInputOutputSection()
 		cfg.getValue("CSV_DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
 		cfg.getValue("CSV_HEADER_LINES", "Input", tmp_csv.header_lines, IOUtils::nothrow);
 		cfg.getValue("CSV_COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
+		
 		cfg.getValue("CSV_FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
 		cfg.getValue("CSV_UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
 		cfg.getValue("CSV_UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
@@ -300,10 +302,7 @@ void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecS
 
 std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd)
 {
-	//check consistency of CsvParameters HACK move this into CsvParameters?
-	if (params.csv_fields.empty())
-		throw InvalidArgumentException("No columns names could be retrieve, please provide them through the configuration file", AT);
-	size_t nr_of_data_fields = params.csv_fields.size();
+	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
 	const bool use_offset = !params.units_offset.empty();
 	const bool use_multiplier = !params.units_multiplier.empty();
 	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields))
