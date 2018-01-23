@@ -238,15 +238,17 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& /*
 
 
 ///////////////////////////////////////////////////// Now the real CsvIO class starts //////////////////////////////////////////
+const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
+
 CsvIO::CsvIO(const std::string& configfile) 
-      : cfg(configfile), csvparam(), vecStations(),
+      : cfg(configfile), indexer(), csvparam(), vecStations(),
         coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	parseInputOutputSection();
 }
 
 CsvIO::CsvIO(const Config& cfgreader)
-      : cfg(cfgreader), csvparam(), vecStations(),
+      : cfg(cfgreader), indexer(), csvparam(), vecStations(),
         coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	parseInputOutputSection();
@@ -257,21 +259,17 @@ void CsvIO::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
-	std::string meteopath;
-	cfg.getValue("METEOPATH", "Input", meteopath);
-	std::vector<std::string> vecFilenames;
-	cfg.getValues("STATION", "INPUT", vecFilenames);
-	const std::vector< std::pair<std::string, std::string> > vecCoords( cfg.getValues("META", "INPUT") );
-	if (vecFilenames.size()!=vecCoords.size())
-		throw InvalidArgumentException("The declared stations and metadata must match!", AT);
+	const std::string meteopath = cfg.get("METEOPATH", "Input");
+	const std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
 	
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 		CsvParameters tmp_csv;
 		
-		const Coords loc(coordin, coordinparam, vecCoords[ii].second);
-		const std::string name( FileUtils::removeExtension(vecFilenames[ii]) );
-		const std::string id( static_cast<ostringstream*>( &(ostringstream() << ii+1) )->str() ); //HACK use the user provided index
-		tmp_csv.setLocation(loc, name, id);
+		const std::string idx( vecFilenames[ii].first.substr(string("STATION").length()) );
+		const std::string coords_specs = cfg.get("POSITION"+idx, "INPUT");
+		const Coords loc(coordin, coordinparam, coords_specs);
+		const std::string name( FileUtils::removeExtension(vecFilenames[ii].second) );
+		tmp_csv.setLocation(loc, name, "ST"+idx);
 		
 		//HACK several of these should be per station!
 		cfg.getValue("CSV_DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
@@ -287,7 +285,7 @@ void CsvIO::parseInputOutputSection()
 		
 		std::vector<std::string> vecMetaSpec;
 		cfg.getValue("CSV_SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
-		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii], vecMetaSpec);
+		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec);
 		csvparam.push_back( tmp_csv );
 	}
 	
@@ -300,11 +298,23 @@ void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecS
 		vecStation.push_back( csvparam[ii].getStation() );
 }
 
-std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*dateStart*/, const Date& /*dateEnd*/)
+std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd)
 {
+	//check consistency of CsvParameters HACK move this into CsvParameters?
 	if (params.csv_fields.empty())
 		throw InvalidArgumentException("No columns names could be retrieve, please provide them through the configuration file", AT);
-	
+	size_t nr_of_data_fields = params.csv_fields.size();
+	const bool use_offset = !params.units_offset.empty();
+	const bool use_multiplier = !params.units_multiplier.empty();
+	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields))
+		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
+
+	//build MeteoData template
+	MeteoData template_md( Date(0., 0.), params.getStation() );
+	for (size_t ii=0; ii<nr_of_data_fields; ii++)
+		template_md.addParameter( params.csv_fields[ii] );
+
+	//now open the file
 	const std::string filename( params.getFilename() );
 	if (!FileUtils::fileExists(filename)) throw AccessException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
@@ -318,30 +328,24 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 	
 	std::string line;
 	size_t linenr=0;
-	
-	//skip the headers (they have been read already, so we know this works)
-	while (!fin.eof() && linenr<params.header_lines){
-		line.clear();
-		getline(fin, line, params.eoln);
-		linenr++;
+	streampos fpointer = indexer.getIndex(dateStart);
+
+	if (fpointer!=static_cast<streampos>(-1))
+		fin.seekg(fpointer); //a previous pointer was found, jump to it
+	else {
+		//skip the headers (they have been read already, so we know this works)
+		while (!fin.eof() && linenr<params.header_lines){
+			line.clear();
+			getline(fin, line, params.eoln);
+			linenr++;
+		}
 	}
-	
-	size_t nr_of_data_fields = params.csv_fields.size();
-	const bool use_offset = !params.units_offset.empty();
-	const bool use_multiplier = !params.units_multiplier.empty();
-	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields)) {
-		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
-	}
-	
-	//build MeteoData template
-	MeteoData template_md( Date(0., 0.), params.getStation() );
-	for (size_t ii=0; ii<nr_of_data_fields; ii++)
-		template_md.addParameter( params.csv_fields[ii] );
 	
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
 	while (!fin.eof()){
+		const streampos current_fpointer = fin.tellg();
 		getline(fin, line, params.eoln);
 		linenr++;
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
@@ -360,6 +364,11 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& /*d
 			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
 			throw InvalidFormatException("Date could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
+
+		if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
+			indexer.setIndex(dt, current_fpointer);
+		if (dt<dateStart) continue;
+		if (dt>dateEnd) break;
 		
 		MeteoData md(template_md);
 		md.setDate(dt);
