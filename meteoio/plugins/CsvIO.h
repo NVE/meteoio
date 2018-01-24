@@ -30,12 +30,13 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters()
-		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(1), csv_delim(','), eoln('\n'), location(), datetime_idx(), file_and_path(), datetime_format(), name(), id(), csv_tz(0.) {}
+		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(1), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(0.) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec, const double& tz_in);
+		void setTimeSpec(const std::string& time_spec, const double& tz_in);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec);
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
-		Date parseDate(const std::string& datetime_str, const std::string& /*time_str*/) const;
+		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const {return StationData(location, id, name);}
 		
@@ -52,8 +53,8 @@ class CsvParameters {
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		
 		Coords location;
-		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate
-		std::string file_and_path, datetime_format; 		///< the scanf() format string for use in parseDate
+		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate
+		std::string file_and_path, datetime_format, time_format; 		///< the scanf() format string for use in parseDate
 		std::string name, id;
 		double csv_tz;		///< timezone to apply to parsed dates
 };

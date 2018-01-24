@@ -218,23 +218,78 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec, const doub
 	const size_t pos_pc_pc = datetime_format.find("%%");
 	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
-	
+
 	csv_tz = tz_in;
 }
 
-Date CsvParameters::parseDate(const std::string& date_str, const std::string& /*time_str*/) const
+void CsvParameters::setTimeSpec(const std::string& time_spec, const double& tz_in)
 {
-	const size_t nrArgs = datetime_idx.size();
-	unsigned int args[6];
-	
-	Date t;
-	if (nrArgs==6) {
-		if (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ]) == 6) {
-			t.setDate(args[0], args[1], args[2], args[3], args[4], args[5], csv_tz);
+	if (time_spec.empty()) return;
+	static const char* keys[] = {"HH24", "MI", "SS"};
+	std::vector< std::pair<size_t, size_t> > sorting_vector;
+	for (size_t ii=0; ii<3; ii++) {
+		const size_t key_pos = time_spec.find( keys[ii] );
+		if (key_pos!=std::string::npos)
+			sorting_vector.push_back( make_pair( key_pos, ii) );
+	}
+
+	std::sort(sorting_vector.begin(), sorting_vector.end(), sort_pred());
+	for (size_t ii=0; ii<sorting_vector.size(); ii++)
+		time_idx.push_back( sorting_vector[ii].second );
+
+	time_format = time_spec;
+	IOUtils::replace_all(time_format, "HH24", "%u");
+	IOUtils::replace_all(time_format, "MI", "%u");
+	IOUtils::replace_all(time_format, "SS", "%u");
+
+	//check that the format is usable (and prevent parameters injection / buffer overflows)
+	const size_t nr_percent = std::count(time_format.begin(), time_format.end(), '%');
+	const size_t nr_placeholders = IOUtils::count(time_format, "%u");
+	const size_t pos_pc_pc = time_format.find("%%");
+	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
+		throw InvalidFormatException("Badly formatted time specification '"+time_format+"': argument appearing twice or using '%%'", AT);
+
+	csv_tz = tz_in;
+}
+
+Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
+{
+	unsigned int args[6] = {0, 0, 0, 0, 0 ,0};
+
+	bool status = false;
+	switch( datetime_idx.size() ) {
+		case 6:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ])==6);
+			break;
+		case 5:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ]) ==5);
+			break;
+		case 4:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ])==4);
+			break;
+		case 3:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ])==3);
+			break;
+	}
+	if (!status) return Date(); //we MUST have read successfuly at least the date part
+
+	if (!time_idx.empty()) {
+		//there is a +3 offset because the first 3 positions are used by the date part
+		switch( datetime_idx.size() ) {
+			case 3:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ])==3);
+				break;
+			case 2:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ])==2);
+				break;
+			case 1:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ])==1);
+				break;
 		}
 	}
-	
-	return t;
+
+	if (!status) return Date();
+	return Date(args[0], args[1], args[2], args[3], args[4], args[5], csv_tz);
 }
 
 
@@ -284,13 +339,15 @@ void CsvIO::parseInputOutputSection()
 		std::string datetime_spec;
 		cfg.getValue("CSV_DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
 		tmp_csv.setDateTimeSpec(datetime_spec, in_TZ);
+		std::string time_spec;
+		cfg.getValue("CSV_TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
+		tmp_csv.setTimeSpec(time_spec, in_TZ);
 		
 		std::vector<std::string> vecMetaSpec;
 		cfg.getValue("CSV_SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
 		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec);
 		csvparam.push_back( tmp_csv );
 	}
-	
 }
 
 void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
@@ -372,7 +429,11 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		MeteoData md(template_md);
 		md.setDate(dt);
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
-			if (ii==params.date_col) continue;
+			if (ii==params.date_col || ii==params.time_col) continue;
+			if (tmp_vec[ii].empty()) { //treat empty value as nodata
+				md( params.csv_fields[ii] ) = IOUtils::nodata;
+				continue;
+			}
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
