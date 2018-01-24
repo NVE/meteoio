@@ -30,7 +30,7 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters()
-		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(1), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(0.) {}
+		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(0.), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec, const double& tz_in);
 		void setTimeSpec(const std::string& time_spec, const double& tz_in);
@@ -38,7 +38,7 @@ class CsvParameters {
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
 		std::string getFilename() const {return file_and_path;}
-		StationData getStation() const {return StationData(location, id, name);}
+		StationData getStation() const;
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
@@ -56,7 +56,7 @@ class CsvParameters {
 		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate
 		std::string file_and_path, datetime_format, time_format; 		///< the scanf() format string for use in parseDate
 		std::string name, id;
-		double csv_tz;		///< timezone to apply to parsed dates
+		double csv_tz, slope, azi;		///< timezone to apply to parsed dates
 };
 
 /**
@@ -90,7 +90,7 @@ class CsvIO : public IOInterface {
 		mio::FileUtils::FileIndexer indexer;
 		std::vector<CsvParameters> csvparam;
 		std::vector<StationData> vecStations;
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordin, coordinparam; //projection parameters
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 };
 

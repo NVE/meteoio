@@ -30,16 +30,54 @@ namespace mio {
 /**
  * @page csvio CsvIO
  * @section csvio_format Format
- * *Put here the informations about the standard format that is implemented*
+ * This plugins offers a flexible way to read Comma Separated Values (<A HREF="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</A>) files. 
+ * It is however assumed that:
+ *     - each line contains a data record
+ *     - a single character is consistently used through the file as field delimiter (to split each record into fields);
+ *     - each line contains the same number of fields;
+ *     - missing data are represented by an empty value, so two delimiters follow directly each other;
+ *     - the file may contain a header that may contain additional information (metadata), see below.
+ * 
+ * In order to reduce the amount of manual configuration, it is possible to extract metadata from the headers, such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- *
+ * The final units MUST be SI. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below).
  *
  * @section csvio_keywords Keywords
- * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - etc
+ * This plugin uses the following keywords, in the [Input] section:
+ * - COORDSYS: coordinate system (see Coords);
+ * - COORDPARAM: extra coordinates parameters (see Coords);
+ * - TIME_ZONE: the timezone that should be used to interpret the dates/times (default: 0);
+ * - METEOPATH: the directory where the data files are available (mandatory);
+ * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
+ * - POSITION#: coordinates of the station (default: reading key "POSITION");
+ * 
+ * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
+ * - CSV#_DELIMITER: field delimiter to use (default: ',');
+ * - CSV#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
+ * - CSV#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
+ * - CSV#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
+ * - CSV#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
+ * - CSV#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ * - CSV#_DATETIME_SPEC: mixed date and time format specification; optional
+ * - CSV#_DATE_SPEC: date format specification; optional
+ * - CSV#_TIME_SPEC: time format specification; optional
+ * - CSV#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * 
+ * 
+ * 
+ * For example, to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps:
+ * @code
+ * METEO = CSV
+ * METEOPATH = ./input/meteo
+ * CSV_HEADER_LINES = 4
+ * CSV_COLUMNS_HEADERS = 2
+ * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
+ * STATION1 = DisMa_DisEx.dat
+ * POSITION1 = 46.810325 9.806657
+ * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
+ * CSV_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
+ * @endcode
  */
 
 //parse the user provided special fields specification
@@ -75,24 +113,6 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 
 inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false;}
 
-void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
-{
-	for (size_t ii=0; ii<fieldNames.size(); ii++) {
-		std::string &tmp = fieldNames[ii];
-		IOUtils::toUpper( tmp );
-		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
-		if (tmp.empty()) continue;
-		
-		if (tmp.compare("TIMESTAMP")==0) {
-			dt_col = tm_col = ii;
-		} else if (tmp.compare("DATE")==0) {
-			dt_col = ii;
-		} else if (tmp.compare("TIME")==0) {
-			tm_col = ii;
-		}
-	}
-}
-
 void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon)
 {
 	std::vector<std::string> vecStr;
@@ -121,6 +141,26 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 			if (field_type=="ALT") location.setAltitude( tmp, false);
 			if (field_type=="LON") lon=tmp;
 			if (field_type=="LAT") lat=tmp;
+			if (field_type=="SLOPE") slope=tmp;
+			if (field_type=="AZI") azi=tmp;
+		}
+	}
+}
+
+void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
+{
+	for (size_t ii=0; ii<fieldNames.size(); ii++) {
+		std::string &tmp = fieldNames[ii];
+		IOUtils::toUpper( tmp );
+		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
+		if (tmp.empty()) continue;
+		
+		if (tmp.compare("TIMESTAMP")==0) {
+			dt_col = tm_col = ii;
+		} else if (tmp.compare("DATE")==0) {
+			dt_col = ii;
+		} else if (tmp.compare("TIME")==0) {
+			tm_col = ii;
 		}
 	}
 }
@@ -159,7 +199,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			
 			if (meta_spec.count(linenr)>0) 
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
-			if (linenr==columns_headers) 
+			if (linenr==columns_headers && csv_fields.empty()) //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				IOUtils::readLineToVec(line, csv_fields, csv_delim);
 		}
 	} catch (...) {
@@ -173,9 +213,9 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
+	//cleanup potential '\r' char at the end of the line
 	if (csv_fields.empty())
 		throw InvalidArgumentException("No columns names could be retrieved, please provide them through the configuration file", AT);
-	//cleanup potential '\r' char at the end of the line
 	std::string &tmp = csv_fields.back();
 	if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
 	
@@ -275,7 +315,7 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 
 	if (!time_idx.empty()) {
 		//there is a +3 offset because the first 3 positions are used by the date part
-		switch( datetime_idx.size() ) {
+		switch( time_idx.size() ) {
 			case 3:
 				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ])==3);
 				break;
@@ -292,59 +332,88 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	return Date(args[0], args[1], args[2], args[3], args[4], args[5], csv_tz);
 }
 
+StationData CsvParameters::getStation() const 
+{
+	StationData sd(location, id, name);
+	if (slope!=IOUtils::nodata && azi!=IOUtils::nodata)
+		sd.setSlope(slope, azi);
+	return sd;
+	
+}
+
 
 ///////////////////////////////////////////////////// Now the real CsvIO class starts //////////////////////////////////////////
 const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
 
 CsvIO::CsvIO(const std::string& configfile) 
       : cfg(configfile), indexer(), csvparam(), vecStations(),
-        coordin(), coordinparam(), coordout(), coordoutparam()
-{
-	parseInputOutputSection();
-}
+        coordin(), coordinparam() { parseInputOutputSection(); }
 
 CsvIO::CsvIO(const Config& cfgreader)
       : cfg(cfgreader), indexer(), csvparam(), vecStations(),
-        coordin(), coordinparam(), coordout(), coordoutparam()
-{
-	parseInputOutputSection();
-}
+        coordin(), coordinparam() { parseInputOutputSection(); }
 
 void CsvIO::parseInputOutputSection()
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
 	const std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
 	
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-		CsvParameters tmp_csv;
-		
 		const std::string idx( vecFilenames[ii].first.substr(string("STATION").length()) );
-		const std::string coords_specs = cfg.get("POSITION"+idx, "INPUT");
+		static const std::string dflt("CSV_"); //the prefix for a key for ALL stations
+		const std::string pre( "CSV"+idx+"_" ); //the prefix for the current station only
+		
+		CsvParameters tmp_csv;
+		std::string coords_specs;
+		if (cfg.keyExists("POSITION"+idx, "INPUT")) cfg.getValue("POSITION"+idx, "INPUT", coords_specs);
+		else cfg.getValue("POSITION", "INPUT", coords_specs);
 		const Coords loc(coordin, coordinparam, coords_specs);
 		const std::string name( FileUtils::removeExtension(vecFilenames[ii].second) );
-		tmp_csv.setLocation(loc, name, "ST"+idx);
+		tmp_csv.setLocation(loc, name, "ID"+idx);
 		
-		//HACK several of these should be per station!
-		cfg.getValue("CSV_DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
-		cfg.getValue("CSV_HEADER_LINES", "Input", tmp_csv.header_lines, IOUtils::nothrow);
-		cfg.getValue("CSV_COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
 		
-		cfg.getValue("CSV_FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
-		cfg.getValue("CSV_UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
-		cfg.getValue("CSV_UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", tmp_csv.csv_delim);
+		else cfg.getValue(dflt+"DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"NR_HEADERS", "Input")) cfg.getValue(pre+"NR_HEADERS", "Input", tmp_csv.header_lines);
+		else cfg.getValue(dflt+"NR_HEADERS", "Input", tmp_csv.header_lines, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"COLUMNS_HEADERS", "Input")) cfg.getValue(pre+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers);
+		else cfg.getValue(dflt+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
+		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
+		
+		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
+			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+		
+		if (cfg.keyExists(pre+"UNITS_OFFSET", "Input")) cfg.getValue(pre+"UNITS_OFFSET", "Input", tmp_csv.units_offset);
+		else cfg.getValue(dflt+"UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier);
+		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
 		
 		std::string datetime_spec;
-		cfg.getValue("CSV_DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"DATETIME_SPEC", "Input")) cfg.getValue(pre+"DATETIME_SPEC", "Input", datetime_spec);
+		else cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
+		if (datetime_spec.empty()) { //alternative naming
+			if (cfg.keyExists(pre+"DATE_SPEC", "Input")) cfg.getValue(pre+"DATE_SPEC", "Input", datetime_spec);
+			else cfg.getValue(dflt+"DATE_SPEC", "Input", datetime_spec, IOUtils::nothrow);
+		}
 		tmp_csv.setDateTimeSpec(datetime_spec, in_TZ);
+		
 		std::string time_spec;
-		cfg.getValue("CSV_TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"TIME_SPEC", "Input")) cfg.getValue(pre+"TIME_SPEC", "Input", time_spec);
+		else cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
 		tmp_csv.setTimeSpec(time_spec, in_TZ);
 		
 		std::vector<std::string> vecMetaSpec;
-		cfg.getValue("CSV_SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
+		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
+		
 		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec);
 		csvparam.push_back( tmp_csv );
 	}

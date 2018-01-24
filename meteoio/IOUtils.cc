@@ -606,14 +606,22 @@ template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base&
 
 
 void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
-                                      std::string& coordout, std::string& coordoutparam) {
+                                      std::string& coordout, std::string& coordoutparam) 
+{
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
 	cfg.getValue("COORDSYS", "Output", coordout, IOUtils::nothrow);
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, IOUtils::nothrow);
 }
 
-void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
+void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam) 
+{
+	cfg.getValue("COORDSYS", "Input", coordin);
+	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
+}
+
+void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) 
+{
 	cfg.getValue("TIME_ZONE", "Input", tz_in, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
 }
