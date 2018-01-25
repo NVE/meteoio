@@ -49,24 +49,56 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - TIME_ZONE: the timezone that should be used to interpret the dates/times (default: 0);
  * - METEOPATH: the directory where the data files are available (mandatory);
- * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
- * - POSITION#: coordinates of the station (default: reading key "POSITION");
+ * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
+ * - POSITION\#: coordinates of the station (default: reading key "POSITION");
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
- * - CSV#_DELIMITER: field delimiter to use (default: ',');
- * - CSV#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
- * - CSV#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- * - CSV#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
- * - CSV#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
- * - CSV#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
- * - CSV#_DATETIME_SPEC: mixed date and time format specification; optional
- * - CSV#_DATE_SPEC: date format specification; optional
- * - CSV#_TIME_SPEC: time format specification; optional
- * - CSV#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * - CSV\#_DELIMITER: field delimiter to use (default: ',');
+ * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
+ * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
+ * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
+ * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
+ * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ * - CSV\#_DATETIME_SPEC: mixed date and time format specification; optional
+ * - CSV\#_DATE_SPEC: date format specification; optional
+ * - CSV\#_TIME_SPEC: time format specification; optional
+ * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
  * 
+ * @section csvio_date_specs Date and time specification
+ * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
+ * the following special markers:
+ * - YYYY: the 4 digits year;
+ * - MM: the two digits month;
+ * - DD: the two digits day;
+ * - HH24: the two digits hour of the day (0-24);
+ * - MI: the two digits minutes (0-59);
+ * - SS: the two digts seconds (0-59).
+ *
+ * Any other character is interpreted as itself, present in the string. It is possible to either provide a datetime field (so date and time are combined into
+ * one single field) or date and time as two different fields. For example:
+ * - YYYY-MM-DDTHH24:MI:SS described an <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> datetime field;
+ * - MM/DD/YYYY described an anglo-saxon date;
+ * - DD.MM.YYYY HH24:MI:SS is for a Swiss formatted datetime.
+ *
+ * @section csvio_special_headers Header metadata extraction
+ * Some valuable metadata might be written into the headers and it is worthwhile to be able to extract it. This is performed with the
+ * "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata specifications as necessary, of the form {field}:{line}:{column}.
+ * The {field} can be any of:
+ * - name;
+ * - id;
+ * - alt (for the altitude);
+ * - lon (for the longitude);
+ * - lat (for the latitude);
+ * - slope (in degrees);
+ * - azi (for the slope azimuth, in degree as read from a compass).
+ *
+ * Therefore, if the station name is available on line 1, column 3 and the station id on line 2, column 5, the configuration would be:
+ * @code
+ * CSV_SPECIAL_HEADERS = name:1:3 id:2:5
+ * @endcode
  * 
- * 
- * For example, to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps:
+ * @section csvio_examples Examples
+ * In order to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps, you need the following configuration:
  * @code
  * METEO = CSV
  * METEOPATH = ./input/meteo
@@ -77,6 +109,35 @@ namespace mio {
  * POSITION1 = 46.810325 9.806657
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
  * CSV_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
+ * @endcode
+ *
+ * In order to read a set of files containing each only one parameter and merge them together (see \ref data_manipulations "raw data editing" for more
+ * on the merge feature):
+ *@code
+ * METEO = CSV
+ * METEOPATH = ./input/meteo
+ * CSV_DELIMITER = ;
+ * CSV_HEADER_LINES = 1
+ * CSV_DATE_SPEC = DD/MM/YYYY
+ * CSV_TIME_SPEC = HH24:MI
+ * POSITION = 46.8 9.80
+ *
+ * CSV1_FIELDS = DATE TIME PSUM
+ * STATION1 = H0118_precipitation.DAT
+ *
+ * CSV2_FIELDS = DATE TIME TA
+ * STATION2 = H0118_tempeartures.DAT
+ *
+ * CSV3_FIELDS = DATE TIME RSWR
+ * STATION3 = H0118_reflected_solar_radiation.DAT
+ *
+ * CSV4_FIELDS = DATE TIME RH
+ * STATION4 = H0118_relaitve_humidity.DAT
+ *
+ * CSV5_FIELDS = DATE TIME VW
+ * STATION5 = H0118_wind_velocity.DAT
+ *
+ * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
  */
 
@@ -396,6 +457,7 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier);
 		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
 		
+		//HACK handle default value (ie ISO)
 		std::string datetime_spec;
 		if (cfg.keyExists(pre+"DATETIME_SPEC", "Input")) cfg.getValue(pre+"DATETIME_SPEC", "Input", datetime_spec);
 		else cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
