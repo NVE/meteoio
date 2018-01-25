@@ -29,11 +29,11 @@ namespace mio {
 
 class CsvParameters {
 	public:
-		CsvParameters()
-		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(0.), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
+		CsvParameters(const double& tz_in)
+		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(tz_in), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 		
-		void setDateTimeSpec(const std::string& datetime_spec, const double& tz_in);
-		void setTimeSpec(const std::string& time_spec, const double& tz_in);
+		void setDateTimeSpec(const std::string& datetime_spec);
+		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec);
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
@@ -48,7 +48,7 @@ class CsvParameters {
 		char csv_delim;
 		char eoln;
 	private:
-		static void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
+		void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
 		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		

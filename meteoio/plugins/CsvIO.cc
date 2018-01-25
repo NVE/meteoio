@@ -59,9 +59,9 @@ namespace mio {
  * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
  * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
- * - CSV\#_DATETIME_SPEC: mixed date and time format specification; optional
- * - CSV\#_DATE_SPEC: date format specification; optional
- * - CSV\#_TIME_SPEC: time format specification; optional
+ * - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
+ * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
+ * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
  * 
  * @section csvio_date_specs Date and time specification
@@ -74,7 +74,7 @@ namespace mio {
  * - MI: the two digits minutes (0-59);
  * - SS: the two digts seconds (0-59).
  *
- * Any other character is interpreted as itself, present in the string. It is possible to either provide a datetime field (so date and time are combined into
+ * Any other character is interpreted as itself, present in the string. It is possible to either provide a combined datetime field (so date and time are combined into
  * one single field) or date and time as two different fields. For example:
  * - YYYY-MM-DDTHH24:MI:SS described an <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> datetime field;
  * - MM/DD/YYYY described an anglo-saxon date;
@@ -102,7 +102,7 @@ namespace mio {
  * @code
  * METEO = CSV
  * METEOPATH = ./input/meteo
- * CSV_HEADER_LINES = 4
+ * CSV_NR_HEADERS = 4
  * CSV_COLUMNS_HEADERS = 2
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * STATION1 = DisMa_DisEx.dat
@@ -224,6 +224,17 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 			tm_col = ii;
 		}
 	}
+	
+	//if necessary, set the format to the appropriate defaults
+	if (dt_col==tm_col) {
+		if (datetime_idx.empty())
+			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
+	} else {
+		if (datetime_idx.empty())
+			setDateTimeSpec("YYYY-MM-DD");
+		if (time_idx.empty())
+			setTimeSpec("HH24:MI:SS");
+	}
 }
 
 //read and parse the file's headers in order to extract all possible information
@@ -291,7 +302,7 @@ struct sort_pred {
 	
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
 //the indices are based on ISO timestamp, so year=0, month=1, etc
-void CsvParameters::setDateTimeSpec(const std::string& datetime_spec, const double& tz_in)
+void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 {
 	static const char* keys[] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
@@ -319,11 +330,9 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec, const doub
 	const size_t pos_pc_pc = datetime_format.find("%%");
 	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
-
-	csv_tz = tz_in;
 }
 
-void CsvParameters::setTimeSpec(const std::string& time_spec, const double& tz_in)
+void CsvParameters::setTimeSpec(const std::string& time_spec)
 {
 	if (time_spec.empty()) return;
 	static const char* keys[] = {"HH24", "MI", "SS"};
@@ -349,8 +358,6 @@ void CsvParameters::setTimeSpec(const std::string& time_spec, const double& tz_i
 	const size_t pos_pc_pc = time_format.find("%%");
 	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted time specification '"+time_format+"': argument appearing twice or using '%%'", AT);
-
-	csv_tz = tz_in;
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
@@ -427,7 +434,7 @@ void CsvIO::parseInputOutputSection()
 		static const std::string dflt("CSV_"); //the prefix for a key for ALL stations
 		const std::string pre( "CSV"+idx+"_" ); //the prefix for the current station only
 		
-		CsvParameters tmp_csv;
+		CsvParameters tmp_csv(in_TZ);
 		std::string coords_specs;
 		if (cfg.keyExists("POSITION"+idx, "INPUT")) cfg.getValue("POSITION"+idx, "INPUT", coords_specs);
 		else cfg.getValue("POSITION", "INPUT", coords_specs);
@@ -457,20 +464,27 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier);
 		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
 		
-		//HACK handle default value (ie ISO)
+		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
 		std::string datetime_spec;
 		if (cfg.keyExists(pre+"DATETIME_SPEC", "Input")) cfg.getValue(pre+"DATETIME_SPEC", "Input", datetime_spec);
 		else cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
-		if (datetime_spec.empty()) { //alternative naming
-			if (cfg.keyExists(pre+"DATE_SPEC", "Input")) cfg.getValue(pre+"DATE_SPEC", "Input", datetime_spec);
-			else cfg.getValue(dflt+"DATE_SPEC", "Input", datetime_spec, IOUtils::nothrow);
-		}
-		tmp_csv.setDateTimeSpec(datetime_spec, in_TZ);
+		
+		std::string date_spec;
+		if (cfg.keyExists(pre+"DATE_SPEC", "Input")) cfg.getValue(pre+"DATE_SPEC", "Input", date_spec);
+		else cfg.getValue(dflt+"DATE_SPEC", "Input", date_spec, IOUtils::nothrow);
 		
 		std::string time_spec;
 		if (cfg.keyExists(pre+"TIME_SPEC", "Input")) cfg.getValue(pre+"TIME_SPEC", "Input", time_spec);
 		else cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
-		tmp_csv.setTimeSpec(time_spec, in_TZ);
+		
+		if (!datetime_spec.empty())
+			tmp_csv.setDateTimeSpec(datetime_spec);
+		else {
+			if (!date_spec.empty())
+				tmp_csv.setDateTimeSpec(date_spec);
+			if (!time_spec.empty()) 
+				tmp_csv.setTimeSpec(time_spec);
+		}
 		
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
@@ -549,7 +563,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		const Date dt( params.parseDate(tmp_vec[params.date_col], tmp_vec[params.time_col]) );
 		if (dt.isUndef()) {
 			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-			throw InvalidFormatException("Date could not be read in file \'"+filename+"' at line "+linenr_str, AT);
+			throw InvalidFormatException("Date or time could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
 
 		if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
