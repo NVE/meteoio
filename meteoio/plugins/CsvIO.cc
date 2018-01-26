@@ -50,7 +50,7 @@ namespace mio {
  * - TIME_ZONE: the timezone that should be used to interpret the dates/times (default: 0);
  * - METEOPATH: the directory where the data files are available (mandatory);
  * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
- * - POSITION\#: coordinates of the station (default: reading key "POSITION");
+ * - POSITION\#: coordinates of the station (default: reading key "POSITION"; see (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax));
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
  * - CSV\#_DELIMITER: field delimiter to use (default: ',');
@@ -106,7 +106,7 @@ namespace mio {
  * CSV_COLUMNS_HEADERS = 2
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * STATION1 = DisMa_DisEx.dat
- * POSITION1 = 46.810325 9.806657
+ * POSITION1 = latlon 46.810325 9.806657 2060
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
  * CSV_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
  * @endcode
@@ -120,7 +120,7 @@ namespace mio {
  * CSV_HEADER_LINES = 1
  * CSV_DATE_SPEC = DD/MM/YYYY
  * CSV_TIME_SPEC = HH24:MI
- * POSITION = 46.8 9.80
+ * POSITION = latlon (46.8, 9.80, 1700)
  *
  * CSV1_FIELDS = DATE TIME PSUM
  * STATION1 = H0118_precipitation.DAT
