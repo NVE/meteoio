@@ -146,27 +146,15 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 {
 	std::multimap< size_t, std::pair<size_t, std::string> > meta_spec;
 	for (size_t ii=0; ii<vecMetaSpec.size(); ii++) {
-		bool error = false;
-		const size_t count_delims = std::count(vecMetaSpec[ii].begin(), vecMetaSpec[ii].end(), ':');
-		if (count_delims==2) {
-			const size_t delim1 = vecMetaSpec[ii].find(":");
-			const size_t delim2 = vecMetaSpec[ii].find(":", delim1+1);
-			if (delim2!=delim1 && delim1>0) {
-				const int linenr = atoi( vecMetaSpec[ii].substr(delim1+1, delim2-delim1-1).c_str() );
-				const int colnr = atoi( vecMetaSpec[ii].substr(delim2+1).c_str() );
-				if (linenr>0 && colnr>0)
-					meta_spec.insert( make_pair( linenr, make_pair( colnr, vecMetaSpec[ii].substr(0, delim1)) ) );
-				else
-					error = true;
-			} else {
-				error = true;
-			}
-		} else {
-			error = true;
-		}
-		
-		if (error)
+		std::vector<std::string> vecArgs;
+		if (IOUtils::readLineToVec(vecMetaSpec[ii], vecArgs, ':') !=3)
 			throw InvalidFormatException("Wrong format for Metadata specification '"+vecMetaSpec[ii]+"'", AT);
+		const int linenr = atoi( vecArgs[1].c_str() );
+		const int colnr = atoi( vecArgs[2].c_str() );
+		if (linenr<=0 || colnr<=0)
+			throw InvalidFormatException("Line numbers and column number must be >0 in Metadata specification '"+vecMetaSpec[ii]+"'", AT);
+		
+		meta_spec.insert( make_pair( linenr, make_pair( colnr, vecArgs[0]) ) );
 	}
 	
 	return meta_spec;
@@ -317,16 +305,16 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 		datetime_idx.push_back( sorting_vector[ii].second );
 	
 	datetime_format = datetime_spec;
-	IOUtils::replace_all(datetime_format, "DD", "%u");
-	IOUtils::replace_all(datetime_format, "MM", "%u");
-	IOUtils::replace_all(datetime_format, "YYYY", "%u");
-	IOUtils::replace_all(datetime_format, "HH24", "%u");
-	IOUtils::replace_all(datetime_format, "MI", "%u");
-	IOUtils::replace_all(datetime_format, "SS", "%u");
+	IOUtils::replace_all(datetime_format, "DD", "%d");
+	IOUtils::replace_all(datetime_format, "MM", "%d");
+	IOUtils::replace_all(datetime_format, "YYYY", "%d");
+	IOUtils::replace_all(datetime_format, "HH24", "%d");
+	IOUtils::replace_all(datetime_format, "MI", "%d");
+	IOUtils::replace_all(datetime_format, "SS", "%d");
 	
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
 	const size_t nr_percent = std::count(datetime_format.begin(), datetime_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(datetime_format, "%u");
+	const size_t nr_placeholders = IOUtils::count(datetime_format, "%d");
 	const size_t pos_pc_pc = datetime_format.find("%%");
 	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
@@ -348,13 +336,13 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 		time_idx.push_back( sorting_vector[ii].second );
 
 	time_format = time_spec;
-	IOUtils::replace_all(time_format, "HH24", "%u");
-	IOUtils::replace_all(time_format, "MI", "%u");
-	IOUtils::replace_all(time_format, "SS", "%u");
+	IOUtils::replace_all(time_format, "HH24", "%d");
+	IOUtils::replace_all(time_format, "MI", "%d");
+	IOUtils::replace_all(time_format, "SS", "%d");
 
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
 	const size_t nr_percent = std::count(time_format.begin(), time_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(time_format, "%u");
+	const size_t nr_placeholders = IOUtils::count(time_format, "%d");
 	const size_t pos_pc_pc = time_format.find("%%");
 	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted time specification '"+time_format+"': argument appearing twice or using '%%'", AT);
@@ -362,7 +350,7 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	unsigned int args[6] = {0, 0, 0, 0, 0 ,0};
+	int args[6] = {0, 0, 0, 0, 0 ,0};
 
 	bool status = false;
 	switch( datetime_idx.size() ) {
