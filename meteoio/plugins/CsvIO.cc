@@ -313,7 +313,7 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 	IOUtils::replace_all(datetime_format, "SS", "%d");
 	
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
-	const size_t nr_percent = std::count(datetime_format.begin(), datetime_format.end(), '%');
+	const size_t nr_percent = (unsigned)std::count(datetime_format.begin(), datetime_format.end(), '%');
 	const size_t nr_placeholders = IOUtils::count(datetime_format, "%d");
 	const size_t pos_pc_pc = datetime_format.find("%%");
 	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
@@ -341,7 +341,7 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 	IOUtils::replace_all(time_format, "SS", "%d");
 
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
-	const size_t nr_percent = std::count(time_format.begin(), time_format.end(), '%');
+	const size_t nr_percent = (unsigned)std::count(time_format.begin(), time_format.end(), '%');
 	const size_t nr_placeholders = IOUtils::count(time_format, "%d");
 	const size_t pos_pc_pc = time_format.find("%%");
 	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
