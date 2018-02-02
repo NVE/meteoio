@@ -63,7 +63,7 @@ namespace mio {
  * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
- * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NULL);
+ * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -522,7 +522,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	std::string line;
 	size_t linenr=0;
 	streampos fpointer = indexer.getIndex(dateStart);
-
 	if (fpointer!=static_cast<streampos>(-1))
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	else {
@@ -540,7 +539,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	const std::string nodata( params.nodata );
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	while (!fin.eof()){
-		const streampos current_fpointer = fin.tellg();
 		getline(fin, line, params.eoln);
 		linenr++;
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
@@ -560,8 +558,10 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			throw InvalidFormatException("Date or time could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
 
-		if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
-			indexer.setIndex(dt, current_fpointer);
+		if (linenr % streampos_every_n_lines == 0) {
+			fpointer = fin.tellg();
+			if (fpointer != static_cast<streampos>(-1)) indexer.setIndex(dt, fpointer);
+		}
 		if (dt<dateStart) continue;
 		if (dt>dateEnd) break;
 		
