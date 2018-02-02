@@ -34,7 +34,7 @@ class CsvParameters {
 		
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
-		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec);
+		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
 		std::string getFilename() const {return file_and_path;}
