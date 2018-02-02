@@ -63,6 +63,7 @@ namespace mio {
  * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NULL);
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -90,7 +91,8 @@ namespace mio {
  * - lon (for the longitude);
  * - lat (for the latitude);
  * - slope (in degrees);
- * - azi (for the slope azimuth, in degree as read from a compass).
+ * - azi (for the slope azimuth, in degree as read from a compass);
+ * - nodata (string to interpret as nodata).
  *
  * Therefore, if the station name is available on line 1, column 3 and the station id on line 2, column 5, the configuration would be:
  * @code
@@ -182,6 +184,8 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 			name = field_val;
 		} else if (field_type=="ID") {
 			id = field_val;
+		} else if (field_type=="NODATA") {
+			nodata = field_val;
 		} else {
 			double tmp;
 			if (!IOUtils::convertString(tmp, field_val))
@@ -256,6 +260,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			linenr++;
+			if (line.empty()) continue;
+			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
 			if (meta_spec.count(linenr)>0) 
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
@@ -273,12 +279,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
-	//cleanup potential '\r' char at the end of the line
-	if (csv_fields.empty())
+	if (csv_fields.empty()) 
 		throw InvalidArgumentException("No columns names could be retrieved, please provide them through the configuration file", AT);
-	std::string &tmp = csv_fields.back();
-	if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
-	
 	parseFields(csv_fields, date_col, time_col);
 }
 
@@ -428,8 +430,10 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue("POSITION", "INPUT", coords_specs);
 		const Coords loc(coordin, coordinparam, coords_specs);
 		const std::string name( FileUtils::removeExtension(vecFilenames[ii].second) );
-		tmp_csv.setLocation(loc, name, "ID"+idx);
+		tmp_csv.setLocation(loc, name, name); //we take the name as default ID
 		
+		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
+		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
 		
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", tmp_csv.csv_delim);
 		else cfg.getValue(dflt+"DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
@@ -533,6 +537,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
+	const std::string nodata( params.nodata );
+	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	while (!fin.eof()){
 		const streampos current_fpointer = fin.tellg();
 		getline(fin, line, params.eoln);
@@ -563,10 +569,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		md.setDate(dt);
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col || ii==params.time_col) continue;
-			if (tmp_vec[ii].empty()) { //treat empty value as nodata
-				md( params.csv_fields[ii] ) = IOUtils::nodata;
+			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
-			}
+			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
