@@ -211,8 +211,9 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
 }
 
-std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Date& end)
+bool ARCIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &results)
 {
+	results.clear();
 	static const char NUM[] = "0123456789";
 	static const size_t date_str_len = 12; //fix format for this plugin
 	const double TZ = cfg.get("TIME_ZONE", "Input");
@@ -220,7 +221,6 @@ std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Da
 	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
 	dirlist.sort();
 	
-	std::map<Date, std::set<size_t> > results;
 	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
 		const std::string::size_type pos = it->find_first_not_of(NUM);
 		if (pos!=date_str_len) continue; //for ARC, we skip the seconds -> date is 12 chars
@@ -229,7 +229,7 @@ std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Da
 		Date date;
 		if (!IOUtils::convertString(date, it->substr(0, date_str_len), TZ)) continue;
 		if (date<start) continue;
-		if (date>end) return results;
+		if (date>end) return true;
 		
 		if (a3d_view_in) {
 			if ((*it)[date_str_len]!='.') continue;
@@ -250,10 +250,11 @@ std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Da
 			results[date].insert( param );
 		} else {
 			if ((*it)[date_str_len]!='_') continue;
-			const std::string ext( FileUtils::getExtension( *it ) );
+			const std::string ext( "."+FileUtils::getExtension( *it ) );
 			if (ext!=grid2d_ext_in) continue;
 
 			const std::string::size_type pos_underscore = it->find('_');
+			if (pos==std::string::npos) continue;
 			const std::string param_str( it->substr(date_str_len+1, (pos_underscore - date_str_len)) );
 			const size_t param = MeteoGrids::getParameterIndex( param_str );
 			if (param==IOUtils::npos) continue;
@@ -261,7 +262,7 @@ std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Da
 		}
 	}
 
-	return results;
+	return true;
 }
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
