@@ -30,7 +30,7 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(tz_in), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
+		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(tz_in), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
@@ -45,13 +45,14 @@ class CsvParameters {
 		
 		std::string nodata;
 		size_t date_col, time_col;
-		size_t header_lines, columns_headers;
+		size_t header_lines, columns_headers, units_headers;
 		char csv_delim;
 		char eoln;
 	private:
 		void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
 		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
+		void parseUnits(const std::string& line);
 		
 		Coords location;
 		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate

@@ -192,6 +192,23 @@ bool check_dim_var(const int& ncid, const std::string& dimname)
 	return check_variable(ncid, dimname);
 }
 
+// Retrieve all variables
+void get_variables(const int& ncid, std::vector<std::string>& variables)
+{
+	int nr_of_variables = -1;
+	int status = nc_inq_nvars(ncid, &nr_of_variables);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve variables for dataset: " + string(nc_strerror(status)), AT);
+
+	// Variable IDs in a NetCDF file are consecutive integers starting with 0
+	for (int ii=0; ii<nr_of_variables; ++ii) {
+		char name[NC_MAX_NAME+1];
+		const int stat = nc_inq_varname(ncid, ii, name);
+		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
+		variables.push_back( std::string(name) );
+	}
+}
+
 // Retrieve all variables with a certain set of dimensions
 void get_variables(const int& ncid, const std::vector<std::string>& dimensions, std::vector<std::string>& variables)
 {

@@ -89,6 +89,7 @@ namespace ncpp {
 	bool check_dim_var(const int& ncid, const std::string& dimname);
 	bool check_variable(const int& ncid, const std::string& varname);
 	void get_variable(const int& ncid, const std::string& varname, int& varid);
+	void get_variables(const int& ncid, std::vector<std::string>& variables);
 	void get_variables(const int& ncid, const std::vector<std::string>& dimensions, std::vector<std::string>& variables);
 	bool check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
 	void get_dimension(const int& ncid, const std::string& dimname, int& dimid);

@@ -57,6 +57,7 @@ namespace mio {
  * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
+ * - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
  * - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
@@ -67,7 +68,12 @@ namespace mio {
  * - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  * - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
  * 
- * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index.
+ * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
+ * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
+ * column of the file, including the date and time.
+ * 
+ * @note Since most parameter won't have names that are recognized by MeteoIO, it is necessary to map them to \ref meteoparam "MeteoIO's internal names". This is done
+ * using the \ref data_move "data renaming" feature of the \ref data_manipulations "Raw Data Editing" stage.
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -110,13 +116,13 @@ namespace mio {
  * METEOPATH = ./input/meteo
  * CSV_NR_HEADERS = 4
  * CSV_COLUMNS_HEADERS = 2
+ * CSV_UNITS_HEADERS = 3
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
  * 
  * STATION1 = DisMa_DisEx.dat
  * POSITION1 = latlon 46.810325 9.806657 2060
  * CSV1_ID = DIS4
- * CSV1_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
  * @endcode
  *
  * In order to read a set of files containing each only one parameter and merge them together (see \ref data_manipulations "raw data editing" for more
@@ -136,12 +142,14 @@ namespace mio {
  *
  * CSV2_FIELDS = DATE TIME TA
  * STATION2 = H0118_tempeartures.DAT
+ * CSV2_UNITS_OFFSET = 0 0 273.15
  *
  * CSV3_FIELDS = DATE TIME RSWR
  * STATION3 = H0118_reflected_solar_radiation.DAT
  *
  * CSV4_FIELDS = DATE TIME RH
  * STATION4 = H0118_relaitve_humidity.DAT
+ * CSV4_UNITS_MULTIPLIER = 1 1 0.01
  *
  * CSV5_FIELDS = DATE TIME VW
  * STATION5 = H0118_wind_velocity.DAT
@@ -236,6 +244,38 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 	}
 }
 
+void CsvParameters::parseUnits(const std::string& line)
+{
+	static const std::string stdUnits[9] = {"TS", "RN", "W/M2", "M/S", "K", "M", "V", "VOLT", "DEG"};
+	static std::set<std::string> noConvUnits( stdUnits, stdUnits+9 );
+	
+	std::vector<std::string> units;
+	IOUtils::readLineToVec(line, units, csv_delim);
+	units_offset.resize(units.size(), 0.);
+	units_multiplier.resize(units.size(), 1.);
+	
+	for (size_t ii=0; ii<units.size(); ii++) {
+		std::string tmp( units[ii] );
+		IOUtils::toUpper( tmp );
+		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
+		if (tmp.empty()) continue; //empty unit
+		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
+		
+		if (tmp=="%" || tmp=="CM") units_multiplier[ii] = 0.01;
+		else if (tmp=="C") units_offset[ii] = Cst::t_water_freezing_pt;
+		else if (tmp=="MM") units_multiplier[ii] = 1e-3;
+		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
+		else if (tmp=="FT") units_multiplier[ii] = 0.3048;
+		else if (tmp=="F") { units_multiplier[ii] = 5./9.; units_offset[ii] = -32.*5./9.;}
+		else if (tmp=="KM/H") units_multiplier[ii] = 1./3.6;
+		else if (tmp=="MPH") units_multiplier[ii] = 0.44704;
+		else if (tmp=="KT") units_multiplier[ii] = 0.5144444444445;
+		else {
+			throw UnknownValueException("Can not parse unit '"+tmp+"'", AT);
+		}
+	}
+}
+
 //read and parse the file's headers in order to extract all possible information
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& station_idx)
 {
@@ -253,6 +293,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		throw AccessException(ss.str(), AT);
 	}
 	
+	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
 	size_t linenr=0;
 	std::string line;
 	double lat = IOUtils::nodata;
@@ -274,6 +315,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
 			if (linenr==columns_headers && csv_fields.empty()) //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				IOUtils::readLineToVec(line, csv_fields, csv_delim);
+			if (read_units && linenr==units_headers)
+				parseUnits(line);
 		}
 	} catch (...) {
 		fin.close();
@@ -470,6 +513,9 @@ void CsvIO::parseInputOutputSection()
 		
 		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
 			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+		
+		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);
+		else cfg.getValue(dflt+"UNITS_HEADERS", "Input", tmp_csv.units_headers, IOUtils::nothrow);
 		
 		if (cfg.keyExists(pre+"UNITS_OFFSET", "Input")) cfg.getValue(pre+"UNITS_OFFSET", "Input", tmp_csv.units_offset);
 		else cfg.getValue(dflt+"UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
