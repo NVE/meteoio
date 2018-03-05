@@ -83,7 +83,8 @@ namespace mio {
  * - DD: the two digits day;
  * - HH24: the two digits hour of the day (0-24);
  * - MI: the two digits minutes (0-59);
- * - SS: the two digts seconds (0-59).
+ * - SS: the two digts seconds (0-59);
+ * - TZ: the numerical timezone as offset to GMT.
  *
  * Any other character is interpreted as itself, present in the string. It is possible to either provide a combined datetime field (so date and time are combined into
  * one single field) or date and time as two different fields. For example:
@@ -352,9 +353,9 @@ struct sort_pred {
 //the indices are based on ISO timestamp, so year=0, month=1, etc
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 {
-	static const char* keys[] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
+	static const char* keys[7] = {"YYYY", "MM", "DD", "HH24", "MI", "SS", "TZ"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<6; ii++) {
+	for (size_t ii=0; ii<7; ii++) {
 		const size_t key_pos = datetime_spec.find( keys[ii] );
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
@@ -365,16 +366,17 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 		datetime_idx.push_back( sorting_vector[ii].second );
 	
 	datetime_format = datetime_spec;
-	IOUtils::replace_all(datetime_format, "DD", "%d");
-	IOUtils::replace_all(datetime_format, "MM", "%d");
-	IOUtils::replace_all(datetime_format, "YYYY", "%d");
-	IOUtils::replace_all(datetime_format, "HH24", "%d");
-	IOUtils::replace_all(datetime_format, "MI", "%d");
-	IOUtils::replace_all(datetime_format, "SS", "%d");
+	IOUtils::replace_all(datetime_format, "DD", "%f");
+	IOUtils::replace_all(datetime_format, "MM", "%f");
+	IOUtils::replace_all(datetime_format, "YYYY", "%f");
+	IOUtils::replace_all(datetime_format, "HH24", "%f");
+	IOUtils::replace_all(datetime_format, "MI", "%f");
+	IOUtils::replace_all(datetime_format, "SS", "%f");
+	IOUtils::replace_all(datetime_format, "TZ", "%f");
 	
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
 	const size_t nr_percent = (unsigned)std::count(datetime_format.begin(), datetime_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(datetime_format, "%d");
+	const size_t nr_placeholders = IOUtils::count(datetime_format, "%f");
 	const size_t pos_pc_pc = datetime_format.find("%%");
 	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
@@ -383,9 +385,9 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 void CsvParameters::setTimeSpec(const std::string& time_spec)
 {
 	if (time_spec.empty()) return;
-	static const char* keys[] = {"HH24", "MI", "SS"};
+	static const char* keys[4] = {"HH24", "MI", "SS", "TZ"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<3; ii++) {
+	for (size_t ii=0; ii<4; ii++) {
 		const size_t key_pos = time_spec.find( keys[ii] );
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
@@ -396,13 +398,14 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 		time_idx.push_back( sorting_vector[ii].second );
 
 	time_format = time_spec;
-	IOUtils::replace_all(time_format, "HH24", "%d");
-	IOUtils::replace_all(time_format, "MI", "%d");
-	IOUtils::replace_all(time_format, "SS", "%d");
+	IOUtils::replace_all(time_format, "HH24", "%f");
+	IOUtils::replace_all(time_format, "MI", "%f");
+	IOUtils::replace_all(time_format, "SS", "%f");
+	IOUtils::replace_all(time_format, "TZ", "%f");
 
 	//check that the format is usable (and prevent parameters injection / buffer overflows)
 	const size_t nr_percent = (unsigned)std::count(time_format.begin(), time_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(time_format, "%d");
+	const size_t nr_placeholders = IOUtils::count(time_format, "%f");
 	const size_t pos_pc_pc = time_format.find("%%");
 	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted time specification '"+time_format+"': argument appearing twice or using '%%'", AT);
@@ -410,10 +413,14 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	int args[6] = {0, 0, 0, 0, 0 ,0};
+	float args[7] = {0, 0, 0, 0, 0, 0, 0};
+	args[6] = csv_tz; //so we have a default value
 
 	bool status = false;
 	switch( datetime_idx.size() ) {
+		case 7:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ], &args[ datetime_idx[6] ])==7);
+			break;
 		case 6:
 			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ])==6);
 			break;
@@ -432,6 +439,9 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	if (!time_idx.empty()) {
 		//there is a +3 offset because the first 3 positions are used by the date part
 		switch( time_idx.size() ) {
+			case 4:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ], &args[ time_idx[3]+3 ])==4);
+				break;
 			case 3:
 				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ])==3);
 				break;
@@ -445,7 +455,7 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	}
 
 	if (!status) return Date();
-	return Date(args[0], args[1], args[2], args[3], args[4], args[5], csv_tz);
+	return Date((int)args[0], (int)args[1], (int)args[2], (int)args[3], (int)args[4], (int)args[5], args[6]);
 }
 
 StationData CsvParameters::getStation() const 

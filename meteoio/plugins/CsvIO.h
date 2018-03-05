@@ -30,7 +30,7 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(tz_in), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
+		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(static_cast<float>(tz_in)) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
@@ -58,7 +58,8 @@ class CsvParameters {
 		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate
 		std::string file_and_path, datetime_format, time_format; 		///< the scanf() format string for use in parseDate
 		std::string name, id;
-		double csv_tz, slope, azi;		///< timezone to apply to parsed dates
+		double slope, azi;
+		float csv_tz;		///< timezone to apply to parsed dates
 };
 
 /**
