@@ -225,9 +225,9 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 		
 		if (tmp.compare("TIMESTAMP")==0) {
 			dt_col = tm_col = ii;
-		} else if (tmp.compare("DATE")==0) {
+		} else if (tmp.compare("DATE")==0 || tmp.compare("giorno")==0) {
 			dt_col = ii;
-		} else if (tmp.compare("TIME")==0) {
+		} else if (tmp.compare("TIME")==0 || tmp.compare("ora")==0) {
 			tm_col = ii;
 		}
 	}
@@ -605,6 +605,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	std::vector<std::string> tmp_vec;
 	const std::string nodata( params.nodata );
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
+	Date prev_dt;
+	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
@@ -624,6 +626,12 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
 			throw InvalidFormatException("Date or time could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
+		if (!prev_dt.isUndef()) {
+			const bool asc = (dt>prev_dt);
+			if (asc) count_asc++;
+			else count_dsc++;
+		}
+		prev_dt = dt;
 
 		if (linenr % streampos_every_n_lines == 0) {
 			fpointer = fin.tellg();
@@ -650,6 +658,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		}
 		vecMeteo.push_back( md );
 	}
+	
+	if (count_dsc>count_asc) std::reverse(vecMeteo.begin(), vecMeteo.end()); //since we might have DST, we might have localy asc/dsc order...
 	
 	return vecMeteo;
 }
