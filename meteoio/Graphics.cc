@@ -73,10 +73,10 @@ Legend::Legend(const unsigned int &height, const double &minimum, const double &
 //uniform division of the given range
 void Legend::simpleLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
-	grid.resize(total_width, height, IOUtils::nodata);
 	const double level_inc = (maximum-minimum)/(double)(nb_labels-1); //the infamous interval thing...
 
 	//vertically center legend in free space
+	grid.resize(total_width, height, IOUtils::nodata);
 	if (height>=total_height) {
 		const unsigned int free_space = height-total_height;
 		const unsigned int start_legend = free_space/2; //we will start from the bottom
@@ -98,8 +98,6 @@ void Legend::simpleLegend(const unsigned int &height, const double &minimum, con
 //this tries to properly round to legend min, max and steps so that it gets easier to follow
 void Legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
-	grid.resize(total_width, height, IOUtils::nodata);
-
 	const double range = maximum-minimum;
 	double min_norm=minimum, max_norm=maximum, decade_mult;
 	unsigned int step_norm, nb_labels_norm;
@@ -121,13 +119,14 @@ void Legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		min_norm = round(min_norm/step_norm*10)*step_norm/10.;
 		max_norm = round(max_norm/step_norm*10)*step_norm/10.;
 		nb_labels_norm = (unsigned int)ceil((max_norm-min_norm)/step_norm*10)+1; //because min_norm might have been tweaked
-	} else {
+	} else { //there is either no data or a constant value
 		step_norm = 0;
 		decade_mult=1.;
 		nb_labels_norm=1;
 	}
 
 	//vertically center legend in free space
+	grid.resize(total_width, height, IOUtils::nodata);
 	const unsigned int smart_height = nb_labels_norm*Legend::label_height+Legend::interline;
 	if (height>=smart_height) {
 		const unsigned int free_space = height-smart_height;
