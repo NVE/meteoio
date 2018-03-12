@@ -53,6 +53,7 @@ class CsvParameters {
 		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		void parseUnits(const std::string& line);
+		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		Coords location;
 		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate

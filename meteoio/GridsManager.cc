@@ -274,8 +274,10 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 			const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
 			if (status) {
 				//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
-				if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
-				if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
+				if (!grids2d_list.empty()) {
+					if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
+					if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
+				}
 			} else { //HACK this means that the call is not implemeted in the plugin
 				iohandler.read2DGrid(grid2D, parameter, date);
 				buffer.push(grid2D, parameter, date);

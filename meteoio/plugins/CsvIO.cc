@@ -343,6 +343,21 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	}
 }
 
+//check that the format is usable (and prevent parameters injection / buffer overflows)
+void CsvParameters::checkSpecString(const std::string& spec_string, const size_t& nr_params)
+{
+	const size_t nr_percent = (unsigned)std::count(spec_string.begin(), spec_string.end(), '%');
+	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%f");
+	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2f");
+	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4f");
+	size_t nr_placeholders = (nr_placeholders0!=std::string::npos)? nr_placeholders0 : 0;
+	nr_placeholders += (nr_placeholders2!=std::string::npos)? nr_placeholders2 : 0;
+	nr_placeholders += (nr_placeholders4!=std::string::npos)? nr_placeholders4 : 0;
+	const size_t pos_pc_pc = spec_string.find("%%");
+	if (nr_percent!=nr_params || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
+		throw InvalidFormatException("Badly formatted date/time specification '"+spec_string+"': argument appearing twice or using '%%'", AT);
+}
+
 struct sort_pred {
 	bool operator()(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) {
 		return left.first < right.first;
@@ -366,20 +381,15 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 		datetime_idx.push_back( sorting_vector[ii].second );
 	
 	datetime_format = datetime_spec;
-	IOUtils::replace_all(datetime_format, "DD", "%f");
-	IOUtils::replace_all(datetime_format, "MM", "%f");
-	IOUtils::replace_all(datetime_format, "YYYY", "%f");
-	IOUtils::replace_all(datetime_format, "HH24", "%f");
-	IOUtils::replace_all(datetime_format, "MI", "%f");
+	IOUtils::replace_all(datetime_format, "DD", "%2f");
+	IOUtils::replace_all(datetime_format, "MM", "%2f");
+	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
+	IOUtils::replace_all(datetime_format, "HH24", "%2f");
+	IOUtils::replace_all(datetime_format, "MI", "%2f");
 	IOUtils::replace_all(datetime_format, "SS", "%f");
 	IOUtils::replace_all(datetime_format, "TZ", "%f");
 	
-	//check that the format is usable (and prevent parameters injection / buffer overflows)
-	const size_t nr_percent = (unsigned)std::count(datetime_format.begin(), datetime_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(datetime_format, "%f");
-	const size_t pos_pc_pc = datetime_format.find("%%");
-	if (nr_percent!=datetime_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
-		throw InvalidFormatException("Badly formatted date/time specification '"+datetime_spec+"': argument appearing twice or using '%%'", AT);
+	checkSpecString(datetime_format, datetime_idx.size());
 }
 
 void CsvParameters::setTimeSpec(const std::string& time_spec)
@@ -398,17 +408,12 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 		time_idx.push_back( sorting_vector[ii].second );
 
 	time_format = time_spec;
-	IOUtils::replace_all(time_format, "HH24", "%f");
-	IOUtils::replace_all(time_format, "MI", "%f");
+	IOUtils::replace_all(time_format, "HH24", "%2f");
+	IOUtils::replace_all(time_format, "MI", "%2f");
 	IOUtils::replace_all(time_format, "SS", "%f");
 	IOUtils::replace_all(time_format, "TZ", "%f");
 
-	//check that the format is usable (and prevent parameters injection / buffer overflows)
-	const size_t nr_percent = (unsigned)std::count(time_format.begin(), time_format.end(), '%');
-	const size_t nr_placeholders = IOUtils::count(time_format, "%f");
-	const size_t pos_pc_pc = time_format.find("%%");
-	if (nr_percent!=time_idx.size() || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
-		throw InvalidFormatException("Badly formatted time specification '"+time_format+"': argument appearing twice or using '%%'", AT);
+	checkSpecString(time_format, time_idx.size());
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
@@ -416,6 +421,8 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	float args[7] = {0, 0, 0, 0, 0, 0, 0};
 	args[6] = csv_tz; //so we have a default value
 
+	//if datetime_idx[ii]=7 -> TZ -> separate processing for TZ (it can be a string)
+	
 	bool status = false;
 	switch( datetime_idx.size() ) {
 		case 7:
@@ -603,7 +610,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	else {
 		//skip the headers (they have been read already, so we know this works)
-		while (!fin.eof() && linenr<params.header_lines){
+		while (!fin.eof() && linenr<params.header_lines) {
 			line.clear();
 			getline(fin, line, params.eoln);
 			linenr++;
