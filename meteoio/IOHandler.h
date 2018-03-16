@@ -84,6 +84,8 @@ class IOHandler : public IOInterface {
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
 		void merge_stations(STATIONS_SET& vecStation) const;
+		void automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
+		void automerge_stations(STATIONS_SET& vecStation) const;
 
 		const Config& cfg;
 		DataCreator dataCreator;
@@ -96,7 +98,7 @@ class IOHandler : public IOInterface {
 		std::map< std::string, std::set<std::string> > move_commands;
 		std::vector<std::string> merged_stations;
 		int merge_strategy;
-		bool copy_ready, move_ready, excludes_ready, keeps_ready, merge_ready;
+		bool copy_ready, move_ready, excludes_ready, keeps_ready, merge_ready, automerge;
 };
 
 } //namespace

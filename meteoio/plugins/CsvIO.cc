@@ -57,6 +57,7 @@ namespace mio {
  * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
+ * - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  * - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
@@ -110,6 +111,28 @@ namespace mio {
  * CSV_SPECIAL_HEADERS = name:1:3 id:2:5
  * @endcode
  * 
+ * @section csvio_filename_parsing Filename metadata extraction
+ * Some valuable metadata might be written into the filename itself and it is worthwhile to be able to extract it. This is performed with the
+ * "CSV#_FILENAME_SPEC" configuration key. This key is followed by the metadata specification that will be applied to identify the information
+ * to extract as well as substrings that are used as "markers" delimiting the different fields (enclosed within {}) . The fields that are recognized are currently:
+ *  - NAME;
+ *  - ID;
+ *  - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
+ *  - SKIP (to skip this part of the substring).
+ * 
+ * For example, to parse the filename "H0118_Generoso-Calmasino_-_Precipitation.DAT" use (please note that the extension is NOT provided):
+ * @code
+ * CSV_FILENAME_SPEC = {ID}_{NAME}-{SKIP}_-_{PARAM}
+ * @endcode
+ * 
+ * If the CSV_FIELDS key is also present, it will have priority. Therefore, it is possible to define one CSV_FILENAME_SPEC for several files and 
+ * only define CSV\#_FIELDS for the files that would require a different handling (for example because their parameter would not be recognized).
+ * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the input section, so all files leading to the same station ID will be merged together
+ * into one single station.
+ * 
+ * @note Obviously, this key can only be used for files that contain the time information (either as datetime or seperate date and time) and one
+ * meteorological parameter.
+ * 
  * @section csvio_examples Examples
  * In order to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps, you need the following configuration:
  * @code
@@ -127,6 +150,34 @@ namespace mio {
  * @endcode
  *
  * In order to read a set of files containing each only one parameter and merge them together (see \ref data_manipulations "raw data editing" for more
+ * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
+ *@code
+ * METEO = CSV
+ * METEOPATH = ./input/meteo
+ * CSV_DELIMITER = ;
+ * CSV_HEADER_LINES = 1
+ * CSV_DATE_SPEC = DD/MM/YYYY
+ * CSV_TIME_SPEC = HH24:MI
+ * POSITION = latlon (46.8, 9.80, 1700)
+ * CSV_FILENAME_SPEC = {ID}_{NAME}_-_{SKIP}-{PARAM}
+ * CSV_COLUMNS_HEADERS = 1
+ *
+ * STATION1 = H0118_Generoso_-_Calmasino_precipitation.DAT
+ *
+ * STATION2 = H0118_Generoso_-_Calmasino_temperature.DAT    #the parameter name is ambiguous, it will not be recognized
+ * CSV2_FIELDS = DATE TIME TA                               #so we define the parameter manually
+ * CSV2_UNITS_OFFSET = 0 0 273.15
+ *
+ * STATION3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.DAT
+ *
+ * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.DAT
+ *
+ * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.DAT
+ *
+ * AUTOMERGE = true
+ * @endcode
+ * 
+ * In order to read a set of files and merge them together (see \ref data_manipulations "raw data editing" for more
  * on the merge feature):
  *@code
  * METEO = CSV
@@ -138,18 +189,18 @@ namespace mio {
  * POSITION = latlon (46.8, 9.80, 1700)
  * CSV_NAME = Generoso
  *
- * CSV1_FIELDS = DATE TIME PSUM
- * STATION1 = H0118_precipitation.DAT
+ * CSV1_FIELDS = DATE TIME PSUM HS
+ * STATION1 = H0118_lg23456.DAT
  *
  * CSV2_FIELDS = DATE TIME TA
- * STATION2 = H0118_tempeartures.DAT
+ * STATION2 = H0118_lg7850.DAT
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
- * CSV3_FIELDS = DATE TIME RSWR
- * STATION3 = H0118_reflected_solar_radiation.DAT
+ * CSV3_FIELDS = DATE TIME RSWR ISWR
+ * STATION3 = H0118_lg64520.DAT
  *
  * CSV4_FIELDS = DATE TIME RH
- * STATION4 = H0118_relaitve_humidity.DAT
+ * STATION4 = H0118_lg45302.DAT
  * CSV4_UNITS_MULTIPLIER = 1 1 0.01
  *
  * CSV5_FIELDS = DATE TIME VW
@@ -216,8 +267,91 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 	}
 }
 
-void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
+struct InvalidChar { bool operator()(const char& c) const { return (c<32 || c>126); } };
+
+void CsvParameters::parseFilenameVariable(const std::string& field_type, const std::string& value)
 {
+	if (field_type=="ID")
+		id = value;
+	else if (field_type=="NAME")
+		name = value;
+	else if (field_type=="PARAM") {
+		std::string param( IOUtils::strToUpper( value ) );
+		if (MeteoData::getStaticParameterIndex( param )!=IOUtils::npos) {
+			single_field = param;
+			return;
+		}
+		
+		param.erase(std::remove_if(param.begin(), param.end(), InvalidChar()), param.end()); //remove accentuated characters, etc
+		//try to map non-standard names to mio's names
+		if (param.compare(0, 15, "TEMPERATURE_AIR")==0 || param.compare(0, 16, "TEMPERATURA_ARIA")==0) param="TA";
+		else if (param.compare(0, 13, "PRECIPITATION")==0 || param.compare(0, 14, "PRECIPITAZIONE")==0) param="PSUM";
+		else if (param.compare(0, 19, "REFLECTED_RADIATION")==0 || param.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) param="RSWR";
+		else if (param.compare(0, 18, "INCOMING_RADIATION")==0 || param.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) param="RSWR";
+		else if (param.compare(0, 14, "WIND_DIRECTION")==0 || param.compare(0, 15, "DIREZIONE_VENTO")==0) param="DW";
+		else if (param.compare(0, 17, "RELATIVE_HUMIDITY")==0 || param.compare(0, 15, "UMIDIT_RELATIVA")==0) param="RH";
+		else if (param.compare(0, 13, "WIND_VELOCITY")==0 || param.compare(0, 13, "VELOCIT_VENTO")==0) param="VW";
+		
+		single_field = param;
+	} else if (field_type!="SKIP")
+		throw InvalidFormatException("Unknown parsing key '"+field_type+"' when parsing filename", AT);
+}
+
+//filename_spec in the form of {ID}_{NAME}-{PARAM}_-_{SKIP} where {ID} is a variable and '_-_' is a constant pattern
+void CsvParameters::parseFileName(std::string filename, const std::string& filename_spec)
+{
+	filename = FileUtils::removeExtension( FileUtils::getFilename(filename) );
+	size_t pos_fn = 0, pos_mt = 0; //current position in the filename and in the filename_spec
+	if (filename_spec[0]!='{') { //there is a constant pattern at the begining, getting rid of it
+		const size_t start_var = filename_spec.find('{');
+		if (start_var==std::string::npos) throw InvalidFormatException("No variables defined for filename parsing", AT);
+		const std::string pattern( filename_spec.substr(0, start_var) );
+		if (filename.substr(0, start_var)!=pattern) throw InvalidFormatException("The filename pattern does not match with the given filename", AT);
+		pos_mt = start_var;
+		pos_fn = start_var;
+	}
+	
+	//we now assume that we start with a variable
+	do {
+		//the start of the next constant pattern defines the end of the current variable
+		const size_t start_pattern = filename_spec.find('}', pos_mt);
+		const size_t end_pattern = filename_spec.find('{', pos_mt+1);
+		if (start_pattern==std::string::npos) {
+			if (end_pattern!=std::string::npos) throw InvalidFormatException("Unclosed variable delimiter '}' in filename parsing", AT);
+			break; //no more variables to read
+		}
+		const size_t pattern_len = end_pattern - start_pattern - 1;
+		
+		size_t len_var = std::string::npos; //until end of string
+		if (end_pattern!=std::string::npos) {
+			const std::string pattern = filename_spec.substr(start_pattern+1, pattern_len); //skip } and {
+			const size_t pos_pattern_fn = filename.find(pattern, pos_fn);
+			if (pos_pattern_fn==std::string::npos) throw InvalidFormatException("The filename pattern does not match with the given filename", AT);
+			len_var = pos_pattern_fn - pos_fn;
+		}
+
+		//read the variable type and value
+		const std::string field_type( IOUtils::strToUpper(filename_spec.substr(pos_mt+1, start_pattern-pos_mt-1)) ); //skip { and }
+		const std::string value( filename.substr(pos_fn, len_var) );
+		parseFilenameVariable(field_type, value);
+
+		if (end_pattern==std::string::npos) break; //nothing more to parse
+		pos_mt = end_pattern;
+		pos_fn = pos_fn + len_var + pattern_len;
+	} while (true);
+
+}
+//+string TZ
+
+//user provided field names are in fieldNames, header field names are in headerFields
+//user provided fields have priority
+void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
+{
+	const bool user_provided_field_names = (!fieldNames.empty());
+	if (headerFields.empty() && !user_provided_field_names) 
+		throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+	
+	if (fieldNames.empty()) fieldNames = headerFields;
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
 		std::string &tmp = fieldNames[ii];
 		IOUtils::toUpper( tmp );
@@ -226,22 +360,26 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 		
 		if (tmp.compare("TIMESTAMP")==0) {
 			dt_col = tm_col = ii;
-		} else if (tmp.compare("DATE")==0 || tmp.compare("giorno")==0) {
+		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0) {
 			dt_col = ii;
-		} else if (tmp.compare("TIME")==0 || tmp.compare("ora")==0) {
+		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0) {
 			tm_col = ii;
 		}
 	}
-	
+
 	//if necessary, set the format to the appropriate defaults
 	if (dt_col==tm_col) {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
+		if (fieldNames.size()==2 && !single_field.empty() && !user_provided_field_names)
+			fieldNames[1] = single_field; //we have a better name from the filename
 	} else {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DD");
 		if (time_idx.empty())
 			setTimeSpec("HH24:MI:SS");
+		if (fieldNames.size()==3 && !single_field.empty() && !user_provided_field_names)
+			fieldNames[2] = single_field; //we have a better name from the filename
 	}
 }
 
@@ -278,7 +416,7 @@ void CsvParameters::parseUnits(const std::string& line)
 }
 
 //read and parse the file's headers in order to extract all possible information
-void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& station_idx)
+void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx)
 {
 	file_and_path = i_file_and_path;
 	const std::multimap< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
@@ -286,6 +424,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	//read and parse the file's headers
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
+	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
@@ -299,6 +438,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	std::string line;
 	double lat = IOUtils::nodata;
 	double lon = IOUtils::nodata;
+	std::vector<std::string> headerFields;
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<header_lines; ii++) {
@@ -314,8 +454,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			
 			if (meta_spec.count(linenr)>0) 
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
-			if (linenr==columns_headers && csv_fields.empty()) //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
-				IOUtils::readLineToVec(line, csv_fields, csv_delim);
+			if (linenr==columns_headers) //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
+				IOUtils::readLineToVec(line, headerFields, csv_delim);
 			if (read_units && linenr==units_headers)
 				parseUnits(line);
 		}
@@ -330,9 +470,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
-	if (csv_fields.empty()) 
-		throw InvalidArgumentException("No columns names could be retrieved, please provide them through the configuration file", AT);
-	parseFields(csv_fields, date_col, time_col);
+	parseFields(headerFields, csv_fields, date_col, time_col);
 	
 	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
 	if (id.empty()) {
@@ -478,11 +616,11 @@ StationData CsvParameters::getStation() const
 const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
 
 CsvIO::CsvIO(const std::string& configfile) 
-      : cfg(configfile), indexer(), csvparam(), vecStations(),
+      : cfg(configfile), indexer_map(), csvparam(), vecStations(),
         coordin(), coordinparam() { parseInputOutputSection(); }
 
 CsvIO::CsvIO(const Config& cfgreader)
-      : cfg(cfgreader), indexer(), csvparam(), vecStations(),
+      : cfg(cfgreader), indexer_map(), csvparam(), vecStations(),
         coordin(), coordinparam() { parseInputOutputSection(); }
 
 void CsvIO::parseInputOutputSection()
@@ -566,7 +704,11 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
 		
-		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, idx);
+		std::string filename_spec;
+		if (cfg.keyExists(pre+"FILENAME_SPEC", "Input")) cfg.getValue(pre+"FILENAME_SPEC", "Input", filename_spec);
+		else cfg.getValue(dflt+"FILENAME_SPEC", "Input", filename_spec, IOUtils::nothrow);
+		
+		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, filename_spec, idx);
 		csvparam.push_back( tmp_csv );
 	}
 }
@@ -605,7 +747,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	
 	std::string line;
 	size_t linenr=0;
-	streampos fpointer = indexer.getIndex(dateStart);
+	streampos fpointer = indexer_map[filename].getIndex(dateStart);
 	if (fpointer!=static_cast<streampos>(-1))
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	else {
@@ -652,7 +794,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 
 		if (linenr % streampos_every_n_lines == 0) {
 			fpointer = fin.tellg();
-			if (fpointer != static_cast<streampos>(-1)) indexer.setIndex(dt, fpointer);
+			if (fpointer != static_cast<streampos>(-1)) indexer_map[filename].setIndex(dt, fpointer);
 		}
 		if (dt<dateStart) continue;
 		if (dt>dateEnd) break;

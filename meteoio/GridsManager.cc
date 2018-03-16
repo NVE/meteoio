@@ -284,7 +284,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 				return;
 			}
 		}
-
+		
 		const std::map<Date, std::set<size_t> >::const_iterator it = grids2d_list.find(date);
 		if (it!=grids2d_list.end()) {
 			if ( it->second.find(parameter) != it->second.end() ) {
