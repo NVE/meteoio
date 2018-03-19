@@ -89,13 +89,16 @@ namespace mio {
  * - HH24: the two digits hour of the day (0-24);
  * - MI: the two digits minutes (0-59);
  * - SS: the two digts seconds (0-59);
- * - TZ: the numerical timezone as offset to GMT.
+ * - TZ: the numerical timezone as offset to GMT (see note below).
  *
  * Any other character is interpreted as itself, present in the string. It is possible to either provide a combined datetime field (so date and time are combined into
  * one single field) or date and time as two different fields. For example:
  * - YYYY-MM-DDTHH24:MI:SS described an <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> datetime field;
  * - MM/DD/YYYY described an anglo-saxon date;
  * - DD.MM.YYYY HH24:MI:SS is for a Swiss formatted datetime.
+ * 
+ * @note When providing a timezone field, it \em must appear at the end of the string. it can either be numerical (such as "+1.") or an abbreviation
+ * such as "CET" (see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
  * 
  * @section csvio_metadata_extraction Metadata extraction
  * Since there is no unified way of providing metadata (such as the location, station name, etc) in CSV files, this information has to
@@ -178,9 +181,7 @@ namespace mio {
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
  * STATION3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.DAT
- *
  * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.DAT
- *
  * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.DAT
  *
  * AUTOMERGE = true
@@ -356,7 +357,6 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 	} while (true);
 
 }
-//+string TZ
 
 //user provided field names are in fieldNames, header field names are in headerFields
 //and user provided fields have priority.
@@ -502,92 +502,105 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 void CsvParameters::checkSpecString(const std::string& spec_string, const size_t& nr_params)
 {
 	const size_t nr_percent = (unsigned)std::count(spec_string.begin(), spec_string.end(), '%');
-	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%f");
-	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2f");
-	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4f");
+	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%d");
+	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2d");
+	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4d");
+	const size_t nr_placeholders5 = IOUtils::count(spec_string, "%32s");
 	size_t nr_placeholders = (nr_placeholders0!=std::string::npos)? nr_placeholders0 : 0;
 	nr_placeholders += (nr_placeholders2!=std::string::npos)? nr_placeholders2 : 0;
 	nr_placeholders += (nr_placeholders4!=std::string::npos)? nr_placeholders4 : 0;
+	nr_placeholders += (nr_placeholders5!=std::string::npos)? nr_placeholders5 : 0;
 	const size_t pos_pc_pc = spec_string.find("%%");
 	if (nr_percent!=nr_params || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
 		throw InvalidFormatException("Badly formatted date/time specification '"+spec_string+"': argument appearing twice or using '%%'", AT);
 }
 
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
-//the indices are based on ISO timestamp, so year=0, month=1, etc
+//the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 and tz is handled separately
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 {
-	static const char* keys[7] = {"YYYY", "MM", "DD", "HH24", "MI", "SS", "TZ"};
+	static const char* keys[6] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<7; ii++) {
+	for (size_t ii=0; ii<6; ii++) {
 		const size_t key_pos = datetime_spec.find( keys[ii] );
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
 	}
 	
+	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (size_t ii=0; ii<sorting_vector.size(); ii++)
 		datetime_idx.push_back( sorting_vector[ii].second );
 	
 	datetime_format = datetime_spec;
-	IOUtils::replace_all(datetime_format, "DD", "%2f");
-	IOUtils::replace_all(datetime_format, "MM", "%2f");
-	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
-	IOUtils::replace_all(datetime_format, "HH24", "%2f");
-	IOUtils::replace_all(datetime_format, "MI", "%2f");
-	IOUtils::replace_all(datetime_format, "SS", "%f");
-	IOUtils::replace_all(datetime_format, "TZ", "%f");
+	const size_t tz_pos = datetime_format.find("TZ");
+	if (tz_pos!=std::string::npos) {
+		if (tz_pos!=(datetime_format.length()-2))
+			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
+		has_tz = true;
+		datetime_format.replace(tz_pos, 2, "%32s");
+	}
+	IOUtils::replace_all(datetime_format, "DD", "%2d");
+	IOUtils::replace_all(datetime_format, "MM", "%2d");
+	IOUtils::replace_all(datetime_format, "YYYY", "%4d");
+	IOUtils::replace_all(datetime_format, "HH24", "%2d");
+	IOUtils::replace_all(datetime_format, "MI", "%2d");
+	IOUtils::replace_all(datetime_format, "SS", "%d");
 	
-	checkSpecString(datetime_format, datetime_idx.size());
+	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
+	checkSpecString(datetime_format, nr_params_check);
 }
 
 void CsvParameters::setTimeSpec(const std::string& time_spec)
 {
 	if (time_spec.empty()) return;
-	static const char* keys[4] = {"HH24", "MI", "SS", "TZ"};
+	static const char* keys[3] = {"HH24", "MI", "SS"};
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<4; ii++) {
+	for (size_t ii=0; ii<3; ii++) {
 		const size_t key_pos = time_spec.find( keys[ii] );
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
 	}
 
+	//fill time_idx as a vector of [0-3] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (size_t ii=0; ii<sorting_vector.size(); ii++)
 		time_idx.push_back( sorting_vector[ii].second );
 
 	time_format = time_spec;
-	IOUtils::replace_all(time_format, "HH24", "%2f");
-	IOUtils::replace_all(time_format, "MI", "%2f");
-	IOUtils::replace_all(time_format, "SS", "%f");
-	IOUtils::replace_all(time_format, "TZ", "%f");
+	const size_t tz_pos = time_format.find("TZ");
+	if (tz_pos!=std::string::npos) {
+		if (tz_pos!=(time_format.length()-2))
+			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
+		has_tz = true;
+		time_format.replace(tz_pos, 2, "%32s");
+	}
+	IOUtils::replace_all(time_format, "HH24", "%2d");
+	IOUtils::replace_all(time_format, "MI", "%2d");
+	IOUtils::replace_all(time_format, "SS", "%d");
 
-	checkSpecString(time_format, time_idx.size());
+	const size_t nr_params_check = (has_tz)? time_idx.size()+1 : time_idx.size();
+	checkSpecString(time_format, nr_params_check);
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	float args[7] = {0, 0, 0, 0, 0, 0, 0};
-	args[6] = csv_tz; //so we have a default value
-
-	//if datetime_idx[ii]=7 -> TZ -> separate processing for TZ (it can be a string)
+	int args[6] = {0, 0, 0, 0, 0, 0};
+	char rest[32] = "";
 	
 	bool status = false;
 	switch( datetime_idx.size() ) {
-		case 7:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ], &args[ datetime_idx[6] ])==7);
-			break;
 		case 6:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ])==6);
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ], rest)>=6);
 			break;
 		case 5:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ]) ==5);
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], rest)>=5);
 			break;
 		case 4:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ])==4);
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], rest)>=4);
 			break;
 		case 3:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ])==3);
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
 			break;
 	}
 	if (!status) return Date(); //we MUST have read successfuly at least the date part
@@ -595,23 +608,21 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	if (!time_idx.empty()) {
 		//there is a +3 offset because the first 3 positions are used by the date part
 		switch( time_idx.size() ) {
-			case 4:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ], &args[ time_idx[3]+3 ])==4);
-				break;
 			case 3:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ])==3);
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ], rest)>=3);
 				break;
 			case 2:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ])==2);
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], rest)>=2);
 				break;
 			case 1:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ])==1);
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], rest)>=1);
 				break;
 		}
 	}
 
 	if (!status) return Date();
-	return Date((int)args[0], (int)args[1], (int)args[2], (int)args[3], (int)args[4], (int)args[5], args[6]);
+	const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
+	return Date((int)args[0], (int)args[1], (int)args[2], (int)args[3], (int)args[4], (int)args[5], tz);
 }
 
 StationData CsvParameters::getStation() const 
