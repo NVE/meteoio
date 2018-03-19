@@ -33,15 +33,18 @@ namespace mio {
  * This plugins offers a flexible way to read Comma Separated Values (<A HREF="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</A>) files. 
  * It is however assumed that:
  *     - each line contains a data record
- *     - a single character is consistently used through the file as field delimiter (to split each record into fields);
  *     - each line contains the same number of fields;
- *     - missing data are represented by an empty value, so two delimiters follow directly each other;
+ *     - a single character is consistently used through the file as field delimiter (to split each record into fields);
+ *     - missing data are represented by an empty value, so two delimiters follow directly each other or by a special value (see NODATA in 
+ * \ref csvio_metadata_extraction "Metadata extraction");
  *     - the file may contain a header that may contain additional information (metadata), see below.
  * 
- * In order to reduce the amount of manual configuration, it is possible to extract metadata from the headers, such as the station name, ID, coordinates, etc
+ * In order to reduce the amount of manual configuration, it is possible to extract metadata from the headers or the filename, 
+ * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * The final units MUST be SI. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below).
+ * The final units MUST be SI. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
+ * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
  * This plugin uses the following keywords, in the [Input] section:
@@ -73,8 +76,9 @@ namespace mio {
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
  * column of the file, including the date and time.
  * 
- * @note Since most parameter won't have names that are recognized by MeteoIO, it is necessary to map them to \ref meteoparam "MeteoIO's internal names". This is done
- * using the \ref data_move "data renaming" feature of the \ref data_manipulations "Raw Data Editing" stage.
+ * @note Since most parameter won't have names that are recognized by MeteoIO, it is necessary to map them to \ref meteoparam "MeteoIO's internal names". 
+ * This is done either by using the CSV_FIELDS key or using the \ref data_move "data renaming" feature of the 
+ * \ref data_manipulations "Raw Data Editing" stage.
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -92,33 +96,38 @@ namespace mio {
  * - YYYY-MM-DDTHH24:MI:SS described an <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> datetime field;
  * - MM/DD/YYYY described an anglo-saxon date;
  * - DD.MM.YYYY HH24:MI:SS is for a Swiss formatted datetime.
+ * 
+ * @section csvio_metadata_extraction Metadata extraction
+ * Since there is no unified way of providing metadata (such as the location, station name, etc) in CSV files, this information has to
+ * be either provided in the configuration file (see \ref csvio_keywords "Configuration keywords") or extracted out of either the file
+ * name or the file headers. A specific syntax allows to describe where to find which metadata field type.
+ * 
+ * @subsection csvio_metadata_field_types Metadata fields types
+ * The following field types are supported:
+ * - NAME;
+ * - ID (this will the used as a handle for the station);
+ * - ALT (for the altitude);
+ * - LON (for the longitude);
+ * - LAT (for the latitude);
+ * - SLOPE (in degrees);
+ * - AZI (for the slope azimuth, in degree as read from a compass);
+ * - NODATA (string to interpret as nodata);
+ * - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
+ * - SKIP (skip this field).
  *
- * @section csvio_special_headers Header metadata extraction
- * Some valuable metadata might be written into the headers and it is worthwhile to be able to extract it. This is performed with the
- * "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata specifications as necessary, of the form {field}:{line}:{column}.
- * The {field} can be any of:
- * - name;
- * - id;
- * - alt (for the altitude);
- * - lon (for the longitude);
- * - lat (for the latitude);
- * - slope (in degrees);
- * - azi (for the slope azimuth, in degree as read from a compass);
- * - nodata (string to interpret as nodata).
+ * @subsection csvio_special_headers Header metadata extraction
+ * This is performed with the "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata 
+ * specifications as necessary, of the form {field}:{line}:{column}.
  *
  * Therefore, if the station name is available on line 1, column 3 and the station id on line 2, column 5, the configuration would be:
  * @code
  * CSV_SPECIAL_HEADERS = name:1:3 id:2:5
  * @endcode
  * 
- * @section csvio_filename_parsing Filename metadata extraction
- * Some valuable metadata might be written into the filename itself and it is worthwhile to be able to extract it. This is performed with the
- * "CSV#_FILENAME_SPEC" configuration key. This key is followed by the metadata specification that will be applied to identify the information
- * to extract as well as substrings that are used as "markers" delimiting the different fields (enclosed within {}) . The fields that are recognized are currently:
- *  - NAME;
- *  - ID;
- *  - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
- *  - SKIP (to skip this part of the substring).
+ * @subsection csvio_filename_parsing Filename metadata extraction
+ * This is performed with the "CSV#_FILENAME_SPEC" configuration key. This key is followed by the metadata specification 
+ * that will be applied to identify the information to extract as well as substrings that are used as "markers" delimiting 
+ * the different fields (enclosed within {}).
  * 
  * For example, to parse the filename "H0118_Generoso-Calmasino_-_Precipitation.DAT" use (please note that the extension is NOT provided):
  * @code
@@ -130,7 +139,7 @@ namespace mio {
  * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the input section, so all files leading to the same station ID will be merged together
  * into one single station.
  * 
- * @note Obviously, this key can only be used for files that contain the time information (either as datetime or seperate date and time) and one
+ * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or seperate date and time) and one
  * meteorological parameter.
  * 
  * @section csvio_examples Examples
@@ -210,8 +219,15 @@ namespace mio {
  * @endcode
  */
 
-//parse the user provided special fields specification
-std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const
+//small helper functions for removal/replacement in strings
+inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false;}
+inline bool InvalidChar(const char& c) { return (c<32 || c>126); }
+//helper function to sort the static keys used for specifying the date/time formats
+inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
+
+//parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
+//(since there can be multiple keys on the same line)
+std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)
 {
 	std::multimap< size_t, std::pair<size_t, std::string> > meta_spec;
 	for (size_t ii=0; ii<vecMetaSpec.size(); ii++) {
@@ -221,7 +237,7 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 		const int linenr = atoi( vecArgs[1].c_str() );
 		const int colnr = atoi( vecArgs[2].c_str() );
 		if (linenr<=0 || colnr<=0)
-			throw InvalidFormatException("Line numbers and column number must be >0 in Metadata specification '"+vecMetaSpec[ii]+"'", AT);
+			throw InvalidFormatException("Line numbers and column numbers must be >0 in Metadata specification '"+vecMetaSpec[ii]+"'", AT);
 		
 		meta_spec.insert( make_pair( linenr, make_pair( colnr, vecArgs[0]) ) );
 	}
@@ -229,8 +245,52 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 	return meta_spec;
 }
 
-inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false;}
+//Given a provided field_type, attribute the value to the proper metadata variable
+void CsvParameters::assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon)
+{
+	if (field_type=="ID") {
+		if (id.empty()) id = field_val;
+	} else if (field_type=="NAME") {
+		if (name.empty()) name = field_val;
+	} else if (field_type=="NODATA") {
+			nodata = field_val;
+	} else if (field_type=="SKIP") {
+		return;
+	} else if (field_type=="PARAM") {
+		std::string param( IOUtils::strToUpper( field_val ) );
+		if (MeteoData::getStaticParameterIndex( param )!=IOUtils::npos) {
+			single_field = param;
+			return;
+		}
+		
+		param.erase(std::remove_if(param.begin(), param.end(), &InvalidChar), param.end()); //remove accentuated characters, etc
+		//try to map non-standard names to mio's names
+		if (param.compare(0, 15, "TEMPERATURE_AIR")==0 || param.compare(0, 16, "TEMPERATURA_ARIA")==0) param="TA";
+		else if (param.compare(0, 13, "PRECIPITATION")==0 || param.compare(0, 14, "PRECIPITAZIONE")==0) param="PSUM";
+		else if (param.compare(0, 19, "REFLECTED_RADIATION")==0 || param.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) param="RSWR";
+		else if (param.compare(0, 18, "INCOMING_RADIATION")==0 || param.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) param="RSWR";
+		else if (param.compare(0, 14, "WIND_DIRECTION")==0 || param.compare(0, 15, "DIREZIONE_VENTO")==0) param="DW";
+		else if (param.compare(0, 17, "RELATIVE_HUMIDITY")==0 || param.compare(0, 15, "UMIDIT_RELATIVA")==0) param="RH";
+		else if (param.compare(0, 13, "WIND_VELOCITY")==0 || param.compare(0, 13, "VELOCIT_VENTO")==0) param="VW";
+		
+		single_field = param;
+	} else {
+		if (field_type=="ALT" || field_type=="LON" || field_type=="LAT" || field_type=="SLOPE" || field_type=="AZI") {
+			double tmp;
+			if (!IOUtils::convertString(tmp, field_val))
+				throw InvalidArgumentException("Could not extract metadata '"+field_type+"' for "+file_and_path, AT);
+			
+			if (field_type=="ALT") location.setAltitude( tmp, false);
+			if (field_type=="LON") lon = tmp;
+			if (field_type=="LAT") lat = tmp;
+			if (field_type=="SLOPE") slope = tmp;
+			if (field_type=="AZI") azi = tmp;
+		} else 
+			throw InvalidFormatException("Unknown parsing key '"+field_type+"' when extracting metadata", AT);
+	}
+}
 
+//Using the special headers parsed specification (done in parseHeadersSpecs), some metadata is extracted from the headers
 void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon)
 {
 	std::vector<std::string> vecStr;
@@ -247,58 +307,13 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		std::string field_val( vecStr[colnr-1] );
 		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
 		
-		if (field_type=="NAME") {
-			if (name.empty()) name = field_val;
-		} else if (field_type=="ID") {
-			if (id.empty()) id = field_val;
-		} else if (field_type=="NODATA") {
-			nodata = field_val;
-		} else {
-			double tmp;
-			if (!IOUtils::convertString(tmp, field_val))
-				throw InvalidArgumentException("Could not parse Metadata specification '"+field_type+"' for "+file_and_path, AT);
-			
-			if (field_type=="ALT") location.setAltitude( tmp, false);
-			if (field_type=="LON") lon=tmp;
-			if (field_type=="LAT") lat=tmp;
-			if (field_type=="SLOPE") slope=tmp;
-			if (field_type=="AZI") azi=tmp;
-		}
+		assignMetadataVariable(field_type, field_val, lat, lon);
 	}
 }
 
-struct InvalidChar { bool operator()(const char& c) const { return (c<32 || c>126); } };
-
-void CsvParameters::parseFilenameVariable(const std::string& field_type, const std::string& value)
-{
-	if (field_type=="ID")
-		id = value;
-	else if (field_type=="NAME")
-		name = value;
-	else if (field_type=="PARAM") {
-		std::string param( IOUtils::strToUpper( value ) );
-		if (MeteoData::getStaticParameterIndex( param )!=IOUtils::npos) {
-			single_field = param;
-			return;
-		}
-		
-		param.erase(std::remove_if(param.begin(), param.end(), InvalidChar()), param.end()); //remove accentuated characters, etc
-		//try to map non-standard names to mio's names
-		if (param.compare(0, 15, "TEMPERATURE_AIR")==0 || param.compare(0, 16, "TEMPERATURA_ARIA")==0) param="TA";
-		else if (param.compare(0, 13, "PRECIPITATION")==0 || param.compare(0, 14, "PRECIPITAZIONE")==0) param="PSUM";
-		else if (param.compare(0, 19, "REFLECTED_RADIATION")==0 || param.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) param="RSWR";
-		else if (param.compare(0, 18, "INCOMING_RADIATION")==0 || param.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) param="RSWR";
-		else if (param.compare(0, 14, "WIND_DIRECTION")==0 || param.compare(0, 15, "DIREZIONE_VENTO")==0) param="DW";
-		else if (param.compare(0, 17, "RELATIVE_HUMIDITY")==0 || param.compare(0, 15, "UMIDIT_RELATIVA")==0) param="RH";
-		else if (param.compare(0, 13, "WIND_VELOCITY")==0 || param.compare(0, 13, "VELOCIT_VENTO")==0) param="VW";
-		
-		single_field = param;
-	} else if (field_type!="SKIP")
-		throw InvalidFormatException("Unknown parsing key '"+field_type+"' when parsing filename", AT);
-}
-
+//Extract metadata from the filename, according to a user-provided specification.
 //filename_spec in the form of {ID}_{NAME}-{PARAM}_-_{SKIP} where {ID} is a variable and '_-_' is a constant pattern
-void CsvParameters::parseFileName(std::string filename, const std::string& filename_spec)
+void CsvParameters::parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon)
 {
 	filename = FileUtils::removeExtension( FileUtils::getFilename(filename) );
 	size_t pos_fn = 0, pos_mt = 0; //current position in the filename and in the filename_spec
@@ -333,7 +348,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		//read the variable type and value
 		const std::string field_type( IOUtils::strToUpper(filename_spec.substr(pos_mt+1, start_pattern-pos_mt-1)) ); //skip { and }
 		const std::string value( filename.substr(pos_fn, len_var) );
-		parseFilenameVariable(field_type, value);
+		assignMetadataVariable(field_type, value, lat, lon);
 
 		if (end_pattern==std::string::npos) break; //nothing more to parse
 		pos_mt = end_pattern;
@@ -344,7 +359,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 //+string TZ
 
 //user provided field names are in fieldNames, header field names are in headerFields
-//user provided fields have priority
+//and user provided fields have priority.
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
@@ -383,6 +398,8 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	}
 }
 
+//very basic units parsing: a few hard-coded units are recognized and provide the necessary
+//offset and multiplier to convert the values back to SI
 void CsvParameters::parseUnits(const std::string& line)
 {
 	static const std::string stdUnits[9] = {"TS", "RN", "W/M2", "M/S", "K", "M", "V", "VOLT", "DEG"};
@@ -410,21 +427,23 @@ void CsvParameters::parseUnits(const std::string& line)
 		else if (tmp=="MPH") units_multiplier[ii] = 0.44704;
 		else if (tmp=="KT") units_multiplier[ii] = 0.5144444444445;
 		else {
-			throw UnknownValueException("Can not parse unit '"+tmp+"'", AT);
+			throw UnknownValueException("Can not parse unit '"+tmp+"', please inform the MeteoIO developers", AT);
 		}
 	}
 }
 
-//read and parse the file's headers in order to extract all possible information
+//read and parse the file's headers in order to extract all possible information (including how to interpret the date/time information)
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx)
 {
 	file_and_path = i_file_and_path;
 	const std::multimap< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
+	double lat = IOUtils::nodata;
+	double lon = IOUtils::nodata;
 	
 	//read and parse the file's headers
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec);
+	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
@@ -436,8 +455,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
 	size_t linenr=0;
 	std::string line;
-	double lat = IOUtils::nodata;
-	double lon = IOUtils::nodata;
 	std::vector<std::string> headerFields;
 	try {
 		eoln = FileUtils::getEoln(fin);
@@ -496,12 +513,6 @@ void CsvParameters::checkSpecString(const std::string& spec_string, const size_t
 		throw InvalidFormatException("Badly formatted date/time specification '"+spec_string+"': argument appearing twice or using '%%'", AT);
 }
 
-struct sort_pred {
-	bool operator()(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) {
-		return left.first < right.first;
-	}
-};
-
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
 //the indices are based on ISO timestamp, so year=0, month=1, etc
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
@@ -514,7 +525,7 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
 	}
 	
-	std::sort(sorting_vector.begin(), sorting_vector.end(), sort_pred());
+	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (size_t ii=0; ii<sorting_vector.size(); ii++)
 		datetime_idx.push_back( sorting_vector[ii].second );
 	
@@ -541,7 +552,7 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 			sorting_vector.push_back( make_pair( key_pos, ii) );
 	}
 
-	std::sort(sorting_vector.begin(), sorting_vector.end(), sort_pred());
+	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (size_t ii=0; ii<sorting_vector.size(); ii++)
 		time_idx.push_back( sorting_vector[ii].second );
 
@@ -764,6 +775,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	std::vector<std::string> tmp_vec;
 	const std::string nodata( params.nodata );
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
+	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	while (!fin.eof()){
@@ -803,7 +815,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		md.setDate(dt);
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col || ii==params.time_col) continue;
-			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes) //treat empty value as nodata, try nodata marker w/o quotes
+			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
 			
 			double tmp;

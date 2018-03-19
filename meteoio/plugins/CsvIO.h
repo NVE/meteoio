@@ -49,10 +49,10 @@ class CsvParameters {
 		char csv_delim;
 		char eoln;
 	private:
-		void parseFilenameVariable(const std::string& field_type, const std::string& value);
-		void parseFileName(std::string filename, const std::string& filename_spec);
+		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon);
+		void parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon);
 		void parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
-		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
+		static std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec);
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		void parseUnits(const std::string& line);
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
