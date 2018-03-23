@@ -26,9 +26,40 @@ namespace mio {
 
 class ncParameters {
 	public:
-		enum Dimensions {NONE, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING};
+		enum Mode {READ, WRITE};
+		enum Dimensions {NONE=MeteoGrids::AZI+10, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING}; //TODO merge variables & most of dimensions
 		
-		ncParameters(const std::string& filename, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug=false);
+		typedef struct VAR_ATTR {
+			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
+			VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt)
+			                     : name(str1), standard_name(), long_name(), units(), height(hgt), param(prm) {};
+			VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
+			                     : name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm) {};
+			std::string toString() const {std::ostringstream os; os << "["  << MeteoGrids::getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
+  
+			std::string name;
+			std::string standard_name;
+			std::string long_name;
+			std::string units; //HACK
+			double height;
+			size_t param; //mapping to our MeteoGrids::Parameters
+		} var_attr;
+
+		typedef struct NC_VARIABLE {
+			NC_VARIABLE() : attributes(), units(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
+			NC_VARIABLE(const var_attr& attr)
+			                   : attributes(attr), units(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
+			NC_VARIABLE(const var_attr& attr, const std::string& i_units, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
+			                   : attributes(attr), units(i_units), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
+			std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\", \"" << units << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << "]"; return os.str();};
+			
+			var_attr attributes;
+			std::string units; //HACK
+			double scale, offset, nodata;
+			int varid;
+		} nc_variable;
+		
+		ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug=false);
 		
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
@@ -37,42 +68,20 @@ class ncParameters {
 		Grid2DObject read2DGrid(const std::string& varname) const;
 		Grid2DObject readDEM() const;
 		
-		void write2DGrid(Grid2DObject grid_in, const Date& date, const std::string& schema);
+		void write2DGrid(Grid2DObject grid_in, nc_variable& var, const Date& date);
+		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
 		
 	private:
-		typedef struct VAR_ATTR {
-			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
-			VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
-			                     : name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm) {};
-			std::string toString() const {std::ostringstream os; os << "["  << MeteoGrids::getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
+		typedef struct DIM_ATTRIBUTES { //TODO dimensions should be slimmed down and coupled with their variable
+			DIM_ATTRIBUTES() : name(), standard_name(), long_name(), units(), type(NONE) {};
+			DIM_ATTRIBUTES(const Dimensions& i_type, const std::string& i_name, const std::string& i_long_name, const std::string& i_units)
+			                     : name(i_name), standard_name(), long_name(i_long_name), units(i_units), type(i_type) {};
+			DIM_ATTRIBUTES(const Dimensions& i_type, const std::string& i_name, const std::string& i_std_name, const std::string& i_long_name, const std::string& i_units)
+			                     : name(i_name), standard_name(i_std_name), long_name(i_long_name), units(i_units), type(i_type) {};
+			std::string toString() const {std::ostringstream os; os << name << " " << standard_name << " / " << long_name << " , in " << units; return os.str();};
   
 			std::string name;
 			std::string standard_name;
-			std::string long_name;
-			std::string units;
-			double height;
-			size_t param; //mapping to our MeteoGrids::Parameters
-		} var_attr;
-
-		typedef struct NC_VARIABLE {
-			NC_VARIABLE() : attributes(), units(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
-			NC_VARIABLE(const var_attr& attr, const std::string& i_units, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
-			                   : attributes(attr),units(i_units), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
-			std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\", \"" << units << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << "]"; return os.str();};
-			
-			var_attr attributes;
-			std::string units;
-			double scale, offset, nodata;
-			int varid;
-		} nc_variable;
-		
-		typedef struct DIM_ATTRIBUTES {
-			DIM_ATTRIBUTES() : name(), long_name(), units(), type(NONE) {};
-			DIM_ATTRIBUTES(const Dimensions& i_type, const std::string& i_name, const std::string& i_long_name, const std::string& i_units)
-			                     : name(i_name), long_name(i_long_name), units(i_units), type(i_type) {};
-			std::string toString() const {std::ostringstream os; os << name << " / " << long_name << " , in " << units; return os.str();};
-  
-			std::string name;
 			std::string long_name;
 			std::string units;
 			Dimensions type;
@@ -99,8 +108,11 @@ class ncParameters {
 		static std::vector<double> readDimension(const int& ncid, const nc_dimension& dim);
 		static void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 		
-		void initVariables(const int& ncid, const std::string& schema_name);
-		void initDimensions(const int& ncid);
+		void initFromFile(const std::string& filename, const std::string& schema);
+		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
+		void initDimensionsFromFile(const int& ncid);
+		
+		void initFromSchema(const std::string& schema);
 		
 		Grid2DObject read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
 		std::vector<Date> readTimeDimension(const int& ncid, const nc_dimension& dim) const;
@@ -108,7 +120,7 @@ class ncParameters {
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
-		void create_dimension(const int& ncid, const Dimensions& dimType, const std::string& schema);
+		static void create_dimension(const int& ncid, nc_dimension &dim);
 		
 		static std::map< std::string, std::vector<ncParameters::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
 		static std::map< std::string, std::vector<ncParameters::dim_attributes> > schemas_dims; ///< all the dimensions' attributes for all schemas
@@ -154,7 +166,7 @@ class NetCDFIO : public IOInterface {
 		const Config cfg;
 		std::vector< std::pair<std::pair<Date,Date>, ncParameters> > cache_grid_files; //cache of grid files in GRID2DPATH
 		std::vector<MeteoGrids::Parameters> available_params;
-		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext;
+		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, out_file;
 		double in_dflt_TZ, out_dflt_TZ;
 		bool dem_altimeter, debug;
 };
