@@ -23,11 +23,12 @@
 #include <string>
 
 namespace mio {
+//https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_data_set_components.html
 
 class ncParameters {
 	public:
 		enum Mode {READ, WRITE};
-		enum Dimensions {NONE=MeteoGrids::AZI+10, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING}; //TODO merge variables & most of dimensions
+		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING, lastdimension=EASTING};
 		
 		typedef struct VAR_ATTR {
 			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
@@ -35,26 +36,26 @@ class ncParameters {
 			                     : name(str1), standard_name(), long_name(), units(), height(hgt), param(prm) {};
 			VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
 			                     : name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm) {};
-			std::string toString() const {std::ostringstream os; os << "["  << MeteoGrids::getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
+			std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
   
 			std::string name;
 			std::string standard_name;
 			std::string long_name;
-			std::string units; //HACK
+			std::string units;
 			double height;
-			size_t param; //mapping to our MeteoGrids::Parameters
+			size_t param; //mapping to our MeteoGrids::Parameters or Dimensions
 		} var_attr;
 
 		typedef struct NC_VARIABLE {
-			NC_VARIABLE() : attributes(), units(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
+			NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
 			NC_VARIABLE(const var_attr& attr)
-			                   : attributes(attr), units(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
-			NC_VARIABLE(const var_attr& attr, const std::string& i_units, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
-			                   : attributes(attr), units(i_units), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
-			std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\", \"" << units << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << "]"; return os.str();};
+			                   : attributes(attr), dimids(), scale(1.), offset(0.), nodata(IOUtils::nodata), varid(-1) {};
+			NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
+			                   : attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
+			std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 			
 			var_attr attributes;
-			std::string units; //HACK
+			std::vector<int> dimids;  //dimensions this variable depends on
 			double scale, offset, nodata;
 			int varid;
 		} nc_variable;
@@ -72,69 +73,63 @@ class ncParameters {
 		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
 		
 	private:
-		typedef struct DIM_ATTRIBUTES { //TODO dimensions should be slimmed down and coupled with their variable
-			DIM_ATTRIBUTES() : name(), standard_name(), long_name(), units(), type(NONE) {};
-			DIM_ATTRIBUTES(const Dimensions& i_type, const std::string& i_name, const std::string& i_long_name, const std::string& i_units)
-			                     : name(i_name), standard_name(), long_name(i_long_name), units(i_units), type(i_type) {};
-			DIM_ATTRIBUTES(const Dimensions& i_type, const std::string& i_name, const std::string& i_std_name, const std::string& i_long_name, const std::string& i_units)
-			                     : name(i_name), standard_name(i_std_name), long_name(i_long_name), units(i_units), type(i_type) {};
-			std::string toString() const {std::ostringstream os; os << name << " " << standard_name << " / " << long_name << " , in " << units; return os.str();};
-  
-			std::string name;
-			std::string standard_name;
-			std::string long_name;
-			std::string units;
-			Dimensions type;
-		} dim_attributes;
-		
 		typedef struct NC_DIMENSION {
-			NC_DIMENSION() : attributes(), length(0), dimid(-1), varid(-1), isUnlimited(false) {};
-			NC_DIMENSION(const dim_attributes& attr) : attributes(attr), length(0), dimid(-1), varid(-1), isUnlimited(false) {};
-			NC_DIMENSION(const dim_attributes& attr, const size_t& len, const int& i_dimid, const int& i_varid, const bool& unlimited)
-			                     : attributes(attr), length(len), dimid(i_dimid), varid(i_varid), isUnlimited(unlimited) {};
-			std::string toString() const {std::ostringstream os; os << "[ " << dimid << "/" << varid << " - " << attributes.toString() << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
+			NC_DIMENSION() : name(), length(0), dimid(-1), type(NONE), isUnlimited(false) {};
+			NC_DIMENSION(const Dimensions& i_type, const std::string& i_name)
+			                     : name(i_name), length(0), dimid(-1), type(i_type), isUnlimited(false) {};
+			NC_DIMENSION(const Dimensions& i_type, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
+			                     : name(i_name), length(len), dimid(i_dimid), type(i_type), isUnlimited(unlimited) {};
+			std::string toString() const {std::ostringstream os; os << getParameterName(type) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
 			
-			dim_attributes attributes;
+			std::string name;
 			size_t length;
-			int dimid, varid;
+			int dimid;
+			Dimensions type;
 			bool isUnlimited;
 		} nc_dimension;
 		
+		static std::vector<std::string> initDimensionNames();
 		static std::map< std::string, std::vector<ncParameters::var_attr> > initSchemasVars();
-		static std::map< std::string, std::vector<ncParameters::dim_attributes> > initSchemasDims();
-		static std::vector<ncParameters::var_attr>  initUserSchemas(const Config& i_cfg);
-		static std::string getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name);
+		static std::map< std::string, std::vector<ncParameters::nc_dimension> > initSchemasDims();
+		static std::vector<ncParameters::var_attr> initUserSchemas(const Config& i_cfg);
+		static std::vector<ncParameters::nc_dimension> initUserDimensions(const Config& i_cfg);
+		static void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, std::string& attr_value);
 		static void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, double& attr_value);
-		static std::vector<double> readDimension(const int& ncid, const nc_dimension& dim);
 		static void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
+		static std::string getParameterName(const size_t& param);
+		static size_t getParameterIndex(const std::string& param);
 		
 		void initFromFile(const std::string& filename, const std::string& schema);
 		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
-		void initDimensionsFromFile(const int& ncid);
-		
+		void initDimensionsFromFile(const int& ncid, const std::string& schema_name);
 		void initFromSchema(const std::string& schema);
 		
 		Grid2DObject read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
-		std::vector<Date> readTimeDimension(const int& ncid, const nc_dimension& dim) const;
+		std::vector<Date> read_TimeVariable(const int& ncid) const;
+		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
+		size_t read_1DvariableLength(const nc_variable& var) const;
 		const ncParameters::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
+		const ncParameters::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
 		static void create_dimension(const int& ncid, nc_dimension &dim);
+		static void write_1Dvariable(const int& ncid, nc_variable& var);
 		
+		static std::vector<std::string> dimnames;
 		static std::map< std::string, std::vector<ncParameters::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
-		static std::map< std::string, std::vector<ncParameters::dim_attributes> > schemas_dims; ///< all the dimensions' attributes for all schemas
+		static std::map< std::string, std::vector<ncParameters::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
 		
 		std::vector<ncParameters::var_attr> user_schemas; ///< all the variables' attributes for the user defined schema
+		std::vector<ncParameters::nc_dimension> user_dimensions; ///< all the variables' attributes for the user defined schema
 		std::map<size_t, nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
 		std::vector<Date> vecTime;
 		std::vector<double> vecLat, vecLon;
-		std::map<ncParameters::Dimensions, nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
+		std::map<size_t, nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path;
 		std::string coordin, coordinparam;
 		double TZ;
-		int max_dimension;
 		bool wrf_hacks, debug;
 };
 
