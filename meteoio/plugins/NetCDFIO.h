@@ -105,7 +105,8 @@ class ncParameters {
 		void initFromSchema(const std::string& schema);
 		
 		Grid2DObject read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
-		std::vector<Date> read_TimeVariable(const int& ncid) const;
+		Date read_variableAtPos(const int& ncid, const size_t pos) const;
+		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const nc_variable& var) const;
 		const ncParameters::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
@@ -113,8 +114,9 @@ class ncParameters {
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
+		static void create_dimension_and_variable(const int& ncid, nc_dimension &dim, nc_variable& var);
 		static void create_dimension(const int& ncid, nc_dimension &dim);
-		static void write_1Dvariable(const int& ncid, nc_variable& var);
+		static void create_variable(const int& ncid, nc_variable& var);
 		
 		static std::vector<std::string> dimnames;
 		static std::map< std::string, std::vector<ncParameters::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
