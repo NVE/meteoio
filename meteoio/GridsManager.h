@@ -73,9 +73,10 @@ class GridsManager {
 		IOHandler& iohandler;
 		const Config& cfg;
 		GridBuffer buffer;
-		std::map<Date, std::set<size_t> > grids2d_list; //list of available 2d grids
-		Date grids2d_start, grids2d_end; //validity range of the grids2d_list
+		std::map<Date, std::set<size_t> > grids2d_list; ///< list of available 2d grids
+		Date grids2d_start, grids2d_end; ///< validity range of the grids2d_list
 
+		double grid2d_list_buffer_size; ///< how many days to read the list of grids2d for?
 		unsigned int processing_level;
 };
 } //end namespace

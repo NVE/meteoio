@@ -27,11 +27,12 @@ namespace mio {
 
 GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
              : iohandler(in_iohandler), cfg(in_cfg), buffer(0), grids2d_list(), grids2d_start(), grids2d_end(),
-               processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
+               grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
 {
 	size_t max_grids = 10;
 	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
 	buffer.setMaxGrids(max_grids);
+	cfg.getValue("BUFFER_SIZE", "General", grid2d_list_buffer_size, IOUtils::nothrow);
 }
 
 /**
@@ -261,7 +262,6 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	static const double buff_size = 370.; //how many days to get the grids list for
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, parameter, date);
 	} else {
@@ -270,7 +270,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 		//should we rebuffer the grids list?
 		if (grids2d_list.empty() || date<grids2d_start || date>grids2d_end) {
 			grids2d_start = date - 1.;
-			grids2d_end = date + buff_size;
+			grids2d_end = date + grid2d_list_buffer_size;
 			const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
 			if (status) {
 				//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
@@ -278,7 +278,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 					if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
 					if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
 				}
-			} else { //HACK this means that the call is not implemeted in the plugin
+			} else { //this means that the call is not implemeted in the plugin
 				iohandler.read2DGrid(grid2D, parameter, date);
 				buffer.push(grid2D, parameter, date);
 				return;
