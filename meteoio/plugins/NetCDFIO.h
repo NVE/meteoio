@@ -32,6 +32,7 @@ class ncParameters {
 		
 		typedef struct VAR_ATTR {
 			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
+			VAR_ATTR(const std::string& i_name) : name(i_name), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
 			VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt)
 			                     : name(str1), standard_name(), long_name(), units(), height(hgt), param(prm) {};
 			VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
@@ -69,7 +70,7 @@ class ncParameters {
 		Grid2DObject read2DGrid(const std::string& varname) const;
 		Grid2DObject readDEM() const;
 		
-		void write2DGrid(Grid2DObject grid_in, nc_variable& var, const Date& date);
+		void write2DGrid(const Grid2DObject& grid_in, nc_variable& var, const Date& date);
 		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
 		
 	private:
@@ -100,12 +101,12 @@ class ncParameters {
 		static size_t getParameterIndex(const std::string& param);
 		
 		void initFromFile(const std::string& filename, const std::string& schema);
+		void initVariableFromFile(const int& ncid, nc_variable& var) const;
 		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
 		void initDimensionsFromFile(const int& ncid, const std::string& schema_name);
 		void initFromSchema(const std::string& schema);
 		
 		Grid2DObject read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
-		Date read_variableAtPos(const int& ncid, const size_t pos) const;
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const nc_variable& var) const;
@@ -114,6 +115,8 @@ class ncParameters {
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
+		size_t addTimestamp(const int& ncid, const Date& date);
+		void create_definitions(const int& ncid, const Grid2DObject& grid_in, nc_variable& var, const Date& date, const bool& is_record, const bool& create_time, const bool& create_spatial_dimensions, const bool& create_variable);
 		static void create_dimension_and_variable(const int& ncid, nc_dimension &dim, nc_variable& var);
 		static void create_dimension(const int& ncid, nc_dimension &dim);
 		static void create_variable(const int& ncid, nc_variable& var);
