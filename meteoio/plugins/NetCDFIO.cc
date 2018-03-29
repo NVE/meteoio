@@ -460,6 +460,7 @@ Grid2DObject ncParameters::readDEM() const
 	if (vars.count(MeteoGrids::DEM)!=0) 
 		return read2DGrid(MeteoGrids::DEM, Date());
 	
+	//HACK this should not be needed anymmore
 	for (std::map<std::string, nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
 		const std::string varname( it->first );
 		//ASTER, GDAL, MeteoCH, WRF namings, respectively
@@ -511,6 +512,8 @@ Grid2DObject ncParameters::read2DGrid(const size_t& param, const Date& date) con
 
 Grid2DObject ncParameters::read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm, const bool& reZero) const
 {
+	if (vars.count(LATITUDE)==0 || vars.count(LONGITUDE)==0) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
+		
 	//define the results grid
 	mio::Coords llcorner(coordin, coordinparam);
 	llcorner.setLatLon( std::min(vecLat.front(), vecLat.back()), std::min(vecLon.front(), vecLon.back()), IOUtils::nodata);
@@ -580,10 +583,14 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, nc_variable& var, co
 		
 		//check what is already present in file and what should be created
 		if (is_record) create_time = (dimensions_map[TIME].dimid == -1);
-		const bool hasLatitude = (dimensions_map[LATITUDE].dimid != -1) && (dimensions_map[LATITUDE].length == grid_in.getNy());
-		const bool hasLongitude = (dimensions_map[LONGITUDE].dimid != -1) && (dimensions_map[LONGITUDE].length == grid_in.getNy());
-		create_spatial_dimensions = (!hasLatitude && !hasLongitude);
-		create_variable = (var.varid == -1); //the variable has never been defined
+		create_spatial_dimensions = ((dimensions_map[LATITUDE].dimid == -1) && (dimensions_map[LONGITUDE].dimid == -1));
+		create_variable = (var.varid == -1);
+
+		if (!create_spatial_dimensions) {
+			const bool consistent_lat = (dimensions_map[LATITUDE].length == grid_in.getNy());
+			const bool consistent_lon = (dimensions_map[LONGITUDE].length == grid_in.getNx());
+			if (!consistent_lat || !consistent_lon) throw InvalidArgumentException("Attempting to write an inconsistent grid to file '"+file_and_path+"' (different geolocalization)", AT);
+		}
 	} else {
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
 		ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
@@ -732,10 +739,18 @@ void ncParameters::initDimensionsFromFile(const int& ncid, const std::string& sc
 	for (int idx=0; idx<ndims; idx++) {
 		char name[NC_MAX_NAME+1];
 		status = nc_inq_dimname(ncid, dimids[idx], name);
+		const std::string dimname( name );
 		if (status != NC_NOERR) throw IOException("Could not retrieve dimension name: " + std::string(nc_strerror(status)), AT);
 		
-		nc_dimension tmp_dim( getSchemaDimension(name, schema_name) ); //set name and type
-		if (tmp_dim.type==NONE) continue; //ie unrecognized dimension
+		nc_dimension tmp_dim( getSchemaDimension(dimname, schema_name) ); //set name and type
+		if (tmp_dim.type==NONE) { //unrecognized dimension -> try harder with some typical names that are not in the schema
+			if (dimname=="lat")
+				tmp_dim.type = LATITUDE;
+			else if (dimname=="lon")
+				tmp_dim.type = LONGITUDE;
+			else continue;
+		}
+
 		tmp_dim.dimid = idx;
 		tmp_dim.isUnlimited = (idx==unlim_id);
 		status = nc_inq_dimlen(ncid, dimids[idx], &tmp_dim.length);
@@ -781,7 +796,20 @@ void ncParameters::initVariablesFromFile(const int& ncid, const std::string& sch
 	for (int ii=0; ii<nr_of_variables; ++ii) {
 		char name[NC_MAX_NAME+1];
 		status = nc_inq_varname(ncid, ii, name);
-		nc_variable tmp_var( getSchemaAttributes(std::string(name), schema_name) );
+		const std::string varname( name );
+		var_attr tmp_attr( getSchemaAttributes(varname, schema_name) );
+
+		//try harder: we try some typical names that are NOT part of the schema (like for DEM)
+		if (tmp_attr.param==IOUtils::npos) {
+			if (varname=="Band1" || varname=="z" || varname=="height" || varname=="HGT")
+				tmp_attr.param = MeteoGrids::DEM;
+			else if (varname=="lat")
+				tmp_attr.param = LATITUDE;
+			else if (varname=="lon")
+				tmp_attr.param = LONGITUDE;
+		}
+
+		nc_variable tmp_var( tmp_attr );
 		initVariableFromFile(ncid, tmp_var);
 		
 		if (tmp_var.attributes.param!=IOUtils::npos) {
