@@ -68,7 +68,6 @@ class ncParameters {
 		std::vector<Date> getTimestamps() const {return vecTime;}
 		Grid2DObject read2DGrid(const size_t& param, const Date& date) const;
 		Grid2DObject read2DGrid(const std::string& varname) const;
-		Grid2DObject readDEM() const;
 		
 		void write2DGrid(const Grid2DObject& grid_in, nc_variable& var, const Date& date);
 		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
@@ -140,7 +139,7 @@ class ncParameters {
 
 /**
  * @class NetCDFIO
- * @brief This plug-in allows reading and writing of NetCDF files for gridded data. IT IS NOT YET USABLE!.
+ * @brief This plug-in allows reading and writing of NetCDF files for gridded data.
  *
  * @ingroup plugins
  */

@@ -32,6 +32,156 @@
 using namespace std;
 
 namespace mio {
+/**
+ * @page netcdf NetCDF
+ * @section netcdf_format Format
+ * In order to promote creation, access and sharing of scientific data, the NetCDF format has been
+ * created as a machine-independent format. NetCDF (network Common Data Form) is therefore an interface
+ * for array-oriented data access and a library that provides an implementation of the interface. The
+ * <A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF software</A> was developed
+ * at the <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado.
+ * In order to graphicaly explore the content and structure of NetCDF files, you can use the
+ * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software or
+ * <A HREF="http://meteora.ucsd.edu/~pierce/ncview_home_page.html">ncview</A>. It is also possible to run *ncdump* on a given
+ * file in order to have a look at its structure (such as *ncdump {my_netcdf_file} | more*) and specially the parameters names
+ * (this is useful if remapping is needed, see below for in the \ref netcdf_keywords "keywords" section).
+ *
+ * The NetCDF format does not impose a specific set of metadata and therefore in order to easily exchange data
+ * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
+ * by this plugin:
+ * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
+ * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
+ * - CNRM - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
+ * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model.
+ *
+ * If you want to better understand the structure of the NetCDF file format, you are highly encouraged to read about
+ * its <A HREF="https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_data_set_components.html">components</A>.
+ *
+ * @section netcdf_compilation Compilation
+ * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
+ * their development files in your package manager.
+ *
+ * @section netcdf_keywords Keywords
+ * This plugin uses the following keywords:
+ * - TIME_ZONE: the time zone to use when interpreting date/time information; [Input] and [Output] section
+ * - DEMFILE: The filename of the file containing the DEM; [Input] section
+ * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
+ * - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
+ * - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
+ * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the NC_EXT extension, provides
+ * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ * - NETCDF_SCHEMA: the schema to use (either CF1 or CNRM or ECMWF or WRF); [Input] and [Output] section (default: ECMWF)
+ * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
+ * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
+ * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
+ *
+ * When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
+ * convenient when using forecats data to automatically use the most short-term forecast.
+ *
+ * @section netcdf_example Example use
+ * Using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below):
+ * @code
+ * [Input]
+ * GRID2D    = NETCDF
+ * GRID2DPATH =  /data/meteo_reanalysis
+ * NETCDF_SCHEMA = ECMWF
+ *
+ * DEM = NETCDF
+ * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
+ * DEM_FROM_PRESSURE = true
+ *
+ * #The lines below have nothing to do with this plugin
+ * Downscaling = true
+ * VSTATION1 = 46.793029 9.821343 ;this is Davos
+ * Virtual_parameters = TA RH PSUM ISWR ILWR P VW DW TSS HS RSWR TSG ;this has to fit the parameter set in the data files
+ * @endcode
+ *
+ * Another example, to extract precipitation from the MeteoSwiss daily precipitation reanalysis, RhiresD
+ * @code
+ * [Input]
+ * DEM     = NETCDF
+ * DEMFILE = ./input/ch02_lonlat.nc
+ *
+ * GRID2D    = NETCDF
+ * GRID2DPATH =  /data/meteo_reanalysis
+ * NC_EXT = .nc
+ * NETCDF_VAR::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
+ *
+ * #The lines below have nothing to do with this plugin
+ * Downscaling = true
+ * VSTATION1 = 46.793029 9.821343 ;this is Davos
+ * Virtual_parameters = PSUM ;this has to fit the parameter set in the data files
+ * @endcode
+ *
+ * @section netcdf_meteoch MeteoCH RhiresD & similar products
+ * <A HREF="http://www.meteoswiss.admin.ch/home.html?tab=overview">MeteoSwiss</A> provides <A HREF="http://www.ifu.ethz.ch/hydrologie/research/research_data/proddoc.pdf">reanalysis</A> of precipitation and other meteo fields from 1961 to present over Switzerland for different time scales: daily, monthly, yearly, as well as hourly (CPC dataset). The DEM are also provided, either in lat/lon,
+ * Swiss coordinates, rotated lat/lon, ... These data sets must be requested from MeteoSwiss and are available with a specific license for research.
+ *
+ * @section netcdf_wrf WRF output files
+ * While <A HREF="http://www.wrf-model.org/index.php">WRF</A> can write its <A HREF="http://www2.mmm.ucar.edu/wrf/users/docs/user_guide_V3/users_guide_chap5.htm#fields">outputs in NetCDF</A>, unfortunately
+ * it does not follow the CF1 convention and relies on lots of idiosyncracies (see http://www.ncl.ucar.edu/Applications/wrfnetcdf.shtml) that break lots of
+ * applications dealing with NetCDF. If some fields are not read by MeteoIO,
+ * please follow the tips given \ref netcdf_tricks "below". Moreover, WRF assumes that latitudes / longitudes are given on an ideal sphere while standard
+ * coordinates systems assume an ellipsoid. This may lead to trouble when converting model coordinates to real world coordinates (see
+ * http://www.pkrc.net/wrf-lambert.html).
+ *
+ * @section netcdf_ecmwf ECMWF Era Interim
+ * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A>
+ * after creating an account and login in.
+ *
+ * It is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
+ * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ *
+ * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR and the *mean sea level pressure* and *surface pressure*
+ * as proxies to compute the elevation. If you have the altitude in a separate file, it can be declared as DEM and there would be no need for the sea
+ *level pressure (this would also be much more precise).
+ *
+ * You should therefore have the following request:
+ * @code
+ * Parameter: 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo,
+ *            Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure,
+ *            Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ *      Step: 3 to 12 by 3
+ *      Type: Forecast
+ *      Time: 00:00:00, 12:00:00
+ * @endcode
+ *
+ * With the <A HREF="https://software.ecmwf.int/wiki/display/WEBAPI/Access+ECMWF+Public+Datasets">ECMWF Python Library</A>, the request
+ * would be for example (the area is defined as North/West/South/East, see the
+ * <A HREF="https://software.ecmwf.int/wiki/display/UDOC/Post-processing+keywords#Post-processingkeywords-area">WEBAPI</a> documentation):
+ * @code
+ * #!/usr/bin/env python
+ * from ecmwfapi import ECMWFDataServer
+ * server = ECMWFDataServer()
+ * server.retrieve({
+ * "class": "ei",
+ * "dataset": "interim",
+ * "date": "2015-01-01/to/2015-01-31",
+ * "expver": "1",
+ * "grid": "0.75/0.75",
+ * "levtype": "sfc",
+ * "param": "33.128/134.128/139.128/141.128/151.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
+ * "step": "3/6/9/12",
+ * "area":"42.2/-1.5/51.7/15.7",
+ * "stream": "oper",
+ * "format":"netcdf",
+ * "target": "my-era-interim.nc",
+ * "time": "00/12",
+ * "type": "fc",
+ * })
+ * @endcode
+ *
+ * @section netcdf_tricks Saving the day when a file is not standard compliant
+ * Unfortunatelly, the naming of the parameters and dimensions within the files is not always standard nor consistent. In order to handle the parameters names,
+ * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
+ * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TIME_T"),
+ * use first the <A HREF="http://linux.die.net/man/1/ncrename">ncrename</A> tool that is part of the
+ * <A HREF="http://nco.sourceforge.net/">NCO utilities</A> to rename both the dimension (-d) and the variable (-v):
+ * @code
+ * ncrename -d TIME_T,time -v TIME_T,time {my_netcdf_file}
+ * @endcode
+ */
+
 //helper function to sort the cache of grid files
 inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncParameters> &left, const std::pair<std::pair<Date,Date>,ncParameters> &right) {
 	if (left.first.first < right.first.first) return true;
@@ -71,7 +221,7 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
-		cfg.getValue("NC_FILE", "Output", out_file);
+		cfg.getValue("GRID2DFILE", "Output", out_file);
 	}
 }
 
@@ -172,7 +322,7 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 	const std::string varname = cfg.get("DEMVAR", "Input", IOUtils::nothrow);
 	
 	const ncParameters ncFile(filename, ncParameters::READ, cfg, in_schema, in_dflt_TZ, debug);
-	const Grid2DObject grid = (varname.empty())? ncFile.readDEM() : ncFile.read2DGrid(varname);
+	const Grid2DObject grid = (varname.empty())? ncFile.read2DGrid(MeteoGrids::DEM, Date()) : ncFile.read2DGrid(varname);
 	dem_out = DEMObject( grid ); //we can not directly assign a Grid2DObject to a DEMObject
 }
 
@@ -257,7 +407,7 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	std::map< std::string, std::vector<ncParameters::var_attr> > results;
 	std::vector<ncParameters::var_attr> tmp;
 
-	//CF1 schema
+	//CF1 schema -> to be checked and improved from CF1 documentation
 	tmp.clear();
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "lat", "latitude", "latitude", "degrees", IOUtils::nodata) );
@@ -335,12 +485,12 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	return results;
 }
 
-//The user can provide his own variables properties as NETCDF::{param} = {name}
+//The user can provide his own variables properties as NETCDF_VAR::{param} = {name}
 std::vector<ncParameters::var_attr> ncParameters::initUserSchemas(const Config& i_cfg)
 {
 	std::vector<ncParameters::var_attr> results;
 	
-	const std::vector<std::string> custom_attr( i_cfg.getKeys("NETCDF::", "Input") );
+	const std::vector<std::string> custom_attr( i_cfg.getKeys("NETCDF_VAR::", "Input") );
 	const size_t nrOfCustoms = custom_attr.size();
 	for (size_t ii=0; ii<nrOfCustoms; ++ii) {
 		const size_t found = custom_attr[ii].find_last_of(":");
@@ -358,7 +508,7 @@ std::vector<ncParameters::var_attr> ncParameters::initUserSchemas(const Config& 
 	return results;
 }
 
-//The user can provide his own variables properties as NETCDF_DIM::{dimension_param} = {name_in_current_file}
+//The user can provide his own dimensions properties as NETCDF_DIM::{dimension_param} = {name_in_current_file}
 std::vector<ncParameters::nc_dimension> ncParameters::initUserDimensions(const Config& i_cfg)
 {
 	std::vector<ncParameters::nc_dimension> results;
@@ -455,22 +605,6 @@ std::set<size_t> ncParameters::getParams() const
 	return available_params;
 }
 
-Grid2DObject ncParameters::readDEM() const
-{
-	if (vars.count(MeteoGrids::DEM)!=0) 
-		return read2DGrid(MeteoGrids::DEM, Date());
-	
-	//HACK this should not be needed anymmore
-	for (std::map<std::string, nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
-		const std::string varname( it->first );
-		//ASTER, GDAL, MeteoCH, WRF namings, respectively
-		if (varname=="Band1" || varname=="z" || varname=="height" || varname=="HGT")
-			return read2DGrid(it->second, IOUtils::npos);
-	}
-	
-	throw NotFoundException("No DEM could not be found in file '"+file_and_path+"'", AT);
-}
-
 Grid2DObject ncParameters::read2DGrid(const std::string& varname) const
 {
 	for (std::map<size_t, nc_variable>::const_iterator it = vars.begin(); it!=vars.end(); ++it) {
@@ -525,7 +659,7 @@ Grid2DObject ncParameters::read2DGrid(const nc_variable& var, const size_t& time
 	int ncid;
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	
-	double *data = new double[vecLat.size()*vecLon.size()]; //HACK do it with variable/dimensions dependencies
+	double *data = new double[vecLat.size()*vecLon.size()];
 	if (time_pos!=IOUtils::npos)
 		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecLat.size(), vecLon.size(), data);
 	else
@@ -541,7 +675,12 @@ Grid2DObject ncParameters::read2DGrid(const nc_variable& var, const size_t& time
 	if (!units.empty()) {
 		if (units=="m**2 s**-2") grid /= Cst::gravity;
 		else if (units=="%") grid /= 100.;
-		else if (units=="J m**-2") grid /= (3600.*3.); //HACK: this is the ECMWF sampling rate
+		else if (units=="J m**-2") {
+			if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
+				const Date integration_period = (time_pos>0)? (vecTime[time_pos] - vecTime[time_pos-1]) : (vecTime[time_pos+1] - vecTime[time_pos]);
+				grid /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
+			}
+		}
 		else if (m2mm && units=="m") grid *= 1000.;
 		
 		if (reZero) {//reset very low values to zero
@@ -749,6 +888,7 @@ void ncParameters::initDimensionsFromFile(const int& ncid, const std::string& sc
 			else if (dimname=="lon")
 				tmp_dim.type = LONGITUDE;
 			else continue;
+			if (dimensions_map.count( tmp_dim.type )>0) continue; //if this parameter has already been read, skip it (so the schema naming has priority)
 		}
 
 		tmp_dim.dimid = idx;
@@ -807,6 +947,7 @@ void ncParameters::initVariablesFromFile(const int& ncid, const std::string& sch
 				tmp_attr.param = LATITUDE;
 			else if (varname=="lon")
 				tmp_attr.param = LONGITUDE;
+			if (vars.count( tmp_attr.param )>0) continue; //if this parameter has already been read, skip it (so the schema naming has priority)
 		}
 
 		nc_variable tmp_var( tmp_attr );
