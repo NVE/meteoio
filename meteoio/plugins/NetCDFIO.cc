@@ -360,7 +360,7 @@ std::vector<std::string> ncParameters::initDimensionNames()
 	std::vector<std::string> tmp;
 	tmp.push_back("NONE"); tmp.push_back("TIME"); 
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE"); tmp.push_back("ALTITUDE");
-	tmp.push_back("NORTHING"); tmp.push_back("EASTING");
+	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); tmp.push_back("STATION");
 	
 	return tmp;
 }
@@ -373,11 +373,11 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	//CF1 schema
 	tmp.clear();
 	tmp.push_back( nc_dimension(TIME, "time") );
-	tmp.push_back( nc_dimension(LATITUDE, "lat") );
-	tmp.push_back( nc_dimension(LONGITUDE, "lon") );
-	tmp.push_back( nc_dimension(ALTITUDE, "alt") );
-	tmp.push_back( nc_dimension(EASTING, "east") );
-	tmp.push_back( nc_dimension(NORTHING, "north") );
+	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
+	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
+	tmp.push_back( nc_dimension(STATION, "station") );
+	tmp.push_back( nc_dimension(EASTING, "easting") );
+	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["CF1"] = tmp;
 	
 	//CNRM schema
@@ -385,7 +385,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "time") );
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
-	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(STATION, "station") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["CNRM"] = tmp;
@@ -395,7 +395,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "time") );
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
-	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(STATION, "station") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["ECMWF"] = tmp;
@@ -405,7 +405,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "Time") );
 	tmp.push_back( nc_dimension(LATITUDE, "south_north") );
 	tmp.push_back( nc_dimension(LONGITUDE, "west_east") );
-	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(STATION, "station") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["WRF"] = tmp;
@@ -414,22 +414,28 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 }
 
 std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initSchemasVars()
-{
+{ //HACK: vars/dims should be identified based on standard_name, not name (cf1)
 	std::map< std::string, std::vector<ncParameters::var_attr> > results;
 	std::vector<ncParameters::var_attr> tmp;
 
 	//CF1 schema -> to be checked and improved from CF1 documentation
 	tmp.clear();
-	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
-	tmp.push_back( var_attr(LATITUDE, "lat", "latitude", "latitude", "degrees", IOUtils::nodata) );
-	tmp.push_back( var_attr(LONGITUDE, "lon", "longitude", "longitude", "degrees", IOUtils::nodata) );
-	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
-	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
-	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
-	tmp.push_back( var_attr(MeteoGrids::DEM, "height", "altitude", "height above mean sea level", "m", IOUtils::nodata) );
-	tmp.push_back( var_attr(MeteoGrids::TA, "temperature", "air_temperature", "near surface air temperature", "K", IOUtils::nodata) );
-	tmp.push_back( var_attr(MeteoGrids::RH, "humidity", "relative humidity", "relative humidity", "fraction", IOUtils::nodata) );
-	tmp.push_back( var_attr(MeteoGrids::P, "pressure", "air_pressure", "near surface air pressure", "Pa", IOUtils::nodata) );
+	tmp.push_back( var_attr(TIME, "time", "time", "", "s", IOUtils::nodata) );
+	tmp.push_back( var_attr(LATITUDE, "latitude", "latitude", "", "degree_north", IOUtils::nodata) );
+	tmp.push_back( var_attr(LONGITUDE, "longitude", "longitude", "", "degree_east", IOUtils::nodata) );
+	tmp.push_back( var_attr(STATION, "station", "timeseries_id", "", "", IOUtils::nodata) );
+	tmp.push_back( var_attr(EASTING, "easting", "projection_x_coordinate", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(NORTHING, "northing", "projection_y_coordinate", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "surface_altitude", "surface_altitude", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::DEM, "altitude", "altitude", "height above mean sea level", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::TA, "air_temperature", "air_temperature", "near surface air temperature", "K", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::RH, "relative_humidity", "relative_humidity", "", "", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::DW, "wind_from_direction", "wind_from_direction", "", "degree", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::VW, "wind_speed", "wind_speed", "", "m/s", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::P, "air_pressure", "air_pressure", "near surface air pressure", "Pa", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::ISWR, "downwelling_shortwave_flux_in_air", "downwelling_shortwave_flux_in_air", "", "W/m2", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::RSWR, "upwelling_shortwave_flux_in_air", "upwelling_shortwave_flux_in_air", "", "W/m2", IOUtils::nodata) );
+	tmp.push_back( var_attr(MeteoGrids::ILWR, "downwelling_longwave_flux_in_air", "downwelling_longwave_flux_in_air", "", "W/m2", IOUtils::nodata) );
 	results["CF1"] = tmp;
 
 	//CNRM schema
@@ -437,9 +443,10 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "latitude", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "longitude", "longitude", "longitude", "degrees", IOUtils::nodata) );
-	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(STATION, "station", "timeseries_id", "", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "surface_altitude", "surface_altitude", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "ZS", "", "altitude", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::SLOPE, "slope", "", "slope angle", "degrees from horizontal", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::AZI, "aspect", "", "slope aspect", "degrees from north", IOUtils::nodata) );
@@ -461,9 +468,10 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "latitude", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "longitude", "longitude", "longitude", "degrees", IOUtils::nodata) );
-	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(STATION, "station", "timeseries_id", "", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "surface_altitude", "surface_altitude", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "z", "geopotential_height", "geopotential_height", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::TA, "t2m", "", "2 metre temperature", "K", 2.) );
 	tmp.push_back( var_attr(MeteoGrids::TD, "d2m", "", "2 metre dewpoint temperature", "K", 2.) );
@@ -488,9 +496,10 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "Times", "Times", "Times", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "XLAT", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "XLONG", "longitude", "longitude", "degrees", IOUtils::nodata) );
-	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(STATION, "station", "timeseries_id", "", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "surface_altitude", "surface_altitude", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::P, "PSFC", "Surface pressure", "Surface pressure", "Pa", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::TA, "T2", "2-meter temperature", "2-meter temperature", "K", 2.) );

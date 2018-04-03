@@ -28,7 +28,7 @@ namespace mio {
 class ncParameters {
 	public:
 		enum Mode {READ, WRITE};
-		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING, lastdimension=EASTING};
+		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING, STATION, lastdimension=STATION};
 		
 		typedef struct VAR_ATTR {
 			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
