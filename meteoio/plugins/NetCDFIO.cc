@@ -742,7 +742,9 @@ void ncParameters::write2DGrid(Grid2DObject grid_in, const size_t& param, const 
 		const std::string param_name( MeteoGrids::getParameterName(param) );
 		const var_attr tmp_attr(param, param_name, IOUtils::nodata);
 		nc_variable tmp_var(tmp_attr);
+		if (unknown_vars.count( param_name )>0) tmp_var = unknown_vars[ param_name ];
 		write2DGrid(grid_in, tmp_var, date);
+		unknown_vars[ param_name ] = tmp_var; //save varid, etc for next calls
 	}
 }
 
