@@ -109,9 +109,11 @@ class ncParameters {
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const nc_variable& var) const;
+		bool hasDimension(const size_t& dim) const;
 		const ncParameters::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
 		const ncParameters::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
+		double calculate_XYcellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
 		size_t addTimestamp(const int& ncid, const Date& date);
@@ -129,12 +131,12 @@ class ncParameters {
 		std::map<size_t, nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
 		std::vector<Date> vecTime;
-		std::vector<double> vecLat, vecLon;
+		std::vector<double> vecX, vecY;
 		std::map<size_t, nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path;
-		std::string coordin, coordinparam;
+		std::string coord_sys, coord_param;
 		double TZ;
-		bool wrf_hacks, debug;
+		bool wrf_hacks, debug, isLatLon;
 };
 
 /**

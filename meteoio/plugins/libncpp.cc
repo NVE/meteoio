@@ -163,6 +163,19 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 }
 
+void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, int& attr_value)
+{
+	size_t attr_len;
+
+	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+
+	status = nc_get_att_int(ncid, varid, attr_name.c_str(), &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+}
+
 bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name)
 {
 	size_t attr_len;
@@ -688,6 +701,14 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 	if (status != NC_NOERR)
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
+
+void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value)
+{
+	const int status = nc_put_att_int(ncid, varid, attr_name.c_str(), NC_INT, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+}
+
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)
 {

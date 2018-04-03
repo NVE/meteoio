@@ -241,7 +241,6 @@ void NetCDFIO::scanMeteoPath(const std::string& in_path, const std::string& nc_e
 		meteo_files.push_back( make_pair(ncFile.getDateRange(), ncFile) );
 		it++;
 	}
-
 	std::sort(meteo_files.begin(), meteo_files.end(), &sort_cache_grids);
 
 	//now handle overlaping files: truncate the end date of the file starting earlier
@@ -376,6 +375,9 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "time") );
 	tmp.push_back( nc_dimension(LATITUDE, "lat") );
 	tmp.push_back( nc_dimension(LONGITUDE, "lon") );
+	tmp.push_back( nc_dimension(ALTITUDE, "alt") );
+	tmp.push_back( nc_dimension(EASTING, "east") );
+	tmp.push_back( nc_dimension(NORTHING, "north") );
 	results["CF1"] = tmp;
 	
 	//CNRM schema
@@ -383,6 +385,9 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "time") );
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
+	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(EASTING, "easting") );
+	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["CNRM"] = tmp;
 	
 	//ECMWF schema
@@ -390,6 +395,9 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "time") );
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
+	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(EASTING, "easting") );
+	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["ECMWF"] = tmp;
 	
 	//WRF schema
@@ -397,6 +405,9 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(TIME, "Time") );
 	tmp.push_back( nc_dimension(LATITUDE, "south_north") );
 	tmp.push_back( nc_dimension(LONGITUDE, "west_east") );
+	tmp.push_back( nc_dimension(ALTITUDE, "altitude") );
+	tmp.push_back( nc_dimension(EASTING, "easting") );
+	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	results["WRF"] = tmp;
 	
 	return results;
@@ -412,6 +423,9 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "lat", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "lon", "longitude", "longitude", "degrees", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "height", "altitude", "height above mean sea level", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::TA, "temperature", "air_temperature", "near surface air temperature", "K", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::RH, "humidity", "relative humidity", "relative humidity", "fraction", IOUtils::nodata) );
@@ -423,6 +437,9 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "latitude", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "longitude", "longitude", "longitude", "degrees", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "ZS", "", "altitude", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::SLOPE, "slope", "", "slope angle", "degrees from horizontal", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::AZI, "aspect", "", "slope aspect", "degrees from north", IOUtils::nodata) );
@@ -444,6 +461,9 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "time", "time", "time", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "latitude", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "longitude", "longitude", "longitude", "degrees", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "z", "geopotential_height", "geopotential_height", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::TA, "t2m", "", "2 metre temperature", "K", 2.) );
 	tmp.push_back( var_attr(MeteoGrids::TD, "d2m", "", "2 metre dewpoint temperature", "K", 2.) );
@@ -468,6 +488,9 @@ std::map< std::string, std::vector<ncParameters::var_attr> > ncParameters::initS
 	tmp.push_back( var_attr(TIME, "Times", "Times", "Times", "", IOUtils::nodata) );
 	tmp.push_back( var_attr(LATITUDE, "XLAT", "latitude", "latitude", "degrees", IOUtils::nodata) );
 	tmp.push_back( var_attr(LONGITUDE, "XLONG", "longitude", "longitude", "degrees", IOUtils::nodata) );
+	tmp.push_back( var_attr(ALTITUDE, "alt", "altitude", "", "m.a.s.l", IOUtils::nodata) );
+	tmp.push_back( var_attr(EASTING, "easting", "easting", "", "m", IOUtils::nodata) );
+	tmp.push_back( var_attr(NORTHING, "northing", "northing", "", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::P, "PSFC", "Surface pressure", "Surface pressure", "Pa", IOUtils::nodata) );
 	tmp.push_back( var_attr(MeteoGrids::TA, "T2", "2-meter temperature", "2-meter temperature", "K", 2.) );
@@ -532,9 +555,9 @@ std::vector<ncParameters::nc_dimension> ncParameters::initUserDimensions(const C
 }
 
 ncParameters::ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug)
-             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecLat(), vecLon(), dimensions_map(), file_and_path(filename), coordin(), coordinparam(), TZ(tz_in), wrf_hacks(schema=="WRF"), debug(i_debug)
+             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(tz_in), wrf_hacks(schema=="WRF"), debug(i_debug), isLatLon(false)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
+	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
 	
 	if (mode==WRITE) {
 		initFromSchema(schema);
@@ -582,10 +605,24 @@ void ncParameters::initFromFile(const std::string& filename, const std::string& 
 	//read the dimensions and variables
 	initDimensionsFromFile(ncid, schema);
 	initVariablesFromFile(ncid, schema);
+
+	isLatLon = hasDimension(LATITUDE) && hasDimension(LONGITUDE);
+	const bool isXY = hasDimension(EASTING) && hasDimension(NORTHING);
+	if (isLatLon) {
+		vecY = read_1Dvariable(ncid, LATITUDE);
+		vecX = read_1Dvariable(ncid, LONGITUDE);
+	} else if (isXY) {
+		vecX = read_1Dvariable(ncid, EASTING);
+		vecY = read_1Dvariable(ncid, NORTHING);
+	}
+	if (hasDimension(TIME)) vecTime = read_1Dvariable(ncid);
 	
-	if (dimensions_map.count(TIME)!=0) vecTime = read_1Dvariable(ncid);
-	if (dimensions_map.count(LATITUDE)!=0) vecLat = read_1Dvariable(ncid, LATITUDE);
-	if (dimensions_map.count(LONGITUDE)!=0) vecLon = read_1Dvariable(ncid, LONGITUDE);
+	if (ncpp::check_attribute(ncid, NC_GLOBAL, "epsg")) {
+		int epsg = IOUtils::inodata;
+		const int status = nc_get_att_int(ncid, NC_GLOBAL, "epsg", &epsg);
+		if (status != NC_NOERR) throw IOException("Could not read attribute 'epsg': " + std::string(nc_strerror(status)), AT);
+		if (epsg!=IOUtils::inodata) CoordsAlgorithms::EPSG_to_str(epsg, coord_sys, coord_param);
+	}
 	
 	ncpp::close_file(filename, ncid);
 }
@@ -646,22 +683,27 @@ Grid2DObject ncParameters::read2DGrid(const size_t& param, const Date& date) con
 
 Grid2DObject ncParameters::read2DGrid(const nc_variable& var, const size_t& time_pos, const bool& m2mm, const bool& reZero) const
 {
-	if (vars.count(LATITUDE)==0 || vars.count(LONGITUDE)==0) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
+	if (isLatLon && (!hasDimension(LATITUDE) || !hasDimension(LONGITUDE))) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
+	if (!isLatLon && (!hasDimension(EASTING) || !hasDimension(NORTHING))) throw IOException("No easting / northing could be identified in file "+file_and_path, AT);
 		
 	//define the results grid
-	mio::Coords llcorner(coordin, coordinparam);
-	llcorner.setLatLon( std::min(vecLat.front(), vecLat.back()), std::min(vecLon.front(), vecLon.back()), IOUtils::nodata);
+	mio::Coords llcorner(coord_sys, coord_param); //if an EPSG was provided, this has been converted to coord_sys/coord_param
+	if (isLatLon)
+		llcorner.setLatLon( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
+	else
+		llcorner.setXY( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
+	//HACK expand the definition of Grid2DObject to support lat/lon grids and reproject in GridsManager
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
-	const double cellsize = calculate_cellsize(resampling_factor_x, resampling_factor_y); //HACK expand the definition of Grid2DObject to support lat/lon grids and reproject in GridsManager
-	Grid2DObject grid(vecLon.size(), vecLat.size(), cellsize, llcorner);
+	const double cellsize = (isLatLon)? calculate_cellsize(resampling_factor_x, resampling_factor_y) : calculate_XYcellsize(resampling_factor_x, resampling_factor_y);
+	Grid2DObject grid(vecX.size(), vecY.size(), cellsize, llcorner);
 	
 	//read the raw data, copy it into the Grid2DObject
 	int ncid;
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	
-	double *data = new double[vecLat.size()*vecLon.size()];
+	double *data = new double[vecY.size()*vecX.size()];
 	if (time_pos!=IOUtils::npos)
-		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecLat.size(), vecLon.size(), data);
+		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecY.size(), vecX.size(), data);
 	else
 		ncpp::read_data(ncid, var.attributes.name, var.varid, data);
 	fill2DGrid(grid, data, var.nodata);
@@ -707,9 +749,10 @@ void ncParameters::write2DGrid(Grid2DObject grid_in, const size_t& param, const 
 void ncParameters::write2DGrid(const Grid2DObject& grid_in, nc_variable& var, const Date& date)
 {
 	//check that the necessary dimensions are available in the maps
-	const bool map_miss_dims = (dimensions_map.count(TIME)==0 || dimensions_map.count(LATITUDE)==0 || dimensions_map.count(LONGITUDE)==0);
-	const bool map_miss_vars = (vars.count(TIME)==0 || vars.count(LATITUDE)==0 || vars.count(LONGITUDE)==0);
-	if (map_miss_dims || map_miss_vars)
+	const bool hasLatLon = (dimensions_map.count(LATITUDE)!=0 && dimensions_map.count(LONGITUDE)!=0) && (vars.count(LATITUDE)!=0 && vars.count(LONGITUDE)!=0);
+	const bool hasEastNorth = (dimensions_map.count(EASTING)!=0 && dimensions_map.count(NORTHING)!=0) && (vars.count(EASTING)!=0 && vars.count(NORTHING)!=0);
+	const bool hasTime = dimensions_map.count(TIME)!=0 && vars.count(TIME)!=0;
+	if ((isLatLon && !hasLatLon) || (!isLatLon && !hasEastNorth) || !hasTime)
 		throw IOException("Error in the schema definition, some basic quantities are not defined!", AT);
 	
 	const bool is_record = (!date.isUndef());
@@ -722,19 +765,23 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, nc_variable& var, co
 		
 		//check what is already present in file and what should be created
 		if (is_record) create_time = (dimensions_map[TIME].dimid == -1);
-		create_spatial_dimensions = ((dimensions_map[LATITUDE].dimid == -1) && (dimensions_map[LONGITUDE].dimid == -1));
 		create_variable = (var.varid == -1);
+		if (isLatLon)
+			create_spatial_dimensions = ((dimensions_map[LATITUDE].dimid == -1) && (dimensions_map[LONGITUDE].dimid == -1));
+		else
+			create_spatial_dimensions = ((dimensions_map[EASTING].dimid == -1) && (dimensions_map[NORTHING].dimid == -1));
 
 		if (!create_spatial_dimensions) {
-			const bool consistent_lat = (dimensions_map[LATITUDE].length == grid_in.getNy());
-			const bool consistent_lon = (dimensions_map[LONGITUDE].length == grid_in.getNx());
-			if (!consistent_lat || !consistent_lon) throw InvalidArgumentException("Attempting to write an inconsistent grid to file '"+file_and_path+"' (different geolocalization)", AT);
+			const bool consistent_Y = (isLatLon)? (dimensions_map[LATITUDE].length == grid_in.getNy()) : (dimensions_map[NORTHING].length == grid_in.getNy());
+			const bool consistent_X = (isLatLon)? (dimensions_map[LONGITUDE].length == grid_in.getNx()) : (dimensions_map[EASTING].length == grid_in.getNx());
+			if (!consistent_X || !consistent_Y) throw InvalidArgumentException("Attempting to write an inconsistent grid to file '"+file_and_path+"' (different geolocalization)", AT);
 		}
 	} else {
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
 		ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.6");
 		ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO "+getLibVersion());
+		if (!isLatLon) ncpp::add_attribute(ncid, NC_GLOBAL, "epsg", grid_in.llcorner.getEPSG());
 		
 		create_variable = create_spatial_dimensions = true;
 		if (is_record) create_time = true;
@@ -744,7 +791,7 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, nc_variable& var, co
 	create_definitions(ncid, grid_in, var, date, is_record, create_time, create_spatial_dimensions, create_variable);
 	
 	//now write the data
-	double *data = new double[grid_in.getNy() * grid_in.getNx()];
+	double *data = new double[grid_in.size()];
 	ncpp::fill_grid_data(grid_in, data);
 	if (is_record) {
 		const size_t time_pos = addTimestamp(ncid, date);
@@ -802,28 +849,51 @@ void ncParameters::create_definitions(const int& ncid, const Grid2DObject& grid_
 		create_dimension_and_variable(ncid, dimensions_map[TIME], vars[TIME]);
 	}
 	if (create_spatial_dimensions) {
-		dimensions_map[LATITUDE].length = grid_in.getNy();
-		create_dimension_and_variable(ncid, dimensions_map[LATITUDE], vars[LATITUDE]);
-		
-		dimensions_map[LONGITUDE].length = grid_in.getNx();
-		create_dimension_and_variable(ncid, dimensions_map[LONGITUDE], vars[LONGITUDE]);
+		if (isLatLon) {
+			dimensions_map[LATITUDE].length = grid_in.getNy();
+			create_dimension_and_variable(ncid, dimensions_map[LATITUDE], vars[LATITUDE]);
+
+			dimensions_map[LONGITUDE].length = grid_in.getNx();
+			create_dimension_and_variable(ncid, dimensions_map[LONGITUDE], vars[LONGITUDE]);
+		} else {
+			dimensions_map[NORTHING].length = grid_in.getNy();
+			create_dimension_and_variable(ncid, dimensions_map[NORTHING], vars[NORTHING]);
+
+			dimensions_map[EASTING].length = grid_in.getNx();
+			create_dimension_and_variable(ncid, dimensions_map[EASTING], vars[EASTING]);
+		}
 	}
 	if (create_variable) {
 		if (is_record) var.dimids.push_back(dimensions_map[TIME].dimid);
-		var.dimids.push_back(dimensions_map[LATITUDE].dimid);
-		var.dimids.push_back(dimensions_map[LONGITUDE].dimid);
+		if (isLatLon) {
+			var.dimids.push_back(dimensions_map[LATITUDE].dimid);
+			var.dimids.push_back(dimensions_map[LONGITUDE].dimid);
+		} else {
+			var.dimids.push_back(dimensions_map[NORTHING].dimid);
+			var.dimids.push_back(dimensions_map[EASTING].dimid);
+		}
 		ncParameters::create_variable(ncid, var);
 	}
 	ncpp::end_definitions(file_and_path, ncid);
 	
 	//write the dimensions' data
 	if (create_spatial_dimensions) {
-		double *lat_array = new double[grid_in.getNy()];
-		double *lon_array = new double[grid_in.getNx()];
-		ncpp::calculate_dimensions(grid_in, lat_array, lon_array);
-		ncpp::write_data(ncid, vars[LATITUDE].attributes.name, vars[LATITUDE].varid, lat_array);
-		ncpp::write_data(ncid, vars[LONGITUDE].attributes.name, vars[LONGITUDE].varid, lon_array);
-		delete[] lat_array; delete[] lon_array; 
+		double *Y_array = new double[grid_in.getNy()];
+		double *X_array = new double[grid_in.getNx()];
+		if (isLatLon) {
+			ncpp::calculate_dimensions(grid_in, Y_array, X_array);
+			ncpp::write_data(ncid, vars[LATITUDE].attributes.name, vars[LATITUDE].varid, Y_array);
+			ncpp::write_data(ncid, vars[LONGITUDE].attributes.name, vars[LONGITUDE].varid, X_array);
+		} else {
+			const double cellsize = grid_in.cellsize;
+			X_array[0] = grid_in.llcorner.getEasting();
+			for (size_t ii=1; ii<grid_in.getNx(); ii++) X_array[ii] = X_array[ii-1] + cellsize;
+			Y_array[0] = grid_in.llcorner.getNorthing();
+			for (size_t ii=1; ii<grid_in.getNy(); ii++) Y_array[ii] = Y_array[ii-1] + cellsize;
+			ncpp::write_data(ncid, vars[NORTHING].attributes.name, vars[NORTHING].varid, Y_array);
+			ncpp::write_data(ncid, vars[EASTING].attributes.name, vars[EASTING].varid, X_array);
+		}
+		delete[] Y_array; delete[] X_array;
 	}
 }
 
@@ -1021,18 +1091,51 @@ size_t ncParameters::read_1DvariableLength(const nc_variable& var) const
 	return it->second.length;
 }
 
+//check that a given dimension exists, has a dimid and an associated variable with a varid
+bool ncParameters::hasDimension(const size_t& dim) const
+{
+	const std::map<size_t, nc_dimension>::const_iterator it_dim = dimensions_map.find( dim );
+	if (it_dim==dimensions_map.end()) return false;
+	if (it_dim->second.dimid==-1) return false;
+	
+	const std::map<size_t, nc_variable>::const_iterator it_var = vars.find( dim );
+	if (it_var==vars.end()) return false;
+	if (it_var->second.varid==-1) return false;
+	
+	return true;
+}
+
 double ncParameters::calculate_cellsize(double& factor_x, double& factor_y) const
 {
 	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
 	double alpha;
-	const double cntr_lat = .5*fabs(vecLat.front()+vecLat.back());
-	const double cntr_lon = .5*fabs(vecLon.front()+vecLon.back());
-	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, vecLon.front(), cntr_lat, vecLon.back(), alpha);
-	const double distanceY = CoordsAlgorithms::VincentyDistance(vecLat.front(), cntr_lon, vecLat.back(), cntr_lon, alpha);
+	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
+	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
+	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
+	const double distanceY = CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
 
 	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecLon.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecLat.size())*100. )) / 100.;
+	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	if (cellsize_x == cellsize_y) {
+		return cellsize_x;
+	} else {
+		const double cellsize = std::min(cellsize_x, cellsize_y);
+		factor_x =  cellsize_x / cellsize;
+		factor_y =  cellsize_y / cellsize;
+		return cellsize;
+	}
+}
+
+double ncParameters::calculate_XYcellsize(double& factor_x, double& factor_y) const
+{
+	const double distanceX = fabs(vecX.front() - vecX.back());
+	const double distanceY = fabs(vecY.front() - vecY.back());
+	
+	//round to 1cm precision for numerical stability
+	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {
@@ -1046,26 +1149,26 @@ double ncParameters::calculate_cellsize(double& factor_x, double& factor_y) cons
 //populate the results grid and handle the case of llcorner/urcorner swapped
 void ncParameters::fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const
 {
-	if (vecLat.front()<=vecLat.back()) {
-		for (size_t kk=0; kk < vecLat.size(); kk++) {
-			const size_t row = kk*vecLon.size();
-			if (vecLon.front()<=vecLon.back()) {
-				for (size_t ll=0; ll < vecLon.size(); ll++)
+	if (vecY.front()<=vecY.back()) {
+		for (size_t kk=0; kk < vecY.size(); kk++) {
+			const size_t row = kk*vecX.size();
+			if (vecX.front()<=vecX.back()) {
+				for (size_t ll=0; ll < vecX.size(); ll++)
 					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
 			} else {
-				for (size_t ll=0; ll < vecLon.size(); ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecLon.size() -1) - ll], nodata);
+				for (size_t ll=0; ll < vecX.size(); ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecX.size() -1) - ll], nodata);
 			}
 		}
 	} else {
-		for (size_t kk=0; kk < vecLat.size(); kk++) {
-			const size_t row = ((vecLat.size()-1) - kk)*vecLon.size();
-			if (vecLon.front()<=vecLon.back()) {
-				for (size_t ll=0; ll < vecLon.size(); ll++)
+		for (size_t kk=0; kk < vecY.size(); kk++) {
+			const size_t row = ((vecY.size()-1) - kk)*vecX.size();
+			if (vecX.front()<=vecX.back()) {
+				for (size_t ll=0; ll < vecX.size(); ll++)
 					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
 			} else {
-				for (size_t ll=0; ll < vecLon.size(); ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecLon.size() -1) - ll], nodata);
+				for (size_t ll=0; ll < vecX.size(); ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecX.size() -1) - ll], nodata);
 			}
 		}
 	}

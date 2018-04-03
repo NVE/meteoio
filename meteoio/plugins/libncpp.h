@@ -43,10 +43,12 @@ namespace ncpp {
 	//Adding attributes
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
+	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value);
 	std::string get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name);
 	void get_VarAttribute(const int& ncid, const std::string& varname, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, double& attr_value);
+	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, int& attr_value);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
 
 	//Adding dimensions
