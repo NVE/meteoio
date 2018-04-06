@@ -28,7 +28,7 @@ namespace mio {
 class ncParameters {
 	public:
 		enum Mode {READ, WRITE};
-		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, ALTITUDE, NORTHING, EASTING, STATION, lastdimension=STATION};
+		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, lastdimension=STATION};
 		
 		typedef struct VAR_ATTR {
 			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
@@ -72,19 +72,21 @@ class ncParameters {
 		void write2DGrid(const Grid2DObject& grid_in, nc_variable& var, const Date& date);
 		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
 		
+		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo);
+		
 	private:
 		typedef struct NC_DIMENSION {
 			NC_DIMENSION() : name(), length(0), dimid(-1), type(NONE), isUnlimited(false) {};
-			NC_DIMENSION(const Dimensions& i_type, const std::string& i_name)
+			NC_DIMENSION(const size_t& i_type, const std::string& i_name)
 			                     : name(i_name), length(0), dimid(-1), type(i_type), isUnlimited(false) {};
-			NC_DIMENSION(const Dimensions& i_type, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
+			NC_DIMENSION(const size_t& i_type, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
 			                     : name(i_name), length(len), dimid(i_dimid), type(i_type), isUnlimited(unlimited) {};
 			std::string toString() const {std::ostringstream os; os << getParameterName(type) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
 			
 			std::string name;
 			size_t length;
 			int dimid;
-			Dimensions type;
+			size_t type;
 			bool isUnlimited;
 		} nc_dimension;
 		
@@ -117,9 +119,10 @@ class ncParameters {
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
 		size_t addTimestamp(const int& ncid, const Date& date);
-		void create_definitions(const int& ncid, const Grid2DObject& grid_in, nc_variable& var, const Date& date, const bool& is_record, const bool& create_time, const bool& create_spatial_dimensions, const bool& create_variable);
-		static void create_dimension_and_variable(const int& ncid, nc_dimension &dim, nc_variable& var);
-		static void create_dimension(const int& ncid, nc_dimension &dim);
+		void fill_SpatialDimensions(const int& ncid, const Grid2DObject& grid_in);
+		void fill_SpatialDimensions(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo);
+		bool create_Dimension(const int& ncid, const size_t& param, const size_t& length);
+		bool create_TimeDimension(const int& ncid, const Date& date, const size_t& length);
 		static void create_variable(const int& ncid, nc_variable& var);
 		
 		static std::vector<std::string> dimnames;
@@ -158,6 +161,8 @@ class NetCDFIO : public IOInterface {
 		
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 
 	private:
 		void parseInputOutputSection();
@@ -167,7 +172,8 @@ class NetCDFIO : public IOInterface {
 		const Config cfg;
 		std::vector< std::pair<std::pair<Date,Date>, ncParameters> > cache_grid_files; //cache of grid files in GRID2DPATH
 		std::vector<MeteoGrids::Parameters> available_params;
-		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, out_file;
+		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
+		std::string out_meteo_path, in_meteo_path, out_meteo_file;
 		double in_dflt_TZ, out_dflt_TZ;
 		bool dem_altimeter, debug;
 };

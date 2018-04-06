@@ -69,6 +69,7 @@ namespace ncpp {
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
 	                const size_t& pos_start, const double * const data);
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const int * const data);
+	void write_data(const int& ncid, const std::string& varname, const int& varid, const char * const data);
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
 	                const size_t& pos_start, const int * const data);
 
