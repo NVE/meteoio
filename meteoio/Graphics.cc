@@ -116,8 +116,18 @@ void Legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		else if (step<=0.5) step_norm=5;
 		else step_norm=10;
 
-		min_norm = round(min_norm/step_norm*10)*step_norm/10.;
-		max_norm = round(max_norm/step_norm*10)*step_norm/10.;
+		if (max_norm >= 0) {
+			min_norm = floor(min_norm / step_norm * 10) * step_norm / 10.;
+		} else {
+			min_norm = ceil(min_norm / step_norm * 10) * step_norm / 10.;
+		}
+
+		if (max_norm >= 0) {
+			max_norm = ceil(max_norm / step_norm * 10) * step_norm / 10.;
+		} else {
+			max_norm = floor(max_norm / step_norm * 10) * step_norm / 10.;
+		}
+
 		nb_labels_norm = (unsigned int)ceil((max_norm-min_norm)/step_norm*10)+1; //because min_norm might have been tweaked
 	} else { //there is either no data or a constant value
 		step_norm = 0;
