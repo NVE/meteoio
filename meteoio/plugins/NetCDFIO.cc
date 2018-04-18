@@ -367,7 +367,6 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	throw IOException("Not implemented yet! Be patient!", AT);
 	const std::string file_and_path( out_meteo_path + "/" + out_meteo_file );
 	ncParameters ncFile(file_and_path, ncParameters::WRITE, cfg, out_schema, out_dflt_TZ, debug);
 	ncFile.writeMeteo(vecMeteo);
@@ -880,10 +879,12 @@ void ncParameters::fill_SpatialDimensions(const int& ncid, const std::vector< st
 }
 
 void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo)
-{//HACK instead, have a vector of which dims and their associated vars should be writen. The call "writeDims" and "writeVars" on these.
+{
 	if (vecMeteo.empty()) return;
+	if (vecMeteo.front().empty()) return;
 	isLatLon = true;
 	//check that the necessary dimensions are available in the maps
+	//HACK: do this check in constructor
 	const bool hasLatLon = (dimensions_map.count(LATITUDE)!=0 && dimensions_map.count(LONGITUDE)!=0) && (vars.count(LATITUDE)!=0 && vars.count(LONGITUDE)!=0);
 	const bool hasEastNorth = (dimensions_map.count(EASTING)!=0 && dimensions_map.count(NORTHING)!=0) && (vars.count(EASTING)!=0 && vars.count(NORTHING)!=0);
 	const bool hasTime = dimensions_map.count(TIME)!=0 && vars.count(TIME)!=0;
@@ -903,23 +904,109 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 		if (!isLatLon) ncpp::add_attribute(ncid, NC_GLOBAL, "epsg", vecMeteo.front().front().meta.position.getEPSG()); //HACK
 	}
 	
-	//create any potentially missing definition, otherwise check that everything is consistent
-	create_TimeDimension(ncid, vecMeteo.front().front().date, 0); //HACK
-	create_Dimension(ncid, STATION, vecMeteo.size());
-	bool fill_spatial_vars = create_Dimension(ncid, MeteoGrids::DEM, vecMeteo.size());
+	std::vector<size_t> dimensions, nc_variables;
+	dimensions.push_back( TIME );
+	dimensions.push_back( STATION );
+	nc_variables.push_back( MeteoGrids::DEM );
 	if (isLatLon) {
-		fill_spatial_vars = create_Dimension(ncid, LATITUDE, vecMeteo.size());
-		fill_spatial_vars = create_Dimension(ncid, LONGITUDE, vecMeteo.size());
+		nc_variables.push_back( LATITUDE );
+		nc_variables.push_back( LONGITUDE );
 	} else {
-		fill_spatial_vars = create_Dimension(ncid, NORTHING, vecMeteo.size());
-		fill_spatial_vars = create_Dimension(ncid, EASTING, vecMeteo.size());
+		nc_variables.push_back( EASTING );
+		nc_variables.push_back( NORTHING );
 	}
+	
+	//check/add dimensions and associated nc_variables as necessary
+	for (size_t ii=0; ii<dimensions.size(); ii++) {
+		bool needFill = false;
+		if (dimensions[ii]!=TIME) 
+			needFill = create_Dimension(ncid, dimensions[ii], vecMeteo.size());
+		else
+			needFill = create_TimeDimension(ncid, vecMeteo.front().front().date, 0);
+		if (needFill) nc_variables.push_back( dimensions[ii] );
+	}
+	
+	//add all vars found in vecMeteo
+	std::map<size_t, size_t> nc2tsVars; //mapping between MeteoGrids & MeteoData indices
+	const MeteoData md( vecMeteo.front().front() );
+	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) { //HACK check which parameters do not have any values!
+		const size_t param = MeteoGrids::getParameterIndex( md.getNameForParameter( ii ) );
+		if (param>=MeteoGrids::nrOfParameters) continue;
+		if (vars.count(param)==0) continue; //HACK unrecognized in schema
+		nc_variables.push_back( param );
+		nc2tsVars[ param ] = ii;
+	}
+	
+	for (size_t ii=0; ii<nc_variables.size(); ii++) {
+		const size_t param = nc_variables[ii];
+		if (vars[ param ].varid == -1) { //skip existing nc_variables
+			if (param<firstdimension && param!=MeteoGrids::DEM)
+				vars[ param ].dimids.push_back( dimensions_map[TIME].dimid );
+			
+			vars[ param ].dimids.push_back( dimensions_map[STATION].dimid );
+			ncParameters::create_variable(ncid, vars[ param ]);
+		}
+	}
+	
 	ncpp::end_definitions(file_and_path, ncid);
 	
-	//now write the data
-	if (fill_spatial_vars) fill_SpatialDimensions(ncid, vecMeteo);
-	
-	//write data
+	//write data: fill associated nc_variables and normal nc_variables
+	//HACK: we assume that all stations have the same timestamps
+	for (size_t ii=0; ii<nc_variables.size(); ii++) {
+		const size_t param = nc_variables[ii];
+		bool isUnlimited = false;
+		std::vector<double> data;
+		
+		if (param>=firstdimension || param==MeteoGrids::DEM) { //associated nc_variables
+			if (param==TIME) {
+				isUnlimited = true;
+				data.resize(vecMeteo.front().size());
+				for (size_t ll=0; ll<vecMeteo.front().size(); ll++)
+					data[ll] = (vecMeteo.front()[ll].date.getJulian() - vars[TIME].offset) / vars[TIME].scale;
+			} else {
+				data.resize(vecMeteo.size());
+				for (size_t jj=0; jj<vecMeteo.size(); jj++) {
+					if (param==MeteoGrids::DEM) {
+						data[jj] = vecMeteo[jj].front().meta.position.getAltitude();
+					} else if (param==EASTING) {
+						data[jj] = vecMeteo[jj].front().meta.position.getEasting();
+					} else if (param==NORTHING) {
+						data[jj] = vecMeteo[jj].front().meta.position.getNorthing();
+					} else if (param==LATITUDE) {
+						data[jj] = vecMeteo[jj].front().meta.position.getLat();
+					} else if (param==LONGITUDE) {
+						data[jj] = vecMeteo[jj].front().meta.position.getLon();
+					} else if (param==STATION) {
+						//HACK: handle writing char*
+						data[jj] =  jj;
+					} else
+						throw UnknownValueException("Unknown dimension found when trying to write out file "+file_and_path, AT);
+				}
+			}
+		} else { //normal nc_variables
+			const size_t nrTimeSteps = vecMeteo.front().size();
+			const size_t nrStations = vecMeteo.size();
+			if (nc2tsVars.count(param)==0) continue;
+			const size_t meteodata_param = nc2tsVars[param];
+			
+			data.resize(nrTimeSteps*nrStations, IOUtils::nodata);
+			for (size_t ll=0; ll<nrTimeSteps; ll++) {
+				for (size_t jj=0; jj<nrStations; jj++)
+					data[ll*nrStations+jj] = vecMeteo[jj][ll]( meteodata_param );
+			}
+		}
+		
+		//HACK make a proper function to handle the case of unlimited associated variables
+		if (isUnlimited) {
+			const size_t start[] = {0};
+			const size_t count[] = {data.size()};
+			const int status = nc_put_vara_double(ncid, vars[param].varid, start, count, &data[0]); //because nc_put_var_double does not work for unlimited dimensions
+			if (status != NC_NOERR)
+				throw IOException("Could not write data for variable '" + vars[param].attributes.name + "': " + nc_strerror(status), AT);
+		} else {
+			ncpp::write_data(ncid, vars[param].attributes.name, vars[param].varid, &data[0]);
+		}
+	}
 	
 	ncpp::close_file(file_and_path, ncid);
 }
@@ -982,8 +1069,9 @@ bool ncParameters::create_Dimension(const int& ncid, const size_t& param, const 
 bool ncParameters::create_TimeDimension(const int& ncid, const Date& date, const size_t& length)
 {
 	if (dimensions_map[ TIME ].dimid == -1) {
-		dimensions_map[ TIME ].length = (dimensions_map[ TIME ].isUnlimited)? 0 : length;
-		const nc_type len = (dimensions_map[ TIME ].isUnlimited)? NC_UNLIMITED : static_cast<int>(length);
+		dimensions_map[ TIME ].length = length;
+		dimensions_map[ TIME ].isUnlimited = (length==0);
+		const nc_type len = (length==0)? NC_UNLIMITED : static_cast<int>(length);
 		const int status = nc_def_dim(ncid, dimensions_map[ TIME ].name.c_str(), len, &dimensions_map[ TIME ].dimid);
 		if (status != NC_NOERR) throw IOException("Could not define dimension '" + dimensions_map[ TIME ].name + "': " + nc_strerror(status), AT);
 	}
@@ -1004,9 +1092,10 @@ bool ncParameters::create_TimeDimension(const int& ncid, const Date& date, const
 	return false;
 }
 
-//write the variable's attributes into the file
+//write the variable's attributes into the file (does nothing if the variable already exists)
 void ncParameters::create_variable(const int& ncid, nc_variable& var)
 {
+	if (var.varid != -1) return; //the variable already exists
 	const int ndims = static_cast<int>( var.dimids.size() );
 	const int status = nc_def_var(ncid, var.attributes.name.c_str(), NC_DOUBLE, ndims, &var.dimids[0], &var.varid);
 	if (status != NC_NOERR) throw IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
