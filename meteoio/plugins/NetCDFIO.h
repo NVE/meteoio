@@ -118,9 +118,11 @@ class ncParameters {
 		double calculate_XYcellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
+		void appendVariablesList(std::vector<size_t> &nc_variables, const MeteoData& md) const;
+		bool writeDimension(const int& ncid, const size_t& param, const size_t& length, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
 		void fill_SpatialDimensions(const int& ncid, const Grid2DObject& grid_in);
-		void fill_SpatialDimensions(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo);
+		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, nc_variable& var);
 		bool create_Dimension(const int& ncid, const size_t& param, const size_t& length);
 		bool create_TimeDimension(const int& ncid, const Date& date, const size_t& length);
 		static void create_variable(const int& ncid, nc_variable& var);
