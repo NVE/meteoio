@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <algorithm>
 
+#define DFLT_STAT_STR_LEN 16
+
 using namespace std;
 
 namespace mio {
@@ -384,7 +386,7 @@ std::vector<std::string> ncParameters::initDimensionNames()
 	std::vector<std::string> tmp;
 	tmp.push_back("NONE"); tmp.push_back("TIME"); 
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
-	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); tmp.push_back("STATION");
+	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
 	
 	return tmp;
 }
@@ -400,6 +402,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
 	tmp.push_back( nc_dimension(STATION, "station") );
+	tmp.push_back( nc_dimension(STATSTRLEN, "station_str_len") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	tmp.push_back( nc_dimension(MeteoGrids::DEM, "surface_altitude") );
@@ -411,6 +414,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
 	tmp.push_back( nc_dimension(STATION, "station") );
+	tmp.push_back( nc_dimension(STATSTRLEN, "station_str_len") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	tmp.push_back( nc_dimension(MeteoGrids::DEM, "ZS") );
@@ -422,6 +426,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(LATITUDE, "latitude") );
 	tmp.push_back( nc_dimension(LONGITUDE, "longitude") );
 	tmp.push_back( nc_dimension(STATION, "station") );
+	tmp.push_back( nc_dimension(STATSTRLEN, "station_str_len") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	tmp.push_back( nc_dimension(MeteoGrids::DEM, "geopotential_height") );
@@ -433,6 +438,7 @@ std::map< std::string, std::vector<ncParameters::nc_dimension> > ncParameters::i
 	tmp.push_back( nc_dimension(LATITUDE, "south_north") );
 	tmp.push_back( nc_dimension(LONGITUDE, "west_east") );
 	tmp.push_back( nc_dimension(STATION, "station") );
+	tmp.push_back( nc_dimension(STATSTRLEN, "station_str_len") );
 	tmp.push_back( nc_dimension(EASTING, "easting") );
 	tmp.push_back( nc_dimension(NORTHING, "northing") );
 	tmp.push_back( nc_dimension(MeteoGrids::DEM, "HGT") );
@@ -886,11 +892,16 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	
 	std::vector<size_t> nc_variables, dimensions;
 	dimensions.push_back( TIME );
+	dimensions.push_back( STATSTRLEN ); //this MUST be before STATION
 	dimensions.push_back( STATION );
+	const Date ref_date( vecMeteo.front().front().date );
 	for (size_t ii=0; ii<dimensions.size(); ii++) {
 		const size_t param = dimensions[ii];
-		const bool fillAssociatedVar = (param==TIME)? writeDimension(ncid, param, 0, vecMeteo.front().front().date) : writeDimension(ncid, param, vecMeteo.size(), Date());
-		if (fillAssociatedVar) nc_variables.push_back( dimensions[ii] );
+		const size_t length = (param==TIME)? 0 : ((param==STATSTRLEN)? DFLT_STAT_STR_LEN : vecMeteo.size()) ;
+		createDimension(ncid, param, length);
+		
+		if (param==STATSTRLEN) continue; //no associated variable for STATSTRLEN
+		if (setAssociatedVariable(ncid, param, ref_date)) nc_variables.push_back( dimensions[ii] ); //associated variable will have to be filled
 	}
 	
 	appendVariablesList(nc_variables, vecMeteo.front().front());
@@ -899,10 +910,10 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
-			if (param<firstdimension && param!=MeteoGrids::DEM)
-				vars[ param ].dimids.push_back( dimensions_map[TIME].dimid );
-			
+			if (param<firstdimension && param!=MeteoGrids::DEM) vars[ param ].dimids.push_back( dimensions_map[TIME].dimid );
 			vars[ param ].dimids.push_back( dimensions_map[STATION].dimid );
+			if (param==STATION) vars[ param ].dimids.push_back( dimensions_map[STATSTRLEN].dimid );
+			
 			ncParameters::create_variable(ncid, vars[ param ]);
 		}
 	}
@@ -912,6 +923,19 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	//write data: fill associated nc_variables and normal nc_variables
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
+		
+		if (param==STATION) {
+			//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
+			for (size_t jj=0; jj<vecMeteo.size(); jj++) {
+				const std::string text(vecMeteo[jj].front().meta.stationID, 0, DFLT_STAT_STR_LEN);
+				const size_t start[] = {jj, 0};
+				const size_t count[] = {1, text.size() + 1}; //only one record, and that many chars to write
+				const int status = nc_put_vara_text(ncid, vars[ param ].varid, start, count, text.c_str());
+				if (status != NC_NOERR) throw IOException("Could not write data for variable '" + vars[ param ].attributes.name + "': " + nc_strerror(status), AT);
+			}
+			continue;
+		}
+		
 		const std::vector<double> data( fillBufferForVar(vecMeteo, vars[ param ]) );
 		if (data.empty()) continue;
 		
@@ -954,7 +978,7 @@ void ncParameters::appendVariablesList(std::vector<size_t> &nc_variables, const 
 
 //check/add dimensions and associated nc_variables as necessary
 //this returns true if the associated variable must be later filled
-bool ncParameters::writeDimension(const int& ncid, const size_t& param, const size_t& length, const Date& ref_date)
+void ncParameters::createDimension(const int& ncid, const size_t& param, const size_t& length)
 {
 	//define dimension properties
 	if (dimensions_map[ param ].dimid == -1) {
@@ -966,9 +990,13 @@ bool ncParameters::writeDimension(const int& ncid, const size_t& param, const si
 		if (dimensions_map[ param ].length != length)
 			throw InvalidArgumentException("Attempting to write an inconsistent lenght into dimension '" + getParameterName(param)+"' into file '"+file_and_path+"'", AT);
 	}
-	
+}
+
+bool ncParameters::setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date)
+{
 	if (vars[ param ].varid == -1) {
 		vars[ param ].dimids.push_back( dimensions_map[ param ].dimid );
+		if (param==STATION) vars[ param ].dimids.push_back( dimensions_map[ STATSTRLEN ].dimid );
 		if (param==TIME) {
 			const Date ref_date_simplified(ref_date.getYear(), 1, 1, 0, 0, 0.); //we force data into GMT
 			std::string date_str( ref_date_simplified.toString(Date::ISO) );
@@ -981,7 +1009,6 @@ bool ncParameters::writeDimension(const int& ncid, const size_t& param, const si
 		ncParameters::create_variable(ncid, vars[ param ]);
 		return true;
 	}
-	
 	return false;
 }
 
@@ -1066,7 +1093,7 @@ size_t ncParameters::addTimestamp(const int& ncid, const Date& date)
 }
 
 //this creates what must be created, otherwise checks that what is present is consistent. Returns false if nothing had to be created
-bool ncParameters::create_Dimension(const int& ncid, const size_t& param, const size_t& length)
+bool ncParameters::create_Dimension(const int& ncid, const size_t& param, const size_t& length) //HACK: deprecate
 {
 	if (dimensions_map[ param ].dimid == -1) {
 		dimensions_map[ param ].length = (dimensions_map[ param ].isUnlimited)? 0 : length;
@@ -1087,7 +1114,7 @@ bool ncParameters::create_Dimension(const int& ncid, const size_t& param, const 
 	return false;
 }
 
-bool ncParameters::create_TimeDimension(const int& ncid, const Date& date, const size_t& length)
+bool ncParameters::create_TimeDimension(const int& ncid, const Date& date, const size_t& length) //HACK: deprecate
 {
 	if (dimensions_map[ TIME ].dimid == -1) {
 		dimensions_map[ TIME ].length = length;
@@ -1118,13 +1145,14 @@ void ncParameters::create_variable(const int& ncid, nc_variable& var)
 {
 	if (var.varid != -1) return; //the variable already exists
 	const int ndims = static_cast<int>( var.dimids.size() );
-	const int status = nc_def_var(ncid, var.attributes.name.c_str(), NC_DOUBLE, ndims, &var.dimids[0], &var.varid);
+	const nc_type xtype = (var.attributes.param==STATION)? NC_CHAR : NC_DOUBLE;
+	const int status = nc_def_var(ncid, var.attributes.name.c_str(), xtype, ndims, &var.dimids[0], &var.varid);
 	if (status != NC_NOERR) throw IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	
 	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
 	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
-	ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata);
+	if (var.attributes.param!=STATION) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata);
 	
 	if (var.attributes.param==TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
 	if (var.attributes.param==MeteoGrids::DEM) {
