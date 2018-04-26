@@ -809,65 +809,49 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, nc_variable& var, co
 		if (!isLatLon) ncpp::add_attribute(ncid, NC_GLOBAL, "epsg", grid_in.llcorner.getEPSG());
 	}
 	
-	//create any potentially missing definition, otherwise check that everything is consistent
-	const bool is_record = (!date.isUndef());
-	if (is_record) create_TimeDimension(ncid, date, 0);
-	bool fill_spatial_vars = true;
+	//create any potentially missing definition, otherwise check that everything is consistent	
+	std::vector<size_t> nc_variables, dimensions;
+	if (!date.isUndef()) dimensions.push_back( TIME );
 	if (isLatLon) {
-		fill_spatial_vars = create_Dimension(ncid, LATITUDE, grid_in.getNy());
-		fill_spatial_vars = create_Dimension(ncid, LONGITUDE, grid_in.getNx());
+		dimensions.push_back( LATITUDE );
+		dimensions.push_back( LONGITUDE );
 	} else {
-		fill_spatial_vars = create_Dimension(ncid, NORTHING, grid_in.getNy());
-		fill_spatial_vars = create_Dimension(ncid, EASTING, grid_in.getNx());
+		dimensions.push_back( NORTHING );
+		dimensions.push_back( EASTING );
 	}
-	if (var.varid == -1) { //the variable must be created
-		if (is_record) var.dimids.push_back(dimensions_map[TIME].dimid);
-		if (isLatLon) {
-			var.dimids.push_back(dimensions_map[LATITUDE].dimid);
-			var.dimids.push_back(dimensions_map[LONGITUDE].dimid);
-		} else {
-			var.dimids.push_back(dimensions_map[NORTHING].dimid);
-			var.dimids.push_back(dimensions_map[EASTING].dimid);
-		}
-		ncParameters::create_variable(ncid, var);
+	
+	for (size_t ii=0; ii<dimensions.size(); ii++) {
+		const size_t param = dimensions[ii];
+		size_t length = 0;
+		if (param==LATITUDE || param==NORTHING) length = grid_in.getNy();
+		if (param==LONGITUDE || param==EASTING) length = grid_in.getNx();
+		createDimension(ncid, param, length);
+		if (setAssociatedVariable(ncid, param, date)) nc_variables.push_back( dimensions[ii] ); //associated variable will have to be filled
+		if (var.varid == -1) var.dimids.push_back( dimensions_map[param].dimid );
 	}
+	if (var.varid == -1) ncParameters::create_variable(ncid, var); //create the "main" variable if necessary
+	nc_variables.push_back( var.attributes.param );
+	
 	ncpp::end_definitions(file_and_path, ncid);
 	
 	//now write the data
-	if (fill_spatial_vars) fill_SpatialDimensions(ncid, grid_in);
-	
-	double *data = new double[grid_in.size()];
-	ncpp::fill_grid_data(grid_in, data);
-	if (is_record) {
-		const size_t time_pos = addTimestamp(ncid, date);
-		ncpp::write_data(ncid, var.attributes.name, var.varid, grid_in.getNy(), grid_in.getNx(), time_pos, data);
-	} else {
-		ncpp::write_data(ncid, var.attributes.name, var.varid, data);
+	const size_t time_pos = (!date.isUndef())? addTimestamp(ncid, date) : IOUtils::npos;
+	for (size_t ii=0; ii<nc_variables.size(); ii++) {
+		const size_t param = nc_variables[ii];
+		if (param==TIME) continue; //this was done above
+		
+		const std::vector<double> data( fillBufferForVar(grid_in, vars[ param ]) );
+		if (data.empty()) continue;
+		
+		if (vars[ param ].dimids.size()>0 && vars[ param ].dimids.front()==TIME) { //as unlimited dimension, TIME is always first
+			ncpp::write_data(ncid, vars[ param ].attributes.name, vars[ param ].varid, grid_in.getNy(), grid_in.getNx(), time_pos, &data[0]);
+		} else {
+			const int status = nc_put_var_double(ncid, vars[ param ].varid, &data[0]);
+			if (status != NC_NOERR) throw IOException("Could not write data for variable '" + vars[ param ].attributes.name + "': " + nc_strerror(status), AT);
+		}
 	}
-	delete[] data;
 	
 	ncpp::close_file(file_and_path, ncid);
-}
-
-void ncParameters::fill_SpatialDimensions(const int& ncid, const Grid2DObject& grid_in)
-{
-	//write the dimensions' data
-	double *Y_array = new double[grid_in.getNy()];
-	double *X_array = new double[grid_in.getNx()];
-	if (isLatLon) {
-		ncpp::calculate_dimensions(grid_in, Y_array, X_array);
-		ncpp::write_data(ncid, vars[LATITUDE].attributes.name, vars[LATITUDE].varid, Y_array);
-		ncpp::write_data(ncid, vars[LONGITUDE].attributes.name, vars[LONGITUDE].varid, X_array);
-	} else {
-		const double cellsize = grid_in.cellsize;
-		X_array[0] = grid_in.llcorner.getEasting();
-		for (size_t ii=1; ii<grid_in.getNx(); ii++) X_array[ii] = X_array[ii-1] + cellsize;
-		Y_array[0] = grid_in.llcorner.getNorthing();
-		for (size_t ii=1; ii<grid_in.getNy(); ii++) Y_array[ii] = Y_array[ii-1] + cellsize;
-		ncpp::write_data(ncid, vars[NORTHING].attributes.name, vars[NORTHING].varid, Y_array);
-		ncpp::write_data(ncid, vars[EASTING].attributes.name, vars[EASTING].varid, X_array);
-	}
-	delete[] Y_array; delete[] X_array;
 }
 
 //HACK this assumes that all stations have the same parameters, the same timestamps and the same coordinate system
@@ -947,8 +931,7 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 			const size_t start[] = {0};
 			const size_t count[] = {data.size()};
 			const int status = nc_put_vara_double(ncid, vars[ param ].varid, start, count, &data[0]); 
-			if (status != NC_NOERR)
-				throw IOException("Could not write data for variable '" + vars[ param ].attributes.name + "': " + nc_strerror(status), AT);
+			if (status != NC_NOERR) throw IOException("Could not write data for variable '" + vars[ param ].attributes.name + "': " + nc_strerror(status), AT);
 		}
 	}
 	
@@ -1057,6 +1040,57 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 	}
 }
 
+const std::vector<double> ncParameters::fillBufferForVar(const Grid2DObject& grid, nc_variable& var)
+{
+	const size_t param = var.attributes.param;
+	
+	if (param>=firstdimension) { //associated nc_variables
+		const double cellsize = grid.cellsize;
+		const size_t nrPts = (param==NORTHING)? grid.getNy() : grid.getNx();
+		if (nrPts==0) return std::vector<double>(); //this should not have happened...
+		std::vector<double> data( nrPts );
+		
+		if (param==NORTHING || param==EASTING) {
+			data[0] = (param==NORTHING)? grid.llcorner.getNorthing() : grid.llcorner.getEasting();
+			for (size_t ii=1; ii<nrPts; ii++)
+				data[ii] = data[0] + static_cast<double>(ii)*cellsize;
+		} else if (param==LATITUDE || param==LONGITUDE) {
+			//this is (very cheap) approximation of some kind of projection from x/y to lat/lon
+			//There is a trick here: walking along a line of constant northing does NOT lead to a constant latitude. Both grids
+			//are shifted (even if a little), which means that the center of lat/lon is != center of east./north..
+			//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonnable approximation
+			double alpha;
+			double lat_length, lon_length, cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
+			for(size_t ii=0; ii<5; ii++) {
+				lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
+				lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
+				cntr_lat = (.5*static_cast<double>(grid.getNy())*grid.cellsize) / lat_length + grid.llcorner.getLat();
+				cntr_lon = (.5*static_cast<double>(grid.getNx())*grid.cellsize) / lon_length + grid.llcorner.getLon();
+			}
+			
+			const double center = (param==NORTHING)? cntr_lat : cntr_lon;
+			const double length = (param==NORTHING)? lat_length : lon_length;
+			const double min = center - (.5*static_cast<double>(nrPts)*cellsize) / length;
+			const double max = center + (.5*static_cast<double>(nrPts)*cellsize) / length;
+			const double interval =  abs(max - min);
+			
+			for (size_t ii=0; ii<nrPts; ii++)
+				data[ii] = min + (interval * static_cast<double>(ii)) / (static_cast<double>(nrPts)-1.);
+		} else
+			throw UnknownValueException("Unsupported dimension found when trying to write out netcdf file", AT);
+		return data;
+	} else { //normal grid variable
+		std::vector<double> data( grid.size() );
+		const size_t nrows = grid.getNy(), ncols = grid.getNx();
+		for (size_t kk=0; kk<nrows; ++kk) {
+			for (size_t ll=0; ll<ncols; ++ll) {
+				data[kk*ncols + ll] = grid.grid2D(ll,kk);
+			}
+		}
+		return data;
+	}
+}
+
 //this returns the index where to insert the new grid
 size_t ncParameters::addTimestamp(const int& ncid, const Date& date)
 {
@@ -1088,54 +1122,6 @@ size_t ncParameters::addTimestamp(const int& ncid, const Date& date)
 			vecTime.insert(vecTime.begin()+time_pos, date);
 	}
 	return time_pos;
-}
-
-//this creates what must be created, otherwise checks that what is present is consistent. Returns false if nothing had to be created
-bool ncParameters::create_Dimension(const int& ncid, const size_t& param, const size_t& length) //HACK: deprecate
-{
-	if (dimensions_map[ param ].dimid == -1) {
-		dimensions_map[ param ].length = (dimensions_map[ param ].isUnlimited)? 0 : length;
-		const nc_type len = (dimensions_map[ param ].isUnlimited)? NC_UNLIMITED : static_cast<int>(length);
-		const int status = nc_def_dim(ncid, dimensions_map[ param ].name.c_str(), len, &dimensions_map[ param ].dimid);
-		if (status != NC_NOERR) throw IOException("Could not define dimension '" + dimensions_map[ param ].name + "': " + nc_strerror(status), AT);
-	} else {
-		if (dimensions_map[ param ].length != length)
-			throw InvalidArgumentException("Attempting to write an inconsistent lenght into dimension '" + getParameterName(param)+"' into file '"+file_and_path+"'", AT);
-	}
-	
-	if (vars[ param ].varid == -1) {
-		vars[ param ].dimids.push_back( dimensions_map[ param ].dimid );
-		ncParameters::create_variable(ncid, vars[ param ]);
-		return true;
-	}
-	
-	return false;
-}
-
-bool ncParameters::create_TimeDimension(const int& ncid, const Date& date, const size_t& length) //HACK: deprecate
-{
-	if (dimensions_map[ TIME ].dimid == -1) {
-		dimensions_map[ TIME ].length = length;
-		dimensions_map[ TIME ].isUnlimited = (length==0);
-		const nc_type len = (length==0)? NC_UNLIMITED : static_cast<int>(length);
-		const int status = nc_def_dim(ncid, dimensions_map[ TIME ].name.c_str(), len, &dimensions_map[ TIME ].dimid);
-		if (status != NC_NOERR) throw IOException("Could not define dimension '" + dimensions_map[ TIME ].name + "': " + nc_strerror(status), AT);
-	}
-	
-	if (vars[ TIME ].varid == -1) {
-		vars[ TIME ].dimids.push_back( dimensions_map[ TIME ].dimid );
-		const Date ref_date(date.getYear(), 1, 1, 0, 0, TZ); //HACK move all to GMT or keep local?
-		std::string date_str( ref_date.toString(Date::ISO) );
-		date_str[ 10 ] = ' '; //replace "T" by " "
-		vars[TIME].attributes.units = "hours since " + date_str;
-		vars[TIME].offset = ref_date.getJulian();
-		vars[TIME].scale = 1./24.;
-		
-		ncParameters::create_variable(ncid, vars[TIME]);
-		return true;
-	}
-	
-	return false;
 }
 
 //write the variable's attributes into the file (does nothing if the variable already exists)

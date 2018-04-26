@@ -28,7 +28,7 @@ namespace mio {
 class ncParameters {
 	public:
 		enum Mode {READ, WRITE};
-		enum Dimensions {firstdimension=MeteoGrids::AZI+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
+		enum Dimensions {firstdimension=MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
 		
 		typedef struct VAR_ATTR {
 			VAR_ATTR() : name(), standard_name(), long_name(), units(), height(IOUtils::nodata), param(IOUtils::npos) {};
@@ -122,10 +122,8 @@ class ncParameters {
 		void createDimension(const int& ncid, const size_t& param, const size_t& length);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
-		void fill_SpatialDimensions(const int& ncid, const Grid2DObject& grid_in);
 		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, nc_variable& var);
-		bool create_Dimension(const int& ncid, const size_t& param, const size_t& length);
-		bool create_TimeDimension(const int& ncid, const Date& date, const size_t& length);
+		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, nc_variable& var);
 		static void create_variable(const int& ncid, nc_variable& var);
 		
 		static std::vector<std::string> dimnames;
