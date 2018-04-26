@@ -601,8 +601,15 @@ ncParameters::ncParameters(const std::string& filename, const Mode& mode, const 
 	if (mode==WRITE) {
 		initFromSchema(schema);
 		if (FileUtils::fileExists(filename)) initFromFile(filename, schema);
-	} else if (mode==READ)
+		
+		//check that the used schema has declared the minimum required dimensions and potentially, associated variables (if based on schema)
+		const bool hasLatLon = ((dimensions_map.count(LATITUDE)!=0 && dimensions_map.count(LONGITUDE)!=0) && (mode!=WRITE || (vars.count(LATITUDE)!=0 && vars.count(LONGITUDE)!=0)));
+		const bool hasEastNorth = ((dimensions_map.count(EASTING)!=0 && dimensions_map.count(NORTHING)!=0) && (mode!=WRITE || (vars.count(EASTING)!=0 && vars.count(NORTHING)!=0)));
+		const bool hasTime = dimensions_map.count(TIME)!=0 && (mode!=WRITE || vars.count(TIME)!=0);
+		if (!hasLatLon || !hasEastNorth || !hasTime) throw IOException("Error in the schema definition, some basic quantities are not defined!", AT);
+	} else if (mode==READ) {
 		initFromFile(filename, schema);
+	}
 	
 	if (debug) {
 		std::cout << filename << ":\n";
@@ -617,13 +624,6 @@ ncParameters::ncParameters(const std::string& filename, const Mode& mode, const 
 		for (std::map<std::string, nc_variable>::const_iterator it=unknown_vars.begin(); it!=unknown_vars.end(); ++it)
 			std::cout << "\t\t" << it->first << " -> " << it->second.toString() << "\n";
 	}
-	
-	//check that the used schema has declared the minimum required dimensions and potentially, associated variables (if based on schema)
-	const bool hasLatLon = ((dimensions_map.count(LATITUDE)!=0 && dimensions_map.count(LONGITUDE)!=0) && (mode!=WRITE || (vars.count(LATITUDE)!=0 && vars.count(LONGITUDE)!=0)));
-	const bool hasEastNorth = ((dimensions_map.count(EASTING)!=0 && dimensions_map.count(NORTHING)!=0) && (mode!=WRITE || (vars.count(EASTING)!=0 && vars.count(NORTHING)!=0)));
-	const bool hasTime = dimensions_map.count(TIME)!=0 && (mode!=WRITE || vars.count(TIME)!=0);
-	if (!hasLatLon || !hasEastNorth || !hasTime)
-		throw IOException("Error in the schema definition, some basic quantities are not defined!", AT);
 }
 
 //populate the dimensions_map from the selected schema
@@ -1035,8 +1035,6 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 					data[jj] = vecMeteo[jj].front().meta.position.getLat();
 				} else if (param==LONGITUDE) {
 					data[jj] = vecMeteo[jj].front().meta.position.getLon();
-				} else if (param==STATION) {
-					data[jj] =  (double)jj; //HACK: handle writing char*
 				} else
 					throw UnknownValueException("Unknown dimension found when trying to write out netcdf file", AT);
 			}
