@@ -70,7 +70,7 @@ class ncParameters {
 		Grid2DObject read2DGrid(const std::string& varname) const;
 		
 		void write2DGrid(const Grid2DObject& grid_in, nc_variable& var, const Date& date);
-		void write2DGrid(Grid2DObject grid_in, const size_t& param, const Date& date);
+		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
 		
 		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo);
 		
@@ -113,12 +113,13 @@ class ncParameters {
 		size_t read_1DvariableLength(const nc_variable& var) const;
 		bool hasDimension(const size_t& dim) const;
 		const ncParameters::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
+		const ncParameters::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncParameters::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		double calculate_cellsize(double& factor_x, double& factor_y) const;
 		double calculate_XYcellsize(double& factor_x, double& factor_y) const;
 		void fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const;
 		
-		void appendVariablesList(std::vector<size_t> &nc_variables, const MeteoData& md) const;
+		void appendVariablesList(std::vector<size_t> &nc_variables, const MeteoData& md);
 		void createDimension(const int& ncid, const size_t& param, const size_t& length);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
@@ -137,7 +138,7 @@ class ncParameters {
 		std::vector<Date> vecTime;
 		std::vector<double> vecX, vecY;
 		std::map<size_t, nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
-		std::string file_and_path;
+		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
 		double TZ;
 		bool wrf_hacks, debug, isLatLon;
