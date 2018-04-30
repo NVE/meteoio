@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/plugins/libncpp_old.h>
+#include <meteoio/plugins/libncpp.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/dataClasses/Coords.h>
