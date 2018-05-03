@@ -27,12 +27,13 @@ namespace mio {
 
 GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
              : iohandler(in_iohandler), cfg(in_cfg), buffer(0), grids2d_list(), grids2d_start(), grids2d_end(),
-               grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
+               grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated), dem_altimeter(false)
 {
 	size_t max_grids = 10;
 	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
 	buffer.setMaxGrids(max_grids);
 	cfg.getValue("BUFFER_SIZE", "General", grid2d_list_buffer_size, IOUtils::nothrow);
+	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow); //HACK document it! if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
 }
 
 /**
@@ -313,6 +314,7 @@ void GridsManager::read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Paramete
 
 void GridsManager::readDEM(DEMObject& grid2D)
 {
+	//TODO: dem_altimeter; reading DEM data with no associated date (ie Date())
 	if (processing_level == IOUtils::raw){
 		iohandler.readDEM(grid2D);
 	} else {

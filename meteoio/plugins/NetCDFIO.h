@@ -122,7 +122,7 @@ class NetCDFIO : public IOInterface {
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, in_meteo_path, out_meteo_file;
 		double in_dflt_TZ, out_dflt_TZ;
-		bool dem_altimeter, debug;
+		bool debug;
 };
 
 } //namespace

@@ -75,7 +75,6 @@ namespace mio {
  * - NETCDF_SCHEMA: the schema to use (either CF-1 or CNRM or ECMWF or WRF); [Input] and [Output] section (default: ECMWF)
  * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
- * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
  * When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
@@ -90,7 +89,6 @@ namespace mio {
  *
  * DEM = NETCDF
  * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
- * DEM_FROM_PRESSURE = true
  *
  * #The lines below have nothing to do with this plugin
  * Downscaling = true
@@ -193,7 +191,7 @@ inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncParameters> 
 
 NetCDFIO::NetCDFIO(const std::string& configfile) 
          : cfg(configfile), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
-         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), dem_altimeter(false), debug(false)
+         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -201,7 +199,7 @@ NetCDFIO::NetCDFIO(const std::string& configfile)
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) 
          : cfg(cfgreader), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
-         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), dem_altimeter(false), debug(false)
+         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -217,7 +215,6 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
-		cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow);
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 	}
 	
