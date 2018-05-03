@@ -664,7 +664,7 @@ void ncParameters::initFromFile(const std::string& filename, const std::string& 
 		if (status != NC_NOERR) throw IOException("Could not read attribute 'epsg': " + std::string(nc_strerror(status)), AT);
 		if (epsg!=IOUtils::inodata) CoordsAlgorithms::EPSG_to_str(epsg, coord_sys, coord_param);
 	}
-	std::cout << "isLatLon=" << isLatLon << "\n";
+
 	ncpp::close_file(filename, ncid);
 }
 
