@@ -94,6 +94,30 @@ void GridsManager::getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& p
 //are available at each time steps. So we don't need to search a combination of parameters and timesteps
 bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date)
 {
+	if (parameter==MeteoGrids::DEM) {
+		if (!dem_altimeter) return false;
+		const bool hasTA = isAvailable(available_params, MeteoGrids::TA, date);
+		const bool hasP = isAvailable(available_params, MeteoGrids::P, date);
+		const bool hasP_sea = isAvailable(available_params, MeteoGrids::P_SEA, date);
+		if (!hasTA || !hasP || !hasP_sea) return false;
+
+		Grid2DObject ta, p, p_sea;
+		getGrid(ta, MeteoGrids::TA, date);
+		getGrid(p, MeteoGrids::P, date);
+		getGrid(p_sea, MeteoGrids::P_SEA, date);
+
+		static const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+		static const double k_inv = 1./k;
+		grid2D.set(p, IOUtils::nodata);
+		for (size_t ii=0; ii<grid2D.size(); ii++) {
+			if (grid2D(ii)==IOUtils::nodata || ta(ii)==IOUtils::nodata || p_sea(ii)==IOUtils::nodata) continue;
+			const double K = pow(grid2D(ii)/p_sea(ii), k_inv); //because grid2D has been initialized with P
+			grid2D(ii) = ta(ii)*Cst::earth_R0*(1.-K) / (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 - ta(ii)*(1.-K));
+		}
+		buffer.push(grid2D, parameter, date);
+		return true;
+	}
+
 	if (parameter==MeteoGrids::VW || parameter==MeteoGrids::DW) {
 		const bool hasU = isAvailable(available_params, MeteoGrids::U, date);
 		const bool hasV = isAvailable(available_params, MeteoGrids::V, date);
@@ -314,7 +338,7 @@ void GridsManager::read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Paramete
 
 void GridsManager::readDEM(DEMObject& grid2D)
 {
-	//TODO: dem_altimeter; reading DEM data with no associated date (ie Date())
+	//TODO: dem_altimeter; reading DEM data with no associated date (ie Date()) OR with associated date (for example, TLS data)
 	if (processing_level == IOUtils::raw){
 		iohandler.readDEM(grid2D);
 	} else {
