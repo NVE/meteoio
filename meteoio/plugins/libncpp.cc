@@ -179,6 +179,18 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<doubl
 	}
 }
 
+void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
+{
+	//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
+	for (size_t ii=0; ii<data.size(); ii++) {
+		const std::string text(data[ii], 0, strMaxLen);
+		const size_t start[] = {ii, 0};
+		const size_t count[] = {1, text.size() + 1}; //only one record, and that many chars to write
+		const int status = nc_put_vara_text(ncid, var.varid, start, count, text.c_str());
+		if (status != NC_NOERR) throw IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+	}
+}
+
 //if the attribute is not found, an empty string is returned
 void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, std::string& attr_value)
 {
@@ -241,6 +253,47 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 	} else {
 		if (dimension.length != length)
 			throw InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
+	}
+}
+
+double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
+{
+	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
+	double alpha;
+	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
+	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
+	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
+	const double distanceY = CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
+
+	//round to 1cm precision for numerical stability
+	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	if (cellsize_x == cellsize_y) {
+		return cellsize_x;
+	} else {
+		const double cellsize = std::min(cellsize_x, cellsize_y);
+		factor_x =  cellsize_x / cellsize;
+		factor_y =  cellsize_y / cellsize;
+		return cellsize;
+	}
+}
+
+double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
+{
+	const double distanceX = fabs(vecX.front() - vecX.back());
+	const double distanceY = fabs(vecY.front() - vecY.back());
+
+	//round to 1cm precision for numerical stability
+	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+
+	if (cellsize_x == cellsize_y) {
+		return cellsize_x;
+	} else {
+		const double cellsize = std::min(cellsize_x, cellsize_y);
+		factor_x =  cellsize_x / cellsize;
+		factor_y =  cellsize_y / cellsize;
+		return cellsize;
 	}
 }
 

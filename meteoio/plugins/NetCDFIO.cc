@@ -733,7 +733,7 @@ Grid2DObject ncParameters::read2DGrid(const ncpp::nc_variable& var, const size_t
 		llcorner.setXY( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
 	//HACK expand the definition of Grid2DObject to support lat/lon grids and reproject in GridsManager
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
-	const double cellsize = (isLatLon)? calculate_cellsize(resampling_factor_x, resampling_factor_y) : calculate_XYcellsize(resampling_factor_x, resampling_factor_y);
+	const double cellsize = (isLatLon)? ncpp::calculate_cellsize(resampling_factor_x, resampling_factor_y, vecX, vecY) : ncpp::calculate_XYcellsize(resampling_factor_x, resampling_factor_y, vecX, vecY);
 	Grid2DObject grid(vecX.size(), vecY.size(), cellsize, llcorner);
 	
 	//read the raw data, copy it into the Grid2DObject
@@ -906,21 +906,14 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 		const size_t param = nc_variables[ii];
 		
 		if (param==ncpp::STATION) {
-			//HACK: fill a vector of strings, call write_data()?
-			//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
-			for (size_t jj=0; jj<vecMeteo.size(); jj++) {
-				const std::string text(vecMeteo[jj].front().meta.stationID, 0, DFLT_STAT_STR_LEN);
-				const size_t start[] = {jj, 0};
-				const size_t count[] = {1, text.size() + 1}; //only one record, and that many chars to write
-				const int status = nc_put_vara_text(ncid, vars[ param ].varid, start, count, text.c_str());
-				if (status != NC_NOERR) throw IOException("Could not write data for variable '" + vars[ param ].attributes.name + "': " + nc_strerror(status), AT);
-			}
-			continue;
+			std::vector<std::string> txtdata( vecMeteo.size() );
+			for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
+			ncpp::write_data(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
+		} else {
+			const std::vector<double> data( fillBufferForVar(vecMeteo, vars[ param ]) );
+			if (data.empty()) continue;
+			ncpp::write_data(ncid, vars[ param ], data, (param==ncpp::TIME));
 		}
-		
-		const std::vector<double> data( fillBufferForVar(vecMeteo, vars[ param ]) );
-		if (data.empty()) continue;
-		ncpp::write_data(ncid, vars[ param ], data, (param==ncpp::TIME));
 	}
 	
 	ncpp::close_file(file_and_path, ncid);
@@ -1289,70 +1282,34 @@ bool ncParameters::hasDimension(const size_t& dim) const
 	return true;
 }
 
-double ncParameters::calculate_cellsize(double& factor_x, double& factor_y) const
-{
-	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
-	double alpha;
-	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
-	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
-	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
-	const double distanceY = CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
-
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
-	}
-}
-
-double ncParameters::calculate_XYcellsize(double& factor_x, double& factor_y) const
-{
-	const double distanceX = fabs(vecX.front() - vecX.back());
-	const double distanceY = fabs(vecY.front() - vecY.back());
-	
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
-	
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
-	}
-}
-
 //populate the results grid and handle the case of llcorner/urcorner swapped
 void ncParameters::fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const
 {
-	if (vecY.front()<=vecY.back()) {
-		for (size_t kk=0; kk < vecY.size(); kk++) {
-			const size_t row = kk*vecX.size();
-			if (vecX.front()<=vecX.back()) {
-				for (size_t ll=0; ll < vecX.size(); ll++)
+	const bool normal_Yorder = (vecY.front()<=vecY.back());
+	const bool normal_Xorder = (vecX.front()<=vecX.back());
+	const size_t ncols = vecX.size();
+	const size_t nrows = vecY.size();
+
+	if (normal_Yorder) {
+		for (size_t kk=0; kk < nrows; kk++) {
+			const size_t row = kk*ncols;
+			if (normal_Xorder) {
+				for (size_t ll=0; ll < ncols; ll++)
 					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
 			} else {
-				for (size_t ll=0; ll < vecX.size(); ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecX.size() -1) - ll], nodata);
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
 			}
 		}
 	} else {
-		for (size_t kk=0; kk < vecY.size(); kk++) {
-			const size_t row = ((vecY.size()-1) - kk)*vecX.size();
-			if (vecX.front()<=vecX.back()) {
-				for (size_t ll=0; ll < vecX.size(); ll++)
+		for (size_t kk=0; kk < nrows; kk++) {
+			const size_t row = ((nrows-1) - kk)*ncols;
+			if (normal_Xorder) {
+				for (size_t ll=0; ll < ncols; ll++)
 					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
 			} else {
-				for (size_t ll=0; ll < vecX.size(); ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (vecX.size() -1) - ll], nodata);
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
 			}
 		}
 	}
