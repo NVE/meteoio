@@ -18,7 +18,7 @@
 #ifndef LIBNCPP_H
 #define LIBNCPP_H
 
-//#include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
@@ -104,6 +104,7 @@ namespace ncpp {
 
 	double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
 	double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
+	void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder=true, const bool& normal_Yorder=true);
 	void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
 	

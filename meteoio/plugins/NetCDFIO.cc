@@ -745,7 +745,7 @@ Grid2DObject ncParameters::read2DGrid(const ncpp::nc_variable& var, const size_t
 		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecY.size(), vecX.size(), data);
 	else
 		ncpp::read_data(ncid, var.attributes.name, var.varid, data);
-	fill2DGrid(grid, data, var.nodata);
+	ncpp::fill2DGrid(grid, data, var.nodata, (vecX.front()<=vecX.back()), (vecY.front()<=vecY.back()) );
 	delete[] data;
 	ncpp::close_file(file_and_path, ncid);
 	
@@ -1280,39 +1280,6 @@ bool ncParameters::hasDimension(const size_t& dim) const
 	if (it_var->second.varid==-1) return false;
 	
 	return true;
-}
-
-//populate the results grid and handle the case of llcorner/urcorner swapped
-void ncParameters::fill2DGrid(Grid2DObject& grid, const double data[], const double& nodata) const
-{
-	const bool normal_Yorder = (vecY.front()<=vecY.back());
-	const bool normal_Xorder = (vecX.front()<=vecX.back());
-	const size_t ncols = vecX.size();
-	const size_t nrows = vecY.size();
-
-	if (normal_Yorder) {
-		for (size_t kk=0; kk < nrows; kk++) {
-			const size_t row = kk*ncols;
-			if (normal_Xorder) {
-				for (size_t ll=0; ll < ncols; ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
-			} else {
-				for (size_t ll=0; ll < ncols; ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
-			}
-		}
-	} else {
-		for (size_t kk=0; kk < nrows; kk++) {
-			const size_t row = ((nrows-1) - kk)*ncols;
-			if (normal_Xorder) {
-				for (size_t ll=0; ll < ncols; ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
-			} else {
-				for (size_t ll=0; ll < ncols; ll++)
-					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
-			}
-		}
-	}
 }
 
 const ncpp::var_attr ncParameters::getSchemaAttributes(const std::string& var, const std::string& schema_name) const

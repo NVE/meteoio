@@ -297,6 +297,37 @@ double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vecto
 	}
 }
 
+//populate the results grid and handle the case of llcorner/urcorner swapped
+void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder, const bool& normal_Yorder)
+{
+	const size_t ncols = grid.getNx();
+	const size_t nrows = grid.getNy();
+
+	if (normal_Yorder) {
+		for (size_t kk=0; kk < nrows; kk++) {
+			const size_t row = kk*ncols;
+			if (normal_Xorder) {
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
+			}
+		}
+	} else {
+		for (size_t kk=0; kk < nrows; kk++) {
+			const size_t row = ((nrows-1) - kk)*ncols;
+			if (normal_Xorder) {
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < ncols; ll++)
+					grid(ll, kk) = mio::IOUtils::standardizeNodata(data[row + (ncols -1) - ll], nodata);
+			}
+		}
+	}
+}
+
 //Since we had to extend MeteoGrids::Parameters, we must redefine this method
 std::string getParameterName(const size_t& param)
 {
