@@ -147,8 +147,11 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "scale_factor", var.scale);
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "add_offset", var.offset);
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "units", var.attributes.units);
+	nc_type type;
+	status = nc_inq_vartype(ncid, var.varid, &type);
+	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+	var.attributes.type = static_cast<ncpp::types>(type);
 	
-	//if (var.attributes.param==ncpp::TIME && !wrf_hacks) 
 	if (readTimeTransform)
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
 }

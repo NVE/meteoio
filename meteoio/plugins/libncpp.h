@@ -31,19 +31,19 @@
 
 namespace ncpp {
 	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
+	enum types {nc_none=0, nc_byte, nc_char, nc_short, nc_int, nc_long=nc_int, nc_float, nc_double, nc_ubyte, nc_ushort, nc_uint};
 	
-	//std::vector<std::string> dimnames;
 	std::string getParameterName(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
 	
 	typedef struct VAR_ATTR {
-		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos) {};
-		VAR_ATTR(const std::string& i_name) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt)
-								: name(str1), standard_name(), long_name(), units(), height(hgt), param(prm) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt)
-								: name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm) {};
-		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << "]"; return os.str();};
+		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(nc_none) {};
+		VAR_ATTR(const std::string& i_name) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(nc_none) {};
+		VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt, const types& i_type)
+								: name(str1), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
+		VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt, const types& i_type)
+								: name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm), type(i_type) {};
+		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
 		std::string name;
 		std::string standard_name;
@@ -51,6 +51,7 @@ namespace ncpp {
 		std::string units;
 		double height;
 		size_t param; //mapping to our MeteoGrids::Parameters or Dimensions
+		types type;
 	} var_attr;
 
 	typedef struct NC_VARIABLE {
