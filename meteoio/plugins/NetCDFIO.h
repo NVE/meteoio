@@ -43,11 +43,11 @@ class ncParameters {
 		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo);
 		
 	private:
-		static std::vector<std::string> initDimensionNames();
 		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > initSchemasDims();
 		static std::vector<ncpp::var_attr> initUserSchemas(const Config& i_cfg);
 		static std::vector<ncpp::nc_dimension> initUserDimensions(const Config& i_cfg);
+		static int initDfltType(const std::string& schema);
 		
 		void initFromFile(const std::string& filename, const std::string& schema);
 		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
@@ -57,6 +57,7 @@ class ncParameters {
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
+		std::vector<std::string> read_1Dvariable(const int& ncid, const size_t& param, const size_t& strMaxLen) const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
 		bool hasDimension(const size_t& dim) const;
 		const ncpp::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
@@ -83,6 +84,7 @@ class ncParameters {
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
 		double TZ;
+		int schema_dflt_type; ///< default data type as defined in the schema
 		bool wrf_hacks, debug, isLatLon;
 };
 

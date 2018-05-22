@@ -63,6 +63,13 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
+void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const float& attr_value)
+{
+	const int status = nc_put_att_float(ncid, varid, attr_name.c_str(), NC_FLOAT, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+}
+
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value)
 {
 	const int status = nc_put_att_int(ncid, varid, attr_name.c_str(), NC_INT, 1, &attr_value);
@@ -70,6 +77,13 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
+//data_type is the target data type, the data will be casted in order to have this type in the NetCDF file
+void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type)
+{
+	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), data_type, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+}
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)
 {
@@ -147,10 +161,8 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "scale_factor", var.scale);
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "add_offset", var.offset);
 	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "units", var.attributes.units);
-	nc_type type;
-	status = nc_inq_vartype(ncid, var.varid, &type);
+	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
-	var.attributes.type = static_cast<ncpp::types>(type);
 	
 	if (readTimeTransform)
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);

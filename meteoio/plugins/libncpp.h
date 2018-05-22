@@ -31,17 +31,17 @@
 
 namespace ncpp {
 	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
-	enum types {nc_none=0, nc_byte, nc_char, nc_short, nc_int, nc_long=nc_int, nc_float, nc_double, nc_ubyte, nc_ushort, nc_uint};
 	
 	std::string getParameterName(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
 	
 	typedef struct VAR_ATTR {
-		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(nc_none) {};
-		VAR_ATTR(const std::string& i_name) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(nc_none) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt, const types& i_type)
+		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(-1) {}; //please do NOT use this constructor!
+		VAR_ATTR(const int& i_type) : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
+		VAR_ATTR(const std::string& i_name, const int& i_type) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
+		VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt, const int& i_type)
 								: name(str1), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt, const types& i_type)
+		VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt, const int& i_type)
 								: name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm), type(i_type) {};
 		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
@@ -51,16 +51,17 @@ namespace ncpp {
 		std::string units;
 		double height;
 		size_t param; //mapping to our MeteoGrids::Parameters or Dimensions
-		types type;
+		int type; //contain NetCDF External Data Types, -1 for "none"
 	} var_attr;
 
 	typedef struct NC_VARIABLE {
-		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
+		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}; //please do NOT use this constructor!
+		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
 		NC_VARIABLE(const var_attr& attr)
 							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
-		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
+		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.toString() << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 		
 		var_attr attributes;
 		std::vector<int> dimids;  //dimensions this variable depends on
@@ -90,7 +91,9 @@ namespace ncpp {
 	void close_file(const std::string& filename, const int& ncid);
 	
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
+	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const float& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value);
+	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
 	void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, std::string& attr_value);
