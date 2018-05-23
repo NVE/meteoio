@@ -40,7 +40,7 @@ class ncParameters {
 		void write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, const Date& date);
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
 		
-		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo);
+		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx=IOUtils::npos);
 		
 	private:
 		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
@@ -57,17 +57,20 @@ class ncParameters {
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
-		std::vector<std::string> read_1Dvariable(const int& ncid, const size_t& param, const size_t& strMaxLen) const;
+		std::vector<std::string> read_1Dstringvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
+		size_t readDimension(const int& dimid) const;
 		bool hasDimension(const size_t& dim) const;
 		const ncpp::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
 		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		
-		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo);
+		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
+		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
+		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
-		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, ncpp::nc_variable& var);
+		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var);
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		static void create_variable(const int& ncid, ncpp::nc_variable& var);
 		
@@ -85,7 +88,7 @@ class ncParameters {
 		std::string coord_sys, coord_param;
 		double TZ;
 		int schema_dflt_type; ///< default data type as defined in the schema
-		bool wrf_hacks, debug, isLatLon;
+		bool debug, isLatLon;
 };
 
 /**

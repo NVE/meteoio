@@ -61,7 +61,7 @@ namespace ncpp {
 							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
-		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.toString() << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
+		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 		
 		var_attr attributes;
 		std::vector<int> dimids;  //dimensions this variable depends on
