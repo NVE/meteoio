@@ -72,7 +72,7 @@ class ncParameters {
 		size_t addTimestamp(const int& ncid, const Date& date);
 		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var);
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
-		static void create_variable(const int& ncid, ncpp::nc_variable& var);
+		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		
 		static std::map< std::string, std::vector<ncpp::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
@@ -124,7 +124,7 @@ class NetCDFIO : public IOInterface {
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, in_meteo_path, out_meteo_file;
 		double in_dflt_TZ, out_dflt_TZ;
-		bool debug;
+		bool debug, out_single_file;
 };
 
 } //namespace

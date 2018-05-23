@@ -102,6 +102,27 @@ bool check_attribute(const int& ncid, const int& varid, const std::string& attr_
 	return true;
 }
 
+//write the variable's attributes into the file (does nothing if the variable already exists)
+void create_variable(const int& ncid, ncpp::nc_variable& var)
+{
+	if (var.varid != -1) return; //the variable already exists
+	const int ndims = static_cast<int>( var.dimids.size() );
+	if (var.attributes.type==-1) throw InvalidArgumentException("Undefined data type for variable "+var.attributes.standard_name, AT);
+	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
+	if (status != NC_NOERR) throw IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+	
+	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
+	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
+	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
+	if (var.attributes.param!=ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
+	
+	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+	if (var.attributes.param==MeteoGrids::DEM) {
+		ncpp::add_attribute(ncid, var.varid, "positive", "up");
+		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
+	}
+}
+
 void file_redef(const std::string& filename, const int& ncid)
 {
 	const int status = nc_redef(ncid);

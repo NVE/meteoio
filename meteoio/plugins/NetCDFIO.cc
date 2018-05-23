@@ -54,6 +54,7 @@ namespace mio {
  * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
+ * - AMUNDSEN - from the <A HREF="https://geographie.uibk.ac.at/blog/ahc/models/">Alpine, Hydro, climatology</A> group in Innsbruck;
  * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model.
  *
  * If you want to better understand the structure of the NetCDF file format, you are highly encouraged to read about
@@ -75,6 +76,7 @@ namespace mio {
  * - NETCDF_SCHEMA: the schema to use (either CF-1 or CNRM or ECMWF or WRF); [Input] and [Output] section (default: ECMWF)
  * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
+ * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
  *
  * When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
@@ -191,7 +193,7 @@ inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncParameters> 
 
 NetCDFIO::NetCDFIO(const std::string& configfile) 
          : cfg(configfile), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
-         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false)
+         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -199,7 +201,7 @@ NetCDFIO::NetCDFIO(const std::string& configfile)
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) 
          : cfg(cfgreader), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
-         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false)
+         out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -238,6 +240,7 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
 		cfg.getValue("METEOFILE", "Output", out_meteo_file);
+		cfg.getValue("NC_SINGLE_FILE", "Output", out_single_file, IOUtils::nothrow);
 	}
 }
 
@@ -271,7 +274,7 @@ bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, st
 	if (cache_grid_files.empty()) scanMeteoPath(in_grid2d_path, in_nc_ext, cache_grid_files);
 	if (cache_grid_files.empty()) return true; //there are no grids to read
 	
-	//HACK handle the case of file_start & file_end are undef() (example: DEM)
+	//TODO handle the case of file_start & file_end are undef() (example: DEM)
 	for (size_t ii=0; ii<cache_grid_files.size(); ii++) {
 		const Date file_start( cache_grid_files[ii].first.first );
 		const Date file_end( cache_grid_files[ii].first.second );
@@ -369,8 +372,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	const bool single_file = true;
-	if (single_file) {
+	if (out_single_file) {
 		const std::string file_and_path( out_meteo_path + "/" + out_meteo_file );
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 		
@@ -382,6 +384,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 			if (vecMeteo[ii].empty()) continue;
 			const std::string file_and_path( out_meteo_path + "/" + vecMeteo[ii].front().meta.stationID + ".nc" );
 			if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
+			if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 			
 			const ncParameters::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncParameters::READ : ncParameters::WRITE;
 			ncParameters ncFile(file_and_path, file_mode, cfg, out_schema, out_dflt_TZ, debug);
@@ -745,13 +748,11 @@ std::set<size_t> ncParameters::getParams() const
 Grid2DObject ncParameters::read2DGrid(const std::string& varname) const
 {
 	for (std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.begin(); it!=vars.end(); ++it) {
-		if (it->second.attributes.name==varname)
-			return read2DGrid(it->second, IOUtils::npos);
+		if (it->second.attributes.name==varname) return read2DGrid(it->second, IOUtils::npos);
 	}
 	
 	for (std::map<std::string, ncpp::nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
-		if (it->first==varname)
-			return read2DGrid(it->second, IOUtils::npos);
+		if (it->first==varname) return read2DGrid(it->second, IOUtils::npos);
 	}
 	
 	throw NotFoundException("The variable '"+varname+"' could not be found in file '"+file_and_path+"'", AT);
@@ -801,7 +802,6 @@ Grid2DObject ncParameters::read2DGrid(const ncpp::nc_variable& var, const size_t
 	//read the raw data, copy it into the Grid2DObject
 	int ncid;
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
-	
 	double *data = new double[vecY.size()*vecX.size()];
 	if (time_pos!=IOUtils::npos)
 		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecY.size(), vecX.size(), data);
@@ -814,22 +814,10 @@ Grid2DObject ncParameters::read2DGrid(const ncpp::nc_variable& var, const size_t
 	//handle data packing and units, if necessary
 	if (var.scale!=1.) grid *= var.scale;
 	if (var.offset!=0.) grid += var.offset;
-	const std::string units( var.attributes.units );
-	if (!units.empty()) {
-		if (units=="m**2 s**-2") grid /= Cst::gravity;
-		else if (units=="%") grid /= 100.;
-		else if (units=="J m**-2") {
-			if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
-				const Date integration_period = (time_pos>0)? (vecTime[time_pos] - vecTime[time_pos-1]) : (vecTime[time_pos+1] - vecTime[time_pos]);
-				grid /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
-			}
-		}
-		else if (m2mm && units=="m") grid *= 1000.;
-		
-		if (reZero) {//reset very low values to zero
-			for (size_t ii=0; ii<grid.size(); ii++)
-				if (grid(ii)<1e-6 && grid(ii)!=mio::IOUtils::nodata) grid(ii)=0.;
-		}
+	applyUnits(grid, var.attributes.units, time_pos, m2mm);
+	if (reZero) {//reset very low values to zero
+		for (size_t ii=0; ii<grid.size(); ii++)
+			if (grid(ii)<1e-6 && grid(ii)!=mio::IOUtils::nodata) grid(ii)=0.;
 	}
 	
 	return grid;
@@ -889,7 +877,7 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& v
 		if (setAssociatedVariable(ncid, param, date)) nc_variables.push_back( dimensions[ii] ); //associated variable will have to be filled
 		if (var.varid == -1) var.dimids.push_back( dimensions_map[param].dimid );
 	}
-	if (var.varid == -1) ncParameters::create_variable(ncid, var); //create the "main" variable if necessary
+	if (var.varid == -1) ncpp::create_variable(ncid, var); //create the "main" variable if necessary
 	nc_variables.push_back( var.attributes.param );
 	vars[ var.attributes.param ] = var;
 	
@@ -921,7 +909,7 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	const size_t ref_station_idx = (multiple_stations)? 0 : station_idx;
 	if (vecMeteo.empty()) return;
 	if (vecMeteo[ref_station_idx].empty()) return;
-	isLatLon = true; //HACK
+	isLatLon = true; //for now, we force lat/lon coordinates for time series
 	
 	int ncid;
 	if ( FileUtils::fileExists(file_and_path) ) {
@@ -962,7 +950,7 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 			if (multiple_stations) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 			
-			ncParameters::create_variable(ncid, vars[ param ]);
+			ncpp::create_variable(ncid, vars[ param ]);
 		}
 	}
 	
@@ -1052,7 +1040,7 @@ bool ncParameters::setAssociatedVariable(const int& ncid, const size_t& param, c
 			vars[param].scale = 1./24.;
 		}
 		
-		ncParameters::create_variable(ncid, vars[ param ]);
+		ncpp::create_variable(ncid, vars[ param ]);
 		return true;
 	}
 	return false;
@@ -1162,6 +1150,22 @@ const std::vector<double> ncParameters::fillBufferForVar(const Grid2DObject& gri
 	}
 }
 
+//bring back known units to MKSA 
+void ncParameters::applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const
+{
+	if (units.empty()) return;
+	
+	if (units=="m**2 s**-2") grid /= Cst::gravity;
+	else if (units=="%") grid /= 100.;
+	else if (units=="J m**-2") {
+		if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
+			const Date integration_period = (time_pos>0)? (vecTime[time_pos] - vecTime[time_pos-1]) : (vecTime[time_pos+1] - vecTime[time_pos]);
+			grid /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
+		}
+	}
+	else if (m2mm && units=="m") grid *= 1000.;
+}
+
 //this returns the index where to insert the new grid
 size_t ncParameters::addTimestamp(const int& ncid, const Date& date)
 {
@@ -1193,27 +1197,6 @@ size_t ncParameters::addTimestamp(const int& ncid, const Date& date)
 			vecTime.insert(vecTime.begin()+time_pos, date);
 	}
 	return time_pos;
-}
-
-//write the variable's attributes into the file (does nothing if the variable already exists)
-void ncParameters::create_variable(const int& ncid, ncpp::nc_variable& var)
-{
-	if (var.varid != -1) return; //the variable already exists
-	const int ndims = static_cast<int>( var.dimids.size() );
-	if (var.attributes.type==-1) throw InvalidArgumentException("Undefined data type for variable "+var.attributes.standard_name, AT);
-	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
-	if (status != NC_NOERR) throw IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
-	
-	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
-	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
-	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
-	if (var.attributes.param!=ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
-	
-	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
-	if (var.attributes.param==MeteoGrids::DEM) {
-		ncpp::add_attribute(ncid, var.varid, "positive", "up");
-		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
-	}
 }
 
 void ncParameters::initDimensionsFromFile(const int& ncid, const std::string& schema_name)

@@ -87,6 +87,7 @@ namespace ncpp {
 	void open_file(const std::string& filename, const int& omode, int& ncid);
 	void create_file(const std::string& filename, const int& cmode, int& ncid);
 	void file_redef(const std::string& filename, const int& ncid);
+	void create_variable(const int& ncid, ncpp::nc_variable& var);
 	void end_definitions(const std::string& filename, const int& ncid);
 	void close_file(const std::string& filename, const int& ncid);
 	
