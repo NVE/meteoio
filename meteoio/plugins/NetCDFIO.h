@@ -65,6 +65,7 @@ class ncParameters {
 		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		
+		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const;
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
