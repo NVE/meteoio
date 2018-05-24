@@ -492,7 +492,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "northing", "projection_y_coordinate", "", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::DEM, "orog", "surface_altitude", "height above mean sea level", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::TA, "ta", "air_temperature", "near surface air temperature", "K", IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::RH, "hur", "relative_humidity", "", "", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::RH, "hur", "relative_humidity", "", "1", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::DW, "dw", "wind_from_direction", "", "degree", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW, "ws", "wind_speed", "", "m/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::P, "ps", "surface_air_pressure", "near surface air pressure", "Pa", IOUtils::nodata, NC_FLOAT) );
@@ -511,6 +511,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(MeteoGrids::TSS, "ts", "surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", IOUtils::nodata, NC_FLOAT) );
+	//tmp.push_back( ncpp::var_attr(MeteoGrids::TSG, "tsg", "soil_surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) ); //HACK this is non-standard!
 	results["CF-1"] = tmp;
 
 	//CROCUS schema
@@ -988,40 +989,70 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 
 void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const
 {
-	const bool multiple_stations = (station_idx==IOUtils::npos);
-	const size_t ref_station_idx = (multiple_stations)? 0 : station_idx;
-	
 	ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema);
+	if (current_schema=="CF-1") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.7");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "cdm_data_type", "Station");
+	Date now; now.setFromSys();
+	ncpp::add_attribute(ncid, NC_GLOBAL, "date_created", now.toString(Date::ISO_DATE));
 	ncpp::add_attribute(ncid, NC_GLOBAL, "History", ncpp::generateHistoryAttribute());
 	Date set_start, set_end;
-	size_t npts;
-	if (multiple_stations) { //HACK we should check for ALL stations. The spatial bound should be a bounding box around all stations
-		set_start = vecMeteo[ref_station_idx].front().date;
-		set_end = vecMeteo[ref_station_idx].back().date;
-		npts = vecMeteo[ref_station_idx].size();
+	int sampling_period = -1;
+	
+	if (station_idx==IOUtils::npos) {
+		ncpp::add_attribute(ncid, NC_GLOBAL, "Title", "Meteorological data timeseries for multiple stations");
+		
+		double lat_min, lat_max, lon_min, lon_max;
+		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+			if (vecMeteo[ii].empty()) continue;
+			const Date curr_start = vecMeteo[ii].front().date;
+			const Date curr_end = vecMeteo[ii].back().date;
+			const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
+			const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
+			
+			if (set_start.isUndef()) {
+				set_start = curr_start;
+				set_end = curr_end;
+				lat_min = lat_max = curr_lat;
+				lon_min = lon_max = curr_lon;
+			}
+			if (set_start>curr_start) set_start = curr_start;
+			if (set_end<curr_end) set_end = curr_end;
+			if (lat_min>curr_lat) lat_min = curr_lat;
+			if (lat_max<curr_lat) lat_max = curr_lat;
+			if (lon_min>curr_lon) lon_min = curr_lon;
+			if (lon_max<curr_lon) lon_max = curr_lon;
+			
+			if (vecMeteo[ii].size()==1) continue;
+			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(vecMeteo[ii].size() - 1) * 24.*3600. + .5);
+			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
+		}
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lat_min", lat_min);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lat_max", lat_max);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lon_min", lon_min);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lon_max", lon_max);
 	} else {
-		const std::string stationName = vecMeteo[ref_station_idx].front().meta.stationName;
-		const std::string name = (!stationName.empty())? stationName : vecMeteo[ref_station_idx].front().meta.stationID;
+		const std::string stationName = vecMeteo[station_idx].front().meta.stationName;
+		const std::string name = (!stationName.empty())? stationName : vecMeteo[station_idx].front().meta.stationID;
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Title", "Meteorological data timeseries for the "+name+" station");
 		ncpp::add_attribute(ncid, NC_GLOBAL, "station_name", name);
 		if (isLatLon) {
 			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:4326");
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point "+vecMeteo[ref_station_idx].front().meta.position.toString(Coords::LATLON));
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point "+vecMeteo[station_idx].front().meta.position.toString(Coords::LATLON));
 		}else {
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+vecMeteo[ref_station_idx].front().meta.position.getEPSG());
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point"+vecMeteo[ref_station_idx].front().meta.position.toString(Coords::XY));
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+vecMeteo[station_idx].front().meta.position.getEPSG());
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point"+vecMeteo[station_idx].front().meta.position.toString(Coords::XY));
 		}
-		set_start = vecMeteo[ref_station_idx].front().date;
-		set_end = vecMeteo[ref_station_idx].back().date;
-		npts = vecMeteo[ref_station_idx].size();
+		set_start = vecMeteo[station_idx].front().date;
+		set_end = vecMeteo[station_idx].back().date;
+		const size_t npts = vecMeteo[station_idx].size();
+		if (npts>1) sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 	}
 	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_start", set_start.toString(Date::ISO_TZ));
 	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_end", set_end.toString(Date::ISO_TZ));
 	
-	if (npts>1) {
-		const int nr_seconds = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
+	if (sampling_period>0) {
 		std::ostringstream os;
-		os << "P" << nr_seconds << "S"; //ISO8601 duration format
+		os << "P" << sampling_period << "S"; //ISO8601 duration format
 		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_resolution", os.str());
 	}
 }
