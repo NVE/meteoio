@@ -483,7 +483,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 
 	//CF-1 schema -> to be checked and improved from CF-1 documentation
 	tmp.clear();
-	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "", "s", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "", "min", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "", "degree_north", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "longitude", "longitude", "", "degree_east", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", IOUtils::nodata, NC_CHAR) );
@@ -931,9 +931,32 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
 		ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO "+getLibVersion());
-		if (!isLatLon) ncpp::add_attribute(ncid, NC_GLOBAL, "epsg", vecMeteo[ref_station_idx].front().meta.position.getEPSG());
-		if (!multiple_stations) ncpp::add_attribute(ncid, NC_GLOBAL, "station_name", vecMeteo[ref_station_idx].front().meta.stationName);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "History", ncpp::generateHistoryAttribute());
+		if (isLatLon) {
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:4326");
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", vecMeteo[ref_station_idx].front().meta.position.toString(Coords::LATLON));
+		}else {
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+vecMeteo[ref_station_idx].front().meta.position.getEPSG());
+			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", vecMeteo[ref_station_idx].front().meta.position.toString(Coords::XY));
+		}
+		Date set_start, set_end;
+		size_t npts;
+		if (multiple_stations) { //HACK we should check for ALL stations
+			set_start = vecMeteo[ref_station_idx].front().date;
+			set_end = vecMeteo[ref_station_idx].back().date;
+			npts = vecMeteo[ref_station_idx].size();
+		} else {
+			const std::string stationName = vecMeteo[ref_station_idx].front().meta.stationName;
+			const std::string name = (!stationName.empty())? stationName : vecMeteo[ref_station_idx].front().meta.stationID;
+			ncpp::add_attribute(ncid, NC_GLOBAL, "Title", "Meteorological data timeseries for the "+name+" station");
+			ncpp::add_attribute(ncid, NC_GLOBAL, "station_name", name);
+			set_start = vecMeteo[ref_station_idx].front().date;
+			set_end = vecMeteo[ref_station_idx].back().date;
+			npts = vecMeteo[ref_station_idx].size();
+		}
+		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_start", set_start.toString(Date::ISO_TZ));
+		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_end", set_end.toString(Date::ISO_TZ));
+		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_resolution", (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts) * 24.*3600.); //HACK put it into ISO8601 duration format!
 	}
 	
 	std::vector<size_t> nc_variables, dimensions;
@@ -1054,7 +1077,7 @@ bool ncParameters::setAssociatedVariable(const int& ncid, const size_t& param, c
 			if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
 				vars[param].scale = 1./24.;
-			} else if (units=="m") {
+			} else if (units=="min") {
 				vars[param].attributes.units = "minutes since " + date_str;
 				vars[param].scale = 1./(24.*60);
 			} else if (units=="s") {

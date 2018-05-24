@@ -112,6 +112,7 @@ namespace ncpp {
 	void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder=true, const bool& normal_Yorder=true);
 	void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
+	std::string generateHistoryAttribute();
 	
 	//std::vector<double> read_1Dvariable(const int& ncid, const size_t& param, std::map<size_t, ncpp::nc_variable> vars, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path);
 	//size_t read_1DvariableLength(const ncpp::nc_variable& var, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path);

@@ -388,6 +388,13 @@ size_t getParameterIndex(const std::string& param)
 	return mio::MeteoGrids::getParameterIndex( param );
 }
 
+std::string generateHistoryAttribute()
+{
+	Date now;
+	now.setFromSys();
+	return now.toString(Date::ISO_Z) + ", " + IOUtils::getLogName() + "@" + IOUtils::getHostName() + ", MeteoIO-" + getLibVersion();
+}
+
 /*std::vector<double> read_1Dvariable(const int& ncid, const size_t& param, std::map<size_t, ncpp::nc_variable> vars, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path)
 {
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
