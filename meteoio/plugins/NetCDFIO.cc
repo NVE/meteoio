@@ -1018,10 +1018,12 @@ void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< 
 	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_start", set_start.toString(Date::ISO_TZ));
 	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_end", set_end.toString(Date::ISO_TZ));
 	
-	const int nr_seconds = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts) * 24.*3600. + .5);
-	std::ostringstream os;
-	os << "P" << nr_seconds << "S"; //ISO8601 duration format
-	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_resolution", os.str());
+	if (npts>1) {
+		const int nr_seconds = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
+		std::ostringstream os;
+		os << "P" << nr_seconds << "S"; //ISO8601 duration format
+		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_resolution", os.str());
+	}
 }
 
 Date ncParameters::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
