@@ -74,7 +74,7 @@ namespace mio {
  * - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
  * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the NC_EXT extension, provides
  * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
- * - NETCDF_SCHEMA: the schema to use (either CF-1 or CNRM or ECMWF or WRF); [Input] and [Output] section (default: ECMWF)
+ * - NETCDF_SCHEMA: the schema to use (either CF-1.7, CROCUS, AMUNDSEN,  ECMWF or WRF); [Input] and [Output] section (default: CF-1.7)
  * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
  * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
@@ -193,7 +193,7 @@ inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncParameters> 
 }
 
 NetCDFIO::NetCDFIO(const std::string& configfile) 
-         : cfg(configfile), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
+         : cfg(configfile), cache_grid_files(), available_params(), in_schema("CF-1.7"), out_schema("CF-1.7"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
          out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -201,7 +201,7 @@ NetCDFIO::NetCDFIO(const std::string& configfile)
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) 
-         : cfg(cfgreader), cache_grid_files(), available_params(), in_schema("ECMWF"), out_schema("ECMWF"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
+         : cfg(cfgreader), cache_grid_files(), available_params(), in_schema("CF-1.7"), out_schema("CF-1.7"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
          out_meteo_path(), in_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
 	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -353,8 +353,11 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 	if (IOUtils::readLineToVec(arguments, vec_argument, ':')  != 2)
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname", AT);
 
-	const ncParameters::Mode file_mode = (FileUtils::fileExists(vec_argument[0]))? ncParameters::READ : ncParameters::WRITE;
-	ncParameters ncFile(out_grid2d_path+"/"+vec_argument[0], file_mode, cfg, out_schema, out_dflt_TZ, debug);
+	const std::string file_and_path( out_grid2d_path + "/" + vec_argument[0] );
+	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
+	
+	const ncParameters::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncParameters::READ : ncParameters::WRITE;
+	ncParameters ncFile(file_and_path, file_mode, cfg, out_schema, out_dflt_TZ, debug);
 	ncFile.write2DGrid(grid_in, IOUtils::npos, vec_argument[1], Date());
 }
 
@@ -401,12 +404,13 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::schemas_vars(
 
 int ncParameters::initDfltType(const std::string& schema)
 {
-	if (schema=="CF-1") return NC_FLOAT;
+	if (schema=="CF-1.7") return NC_FLOAT;
 	if (schema=="CROCUS") return NC_DOUBLE;
 	if (schema=="ECMWF") return NC_DOUBLE;
 	if (schema=="WRF") return NC_DOUBLE;
 	if (schema=="AMUNDSEN") return NC_FLOAT;
-	return NC_DOUBLE;
+	
+	throw InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
 
 std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::initSchemasDims()
@@ -414,7 +418,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::initSchem
 	std::map< std::string, std::vector<ncpp::nc_dimension> > results;
 	std::vector<ncpp::nc_dimension> tmp;
 	
-	//CF-1 schema
+	//CF-1.7 schema
 	tmp.clear();
 	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "time") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
@@ -424,7 +428,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::initSchem
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(MeteoGrids::DEM, "surface_altitude") );
-	results["CF-1"] = tmp;
+	results["CF-1.7"] = tmp;
 	
 	//CROCUS schema
 	tmp.clear();
@@ -482,7 +486,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	std::map< std::string, std::vector<ncpp::var_attr> > results;
 	std::vector<ncpp::var_attr> tmp;
 
-	//CF-1 schema -> to be checked and improved from CF-1 documentation
+	//CF-1.7 schema -> to be checked and improved from CF-1.7 documentation
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "", "min", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "", "degree_north", IOUtils::nodata, NC_FLOAT) );
@@ -512,7 +516,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", IOUtils::nodata, NC_FLOAT) );
 	//tmp.push_back( ncpp::var_attr(MeteoGrids::TSG, "tsg", "soil_surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) ); //HACK this is non-standard!
-	results["CF-1"] = tmp;
+	results["CF-1.7"] = tmp;
 
 	//CROCUS schema
 	tmp.clear();
@@ -866,9 +870,7 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& v
 	} else {
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
 		ncpp::create_file(file_and_path, NC_CLASSIC_MODEL, ncid);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO "+getLibVersion());
-		if (!isLatLon) ncpp::add_attribute(ncid, NC_GLOBAL, "epsg", grid_in.llcorner.getEPSG());
+		writeGridMetadataHeader(ncid, grid_in);
 	}
 	
 	//create any potentially missing definition, otherwise check that everything is consistent
@@ -987,14 +989,61 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	ncpp::close_file(file_and_path, ncid);
 }
 
+void ncParameters::writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in) const
+{
+	ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema);
+	if (current_schema=="CF-1.7") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.7");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "cdm_data_type", "Grid");
+	Date now; now.setFromSys();
+	ncpp::add_attribute(ncid, NC_GLOBAL, "date_created", now.toString(Date::ISO_DATE));
+	ncpp::add_attribute(ncid, NC_GLOBAL, "creator_name", IOUtils::getLogName());
+	ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO-" + getLibVersion(true));
+	ncpp::add_attribute(ncid, NC_GLOBAL, "History", ncpp::generateHistoryAttribute());
+	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "Title", "Gridded data for various parameters and timesteps");
+	
+	Coords urcorner(grid_in.llcorner);
+	urcorner.moveByXY(static_cast<double>(grid_in.getNx())*grid_in.cellsize, static_cast<double>(grid_in.getNy())*grid_in.cellsize);
+	
+	std::string epsg_str = "4326";
+	std::string geometry;
+	if (isLatLon) {
+		std::ostringstream ss;
+		ss << std::fixed << std::setprecision(10) << grid_in.llcorner.getLon() << " " << grid_in.llcorner.getLat() << ", ";
+		ss << urcorner.getLon() << " " << grid_in.llcorner.getLat() << ", ";
+		ss << urcorner.getLon() << " " << urcorner.getLat() << ", ";
+		ss << grid_in.llcorner.getLon() << " " << urcorner.getLat();
+		geometry = ss.str();
+	}else {
+		std::ostringstream os;
+		os << grid_in.llcorner.getEPSG();
+		epsg_str = os.str();
+		
+		std::ostringstream ss;
+		ss << std::fixed << std::setprecision(10) << grid_in.llcorner.getEasting() << " " << grid_in.llcorner.getNorthing() << ", ";
+		ss << urcorner.getEasting() << " " << grid_in.llcorner.getNorthing() << ", ";
+		ss << urcorner.getEasting() << " " << urcorner.getNorthing() << ", ";
+		ss << grid_in.llcorner.getEasting() << " " << urcorner.getNorthing();
+		geometry = ss.str();
+	}
+	ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+epsg_str);
+	ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Polygon (("+geometry+"))");
+}
+
 void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const
 {
 	ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema);
-	if (current_schema=="CF-1") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.7");
+	if (current_schema=="CF-1.7") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.7");
 	ncpp::add_attribute(ncid, NC_GLOBAL, "cdm_data_type", "Station");
 	Date now; now.setFromSys();
 	ncpp::add_attribute(ncid, NC_GLOBAL, "date_created", now.toString(Date::ISO_DATE));
+	ncpp::add_attribute(ncid, NC_GLOBAL, "creator_name", IOUtils::getLogName());
+	ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO-" + getLibVersion(true));
 	ncpp::add_attribute(ncid, NC_GLOBAL, "History", ncpp::generateHistoryAttribute());
+	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology, Time series analysis");
+	
 	Date set_start, set_end;
 	int sampling_period = -1;
 	
@@ -1035,13 +1084,23 @@ void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< 
 		const std::string name = (!stationName.empty())? stationName : vecMeteo[station_idx].front().meta.stationID;
 		ncpp::add_attribute(ncid, NC_GLOBAL, "Title", "Meteorological data timeseries for the "+name+" station");
 		ncpp::add_attribute(ncid, NC_GLOBAL, "station_name", name);
+		std::string epsg_str = "4326";
+		std::string geometry;
+		const Coords location = vecMeteo[station_idx].front().meta.position;
 		if (isLatLon) {
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:4326");
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point "+vecMeteo[station_idx].front().meta.position.toString(Coords::LATLON));
+			std::ostringstream ss;
+			ss << std::fixed << std::setprecision(10) << location.getLon() << " " << location.getLat();
+			geometry = ss.str();
 		}else {
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+vecMeteo[station_idx].front().meta.position.getEPSG());
-			ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point"+vecMeteo[station_idx].front().meta.position.toString(Coords::XY));
+			std::ostringstream os;
+			os << location.getEPSG();
+			epsg_str = os.str();
+			std::ostringstream ss;
+			ss << std::fixed << std::setprecision(10) << location.getEasting() << " " << location.getNorthing();
 		}
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+epsg_str);
+		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point ("+geometry+")");
+		
 		set_start = vecMeteo[station_idx].front().date;
 		set_end = vecMeteo[station_idx].back().date;
 		const size_t npts = vecMeteo[station_idx].size();

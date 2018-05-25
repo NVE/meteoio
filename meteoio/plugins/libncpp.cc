@@ -392,7 +392,7 @@ std::string generateHistoryAttribute()
 {
 	Date now;
 	now.setFromSys();
-	return now.toString(Date::ISO_Z) + ", " + IOUtils::getLogName() + "@" + IOUtils::getHostName() + ", MeteoIO-" + getLibVersion();
+	return now.toString(Date::ISO_Z) + ", " + IOUtils::getLogName() + "@" + IOUtils::getHostName() + ", MeteoIO-" + getLibVersion(true);
 }
 
 /*std::vector<double> read_1Dvariable(const int& ncid, const size_t& param, std::map<size_t, ncpp::nc_variable> vars, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path)
