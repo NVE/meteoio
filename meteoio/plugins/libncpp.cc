@@ -30,6 +30,10 @@ using namespace mio;  // for the IOExceptions and IOUtils
 
 namespace ncpp {
 
+/**
+* @brief Set the names of the dimensions
+* @return vector of names that should be in the same order as the enum
+*/
 std::vector<std::string> initDimensionNames()
 {
 	//the order must be the same as in the enum Dimensions
@@ -102,7 +106,13 @@ bool check_attribute(const int& ncid, const int& varid, const std::string& attr_
 	return true;
 }
 
-//write the variable's attributes into the file (does nothing if the variable already exists)
+/**
+* @brief Write a pre-defined set of attributes for the given variable.
+* @details Please note that during this call, a variable will be created, therefore the nc_variable structure will get a positive varid.
+* If the variable already exists, it will return without doing anything.
+* @param[in] ncid file ID
+* @param[in,out] var variable whose attributes should be set.
+*/
 void create_variable(const int& ncid, ncpp::nc_variable& var)
 {
 	if (var.varid != -1) return; //the variable already exists
@@ -164,8 +174,16 @@ void read_data(const int& ncid, const std::string& varname, const int& varid, do
 		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
-//attributes.name is used as a handle to get all the metadata from the file
-//all other attributes are ignored, attributes.units is overwritten
+/**
+* @brief Read a pre-defined set of attributes for the given variable, from the provided file.
+* @details Please note that during this call, the nc_variable structure will get a positive varid.
+* If any of the predefined set of attribute does not exist, it will be silently skipped. The attributes structure
+* of the variable var will then be populated by what has been read.
+* @param[in] ncid file ID
+* @param[in,out] var variable whose attributes should be read.
+* @param[in] readTimeTransform should the time-parsing arguments (offset and scale from a reference date and units) be read? default=false
+* @param[in] TZ timezone to use when/if reading a date
+*/
 void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform, const double& TZ)
 {
 	int nrdims;
@@ -254,6 +272,15 @@ void getAttribute(const int& ncid, const int& value_id, const std::string& value
 	}
 }
 
+/**
+* @brief Parse a time unit specification
+* @details Time is often defined as a number of intervals (hours, seconds, etc) from a reference date. This call parses such as specification string
+* and return the necessary offset and multiplier compared to julian date.
+* @param[in] time_units time specification string
+* @param[in] i_TZ timezone to use to interpret the reference date
+* @param[out] o_time_offset offset to apply to convert the read values to julian date
+* @param[out] o_time_multiplier multiplier to apply to convert the read values to julian date
+*/
 void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier)
 {
 	static const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
@@ -278,7 +305,13 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	o_time_offset = refDate.getJulian();
 }
 
-//check/add dimension as necessary
+/**
+* @brief Create a new dimension
+* @details If the requested dimension already exists, nothing is done
+* @param[in] ncid file ID
+* @param[in] dimension dimension to create
+* @param[in] length length to set for this dimension (for the unlimited dimension, this will be ignored)
+*/
 void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_t& length)
 {
 	if (dimension.dimid == -1) {
@@ -394,34 +427,6 @@ std::string generateHistoryAttribute()
 	now.setFromSys();
 	return now.toString(Date::ISO_Z) + ", " + IOUtils::getLogName() + "@" + IOUtils::getHostName() + ", MeteoIO-" + getLibVersion(true);
 }
-
-/*std::vector<double> read_1Dvariable(const int& ncid, const size_t& param, std::map<size_t, ncpp::nc_variable> vars, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path)
-{
-	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
-	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
-	const size_t length = read_1DvariableLength(it->second, dimensions_map, file_and_path);
-	
-	std::vector<double> results( length );
-	double *data = new double[ length ];
-	ncpp::read_data(ncid, it->second.attributes.name, it->second.varid, data);
-	std::copy(data, data+length, results.begin());
-	delete[] data;
-	return results;
-}
-
-size_t read_1DvariableLength(const ncpp::nc_variable& var, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path)
-{
-	if (var.dimids.size()!=1) throw InvalidArgumentException("Parameter \""+ncpp::getParameterName(var.attributes.param)+"\" in file \""+file_and_path+"\" is not a 1D variable", AT);
-	
-	const int dimid = var.dimids[0];
-	std::map<size_t, ncpp::nc_dimension>::const_iterator it = dimensions_map.begin();
-	for (; it!=dimensions_map.end(); ++it) {
-		if (it->second.dimid==dimid) break;
-	}
-	if (it==dimensions_map.end()) throw InvalidArgumentException("Could not find a dimension in file \""+file_and_path+"\"", AT);
-	
-	return it->second.length;
-}*/
 
 } //end namespace
 

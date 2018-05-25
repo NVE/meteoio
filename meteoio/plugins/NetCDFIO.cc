@@ -510,8 +510,8 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(MeteoGrids::HS, "snd", "surface_snow_thickness", "", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::RSNO, "snow_density", "snow_density", "", "kg/m3", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::SWE, "swe", "lwe_thickness_of_surface_snow_amount", "", "m", IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM, "pr", "precipitation_flux", "", "kg/m/s", IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM_S, "solid_precipitation_flux", "solid_precipitation_flux", "", "kg/m/s", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM, "pr", "precipitation_flux", "", "kg/m2/s", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM_S, "solid_precipitation_flux", "solid_precipitation_flux", "", "kg/m2/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::TSS, "ts", "surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", IOUtils::nodata, NC_FLOAT) );
@@ -1209,9 +1209,15 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 	
 	if (param>=ncpp::firstdimension || param==MeteoGrids::DEM) { //associated nc_variables
 		if (param==ncpp::TIME) {
-			std::vector<double> data(vecMeteo[ref_station_idx].size());
-			for (size_t ll=0; ll<vecMeteo[ref_station_idx].size(); ll++)
-				data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale;
+			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
+			std::vector<double> data(nrTimeSteps);
+			if (var.attributes.type==NC_INT) { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
+				for (size_t ll=0; ll<nrTimeSteps; ll++)
+					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale) );
+			} else {
+				for (size_t ll=0; ll<nrTimeSteps; ll++)
+					data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale;
+			}
 			return data;
 		} else {
 			std::vector<double> data(nrStations);
