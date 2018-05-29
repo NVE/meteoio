@@ -187,36 +187,34 @@ void close_file(const std::string& filename, const int& ncid)
 /**
 * @brief Read 2D gridded data at the provided time position for a specific variable
 * @param[in] ncid file ID
-* @param[in] varname variable name (used for error reporting)
-* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] var variable to read
 * @param[in] pos time index in the file
 * @param[in] nrows number of rows
 * @param[in] ncols number of longitudes
 * @param[out] data data extracted from the file
 */
-void read_data(const int& ncid, const std::string& varname, const int& varid,
+void read_data(const int& ncid, const nc_variable& var,
                const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data)
 {
 	const size_t start[] = {pos, 0, 0};
 	const size_t count[] = {1, nrows, ncols};
 
-	const int status = nc_get_vara_double(ncid, varid, start, count, data);
+	const int status = nc_get_vara_double(ncid, var.varid, start, count, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
+		throw IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
 
 /**
 * @brief Read all the data for a specific variable
 * @param[in] ncid file ID
-* @param[in] varname variable name (used for error reporting)
-* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] var variable to read
 * @param[out] data data extracted from the file
 */
-void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data)
+void read_data(const int& ncid, const nc_variable& var, double*& data)
 {
-	const int status = nc_get_var_double(ncid, varid, data);
+	const int status = nc_get_var_double(ncid, var.varid, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
+		throw IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -255,28 +253,27 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 /**
 * @brief Write 2D gridded data at the provided time position for a specific variable
 * @param[in] ncid file ID
-* @param[in] varname variable name (used for error reporting)
-* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] var variable to write out
 * @param[in] nrows number of rows
 * @param[in] ncols number of columns
 * @param[in] pos time index in the file
 * @param[in] data data to write to the file
 */
-void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols,
+void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols,
                 const double * const data)
 {
 	const size_t start[] = {pos, 0, 0};
 	const size_t count[] = {1, nrows, ncols};
 
-	const int status = nc_put_vara_double(ncid, varid, start, count, data);
+	const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not write variable '" + varname + "': " + string(nc_strerror(status)), AT);
+		throw IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
 }
 
 /**
 * @brief Write a vector of data for a given 1D variable
 * @param[in] ncid file ID
-* @param[in] var variable properties
+* @param[in] var variable to write out
 * @param[in] data vector that has to be written
 * @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension?
 */

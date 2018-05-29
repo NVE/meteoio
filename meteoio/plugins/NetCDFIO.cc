@@ -822,9 +822,9 @@ Grid2DObject ncParameters::read2DGrid(const ncpp::nc_variable& var, const size_t
 	ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 	double *data = new double[vecY.size()*vecX.size()];
 	if (time_pos!=IOUtils::npos)
-		ncpp::read_data(ncid, var.attributes.name, var.varid, time_pos, vecY.size(), vecX.size(), data);
+		ncpp::read_data(ncid, var, time_pos, vecY.size(), vecX.size(), data);
 	else
-		ncpp::read_data(ncid, var.attributes.name, var.varid, data);
+		ncpp::read_data(ncid, var, data);
 	ncpp::fill2DGrid(grid, data, var.nodata, (vecX.front()<=vecX.back()), (vecY.front()<=vecY.back()) );
 	delete[] data;
 	ncpp::close_file(file_and_path, ncid);
@@ -909,7 +909,7 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& v
 		if (data.empty()) continue;
 		
 		if (vars[ param ].dimids.size()>0 && vars[ param ].dimids.front()==ncpp::TIME) { //as unlimited dimension, TIME is always first
-			ncpp::write_data(ncid, vars[ param ].attributes.name, vars[ param ].varid, time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
+			ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		} else {
 			ncpp::write_data(ncid, vars[ param ], data, false);
 		}
@@ -1475,7 +1475,7 @@ std::vector<double> ncParameters::read_1Dvariable(const int& ncid, const size_t&
 	
 	std::vector<double> results( length );
 	double *data = new double[ length ];
-	ncpp::read_data(ncid, it->second.attributes.name, it->second.varid, data);
+	ncpp::read_data(ncid, it->second, data);
 	std::copy(data, data+length, results.begin());
 	delete[] data;
 	return results;

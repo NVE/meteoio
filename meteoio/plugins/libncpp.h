@@ -100,10 +100,10 @@ namespace ncpp {
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, std::string& attr_value);
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value);
 	
-	void read_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data);
-	void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data);
+	void read_data(const int& ncid, const nc_variable& var, double*& data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);
-	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols, const double * const data);
+	void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, const double * const data);
 	void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited);
 	void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
 
