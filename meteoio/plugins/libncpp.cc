@@ -60,6 +60,30 @@ void create_file(const std::string& filename, const int& cmode, int& ncid)
 		throw IOException("Could not create netcdf file '" + filename + "': " + nc_strerror(status), AT);
 }
 
+/**
+* @brief Add an attribute to the file pointed to by ncid.
+* @details The provided attribute value will be casted to the data type that is provided as argument.
+* @param[in] ncid file ID
+* @param[in] varid ID of the variable this attribute belongs to
+* @param[in] attr_name name of the attribute
+* @param[in] attr_value value of the attribute (represented as a double)
+* @param[in] data_type data type to cast the value to (according to NetCDF's <a href="https://www.unidata.ucar.edu/software/netcdf/docs/data_type.html">external data types</a>)
+*/
+void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type)
+{
+	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), data_type, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+}
+
+/**
+* @brief Add an attribute to the file pointed to by ncid.
+* @details In the target NetCDF file, the attribute will have the same type as the provided attribute value argument provided in this call
+* @param[in] ncid file ID
+* @param[in] varid ID of the variable this attribute belongs to
+* @param[in] attr_name name of the attribute
+* @param[in] attr_value value of the attribute
+*/
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value)
 {
 	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), NC_DOUBLE, 1, &attr_value);
@@ -81,14 +105,6 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
-//data_type is the target data type, the data will be casted in order to have this type in the NetCDF file
-void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type)
-{
-	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), data_type, 1, &attr_value);
-	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
-}
-
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)
 {
 	const int status = nc_put_att_text(ncid, varid, attr_name.c_str(), attr_value.size(), attr_value.c_str());
@@ -96,6 +112,13 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
+/**
+* @brief Check if a variable has a given attribute
+* @param[in] ncid file ID
+* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] attr_name name of the attribute to check
+* @return true if the variable has the given attribute, false otherwise
+*/
 bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name)
 {
 	size_t attr_len;
@@ -133,6 +156,11 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	}
 }
 
+/**
+* @brief Re-open the file in "definition" mode
+* @param[in] filename filename to use when reporting errors
+* @param[in] ncid file ID
+*/
 void file_redef(const std::string& filename, const int& ncid)
 {
 	const int status = nc_redef(ncid);
@@ -156,17 +184,34 @@ void close_file(const std::string& filename, const int& ncid)
 
 }
 
+/**
+* @brief Read 2D gridded data at the provided time position for a specific variable
+* @param[in] ncid file ID
+* @param[in] varname variable name (used for error reporting)
+* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] pos time index in the file
+* @param[in] nrows number of rows
+* @param[in] ncols number of longitudes
+* @param[out] data data extracted from the file
+*/
 void read_data(const int& ncid, const std::string& varname, const int& varid,
-               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data)
+               const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data)
 {
 	const size_t start[] = {pos, 0, 0};
-	const size_t count[] = {1, latlen, lonlen};
+	const size_t count[] = {1, nrows, ncols};
 
 	const int status = nc_get_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
+/**
+* @brief Read all the data for a specific variable
+* @param[in] ncid file ID
+* @param[in] varname variable name (used for error reporting)
+* @param[in] varid ID of the variable those attributes should be checked
+* @param[out] data data extracted from the file
+*/
 void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data)
 {
 	const int status = nc_get_var_double(ncid, varid, data);
@@ -195,11 +240,11 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
 	var.dimids.assign(dimids, dimids+nrdims);
 	
-	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "_FillValue", var.nodata);
-	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "missing_value", var.nodata);
-	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "scale_factor", var.scale);
-	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "add_offset", var.offset);
-	ncpp::getAttribute(ncid, var.varid, var.attributes.name, "units", var.attributes.units);
+	ncpp::getAttribute(ncid, var, "_FillValue", var.nodata);
+	ncpp::getAttribute(ncid, var, "missing_value", var.nodata);
+	ncpp::getAttribute(ncid, var, "scale_factor", var.scale);
+	ncpp::getAttribute(ncid, var, "add_offset", var.offset);
+	ncpp::getAttribute(ncid, var, "units", var.attributes.units);
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
 	
@@ -207,18 +252,34 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
 }
 
-void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
-                const size_t& pos_start, const double * const data)
+/**
+* @brief Write 2D gridded data at the provided time position for a specific variable
+* @param[in] ncid file ID
+* @param[in] varname variable name (used for error reporting)
+* @param[in] varid ID of the variable those attributes should be checked
+* @param[in] nrows number of rows
+* @param[in] ncols number of columns
+* @param[in] pos time index in the file
+* @param[in] data data to write to the file
+*/
+void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols,
+                const double * const data)
 {
-	const size_t start[] = {pos_start, 0, 0};
+	const size_t start[] = {pos, 0, 0};
 	const size_t count[] = {1, nrows, ncols};
 
 	const int status = nc_put_vara_double(ncid, varid, start, count, data);
-	if (status != NC_NOERR) {
+	if (status != NC_NOERR)
 		throw IOException("Could not write variable '" + varname + "': " + string(nc_strerror(status)), AT);
-	}
 }
 
+/**
+* @brief Write a vector of data for a given 1D variable
+* @param[in] ncid file ID
+* @param[in] var variable properties
+* @param[in] data vector that has to be written
+* @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension?
+*/
 void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
 {
 	if (!isUnlimited) {
@@ -233,6 +294,13 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<doubl
 	}
 }
 
+/**
+* @brief Write a vector of strings for a given 1D variable
+* @param[in] ncid file ID
+* @param[in] var variable properties
+* @param[in] data vector that has to be written
+* @param[in] strMaxLen maximum length of the strings in the vector (this MUST have been defined as a dimension before)
+*/
 void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
 {
 	//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
@@ -245,15 +313,21 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<std::
 	}
 }
 
-//if the attribute is not found, an empty string is returned
-void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, std::string& attr_value)
+/**
+* @brief Read a given attribute from a variable (if not found, an empty string is returned)
+* @param[in] ncid file ID
+* @param[in] var variable properties
+* @param[in] attr_name attribute name
+* @param[out] attr_value attribute value as read
+*/
+void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, std::string& attr_value)
 {
 	size_t attr_len;
-	int status = nc_inq_attlen (ncid, value_id, attr_name.c_str(), &attr_len);
+	int status = nc_inq_attlen (ncid, var.varid, attr_name.c_str(), &attr_len);
 	if (status == NC_NOERR) {
 		char* value = new char[attr_len + 1]; // +1 for trailing null
-		status = nc_get_att_text(ncid, value_id, attr_name.c_str(), value);
-		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + value_name + "': " + nc_strerror(status), AT);
+		status = nc_get_att_text(ncid, var.varid, attr_name.c_str(), value);
+		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
 
 		value[attr_len] = '\0';
 		attr_value = value;
@@ -261,14 +335,20 @@ void getAttribute(const int& ncid, const int& value_id, const std::string& value
 	}
 }
 
-//if the attribute is not found, the attr_value is not changed
-void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, double& attr_value)
+/**
+* @brief Read a given attribute from a variable (if not found, attr_value is left unchanged)
+* @param[in] ncid file ID
+* @param[in] var variable properties
+* @param[in] attr_name attribute name
+* @param[out] attr_value attribute value as read
+*/
+void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value)
 {
 	size_t attr_len;
-	int status = nc_inq_attlen (ncid, value_id, attr_name.c_str(), &attr_len);
+	int status = nc_inq_attlen (ncid, var.varid, attr_name.c_str(), &attr_len);
 	if (status == NC_NOERR) {
-		status = nc_get_att_double(ncid, value_id, attr_name.c_str(), &attr_value);
-		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + value_name + "': " + nc_strerror(status), AT);
+		status = nc_get_att_double(ncid, var.varid, attr_name.c_str(), &attr_value);
+		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	}
 }
 
@@ -366,7 +446,16 @@ double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vecto
 	}
 }
 
-//populate the results grid and handle the case of llcorner/urcorner swapped
+/**
+* @brief Fill a Grid2DObject with 2D gridded data as read from a NetCDF file
+* @details The provided Grid2DObject must have been properly initialized before (ie proper Nx, Ny). Grids whose llcorner/urcorner have been reversed
+* are properly handled by providing the normal_Xorder and/or normal_Yorder booleans (as well as any combination).
+* @param[out] grid grid to populate
+* @param[in] data serialized data, as read from the NetCDF file
+* @param[in] nodata value that indicates nodata
+* @param[in] normal_Xorder set to false if the X coordinate is reversed
+* @param[in] normal_Yorder set to false if the Y coordinate is reversed
+*/
 void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder, const bool& normal_Yorder)
 {
 	const size_t ncols = grid.getNx();
@@ -397,7 +486,12 @@ void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& noda
 	}
 }
 
-//Since we had to extend MeteoGrids::Parameters, we must redefine this method
+/**
+* @brief Given a parameter index, return its associated name
+* @details Since the MeteoGrids::Parameters have been extended inncpp, this method had to be redefined.
+* @param[in] param parameter index to get the name for
+* @return parameter name
+*/
 std::string getParameterName(const size_t& param)
 {
 	if (param==IOUtils::npos) return "";
@@ -411,7 +505,12 @@ std::string getParameterName(const size_t& param)
 	return mio::MeteoGrids::getParameterName( param );
 }
 
-//Since we had to extend MeteoGrids::Parameters, we must redefine this method
+/**
+* @brief Given a parameter name, return its associated index
+* @details Since the MeteoGrids::Parameters have been extended inncpp, this method had to be redefined.
+* @param[in] param parameter name to get the index for
+* @return parameter index
+*/
 size_t getParameterIndex(const std::string& param)
 {
 	for (size_t ii=firstdimension; ii<=lastdimension; ii++) {
@@ -421,6 +520,10 @@ size_t getParameterIndex(const std::string& param)
 	return mio::MeteoGrids::getParameterIndex( param );
 }
 
+/**
+* @brief Build a CF-1 history string (date of creation, creator, software version)
+* @return string describing the file creation metadata
+*/
 std::string generateHistoryAttribute()
 {
 	Date now;

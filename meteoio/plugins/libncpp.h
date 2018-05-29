@@ -97,13 +97,13 @@ namespace ncpp {
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
-	void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, std::string& attr_value);
-	void getAttribute(const int& ncid, const int& value_id, const std::string& value_name, const std::string& attr_name, double& attr_value);
+	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, std::string& attr_value);
+	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value);
 	
-	void read_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
+	void read_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data);
 	void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);
-	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols, const size_t& pos_start, const double * const data);
+	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, const size_t& nrows, const size_t& ncols, const double * const data);
 	void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited);
 	void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
 
@@ -113,9 +113,6 @@ namespace ncpp {
 	void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
 	std::string generateHistoryAttribute();
-	
-	//std::vector<double> read_1Dvariable(const int& ncid, const size_t& param, std::map<size_t, ncpp::nc_variable> vars, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path);
-	//size_t read_1DvariableLength(const ncpp::nc_variable& var, const std::map<size_t, ncpp::nc_dimension>& dimensions_map, const std::string& file_and_path);
 } // end namespace
 
 #endif

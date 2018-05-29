@@ -909,7 +909,7 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& v
 		if (data.empty()) continue;
 		
 		if (vars[ param ].dimids.size()>0 && vars[ param ].dimids.front()==ncpp::TIME) { //as unlimited dimension, TIME is always first
-			ncpp::write_data(ncid, vars[ param ].attributes.name, vars[ param ].varid, grid_in.getNy(), grid_in.getNx(), time_pos, &data[0]);
+			ncpp::write_data(ncid, vars[ param ].attributes.name, vars[ param ].varid, time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		} else {
 			ncpp::write_data(ncid, vars[ param ], data, false);
 		}
