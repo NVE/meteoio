@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -27,33 +27,34 @@
 #include <string>
 #include <vector>
 
-//https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_data_set_components.html
-
 namespace ncpp {
+	/// This enum expand the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
 	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
 	
 	std::string getParameterName(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
 	
+	/** This structure contains the metadata associated with a NetCDF variable that are schema specific (for example, CF-1) */
 	typedef struct VAR_ATTR {
 		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(-1) {}; //please do NOT use this constructor!
 		VAR_ATTR(const int& i_type) : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
 		VAR_ATTR(const std::string& i_name, const int& i_type) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const double& hgt, const int& i_type)
-								: name(str1), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
-		VAR_ATTR(const size_t& prm, const std::string& str1, const std::string& str2, const std::string& str3, const std::string& str4, const double& hgt, const int& i_type)
-								: name(str1), standard_name(str2), long_name(str3), units(str4), height(hgt), param(prm), type(i_type) {};
+		VAR_ATTR(const size_t& prm, const std::string& i_name, const double& hgt, const int& i_type)
+								: name(i_name), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
+		VAR_ATTR(const size_t& prm, const std::string& i_name, const std::string& std_name, const std::string& lg_name, const std::string& i_units, const double& hgt, const int& i_type)
+								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
 		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
-		std::string name;
-		std::string standard_name;
-		std::string long_name;
-		std::string units;
-		double height;
-		size_t param; //mapping to our MeteoGrids::Parameters or Dimensions
-		int type; //contain NetCDF External Data Types, -1 for "none"
+		std::string name; ///< variable name (it is possible to retrieve a variable by name)
+		std::string standard_name; ///< somehow human-friendly, standardized description of the name
+		std::string long_name; ///< non-standard but often present, longer description of the variable
+		std::string units; ///< unit string representation
+		double height; ///< sensor height (currently unused)
+		size_t param; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
+		int type; ///< contain NetCDF External Data Types, -1 for "none"
 	} var_attr;
 
+	/** This structure contains the metadata associated with a NetCDF variable that are file specific as well as contains the schema specific metadata */
 	typedef struct NC_VARIABLE {
 		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}; //please do NOT use this constructor!
 		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
@@ -63,12 +64,13 @@ namespace ncpp {
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
 		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 		
-		var_attr attributes;
-		std::vector<int> dimids;  //dimensions this variable depends on
-		double scale, offset, nodata;
-		int varid;
+		var_attr attributes; ///< metadata about the variable
+		std::vector<int> dimids;  ///< dimensions this variable depends on
+		double scale, offset, nodata; ///< scale and offset for data packing, nodata value
+		int varid; ///< variable ID, set to -1 and then to a positive value after reading/writing to/from a file
 	} nc_variable;
 	
+	/** This structure contains the metadata associated with a NetCDF dimension */
 	typedef struct NC_DIMENSION {
 			NC_DIMENSION() : name(), length(0), dimid(-1), type(mio::IOUtils::npos), isUnlimited(false) {};
 			NC_DIMENSION(const size_t& i_type, const std::string& i_name)
@@ -77,11 +79,11 @@ namespace ncpp {
 			                     : name(i_name), length(len), dimid(i_dimid), type(i_type), isUnlimited(unlimited) {};
 			std::string toString() const {std::ostringstream os; os << getParameterName(type) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
 			
-			std::string name;
-			size_t length;
-			int dimid;
-			size_t type;
-			bool isUnlimited;
+			std::string name; ///< dimension name
+			size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
+			int dimid; ///< dimension ID, set to -1 and then to a positive value after reading/writing to/from a file
+			size_t type; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
+			bool isUnlimited; ///< at most, one dimension can be "unlimited"
 		} nc_dimension;
 	
 	void open_file(const std::string& filename, const int& omode, int& ncid);

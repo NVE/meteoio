@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -26,7 +26,6 @@
 #include <algorithm>
 
 using namespace std;
-using namespace mio;  // for the IOExceptions and IOUtils
 
 namespace ncpp {
 
@@ -50,14 +49,14 @@ void open_file(const std::string& filename, const int& omode, int& ncid)
 {
 	const int status = nc_open(filename.c_str(), omode, &ncid);
 	if (status != NC_NOERR)
-		throw IOException("Could not open netcdf file '" + filename + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not open netcdf file '" + filename + "': " + nc_strerror(status), AT);
 }
 
 void create_file(const std::string& filename, const int& cmode, int& ncid)
 {
 	const int status = nc_create(filename.c_str(), cmode, &ncid);
 	if (status != NC_NOERR)
-		throw IOException("Could not create netcdf file '" + filename + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not create netcdf file '" + filename + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -73,7 +72,7 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 {
 	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), data_type, 1, &attr_value);
 	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -88,28 +87,28 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 {
 	const int status = nc_put_att_double(ncid, varid, attr_name.c_str(), NC_DOUBLE, 1, &attr_value);
 	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const float& attr_value)
 {
 	const int status = nc_put_att_float(ncid, varid, attr_name.c_str(), NC_FLOAT, 1, &attr_value);
 	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value)
 {
 	const int status = nc_put_att_int(ncid, varid, attr_name.c_str(), NC_INT, 1, &attr_value);
 	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)
 {
 	const int status = nc_put_att_text(ncid, varid, attr_name.c_str(), attr_value.size(), attr_value.c_str());
 	if (status != NC_NOERR)
-		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -140,9 +139,9 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 {
 	if (var.varid != -1) return; //the variable already exists
 	const int ndims = static_cast<int>( var.dimids.size() );
-	if (var.attributes.type==-1) throw InvalidArgumentException("Undefined data type for variable "+var.attributes.standard_name, AT);
+	if (var.attributes.type==-1) throw mio::InvalidArgumentException("Undefined data type for variable "+var.attributes.standard_name, AT);
 	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
-	if (status != NC_NOERR) throw IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+	if (status != NC_NOERR) throw mio::IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	
 	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
@@ -150,7 +149,7 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	if (var.attributes.param!=ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
 	
 	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
-	if (var.attributes.param==MeteoGrids::DEM) {
+	if (var.attributes.param==mio::MeteoGrids::DEM) {
 		ncpp::add_attribute(ncid, var.varid, "positive", "up");
 		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
 	}
@@ -165,14 +164,14 @@ void file_redef(const std::string& filename, const int& ncid)
 {
 	const int status = nc_redef(ncid);
 	if (status != NC_NOERR)
-		throw IOException("Could not open define mode for file '" + filename + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not open define mode for file '" + filename + "': " + nc_strerror(status), AT);
 }
 
 void end_definitions(const std::string& filename, const int& ncid)
 {
 	const int status = nc_enddef(ncid);
 	if (status != NC_NOERR)
-		throw IOException("Could not close define mode for file '" + filename + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not close define mode for file '" + filename + "': " + nc_strerror(status), AT);
 
 }
 
@@ -180,7 +179,7 @@ void close_file(const std::string& filename, const int& ncid)
 {
 	const int status = nc_close(ncid);
 	if (status != NC_NOERR)
-		throw IOException("Could not close netcdf file  '" + filename + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not close netcdf file  '" + filename + "': " + nc_strerror(status), AT);
 
 }
 
@@ -201,7 +200,7 @@ void read_data(const int& ncid, const nc_variable& var,
 
 	const int status = nc_get_vara_double(ncid, var.varid, start, count, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -214,7 +213,7 @@ void read_data(const int& ncid, const nc_variable& var, double*& data)
 {
 	const int status = nc_get_var_double(ncid, var.varid, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
 
 /**
@@ -233,9 +232,9 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	int dimids[NC_MAX_VAR_DIMS];
 
 	int status = nc_inq_varid (ncid, var.attributes.name.c_str(), &var.varid);
-	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	status = nc_inq_var(ncid, var.varid, NULL, NULL, &nrdims, dimids, NULL);
-	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	var.dimids.assign(dimids, dimids+nrdims);
 	
 	ncpp::getAttribute(ncid, var, "_FillValue", var.nodata);
@@ -244,7 +243,7 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	ncpp::getAttribute(ncid, var, "add_offset", var.offset);
 	ncpp::getAttribute(ncid, var, "units", var.attributes.units);
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
-	if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	
 	if (readTimeTransform)
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
@@ -267,7 +266,7 @@ void write_data(const int& ncid, const nc_variable& var, const size_t& pos, cons
 
 	const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+		throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
 }
 
 /**
@@ -281,13 +280,13 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<doubl
 {
 	if (!isUnlimited) {
 		const int status = nc_put_var_double(ncid, var.varid, &data[0]);
-		if (status != NC_NOERR) throw IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	} else {
 		//because nc_put_var_double does not work for unlimited dimensions
 		const size_t start[] = {0};
 		const size_t count[] = {data.size()};
 		const int status = nc_put_vara_double(ncid, var.varid, start, count, &data[0]); 
-		if (status != NC_NOERR) throw IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	}
 }
 
@@ -306,7 +305,7 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<std::
 		const size_t start[] = {ii, 0};
 		const size_t count[] = {1, text.size() + 1}; //only one record, and that many chars to write
 		const int status = nc_put_vara_text(ncid, var.varid, start, count, text.c_str());
-		if (status != NC_NOERR) throw IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	}
 }
 
@@ -324,7 +323,7 @@ void getAttribute(const int& ncid, const nc_variable& var, const std::string& at
 	if (status == NC_NOERR) {
 		char* value = new char[attr_len + 1]; // +1 for trailing null
 		status = nc_get_att_text(ncid, var.varid, attr_name.c_str(), value);
-		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
 
 		value[attr_len] = '\0';
 		attr_value = value;
@@ -345,7 +344,7 @@ void getAttribute(const int& ncid, const nc_variable& var, const std::string& at
 	int status = nc_inq_attlen (ncid, var.varid, attr_name.c_str(), &attr_len);
 	if (status == NC_NOERR) {
 		status = nc_get_att_double(ncid, var.varid, attr_name.c_str(), &attr_value);
-		if (status != NC_NOERR) throw IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	}
 }
 
@@ -363,8 +362,8 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	static const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
 	
 	std::vector<std::string> vecString;
-	const size_t nrWords = IOUtils::readLineToVec(time_units, vecString);
-	if (nrWords<3 || nrWords>4) throw InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
+	const size_t nrWords = mio::IOUtils::readLineToVec(time_units, vecString);
+	if (nrWords<3 || nrWords>4) throw mio::InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
 	if (vecString[0]=="years") o_time_multiplier = equinox_year;
 	else if (vecString[0]=="months") o_time_multiplier = equinox_year/12.;
@@ -372,12 +371,12 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	else if (vecString[0]=="hours") o_time_multiplier = 1./24.;
 	else if (vecString[0]=="minutes") o_time_multiplier = 1./(24.*60.);
 	else if (vecString[0]=="seconds") o_time_multiplier = 1./(24.*3600);
-	else throw InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
+	else throw mio::InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
 	
 	const std::string ref_date_str = (nrWords==3)? vecString[2] : vecString[2]+"T"+vecString[3];
-	Date refDate;
-	if (!IOUtils::convertString(refDate, ref_date_str, i_TZ))
-		throw InvalidArgumentException("Invalid reference date \'"+ref_date_str+"\'", AT);
+	mio::Date refDate;
+	if (!mio::IOUtils::convertString(refDate, ref_date_str, i_TZ))
+		throw mio::InvalidArgumentException("Invalid reference date \'"+ref_date_str+"\'", AT);
 	
 	o_time_offset = refDate.getJulian();
 }
@@ -395,10 +394,10 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 		dimension.length = length;
 		const nc_type len = (dimension.isUnlimited)? NC_UNLIMITED : static_cast<int>(dimension.length);
 		const int status = nc_def_dim(ncid, dimension.name.c_str(), len, &dimension.dimid);
-		if (status != NC_NOERR) throw IOException("Could not define dimension '" + dimension.name + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) throw mio::IOException("Could not define dimension '" + dimension.name + "': " + nc_strerror(status), AT);
 	} else {
 		if (dimension.length != length)
-			throw InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
+			throw mio::InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
 	}
 }
 
@@ -408,12 +407,12 @@ double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<
 	double alpha;
 	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
 	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
-	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
-	const double distanceY = CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
+	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
+	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
 
 	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {
@@ -430,8 +429,8 @@ double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vecto
 	const double distanceY = fabs(vecY.front() - vecY.back());
 
 	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
@@ -491,11 +490,11 @@ void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& noda
 */
 std::string getParameterName(const size_t& param)
 {
-	if (param==IOUtils::npos) return "";
+	if (param==mio::IOUtils::npos) return "";
 	
 	if (param>=NONE) {
 		if (param>lastdimension) 
-			throw IndexOutOfBoundsException("Trying to get name for a dimension that does not exist", AT);
+			throw mio::IndexOutOfBoundsException("Trying to get name for a dimension that does not exist", AT);
 		return dimnames[ param - firstdimension ];
 	}
 	
@@ -523,9 +522,9 @@ size_t getParameterIndex(const std::string& param)
 */
 std::string generateHistoryAttribute()
 {
-	Date now;
+	mio::Date now;
 	now.setFromSys();
-	return now.toString(Date::ISO_Z) + ", " + IOUtils::getLogName() + "@" + IOUtils::getHostName() + ", MeteoIO-" + getLibVersion(true);
+	return now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true);
 }
 
 } //end namespace
