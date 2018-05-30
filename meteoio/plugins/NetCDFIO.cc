@@ -1212,8 +1212,12 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps);
 			if (var.attributes.type==NC_INT) { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
-				for (size_t ll=0; ll<nrTimeSteps; ll++)
+				double prev = IOUtils::nodata;
+				for (size_t ll=0; ll<nrTimeSteps; ll++) {
 					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale) );
+					if (prev!=IOUtils::nodata && data[ll]==prev) throw InvalidArgumentException("When writing time as INT, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+					prev = data[ll];
+				}
 			} else {
 				for (size_t ll=0; ll<nrTimeSteps; ll++)
 					data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale;
@@ -1256,9 +1260,8 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 		}
 
 		//perform some units corrections, if necessary
-		if (var.attributes.units=="%") {
-			for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 100.;
-		}
+		if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 100.;
+
 		return data;
 	}
 }
