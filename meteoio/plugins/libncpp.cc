@@ -39,7 +39,8 @@ std::vector<std::string> initDimensionNames()
 	std::vector<std::string> tmp;
 	tmp.push_back("NONE"); tmp.push_back("TIME"); 
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
-	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
+	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
 	
 	return tmp;
 }

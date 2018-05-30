@@ -47,8 +47,8 @@ class ncParameters {
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > initSchemasDims();
 		static std::vector<ncpp::var_attr> initUserSchemas(const Config& i_cfg);
 		static std::vector<ncpp::nc_dimension> initUserDimensions(const Config& i_cfg);
-		static int initDfltType(const std::string& schema);
 		
+		void initSchemaCst(const std::string& schema);
 		void initFromFile(const std::string& filename, const std::string& schema);
 		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
 		void initDimensionsFromFile(const int& ncid, const std::string& schema_name);
@@ -89,8 +89,9 @@ class ncParameters {
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
 		double TZ;
+		double schema_nodata; ///< nodata value as defined in the schema
 		int schema_dflt_type; ///< default data type as defined in the schema
-		bool debug, isLatLon;
+		bool debug, isLatLon, force_station_dimension;
 };
 
 /**

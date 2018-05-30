@@ -402,15 +402,22 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::schemas_dims( initSchemasDims() );
 std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::schemas_vars( initSchemasVars() );
 
-int ncParameters::initDfltType(const std::string& schema)
+void ncParameters::initSchemaCst(const std::string& schema)
 {
-	if (schema=="CF-1.7") return NC_FLOAT;
-	if (schema=="CROCUS") return NC_DOUBLE;
-	if (schema=="ECMWF") return NC_DOUBLE;
-	if (schema=="WRF") return NC_DOUBLE;
-	if (schema=="AMUNDSEN") return NC_FLOAT;
-	
-	throw InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
+	if (schema=="CF-1.7") {
+		schema_dflt_type = NC_FLOAT;
+	} else if (schema=="CROCUS") {
+		schema_dflt_type = NC_DOUBLE;
+		schema_nodata =  -9999999.; //CNRM-GAME nodata value //HACK do we need it?
+		force_station_dimension = true;
+	} else if (schema=="ECMWF") {
+		schema_dflt_type = NC_DOUBLE;
+	} else if (schema=="WRF") {
+		schema_dflt_type = NC_DOUBLE;
+	} else if (schema=="AMUNDSEN") {
+		schema_dflt_type = NC_FLOAT;
+	} else
+		throw InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
 
 std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::initSchemasDims()
@@ -435,7 +442,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > ncParameters::initSchem
 	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "time") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "longitude") );
-	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "Number_of_points") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
@@ -520,26 +527,28 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 
 	//CROCUS schema
 	tmp.clear();
-	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "h", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "latitude", "degrees", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "longitude", "longitude", "longitude", "degrees", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "s", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "LAT", "latitude", "latitude", "degrees_north", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "LON", "longitude", "longitude", "degrees_east", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", IOUtils::nodata, NC_CHAR) );
 	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "easting", "easting", "", "m", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "northing", "northing", "", "m", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::DEM, "ZS", "", "altitude", "m", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::DEM, "ZS", "altitude", "altitude", "m", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::SLOPE, "slope", "", "slope angle", "degrees from horizontal", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::AZI, "aspect", "", "slope aspect", "degrees from north", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::TA, "Tair", "", "Near Surface Air Temperature", "K", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::RH, "HUMREL", "", "Relative Humidity", "%", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::QI, "Qair", "", "", "", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::QI, "Qair", "", "Near Surface Specific Humidity", "kg/kg", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW, "Wind", "", "Wind Speed", "m/s", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::DW, "Wind_DIR", "", "Wind Direction", "deg", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM_L, "Rainf", "", "Rainfall Rate", "kg/m2/s", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM_S, "Snowf", "", "", "", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::PSUM_S, "Snowf", "", "Snowfall Rate", "kg/m2/s", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::ISWR, "theorSW", "", "Surface Incident total Shortwave radiation", "W/m2", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ISWR_DIR, "DIR_SWdown", "", "Surface Incident Direct Shortwave Radiation", "W/m2", IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(MeteoGrids::ISWR_DIFF, "SCA_SWdown", "", "", "", IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(MeteoGrids::ISWR_DIFF, "SCA_SWdown", "", "Surface Incident Diffuse Shortwave Radiation", "W/m2", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::P, "PSurf", "", "Surface Pressure", "Pa", IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ILWR, "LWdown", "", "Surface Incident Longwave Radiation", "W/m2", IOUtils::nodata, NC_DOUBLE) );
+	//missing: CO2air, NEB
 	results["CROCUS"] = tmp;
 	
 	//AMUNDSEN schema
@@ -669,9 +678,10 @@ std::vector<ncpp::nc_dimension> ncParameters::initUserDimensions(const Config& i
 
 //TODO: redo the whole user_schema thing: we should fill vars / dimensions with the schema, then add/overwrite with the user schema
 ncParameters::ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug)
-             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), schema_dflt_type(initDfltType(schema)), debug(i_debug), isLatLon(false)
+             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), schema_nodata(IOUtils::nodata), schema_dflt_type(NC_DOUBLE), debug(i_debug), isLatLon(false), force_station_dimension(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
+	initSchemaCst(schema);
 	initFromSchema(schema);
 	
 	if (mode==WRITE) {
@@ -921,8 +931,8 @@ void ncParameters::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& v
 //When writing multiple stations in one file, this assumes that they all have the same parameters, the same timestamps and the same coordinate system
 void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
-	const bool multiple_stations = (station_idx==IOUtils::npos);
-	const size_t ref_station_idx = (multiple_stations)? 0 : station_idx;
+	const bool station_dimension = (station_idx==IOUtils::npos) || force_station_dimension;
+	const size_t ref_station_idx = (station_dimension)? 0 : station_idx;
 	if (vecMeteo.empty()) return;
 	if (vecMeteo[ref_station_idx].empty()) return;
 	isLatLon = true; //for now, we force lat/lon coordinates for time series
@@ -939,19 +949,19 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	
 	std::vector<size_t> nc_variables, dimensions;
 	dimensions.push_back( ncpp::TIME );
-	if (multiple_stations) {
+	if (station_dimension) {
 		dimensions.push_back( ncpp::STATSTRLEN ); //this MUST be before STATION
 		dimensions.push_back( ncpp::STATION );
 	}
 	const Date ref_date( getRefDate(vecMeteo, station_idx) );
-	const size_t nrStations = (multiple_stations)? vecMeteo.size() : 1;
+	const size_t nrStations = (station_dimension)? vecMeteo.size() : 1;
 	for (size_t ii=0; ii<dimensions.size(); ii++) {
 		const size_t param = dimensions[ii];
 		const size_t length = (param==ncpp::TIME)? 0 : ((param==ncpp::STATSTRLEN)? DFLT_STAT_STR_LEN : nrStations) ;
 		ncpp::createDimension(ncid, dimensions_map[ param ], length);
 		
 		if (param==ncpp::STATSTRLEN) continue; //no associated variable for STATSTRLEN
-		if (!multiple_stations && param==ncpp::STATION) continue;
+		if (!station_dimension && param==ncpp::STATION) continue;
 		if (setAssociatedVariable(ncid, param, ref_date)) nc_variables.push_back( dimensions[ii] ); //associated variable will have to be filled
 	}
 	
@@ -961,8 +971,9 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
-			if (param<ncpp::firstdimension && param!=MeteoGrids::DEM) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
-			if (multiple_stations) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
+			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI);
+			if (param<ncpp::firstdimension && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
+			if (station_dimension) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 			
 			ncpp::create_variable(ncid, vars[ param ]);
@@ -975,7 +986,7 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
 		
-		if (param==ncpp::STATION) { //this is not present if !multiple_stations
+		if (param==ncpp::STATION) { //this is not present if !station_dimension
 			std::vector<std::string> txtdata( vecMeteo.size() );
 			for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
 			ncpp::write_data(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
@@ -1149,6 +1160,8 @@ void ncParameters::appendVariablesList(std::vector<size_t> &nc_variables, const 
 		pushVar(nc_variables, ncpp::EASTING );
 		pushVar(nc_variables, ncpp::NORTHING );
 	}
+	pushVar(nc_variables, MeteoGrids::SLOPE );
+	pushVar(nc_variables, MeteoGrids::AZI );
 	
 	//add all vars found in vecMeteo
 	const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1207,7 +1220,8 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 	const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
 	const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1;
 	
-	if (param>=ncpp::firstdimension || param==MeteoGrids::DEM) { //associated nc_variables
+	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI);
+	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
 		if (param==ncpp::TIME) {
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps);
@@ -1228,6 +1242,10 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 			for (size_t jj=st_start; jj<st_end; jj++) {
 				if (param==MeteoGrids::DEM) {
 					data[jj-st_start] = vecMeteo[jj].front().meta.position.getAltitude();
+				} else if (param==MeteoGrids::SLOPE) {
+					data[jj-st_start] = vecMeteo[jj].front().meta.getSlopeAngle();
+				} else if (param==MeteoGrids::AZI) {
+					data[jj-st_start] = vecMeteo[jj].front().meta.getAzimuth();
 				} else if (param==ncpp::EASTING) {
 					data[jj-st_start] = vecMeteo[jj].front().meta.position.getEasting();
 				} else if (param==ncpp::NORTHING) {
