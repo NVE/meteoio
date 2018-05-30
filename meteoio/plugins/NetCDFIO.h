@@ -69,6 +69,7 @@ class ncParameters {
 		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const;
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
+		void addToVars(const size_t& param);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);

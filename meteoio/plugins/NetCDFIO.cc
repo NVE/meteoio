@@ -1149,6 +1149,16 @@ void ncParameters::pushVar(std::vector<size_t> &nc_variables, const size_t& para
 		nc_variables.push_back( param );
 }
 
+//add an out-of-schema parameter to the vars map (if necessary)
+void ncParameters::addToVars(const size_t& param)
+{
+	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
+		const std::string varname( ncpp::getParameterName(param) );
+		const ncpp::var_attr tmp_attr(param, varname, IOUtils::nodata, schema_dflt_type);
+		vars[param] = ncpp::nc_variable(tmp_attr);
+	}
+}
+
 void ncParameters::appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
 	//add metadata variables
@@ -1160,23 +1170,19 @@ void ncParameters::appendVariablesList(std::vector<size_t> &nc_variables, const 
 		pushVar(nc_variables, ncpp::EASTING );
 		pushVar(nc_variables, ncpp::NORTHING );
 	}
-	pushVar(nc_variables, MeteoGrids::SLOPE );
-	pushVar(nc_variables, MeteoGrids::AZI );
+	addToVars( MeteoGrids::SLOPE); pushVar(nc_variables, MeteoGrids::SLOPE );
+	addToVars( MeteoGrids::AZI ); pushVar(nc_variables, MeteoGrids::AZI );
 	
 	//add all vars found in vecMeteo
 	const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
 	const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
 	for (size_t st=st_start; st<st_end; st++) {
-		const std::set<std::string> parameters( MeteoData::listAvailableParameters( vecMeteo[st]));
+		const std::set<std::string> parameters( MeteoData::listAvailableParameters( vecMeteo[st] ));
 		
 		for (std::set<std::string>::const_iterator it=parameters.begin(); it!=parameters.end(); ++it) {
 			const size_t param = MeteoGrids::getParameterIndex( *it );
 			if (param>=MeteoGrids::nrOfParameters) continue; //in order to be supported, a parameter must be declared in MeteoGrids
-			if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
-				const ncpp::var_attr tmp_attr(param, *it, IOUtils::nodata, schema_dflt_type);
-				vars[param] = ncpp::nc_variable(tmp_attr);
-			}
-			pushVar(nc_variables, param);
+			addToVars(param); pushVar(nc_variables, param);
 		}
 	}
 }

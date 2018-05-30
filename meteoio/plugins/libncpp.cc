@@ -140,7 +140,7 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 {
 	if (var.varid != -1) return; //the variable already exists
 	const int ndims = static_cast<int>( var.dimids.size() );
-	if (var.attributes.type==-1) throw mio::InvalidArgumentException("Undefined data type for variable "+var.attributes.standard_name, AT);
+	if (var.attributes.type==-1) throw mio::InvalidArgumentException("Undefined data type for variable '"+var.attributes.standard_name+"'", AT);
 	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
 	if (status != NC_NOERR) throw mio::IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	
