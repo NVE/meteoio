@@ -1254,6 +1254,11 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 				if (stationHasParameter[jj-st_start]) data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param );
 			}
 		}
+
+		//perform some units corrections, if necessary
+		if (var.attributes.units=="%") {
+			for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 100.;
+		}
 		return data;
 	}
 }
