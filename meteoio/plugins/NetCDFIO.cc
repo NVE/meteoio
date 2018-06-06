@@ -535,6 +535,8 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", IOUtils::nodata, NC_CHAR) );
 	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "easting", "easting", "", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "northing", "northing", "", "m", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(ncpp::ZREF, "ZREF", "", "Reference_Height", "m", IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(ncpp::UREF, "UREF", "", "Reference_Height_for_Wind", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::DEM, "ZS", "altitude", "altitude", "m", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::SLOPE, "slope", "", "slope angle", "degrees from horizontal", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::AZI, "aspect", "", "slope aspect", "degrees from north", IOUtils::nodata, NC_FLOAT) );
@@ -679,9 +681,14 @@ std::vector<ncpp::nc_dimension> ncParameters::initUserDimensions(const Config& i
 
 //TODO: redo the whole user_schema thing: we should fill vars / dimensions with the schema, then add/overwrite with the user schema
 ncParameters::ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug)
-             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), schema_nodata(IOUtils::nodata), schema_dflt_type(NC_DOUBLE), debug(i_debug), isLatLon(false), force_station_dimension(false)
+             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
+             schema_nodata(IOUtils::nodata), schema_dflt_type(NC_DOUBLE), debug(i_debug), isLatLon(false), force_station_dimension(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
+	cfg.getValue("ZREF", "Input", dflt_zref, IOUtils::nothrow);
+	cfg.getValue("UREF", "Input", dflt_uref, IOUtils::nothrow);
+	cfg.getValue("DEFAULT_SLOPE", "Input", dflt_slope, IOUtils::nothrow);
+	cfg.getValue("DEFAULT_AZI", "Input", dflt_azi, IOUtils::nothrow);
 	initSchemaCst(schema);
 	initFromSchema(schema);
 	
@@ -972,7 +979,7 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
-			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI);
+			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
 			if (param<ncpp::firstdimension && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
 			if (station_dimension) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
@@ -1174,6 +1181,10 @@ void ncParameters::appendVariablesList(std::vector<size_t> &nc_variables, const 
 	}
 	addToVars( MeteoGrids::SLOPE); pushVar(nc_variables, MeteoGrids::SLOPE );
 	addToVars( MeteoGrids::AZI ); pushVar(nc_variables, MeteoGrids::AZI );
+	if (dflt_zref!=IOUtils::nodata || dflt_uref!=IOUtils::nodata) { //This is required by Crocus and we don't have any better solution for now...
+		addToVars( ncpp::ZREF ); pushVar(nc_variables, ncpp::ZREF );
+		addToVars( ncpp::UREF ); pushVar(nc_variables, ncpp::UREF );
+	}
 	
 	//add all vars found in vecMeteo
 	const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1220,7 +1231,7 @@ bool ncParameters::setAssociatedVariable(const int& ncid, const size_t& param, c
 	return false;
 }
 
-const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var)
+const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const
 {
 	const size_t param = var.attributes.param;
 	const size_t ref_station_idx = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1228,7 +1239,7 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 	const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
 	const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1;
 	
-	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI);
+	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
 	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
 		if (param==ncpp::TIME) {
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
@@ -1253,8 +1264,10 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 					value = vecMeteo[jj].front().meta.position.getAltitude();
 				} else if (param==MeteoGrids::SLOPE) {
 					value = vecMeteo[jj].front().meta.getSlopeAngle();
+					if (value==IOUtils::nodata) value = dflt_slope;
 				} else if (param==MeteoGrids::AZI) {
 					value = vecMeteo[jj].front().meta.getAzimuth();
+					if (value==IOUtils::nodata) value = dflt_azi;
 				} else if (param==ncpp::EASTING) {
 					value = vecMeteo[jj].front().meta.position.getEasting();
 				} else if (param==ncpp::NORTHING) {
@@ -1263,6 +1276,10 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 					value = vecMeteo[jj].front().meta.position.getLat();
 				} else if (param==ncpp::LONGITUDE) {
 					value = vecMeteo[jj].front().meta.position.getLon();
+				} else if (param==ncpp::ZREF) { //this two are required by Crocus and we don't have anything better for now...
+					value = dflt_zref;
+				} else if (param==ncpp::UREF) {
+					value = dflt_uref;
 				} else
 					throw UnknownValueException("Unknown dimension found when trying to write out netcdf file", AT);
 				

@@ -41,6 +41,7 @@ std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
 }
