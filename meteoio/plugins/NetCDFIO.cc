@@ -81,7 +81,8 @@ namespace mio {
  *
  * @note When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
- * @note When using the CROCUS schema, please note that the humidity should be provided as specific humidity, so please use a data creator / generator if needed.
+ * @note When using the CROCUS schema, please note that the humidity should be provided as specific humidity, so please use a data 
+ * creator / generator if needed to get a QI parameter (see HumidityGenerator).
  *
  * @section netcdf_example Example use
  * Using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below):

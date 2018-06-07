@@ -45,7 +45,11 @@ bool HumidityGenerator::generate(const size_t& param, MeteoData& md)
 	if (value != IOUtils::nodata) return true;
 
 	if (type==GEN_RH) return generateRH(value, md);
-	else throw IOException("Not implemented yet", AT);
+	else if (type==GEN_TD) return generateTD(value, md);
+	else if (type==GEN_QI) return generateQI(value, md);
+	else if (type==GEN_AH) return generateAH(value, md);
+	else 
+		throw InvalidArgumentException("Invalid parameter type", AT);
 }
 
 bool HumidityGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
@@ -60,12 +64,117 @@ bool HumidityGenerator::create(const size_t& param, std::vector<MeteoData>& vecM
 	return all_filled;
 }
 
+bool HumidityGenerator::generateAH(double& value, MeteoData& md)
+{
+	const double TA = md(MeteoData::TA);
+	if (TA==IOUtils::nodata) return false;//nothing else we can do here
+	
+	if (md.param_exists("RH")) {
+		const double RH = md("RH");
+		if (RH!=IOUtils::nodata) {
+			value = RH * Atmosphere::vaporSaturationPressure(TA) / (TA * Cst::gaz_constant_water_vapor);
+			return true;
+		}
+	}
+
+	if (md.param_exists("TD")) {
+		const double TD = md("TD");
+		if (TD!=IOUtils::nodata) {
+			const double RH = Atmosphere::DewPointtoRh(TD, TA, false);
+			value = RH * Atmosphere::vaporSaturationPressure(TA) / (TA * Cst::gaz_constant_water_vapor);
+			return true;
+		}
+	}
+	
+	if (md.param_exists("QI")) {
+		const double QI = md("QI");
+		const double altitude = md.meta.position.getAltitude();
+		if (QI!=IOUtils::nodata && altitude!=IOUtils::nodata) {
+			const double RH = Atmosphere::specToRelHumidity(altitude, TA, QI);
+			value = RH * Atmosphere::vaporSaturationPressure(TA) / (TA * Cst::gaz_constant_water_vapor);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool HumidityGenerator::generateQI(double& value, MeteoData& md)
+{
+	const double TA = md(MeteoData::TA);
+	if (TA==IOUtils::nodata) return false;//nothing else we can do here
+	const double altitude = md.meta.position.getAltitude();
+	if (altitude==IOUtils::nodata) return false;
+	
+	if (md.param_exists("RH")) {
+		const double RH = md("RH");
+		if (RH!=IOUtils::nodata) {
+			value = Atmosphere::relToSpecHumidity(altitude, TA, RH);
+			return true;
+		}
+	}
+	
+	if (md.param_exists("AH")) {
+		const double AH = md("AH");
+		if (AH!=IOUtils::nodata) {
+			const double RH = AH * Cst::gaz_constant_water_vapor * TA / Atmosphere::vaporSaturationPressure(TA);
+			value = Atmosphere::relToSpecHumidity(altitude, TA, RH);
+			return true;
+		}
+	}
+
+	if (md.param_exists("TD")) {
+		const double TD = md("TD");
+		if (TD!=IOUtils::nodata) {
+			const double RH = Atmosphere::DewPointtoRh(TD, TA, false);
+			value = Atmosphere::relToSpecHumidity(altitude, TA, RH);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool HumidityGenerator::generateTD(double& value, MeteoData& md)
+{
+	const double TA = md(MeteoData::TA);
+	if (TA==IOUtils::nodata) return false;//nothing else we can do here
+	
+	if (md.param_exists("RH")) {
+		const double RH = md("RH");
+		if (RH!=IOUtils::nodata) {
+			value = Atmosphere::RhtoDewPoint(RH, TA, false);
+			return true;
+		}
+	}
+	
+	if (md.param_exists("AH")) {
+		const double AH = md("AH");
+		if (AH!=IOUtils::nodata) {
+			const double RH = AH * Cst::gaz_constant_water_vapor * TA / Atmosphere::vaporSaturationPressure(TA);
+			value = Atmosphere::RhtoDewPoint(RH, TA, false);
+			return true;
+		}
+	}
+
+	if (md.param_exists("QI")) {
+		const double QI = md("QI");
+		const double altitude = md.meta.position.getAltitude();
+		if (QI!=IOUtils::nodata && altitude!=IOUtils::nodata) {
+			const double RH = Atmosphere::specToRelHumidity(altitude, TA, QI);
+			value = Atmosphere::RhtoDewPoint(RH, TA, false);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool HumidityGenerator::generateRH(double& value, MeteoData& md)
-{//HACK handle AH
+{
 	const double TA = md(MeteoData::TA);
 	if (TA==IOUtils::nodata) return false;//nothing else we can do here
 
-	//first chance to compute RH
 	if (md.param_exists("TD")) {
 		const double TD = md("TD");
 		if (TD!=IOUtils::nodata) {
@@ -73,8 +182,15 @@ bool HumidityGenerator::generateRH(double& value, MeteoData& md)
 			return true;
 		}
 	}
+	
+	if (md.param_exists("AH")) {
+		const double AH = md("AH");
+		if (AH!=IOUtils::nodata) {
+			value = AH * Cst::gaz_constant_water_vapor * TA / Atmosphere::vaporSaturationPressure(TA);
+			return true;
+		}
+	}
 
-	//second chance to try to compute RH
 	if (md.param_exists("QI")) {
 		const double QI = md("QI");
 		const double altitude = md.meta.position.getAltitude();

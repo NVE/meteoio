@@ -34,7 +34,6 @@ namespace mio {
  * RH::generators = HUMIDITY
  * RH::humidity::type = RH
  * @endcode
- * @NOTE This is still under developement, only limited functionality is available
  */
 class HumidityGenerator : public GeneratorAlgorithm {
 	public:
@@ -46,7 +45,10 @@ class HumidityGenerator : public GeneratorAlgorithm {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
+		static bool generateAH(double& value, MeteoData& md);
 		static bool generateRH(double& value, MeteoData& md);
+		static bool generateTD(double& value, MeteoData& md);
+		static bool generateQI(double& value, MeteoData& md);
 
 		typedef enum GEN_TYPE {
 			GEN_AH,
