@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <meteoio/dataGenerators/RelHumGenerator.h>
+#include <meteoio/dataGenerators/HumidityGenerator.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 namespace mio {

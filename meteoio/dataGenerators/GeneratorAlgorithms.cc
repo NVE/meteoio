@@ -26,7 +26,7 @@
 #include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
 #include <meteoio/dataGenerators/PPHASEGenerator.h>
 #include <meteoio/dataGenerators/PrecUnsplit.h>
-#include <meteoio/dataGenerators/RelHumGenerator.h>
+#include <meteoio/dataGenerators/HumidityGenerator.h>
 #include <meteoio/dataGenerators/SinGenerator.h>
 #include <meteoio/dataGenerators/StdPressGenerator.h>
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
