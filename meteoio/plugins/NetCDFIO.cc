@@ -185,6 +185,13 @@ namespace mio {
  * @code
  * ncrename -d TIME_T,time -v TIME_T,time {my_netcdf_file}
  * @endcode
+ *
+ * If you need to edit netCDF attributes (for example, to add your metadata), you can use <A href="http://nco.sourceforge.net/">ncatted</A> to do so. For example, to
+ * replace the previous global attribute <i>summary</i> by yours or to append a line to the <i>history</i> global attribute:
+ * @code
+ * ncatted -a summary,global,o,c,"My summary" myFile.nc	#Overwrite the summary field
+ * ncatted -a history,global,a,c,"Edited by me on 2018-06-06\n" myFile.nc	#Append a line to the history field
+ * @endcode
  */
 
 //helper function to sort the cache of grid files
@@ -1022,6 +1029,11 @@ void ncParameters::writeGridMetadataHeader(const int& ncid, const Grid2DObject& 
 	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
 	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology");
 	ncpp::add_attribute(ncid, NC_GLOBAL, "title", "Gridded data for various parameters and timesteps");
+	//The following are placeholders to help users know what has to be manually provided for ACDD compliance
+	ncpp::add_attribute(ncid, NC_GLOBAL, "summary", "Please fill this field to be ACDD compliant");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "acknowledgement", "Please fill this field to be ACDD compliant");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "metadata_link", "Please fill this field (with DOI or URL) to be ACDD compliant");
+
 	
 	Coords urcorner(grid_in.llcorner);
 	urcorner.moveByXY(static_cast<double>(grid_in.getNx())*grid_in.cellsize, static_cast<double>(grid_in.getNy())*grid_in.cellsize);
@@ -1064,6 +1076,10 @@ void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< 
 	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
 	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology, Time series analysis");
 	ncpp::add_attribute(ncid, NC_GLOBAL, "institution", IOUtils::getDomainName());
+	//The following are placeholders to help users know what has to be manually provided for ACDD compliance
+	ncpp::add_attribute(ncid, NC_GLOBAL, "summary", "Please fill this field to be ACDD compliant");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "acknowledgement", "Please fill this field to be ACDD compliant");
+	ncpp::add_attribute(ncid, NC_GLOBAL, "metadata_link", "Please fill this field (with DOI or URL) to be ACDD compliant");
 	
 	Date set_start, set_end;
 	int sampling_period = -1;
