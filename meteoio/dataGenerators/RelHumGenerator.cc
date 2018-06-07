@@ -21,77 +21,70 @@
 
 namespace mio {
 
-bool RhGenerator::generate(const size_t& param, MeteoData& md)
+void HumidityGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	double &value = md(param);
-	if (value == IOUtils::nodata) {
-		const double TA = md(MeteoData::TA);
-		if (TA==IOUtils::nodata) return false;//nothing else we can do here
+	const std::string where( "generators::"+algo );
 
-		//first chance to compute RH
-		if (md.param_exists("TD")) {
-			const double TD = md("TD");
-			if (TD!=IOUtils::nodata) {
-				value = Atmosphere::DewPointtoRh(TD, TA, false);
-				return true;
-			}
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_type( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_type=="AH") type = GEN_AH;
+			else if (user_type=="RH") type = GEN_RH;
+			else if (user_type=="TD") type = GEN_TD;
+			else if (user_type=="QI") type = GEN_QI;
+			else
+				throw InvalidArgumentException("Unknown humidity parameter \""+user_type+"\" supplied for "+where, AT);
 		}
-
-		//second chance to try to compute RH
-		if (md.param_exists("SH")) {
-			const double SH = md("SH");
-			const double altitude = md.meta.position.getAltitude();
-			if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata) {
-				value = Atmosphere::specToRelHumidity(altitude, TA, SH);
-				return true;
-			}
-		}
-
-		return false;
 	}
-
-	return true; //all missing values could be filled
 }
 
-bool RhGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool HumidityGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if (value != IOUtils::nodata) return true;
+
+	if (type==GEN_RH) return generateRH(value, md);
+	else throw IOException("Not implemented yet", AT);
+}
+
+bool HumidityGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
-	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
-
 	bool all_filled = true;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		double &value = vecMeteo[ii](param);
-		if (value == IOUtils::nodata) {
-			const double TA = vecMeteo[ii](MeteoData::TA);
-			if (TA==IOUtils::nodata) { //nothing else we can do here
-				all_filled=false;
-				continue;
-			}
-
-			//first chance to compute RH
-			if (vecMeteo[ii].param_exists("TD")) {
-				const double TD = vecMeteo[ii]("TD");
-				if (TD!=IOUtils::nodata) {
-					value = Atmosphere::DewPointtoRh(TD, TA, false);
-					continue;
-				}
-			}
-
-			//second chance to try to compute RH
-			if (vecMeteo[ii].param_exists("SH")) {
-				const double SH = vecMeteo[ii]("SH");
-				if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata) {
-					value = Atmosphere::specToRelHumidity(altitude, TA, SH);
-					continue;
-				}
-			}
-
-			all_filled=false;
-		}
+		if (!generate(param, vecMeteo[ii])) all_filled=false;
 	}
 
 	return all_filled;
+}
+
+bool HumidityGenerator::generateRH(double& value, MeteoData& md)
+{//HACK handle AH
+	const double TA = md(MeteoData::TA);
+	if (TA==IOUtils::nodata) return false;//nothing else we can do here
+
+	//first chance to compute RH
+	if (md.param_exists("TD")) {
+		const double TD = md("TD");
+		if (TD!=IOUtils::nodata) {
+			value = Atmosphere::DewPointtoRh(TD, TA, false);
+			return true;
+		}
+	}
+
+	//second chance to try to compute RH
+	if (md.param_exists("QI")) {
+		const double QI = md("QI");
+		const double altitude = md.meta.position.getAltitude();
+		if (QI!=IOUtils::nodata && altitude!=IOUtils::nodata) {
+			value = Atmosphere::specToRelHumidity(altitude, TA, QI);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 } //namespace
