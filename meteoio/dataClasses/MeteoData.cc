@@ -31,47 +31,47 @@ namespace mio {
  * static section                                           *
  ************************************************************/
 const size_t MeteoGrids::nrOfParameters =  MeteoGrids::lastparam - MeteoGrids::firstparam + 1;
-std::vector<std::string> MeteoGrids::paramname;
+std::vector<std::string> MeteoGrids::paramname, MeteoGrids::long_name, MeteoGrids::units;
 const bool MeteoGrids::__init = MeteoGrids::initStaticData();
 
 bool MeteoGrids::initStaticData()
 {
 	//the order must be the same as in the enum
-	paramname.push_back("TA");
-	paramname.push_back("RH");
-	paramname.push_back("QI");
-	paramname.push_back("TD");
-	paramname.push_back("VW");
-	paramname.push_back("DW");
-	paramname.push_back("VW_MAX");
-	paramname.push_back("ISWR");
-	paramname.push_back("RSWR");
-	paramname.push_back("ISWR_DIFF");
-	paramname.push_back("ISWR_DIR");
-	paramname.push_back("ILWR");
-	paramname.push_back("OLWR");
-	paramname.push_back("TAU_CLD");
-	paramname.push_back("HS");
-	paramname.push_back("PSUM");
-	paramname.push_back("PSUM_PH");
-	paramname.push_back("PSUM_L");
-	paramname.push_back("PSUM_S");
-	paramname.push_back("TSG");
-	paramname.push_back("TSS");
-	paramname.push_back("TSOIL");
-	paramname.push_back("P");
-	paramname.push_back("P_SEA");
-	paramname.push_back("U");
-	paramname.push_back("V");
-	paramname.push_back("W");
-	paramname.push_back("SWE");
-	paramname.push_back("RSNO");
-	paramname.push_back("ROT");
-	paramname.push_back("ALB");
-	paramname.push_back("DEM");
-	paramname.push_back("SHADE");
-	paramname.push_back("SLOPE");
-	paramname.push_back("AZI");
+	paramname.push_back("TA");					long_name.push_back("Air Temperature");						units.push_back("K");
+	paramname.push_back("RH");					long_name.push_back("Relative Humidity");					units.push_back("-");
+	paramname.push_back("QI");					long_name.push_back("Specific Humidity");					units.push_back("g/g");
+	paramname.push_back("TD");					long_name.push_back("Dew Point Temperature");			units.push_back("K");
+	paramname.push_back("VW");				long_name.push_back("Wind Velocity");							units.push_back("m/s");
+	paramname.push_back("DW");				long_name.push_back("Wind Direction");						units.push_back("°");
+	paramname.push_back("VW_MAX");		long_name.push_back("Gust Wind Velocity");					units.push_back("m/s");
+	paramname.push_back("ISWR");				long_name.push_back("Incoming Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("RSWR");			long_name.push_back("Reflected Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("ISWR_DIFF");		long_name.push_back("Incoming Diffuse Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ISWR_DIR");		long_name.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ILWR");				long_name.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("OLWR");			long_name.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("TAU_CLD");		long_name.push_back("Atmospheric Transmissivity");					units.push_back("-");
+	paramname.push_back("HS");					long_name.push_back("Snow Height");							units.push_back("m");
+	paramname.push_back("PSUM");			long_name.push_back("Precipitation Sum");					units.push_back("kg/m2");
+	paramname.push_back("PSUM_PH");		long_name.push_back("Precipitation Phase");					units.push_back("-");
+	paramname.push_back("PSUM_L");			long_name.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
+	paramname.push_back("PSUM_S");			long_name.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
+	paramname.push_back("TSG");				long_name.push_back("Ground Surface Temperature");					units.push_back("K");
+	paramname.push_back("TSS");				long_name.push_back("Surface Temperature");				units.push_back("K");
+	paramname.push_back("TSOIL");			long_name.push_back("Soil Temperature");					units.push_back("K");
+	paramname.push_back("P");					long_name.push_back("Air Pressure");							units.push_back("Pa");
+	paramname.push_back("P_SEA");			long_name.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
+	paramname.push_back("U");					long_name.push_back("Wind Velocity East Component");				units.push_back("m/s");
+	paramname.push_back("V");					long_name.push_back("Wind Velocity North Component");				units.push_back("m/s");
+	paramname.push_back("W");					long_name.push_back("Wind Velocity Vertical Component");			units.push_back("m/s");
+	paramname.push_back("SWE");				long_name.push_back("Snow Water Equivalent");			units.push_back("kg/m2");
+	paramname.push_back("RSNO");			long_name.push_back("Snow Mean Density");				units.push_back("kg/m3");
+	paramname.push_back("ROT");				long_name.push_back("Total generated runoff");			units.push_back("gk/m2");
+	paramname.push_back("ALB");				long_name.push_back("Albedo");									units.push_back("-");
+	paramname.push_back("DEM");				long_name.push_back("Altitude above Sea Level");		units.push_back("m");
+	paramname.push_back("SHADE");			long_name.push_back("Hillshade");									units.push_back("-");
+	paramname.push_back("SLOPE");			long_name.push_back("Slope Angle");							units.push_back("°");
+	paramname.push_back("AZI");				long_name.push_back("Slope Aspect");							units.push_back("°");
 
 	return true;
 }
@@ -82,6 +82,21 @@ const std::string& MeteoGrids::getParameterName(const size_t& parindex)
 		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
 
 	return paramname[parindex];
+}
+const std::string& MeteoGrids::getParameterLongName(const size_t& parindex)
+{
+	if (parindex >= MeteoGrids::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to get long_name for parameter that does not exist", AT);
+
+	return long_name[parindex];
+}
+
+const std::string& MeteoGrids::getParameterUnits(const size_t& parindex)
+{
+	if (parindex >= MeteoGrids::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to get units for parameter that does not exist", AT);
+
+	return units[parindex];
 }
 
 size_t MeteoGrids::getParameterIndex(const std::string& parname)

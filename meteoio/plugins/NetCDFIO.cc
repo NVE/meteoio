@@ -47,7 +47,7 @@ namespace mio {
  * <A HREF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse</A> java software or
  * <A HREF="http://meteora.ucsd.edu/~pierce/ncview_home_page.html">ncview</A>. It is also possible to run *ncdump* on a given
  * file in order to have a look at its structure (such as *ncdump {my_netcdf_file} | more*) and specially the parameters names
- * (this is useful if remapping is needed, see below for in the \ref netcdf_keywords "keywords" section).
+ * (this is useful if remapping is needed, see below in the \ref netcdf_keywords "Keywords" or in the \ref netcdf_renaming "Renaming" section).
  *
  * The NetCDF format does not impose a specific set of metadata and therefore in order to easily exchange data
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
@@ -57,6 +57,10 @@ namespace mio {
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
  * - AMUNDSEN - from the <A HREF="https://geographie.uibk.ac.at/blog/ahc/models/">Alpine, Hydro, climatology</A> group in Innsbruck;
  * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model.
+ * 
+ * Moreover, when writing NetCDF files with MeteoIO, all the generated files will contain as much of the Attribute Conventions Dataset Discovery 
+ * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> metadata as (automatically) possible, 
+ * but some fields must be filled by the user for full compliance. This is detailed in section \ref netcdf_editing "Editing" below.
  *
  * If you want to better understand the structure of the NetCDF file format, you are highly encouraged to read about
  * its <A HREF="https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_data_set_components.html">components</A>.
@@ -79,10 +83,16 @@ namespace mio {
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
  * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
  *
+ * For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
+ *  - ZREF: the reference height for meteorological measurements;
+ *  - UREF: the reference height for wind measurements;
+ *  - DEFAULT_SLOPE: a default value for the slope when none is available;
+ *  - DEFAULT_AZI: a default value for the azimuth when none is available;
+ * 
  * @note When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
  * @note When using the CROCUS schema, please note that the humidity should be provided as specific humidity, so please use a data 
- * creator / generator if needed to get a QI parameter (see HumidityGenerator).
+ * creator if don't already have a QI parameter (see HumidityGenerator).
  *
  * @section netcdf_example Example use
  * Using this plugin to build downscaled time series at virtual stations, with the ECMWF Era Interim data set (see section below):
@@ -176,7 +186,23 @@ namespace mio {
  * })
  * @endcode
  *
- * @section netcdf_tricks Saving the day when a file is not standard compliant
+ * @section netcdf_tricks External tools and tricks to work with NetCDF
+ * @subsection netcdf_editing Editing the metadata of a NetCDF file
+ * In order to ensure that a NetCDF is <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A> compliant,
+ * several global variables must be defined. Most of them have already been populated by MeteoIO but a few need further editing. You can have a
+ * look at what has already been defined by dumping the header content with ncdump:
+ * @code
+ * ncdump -h {my_netcdf_file}
+ * @endcode
+ * 
+ * Then, to add your metadata, you can use <A href="http://nco.sourceforge.net/">ncatted</A> (it is often packaged as "nco"). For example, 
+ * to replace the previous global attribute <i>summary</i> by yours or to append a line to the <i>history</i> global attribute:
+ * @code
+ * ncatted -a summary,global,o,c,"My summary" {my_netcdf_file}	#Overwrite the summary field
+ * ncatted -a history,global,a,c,"Edited by me on 2018-06-06\n" {my_netcdf_file}	#Append a line to the history field
+ * @endcode
+ * 
+ * @subsection netcdf_renaming Saving the day when a file is not standard compliant
  * Unfortunatelly, the naming of the parameters and dimensions within the files is not always standard nor consistent. In order to handle the parameters names,
  * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
  * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TIME_T"),
@@ -184,13 +210,6 @@ namespace mio {
  * <A HREF="http://nco.sourceforge.net/">NCO utilities</A> to rename both the dimension (-d) and the variable (-v):
  * @code
  * ncrename -d TIME_T,time -v TIME_T,time {my_netcdf_file}
- * @endcode
- *
- * If you need to edit netCDF attributes (for example, to add your metadata), you can use <A href="http://nco.sourceforge.net/">ncatted</A> to do so. For example, to
- * replace the previous global attribute <i>summary</i> by yours or to append a line to the <i>history</i> global attribute:
- * @code
- * ncatted -a summary,global,o,c,"My summary" myFile.nc	#Overwrite the summary field
- * ncatted -a history,global,a,c,"Edited by me on 2018-06-06\n" myFile.nc	#Append a line to the history field
  * @endcode
  */
 
@@ -532,7 +551,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > ncParameters::initSchemasVa
 	tmp.push_back( ncpp::var_attr(MeteoGrids::TSS, "ts", "surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", IOUtils::nodata, NC_FLOAT) );
-	//tmp.push_back( ncpp::var_attr(MeteoGrids::TSG, "tsg", "soil_surface_temperature", "", "K", IOUtils::nodata, NC_FLOAT) ); //HACK this is non-standard!
 	results["CF-1.6"] = tmp;
 
 	//CROCUS schema
@@ -1180,7 +1198,10 @@ void ncParameters::addToVars(const size_t& param)
 {
 	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
 		const std::string varname( ncpp::getParameterName(param) );
-		const ncpp::var_attr tmp_attr(param, varname, IOUtils::nodata, schema_dflt_type);
+		const std::string long_name( ncpp::getParameterLongName(param) );
+		const std::string units( ncpp::getParameterUnits(param) );
+		
+		const ncpp::var_attr tmp_attr(param, varname, "", long_name, units, IOUtils::nodata, schema_dflt_type);
 		vars[param] = ncpp::nc_variable(tmp_attr, schema_nodata);
 	}
 }

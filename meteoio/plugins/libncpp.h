@@ -31,7 +31,10 @@ namespace ncpp {
 	/// This enum expand the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
 	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, ZREF, UREF, lastdimension=UREF};
 	
+	//These methods are needed by the structures defined below
 	std::string getParameterName(const size_t& param);
+	std::string getParameterLongName(const size_t& param);
+	std::string getParameterUnits(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
 	
 	/** This structure contains the metadata associated with a NetCDF variable that are schema specific (for example, CF-1) */
@@ -43,6 +46,7 @@ namespace ncpp {
 								: name(i_name), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
 		VAR_ATTR(const size_t& prm, const std::string& i_name, const std::string& std_name, const std::string& lg_name, const std::string& i_units, const double& hgt, const int& i_type)
 								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
+		
 		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
 		std::string name; ///< variable name (it is possible to retrieve a variable by name)
@@ -62,6 +66,7 @@ namespace ncpp {
 							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {};
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
+		
 		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 		
 		var_attr attributes; ///< metadata about the variable
