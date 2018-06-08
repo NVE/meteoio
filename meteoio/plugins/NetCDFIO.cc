@@ -83,6 +83,7 @@ namespace mio {
  * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
  * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
+ * - METEOFILE: NC_SINGLE_FILE is set, the output file name to use [Output];
  * 
  * Some of the ACDD metadata can also be configured, see the ACDD class.
  *
@@ -271,8 +272,8 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
-		cfg.getValue("METEOFILE", "Output", out_meteo_file);
 		cfg.getValue("NC_SINGLE_FILE", "Output", out_single_file, IOUtils::nothrow);
+		if (out_single_file) cfg.getValue("METEOFILE", "Output", out_meteo_file);
 	}
 }
 
@@ -438,9 +439,8 @@ void ncParameters::initSchemaCst(const std::string& schema)
 	if (schema=="CF-1.6") {
 		schema_dflt_type = NC_FLOAT;
 	} else if (schema=="CROCUS") {
-		schema_dflt_type = NC_DOUBLE;
+		schema_dflt_type = NC_FLOAT;
 		schema_nodata =  -9999999.; //CNRM-GAME nodata value
-		//TODO uref, zref must be provided
 		force_station_dimension = true;
 	} else if (schema=="ECMWF") {
 		schema_dflt_type = NC_DOUBLE;
@@ -1277,11 +1277,12 @@ const std::vector<double> ncParameters::fillBufferForVar(const std::vector< std:
 		if (param==ncpp::TIME) {
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps, var.nodata);
-			if (var.attributes.type==NC_INT) { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
+			const char units_prefix = var.attributes.units[0]; //for now, a very simple criteria to round the time representation
+			if (var.attributes.type==NC_INT || units_prefix=='s') { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
 					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale) );
-					if (prev!=IOUtils::nodata && data[ll]==prev) throw InvalidArgumentException("When writing time as INT, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+					if (prev!=IOUtils::nodata && data[ll]==prev) throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 					prev = data[ll];
 				}
 			} else {
