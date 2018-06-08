@@ -20,10 +20,9 @@
 
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/dataClasses/Date.h>
+#include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>
 
-#include <netcdf.h>
 #include <string>
 #include <vector>
 
@@ -121,5 +120,41 @@ namespace ncpp {
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
 	std::string generateHistoryAttribute();
 } // end namespace
+
+/**
+ * @class ACDD
+ * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
+ * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A>).
+ * 
+ * A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
+ * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
+ * following keys:
+ *  - NC_CREATOR: the name of the creator of the data set (default: login name);
+ *  - NC_EMAIL: the email of the creator;
+ *  - NC_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
+ *  - NC_TITLE: a short title for the data set;
+ *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
+ *  - NC_SUMMARY: a paragraph describing the dataset;
+ *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
+ *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata.
+*/
+class ACDD {
+	public:
+		enum Mode {MERGE, REPLACE, APPEND};
+		
+		ACDD() : name(), cfg_key(), value() {defaultInit();}
+		
+		void setUserConfig(const mio::Config& cfg, const std::string& section);
+		
+		void addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key="", Mode mode=MERGE);
+		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);
+		void writeAttributes(const int& ncid) const;
+		
+	private:
+		void defaultInit();
+		size_t find(const std::string& search_name) const;
+		
+		std::vector<std::string> name, cfg_key, value;
+};
 
 #endif

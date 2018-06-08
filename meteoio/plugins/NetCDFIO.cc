@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
+#include <netcdf.h>
 
 #define DFLT_STAT_STR_LEN 16
 
@@ -82,6 +83,8 @@ namespace mio {
  * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncParameters Dimensions; [Input] section;
  * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
+ * 
+ * Some of the ACDD metadata can also be configured, see the ACDD class.
  *
  * For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
  *  - ZREF: the reference height for meteorological measurements;
@@ -707,10 +710,12 @@ std::vector<ncpp::nc_dimension> ncParameters::initUserDimensions(const Config& i
 
 //TODO: redo the whole user_schema thing: we should fill vars / dimensions with the schema, then add/overwrite with the user schema
 ncParameters::ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug)
-             : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
+             : acdd(), user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), current_schema(schema), coord_sys(), coord_param(), TZ(tz_in), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
              schema_nodata(IOUtils::nodata), schema_dflt_type(NC_DOUBLE), debug(i_debug), isLatLon(false), force_station_dimension(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
+	
+	//TODO handle these parameter in a more generic way in MeteoIO (ie outside of this plugin)
 	cfg.getValue("ZREF", "Input", dflt_zref, IOUtils::nothrow);
 	cfg.getValue("UREF", "Input", dflt_uref, IOUtils::nothrow);
 	cfg.getValue("DEFAULT_SLOPE", "Input", dflt_slope, IOUtils::nothrow);
@@ -719,6 +724,7 @@ ncParameters::ncParameters(const std::string& filename, const Mode& mode, const 
 	initFromSchema(schema);
 	
 	if (mode==WRITE) {
+		acdd.setUserConfig( cfg, "Output" );
 		if (FileUtils::fileExists(filename)) initFromFile(filename, schema);
 	} else if (mode==READ) {
 		initFromFile(filename, schema);
@@ -1034,24 +1040,12 @@ void ncParameters::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMe
 	ncpp::close_file(file_and_path, ncid);
 }
 
-void ncParameters::writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in) const
+void ncParameters::writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in)
 {
-	ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema+",ACDD-1.3");
-	if (current_schema=="CF-1.6") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.6");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "cdm_data_type", "Grid");
-	Date now; now.setFromSys();
-	ncpp::add_attribute(ncid, NC_GLOBAL, "date_created", now.toString(Date::ISO_DATE));
-	ncpp::add_attribute(ncid, NC_GLOBAL, "creator_name", IOUtils::getLogName());
-	ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO-" + getLibVersion(true));
-	ncpp::add_attribute(ncid, NC_GLOBAL, "history", ncpp::generateHistoryAttribute());
-	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "title", "Gridded data for various parameters and timesteps");
-	//The following are placeholders to help users know what has to be manually provided for ACDD compliance
-	ncpp::add_attribute(ncid, NC_GLOBAL, "summary", "Please fill this field to be ACDD compliant");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "acknowledgement", "Please fill this field to be ACDD compliant");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "metadata_link", "Please fill this field (with DOI or URL) to be ACDD compliant");
-
+	acdd.addAttribute("Conventions", current_schema+",ACDD-1.3");
+	if (current_schema=="CF-1.6") acdd.addAttribute("standard_name_vocabulary", "CF-1.6");
+	acdd.addAttribute("cdm_data_type", "Grid");
+	acdd.addAttribute("title", "Gridded data for various parameters and timesteps");
 	
 	Coords urcorner(grid_in.llcorner);
 	urcorner.moveByXY(static_cast<double>(grid_in.getNx())*grid_in.cellsize, static_cast<double>(grid_in.getNy())*grid_in.cellsize);
@@ -1077,33 +1071,31 @@ void ncParameters::writeGridMetadataHeader(const int& ncid, const Grid2DObject& 
 		ss << grid_in.llcorner.getEasting() << " " << urcorner.getNorthing();
 		geometry = ss.str();
 	}
-	ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+epsg_str);
-	ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Polygon (("+geometry+"))");
+	acdd.addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
+	acdd.addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
+	
+	acdd.writeAttributes(ncid);
 }
 
-void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const
+void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
-	ncpp::add_attribute(ncid, NC_GLOBAL, "Conventions", current_schema+",ACDD-1.3");
-	if (current_schema=="CF-1.6") ncpp::add_attribute(ncid, NC_GLOBAL, "standard_name_vocabulary", "CF-1.6");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "cdm_data_type", "Station");
-	Date now; now.setFromSys();
-	ncpp::add_attribute(ncid, NC_GLOBAL, "date_created", now.toString(Date::ISO_DATE));
-	ncpp::add_attribute(ncid, NC_GLOBAL, "creator_name", IOUtils::getLogName());
-	ncpp::add_attribute(ncid, NC_GLOBAL, "source", "MeteoIO-" + getLibVersion(true));
-	ncpp::add_attribute(ncid, NC_GLOBAL, "history", ncpp::generateHistoryAttribute());
-	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords_vocabulary", "AGU Index Terms");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology, Time series analysis");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "institution", IOUtils::getDomainName());
-	//The following are placeholders to help users know what has to be manually provided for ACDD compliance
-	ncpp::add_attribute(ncid, NC_GLOBAL, "summary", "Please fill this field to be ACDD compliant");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "acknowledgement", "Please fill this field to be ACDD compliant");
-	ncpp::add_attribute(ncid, NC_GLOBAL, "metadata_link", "Please fill this field (with DOI or URL) to be ACDD compliant");
+	acdd.addAttribute("Conventions", current_schema+",ACDD-1.3");
+	if (current_schema=="CF-1.6") acdd.addAttribute("standard_name_vocabulary", "CF-1.6");
+	acdd.addAttribute("cdm_data_type", "Station");
+	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 	
 	Date set_start, set_end;
 	int sampling_period = -1;
 	
 	if (station_idx==IOUtils::npos) {
-		ncpp::add_attribute(ncid, NC_GLOBAL, "title", "Meteorological data timeseries for multiple stations");
+		acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
+		if (vecMeteo.size()<10) {
+			std::string stats_list( vecMeteo[0].front().meta.stationID );
+			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
+				stats_list = stats_list + ", " + vecMeteo[ii].front().meta.stationID;
+			}
+			acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list, "", ACDD::REPLACE);
+		}
 		
 		double lat_min, lat_max, lon_min, lon_max;
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
@@ -1130,15 +1122,16 @@ void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< 
 			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(vecMeteo[ii].size() - 1) * 24.*3600. + .5);
 			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
 		}
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lat_min", lat_min);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lat_max", lat_max);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lon_min", lon_min);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_lon_max", lon_max);
+		acdd.addAttribute("geospatial_lat_min", lat_min);
+		acdd.addAttribute("geospatial_lat_max", lat_max);
+		acdd.addAttribute("geospatial_lon_min", lon_min);
+		acdd.addAttribute("geospatial_lon_max", lon_max);
 	} else {
 		const std::string stationName = vecMeteo[station_idx].front().meta.stationName;
 		const std::string name = (!stationName.empty())? stationName : vecMeteo[station_idx].front().meta.stationID;
-		ncpp::add_attribute(ncid, NC_GLOBAL, "title", "Meteorological data timeseries for the "+name+" station");
-		ncpp::add_attribute(ncid, NC_GLOBAL, "station_name", name);
+		acdd.addAttribute("title", "Meteorological data timeseries for the "+name+" station");
+		acdd.addAttribute("station_name", name);
+		
 		std::string epsg_str = "4326";
 		std::string geometry;
 		const Coords location = vecMeteo[station_idx].front().meta.position;
@@ -1153,22 +1146,24 @@ void ncParameters::writeMeteoMetadataHeader(const int& ncid, const std::vector< 
 			std::ostringstream ss;
 			ss << std::fixed << std::setprecision(10) << location.getEasting() << " " << location.getNorthing();
 		}
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds_crs", "EPSG:"+epsg_str);
-		ncpp::add_attribute(ncid, NC_GLOBAL, "geospatial_bounds", "Point ("+geometry+")");
+		acdd.addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
+		acdd.addAttribute("geospatial_bounds", "Point ("+geometry+")");
 		
 		set_start = vecMeteo[station_idx].front().date;
 		set_end = vecMeteo[station_idx].back().date;
 		const size_t npts = vecMeteo[station_idx].size();
 		if (npts>1) sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 	}
-	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_start", set_start.toString(Date::ISO_TZ));
-	ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_end", set_end.toString(Date::ISO_TZ));
+	acdd.addAttribute( "time_coverage_start", set_start.toString(Date::ISO_TZ));
+	acdd.addAttribute("time_coverage_end", set_end.toString(Date::ISO_TZ));
 	
 	if (sampling_period>0) {
 		std::ostringstream os;
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		ncpp::add_attribute(ncid, NC_GLOBAL, "time_coverage_resolution", os.str());
+		acdd.addAttribute("time_coverage_resolution", os.str());
 	}
+	
+	acdd.writeAttributes(ncid);
 }
 
 Date ncParameters::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
