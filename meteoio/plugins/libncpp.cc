@@ -505,10 +505,10 @@ std::string getParameterName(const size_t& param)
 	return mio::MeteoGrids::getParameterName( param );
 }
 
-std::string getParameterLongName(const size_t& param)
+std::string getParameterDescription(const size_t& param)
 {
 	if (param==mio::IOUtils::npos || param>=NONE) return "";
-	return mio::MeteoGrids::getParameterLongName( param );
+	return mio::MeteoGrids::getParameterDescription( param );
 }
 
 std::string getParameterUnits(const size_t& param)

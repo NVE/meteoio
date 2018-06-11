@@ -32,7 +32,7 @@ namespace ncpp {
 	
 	//These methods are needed by the structures defined below
 	std::string getParameterName(const size_t& param);
-	std::string getParameterLongName(const size_t& param);
+	std::string getParameterDescription(const size_t& param);
 	std::string getParameterUnits(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
 	

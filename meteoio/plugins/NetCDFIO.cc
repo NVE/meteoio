@@ -1193,7 +1193,7 @@ void ncParameters::addToVars(const size_t& param)
 {
 	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
 		const std::string varname( ncpp::getParameterName(param) );
-		const std::string long_name( ncpp::getParameterLongName(param) );
+		const std::string long_name( ncpp::getParameterDescription(param) );
 		const std::string units( ncpp::getParameterUnits(param) );
 		
 		const ncpp::var_attr tmp_attr(param, varname, "", long_name, units, IOUtils::nodata, schema_dflt_type);
