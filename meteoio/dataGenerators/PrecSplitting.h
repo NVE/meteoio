@@ -63,6 +63,7 @@ namespace mio {
  * PSUM_S::PPHASE::snow   = 274.35
  * @endcode
  * 
+ * @note When generating PSUM_L / PSUM_S, you most probably also need to set their resampling to "accumulate", like for PSUM...
  */
 class PrecSplitting : public GeneratorAlgorithm {
 	public:
