@@ -25,11 +25,11 @@
 
 namespace mio {
 
-class ncParameters {
+class ncFiles {
 	public:
 		enum Mode {READ, WRITE};
 		
-		ncParameters(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug=false);
+		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug=false);
 		
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
@@ -41,6 +41,9 @@ class ncParameters {
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
 		
 		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx=IOUtils::npos);
+		
+		std::vector<StationData> readStationData() const;
+		std::vector< std::vector<MeteoData> > readMeteoData(const Date& dateStart, const Date& dateEnd);
 		
 	private:
 		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
@@ -55,12 +58,14 @@ class ncParameters {
 		void initFromSchema(const std::string& schema);
 		
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
+		double read_0Dvariable(const int& ncid, const size_t& param) const;
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
 		std::vector<std::string> read_1Dstringvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
 		size_t readDimension(const int& dimid) const;
 		bool hasDimension(const size_t& dim) const;
+		bool hasVariable(const size_t& var) const;
 		const ncpp::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
 		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
@@ -86,7 +91,7 @@ class ncParameters {
 		std::map<size_t, ncpp::nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, ncpp::nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
 		std::vector<Date> vecTime;
-		std::vector<double> vecX, vecY;
+		std::vector<double> vecX, vecY; //HACK could it be kept within the grird2d specific methods?
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
@@ -119,14 +124,18 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 		
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
+		
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void parseInputOutputSection();
-		void scanMeteoPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncParameters> > &meteo_files);
-		void cleanMeteoCache(std::vector< std::pair<std::pair<Date,Date>, ncParameters> > &meteo_files);
+		void scanPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &meteo_files);
+		void cleanMeteoCache(std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &meteo_files);
 		
 		const Config cfg;
-		std::vector< std::pair<std::pair<Date,Date>, ncParameters> > cache_grid_files; //cache of grid files in GRID2DPATH
+		std::vector< std::pair<std::pair<Date,Date>, ncFiles> > cache_grid_files; //cache of grid files in GRID2DPATH
 		std::vector<MeteoGrids::Parameters> available_params;
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, in_meteo_path, out_meteo_file;

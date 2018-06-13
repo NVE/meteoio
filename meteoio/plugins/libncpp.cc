@@ -197,7 +197,7 @@ void close_file(const std::string& filename, const int& ncid)
 * @param[out] data data extracted from the file
 */
 void read_data(const int& ncid, const nc_variable& var,
-               const size_t& pos, const size_t& nrows, const size_t& ncols, double*& data)
+               const size_t& pos, const size_t& nrows, const size_t& ncols, double* data)
 {
 	const size_t start[] = {pos, 0, 0};
 	const size_t count[] = {1, nrows, ncols};
@@ -213,7 +213,7 @@ void read_data(const int& ncid, const nc_variable& var,
 * @param[in] var variable to read
 * @param[out] data data extracted from the file
 */
-void read_data(const int& ncid, const nc_variable& var, double*& data)
+void read_data(const int& ncid, const nc_variable& var, double* data)
 {
 	const int status = nc_get_var_double(ncid, var.varid, data);
 	if (status != NC_NOERR)
@@ -349,6 +349,37 @@ void getAttribute(const int& ncid, const nc_variable& var, const std::string& at
 	if (status == NC_NOERR) {
 		status = nc_get_att_double(ncid, var.varid, attr_name.c_str(), &attr_value);
 		if (status != NC_NOERR) throw mio::IOException("Could not read attribute '" + attr_name + "' for '" + var.attributes.name + "': " + nc_strerror(status), AT);
+	}
+}
+
+/**
+* @brief Read a given global attribute (if not found, an empty string is returned)
+* @param[in] ncid file ID
+* @param[in] attr_name attribute name
+* @param[out] attr_value attribute value as read
+*/
+void getGlobalAttribute(const int& ncid, const std::string& attr_name, std::string& attr_value)
+{
+	size_t attr_len;
+	int status = nc_inq_attlen (ncid, NC_GLOBAL, attr_name.c_str(), &attr_len);
+	if (status == NC_NOERR) {
+		char* value = new char[attr_len + 1]; // +1 for trailing null
+		status = nc_get_att_text(ncid, NC_GLOBAL, attr_name.c_str(), value);
+		if (status != NC_NOERR) throw mio::IOException("Could not read global attribute '" + attr_name + "': " + nc_strerror(status), AT);
+
+		value[attr_len] = '\0';
+		attr_value = value;
+		delete[] value;
+	}
+}
+
+void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr_value)
+{
+	size_t attr_len;
+	int status = nc_inq_attlen (ncid, NC_GLOBAL, attr_name.c_str(), &attr_len);
+	if (status == NC_NOERR) {
+		status = nc_get_att_int(ncid, NC_GLOBAL, attr_name.c_str(), &attr_value);
+		if (status != NC_NOERR) throw mio::IOException("Could not read global attribute '" + attr_name + "': " + nc_strerror(status), AT);
 	}
 }
 
