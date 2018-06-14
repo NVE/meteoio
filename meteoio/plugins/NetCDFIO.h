@@ -92,7 +92,7 @@ class ncFiles {
 		std::map<size_t, ncpp::nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, ncpp::nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
 		std::vector<Date> vecTime;
-		std::vector<double> vecX, vecY; //HACK could it be kept within the grird2d specific methods?
+		std::vector<double> vecX, vecY; ///< caching the lats/lons or eastings/northings to deal with grids
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
@@ -137,9 +137,10 @@ class NetCDFIO : public IOInterface {
 		
 		const Config cfg;
 		std::vector< std::pair<std::pair<Date,Date>, ncFiles> > cache_grid_files; //cache of grid files in GRID2DPATH
+		std::vector< ncFiles > cache_inmeteo_files; //cache of meteo files in input METEOPATH
 		std::vector<MeteoGrids::Parameters> available_params;
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
-		std::string out_meteo_path, in_meteo_path, out_meteo_file;
+		std::string out_meteo_path, out_meteo_file;
 		double in_dflt_TZ, out_dflt_TZ;
 		bool debug, out_single_file;
 };
