@@ -448,8 +448,8 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 	throw IOException("Not implemented yet", AT);
 	
 	const std::string meteopath = cfg.get("METEOPATH", "Input"); //HACK
-	//const std::string filename("test.nc");
-	const std::string filename("testMultiple.nc");
+	const std::string filename("test.nc");
+	//const std::string filename("testMultiple.nc");
 	
 	if (!FileUtils::fileExists(meteopath+"/"+filename)) throw NotFoundException(meteopath+"/"+filename, AT);
 	ncFiles file(meteopath+"/"+filename, ncFiles::READ, cfg, in_schema, in_dflt_TZ, debug);
@@ -1247,6 +1247,7 @@ std::vector<StationData> ncFiles::readStationData() const
 		std::string stationID, stationName;
 		ncpp::getGlobalAttribute(ncid, "station_id", stationID); //TODO: fallback?
 		ncpp::getGlobalAttribute(ncid, "station_name", stationName); //TODO: fallback?
+		if (stationID.empty()) stationID = stationName;
 		
 		Coords position;
 		if (hasLatLon) {
@@ -1266,6 +1267,43 @@ std::vector<StationData> ncFiles::readStationData() const
 	}
 	
 	return vecStation;
+}
+
+//build a list of valid timeseries to read in the current file as a vector of (Parameter, mio name)
+std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
+{
+	//get the dimensions that are required for timeseries
+	int time_dim=IOUtils::inodata, station_dim=IOUtils::inodata;
+	for (std::map<size_t, ncpp::nc_dimension>::const_iterator it=dimensions_map.begin(); it!=dimensions_map.end(); ++it) {
+		if  (it->second.dimid==-1) continue;
+		if (it->second.type==ncpp::TIME) time_dim = it->second.dimid;
+		if (it->second.type==ncpp::STATION) station_dim = it->second.dimid;
+	}
+	if (time_dim==IOUtils::inodata) throw InvalidFormatException("No valid time dimension could be found in file "+file_and_path, AT);
+
+	//get the variables that only depend on the found dimensions in the schema vars
+	std::vector< std::pair<size_t, std::string> > results;
+	for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it) {
+		if (it->second.varid<0) continue;
+		if (it->second.attributes.param==ncpp::TIME) continue;
+
+		bool has_time = false, has_station=false;
+		for (size_t ii=0; ii<it->second.dimids.size(); ii++) {
+			if (it->second.dimids[ii]==time_dim) {
+				has_time = true;
+			} else if (station_dim!=IOUtils::inodata && it->second.dimids[ii]==station_dim) {
+				has_station = true;
+			}
+		}
+
+		if (has_time && (station_dim==IOUtils::inodata || (station_dim!=IOUtils::inodata && has_station))) {
+			results.push_back( std::make_pair(it->first, ncpp::getParameterName( it->first )) );
+		}
+	}
+
+	//TODO do the same as above but in the unknown_vars
+
+	return results;
 }
 
 std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateStart, const Date& dateEnd)
@@ -1291,17 +1329,14 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 		return std::vector< std::vector<MeteoData> >(nrStations);
 	}
 	
-	//TODO build a list of valid parameters (ie: depend on the right dimension(s) and not metadata)
+	//all the parameters that depend on the proper dimensions for timeseries
+	const std::vector< std::pair<size_t, std::string> > tsParams = getTSParameters();
 	
 	//build a MeteoData template (all the stations share the same parameters)
 	MeteoData mdGeneric;
-	for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it) {
-		if (it->second.varid<0) continue;
-		const size_t param = it->second.attributes.param;
-		const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param>MeteoGrids::lastparam);
-		if (varIsLocation) continue;
-		const std::string parname( ncpp::getParameterName( it->first ) );
-		if (!mdGeneric.param_exists(parname)) mdGeneric.addParameter( parname );
+	for (size_t ii=0; ii<tsParams.size(); ii++) {
+		if (!mdGeneric.param_exists(tsParams[ii].second))
+			mdGeneric.addParameter( tsParams[ii].second );
 	}
 	
 	//now populate the vector of vector with the metadata and time steps
@@ -1313,28 +1348,31 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 			vecMeteo[st][ii-start_idx].date = vecTime[ii];
 		}
 	}
-	
-	//populate the vectors with the variables' values TODO cf Todo above
-	for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it) {
-		if (it->second.varid<0) continue;
-		const size_t param = it->second.attributes.param;
-		const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param>MeteoGrids::lastparam);
-		if (varIsLocation) continue;
-		
+
+	const bool multiple_stations_per_file = hasDimension(ncpp::STATION);
+	//populate the vectors with the variables' values
+	for (size_t ii=0; ii<tsParams.size(); ii++) {
+		const std::string parname( tsParams[ii].second );
 		//get the data for this variables for all stations but only the valid timesteps
 		double *data = (double*)calloc(nrStations,sizeof(double)*nrSteps);
-		const size_t start[] = {start_idx, 0};
-		const size_t count[] = {nrSteps, nrStations};
-		const int status = nc_get_vara_double(ncid, it->second.varid, start, count, data);
-		if (status != NC_NOERR)
-			throw mio::IOException("Could not retrieve data for variable '" + it->second.attributes.name + "': " + nc_strerror(status), AT);
-		
-		const double scale = it->second.scale;
-		const double offset = it->second.offset;
-		const std::string parname( ncpp::getParameterName( it->first ) );
+		int status;
+		if (!multiple_stations_per_file) {
+			const size_t start[] = {start_idx};
+			const size_t count[] = {nrSteps};
+			status = nc_get_vara_double(ncid, vars[ tsParams[ii].first ].varid, start, count, data);
+		} else {
+			const size_t start[] = {start_idx, 0};
+			const size_t count[] = {nrSteps, nrStations};
+			status = nc_get_vara_double(ncid, vars[ tsParams[ii].first ].varid, start, count, data);
+		}
+
+		if (status != NC_NOERR) throw mio::IOException("Could not retrieve data for variable '" + parname + "': " + nc_strerror(status), AT);
+
+		const double scale = vars[ tsParams[ii].first ].scale;
+		const double offset = vars[ tsParams[ii].first ].offset;
 		for (size_t st=0; st<nrStations; st++) {
-			for (size_t ii=0; ii<nrSteps; ii++)
-				vecMeteo[st][ii](parname) = (data[st + ii*nrStations] * scale) + offset;
+			for (size_t jj=0; jj<nrSteps; jj++)
+				vecMeteo[st][jj](parname) = (data[st + jj*nrStations] * scale) + offset;
 		}
 		free(data);
 	}
