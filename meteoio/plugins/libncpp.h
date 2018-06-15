@@ -127,8 +127,7 @@ namespace ncpp {
  * @class ACDD
  * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A>).
- * 
- * A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
+ * @details A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
  * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
  * following keys:
  *  - NC_CREATOR: the name of the creator of the data set (default: login name);
@@ -138,7 +137,8 @@ namespace ncpp {
  *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
  *  - NC_SUMMARY: a paragraph describing the dataset;
  *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
- *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata.
+ *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata;
+ *  - NC_LICENSE: describes the license applicable to the dataset.
 */
 class ACDD {
 	public:
@@ -152,11 +152,52 @@ class ACDD {
 		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);
 		void writeAttributes(const int& ncid) const;
 		
+		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
+		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
+		void setGeometry(const mio::Coords& location, const bool& isLatLon);
+		
 	private:
 		void defaultInit();
 		size_t find(const std::string& search_name) const;
 		
 		std::vector<std::string> name, cfg_key, value;
+};
+
+/**
+ * @class NC_SCHEMA
+ * @brief This class contains and handles NetCDF schemas.
+ * @details As many applications have their own naming schemes, data types, units, etc we define here schemas that contain all this information
+ * so generic NetCDF methods can find here all the application specific information they need to successfully read and interpret the structure and
+ * data contained in a NetCDF file.
+*/
+//TODO: redo the whole user_schema thing: we should fill vars / dimensions with the schema, then add/overwrite with the user schema
+class NC_SCHEMA {
+	public:
+		NC_SCHEMA(const mio::Config& cfg, const std::string& schema);
+		
+		void initFromSchema(std::map<size_t, ncpp::nc_variable> &vars, std::map<size_t, ncpp::nc_dimension> &dimensions_map);
+		const ncpp::var_attr getSchemaAttributes(const std::string& var) const;
+		const ncpp::var_attr getSchemaAttributes(const size_t& param) const;
+		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname) const;
+		
+	private:
+		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
+		static std::map< std::string, std::vector<ncpp::nc_dimension> > initSchemasDims();
+		static std::vector<ncpp::var_attr> initUserSchemas(const mio::Config& i_cfg);
+		static std::vector<ncpp::nc_dimension> initUserDimensions(const mio::Config& i_cfg);
+		void initSchemaCst(const std::string& schema);
+		
+		static std::map< std::string, std::vector<ncpp::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
+		static std::map< std::string, std::vector<ncpp::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
+		
+		std::vector<ncpp::var_attr> user_schemas; ///< all the variables' attributes for the user defined schema
+		std::vector<ncpp::nc_dimension> user_dimensions; ///< all the variables' attributes for the user defined schema
+		
+	public:
+		std::string name; ///< name of the current schema
+		double nodata; ///< nodata value as defined in the schema
+		int dflt_type; ///< default data type as defined in the schema
+		bool force_station_dimension; ///< force writing a station dimension even if only one station is present
 };
 
 #endif

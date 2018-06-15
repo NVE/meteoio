@@ -29,7 +29,7 @@ class ncFiles {
 	public:
 		enum Mode {READ, WRITE};
 		
-		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema, const double& tz_in, const bool& i_debug=false);
+		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const double& tz_in, const bool& i_debug=false);
 		
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
@@ -46,16 +46,9 @@ class ncFiles {
 		std::vector< std::vector<MeteoData> > readMeteoData(const Date& dateStart, const Date& dateEnd);
 		
 	private:
-		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
-		static std::map< std::string, std::vector<ncpp::nc_dimension> > initSchemasDims();
-		static std::vector<ncpp::var_attr> initUserSchemas(const Config& i_cfg);
-		static std::vector<ncpp::nc_dimension> initUserDimensions(const Config& i_cfg);
-		
-		void initSchemaCst(const std::string& schema);
-		void initFromFile(const std::string& filename, const std::string& schema);
-		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
-		void initDimensionsFromFile(const int& ncid, const std::string& schema_name);
-		void initFromSchema(const std::string& schema);
+		void initFromFile(const std::string& filename);
+		void initVariablesFromFile(const int& ncid);
+		void initDimensionsFromFile(const int& ncid);
 		
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
 		double read_0Dvariable(const int& ncid, const size_t& param) const;
@@ -67,9 +60,6 @@ class ncFiles {
 		size_t readDimension(const int& dimid) const;
 		bool hasDimension(const size_t& dim) const;
 		bool hasVariable(const size_t& var) const;
-		const ncpp::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
-		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
-		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		
 		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in);
 		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
@@ -83,25 +73,18 @@ class ncFiles {
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		
-		static std::map< std::string, std::vector<ncpp::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
-		static std::map< std::string, std::vector<ncpp::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
-		
 		ACDD acdd; ///< Object that contains the ACDD metadata
-		std::vector<ncpp::var_attr> user_schemas; ///< all the variables' attributes for the user defined schema
-		std::vector<ncpp::nc_dimension> user_dimensions; ///< all the variables' attributes for the user defined schema
+		NC_SCHEMA schema; ///<Object that contain all the schema information
 		std::map<size_t, ncpp::nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, ncpp::nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
 		std::vector<Date> vecTime;
 		std::vector<double> vecX, vecY; ///< caching the lats/lons or eastings/northings to deal with grids
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
-		std::string file_and_path, current_schema;
-		std::string coord_sys, coord_param;
+		std::string file_and_path, coord_sys, coord_param;
 		double TZ;
 		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
-		double schema_nodata; ///< nodata value as defined in the schema
-		int schema_dflt_type; ///< default data type as defined in the schema
-		bool debug, isLatLon, force_station_dimension;
+		bool debug, isLatLon;
 };
 
 /**
