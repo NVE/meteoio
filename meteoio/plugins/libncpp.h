@@ -156,6 +156,9 @@ class ACDD {
 		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setGeometry(const mio::Coords& location, const bool& isLatLon);
 		
+		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
+		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
+		
 	private:
 		void defaultInit();
 		size_t find(const std::string& search_name) const;

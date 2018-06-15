@@ -73,7 +73,6 @@ namespace mio {
  * @section netcdf_keywords Keywords
  * This plugin uses the following keywords:
  * - General keys:
- *     - TIME_ZONE: the time zone to use when interpreting date/time information; [Input] and [Output] section
  *     - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
  *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ECMWF or WRF); [Input] and [Output] section (default: CF-1.6)
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
@@ -97,6 +96,7 @@ namespace mio {
  * 
  * Some of the ACDD metadata can also be configured, see the ACDD class.
  * 
+ * @note the timezone is assumed to be GMT.
  * @note When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
  * @note When using the CROCUS schema, please note that the humidity should be provided as specific humidity, so please use a data 
@@ -232,7 +232,6 @@ NetCDFIO::NetCDFIO(const std::string& configfile)
          : cfg(configfile), cache_grid_files(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
          out_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
-	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
@@ -240,7 +239,6 @@ NetCDFIO::NetCDFIO(const Config& cfgreader)
          : cfg(cfgreader), cache_grid_files(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(), 
          out_meteo_path(), out_meteo_file(), in_dflt_TZ(0.), out_dflt_TZ(0.), debug(false), out_single_file(false)
 {
-	//IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
@@ -250,7 +248,7 @@ void NetCDFIO::parseInputOutputSection()
 	cfg.getValue("GRID2D", "Input", in_grid2d, IOUtils::nothrow);
 	cfg.getValue("GRID2D", "Output", out_grid2d, IOUtils::nothrow);
 	if (in_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ, IOUtils::nothrow);
+		//cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
@@ -258,7 +256,7 @@ void NetCDFIO::parseInputOutputSection()
 	}
 	
 	if (out_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
+		//cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
 		cfg.getValue("GRID2DFILE", "Output", grid2d_out_file);
@@ -268,7 +266,7 @@ void NetCDFIO::parseInputOutputSection()
 	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	cfg.getValue("METEO", "Output", out_meteo, IOUtils::nothrow);
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("TIME_ZONE", "Input", out_dflt_TZ, IOUtils::nothrow);
+		//cfg.getValue("TIME_ZONE", "Input", out_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
@@ -288,7 +286,7 @@ void NetCDFIO::parseInputOutputSection()
 		if (cache_inmeteo_files.empty()) throw InvalidArgumentException("No valid input meteo files provided", AT);
 	}
 	if (out_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
+		//cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
 		cfg.getValue("NC_SINGLE_FILE", "Output", out_single_file, IOUtils::nothrow);
@@ -813,51 +811,26 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 	acdd.addAttribute("cdm_data_type", "Station");
 	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 	
-	Date set_start, set_end;
-	int sampling_period = -1;
-	
 	if (station_idx==IOUtils::npos) {
-		acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		if (vecMeteo.size()<10) {
 			std::string stats_list( vecMeteo[0].front().meta.stationID );
 			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
 				stats_list = stats_list + ", " + vecMeteo[ii].front().meta.stationID;
 			}
-			acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list, "", ACDD::REPLACE);
+			acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list);
+		} else {
+			acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		}
 		acdd.setGeometry(vecMeteo);
-		
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-			if (vecMeteo[ii].empty()) continue;
-			const Date curr_start = vecMeteo[ii].front().date;
-			const Date curr_end = vecMeteo[ii].back().date;
-			if (set_start>curr_start) set_start = curr_start;
-			if (set_end<curr_end) set_end = curr_end;
-			
-			if (vecMeteo[ii].size()==1) continue;
-			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(vecMeteo[ii].size() - 1) * 24.*3600. + .5);
-			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
-		}
+		acdd.setTimeCoverage(vecMeteo);
 	} else {
-		const std::string stationName = vecMeteo[station_idx].front().meta.stationName;
+		const std::string stationName( vecMeteo[station_idx].front().meta.stationName );
 		const std::string name = (!stationName.empty())? stationName : vecMeteo[station_idx].front().meta.stationID;
 		acdd.addAttribute("title", "Meteorological data timeseries for the "+name+" station");
 		acdd.addAttribute("station_name", name);
 		acdd.addAttribute("station_id", vecMeteo[station_idx].front().meta.stationID);
 		acdd.setGeometry( vecMeteo[station_idx].front().meta.position, isLatLon );
-		
-		set_start = vecMeteo[station_idx].front().date;
-		set_end = vecMeteo[station_idx].back().date;
-		const size_t npts = vecMeteo[station_idx].size();
-		if (npts>1) sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
-	}
-	acdd.addAttribute( "time_coverage_start", set_start.toString(Date::ISO_TZ));
-	acdd.addAttribute("time_coverage_end", set_end.toString(Date::ISO_TZ));
-	
-	if (sampling_period>0) {
-		std::ostringstream os;
-		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		acdd.addAttribute("time_coverage_resolution", os.str());
+		acdd.setTimeCoverage(vecMeteo[station_idx]);
 	}
 	
 	acdd.writeAttributes(ncid);
@@ -1013,7 +986,7 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 		return std::vector< std::vector<MeteoData> >(nrStations);
 	}
 	
-	//all the parameters that depend on the proper dimensions for timeseries
+	//list all the parameters that appear to be timeseries
 	const std::vector< std::pair<size_t, std::string> > tsParams = getTSParameters();
 	
 	//build a MeteoData template (all the stations share the same parameters)
@@ -1023,7 +996,7 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 			mdGeneric.addParameter( tsParams[ii].second );
 	}
 	
-	//now populate the vector of vector with the metadata and time steps
+	//now populate the vector of vectors with the metadata and time steps
 	const size_t nrSteps = end_idx - start_idx;
 	std::vector< std::vector<MeteoData> > vecMeteo(nrStations, std::vector<MeteoData>(nrSteps, mdGeneric));
 	for (size_t st=0; st<nrStations; st++) {
@@ -1053,7 +1026,10 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 			const size_t count[] = {nrSteps, nrStations};
 			status = nc_get_vara_double(ncid, varid, start, count, data);
 		}
-		if (status != NC_NOERR) throw mio::IOException("Could not retrieve data for variable '" + parname + "': " + nc_strerror(status), AT);
+		if (status != NC_NOERR) {
+			free(data);
+			throw mio::IOException("Could not retrieve data for variable '" + parname + "': " + nc_strerror(status), AT);
+		}
 
 		const double scale = (fromSchema)? vars[ parindex ].scale : unknown_vars[ parname ].scale;
 		const double offset = (fromSchema)? vars[ parindex ].offset : unknown_vars[ parname ].offset;
@@ -1134,6 +1110,7 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 	}
 }
 
+//TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date)
 {
 	if (vars[ param ].varid == -1) {
@@ -1147,13 +1124,13 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 			const std::string units( vars[ param ].attributes.units );
 			if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
-				vars[param].scale = 1./24.;
+				vars[param].scale = 24.;
 			} else if (units=="min") {
 				vars[param].attributes.units = "minutes since " + date_str;
-				vars[param].scale = 1./(24.*60);
+				vars[param].scale = (24.*60);
 			} else if (units=="s") {
 				vars[param].attributes.units = "seconds since " + date_str;
-				vars[param].scale = 1./(24.*3600.);
+				vars[param].scale = (24.*3600.);
 			} else 
 				throw InvalidArgumentException("Unsupported time unit specified in schema: '"+units+"'", AT);
 			vars[param].offset = ref_date_simplified.getJulian();
@@ -1175,20 +1152,20 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 	
 	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
 	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
-		if (param==ncpp::TIME) { //HACK
+		if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps, var.nodata);
 			const char units_prefix = var.attributes.units[0]; //for now, a very simple criteria to round the time representation
 			if (var.attributes.type==NC_INT || units_prefix=='s') { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
-					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale) );
+					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale) );
 					if (prev!=IOUtils::nodata && data[ll]==prev) throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 					prev = data[ll];
 				}
 			} else {
 				for (size_t ll=0; ll<nrTimeSteps; ll++)
-					data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian() - var.offset) / var.scale;
+					data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale;
 			}
 			return data;
 		} else {
@@ -1334,7 +1311,7 @@ size_t ncFiles::addTimestamp(const int& ncid, const Date& date)
 	}
 	
 	if (create_timestamp) {
-		const double dt = (date.getJulian() - vars[ncpp::TIME].offset) / vars[ncpp::TIME].scale;
+		const double dt = (date.getJulian() - vars[ncpp::TIME].offset) * vars[ncpp::TIME].scale;
 		const size_t start[] = {time_pos};
 		const size_t count[] = {1};
 		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &dt);
