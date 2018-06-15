@@ -72,28 +72,30 @@ namespace mio {
  *
  * @section netcdf_keywords Keywords
  * This plugin uses the following keywords:
- * - TIME_ZONE: the time zone to use when interpreting date/time information; [Input] and [Output] section
- * - METEOPATH: meteo files directory where to read the meteofiles; [Input] section
- * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT)
- * - DEMFILE: The filename of the file containing the DEM; [Input] section
- * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
- * - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
- * - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
- * - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the NC_EXT extension, provides
+ * - General keys:
+ *     - TIME_ZONE: the time zone to use when interpreting date/time information; [Input] and [Output] section
+ *     - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
+ *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ECMWF or WRF); [Input] and [Output] section (default: CF-1.6)
+ *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
+ *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
+ * - Gridded data handling:
+ *     - DEMFILE: The filename of the file containing the DEM; [Input] section
+ *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
+ *     - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
+ *     - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the NC_EXT extension, provides
  * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
- * - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ECMWF or WRF); [Input] and [Output] section (default: CF-1.6)
- * - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
- * - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
- * - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false)
- * - METEOFILE: NC_SINGLE_FILE is set, the output file name to use [Output];
+ * - Time series handling:
+ *     - METEOPATH: meteo files directory where to read the meteofiles; [Input] section
+ *     - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT); [Input]
+ *     - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false); [Output]
+ *     - METEOFILE: NC_SINGLE_FILE is set, the output file name to use [Output];
+ *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
+ *          - ZREF: the reference height for meteorological measurements;
+ *          - UREF: the reference height for wind measurements;
+ *          - DEFAULT_SLOPE: a default value for the slope when none is available;
+ *          - DEFAULT_AZI: a default value for the azimuth when none is available;
  * 
  * Some of the ACDD metadata can also be configured, see the ACDD class.
- *
- * For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
- *  - ZREF: the reference height for meteorological measurements;
- *  - UREF: the reference height for wind measurements;
- *  - DEFAULT_SLOPE: a default value for the slope when none is available;
- *  - DEFAULT_AZI: a default value for the azimuth when none is available;
  * 
  * @note When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
