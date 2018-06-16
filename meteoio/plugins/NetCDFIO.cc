@@ -810,6 +810,7 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 	acdd.addAttribute("Conventions", schema.name+",ACDD-1.3");
 	if (schema.name=="CF-1.6") acdd.addAttribute("standard_name_vocabulary", "CF-1.6");
 	acdd.addAttribute("cdm_data_type", "Station");
+	acdd.addAttribute("featureType", "timeSeries");
 	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 	
 	if (station_idx==IOUtils::npos) {
