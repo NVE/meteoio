@@ -150,21 +150,20 @@ namespace mio {
  * coordinates systems assume an ellipsoid. This may lead to trouble when converting model coordinates to real world coordinates (see
  * http://www.pkrc.net/wrf-lambert.html).
  *
- * @section netcdf_ecmwf ECMWF Era Interim
+ * @section netcdf_ecmwf ECMWF Era Interim / Era 5
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A>
  * after creating an account and login in.
  *
  * It is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
- * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
  *
- * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR and the *mean sea level pressure* and *surface pressure*
- * as proxies to compute the elevation. If you have the altitude in a separate file, it can be declared as DEM and there would be no need for the sea
- *level pressure (this would also be much more precise).
+ * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the 
+ * "invariants" section on the left hand side of the page where you select the fields to download).
  *
  * You should therefore have the following request:
  * @code
  * Parameter: 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo,
- *            Mean sea level pressure, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure,
+ *            Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure,
  *            Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
  *      Step: 3 to 12 by 3
  *      Type: Forecast
@@ -185,7 +184,7 @@ namespace mio {
  * "expver": "1",
  * "grid": "0.75/0.75",
  * "levtype": "sfc",
- * "param": "33.128/134.128/139.128/141.128/151.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
+ * "param": "33.128/134.128/139.128/141.128/165.128/166.128/167.128/168.128/169.128/175.128/205.128/228.128/235.128/243.128",
  * "step": "3/6/9/12",
  * "area":"42.2/-1.5/51.7/15.7",
  * "stream": "oper",
