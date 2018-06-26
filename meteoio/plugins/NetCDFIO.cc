@@ -82,7 +82,7 @@ namespace mio {
  *     - DEMFILE: The filename of the file containing the DEM; [Input] section
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  *     - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
- *     - GRID2DFILE: force reading the data only from a single file within GRID2DPATH or specify the output file name; [Input] and [Output] section
+ *     - GRID2DFILE: force reading the data from a single file within GRID2DPATH or specify the output file name; [Input] and [Output] section
  * - Time series handling:
  *     - METEOPATH: meteo files directory where to read the meteofiles; [Input] section
  *     - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT); [Input]
@@ -197,7 +197,7 @@ namespace mio {
  * @section netcdf_tricks External tools and tricks to work with NetCDF
  * @subsection netcdf_editing Editing the metadata of a NetCDF file
  * In order to ensure that a NetCDF is <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A> compliant,
- * several global variables must be defined. Most of them have already been populated by MeteoIO but a few need further editing. You can have a
+ * several global variables must be defined. Most of them have already been populated by MeteoIO but a few could benefit from further editing. You can have a
  * look at what has already been defined by dumping the header content with ncdump:
  * @code
  * ncdump -h {my_netcdf_file}
