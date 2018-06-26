@@ -426,7 +426,7 @@ void Meteo2DInterpolator::pushVirtualMeteoData(const Date& i_date, TimeSeriesMan
 	const Date buff_start( user_tsmanager.getRawBufferStart() );
 	const Date buff_end( user_tsmanager.getRawBufferEnd() );
 	const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
-
+	
 	if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end) {
 		METEO_SET vecMeteo;
 		getVirtualMeteoData(i_date_down, vecMeteo);
@@ -528,6 +528,8 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	//read the provided coordinates, remove duplicates and generate metadata
 	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
+		if (vecStation[ii].first.find('_') != std::string::npos) continue; //so we skip the other vstations_xxx parameters
+		
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
 		Coords curr_point(coordin, coordinparam, vecStation[ii].second);
 

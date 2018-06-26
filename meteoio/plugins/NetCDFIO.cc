@@ -82,8 +82,7 @@ namespace mio {
  *     - DEMFILE: The filename of the file containing the DEM; [Input] section
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  *     - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
- *     - GRID2DFILE: if GRID2DPATH has not been defined or if it does not contain files matching the NC_EXT extension, provides
- * the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ *     - GRID2DFILE: force reading the data only from a single file within GRID2DPATH or specify the output file name; [Input] and [Output] section
  * - Time series handling:
  *     - METEOPATH: meteo files directory where to read the meteofiles; [Input] section
  *     - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT); [Input]
@@ -248,10 +247,18 @@ void NetCDFIO::parseInputOutputSection()
 	std::string in_grid2d, out_grid2d;
 	cfg.getValue("GRID2D", "Input", in_grid2d, IOUtils::nothrow);
 	if (in_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
-		cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
-		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
+		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
+		
+		const std::string grid2d_in_file = cfg.get("GRID2DFILE", "Input", IOUtils::nothrow);
+		if (!grid2d_in_file.empty()) {
+			if (!FileUtils::fileExists(grid2d_in_file)) throw AccessException(grid2d_in_file, AT); //prevent invalid filenames
+			const ncFiles file(grid2d_in_file, ncFiles::READ, cfg, in_schema, debug);
+			cache_grid_files.push_back( make_pair(file.getDateRange(), file) );
+		} else {
+			cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
+			cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
+		}
 	}
 	
 	cfg.getValue("GRID2D", "Output", out_grid2d, IOUtils::nothrow);
@@ -265,9 +272,9 @@ void NetCDFIO::parseInputOutputSection()
 	std::string in_meteo, out_meteo;
 	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
-		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
