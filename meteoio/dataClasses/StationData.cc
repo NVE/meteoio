@@ -80,6 +80,34 @@ void StationData::merge(const StationData& sd2) {
 	position.merge(sd2.position);
 }
 
+bool StationData::unique(std::vector<StationData> &vecStation, const bool& position_only)
+{
+	bool status = false;
+	if (position_only) {
+		for (size_t ii=0; ii<vecStation.size(); ii++) {
+			for (size_t jj=ii+1; jj<vecStation.size(); jj++) {
+				if (vecStation[ii].position==vecStation[jj].position) {
+					std::swap( vecStation[jj], vecStation.back() );
+					vecStation.pop_back();
+					status = true;
+				}
+			}
+		}
+	} else {
+		for (size_t ii=0; ii<vecStation.size(); ii++) {
+			for (size_t jj=ii+1; jj<vecStation.size(); jj++) {
+				if (vecStation[ii]==vecStation[jj]) {
+					std::swap( vecStation[jj], vecStation.back() );
+					vecStation.pop_back();
+					status = true;
+				}
+			}
+		}
+	}
+	
+	return status;
+}
+
 const std::string StationData::toString() const {
 	std::ostringstream os;
 	os << "<station>" << "\n"

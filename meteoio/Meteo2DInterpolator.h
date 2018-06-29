@@ -139,7 +139,10 @@ class Meteo2DInterpolator {
 		                 Grid2DObject& result, std::string& InfoString);
 
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
+                            std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string);
+		
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<StationData> vec_stations, std::vector<double>& result, std::string& info_string);
 
 		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm
@@ -198,7 +201,6 @@ class Meteo2DInterpolator {
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 
 		std::vector<size_t> v_params; ///< Parameters for virtual stations
-		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
 		RESAMPLING_STRATEGY resampling_strategy; ///< Should we perform resampling and with which strategy?

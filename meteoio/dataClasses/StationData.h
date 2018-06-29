@@ -115,6 +115,14 @@ class StationData {
 		* @param sd2 extra StationData to merge, lowest priority
 		*/
 		void merge(const StationData& sd2);
+		
+		/**
+		* @brief Remove duplicate stations from a vector.
+		* @param vecStations vector to purge from duplicate entries
+		* @param position_only only consider the station location as criteria for equality (default: false)
+		* @return true if some duplicates have been found
+		*/
+		static bool unique(std::vector<StationData> &vecStation, const bool& position_only=false);
 
 	public:
 		Coords position;
