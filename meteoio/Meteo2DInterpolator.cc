@@ -30,6 +30,7 @@ namespace mio {
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword, after setting RESAMPLING to TRUE):
  *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
  *     + GRID_EXTRACT: gridded values are extracted for the cells containing the given locations;
+ *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed (so it is ready for performing spatial interpolations);
  *     + GRID_ALL: all grid points are extracted.
  * 
  * Currently, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted point. This is described
@@ -485,22 +486,19 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const Date& i_date, METEO_SET& v
 	if (v_stations.empty()) {
 		if (resampling_strategy==GRID_ALL) {
 			initVirtualStationsAtAllGridPoints();
-		} else if (resampling_strategy==GRID_SMART) {
-			//initVirtualStationsAtSmartGridPoints();
 		} else {
 			const bool adjust_coordinates = (resampling_strategy==GRID_EXTRACT);
-			initVirtualStations(adjust_coordinates);
+			const bool fourNeighbors = (resampling_strategy==GRID_SMART);
+			initVirtualStations(adjust_coordinates, fourNeighbors);
 		}
 	}
 	
 	if (resampling_strategy==VSTATIONS) {
 		//this reads station data, interpolates the stations and extract points from the interpolated grids
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (resampling_strategy==GRID_EXTRACT || resampling_strategy==GRID_ALL) {
+	} else if (resampling_strategy==GRID_EXTRACT || resampling_strategy==GRID_ALL || resampling_strategy==GRID_SMART) {
 		//This reads already gridded data and extract points from the grids at the provided locations
 		//(the virtual stations must have been initialized before, see above)
-		return getVirtualStationsFromGrid(i_date, vecMeteo);
-	} else if (resampling_strategy==GRID_SMART) {
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
 	}
 
@@ -546,9 +544,11 @@ void Meteo2DInterpolator::initVirtualStationsAtAllGridPoints()
 }
 
 /** @brief read the list of virtual stations
- * @param adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ * @details Please not that the two options are mutually exclusive.
+ * @param[in] adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ * @param[in] fourNeighbors pick the surrounding four nodes instead of only the exact one?
  */
-void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
+void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates, const bool& fourNeighbors)
 {
 	if (internal_dem.empty()) {
 		if (cfg.keyExists("GRID2D_DEM", "Input")) {
@@ -563,9 +563,6 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	std::string coordin, coordinparam, coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	internal_dem.llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
-	const double dem_easting = internal_dem.llcorner.getEasting();
-	const double dem_northing = internal_dem.llcorner.getNorthing();
-	const double cellsize = internal_dem.cellsize;
 
 	//read the provided coordinates, remove duplicates and generate metadata
 	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
@@ -574,15 +571,34 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 		
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
 		Coords curr_point(coordin, coordinparam, vecStation[ii].second);
+		if (curr_point.isNodata()) continue;
 
-		if (!curr_point.isNodata()) {
-			if (!internal_dem.gridify(curr_point))
-				throw NoDataException("Virtual station "+vecStation[ii].second+" is not contained in provided DEM "+internal_dem.toString(DEMObject::SHORT), AT);
+		if (!internal_dem.gridify(curr_point))
+			throw NoDataException("Virtual station "+vecStation[ii].second+" is not contained in provided DEM "+internal_dem.toString(DEMObject::SHORT), AT);
 
-			const size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+		if (fourNeighbors) { //pick the surrounding four nodes
+			if (i==internal_dem.getNx()) i--;
+			if (j==internal_dem.getNy()) j--;
+			
+			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			for (size_t mm=i; mm<=i+1; mm++) {
+				for (size_t nn=j; nn<=j+1; nn++) {
+					const double easting = internal_dem.llcorner.getEasting() + internal_dem.cellsize*static_cast<double>(mm);
+					const double northing = internal_dem.llcorner.getNorthing() + internal_dem.cellsize*static_cast<double>(nn);
+					curr_point.setXY(easting, northing, internal_dem(mm,nn));
+					curr_point.setGridIndex(static_cast<int>(mm), static_cast<int>(nn), IOUtils::inodata, true);
+					const std::string sub_id( static_cast<ostringstream*>( &(ostringstream() << (mm-i)*2+(nn-j)+1) )->str() );
+					const std::string grid_pos( static_cast<ostringstream*>( &(ostringstream() << mm << "-" << nn) )->str() );
+					StationData sd(curr_point, "VIR"+id_num+"_"+sub_id, "Virtual_Station_"+grid_pos);
+					sd.setSlope(internal_dem.slope(mm,nn), internal_dem.azi(mm,nn));
+					v_stations.push_back( sd );
+				}
+			}
+		} else { //pick the exact node
 			if (adjust_coordinates) { //adjust coordinates to match the chosen cell
-				const double easting = dem_easting + cellsize*static_cast<double>(i);
-				const double northing = dem_northing + cellsize*static_cast<double>(j);
+				const double easting = internal_dem.llcorner.getEasting() + internal_dem.cellsize*static_cast<double>(i);
+				const double northing = internal_dem.llcorner.getNorthing() + internal_dem.cellsize*static_cast<double>(j);
 				curr_point.setXY(easting, northing, internal_dem(i,j));
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			} else {
@@ -600,7 +616,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	if (v_stations.empty()) throw NoDataException("No virtual stations provided", AT);
 	
 	//removing potential duplicates
-	if (StationData::unique( v_stations ) )
+	if (StationData::unique( v_stations, true ) && !fourNeighbors)
 		std::cout << "[W] Some of the input stations have been identified as duplicates and removed\n";
 }
 

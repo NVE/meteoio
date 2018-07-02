@@ -189,7 +189,7 @@ class Meteo2DInterpolator {
 		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
 		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);
 		void setAlgorithms();
-		void initVirtualStations(const bool& adjust_coordinates);
+		void initVirtualStations(const bool& adjust_coordinates, const bool& fourNeighbors);
 		void initVirtualStationsAtAllGridPoints();
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction

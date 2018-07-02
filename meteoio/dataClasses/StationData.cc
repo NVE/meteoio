@@ -82,24 +82,31 @@ void StationData::merge(const StationData& sd2) {
 
 bool StationData::unique(std::vector<StationData> &vecStation, const bool& position_only)
 {
+	//this uses swap and pop_back for greater efficiency
 	bool status = false;
 	if (position_only) {
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			for (size_t jj=ii+1; jj<vecStation.size(); jj++) {
+			size_t jj=ii+1;
+			while (jj<vecStation.size()) { //so we can rescan the last removed duplicate
 				if (vecStation[ii].position==vecStation[jj].position) {
 					std::swap( vecStation[jj], vecStation.back() );
 					vecStation.pop_back();
 					status = true;
+				} else {
+					jj++;
 				}
 			}
 		}
 	} else {
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			for (size_t jj=ii+1; jj<vecStation.size(); jj++) {
+			size_t jj=ii+1;
+			while (jj<vecStation.size()) { //so we can rescan the last removed duplicate
 				if (vecStation[ii]==vecStation[jj]) {
 					std::swap( vecStation[jj], vecStation.back() );
 					vecStation.pop_back();
 					status = true;
+				} else {
+					jj++;
 				}
 			}
 		}
