@@ -368,7 +368,7 @@ void ImisIO::parseStationID(const std::string& stationID, std::string& stat_abk,
 
 /**
  * @brief This function extracts all info about the stations that are to be used from global Config object
- * @param vecStationID A vector that will hold all relevant stations as std::strings
+ * @return a vector that will hold all relevant stations as std::strings
  */
 std::vector<std::string> ImisIO::readStationIDs()
 {
