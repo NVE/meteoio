@@ -145,6 +145,7 @@ class IOManager {
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 
+
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result);
 
@@ -153,7 +154,6 @@ class IOManager {
 		
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string);
-
 		
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
@@ -227,7 +227,7 @@ class IOManager {
 		TimeSeriesManager tsm1, tsm2;
 		GridsManager gdm1;
 		Meteo2DInterpolator interpolator;
-		DEMObject resampling_dem;
+		DEMObject source_dem;
 		std::vector<size_t> v_params; ///< Parameters for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
