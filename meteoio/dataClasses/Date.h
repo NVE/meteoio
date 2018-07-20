@@ -133,7 +133,7 @@ class Date {
 		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
 		void setUndef(const bool& flag);
 
-		bool isUndef() const;
+		bool isUndef() const {return undef;};
 		double getTimeZone() const;
 		bool getDST() const;
 		double getJulian(const bool& gmt=false) const;
@@ -148,9 +148,10 @@ class Date {
 		void getDate(int& year, int& month, int& day, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute, const bool& gmt=false) const;
+		void getDate(int& year, int& month, int& day, int& hour, int& minute, double& second, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute, int& second, const bool& gmt=false) const;
 		void getTime(int& hour_out, int& minute_out, const bool& gmt=false) const;
-		void getTime(int& hour_out, int& minute_out, int& second_out, const bool& gmt=false) const;
+		void getTime(int& hour_out, int& minute_out, double& second_out, const bool& gmt=false) const;
 		int getYear(const bool& gmt=false) const;
 
 		unsigned short getDayOfWeek(const bool& gmt=false) const;
@@ -202,7 +203,9 @@ class Date {
 		double localToGMT(const double& in_julian) const;
 		double GMTToLocal(const double& in_gmt_julian) const;
 		static double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& i_second);
-		static void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute, int& o_second);
+		static void calculateDate(const double& i_julian, int& out_year, int& out_month, int& out_day);
+		static void calculateTime(const double& i_julian, int& o_hour, int& o_minute, double& o_second);
+		static void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute, double& o_second);
 		static long getJulianDayNumber(const int&, const int&, const int&);
 		static bool isLeapYear(const int&);
 		static void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second);
@@ -213,7 +216,6 @@ class Date {
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
-		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second; //HACK to remove and convert on the fly
 		bool dst;
 		bool undef;
 };
