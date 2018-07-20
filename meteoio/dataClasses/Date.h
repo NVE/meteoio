@@ -161,9 +161,9 @@ class Date {
 
 		static unsigned int mod(const double& julian, const unsigned int& seconds);
 		static unsigned int mod(const Date& indate, const unsigned int& seconds);
-		static double rnd(const double& julian, const unsigned int& precision, const RND& type=CLOSEST);
-		void rnd(const unsigned int& precision, const RND& type=CLOSEST);
-		static const Date rnd(const Date& indate, const unsigned int& precision, const RND& type=CLOSEST);
+		static double rnd(const double& julian, const double& precision, const RND& type=CLOSEST);
+		void rnd(const double& precision, const RND& type=CLOSEST);
+		static const Date rnd(const Date& indate, const double& precision, const RND& type=CLOSEST);
 		static double parseTimeZone(const std::string& timezone_iso);
 
 		static std::string printFractionalDay(const double& fractional);
@@ -209,11 +209,11 @@ class Date {
 		static bool initStaticData();///<initialize the static map TZAbbrev
 
 		static std::map< std::string, double> TZAbbrev;
-		static const double epsilon;
+		static const double epsilon_sec, epsilon;
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
-		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second;
+		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second; //HACK to remove and convert on the fly
 		bool dst;
 		bool undef;
 };

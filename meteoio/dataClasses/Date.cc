@@ -53,7 +53,8 @@ const double Date::RFC868_offset = 2415020.5; ///< offset between julian date an
 const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
-const double Date::epsilon=.01/(24.*3600.025); ///< minimum difference between two dates: .1 second in units of days. 3600.025 is intentional
+const double Date::epsilon_sec = 0.01; //minimum difference between two dates, in seconds
+const double Date::epsilon = epsilon_sec / (24.*3600.025); ///< minimum difference between two dates in days. 3600.025 is intentional
 std::map< std::string, double> Date::TZAbbrev;
 const bool Date::__init = Date::initStaticData();
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
@@ -307,7 +308,7 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst)
 {
 	setTimeZone(in_timezone, in_dst);
-	gmt_julian = rnd( localToGMT(julian_in), (unsigned)1); //round to internal precision of 1 second
+	gmt_julian = rnd( localToGMT(julian_in), epsilon_sec);
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second);
 	undef = false;
 }
@@ -854,14 +855,14 @@ unsigned int Date::mod(const Date& indate, const unsigned int& seconds)
  * @param precision round date to the given precision, in seconds
  * @param type rounding strategy (default: CLOSEST)
  */
-double Date::rnd(const double& julian, const unsigned int& precision, const RND& type)
+double Date::rnd(const double& julian, const double& precision, const RND& type)
 {
-	if (precision == 0)
+	if (precision <= 0)
 		throw InvalidArgumentException("Can not round dates to 0 seconds precision!", AT);
 
 	double integral;
 	const double fractional = modf(julian-.5, &integral);
-	const double rnd_factor = (3600.*24.)/(double)precision;
+	const double rnd_factor = (3600.*24.) / precision;
 
 	if (type==CLOSEST)
 		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor + .5;
@@ -878,14 +879,14 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
  * @param precision round date to the given precision, in seconds
  * @param type rounding strategy (default: CLOSEST)
  */
-void Date::rnd(const unsigned int& precision, const RND& type) {
+void Date::rnd(const double& precision, const RND& type) {
 	if (!undef) {
 		const double rnd_julian = rnd( getJulian(false), precision, type ); //round local time
 		setDate(rnd_julian, timezone, dst);
 	}
 }
 
-const Date Date::rnd(const Date& indate, const unsigned int& precision, const RND& type) {
+const Date Date::rnd(const Date& indate, const double& precision, const RND& type) {
 	Date tmp(indate);
 	if (!tmp.undef) {
 		const double rnd_julian = rnd( tmp.getJulian(false), precision, type ); //round local time
