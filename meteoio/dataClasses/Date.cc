@@ -1108,7 +1108,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 	std::string subsec_str;
 	if (subseconds!=0) {
 		std::ostringstream subsec_tmp;
-		subsec_tmp << std::fixed << '.' << setw(2) << setprecision(2) << setfill('0') << (int)(subseconds*100.);
+		subsec_tmp << std::fixed << '.' << setw(3) << setprecision(3) << setfill('0') << (int)(subseconds*1000. + .5);
 		subsec_str = subsec_tmp.str();
 	}
 
