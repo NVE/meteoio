@@ -747,8 +747,8 @@ void DEMObject::CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, dou
 	if ( A[1][1]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata &&
 	     A[2][1]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata &&
 	     A[3][1]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata) {
-		o_Nx = ((A[3][3]+2.*A[2][3]+A[1][3]) - (A[3][1]+2.*A[2][1]+A[1][1])) / (8.*cellsize);
-		o_Ny = ((A[1][3]+2.*A[1][2]+A[1][1]) - (A[3][3]+2.*A[3][2]+A[3][1])) / (8.*cellsize);
+		o_Nx = ((A[1][1]+2*A[2][1]+A[3][1]) - (A[1][3]+2*A[2][3]+A[3][3])) / (8.*cellsize);
+		o_Ny = ((A[3][3]+2*A[3][2]+A[3][1]) - (A[1][3]+2*A[1][2]+A[1][1])) / (8.*cellsize);
 		o_Nz = 1.;
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
