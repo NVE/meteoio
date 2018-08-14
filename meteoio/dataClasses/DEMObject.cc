@@ -271,6 +271,30 @@ void DEMObject::update(const std::string& algorithm) {
 
 /**
 * @brief Sets the default slope calculation algorithm
+* @param algorithm specify the default algorithm to use for slope computation
+*/
+void DEMObject::setDefaultAlgorithm(const std::string& algorithm) {
+	slope_type type;
+
+	if (algorithm.compare("HICK")==0) {
+		type=HICK;
+	} else if (algorithm.compare("FLEMING")==0) {
+		type=FLEM;
+	} else if (algorithm.compare("HORN")==0) {
+		type=HORN;
+	} else if (algorithm.compare("CORRIPIO")==0) {
+		type=CORR;
+	} else if (algorithm.compare("D8")==0) {
+		type=D8;
+	} else {
+		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
+	}
+	
+	dflt_algorithm = type;
+}
+
+/**
+* @brief Sets the default slope calculation algorithm
 * @param i_algorithm specify the default algorithm to use for slope computation
 */
 void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
