@@ -124,9 +124,9 @@ class PolynomialRegression : public FitModel {
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setDegree(const int& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
+		void setDegree(const size_t& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
 	protected:
-		int degree;
+		size_t degree;
 };
 
 /**

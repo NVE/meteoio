@@ -160,65 +160,60 @@ void PolynomialRegression::setData(const std::vector<double>& in_X, const std::v
 
 double PolynomialRegression::f(const double& x) const
 {
-    double fittedValue=Lambda.at(0);
-    for (size_t ii=1; ii<=degree; ii++){
-        fittedValue = fittedValue + Lambda.at(ii)*pow(x,ii);
-    }
-    return fittedValue;
+	double fittedValue = Lambda.at(0);
+	for (size_t ii=1; ii<=degree; ii++){
+		fittedValue = fittedValue + Lambda.at(ii)*pow(x,ii);
+	}
+	return fittedValue;
 }
 
 bool PolynomialRegression::fit()
 {
-    if (!checkInputs())
-        return false;
+	if (!checkInputs())
+		return false;
 
-    size_t N = X.size();
-    int n = degree;
-    int np1 = n + 1;
-    int tnp1 = 2 * n + 1;
+	const size_t N = X.size();
+	const size_t n = degree;
 
-    // Xh = vector that stores values of sigma(xi^2n)
-    std::vector<double> Xh(tnp1);
-    for (int i = 0; i < tnp1; i++) {
-        Xh[i] = 0;
-        for (int j = 0; j < N; j++){
-            Xh[i] += pow(X[j], i);
-        }
-    }
+	// Xh = vector that stores values of sigma(xi^2n)
+	std::vector<double> Xh(2*n + 1);
+	for (size_t i = 0; i < (2*n + 1); i++){
+		Xh[i] = 0;
+		for (size_t j = 0; j < N; j++){
+			Xh[i] += pow(X[j], i);
+		}
+	}
 
-    // BM = normal augmented matrix that stores the equations.
-    Matrix BM(np1,np1);
-    for (int i = 0; i <= n; i++){
-        for (int j = 0; j <= n; j++){
-            BM(j+1,i+1)=Xh[i+j];
-        }
-    }
+	// BM = normal augmented matrix that stores the equations.
+	Matrix BM(n+1,n+1);
+	for (size_t i = 0; i <= n; i++){
+		for (size_t j = 0; j <= n; j++){
+			BM(j+1,i+1)=Xh[i+j];
+		}
+	}
 
-    // YM = vector to store values of sigma(xi^n * yi)
-    Matrix YM(np1,1);
-    for (int i = 0; i < np1; i++) {
-        YM(i+1,1) = 0;
-        for (int j = 0; j < N; j++) {
-            YM(i+1,1) += pow(X[j], i)*Y[j];
-        }
-    }
+	// YM = vector to store values of sigma(xi^n * yi)
+	Matrix YM(n+1,(size_t)1);
+	for (size_t i = 0; i < (n+1); i++){
+		YM(i+1,1) = 0;
+		for (size_t j = 0; j < N; j++){
+			YM(i+1,1) += pow(X[j], i)*Y[j];
+		}
+	}
 
-    //bM = vector to store the resulting coefficients
-    Matrix bM(np1,1);
-    if (!Matrix::solve(BM,YM,bM)) {
-        return false;
-    }
+	//bM = vector to store the resulting coefficients
+	Matrix bM(n+1,(size_t)1);
+	if (!Matrix::solve(BM,YM,bM))
+		return false;
 
-    //set the coefficients to Lambda
-    Lambda.resize(np1);
-    for (size_t i = 0; i < np1; i++){
-        Lambda[i] = bM(i+1,1);
-    }
-    fit_ready = true;
-    return true;
+	//set the coefficients to Lambda
+	Lambda.resize(n+1);
+	for (size_t i = 0; i < (n+1); i++){
+		Lambda[i] = bM(i+1,1);
+	}
+	fit_ready = true;
+	return true;
 }
-
-
 
 bool NoisyLinear::fit()
 {
