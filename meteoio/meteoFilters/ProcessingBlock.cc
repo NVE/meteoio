@@ -467,11 +467,11 @@ const std::string ProcessingProperties::toString() const
 	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
 	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
 	if(stage==ProcessingProperties::first)
-		os << "p¹";
+		os << "pÂ¹";
 	if(stage==ProcessingProperties::second)
-		os << "p²";
+		os << "pÂ²";
 	if(stage==ProcessingProperties::both)
-		os << "p½";
+		os << "pÂ½";
 	os << "}";
 	return os.str();
 }
