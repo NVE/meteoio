@@ -82,13 +82,13 @@ class FilterDespikingPS : public FilterBlock {
 		void findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
 									  const double a,const double b,const double theta, std::vector<int>& outsideVec);
 		void getWindowForInterpolation(const size_t index, const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-									   const unsigned int windowWidth, std::vector<double>& xVec, std::vector<double>& yVec);
+									   const unsigned int& windowWidth, std::vector<double>& xVec, std::vector<double>& yVec);
 		bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const size_t index,const unsigned int minPoints,
 													   const bool avoidExtrapolation);
 		//helper functions:
 		void solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x);
-		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
-																			const unsigned int& param);
+		/*const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
+																			const unsigned int& param);*/
 		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec, const unsigned int& param);
 		void helperWriteDebugFile1DerivativesAndFittedEllipses (const std::vector<double>& uVec, const std::vector<double>& duVec,
 										  const std::vector<double>& du2Vec,

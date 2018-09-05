@@ -166,7 +166,7 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 				i2 = ii;
 				v2 = ivec[ii];
 			}
-			const size_t delta = i2-i1;
+			const size_t delta = i2 - i1;
 			if (delta>0){
 				const double deltaValue = (v2-v1) / double(delta);
 				ovec.push_back(deltaValue);
@@ -268,13 +268,15 @@ std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& uVec, 
 	const std::vector<double> du2Vec( calculateDerivatives(duVec) );
 
 	//step 2: calculate the standard deviations:
-	const double uStdDev = Interpol1D::std_dev(uVec);
-	const double duStdDev = Interpol1D::std_dev(duVec);
-	const double du2StdDev = Interpol1D::std_dev(du2Vec);
+	const double uStdDev = Interpol1D::std_dev( uVec );
+	const double duStdDev = Interpol1D::std_dev( duVec );
+	const double du2StdDev = Interpol1D::std_dev( du2Vec );
 
 	//step 3: calculate the rotation angle of the principal axis of du2Vec versus uVec:
-	const double crossCorrelation = calculateCrossCorrelation(du2Vec,uVec);
+	const double crossCorrelation = calculateCrossCorrelation(du2Vec, uVec);
 	const double theta = atan(crossCorrelation);
+	const double cosTheta2 = Optim::pow2( cos(theta) );
+	const double sinTheta2 = Optim::pow2( sin(theta) );
 
 	//step 4: calculate ellipses
 	const double nElements = static_cast<double>(uVec.size()) - nNodataElements(uVec);
@@ -287,15 +289,13 @@ std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& uVec, 
 	const double b1 = universalThreshold*duStdDev;
 	const double a2 = universalThreshold*duStdDev;
 	const double b2 = universalThreshold*du2StdDev;
-	double a3 = 0;
-	double b3 = 0;
-	double a_[2]={pow(cos(theta),2),pow(sin(theta),2)};
-	double b_[2]={pow(sin(theta),2),pow(cos(theta),2)};
-	double c_[2]={pow(a1,2),pow(b2,2)};
-	double x_[2]={a3,b3};
+	double a_[2] = {cosTheta2, sinTheta2};
+	double b_[2] = {sinTheta2, cosTheta2};
+	double c_[2] = {Optim::pow2(a1), Optim::pow2(b2)};
+	double x_[2]={0., 0.};
 	solve2X2LinearEquations(a_,b_,c_,x_);
-	a3=sqrt(x_[0]); //todo: check if x_[0] or x_[1] are negative!
-	b3=sqrt(x_[1]);
+	double a3 = sqrt(x_[0]); //todo: check if x_[0] or x_[1] are negative!
+	double b3 = sqrt(x_[1]);
 
 	//step 5: identify the points that lie outside the ellipses:
 	findPointsOutsideEllipse(uVec,duVec,a1,b1,0,spikesVec);
@@ -325,36 +325,36 @@ std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& uVec, 
  * @param yVec output: y-coordinates (=the values of the signal)
  */
 void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-                                                 const unsigned int windowWidth, std::vector<double>& xVec, std::vector<double>& yVec)
+                                                 const unsigned int& windowWidth, std::vector<double>& xVec, std::vector<double>& yVec)
 {
-    xVec.clear();
-    yVec.clear();
-    const unsigned int windowRadius = windowWidth/2;
-    size_t ii = index;
-    unsigned int nLeftPointsFound=0;
-    while(nLeftPointsFound < windowRadius && ii > 0){
-        ii=ii-1;
-        if(uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
-            nLeftPointsFound=nLeftPointsFound+1;
-        }
-    }
-    while(ii < index){
-        if(uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
-            xVec.push_back(ii);
-            yVec.push_back(uVec[ii]);
-        }
-        ii=ii+1;
-    }
-    unsigned int nRightPointsFound=0;
-    ii=index;
-    while(nRightPointsFound < windowRadius && ii < uVec.size()-1){
-        ii=ii+1;
-        if(uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
-            nRightPointsFound=nRightPointsFound+1;
-            xVec.push_back(ii);
-            yVec.push_back(uVec[ii]);
-        }
-    }
+	xVec.clear();
+	yVec.clear();
+	const unsigned int windowRadius = windowWidth/2;
+	size_t ii = index;
+	unsigned int nLeftPointsFound=0;
+	while (nLeftPointsFound < windowRadius && ii > 0){
+		ii--;
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+			nLeftPointsFound++;
+		}
+	}
+	while (ii < index){
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+			xVec.push_back( static_cast<double>(ii) );
+			yVec.push_back(uVec[ii]);
+		}
+		ii++;
+	}
+	unsigned int nRightPointsFound=0;
+	ii=index;
+	while (nRightPointsFound < windowRadius && ii < uVec.size()-1){
+		ii++;
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+			nRightPointsFound++;
+			xVec.push_back( static_cast<double>(ii) );
+			yVec.push_back(uVec[ii]);
+		}
+	}
 }
 
 /**
@@ -370,20 +370,18 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std:
 bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const size_t index,
                                                                  const unsigned int minPoints, const bool avoidExtrapolation)
 {
-    if(xVec.size()==0){
-        return false;
-    }
-    if(avoidExtrapolation){
-        if (xVec[0]>=index || xVec[xVec.size()-1]<=index)
-        {
-            return false;
-        }
-    }
-    bool sufficient=false;
-    if(xVec.size() >= minPoints){
-        sufficient=true;
-    }
-    return sufficient;
+	if(xVec.size()==0) return false;
+
+	if(avoidExtrapolation){
+		if (xVec[0]>=index || xVec[xVec.size()-1]<=index){
+			return false;
+		}
+	}
+	bool sufficient = false;
+	if(xVec.size() >= minPoints){
+		sufficient = true;
+	}
+	return sufficient;
 }
 
 
@@ -398,42 +396,43 @@ bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vec
  */
 void FilterDespikingPS::replaceSpikes(std::vector<double>& uVec, std::vector<int>& spikesVec)
 {
-    std::vector<double> xVec;
-    std::vector<double> yVec;
-    const unsigned int windowWidth = 12; //wished width of the window for interpolation
-    const unsigned int degreeOfInterpolation = 2; //1: linear fit, 2: quadratic fit, 3: cubic fit
-    const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
-    bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
-    for (size_t ii=0; ii<uVec.size(); ii++) {
-        if(spikesVec[ii]!=0){ //here we have a spike. replace its value:
-            getWindowForInterpolation(ii,uVec,spikesVec,windowWidth,xVec,yVec);
-            if(checkIfWindowForInterpolationIsSufficient(xVec,ii,minPointsForInterpolation,avoidExtrapolation)){
-                try{
-                    //interpolate the spike data point:
-                    Fit1D quadraticFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
-                    quadraticFit.setDegree(degreeOfInterpolation);
-                    quadraticFit.fit();
-                    double interpolatedValue = quadraticFit.f(ii);
-                    uVec[ii]=interpolatedValue;
-                    //helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-                    if(1==2){ //this is for debugging of the nonlinear quadratic fit function. try to use pivoting!
-                        Fit1D quadraticFit2 = Fit1D("QUADRATIC",xVec,yVec,false);
-                        quadraticFit2.fit();
-                        //interpolate the spike data point
-                        interpolatedValue = quadraticFit2.f(ii);
-                        std::cout << "replace spikes.... at ii: uVec[ii] with f(x[ii]) " << ii << " " << uVec[ii]
-                                                                        << " " << interpolatedValue << std::endl;
-                        //helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-                    }
-                } catch (const std::exception &e) {
-                    std::cout << "An exception occurred: " << e.what() << std::endl;
-                    //helperWriteDebugFile3WindowForInterpolation(ii,xVec,yVec);
-                }
-            } else{
-                //std::cout << "We were not able to create a window for interpolation. " << std::endl;
-            }
-        }
-    }
+	std::vector<double> xVec;
+	std::vector<double> yVec;
+	const unsigned int windowWidth = 12; //wished width of the window for interpolation
+	const unsigned int degreeOfInterpolation = 2; //1: linear fit, 2: quadratic fit, 3: cubic fit
+	const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
+	bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
+
+	for (size_t ii=0; ii<uVec.size(); ii++) {
+		if (spikesVec[ii]!=0){ //here we have a spike. replace its value:
+			getWindowForInterpolation(ii,uVec,spikesVec,windowWidth,xVec,yVec);
+			if (checkIfWindowForInterpolationIsSufficient(xVec,ii,minPointsForInterpolation,avoidExtrapolation)){
+				try{
+					//interpolate the spike data point:
+					Fit1D quadraticFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
+					quadraticFit.setDegree(degreeOfInterpolation);
+					quadraticFit.fit();
+					double interpolatedValue = quadraticFit.f(ii);
+					uVec[ii] = interpolatedValue;
+					//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
+					if(1==2){ //this is for debugging of the nonlinear quadratic fit function. try to use pivoting!
+						Fit1D quadraticFit2 = Fit1D("QUADRATIC",xVec,yVec,false);
+						quadraticFit2.fit();
+						//interpolate the spike data point
+						interpolatedValue = quadraticFit2.f(ii);
+						std::cout << "replace spikes.... at ii: uVec[ii] with f(x[ii]) " << ii << " " << uVec[ii]
+												<< " " << interpolatedValue << std::endl;
+						//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
+					}
+				} catch (const std::exception &e) {
+					std::cout << "An exception occurred: " << e.what() << std::endl;
+					//helperWriteDebugFile3WindowForInterpolation(ii,xVec,yVec);
+				}
+			} else{
+				//std::cout << "We were not able to create a window for interpolation. " << std::endl;
+			}
+		}
+	}
 }
 //------------------------------------ below here are some helper functions: ----------------------------------------------
 
@@ -449,14 +448,14 @@ void FilterDespikingPS::replaceSpikes(std::vector<double>& uVec, std::vector<int
  */
 void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x)
 {
-    double denominator = a[0]*b[1]-b[0]*a[1];
-    if(denominator==0){                     //todo: check if denominator is close to zero!???
-        x[0]=IOUtils::nodata;
-        x[1]=IOUtils::nodata;
-    }else{
-        x[0]=(c[0]*b[1]-b[0]*c[1])/denominator;
-        x[1]=(a[0]*c[1]-c[0]*a[1])/denominator;
-    }
+	const double denominator = a[0]*b[1]-b[0]*a[1];
+	if(denominator==0){                     //todo: check if denominator is close to zero!???
+		x[0] = IOUtils::nodata;
+		x[1] = IOUtils::nodata;
+	}else{
+		x[0] = (c[0]*b[1]-b[0]*c[1]) / denominator;
+		x[1] = (a[0]*c[1]-c[0]*a[1]) / denominator;
+	}
 }
 
 /**
@@ -464,17 +463,16 @@ void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b
  * @param ivec input meteo-data-vector
  * @param param which values of the meteo-data-vector do you want to get (e.g. temperature)
  */
-const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
+/*const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
                                                                                       const unsigned int& param)
 {
-    std::vector<double> ovec;
-    for (size_t ii=0; ii<ivec.size(); ii++) {
-        const MeteoData meteoValue = *ivec[ii];
-        const double& value = meteoValue(param);
-        ovec.push_back(value);
-    }
-    return ovec;
-}
+	std::vector<double> ovec;
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		const MeteoData meteoValue( *ivec[ii] );
+		ovec.push_back( meteoValue(param) );
+	}
+	return ovec;
+}*/
 
 /**
  * @brief This function creates a double vector out of a MeteoData-vector.
@@ -484,13 +482,12 @@ const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoData
 const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec,
                                                                                       const unsigned int& param)
 {
-    std::vector<double> ovec;
-    for (size_t ii=0; ii<ivec.size(); ii++) {
-        const MeteoData meteoValue = ivec[ii];
-        const double& value = meteoValue(param);
-        ovec.push_back(value);
-    }
-    return ovec;
+	std::vector<double> ovec;
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		const MeteoData meteoValue = ivec[ii];
+		ovec.push_back( meteoValue(param) );
+	}
+	return ovec;
 }
 
 /**
@@ -500,17 +497,18 @@ void FilterDespikingPS::helperWriteDebugFile1DerivativesAndFittedEllipses(const 
                                           const std::vector<double>& du2Vec,
                                           double a1,double b1,double a2,double b2,double a3,double b3,double theta)
 {
-    ofstream myfile;
-    const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
+	ofstream myfile;
+	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
 	const std::string filename( "debugOutputFiles/debugFilterDespikingPS_findSpike_iteration_"+itnr_str+".csv" );
-    myfile.open (filename.c_str());
-    myfile << "a1; b1; a2; b2; a3; b3; theta "<< std::endl;
-    myfile << a1 << ";" << b1 << ";" << a2 << ";" << b2 << ";" << a3 << ";" << b3 << ";" << theta << std::endl;
-    myfile << "uVec; duVec; du2Vec " << std::endl;
-    for (size_t ii=0; ii<uVec.size(); ii++) {
-        myfile << uVec[ii] << ";" << duVec[ii] << ";" << du2Vec[ii] << std::endl;
-    }
-    myfile.close();
+	myfile.open (filename.c_str());
+
+	myfile << "a1; b1; a2; b2; a3; b3; theta "<< std::endl;
+	myfile << a1 << ";" << b1 << ";" << a2 << ";" << b2 << ";" << a3 << ";" << b3 << ";" << theta << std::endl;
+	myfile << "uVec; duVec; du2Vec " << std::endl;
+	for (size_t ii=0; ii<uVec.size(); ii++) {
+		myfile << uVec[ii] << ";" << duVec[ii] << ";" << du2Vec[ii] << std::endl;
+	}
+	myfile.close();
 }
 
 /**
@@ -519,24 +517,24 @@ void FilterDespikingPS::helperWriteDebugFile1DerivativesAndFittedEllipses(const 
 void FilterDespikingPS::helperWriteDebugFile2Interpolation(const std::vector<double>& uVec, const std::vector<int>& spikesVec,
                                           const std::vector<double>& x, const std::vector<double>& y, const Fit1D& quadraticFit,unsigned int iiSpike)
 {
-    ofstream myfile;
-    const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
-    const std::string spikenr_str( static_cast<ostringstream*>( &(ostringstream() << iiSpike) )->str() );
-    std::string filename( "debugOutputFiles/debugFilterDespikingPS_replaceSpike_spike_at_"+spikenr_str
-                                        +"_iteration_"+itnr_str+".csv" );
-    myfile.open (filename.c_str());
+	ofstream myfile;
+	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
+	const std::string spikenr_str( static_cast<ostringstream*>( &(ostringstream() << iiSpike) )->str() );
+	std::string filename( "debugOutputFiles/debugFilterDespikingPS_replaceSpike_spike_at_"+spikenr_str
+						+"_iteration_"+itnr_str+".csv" );
+	myfile.open (filename.c_str());
 
-    myfile << "x; y; quadratic fit(x) " << std::endl;
-    for (size_t ii=0; ii<x.size(); ii++) {
-        myfile << x[ii] << ";" << y[ii] << ";" <<  quadraticFit.f(x[ii]) << std::endl;
-    }
-    myfile << iiSpike << ";" << uVec[iiSpike] << ";" <<  quadraticFit.f(iiSpike) << std::endl;
+	myfile << "x; y; quadratic fit(x) " << std::endl;
+	for (size_t ii=0; ii<x.size(); ii++) {
+		myfile << x[ii] << ";" << y[ii] << ";" <<  quadraticFit.f(x[ii]) << std::endl;
+	}
+	myfile << iiSpike << ";" << uVec[iiSpike] << ";" <<  quadraticFit.f(iiSpike) << std::endl;
 
-    myfile << "ii; uVec; spikesVec; spikesVec*uVec " << std::endl;
-    for (size_t ii=0; ii<uVec.size(); ii++) {
-        myfile << ii << ";" << uVec[ii] << ";" <<  spikesVec[ii] << ";" <<  spikesVec[ii]*uVec[ii] << std::endl;
-    }
-    myfile.close();
+	myfile << "ii; uVec; spikesVec; spikesVec*uVec " << std::endl;
+	for (size_t ii=0; ii<uVec.size(); ii++) {
+		myfile << ii << ";" << uVec[ii] << ";" <<  spikesVec[ii] << ";" <<  spikesVec[ii]*uVec[ii] << std::endl;
+	}
+	myfile.close();
 }
 
 /**
@@ -544,19 +542,19 @@ void FilterDespikingPS::helperWriteDebugFile2Interpolation(const std::vector<dou
  */
 void FilterDespikingPS::helperWriteDebugFile3WindowForInterpolation(size_t iteration,std::vector<double>& x,std::vector<double>& y)
 {
-    ofstream myfile;
+	ofstream myfile;
 
 	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
-    const std::string iter_str( static_cast<ostringstream*>( &(ostringstream() << iteration) )->str() );
-    std::string filename( "debugOutputFiles/debugFilterDespikingPS_windowForInterpolation_at_"+iter_str
-                                        +"_iteration_"+itnr_str+".csv" );
-    myfile.open (filename.c_str());
+	const std::string iter_str( static_cast<ostringstream*>( &(ostringstream() << iteration) )->str() );
+	std::string filename( "debugOutputFiles/debugFilterDespikingPS_windowForInterpolation_at_"+iter_str
+						+"_iteration_"+itnr_str+".csv" );
+	myfile.open (filename.c_str());
 
-    myfile << "x; y" << std::endl;
-    for (size_t ii=0; ii<x.size(); ii++) {
-        myfile << x[ii] << ";" << y[ii] << std::endl;
-    }
-    myfile.close();
+	myfile << "x; y" << std::endl;
+	for (size_t ii=0; ii<x.size(); ii++) {
+		myfile << x[ii] << ";" << y[ii] << std::endl;
+	}
+	myfile.close();
 }
 
 /**
