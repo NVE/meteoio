@@ -17,6 +17,7 @@
 */
 
 #include <meteoio/dataGenerators/PrecSplitting.h>
+#include <algorithm>
 
 namespace mio {
 
@@ -208,7 +209,7 @@ bool PrecSplitting::generatePSUM(double& value, MeteoData& md) const
 		if (PSUM_PH==0.) return false; //precip is fully solid but we only have the liquid phase...
 		value = PSUM_L / PSUM_PH;
 		return true;
-	} else {
+	} else if (hasPSUMS) {
 		if (PSUM_PH==1.) return false; //precip is fully liquid but we only have the solid phase...
 		value = PSUM_S / (1. - PSUM_PH);
 		return true;
