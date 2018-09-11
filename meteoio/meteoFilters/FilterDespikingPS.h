@@ -35,14 +35,14 @@ namespace mio {
  *      Goring, D.G. and Nikora, V.I. (2002). "Despiking Acoustic Doppler Velocimeter Data" J. Hydraul. Eng., 128(1): 117-126
  *
  * Detection of the spikes works like this:
- *  -calculate first and second derivatives of the whole signal
- *  -the data points plotted in phase space are enclosed by an ellipsoid defined
+ *  - calculate first and second derivatives of the whole signal
+ *  - the data points plotted in phase space are enclosed by an ellipsoid defined
  *     by the standard deviations and the universal threshold (=sqrt(2*ln(number of data points)))
- *  -points outside this ellipsoid are designated as spikes
+ *  - points outside this ellipsoid are designated as spikes
  *
  * Replacement of the spikes:
- *  -find a quadratic or cubic fit for the data points around the spike
- *  -replace the spike with a fitted value
+ *  - find a quadratic or cubic fit for the data points around the spike
+ *  - replace the spike with a fitted value
  *
  * Parameters:
  * The sensitivity parameter was added to be able to control the sensitivity of the filter. The universal threshold is divided by
