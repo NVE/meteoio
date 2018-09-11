@@ -20,7 +20,9 @@
 #include <cstring>
 #include <ctype.h>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
-	#define NOMINMAX
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 	#include <winsock.h>
 #else
 	#include <unistd.h>
