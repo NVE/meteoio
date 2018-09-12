@@ -46,6 +46,8 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
                                                    std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
+	//the time vector (a vector of double-values):
+	std::vector<double> timeVec( helperGetTimeVectorOutOfMeteoDataVector(ivec) );
 	//the signal (a vector of double-values) we will despike:
 	std::vector<double> doubleVec( helperGetDoubleVectorOutOfMeteoDataVector(ivec,param) );
 	//the original signal. we need it just for debugging, to visualize the changes:
@@ -64,14 +66,14 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 	nIterations=0;
 	while(keepLookingForSpikes == true){
 		//2. find spikes
-		std::vector<int> spikesVec( findSpikes(doubleVec, nNewSpikes) );
+		std::vector<int> spikesVec( findSpikes(timeVec,doubleVec,nNewSpikes) );
 		for (size_t ii=0; ii<spikesVec.size();ii++){
 			allSpikesVec[ii] = allSpikesVec[ii] + spikesVec[ii];
 		}
 
 		//3. replace spikes
 		const double stdDev0 = Interpol1D::std_dev(doubleVec);
-		replaceSpikes(doubleVec, spikesVec);
+		replaceSpikes(timeVec, doubleVec, spikesVec);
 		const double stdDev1 = Interpol1D::std_dev(doubleVec);
 		nIterations++;
 
@@ -135,17 +137,18 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 }
 
 /**
- * @brief This function calculates the derivative of a signal: d(ivec)(ii)=(ivec(ii+1)-ivec(ii-1))/2
-          Care has to be taken about the first and last value of the signal and about nodata values:
-            -the derivative of a nodata-value is also a nodata-value. (even though there could be a valid point before and after...)
-            -the derivative of the first data point is d(ivec)(0) = (ivec(1)-ivec(0))/1
-            -the derivative of the last data point is d(ivec)(lastIndex) = (ivec(lastIndex)-ivec(lastIndex-1))/1
-            -if ivec(ii+1) or ivec(ii-1) is a nodata-value we use ivec(ii) instead.
-            -if ivec(ii+1) and ivec(ii-1) is a nodata-vaue we set the derivative to nodata.
+ * @brief This function calculates the derivative of a signal: d(ivec)(ii)=(ivec(ii+1)-ivec(ii-1))/(timeVec(ii+1)-timeVec(ii-1))
+ *         Care has to be taken about the first and last value of the signal and about nodata values:
+ *           - the derivative of a nodata-value is also a nodata-value. (even though there could be a valid point before and after...)
+ *           - the derivative of the first data point is d(ivec)(0) = (ivec(1)-ivec(0))/(timeVec(1)-timeVec(0))
+ *           - the derivative of the last data point is d(ivec)(lastIndex) = (ivec(lastIndex)-ivec(lastIndex-1))/(timeVec(lastIndex)-timeVec(lastIndex-1))
+ *           - if ivec(ii+1) or ivec(ii-1) is a nodata-value we use ivec(ii) instead.
+ *           - if ivec(ii+1) and ivec(ii-1) is a nodata-vaue we set the derivative to nodata.
  * @param ivec the input-vector
+ * @param timeVec time-vector (same length as iVec)
  * @param return a double-vector containing the derivatives of the input-vector
  */
-std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<double>& ivec)
+std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec)
 {
 	std::vector<double> ovec;
 
@@ -166,9 +169,9 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 				i2 = ii;
 				v2 = ivec[ii];
 			}
-			const size_t delta = i2 - i1;
-			if (delta>0){
-				const double deltaValue = (v2-v1) / double(delta);
+			const double dt = timeVec[i2]-timeVec[i1];
+			if (dt != 0){
+				const double deltaValue = (v2-v1) / dt;
 				ovec.push_back(deltaValue);
 			} else
 				ovec.push_back(IOUtils::nodata);
@@ -179,8 +182,8 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 
 /**
  * @brief This function calculates the cross correlation of two vectors and returns the cross correlation as a double value.
-          The two vectors have to be of equal length. The cross correlation is defined as:
-                cross-correlation = sum over i( a(i)*b(i) ) / sum over i( b(i)^2 )
+ *         The two vectors have to be of equal length. The cross correlation is defined as:
+ *               cross-correlation = sum over i( a(i)*b(i) ) / sum over i( b(i)^2 )
  * @param aVec input double-vector
  * @param bvec input double-vector
  * @param return the calculated cross correlation
@@ -225,10 +228,10 @@ unsigned int FilterDespikingPS::nNodataElements(const std::vector<double>& iVec)
 
 /**
  * @brief This function finds points (described by xVec and yVec) which lie outside of the ellipse (described by a,b and theta)
-            and sets outsideVec to 1 (if a point lies outside of the ellipse).
-            xVec, yVec and outsideVec all have the same size.
-            The condition for a point to be outside the ellipse is:
-                (x*cos(theta)+y*sin(theta))^2+(x*sin(theta)-y*cos(theta))^2 > 1
+ *        and sets outsideVec to 1 (if a point lies outside of the ellipse).
+ *           xVec, yVec and outsideVec all have the same size.
+ *           The condition for a point to be outside the ellipse is:
+ *               (x*cos(theta)+y*sin(theta))^2+(x*sin(theta)-y*cos(theta))^2 > 1
  * @param xVec input x-coordinates
  * @param yVec input y-coordinates
  * @param a input. the major axis of the ellipse
@@ -256,16 +259,17 @@ void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec
 /**
  * @brief This function detects spikes in a signal.
  * @param uVec input-signal
+ * @param timeVec time-vector (same length as uVec)
  * @param nNewSpikes output: the number of new detected spikes.
  * @param return a vector of the same length as uVec, which is set to 1 if there is a spike in the signal, 0 otherwise
  */
-std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& uVec, unsigned int& nNewSpikes)
+std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
 {
 	std::vector<int> spikesVec(uVec.size(),0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
 
 	//step 1: calculate the first and second derivatives:
-	const std::vector<double> duVec( calculateDerivatives(uVec) );
-	const std::vector<double> du2Vec( calculateDerivatives(duVec) );
+	const std::vector<double> duVec( calculateDerivatives(uVec,timeVec) );
+	const std::vector<double> du2Vec( calculateDerivatives(duVec,timeVec) );
 
 	//step 2: calculate the standard deviations:
 	const double uStdDev = Interpol1D::std_dev( uVec );
@@ -315,23 +319,27 @@ std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& uVec, 
 
 /**
  * @brief This function creates a window of data points around the index-position. These points are used as input for interpolation.
-        Care has to be taken for data points which are noData or spikes.
+ *        Care has to be taken for data points which are noData or spikes.
+ *        For numerical reasons the x-values are shifted by the time at the index position.
  * @param index the index around which the window has to be found
+ * @param timeVec time-vector (same length as uVec)
  * @param uVec the whole input signal
  * @param spikesVec the vector indicating the spikes
- * @param windowWidth the wished width of the window. The value should be even. Half of the data points are left of the index and
-                        the other half right of the index.
- * @param xVec output: x-coordinates (=the indices of the signal)
+ * @param windowWidth the wished width of the window (in # of data points). The value should be even. Half of the data points are
+ *        left of the index and the other half right of the index.
+ * @param xVec output: x-coordinates (=time)
  * @param yVec output: y-coordinates (=the values of the signal)
  */
-void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-                                                 const unsigned int& windowWidth, std::vector<double>& xVec, std::vector<double>& yVec)
+void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::vector<double>& timeVec, const std::vector<double>& uVec,
+                                                  const std::vector<int>& spikesVec, const unsigned int& windowWidth, std::vector<double>& xVec,
+                                                  std::vector<double>& yVec)
 {
 	xVec.clear();
 	yVec.clear();
 	const unsigned int windowRadius = windowWidth/2;
 	size_t ii = index;
 	unsigned int nLeftPointsFound=0;
+	double timeShift = timeVec[index];
 	while (nLeftPointsFound < windowRadius && ii > 0){
 		ii--;
 		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
@@ -340,7 +348,7 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std:
 	}
 	while (ii < index){
 		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
-			xVec.push_back( static_cast<double>(ii) );
+			xVec.push_back(timeVec[ii]-timeShift);
 			yVec.push_back(uVec[ii]);
 		}
 		ii++;
@@ -351,7 +359,7 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std:
 		ii++;
 		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
 			nRightPointsFound++;
-			xVec.push_back( static_cast<double>(ii) );
+			xVec.push_back(timeVec[ii]-timeShift);
 			yVec.push_back(uVec[ii]);
 		}
 	}
@@ -359,21 +367,21 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index, const std:
 
 /**
  * @brief This function checks if a window of data points is sufficient for interpolation.
- * @param xVec the indices of the window
- * @param index the index around which the window was build
+ * @param xVec a vector of x-values (=time) of the window
+ * @param time the time around which the window was build (x-values)
  * @param minPoints the minimum number of points in the window necessary for interpolation (e.g. for a
-                    quadratic interpolation we need at least 3 points)
+ *                   quadratic interpolation we need at least 3 points)
  * @param avoidExtrapolation if we want to avoid extrapolation, there should be at least one data point left
-                                and right of the index.
+ *                               and right of the center time.
  * @param return true if a window which fulfills the requirements was found, false otherwise
  */
-bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const size_t index,
-                                                                 const unsigned int minPoints, const bool avoidExtrapolation)
+bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,
+                                                                  const unsigned int minPoints, const bool avoidExtrapolation)
 {
 	if(xVec.size()==0) return false;
 
 	if(avoidExtrapolation){
-		if (xVec[0]>=index || xVec[xVec.size()-1]<=index){
+		if (xVec[0]>=time || xVec[xVec.size()-1]<=time){
 			return false;
 		}
 	}
@@ -388,13 +396,14 @@ bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vec
 
 /**
  * @brief This function replaces the spikes with fitted values. Here we use a quadratic (!!!) fit for interpolation at the spikes.
-            Algorithm: We go through the input-signal (uVec), wherever there is a spike (spikesVec[ii] != 0) we replace the spike with
-            a fitted value. Therefore we take a window of the input-signal (the center of the window is at the spike if possible) and use this
-            window for interpolation.
+ *        Algorithm: We go through the input-signal (uVec), wherever there is a spike (spikesVec[ii] != 0) we replace the spike with
+ *        a fitted value. Therefore we take a window of the input-signal (the center of the window is at the spike if possible) and use this
+ *        window for interpolation.
+ * @param timeVec time-vector (same length as uVec)
  * @param uVec This vector is used as input (signal with spikes) and output (signal with replaced spikes).
  * @param spikesVec The vector indicating the spikes
  */
-void FilterDespikingPS::replaceSpikes(std::vector<double>& uVec, std::vector<int>& spikesVec)
+void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::vector<double>& uVec, std::vector<int>& spikesVec)
 {
 	std::vector<double> xVec;
 	std::vector<double> yVec;
@@ -405,23 +414,23 @@ void FilterDespikingPS::replaceSpikes(std::vector<double>& uVec, std::vector<int
 
 	for (size_t ii=0; ii<uVec.size(); ii++) {
 		if (spikesVec[ii]!=0){ //here we have a spike. replace its value:
-			getWindowForInterpolation(ii,uVec,spikesVec,windowWidth,xVec,yVec);
-			if (checkIfWindowForInterpolationIsSufficient(xVec,ii,minPointsForInterpolation,avoidExtrapolation)){
+			getWindowForInterpolation(ii,timeVec,uVec,spikesVec,windowWidth,xVec,yVec);
+			if(checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)){
 				try{
 					//interpolate the spike data point:
 					Fit1D quadraticFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
 					quadraticFit.setDegree(degreeOfInterpolation);
 					quadraticFit.fit();
-					double interpolatedValue = quadraticFit.f(ii);
+					double interpolatedValue = quadraticFit.f(0);
 					uVec[ii] = interpolatedValue;
 					//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
 					if(1==2){ //this is for debugging of the nonlinear quadratic fit function. try to use pivoting!
 						Fit1D quadraticFit2 = Fit1D("QUADRATIC",xVec,yVec,false);
 						quadraticFit2.fit();
 						//interpolate the spike data point
-						interpolatedValue = quadraticFit2.f(ii);
-						std::cout << "replace spikes.... at ii: uVec[ii] with f(x[ii]) " << ii << " " << uVec[ii]
-												<< " " << interpolatedValue << std::endl;
+						double interpolatedValue2 = quadraticFit2.f(0);
+						std::cout << "replace spikes... ii, uVec[ii], f(x[ii]),f_correct(x[ii]) " << timeVec[ii] << " " << uVec[ii]
+													<< " " << interpolatedValue2 <<" "<<interpolatedValue << std::endl;
 						//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
 					}
 				} catch (const std::exception &e) {
@@ -463,22 +472,6 @@ void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b
  * @param ivec input meteo-data-vector
  * @param param which values of the meteo-data-vector do you want to get (e.g. temperature)
  */
-/*const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
-                                                                                      const unsigned int& param)
-{
-	std::vector<double> ovec;
-	for (size_t ii=0; ii<ivec.size(); ii++) {
-		const MeteoData meteoValue( *ivec[ii] );
-		ovec.push_back( meteoValue(param) );
-	}
-	return ovec;
-}*/
-
-/**
- * @brief This function creates a double vector out of a MeteoData-vector.
- * @param ivec input meteo-data-vector
- * @param param which values of the meteo-data-vector do you want to get (e.g. temperature)
- */
 const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec,
                                                                                       const unsigned int& param)
 {
@@ -486,6 +479,29 @@ const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoData
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const MeteoData meteoValue = ivec[ii];
 		ovec.push_back( meteoValue(param) );
+	}
+	return ovec;
+}
+
+/**
+ * @brief This function creates a double vector out of a MeteoData-vector containing the time of each data point.
+ *        The time is shifted so that the first time is 0 and scaled so that the first time step is 1.
+ *        The shifting and scaling is done for numerical reasons.
+ * @param ivec input meteo-data-vector
+ */
+const std::vector<double> FilterDespikingPS::helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec)
+{
+	std::vector<double> ovec;
+	double time0 = 0;
+	double dt = 1;
+	if (ivec.size()>1){
+		time0 = ivec[0].date.getJulian();
+		dt = ivec[1].date.getJulian() - ivec[0].date.getJulian();
+	}
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		const MeteoData meteoValue = ivec[ii];
+		const double time = (meteoValue.date.getJulian()-time0)/dt;
+		ovec.push_back(time);
 	}
 	return ovec;
 }
@@ -563,16 +579,21 @@ void FilterDespikingPS::helperWriteDebugFile3WindowForInterpolation(size_t itera
 void FilterDespikingPS::helperWriteDebugFile4OriginalAndFinalSignal(std::vector<double>& ivec, std::vector<double>& ovec,
                                                                     std::vector<int>& allSpikesVec, double mean)
 {
-    ofstream myfile;
-    std::string filename("debugOutputFiles/debugFilterDespikingPS_OriginalAndFinalSignal.csv");
-    myfile.open (filename.c_str());
+	ofstream myfile;
+	std::string filename("debugOutputFiles/debugFilterDespikingPS_OriginalAndFinalSignal.csv");
+	myfile.open (filename.c_str());
 
-    myfile << "i; original signal; filtered signal; spikes" << std::endl;
-    for (size_t ii=0; ii<ivec.size(); ii++) {
-        myfile << ii <<";"<< ivec[ii] <<";"<< ovec[ii]+mean <<";"<< allSpikesVec[ii]<< std::endl;
-    }
-    myfile.close();
-
+	myfile << "i; original signal; filtered signal; spikes" << std::endl;
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		double h=ovec[ii];
+		if(h != IOUtils::nodata){
+			h=h+mean;
+		}
+		if(ovec[ii]){
+			myfile << ii <<";"<< ivec[ii] <<";"<< h <<";"<< allSpikesVec[ii]<< std::endl;
+		}
+	}
+	myfile.close();
 }
 
 } //end namespace
