@@ -137,13 +137,10 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 }
 
 /**
- * @brief This function calculates the derivative of a signal: d(ivec)(ii)=(ivec(ii+1)-ivec(ii-1))/(timeVec(ii+1)-timeVec(ii-1))
- *         Care has to be taken about the first and last value of the signal and about nodata values:
+ * @brief This function calculates the derivative of a signal: d(ivec)(ii)=(ivec(i2)-ivec(i1))/(timeVec(i2)-timeVec(i1)) with i2=ii+1 and i1=ii-1
+ *        Care has to be taken about the first and last value of the signal and about nodata values:
  *           - the derivative of a nodata-value is also a nodata-value. (even though there could be a valid point before and after...)
- *           - the derivative of the first data point is d(ivec)(0) = (ivec(1)-ivec(0))/(timeVec(1)-timeVec(0))
- *           - the derivative of the last data point is d(ivec)(lastIndex) = (ivec(lastIndex)-ivec(lastIndex-1))/(timeVec(lastIndex)-timeVec(lastIndex-1))
- *           - if ivec(ii+1) or ivec(ii-1) is a nodata-value we use ivec(ii) instead.
- *           - if ivec(ii+1) and ivec(ii-1) is a nodata-vaue we set the derivative to nodata.
+ *           - if ivec(i2) or ivec(i1) is a nodata-value, we increment i2 and decrement i1 until both are not nodata.
  * @param ivec the input-vector
  * @param timeVec time-vector (same length as iVec)
  * @param return a double-vector containing the derivatives of the input-vector
@@ -156,23 +153,32 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 		if (ivec[ii]==IOUtils::nodata){
 			ovec.push_back(IOUtils::nodata);
 		} else {
-			size_t i1 = (ii==0)? ii : ii-1;
-			size_t i2 = (ii==ivec.size()-1)? ii : ii+1;
-
-			double v1 = ivec[i1];
-			double v2 = ivec[i2];
-			if (v1==IOUtils::nodata){
-				i1 = ii;
-				v1 = ivec[ii];
-			}
-			if (v2==IOUtils::nodata){
-				i2 = ii;
-				v2 = ivec[ii];
+			size_t i1 = ii;
+			size_t i2 = ii;
+			bool stop=false;
+			const size_t maxSteps = 100;
+			while (stop==false){
+				i1 = i1-1;
+				i2 = i2+1;
+				if(i1<=0){
+					stop=true;
+					i1=ii;
+				}
+				if(i2>=ivec.size()){
+					stop=true;
+					i2=ii;
+				}
+				if(ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata){
+					stop=true;
+				}
+				if(i1<ii-maxSteps || i2>ii+maxSteps){
+					stop=true;
+				}
 			}
 			const double dt = timeVec[i2]-timeVec[i1];
-			if (dt != 0){
-				const double deltaValue = (v2-v1) / dt;
-				ovec.push_back(deltaValue);
+			if (dt != 0 && ivec[i1] != IOUtils::nodata && ivec[i2] != IOUtils::nodata){
+				const double derivative = (ivec[i2]-ivec[i1]) / dt;
+				ovec.push_back(derivative);
 			} else
 				ovec.push_back(IOUtils::nodata);
 		}
