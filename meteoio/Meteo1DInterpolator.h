@@ -51,7 +51,7 @@ namespace mio {
  * Using the template.cc and template.h files, build your own algorithm:
  *  - rename template.cc and template.h into a proper name for your algorithm as well as all mentions of "TEMPLATE" in the files;
  *  - declare your cc file in meteoio/meteoResampling/CMakeLists.txt;
- *  - declare your class in meteoio/meteoResampling/ResamplingAlgorithms.cc (both as #include and in the object factory
+ *  - declare your class in meteoio/meteoResampling/ResamplingAlgorithms.cc (both as \#include and in the object factory
  * ResamplingAlgorithmsFactory::getAlgorithm);
  *  - implement your arguments parsing in your constructor;
  *  - implement the temporal interpolation in the resample() method. You receive the full vector of data, the index at or right after where
