@@ -5,9 +5,10 @@
 # set Memory check command
 set(CTEST_MEMORYCHECK_COMMAND valgrind)
 
-#get all include flags needed to make executables
-SET(SHAREDNAME ${PROJECT_NAME})
-SET(LIBRARIES ${SHAREDNAME} ${CMAKE_DL_LIBS})
+#get everytyhing needed to make executables
+FIND_PACKAGE(MeteoIO)
+INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${METEOIO_INCLUDE_DIR})
+SET(LIBRARIES ${METEOIO_LIBRARIES})
 
 # go back to the source dir to have all .h files as would be installed
 INCLUDE_DIRECTORIES(..)
