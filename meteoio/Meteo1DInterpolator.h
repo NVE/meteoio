@@ -120,7 +120,7 @@ class Meteo1DInterpolator {
 		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
 		double window_size; ///< In seconds
-		bool enable_resampling; ///< easy way to turn resampling off
+		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
 };
 } //end namespace
 
