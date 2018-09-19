@@ -25,6 +25,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <typeinfo> //for typeid()
 
 namespace mio {
 
@@ -326,6 +327,8 @@ class ConfigProxy {
 		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
 		template<typename T> operator T() const {
+			if (opt==IOUtils::nothrow && typeid(T)!=typeid(std::string("str")))
+				throw ConversionFailedException("Wrong Config::get() call for "+section+"::"+key+", please report it to the developers", AT);
 			T tmp;
 			proxycfg.getValue(key, section, tmp, opt);
 			return tmp;
