@@ -192,15 +192,7 @@ class Config {
 
 		/**
 		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
-		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
-		 * @param[in] opt indicating whether an exception should be raised, when key is not present
-		 * @return A value of type T
-		 */
-		ConfigProxy get(const std::string& key, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
-
-		/**
-		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
-		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
+		 * @param[in] key std::string representing a KEY in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 * @return A value of type T
