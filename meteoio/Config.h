@@ -140,7 +140,7 @@ class Config {
 		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
 		friend std::istream& operator>>(std::istream& is, Config& cfg);
 
-		template <typename T> std::vector<T> getValue(const std::string& key, std::string section,
+		template <typename T> std::vector<T> getValue(const std::string& key, std::string& section,
 		                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			std::vector<T> tmp;
@@ -191,20 +191,54 @@ class Config {
 		}
 
 		/**
-		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
+		 * @brief A function that allows to retrieve a value for a key as return parameter (vectors of values too). 
+		 * @details If the key is not found, an exception is thrown.
 		 * @param[in] key std::string representing a KEY in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
-		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 * @return A value of type T
 		 *
 		 * Example Usage:
 		 * @code
 		 * Config cfg("io.ini");
-		 * vector<int> = cfg.get("DEPTHS", "INPUT", IOUtils::nothrow);
+		 * vector<int> = cfg.get("DEPTHS", "INPUT");
 		 * string mystr = cfg.get("PATH", "OUTPUT");
 		 * @endcode
 		 */
-		ConfigProxy get(const std::string& key, std::string section, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
+		const ConfigProxy get(const std::string& key, const std::string& section) const;
+		
+		/**
+		 * @brief A function that allows to retrieve a value for a key as return parameter (vectors of values too). 
+		 * @details If the key is not found, the provided default value is returned.
+		 * @param[in] key std::string representing a KEY in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[in] dflt default value, if the key is not found
+		 * @return A value of type T
+		 *
+		 * Example Usage:
+		 * @code
+		 * Config cfg("io.ini");
+		 * const double factor = cfg.get("factor", "Input", 1.);
+		 * @endcode
+		 */
+		template <typename T> const T get(const std::string& key, const std::string& section, const T& dflt) const;
+		
+		/**
+		 * @brief A function that allows to retrieve a value for a key as return parameter (vectors of values too). 
+		 * @details If the key is not found, the provided default value is returned.
+		 * @param[in] key std::string representing a KEY in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[in] dflt default value, if the key is not found
+		 * @return A value of type T
+		 *
+		 * Example Usage:
+		 * @code
+		 * Config cfg("io.ini");
+		 * const std::string factor = cfg.get("model", "Input", "default");
+		 * @endcode
+		 * @note this is a specialized version of the template method, since strings are tricky: they can be initialized 
+		 * with "" but this needs casting (since this is either a char or a char[]), therefore template argument deduction would fail.
+		 */
+		const std::string get(const std::string& key, const std::string& section, const std::string& dflt) const;
 
 		/**
 		 * @brief Template function to retrieve a value of class T for a certain key
@@ -239,15 +273,16 @@ class Config {
 		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
-		 * @param[in] keystart std::string representing a pattern for the key in the key/value file
+		 * @param[in] keymatch std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
 		 */
-		template <typename T> void getValues(const std::string& keystart, std::string section, std::vector<T>& vecT) const
+		template <typename T> void getValues(std::string keymatch, std::string section, std::vector<T>& vecT) const
 		{
 			vecT.clear();
+			IOUtils::toUpper(keymatch);
 			IOUtils::toUpper(section);
-			const std::vector< std::string > vecKeys( getKeys(keystart, section) );
+			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
 			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
 				const std::string full_key( section + "::" + vecKeys[ii] );
@@ -261,11 +296,12 @@ class Config {
 			}
 		}
 
-		template <typename T> void getValues(const std::string& keystart, std::string section, std::vector<T>& vecT, std::vector<std::string>& vecKeys) const
+		template <typename T> void getValues(std::string keymatch, std::string section, std::vector<T>& vecT, std::vector<std::string>& vecKeys) const
 		{
 			vecT.clear();
+			IOUtils::toUpper(keymatch);
 			IOUtils::toUpper(section);
-			vecKeys = getKeys(keystart, section);
+			vecKeys = getKeys(keymatch, section);
 
 			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
 				const std::string full_key = section + "::" + vecKeys[ii];
@@ -279,7 +315,7 @@ class Config {
 			}
 		}
 
-		std::vector< std::pair<std::string, std::string> > getValues(std::string keystart, std::string section, const bool& anywhere=false) const;
+		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
 
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
@@ -287,7 +323,7 @@ class Config {
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
-		 * @return a vector that holds all keys that partially match keystart
+		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
 		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
 		 * @endcode
@@ -312,17 +348,14 @@ class ConfigProxy {
 		const Config& proxycfg;
 		const std::string& key;
 		const std::string& section;
-		const IOUtils::ThrowOptions& opt;
 
 		ConfigProxy(const Config& i_cfg, const std::string& i_key,
-		            const std::string& i_section, const IOUtils::ThrowOptions& i_opt)
-		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
+		            const std::string& i_section)
+		            : proxycfg(i_cfg), key(i_key),section(i_section) { }
 
 		template<typename T> operator T() const {
-			if (opt==IOUtils::nothrow && typeid(T)!=typeid(std::string("str")))
-				throw ConversionFailedException("Wrong Config::get() call for "+section+"::"+key+", please report it to the developers", AT);
 			T tmp;
-			proxycfg.getValue(key, section, tmp, opt);
+			proxycfg.getValue(key, section, tmp, IOUtils::dothrow);
 			return tmp;
 		}
 

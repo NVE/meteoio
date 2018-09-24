@@ -158,7 +158,7 @@ namespace mio {
 
 IOHandler::operation_mode IOManager::setMode(const Config& i_cfg)
 {
-	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", IOUtils::nothrow);
+	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", "");
 	if (resampling_strategy_str.empty())
 		return IOHandler::STD;
 	if (resampling_strategy_str=="VSTATIONS")
