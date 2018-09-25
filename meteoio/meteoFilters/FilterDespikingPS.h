@@ -33,31 +33,35 @@ namespace mio {
  * This filter iteratively finds and replaces spikes (outliers) in a data sequence until no more spikes are found. The filter was developed to despike Acoustic
  * Doppler Velocimeter (ADV) data, but might also be useful to remove outliers from other signals.
  *
+ * \image html DespikingFilter_typicalFilterResult.png "Example of filter performance for one hour of ADV-data. Outliers are successfully removed by the filter."
+ *
  * Two versions of this filter are implemented:
  *   - The "Goring"-version is implemented according to following paper:
  *      Goring, D.G. and Nikora, V.I. (2002). "Despiking Acoustic Doppler Velocimeter Data" J. Hydraul. Eng., 128(1): 117-126
  *   - And the "Mori"-version is implemented according to this paper:
  *      Mori, N., Suzuki, T. and Kakuno, S. (2007). "Noise of Acoustic Doppler Velocimeter Data in Bubbly Flows" J. Eng. Mech., 133(1):122-125
  *
- * Detection of the spikes works like this:
+ * Method:
+ * - Detection of the spikes:
  *  - calculate first and second derivatives of the whole signal
  *  - the data points plotted in phase space are enclosed by an ellipsoid defined
  *     by the standard deviations and the universal threshold (=sqrt(2*ln(number of data points))) (see figure below)
  *  - points outside this ellipsoid are designated as spikes (the Goring-implementation uses three 2D-projections of the ellipsoid to identify
  *                                                            the outliers, while the Mori-implementation finds the outliers in 3D)
  *
- * Replacement of the spikes:
+ * - Replacement of the spikes:
  *  - find a cubic fit for 24 data points around the spike
  *  - replace the spike with a fitted value
  *
  * Parameters:
+ * - Adjustable parameters:
  *  - The sensitivity parameter was added to be able to control the sensitivity of the filter. The universal threshold is divided by
  *      this value. Thus a sensitivity of 1 is the default value. The larger the sensitivity the smaller the threshold (=the smaller
  *      the ellipsoid) and thus the more spikes will be detected.
  *  - The method parameter decides which implementation to use: "Mori" or "Goring". The differences are small between both implementations.
  *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested.
 
- * Hard-coded parameters:
+ * - Hard-coded parameters:
  *    - the maximum number of iterations for the spike detection. This is set to 50.
  *    - the number of points used for the fitting (replacement) of the spikes. This is set to 24 (just as proposed in the paper by Goring).
  *    - the degree of the fit for the replacement. This is set to 3 (cubic fit) (as proposed in the paper by Goring).
