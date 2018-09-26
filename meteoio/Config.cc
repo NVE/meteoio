@@ -41,7 +41,7 @@ const ConfigProxy Config::get(const std::string& key, const std::string& section
 	return ConfigProxy(*this, key, section);
 }
 
-template <typename T> const T Config::get(const std::string& key, const std::string& section, const T& dflt) const
+template <typename T> T Config::get(const std::string& key, const std::string& section, const T& dflt) const
 {
 	if (keyExists(key, section)) {
 		T tmp;
@@ -52,10 +52,32 @@ template <typename T> const T Config::get(const std::string& key, const std::str
 	}
 }
 
-const std::string Config::get(const std::string& key, const std::string& section, const std::string& dflt) const
+std::string Config::get(const std::string& key, const std::string& section, const std::string& dflt) const
 {
 	if (keyExists(key, section)) {
 		std::string tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return dflt;
+	}
+}
+
+std::string Config::get(const std::string& key, const std::string& section, const char dflt[]) const
+{
+	if (keyExists(key, section)) {
+		std::string tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return std::string(dflt);
+	}
+}
+
+bool Config::get(const std::string& key, const std::string& section, const bool& dflt) const
+{
+	if (keyExists(key, section)) {
+		bool tmp;
 		getValue(key, section, tmp);
 		return tmp;
 	} else {

@@ -220,7 +220,7 @@ class Config {
 		 * const double factor = cfg.get("factor", "Input", 1.);
 		 * @endcode
 		 */
-		template <typename T> const T get(const std::string& key, const std::string& section, const T& dflt) const;
+		template <typename T> T get(const std::string& key, const std::string& section, const T& dflt) const;
 		
 		/**
 		 * @brief A function that allows to retrieve a value for a key as return parameter (vectors of values too). 
@@ -238,7 +238,10 @@ class Config {
 		 * @note this is a specialized version of the template method, since strings are tricky: they can be initialized 
 		 * with "" but this needs casting (since this is either a char or a char[]), therefore template argument deduction would fail.
 		 */
-		const std::string get(const std::string& key, const std::string& section, const std::string& dflt) const;
+		std::string get(const std::string& key, const std::string& section, const std::string& dflt) const;
+		std::string get(const std::string& key, const std::string& section, const char dflt[]) const;
+		bool get(const std::string& key, const std::string& section, const bool& dflt) const;
+
 
 		/**
 		 * @brief Template function to retrieve a value of class T for a certain key
