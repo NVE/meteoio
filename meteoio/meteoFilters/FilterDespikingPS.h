@@ -37,9 +37,9 @@ namespace mio {
  *
  * Two versions of this filter are implemented:
  *   - The "Goring"-version is implemented according to following paper:
- *      Goring, D.G. and Nikora, V.I. (2002). "Despiking Acoustic Doppler Velocimeter Data" J. Hydraul. Eng., 128(1): 117-126
+ *      Goring, D.G. and Nikora, V.I. (2002). <i>"Despiking Acoustic Doppler Velocimeter Data"</i> J. Hydraul. Eng., 128(1): 117-126
  *   - And the "Mori"-version is implemented according to this paper:
- *      Mori, N., Suzuki, T. and Kakuno, S. (2007). "Noise of Acoustic Doppler Velocimeter Data in Bubbly Flows" J. Eng. Mech., 133(1):122-125
+ *      Mori, N., Suzuki, T. and Kakuno, S. (2007). <i>"Noise of Acoustic Doppler Velocimeter Data in Bubbly Flows"</i> J. Eng. Mech., 133(1):122-125
  *
  * Method:
  * - Detection of the spikes:

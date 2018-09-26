@@ -183,11 +183,11 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 				i2 = i2+1;
 				if (i1<0){
 					stop=true;
-					i1=ii;
+					i1=static_cast<int>(ii);
 				}
 				if (i2>=static_cast<int>(ivec.size())){
 					stop=true;
-					i2=ii;
+					i2=static_cast<int>(ii);
 				}
 				if (ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata){
 					stop=true;
@@ -536,9 +536,9 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 {
 	std::vector<double> xVec;
 	std::vector<double> yVec;
-	const unsigned int windowWidth = 24; //wished width of the window for interpolation
-	const unsigned int degreeOfInterpolation = 3; //1: linear fit, 2: quadratic fit, 3: cubic fit
-	const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
+	static const unsigned int windowWidth = 24; //wished width of the window for interpolation
+	static const unsigned int degreeOfInterpolation = 3; //1: linear fit, 2: quadratic fit, 3: cubic fit
+	static const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
 	bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
 
 	for (size_t ii=0; ii<uVec.size(); ii++) {
@@ -553,21 +553,10 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 					double interpolatedValue = quadraticFit.f(0);
 					uVec[ii] = interpolatedValue;
 					//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-					if(1==2){ //this is for debugging of the nonlinear quadratic fit function. try to use pivoting!
-						Fit1D quadraticFit2 = Fit1D("QUADRATIC",xVec,yVec,false);
-						quadraticFit2.fit();
-						//interpolate the spike data point
-						double interpolatedValue2 = quadraticFit2.f(0);
-						std::cout << "replace spikes... ii, uVec[ii], f(x[ii]),f_correct(x[ii]) " << timeVec[ii] << " " << uVec[ii]
-													<< " " << interpolatedValue2 <<" "<<interpolatedValue << std::endl;
-						//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-					}
 				} catch (const std::exception &e) {
 					std::cout << "An exception occurred: " << e.what() << std::endl;
 					//helperWriteDebugFile3WindowForInterpolation(ii,xVec,yVec);
 				}
-			} else{
-				//std::cout << "We were not able to create a window for interpolation. " << std::endl;
 			}
 		}
 	}
@@ -714,10 +703,7 @@ void FilterDespikingPS::helperWriteDebugFile4OriginalAndFinalSignal(std::vector<
 
 	myfile << "i; original signal; filtered signal; spikes" << std::endl;
 	for (size_t ii=0; ii<ivec.size(); ii++) {
-		double h=ovec[ii];
-		if(ovec[ii]){
-			myfile << ii <<";"<< ivec[ii] <<";"<< h <<";"<< allSpikesVec[ii]<< std::endl;
-		}
+		myfile << ii <<";"<< ivec[ii] <<";"<< ovec[ii] <<";"<< allSpikesVec[ii]<< std::endl;
 	}
 	myfile.close();
 }
