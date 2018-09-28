@@ -269,6 +269,13 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
+	const double slope_angle = myreader.get_header_doublevalue("slope_angle");
+	const double slope_azi = myreader.get_header_doublevalue("slope_azi");
+	if (slope_angle!=IOUtils::nodata && slope_azi!=IOUtils::nodata) {
+		meta.setSlope(slope_angle, slope_azi);
+	} else if (slope_angle==0.) {
+		meta.setSlope(slope_angle, 0.);
+	}
 
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 	if (data_epsg){
@@ -543,6 +550,13 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
 		const short int epsg = sd.position.getEPSG();
 		if (epsg!=IOUtils::snodata) mywriter.set_header_value("epsg", static_cast<double>(epsg));
+		
+		const double slope = sd.getSlopeAngle(), azi = sd.getAzimuth();
+		if ((slope==0.) || (slope!=IOUtils::nodata && azi!=IOUtils::nodata)) {
+			mywriter.set_header_value("slope_angle", slope);
+			if (azi!=IOUtils::nodata) mywriter.set_header_value("slope_azi", azi);
+			else mywriter.set_header_value("slope_azi", 0.); //flat terrain gets N azimuth
+		}
 
 		if (timezone != IOUtils::nodata)
 			mywriter.set_header_value("tz", timezone);
