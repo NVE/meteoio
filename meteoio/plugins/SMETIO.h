@@ -54,6 +54,7 @@ class SMETIO : public IOInterface {
 		virtual void readPOI(std::vector<Coords>& pts);
 
 	private:
+		static double getSnowpackSlope(const std::string& id);
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
 		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
 		                     bool& julian_present, MeteoData& md);
@@ -75,6 +76,7 @@ class SMETIO : public IOInterface {
 		                        smet::SMETWriter& mywriter);
 
 		static const char* dflt_extension;
+		static const double snVirtualSlopeAngle;
 		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
@@ -83,7 +85,7 @@ class SMETIO : public IOInterface {
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		size_t nr_stations; //number of stations to read from
-		bool outputIsAscii, outputPlotHeaders, allowAppend, allowOverwrite;//read from the Config [Output] section
+		bool outputIsAscii, outputPlotHeaders, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
 } //namespace

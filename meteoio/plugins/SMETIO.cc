@@ -47,6 +47,9 @@ namespace mio {
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet";
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
+ * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
+ * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
+ * naming scheme will be used to derive the slope information (default: false).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
@@ -83,13 +86,14 @@ namespace mio {
  */
 
 const char* SMETIO::dflt_extension = ".smet";
+const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -99,7 +103,7 @@ SMETIO::SMETIO(const Config& cfgreader)
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -116,6 +120,7 @@ void SMETIO::parseInputOutputSection()
 	std::string inpath, in_meteo;
 	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
 		cfg.getValue("METEOPATH", "Input", inpath);
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
@@ -241,6 +246,26 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	}
 }
 
+//assume an operational snowpack virtual slopes naming: the station ID is made of letters followed by a station
+//number (1 digit) and an optional virtual slope (1 digit, between 1 and 4)
+double SMETIO::getSnowpackSlope(const std::string& id)
+{
+	static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	
+	const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
+	if (end_name_pos==std::string::npos) return IOUtils::nodata; //this is not a Snowpack virtual station naming
+	if (id[end_name_pos]<'0' || id[end_name_pos]>'9') return IOUtils::nodata;
+	
+	if (id.size() - end_name_pos == 1) return 0.; //this is the flat field station
+	const char slope_code = id[end_name_pos+1]; //we are now sure that there is another char at this position
+	
+	if (slope_code=='1') return 1.;
+	else if (slope_code=='2') return 2.;
+	else if (slope_code=='3') return 3.;
+	else if (slope_code=='4') return 4.;
+	else return IOUtils::nodata; //this is not a digit or not in the [1-4] range
+}
+
 void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 {
 	/*
@@ -275,6 +300,12 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		meta.setSlope(slope_angle, slope_azi);
 	} else if (slope_angle==0.) {
 		meta.setSlope(slope_angle, 0.);
+	} else if (snowpack_slopes) {
+		const double exposition = getSnowpackSlope( meta.stationID );
+		if (exposition==0.) 
+			meta.setSlope(0., 0.);
+		else if (exposition!=IOUtils::nodata) 
+			meta.setSlope(snVirtualSlopeAngle, (exposition - 1.)*90.);
 	}
 
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
