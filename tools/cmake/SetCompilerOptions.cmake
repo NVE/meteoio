@@ -36,7 +36,7 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF(DEBUG_ARITHM)
 		
 		SET(WARNINGS_OFF "-Wno-unknown-pragmas")
-		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch ${WARNINGS_OFF}")
+		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch ${WARNINGS_OFF} -wd2015,11071")
 		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
 		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
