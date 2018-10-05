@@ -465,9 +465,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
 		std::vector<bool> vecParamInUse(nr_of_parameters, false);
 		std::vector<std::string> vecColumnName(nr_of_parameters, "NULL");
-		double timezone = IOUtils::nodata; //time zone of the data
-		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
-		if (out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
+		double smet_timezone = IOUtils::nodata; //time zone of the data
+		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, smet_timezone, vecParamInUse, vecColumnName);
+		if (out_dflt_TZ != IOUtils::nodata) smet_timezone = out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
@@ -484,7 +484,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
 				
 				mywriter = new smet::SMETWriter(filename, type);
-				generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
+				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
 
@@ -534,7 +534,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-                                const double& timezone, const size_t& nr_of_parameters,
+                                const double& smet_timezone, const size_t& nr_of_parameters,
                                 const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
                                 smet::SMETWriter& mywriter)
 {
@@ -544,7 +544,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	 * - station_id, station_name (if present)
 	 * - nodata (set to IOUtils::nodata)
 	 * - fields (depending on ASCII/BINARY format and whether the meta data is part of the header or data)
-	 * - timezone
+	 * - smet_timezone
 	 * - meta data (lat/lon/alt or east/north/alt/epsg if not part of data section)
 	 */
 	std::ostringstream ss;
@@ -589,8 +589,8 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			else mywriter.set_header_value("slope_azi", 0.); //flat terrain gets N azimuth
 		}
 
-		if (timezone != IOUtils::nodata)
-			mywriter.set_header_value("tz", timezone);
+		if (smet_timezone != IOUtils::nodata)
+			mywriter.set_header_value("tz", smet_timezone);
 	} else {
 		ss << " latitude longitude altitude";
 		myprecision.push_back(8); //for latitude
@@ -752,7 +752,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 	return actual_nr_of_parameters;
 }
 
-void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& timezone,
+void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
                                     std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName)
 {
 	/**
@@ -773,7 +773,7 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, cons
 	}
 
 	if (!vecMeteo.empty())
-		timezone = vecMeteo[0].date.getTimeZone();
+		smet_timezone = vecMeteo[0].date.getTimeZone();
 }
 
 bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
