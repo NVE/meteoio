@@ -46,7 +46,7 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
  * @param[out] is_night set to TRUE if it is night time
  * @return cloudiness (between 0 and 1)
  */
-double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& use_rswr, SunObject& sun, bool &is_night)
+double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, SunObject& sun, bool &is_night)
 {
 	static const double night_thresh = 5.; //threshold on iswr for night or day
 	//we know that TA and RH are available, otherwise we would not get called
@@ -69,7 +69,7 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 		if (ISWR==IOUtils::nodata) { //ISWR is missing, trying to compute it
 			if (RSWR!=IOUtils::nodata)
 				is_night = (RSWR / albedo) < night_thresh; //in any case, we use RSWR, at least to know if it's night
-			if (!use_rswr)
+			if (!i_use_rswr)
 				return IOUtils::nodata;
 			if (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)
 				ISWR = RSWR / albedo;
