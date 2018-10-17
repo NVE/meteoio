@@ -127,7 +127,7 @@ void SMETIO::parseInputOutputSection()
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 			bool is_recursive = false;
 			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, ".smet", is_recursive) );
+			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, dflt_extension, is_recursive) );
 			dirlist.sort();
 			vecFilenames.reserve( dirlist.size() );
 			std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
@@ -457,7 +457,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			sd.stationID = ss.str();
 		}
 
-		const std::string filename( outpath + "/" + sd.stationID + ".smet" );
+		const std::string filename( outpath + "/" + sd.stationID + dflt_extension );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 
