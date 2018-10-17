@@ -63,7 +63,7 @@ namespace IOUtils {
 	const unsigned int unodata = static_cast<unsigned int>(-1);
 	const int inodata = -999;
 	const short int snodata = -999;
-	const char cnodata = CHAR_MAX;
+	const char cnodata = std::numeric_limits<char>::max();
 	const size_t npos    = static_cast<size_t>(-1);  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
