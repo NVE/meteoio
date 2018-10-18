@@ -40,7 +40,7 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
  * used to evaluate the cloudiness, based on the chosen parametrization.
  * @param[in] clf_model cloudiness parametrization
  * @param[in] md MeteoData
- * @param[in] use_rswr if set to true, in case of no iswr measurements, a ground albedo is assumed and used to compute iswr. Based on HS, this albedo can either
+ * @param[in] i_use_rswr if set to true, in case of no iswr measurements, a ground albedo is assumed and used to compute iswr. Based on HS, this albedo can either
  * be a soil ro a snow albedo
  * @param sun For better efficiency, the SunObject for this location (so it can be cached)
  * @param[out] is_night set to TRUE if it is night time
