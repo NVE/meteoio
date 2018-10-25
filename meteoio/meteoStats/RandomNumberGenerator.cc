@@ -35,7 +35,7 @@
  * What's left to do:
  *  - Mersenne Twister
  *  - some distributions
- *  - Monte Carlo sampling template for arbitrary distribution function
+ *  - Monte Carlo sampling template for arbitrary distribution functions
  *  - write the doc
  *
  * For developers of statistical filters it may be important to be able to implement custom probability distributions,
@@ -222,7 +222,7 @@ double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_dou
 	double rr = true_double? RngCore::trueDoub() : doubUniform();
 	if (bounds != RNG_AINCBINC) {
 		while ( (bounds == RNG_AINCBEXC && rr == 1.) ||
-			(bounds == RNG_AEXCBINC && rr == 0.) ||
+		        (bounds == RNG_AEXCBINC && rr == 0.) ||
 		        (bounds == RNG_AEXCBEXC && (rr == 0. || rr == 1.)) )
 			rr = true_double? RngCore::trueDoub() : doubUniform();	
 	}
@@ -562,7 +562,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 	    1. / (sqrt(2. * M_PI)) * exp(-(xabs*xabs) / 2.); //Horner's method to evaluate polynom
 
 	const int sign = (xx > mean) - (xx < mean); //formula is for x > 0, but it is symmetric around mu
-	return 0.5 + sign * (yy - 0.5); //|error| < 7.5e-8
+	return 0.5 + sign * (yy - 0.5);
 }
 
 //CUSTOM_DIST step 5/6: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
@@ -682,9 +682,9 @@ uint32_t RngPcg::int32()
 	const uint64_t oldstate = state; 
 	state = oldstate * 6364136223846793005ULL + (inc|1);
 	//permutation function of a tuple as output function:
-	const uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
-	const uint32_t rot = oldstate >> 59u;
-	return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+	const uint32_t xorshifted = (uint32_t)( ((oldstate >> 18u) ^ oldstate) >> 27u );
+	const uint32_t rot = (uint32_t)(oldstate >> 59u);
+	return  (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 //---------- End Apache license
 
@@ -787,7 +787,7 @@ double RngCore::doubFromInt(const uint64_t& rn) const
 {
 	//For speed, we don't check boundaries in the standard method (if this leads to problems then probably the generator
 	//is broken anyway) and rely on the built in implementation:
-	return ldexp(rn, -64); //rn * 2^(-64)
+	return ldexp((double)rn, -64); //rn * 2^(-64)
 	//Return values in [2^-11, 1] are overrepresentated, low precision for small exponents
 }
 
