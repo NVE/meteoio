@@ -124,15 +124,59 @@ namespace mio { //the holy land
  * calculations with a grandfathered in, better, faster, ... RNG we can at least help with the seeding.
  */
 RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DISTR& distribution,
-    const std::vector<double>& distribution_params) : rng_type(type), rng_muller_z1(0.)
+    const std::vector<double>& distribution_params) :
+    rng_core(RngFactory::getCore(type)),
+    rng_type(type),
+    rng_distribution(distribution),
+    DistributionParameters(distribution_params),
+    rng_muller_generate(true),
+    rng_muller_z1(0.),
+    doubFunc(&RandomNumberGenerator::doubUniform),
+    pdfFunc(&RandomNumberGenerator::pdfUniform),
+    cdfFunc(&RandomNumberGenerator::cdfUniform)
 {
-	rng_core = RngFactory::getCore(type);
-	setDistribution(distribution, distribution_params);
+	setDistribution(distribution, distribution_params); //checks if the parameters fit the distribution
+}
+
+RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& rng) : 
+    rng_core(RngFactory::getCore(rng.rng_type)),
+    rng_type(rng.rng_type),
+    rng_distribution(rng.rng_distribution),
+    DistributionParameters(rng.DistributionParameters),
+    rng_muller_generate(rng.rng_muller_generate),
+    rng_muller_z1(rng.rng_muller_z1),
+    doubFunc(rng.doubFunc),
+    pdfFunc(rng.pdfFunc),
+    cdfFunc(rng.cdfFunc)
+{
+	std::vector<uint64_t> transfer_states;
+	rng.getState(transfer_states);
+	setState(transfer_states);
 }
 
 RandomNumberGenerator::~RandomNumberGenerator()
 {
 	delete rng_core; //TODO: good practice to guard this further?
+}
+
+RandomNumberGenerator& RandomNumberGenerator::operator=(const RandomNumberGenerator& rng)
+{
+	if (this != &rng) {
+    		rng_core = RngFactory::getCore(rng.rng_type);
+    		rng_type = rng.rng_type;
+    		rng_distribution = rng.rng_distribution;
+    		DistributionParameters = rng.DistributionParameters;
+    		rng_muller_generate = rng.rng_muller_generate;
+    		rng_muller_z1 = rng.rng_muller_z1;
+    		doubFunc = rng.doubFunc;
+    		pdfFunc = rng.pdfFunc;
+    		cdfFunc = rng.cdfFunc;
+
+		std::vector<uint64_t> transfer_states;
+		rng.getState(transfer_states);
+		setState(transfer_states);
+	}
+	return *this;
 }
 
 /* PUBLIC FUNCTIONS */
@@ -517,7 +561,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 	double yy = 1. - ( ((((bb[4]*tt + bb[3])*tt) + bb[2])*tt + bb[1])*tt + bb[0] )*tt *
 	    1. / (sqrt(2. * M_PI)) * exp(-(xabs*xabs) / 2.); //Horner's method to evaluate polynom
 
-	const short sign = (xx > mean) - (xx < mean); //formula is for x > 0, but it is symmetric around mu
+	const int sign = (xx > mean) - (xx < mean); //formula is for x > 0, but it is symmetric around mu
 	return 0.5 + sign * (yy - 0.5); //|error| < 7.5e-8
 }
 
@@ -530,7 +574,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 ///////////////////////////////////////////////////////////////////////////////
 
 /* CONSTRUCTOR */
-RngXor::RngXor()
+RngXor::RngXor() : state(0), uu(0), vv(0), ww(0)
 {
 	hardware_seed_success = initAllStates();
 }
@@ -603,7 +647,7 @@ bool RngXor::initAllStates() //initial XOR-generator states
 ///////////////////////////////////////////////////////////////////////////////
 
 /* CONSTRUCTOR */
-RngPcg::RngPcg()
+RngPcg::RngPcg() : state(0), inc(0)
 {
 	hardware_seed_success = initAllStates();
 }
@@ -699,6 +743,12 @@ uint32_t twister_temper(uint32_t state)
 ///////////////////////////////////////////////////////////////////////////////
 
 /* CONSTRUCTOR */
+RngCore::RngCore() : hardware_seed_success(0)
+{
+	//do nothing
+}
+
+
 RngCore::~RngCore() //we need this declared virtual to be able to delete rng_core
 {
 	//do nothing
