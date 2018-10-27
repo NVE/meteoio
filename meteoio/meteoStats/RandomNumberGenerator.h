@@ -119,7 +119,7 @@ class RandomNumberGenerator : private RngCore {
 		double cdfGauss(const double& xx) const;
 };
 
-class RngXor : public RngCore {
+class RngXor : public RngCore { //combined generator with xor, shift and multiply
 	public: //new generators must provide these
 		RngXor();
 		uint64_t int64();
@@ -134,7 +134,7 @@ class RngXor : public RngCore {
 		bool initAllStates();
 };
 
-class RngPcg : public RngCore {
+class RngPcg : public RngCore { //Permuted linear congruential generator
 	public:
 		RngPcg();
 		uint64_t int64();
@@ -145,6 +145,24 @@ class RngPcg : public RngCore {
 	private:
 		uint64_t state;
 		uint64_t inc;
+
+		bool initAllStates();
+};
+
+class RngMtw : public RngCore { //Mersenne Twister
+	public:
+		RngMtw();
+		uint64_t int64();
+		uint32_t int32( );
+		void getState(std::vector<uint64_t>& ovec_seed) const;
+		void setState(const std::vector<uint64_t>& ivec_seed);
+
+	private:
+		const unsigned int MT_NN; //number of states
+		const unsigned int MT_MM; //middle word / offset
+		unsigned int current_mt_index;
+		
+		std::vector<uint32_t> vec_states;
 
 		bool initAllStates();
 };

@@ -3,8 +3,8 @@
 /* - doc piece -
  * RANDOM NUMBER GENERATION
  * Random numbers outside of the insidious standard library.
- * We offer an inherently 64 bit generator, and an inherently 32 bit generator,
- * (although both need 64 bit space) aswell as some convenience methods.
+ * We offer two inherently 32 bit generators, and an inherently 64 bit generator,
+ * (although all three need 64 bits space) aswell as some convenience methods.
  *
  * The goal is to have a generator suite that satisfies all needs for statistical filters / Monte Carlo methods (and not
  * more), especially when working within meteoIO. In a way, statistical filters are what ultimately justify this class,
@@ -33,7 +33,6 @@
  *  - good benchmarks for the generator cores, memory check passed
  *
  * What's left to do:
- *  - Mersenne Twister
  *  - some distributions
  *  - Monte Carlo sampling template for arbitrary distribution functions
  *  - write the doc
@@ -54,9 +53,16 @@
  * [AS73] Abramowitz, Stegun.
  *        Handbook of Mathematical Functions.
  *        Applied Mathematics Series 55, 10th edition, 1973.
+ * [DK81] Donald E. Knuth.
+ *        The art of computer programming 2
+ *        Addison-Wesley series in computer science and information processing, 2nd edition, 1981.
  * [GM03] George Marsaglia.
  *        Xorshift RNGs.
  *        Journal of Statistical Software, Articles, 8/14, 2003.
+ * [MN98] Makoto Matsumoto and Takuji Nishimura.
+ *        Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator.
+ *        ACM Transactions on Modeling and Computer Simulation, 8/1, 1998.
+ *        http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
  * [MO14] Melissa O'Neill.
  *        PCG: A family of simple fast space-efficient statistically good algorithms
  *        for random number generation.
@@ -151,7 +157,7 @@ RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& rng) :
 {
 	std::vector<uint64_t> transfer_states;
 	rng.getState(transfer_states);
-	setState(transfer_states);
+	setState(transfer_states); //a little different per generator
 }
 
 RandomNumberGenerator::~RandomNumberGenerator()
@@ -162,15 +168,15 @@ RandomNumberGenerator::~RandomNumberGenerator()
 RandomNumberGenerator& RandomNumberGenerator::operator=(const RandomNumberGenerator& rng)
 {
 	if (this != &rng) {
-    		rng_core = RngFactory::getCore(rng.rng_type);
-    		rng_type = rng.rng_type;
-    		rng_distribution = rng.rng_distribution;
-    		DistributionParameters = rng.DistributionParameters;
-    		rng_muller_generate = rng.rng_muller_generate;
-    		rng_muller_z1 = rng.rng_muller_z1;
-    		doubFunc = rng.doubFunc;
-    		pdfFunc = rng.pdfFunc;
-    		cdfFunc = rng.cdfFunc;
+		rng_core = RngFactory::getCore(rng.rng_type);
+		rng_type = rng.rng_type;
+		rng_distribution = rng.rng_distribution;
+		DistributionParameters = rng.DistributionParameters;
+		rng_muller_generate = rng.rng_muller_generate;
+		rng_muller_z1 = rng.rng_muller_z1;
+		doubFunc = rng.doubFunc;
+		pdfFunc = rng.pdfFunc;
+		cdfFunc = rng.cdfFunc;
 
 		std::vector<uint64_t> transfer_states;
 		rng.getState(transfer_states);
@@ -236,6 +242,8 @@ double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_dou
 	//return int32() * (1. / 4294967296.); //divide by 2^32 for [0, 1)
 	//return ((int64() >> 12) + 0.5) * (1./4503599627370496.); //for (0, 1)
 	//return int32() / (double)(UINT32_MAX + 1); //[0, 1]
+	//uint32_t a = int32() >>5, b = int32() >> 6; 
+	//return(a * 67108864. + b) * (1. / 9007199254740992.); //53 bits resolution
 }
 
 double RandomNumberGenerator::draw() //convenience call with no gimmicks
@@ -467,7 +475,10 @@ std::string RandomNumberGenerator::toString()
 		ss << "Period: ~2^64 ~ 1.8e19\n";
 		break;
 	case RNG_MTW:
-		ss << "<MT not implemented yet>\n";
+		ss << "Name: Mersenne Twister\n";
+		ss << "Family: Twisted feedback shift register\n";
+		ss << "Size: 32 bit\n";
+		ss << "Period: 2^19937-1 ~ 4.3e6001\n";
 		break;
 	}
 	ss << "Hardware seeded: " << (getHardwareSeedSuccess()? "yes" : "no") << "\n";
@@ -598,7 +609,7 @@ uint64_t RngXor::int64()
 	//64 bit xorshift, using one of the empirical triplets preserving order 2^64-1:
 	vv ^= (vv << 13); vv ^= (vv >> 7); vv ^= (vv << 17); //Ref. [GM03]
 	//multiply with carry:
-	ww = 3874257210U * (ww & 0xFFFFFFFF) + (ww >> 32); //Ref. [PE97]
+	ww = 3874257210U * (ww & 0xffffffff) + (ww >> 32); //Ref. [PE97]
 	//xorshift on the other states:
 	uint64_t xx = uu ^ (uu << 21); xx ^= xx >> 35; xx ^= xx << 4; //Ref. [NR3]
 	return (xx + vv) ^ ww;
@@ -714,32 +725,161 @@ bool RngPcg::initAllStates() //initial PCG-generator states
 	return (hardware_success_1 && hardware_success_2);
 }
 
-/*
- * To understand what's going on in a Mersenne Twister and to compare the raw core to the others, here
- * is a fully functional minimal implementation:
-void twister_step(uint32_t& state[624])
-{ //propagate states forward
-	for (size_t i = 0; i < 624; ++i) {
-		//first bit of current, last 31 bits of next state:
-		uint32_t y = (state[i] & 0x80000000) + (state[(i + 1) % 624] & 0x7fffffff);
-		uint32_t rn = y >> 1; //bitshift
-		rn ^= state[(i + 397) % 624]; //xor with 397th number
-		if ((y & 1L) == 1L) //if odd, xor with magic number
-			rn ^= 0x9908b0df;
-		state[i] = rn;
-	}
+///////////////////////////////////////////////////////////////////////////////
+//    MERSENNE TWISTER GENERATOR class                                       //
+///////////////////////////////////////////////////////////////////////////////
+
+/* CONSTRUCTOR */
+RngMtw::RngMtw() : MT_NN(624), MT_MM(397), current_mt_index(0), vec_states(std::vector<uint32_t>()) 
+{
+	/* MT_NN denotes the number of states the MT uses and is not really meant to change, but doing so doesn't break
+	 * anything as long as UPPER- and LOWER_MASK are corrected accordingly. It is hardcoded for simplicity,
+	 * standard choices are 314 and 624. If w is the word size and r the separation point (bits in lower
+	 * bitmask), then 2^(NN*w-r)-1 must be a Mersenne Prime. */
+	hardware_seed_success = initAllStates();
 }
-uint32_t twister_temper(uint32_t state)
-{ //tempering function for output from state
-	state ^= (state >> 11);
-	state ^= (state << 7) & 0x9d2c5680;
-	state ^= (state << 15) & 0xefc60000;
-	state ^= (state >> 18);
-	return state;
-} */
+
+/* PUBLIC FUNCTIONS */
+uint64_t RngMtw::int64()
+{
+	const uint32_t lowpart = int32();
+	const uint32_t highpart = int32();
+	return RngCore::combine32to64(lowpart, highpart);
+}
+
+void RngMtw::getState(std::vector<uint64_t>& ovec_seed) const
+{
+	ovec_seed.clear();
+	ovec_seed.push_back(current_mt_index); //1st element is the currently used index
+	for (size_t i = 0; i < vec_states.size(); ++i)
+		ovec_seed.push_back( (uint64_t)vec_states[i] );
+}
+
+void RngMtw::setState(const std::vector<uint64_t>& ivec_seed)
+{
+	//assert that we have NN seeds or NN+1 seeds with the 1st one usable as the current index:
+	if ( (ivec_seed.size() != MT_NN) && ((ivec_seed.size() != MT_NN + 1) || (ivec_seed[0] >= MT_NN)) ) {
+		std::stringstream ss;
+		ss << "RNG: Unexpected number of seeds for this generator (needed: " << MT_NN << ")";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	unsigned int offset = 0;
+	if (ivec_seed.size() == MT_NN + 1) { //initializing from a previous run including the last index
+		current_mt_index = (unsigned int)ivec_seed[0];
+		offset = 1; //actual states start after the stored index
+	} else { //initializing from scratch with NN numbers the user provides
+		current_mt_index = 0;
+	}
+
+	for (size_t i = 0; i < ivec_seed.size(); ++i)
+		vec_states[i] = (uint32_t)ivec_seed[i+offset];
+}
+
+/* - doc piece -
+ * Random Number Generator 3 - Mersenne Twister
+ * - Implementation of the wide-spread Mersenne Twister algorithm by M. Matsumoto and T. Nishimura (Ref. [MN98]).
+ * - By using 624 internal states, the period is extremely long.
+ * - This does not make it crypto-secure (the state can be derived from 624 random numbers), but it
+ *   passes many statistical tests and is the standard RNG in numerous well-known software packages.
+ * - It needs a few kB buffer size, which is relatively large compared to the other generators.
+ * - Facts:
+ *   size: 32 bit, period: 2^19937-1 (Mersenne prime) ~ 4.3e6001
+ */
+
+//---------- The following code is adapted from copyrighted but completely free-to-use material by M. Matsumoto and T. Nishimura, Ref. [MN98]
+uint32_t RngMtw::int32() //[0, 2^32-1] 
+{
+	const uint32_t UPPER_MASK = 0x80000000UL; //most significant w-r bits
+	const uint32_t LOWER_MASK = 0x7fffffffUL; //least significant r bits
+	const uint32_t magic[2] = {0x0UL, 0x9908b0dfUL}; //Twister-matrix
+
+	uint32_t xx(0);
+
+	if (current_mt_index >= MT_NN) { //all NN words were used --> calculate next set
+		for (size_t i = 0; i < MT_NN - MT_MM; ++i) { //fist bit of current, last 32 bits of next state
+			xx = (vec_states[i] & UPPER_MASK) | (vec_states[i+1] & LOWER_MASK);
+			vec_states[i] = (uint32_t)( vec_states[i+MT_MM] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
+        	}
+        	for (size_t i = MT_NN - MT_MM; i < MT_NN-1; ++i) {
+            		xx = (vec_states[i] & UPPER_MASK) | (vec_states[i+1] & LOWER_MASK);
+            		vec_states[i] = (uint32_t)( vec_states[i+MT_MM-MT_NN] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
+        	}
+		//if odd, xor with magic number
+        	xx = (vec_states[MT_NN-1] & UPPER_MASK) | (vec_states[0] & LOWER_MASK);
+        	vec_states[MT_NN-1] = (uint32_t)( vec_states[MT_MM-1] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
+		current_mt_index = 0; //new set of numbers - can run through them again
+	}
+
+	xx = vec_states[current_mt_index];
+	current_mt_index++;
+
+	xx ^= (xx >> 11); //output tempering
+	xx ^= (xx << 7) & 0x9d2c5680UL;
+	xx ^= (xx << 15) & 0xefc60000UL;
+	xx ^= (xx >> 18);
+
+	return xx;
+}
+
+/* PRIVATE FUNCTIONS */
+bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo" entropy
+{
+	//first, the full state array is initialized with values generated from a single seed:
+	uint64_t store;
+	bool hardware_success = getUniqueSeed(store);
+	uint32_t seed = (uint32_t)store; //keeps lower bits
+	vec_states.clear();
+	vec_states.push_back(seed);
+	for (size_t i = 1; i < MT_NN; ++i) { //Ref. [DK81] for multiplier
+		vec_states.push_back( (1812433253UL * (vec_states[i-1] ^ (vec_states[i-1] >> 30)) + i) );
+		vec_states[i] &= 0xffffffffUL;
+	}
+
+	//next, we generate a second seeding array independent of the first one:
+	std::vector<uint32_t> seed_states; //this vector could be user input at the cost of another seeding function
+	const unsigned int n_additional_seeds = 64; //our choice
+	for (size_t i = 0; i < n_additional_seeds; i+=2) {
+		const bool hw = getUniqueSeed(store);
+		if (!hw) hardware_success = false; //report failed hardware seed
+		//decompose the 64 bit hardware seed into two 32 bit states:
+		seed_states.push_back( (uint32_t)(store >> 32) ); //high bits
+		seed_states.push_back( (uint32_t)(store & 0xffffffffUL) ); //low bits
+	}
+
+	//then, the initially generated states are mixed with the additional entropy:
+	const uint32_t sz = MT_NN > seed_states.size()? MT_NN : seed_states.size();
+	uint32_t i = 1, j = 0;
+	for (uint32_t k = sz; k > 0; --k) { //1st step with arbitraryly sized 2nd array
+		vec_states[i] = (vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
+		    * 1664525UL)) + seed_states[j] + j; //non-linear
+		vec_states[i] &= 0xffffffffUL;
+		i++; j++;
+		if (i >= MT_NN) {
+			vec_states[0] = vec_states[MT_NN-1];
+			i = 1;
+		}
+		if (j>=seed_states.size())
+			j = 0;
+	}
+	for (uint32_t k = MT_NN - 1; k > 0; --k) { //2nd step over all states
+		vec_states[i] = (vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
+		    * 1566083941UL)) - i;
+		vec_states[i] &= 0xffffffffUL;
+		i++;
+		if (i >= MT_NN) {
+			vec_states[0] = vec_states[MT_NN-1];
+			i = 1;
+		}
+	}
+	vec_states[0] = 0x80000000UL; //assure non-zero initial array (most significant bit is 1)
+	current_mt_index = MT_NN + 1; //make sure int64() inits on the first run
+
+	return hardware_success;
+}
+//---------- End algorithm Matsumoto/Nishimura
 
 ///////////////////////////////////////////////////////////////////////////////
-//    the CORE class                                                         //
+//    The CORE class                                                         //
 ///////////////////////////////////////////////////////////////////////////////
 
 /* CONSTRUCTOR */
@@ -868,7 +1008,7 @@ uint32_t RngCore::hash(const uint32_t& nn) const
 	v ^= v >> 21; v ^= v << 37; v ^= v >> 4;
 	v *= 4768777513237032717LL;
 	v ^= v << 20; v ^= v >> 41; v ^= v << 5;
-	return (v & 0xFFFFFFFF); //down to 32 bits
+	return (v & 0xffffffff); //down to 32 bits
 }
 
 size_t RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor man's clz-algorithm
@@ -896,6 +1036,8 @@ RngCore* RngFactory::getCore(const RandomNumberGenerator::RNG_TYPE& algorithm)
 		return new RngXor;
 	else if (algorithm == RandomNumberGenerator::RNG_PCG)
 		return new RngPcg;
+	else if (algorithm == RandomNumberGenerator::RNG_MTW)
+		return new RngMtw;
 	else
 		throw InvalidArgumentException("RNG: This random number generator algorithm is not implemented. Check your RNG_TYPE.", AT);
 }
