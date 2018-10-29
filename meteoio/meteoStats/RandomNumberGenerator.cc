@@ -242,8 +242,8 @@ double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_dou
 	//return int32() * (1. / 4294967296.); //divide by 2^32 for [0, 1)
 	//return ((int64() >> 12) + 0.5) * (1./4503599627370496.); //for (0, 1)
 	//return int32() / (double)(UINT32_MAX + 1); //[0, 1]
-	//uint32_t a = int32() >>5, b = int32() >> 6; 
-	//return(a * 67108864. + b) * (1. / 9007199254740992.); //53 bits resolution
+	//uint32_t a = int32() >> 5, b = int32() >> 6; 
+	//return (a * 67108864. + b) * (1. / 9007199254740992.); //53 bits resolution
 }
 
 double RandomNumberGenerator::draw() //convenience call with no gimmicks
@@ -272,7 +272,7 @@ double RandomNumberGenerator::cdf(const double& xx) //cumulative distribution fu
 uint64_t RandomNumberGenerator::range64(const uint64_t& aa, const uint64_t& bb) 
 { //needs 64 bits space
 	const uint64_t diff = &bb + 1 - &aa; //[a, b]
-	if (diff < UINT32_MAX)
+	if (diff < 0xffffffff)
 		return (uint64_t)(range32( (uint32_t)aa, (uint32_t)bb ));
 
 	//multiply that keeps only the top 64 bits of the resulting 128 bit number:
@@ -799,14 +799,14 @@ uint32_t RngMtw::int32() //[0, 2^32-1]
 		for (size_t i = 0; i < MT_NN - MT_MM; ++i) { //fist bit of current, last 32 bits of next state
 			xx = (vec_states[i] & UPPER_MASK) | (vec_states[i+1] & LOWER_MASK);
 			vec_states[i] = (uint32_t)( vec_states[i+MT_MM] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
-        	}
-        	for (size_t i = MT_NN - MT_MM; i < MT_NN-1; ++i) {
-            		xx = (vec_states[i] & UPPER_MASK) | (vec_states[i+1] & LOWER_MASK);
-            		vec_states[i] = (uint32_t)( vec_states[i+MT_MM-MT_NN] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
-        	}
+		}
+		for (size_t i = MT_NN - MT_MM; i < MT_NN-1; ++i) {
+			xx = (vec_states[i] & UPPER_MASK) | (vec_states[i+1] & LOWER_MASK);
+			vec_states[i] = (uint32_t)( vec_states[i+MT_MM-MT_NN] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
+		}
 		//if odd, xor with magic number
-        	xx = (vec_states[MT_NN-1] & UPPER_MASK) | (vec_states[0] & LOWER_MASK);
-        	vec_states[MT_NN-1] = (uint32_t)( vec_states[MT_MM-1] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
+		xx = (vec_states[MT_NN-1] & UPPER_MASK) | (vec_states[0] & LOWER_MASK);
+		vec_states[MT_NN-1] = (uint32_t)( vec_states[MT_MM-1] ^ (xx >> 1) ^ magic[(int)(xx & 0x1UL)] );
 		current_mt_index = 0; //new set of numbers - can run through them again
 	}
 
@@ -872,7 +872,7 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 		}
 	}
 	vec_states[0] = 0x80000000UL; //assure non-zero initial array (most significant bit is 1)
-	current_mt_index = MT_NN + 1; //make sure int64() inits on the first run
+	current_mt_index = MT_NN + 1; //make sure int32() inits on the first run
 
 	return hardware_success;
 }
