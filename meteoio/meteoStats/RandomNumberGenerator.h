@@ -51,7 +51,11 @@ class RandomNumberGenerator : private RngCore {
 			RNG_UNIFORM,
 			RNG_GAUSS,
 			RNG_NORMAL, //= RNG_GAUSS
-			RNG_GAMMA
+			RNG_GAMMA,
+			RNG_CHISQUARE,
+			RNG_STUDENTT,
+			RNG_BETA,
+			RNG_F
 		};
 		enum RNG_BOUND //return uniform double respecting these boundaries
 		{
@@ -117,6 +121,18 @@ class RandomNumberGenerator : private RngCore {
 		double doubGauss(); //=normal
 		double pdfGauss(const double& xx) const;
 		double cdfGauss(const double& xx) const;
+		double doubGamma();
+		double doubChiSquare();
+		double doubStudentT();
+		double doubBeta();
+		double doubF();
+
+		double pdfNotImplemented(const double& xx) const;
+		double cdfNotImplemented(const double& xx) const;
+
+		double doubGaussKernel(const double& mean, const double& sigma); //internal calls with specific params
+		double doubGammaKernel(const double& alpha, const double& beta);
+		double doubBetaKernel(const double& alpha, const double& beta);
 };
 
 class RngXor : public RngCore { //combined generator with xor, shift and multiply
