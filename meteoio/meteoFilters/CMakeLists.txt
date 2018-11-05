@@ -14,6 +14,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcAggregate.cc
 	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc
+	meteoFilters/ProcQuantileMapping.cc
 	meteoFilters/ProcShade.cc
 	meteoFilters/ProcPSUMDistribute.cc
 	meteoFilters/ProcDeAccumulate.cc
