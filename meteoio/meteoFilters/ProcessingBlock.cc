@@ -304,6 +304,65 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 	}
 }
 
+void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2)
+{
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	try {
+		size_t lcount=0;
+		double xvalue, y1value, y2value;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> xvalue;
+			if (!iss) {
+				std::ostringstream ss;
+				ss << "Invalid index in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			iss >> std::skipws >> y1value;
+			if ( iss.fail() ) {
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			
+			iss >> std::skipws >> y2value;
+			if ( iss.fail() ) {
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			
+			X.push_back( xvalue );
+			Y1.push_back( y1value );
+			Y2.push_back( y2value );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+}
+
 std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init)
 {
 	std::ifstream fin( filename.c_str() );
