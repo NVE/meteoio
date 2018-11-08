@@ -55,26 +55,28 @@ namespace mio {
 
  /**
  * @mainpage Table of content
- * -# External Links
- *    -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
- *          -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
- *          -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
- *    -# subscribe to <A HREF="https://freecode.com/projects/meteoio">MeteoIO's release announcements</A>
- * -# End User documentation
+ * -# General overview
  *    -# \subpage general "General concepts"
  *    -# \subpage configuration "Configuration file"
+ *    -# \subpage build_io "How to build your io.ini configuration file"
+ *    -# External Links
+ *         -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
+ *               -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
+ *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
+ * -# Processing steps documentation
  *    -# \subpage data_sources "Data input and sources"
+ *    -# \subpage raw_data_editing "Raw Data Editing"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage generators "Available data creators and generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
- *    -# \subpage build_io "How to build your io.ini configuration file"
- * -# Programing using MeteoIO
+ *    -# \subpage spatial_resampling "Spatial resampling"
+ * -# Advanced: Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
- * -# Expanding MeteoIO
+ * -# Advanced: Expanding MeteoIO
  *    -# How to \subpage dev_coords "write a coordinate system support"
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_processing "write a processing element"
@@ -117,11 +119,12 @@ namespace mio {
  * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of \ref data_manipulations "raw data editing" methods to select/merge/convert the raw data
+ * - a set of \ref raw_data_editing "raw data editing" methods to select/merge/convert the raw data
  * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
  * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
  * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
  * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
+ * - it is also possible to \ref spatial_resampling "spatially resample" the data  (for example to extract points out of gridded data or generate data from neighbouring stations)
  *
  * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
  * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
@@ -233,7 +236,7 @@ namespace mio {
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to perform some editing on the raw data, see \ref data_manipulations.
+ *             possible to perform some editing on the raw data, see \ref raw_data_editing.
  *
  *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *
