@@ -1,112 +1,19 @@
-/* DO NOT USE this file until you see the usual header here. */
+/***********************************************************************************/
+/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-/* - doc piece -
- * RANDOM NUMBER GENERATION
- * Random numbers outside of the insidious standard library.
- * We offer two inherently 32 bit generators, and an inherently 64 bit generator,
- * (although all three need 64 bits space) aswell as some convenience methods.
- *
- * The goal is to have a generator suite that satisfies all needs for statistical filters / Monte Carlo methods (and not
- * more), especially when working within meteoIO. In a way, statistical filters are what ultimately justify this class,
- * and therefore it is meant to be tailored to their needs (and be ANSI C).
- *
- * So, if you are currently using this[1]:
- *    srand( time(NULL) );
- *    return rand() % range;
- *    return rand() / double(RAND_MAX + 1);
- * then switch to meteoIO's RNG. If however you rely heavily on the best quality random numbers, maybe even crypto-secure,
- * there are some links to dedicated libraries in the bibliography.
- * Apart from the generators and distributions, this class aims to take away all the small steps that are often quickly
- * deemed good enough, i.e. generator choice, seeding, saving states, range calculations, ...
- *
- * What it can already do:
- *  - produce quality 64 bit, 32 bit and double random numbers with one simple call
- *  - doubles with uniform and Gaussian distribution
- *  - probability density functions and cumulative distribution functions
- *  - make use of quality hardware and time seeds
- *  - fast downscaling of random numbers to a range
- *  - true floating point random numbers without rounding
- *  - can be resumed from a saved state
- *  - sidesteps some widespread misuse of quick & dirty solutions
- *  - offers a ready-to-use interface for implementing new distributions (or even generators)
- *  - passes statistical tests
- *  - very good benchmarks for the generator cores, memory check passed
- *
- * What's left to do:
- *  - some distributions
- *  - Monte Carlo sampling template for arbitrary distribution functions
- *  - write the doc
- *
- * For developers of statistical filters it may be important to be able to implement custom probability distributions,
- * for example for an empirical nonlinear sensor response. This class tries to be easy to expand in that regard.
- * There are comment markers in the header file and in here leading with "CUSTOM_DIST step #: ..." in the 6 places
- * you need to register your custom distribution functions at. These 6 steps are:
- *  1) Give your distribution a name within meteoIO
- *  2) Put your functions' prototypes in the header
- *  3) Point to your distribution function in the generic setDistribution() function,
- *     and use the interface to the caller to set your distribution parameters
- *  4) Give a small output info string
- *  5) Write your distribution function, its pdf and cdf (if only to throw a not-implemented error)
- *  6) If you want, you can map your parameters to names in the get- and setDistributionParameter() functions.
- *
- * REFERENCES
- * [AS73] Abramowitz, Stegun.
- *        Handbook of Mathematical Functions.
- *        Applied Mathematics Series 55, 10th edition, 1973.
- * [DK81] Donald E. Knuth.
- *        The art of computer programming 2
- *        Addison-Wesley series in computer science and information processing, 2nd edition, 1981.
- * [GM03] George Marsaglia.
- *        Xorshift RNGs.
- *        Journal of Statistical Software, Articles, 8/14, 2003.
- * [MN98] Makoto Matsumoto and Takuji Nishimura.
- *        Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator.
- *        ACM Transactions on Modeling and Computer Simulation, 8/1, 1998.
- *        http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
- * [MO14] Melissa O'Neill.
- *        PCG: A family of simple fast space-efficient statistically good algorithms
- *        for random number generation.
- *        Harvey Mudd College, 2014.
- *        http://www.pcg-random.org
- * [MT00] G. Marsaglia and W. Tsang.
- *        A simple method for generating gamma variables.
- *        ACM Transactions on Mathematical Software, 26/3, 2000.
- *  [NR3] Press, Teukolsky, Vetterling, Flannery.
- *        Numerical Recipes. The Art of Scientific Computing.
- *        Cambridge University Press, 3rd edition, 2007.
- * [PE97] Pierre L'Ecuyer.
- *        Distribution properties of multiply-with-carry random number generators.
- *        Mathematics of Computation, 66/218i, 1997.
- * [PE99] Pierr L'Ecuyer.
- *        Tables of linear congruential generators of different sizes and good
- *        lattice structure.
- *        Mathematics of Computation, 68/225, 1999.
- *        (Errata for the paper at
- *        https://www.iro.umontreal.ca/~lecuyer/myftp/papers/latrules99Errata.pdf, read on 18-10-23) 
- * [TC14] Taylor R. Campbell.
- *        http://mumble.net/~campbell/tmp/random_real.c (read on 18-10-23)
- *
- * APPENDIX
- * [1] Why is
- *      srand( time(NULL) );
- *      return rand() % range;
- *      return rand() / double(RAND_MAX + 1);
- * bad?
- * - A purely linear congruential RNG has purely bad statistical qualities
- * - Quiet type collision between time() and srand()
- * - (% range) distorts the distribution at the borders and (range + 1) should be used
- * - Careful not to hit RAND_MAX = INT_MAX, maybe ((double)RAND_MAX) + 1.
- * Why is
- *      std::random_device RNG;
- *      std::seed_seq seed{RNG()};
- *      std::mt19937 RNG_MT(seed);
- * not good?
- * - A 624 state Mersenne Twister is seeded with a single 32 bit value, not a sequence
- * - Leads to statistical flaws; some numbers are never drawn
- * - std::seed_seq isn't a bijection like it's supposed to be
- * - Can produce zero-state
- *
- * Author: Michael Reisecker, 2018-10
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <cmath>
@@ -123,14 +30,14 @@ namespace mio { //the holy land
 //    RANDOM NUMBER GENERATOR class                                          //
 ///////////////////////////////////////////////////////////////////////////////
 
-/* CONSTRUCTOR */
+/* CONSTRUCTORS */
 
-/* -doc piece-
- * Each time a RNG is constructed, it auto-seeds from hardware noise, or if that fails the system time.
- * Manually seeding the generator is done after the fact with RNG.setState(), for example, to resume
- * experiments after the state was saved via RNG.getState().
- * Finally, we offer the getUniqueSeed() function to the outside, so if someone has set up their
- * calculations with a grandfathered in, better, faster, ... RNG we can at least help with the seeding.
+/**
+ * @brief Default constructor.
+ * @param type Random number generator algorithm
+ * @param distribution Distribution of double random numbers
+ * @param distribution_params Parameters to shape the distribution functions
+ * @return RNG object with defaults or if supplied the desired distribution properties
  */
 RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DISTR& distribution,
     const std::vector<double>& distribution_params) :
@@ -147,6 +54,11 @@ RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DIS
 	setDistribution(distribution, distribution_params); //checks if the parameters fit the distribution
 }
 
+/**
+ * @brief Copy-constructor
+ * @param source RNG to copy from
+ * @return RNG object that is in an identical state as the given RNG
+ */
 RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& source) : 
     rng_core(RngFactory::getCore(source.rng_type)),
     rng_type(source.rng_type),
@@ -163,11 +75,20 @@ RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& source
 	setState(transfer_states); //a little different per generator
 }
 
+/**
+ * @brief Default destructor. Makes sure all states are freed from memory
+ */
 RandomNumberGenerator::~RandomNumberGenerator()
 {
 	delete rng_core; //TODO: good practice to guard this further?
 }
 
+/* OPERATORS */
+/**
+ * @brief Copy-operator
+ * @param source RNG to copy from
+ * @return RNG object that is in an identical state as the given RNG
+ */
 RandomNumberGenerator& RandomNumberGenerator::operator=(const RandomNumberGenerator& source)
 {
 	if (this != &source) {
@@ -189,40 +110,38 @@ RandomNumberGenerator& RandomNumberGenerator::operator=(const RandomNumberGenera
 }
 
 /* PUBLIC FUNCTIONS */
+/**
+ * @brief Draw a 64 bit random number
+ * @return 64 bit random number
+ */
 uint64_t RandomNumberGenerator::int64()
 {
 	return rng_core->int64();
 }
 
+/**
+ * @brief Draw a 32 bit random number
+ * @return 32 bit random number
+ */
 uint32_t RandomNumberGenerator::int32()
 {
 	return rng_core->int32();
 }
 
-/* - doc piece -
- * The RNG.doub() function returns a double within [0, 1] that is rounded to the nearest 1/2^64th.
- * If you absolutely need to control the properties further, look into the RNG.doub(RNG_BOUND bound, bool true_double)
- * function call:
- * You can call the doub() function with an RNG_BOUND argument and choose from RNG_AINCBINC [0, 1], RNG_AINCBEXC [0, 1),
- * RNG_AEXBINC (0, 1] and RNG_AEXCBEXC (0, 1). This can be only done for the uniform distribution, where it's clear
- * what the borders are.
- * You can also set true_double to use an algorithm that calculates doubles in [0, 1] without the usual limitation of
- * floating point randoms being on a grid (but then you must use RNG_AINCBINC and guard that in your own code).
- * Example 1:
- *     double rr = RNG.doub(RNG_AEXCBINC); //make sure it's not 0
- *     rr = log(rr);
- * Example 2:
- *     double rr;
- *     do {
- *         rr = RNG.doub(RNG_AINCBINC, true); //get a random float on continuous axis
- *     } while (rr == 0.); //make sure it's not 0
- *     rr = log(rr)
+/**
+ * @brief Draw a random number with double precision
+ * @return Double random number with the set distribution (default: Uniform)
  */
 double RandomNumberGenerator::doub()
 {
 	return (this->*doubFunc)();
 }
 
+/**
+ * @brief Draw a tuned double random number
+ * @param bounds Choose if the boundaries 0 and 1 are included or not
+ * @param true_double Set to `true` to use an algorithm that directly produces doubles without rounding from an integer
+ */
 double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_double)
 {
 	if (rng_distribution != RNG_UNIFORM)
@@ -248,29 +167,40 @@ double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_dou
 	//uint32_t a = int32() >> 5, b = int32() >> 6; 
 	//return (a * 67108864. + b) * (1. / 9007199254740992.); //53 bits resolution
 }
-
+/**
+ * @brief Draw a random number with double precision
+ * @return Double random number with Uniform distribution
+ */
 double RandomNumberGenerator::draw() //convenience call with no gimmicks
 {
 	return doubUniform();
 }
 
+/**
+ * @brief Probability density function of selected distribution
+ * @param xx Point to evaluate function at
+ * @return Probability to hit a number close to `xx`
+ */
 double RandomNumberGenerator::pdf(const double& xx) //probability density function of selected distribution
 {
 	return (this->*pdfFunc)(xx);
 }
 
+/**
+ * @brief Cumulative distribution function of selected distribution (integrated distribution function)
+ * @param xx Point to evaluate function at
+ * @return Probability to hit a number smaller than or equal to `xx`
+ */
 double RandomNumberGenerator::cdf(const double& xx) //cumulative distribution function of selected distribution
 {
 	return (this->*cdfFunc)(xx);
 }
 
-/* - doc piece -
- * Note that whatever you do, for an arbitrary count of random numbers you cannot downscale them and keep the distribution intact
- * (although "non-trivial" methods are under investigation) due to the Pigeonhole principle (https://en.wikipedia.org/wiki/Pigeonhole_principle).
- * The only way not to distort the (uniform) distribution is to generate lots of numbers and reject
- * out of boundary values. This is done by the trueRange32(...) function with a default 1e6 tries before
- * resorting to downscaling. You can crank this up, but to state the obvious if the range gets small this gets
- * costly quickly. The bitshift-methods here only avoid the slow modulo and its possible inherent bias.
+/**
+ * @brief 64 bit random number in an interval `[aa, bb]`
+ * @param aa Lower bound (included)
+ * @param bb Upper bound (included)
+ * @return Random integer between `aa` and `bb`
  */
 uint64_t RandomNumberGenerator::range64(const uint64_t& aa, const uint64_t& bb) 
 { //needs 64 bits space
@@ -291,6 +221,12 @@ uint64_t RandomNumberGenerator::range64(const uint64_t& aa, const uint64_t& bb)
 	return rn;
 }
 
+/**
+ * @brief 32 bit random number in an interval `[aa, bb]`
+ * @param aa Lower bound (included)
+ * @param bb Upper bound (included)
+ * @return Random integer between `aa` and `bb`
+ */
 uint32_t RandomNumberGenerator::range32(const uint32_t& aa, const uint32_t& bb)
 { //also needs 64 bits space
 	uint64_t rn = int32();
@@ -299,6 +235,14 @@ uint32_t RandomNumberGenerator::range32(const uint32_t& aa, const uint32_t& bb)
 	return (uint32_t)tmp;
 }
 
+/**
+ * @brief Random integer in a range without distribution distortions
+ * @param aa Lower bound (included)
+ * @param bb Upper bound (included)
+ * @param[out] result Stores the found random number
+ * @param nmax Maximum number of tries before resorting to downscaling
+ * @return Success of bruteforce method
+ */
 bool RandomNumberGenerator::trueRange32(const uint32_t& aa, const uint32_t& bb, uint32_t& result, const unsigned int& nmax)
 { //only 32 bits to have more chances
 	uint64_t it(0);
@@ -316,64 +260,28 @@ bool RandomNumberGenerator::trueRange32(const uint32_t& aa, const uint32_t& bb, 
 	return true;
 }
 
+/**
+ * @brief Get the state of the RNG to save for later continuation
+ * @param[out] ovec_seed Vector that the internal states are saved to
+ */
 void RandomNumberGenerator::getState(std::vector<uint64_t>& ovec_seed) const
 {
 	rng_core->getState(ovec_seed);
 }
 
+/**
+ * @brief Set the state of the RNG (seed the RNG)
+ * @param ivec_seed A vector containing the number of seeds the generator needs
+ */
 void RandomNumberGenerator::setState(const std::vector<uint64_t>& ivec_seed)
 {
 	rng_core->setState(ivec_seed);
 }
 
-/* -doc piece -
- * - DISTRIBUTION -
- * When you change the distribution, you switch to a completely new one.
- * The distribution parameters _have to be_ provided each time, or they will be defaulted.
- *
- * - DISTRIBUTION PARAMETERS -
- * You can set distribution parameters in two ways:
- *  1) By setting (getting) them one by one after a distribution has been set:
- *        RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAUSS);
- *        RNG.setDistributionParameter("mean", 5.);
- *        RNG.setDistributionParameter("sigma", 2.);
- *        double mean_out = RNG.getDistributionParameter("mean");
- *  2) Via accessing the DistributionParameters vector directly. This is a generic interface between the
- *    implementation of the distribution algorithm and the end user allowing for arbitrary parameter passing.
- *    A std::vector<double> is provided by the user with input parameters, or it has the output stored to it.
- *    This vector is given to the set- or getDistribution() call (the latter also returns the distribution type).
- *    Set distribution and parameters:
- *        std::vector<double> distribution_params;
- *        double gamma_in = 0.7;
- *        distribution_params.push_back(gamma_in);
- *        RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAMMA, distribution_params); //set distribution with params
- *    Be aware that if you forget this, default parameters may be set without a warning.
- *    Get distribution and parameters:
- *        distribution_params.clear();
- *        const mio::RandomNumberGenerator::RNG_DISTR dist_t = RNG.getDistribution(distribution_params);
- *        const double gamma_out = distribution_params[0]; //check doc for indices
- *
- * RNG_UNIFORM:
- *     no parameters
- * RNG_GAUSS = RNG_NORMAL:
- *     #1:  "mean" ... center of curve (default: 0)
- *     #2: "sigma" ... standard deviation (default: 1)
- * RNG_GAMMA:
- *     #1: "alpha" ... shape parameter 1 (default: 1)
- *     #2:  "beta" ... shape parameter 2 (default: 1)
- * RNG_CHISQUARE:
- *     #1:    "nu" ... number of degrees of freedom (default: 1)
- * RNG_STUDENTT:
- *     #1:    "nu" ... shape parameter (default: 1)
- *     #2:  "mean" ... center of curve (default: 0)
- *     #3: "sigma" ... standard deviation (default: 1)
- * RNG_BETA:
- *     #1: "alpha" ... shape parameter 1 (default: 1)
- *     #2:  "beta" ... shape parameter 2 (default: 1)
- * RNG_F:
- *     #1:   "nu1" ... degrees of freedom in numerator (default: 1)
- *     #2:   "nu2" ... degrees of freedom in denominaator (default: 1)
-*/
+/**
+ * @brief Set the state of the RNG (seed the RNG)
+ * @param[out] vec_params A vector containing the number of seeds the generator needs
+ */
 RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vector<double>& vec_params) const
 {
 	vec_params = DistributionParameters;
@@ -383,6 +291,12 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vec
 //CUSTOM_DIST step 3/6: Add a case for your distribution here and set your functions from step 2, aswell as defaults
 //for all parameters the distribution needs via the vector DistributionParameters. Please make sure all mandatory ones
 //are described properly. Cf. notes in doc setDistribution().
+
+/**
+ * @brief Set the distribution to draw random numbers from
+ * @param distribution Desired distribution
+ * @param vec_params Distribution parameters (mean, standard deviation, shape, ...)
+ */
 void RandomNumberGenerator::setDistribution(const RNG_DISTR& distribution, const std::vector<double>& vec_params)
 {
 	rng_distribution = distribution;
@@ -419,7 +333,7 @@ void RandomNumberGenerator::setDistribution(const RNG_DISTR& distribution, const
 			throw InvalidArgumentException("RNG: Incorrect number of input parameters for distribution (length of input vector). Expected: 2 (alpha, beta).", AT);
 		}
 		break;
-	case RNG_CHISQUARE:
+	case RNG_CHISQUARED:
 		this->doubFunc = &RandomNumberGenerator::doubChiSquare;
 		this->pdfFunc = &RandomNumberGenerator::pdfNotImplemented;
 		this->cdfFunc = &RandomNumberGenerator::cdfNotImplemented;
@@ -483,6 +397,11 @@ void RandomNumberGenerator::setDistribution(const RNG_DISTR& distribution, const
  * In these two functions, a distribution is meant to provide a nice interface to the user, but it's not mandatory to do so.
  * (About 1% speed loss per value in vector as opposed to global constants in uniform distribution.)
  */
+/**
+ * @brief Retrieve single distribution parameter
+ * @param param_name Name of the parameter (see section \ref rng_distributionparams)
+ * @return Current value of the distribution parameter
+ */
 double RandomNumberGenerator::getDistributionParameter(const std::string& param_name) const
 { //convenience call taking away the vector from the user
 	const std::string str_param_error("RNG: Distribution parameter " + param_name +
@@ -509,7 +428,7 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 		else
 			throw InvalidArgumentException(str_param_error, AT);
 		break;
-	case RNG_CHISQUARE:
+	case RNG_CHISQUARED:
 		if (IOUtils::strToLower(param_name) == "nu")
 			return DistributionParameters.at(0);
 		else
@@ -548,6 +467,13 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 }
 
 //CUSTOM_DIST step 6/6: Convenience mapping of your distribution parameters to names (not mandatory if you have many) 
+
+/**
+ * @brief Retrieve single distribution parameter
+ * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
+ * @param param_val Value to set
+ * @return Current value of the distribution parameter
+ */
 void RandomNumberGenerator::setDistributionParameter(const std::string& param_name, const double& param_val)
 { //convenience
 	const std::string str_param_error("RNG: Distribution parameter " + param_name + " not available when trying to set. If you are sure you set the correct distribution before encountering this error please notify the developers.");
@@ -572,7 +498,7 @@ void RandomNumberGenerator::setDistributionParameter(const std::string& param_na
 		else
 			throw InvalidArgumentException(str_param_error, AT);
 		break;
-	case RNG_CHISQUARE:
+	case RNG_CHISQUARED:
 		if (IOUtils::strToLower(param_name) == "nu")
 			DistributionParameters.at(0) = param_val;
 		else
@@ -609,16 +535,30 @@ void RandomNumberGenerator::setDistributionParameter(const std::string& param_na
 	} //end switch
 }
 
+/**
+ * @brief Check if hardware noise could be read
+ * @return `True` if the generator was seeded from hardware, `false` if the system time was used
+ */
 bool RandomNumberGenerator::getHardwareSeedSuccess() const
 { //has the RNG successfully seeded from hardware noise?
 	return rng_core->hardware_seed_success;
 }
 
+/**
+ * @brief Get a proper 64 bit seeding value for the generator
+ * @param[out] store The result is stored here
+ * @return `True` if the generator was seeded from hardware, `false` if the system time was
+ * mixed to a pseudo-random seed.
+ */
 bool RandomNumberGenerator::getUniqueSeed(uint64_t& store) const
 { //allow for outside calls to the seeding function if someone wants only that for their own RNG
 	return rng_core->getUniqueSeed(store);
 }
 
+/**
+ * @brief Print some info about the selected generator
+ * @return A small info string
+ */
 std::string RandomNumberGenerator::toString()
 {
 	std::stringstream ss;
@@ -658,7 +598,7 @@ std::string RandomNumberGenerator::toString()
 		ss << "Alpha: " << DistributionParameters.at(0)
 		   << ", beta: " << DistributionParameters.at(1) << "\n";
 		break;
-	case RNG_CHISQUARE:
+	case RNG_CHISQUARED:
 		ss << "Distribution: Chi-Square\n";
 		ss << "Nu: " << DistributionParameters.at(0) << "\n";
 		break;
@@ -680,7 +620,7 @@ std::string RandomNumberGenerator::toString()
 		break;
 //CUSTOM_DIST step 4/6: Give a small info string in this function. 
 	default:
-		ss << "Distribution: custom\n";	
+		ss << "Distribution: Custom\n";
 	}
 
 	return ss.str();
@@ -704,8 +644,8 @@ double RandomNumberGenerator::cdfUniform(const double& xx) const
 	return xx; //in [0, 1]
 }
 
-double RandomNumberGenerator::doubGauss() //Gauss double with user-set parameters
-{ //Gauss double with user set distribution parameters
+double RandomNumberGenerator::doubGauss() //Gauss double
+{ //with user set distribution parameters
 	const double mean = DistributionParameters[0];
 	const double sigma = DistributionParameters[1];
 	
@@ -784,6 +724,9 @@ double RandomNumberGenerator::doubGamma() //Ref. [MT00]
 
 double RandomNumberGenerator::doubGammaKernel(const double& alpha, const double& beta)
 { //Gamma deviates
+
+	/* alpha and beta > 0 are assumed! */
+
 	if (alpha < 1.) { //Gamma(a, b) ~ Gamma(a+1, b) * U^(1/a), U ~ (0, 1)
 		double ru;
 		do {
@@ -824,7 +767,7 @@ double RandomNumberGenerator::doubStudentT()
 
 	//There's a formula similar to Box-Muller, but it doesn't generate 2 values at once,
 	//diminishing this advantage. So, we use what we already have:
-	//x ~ N(0, 1), y ~ Gamma(nu/2, 1/2) --> x*sqrt(nu/y) = StudentT(nu, 0, 1)
+	//x ~ N(0, 1), y ~ Gamma(nu/2, 1/2) --> x*sqrt(nu/y) ~ StudentT(nu, 0, 1)
 	const double xx = doubGaussKernel(0., 1.);
 	const double yy = doubGammaKernel(nu/2., 0.5);
 	const double st = xx * sqrt(nu / yy);
@@ -842,7 +785,9 @@ double RandomNumberGenerator::doubBeta()
 }
 
 double RandomNumberGenerator::doubBetaKernel(const double& alpha, const double& beta)
-{ //TODO: maybe some limits assertions
+{
+	/* alpha, beta  > 0 assumed! */
+
 	//x ~ Gamma(a, 1), y ~ Gamma(b, 1) --> x/(x+y) ~ Beta(a, b)
 	const double xx = doubGammaKernel(alpha, 1.);
 	const double yy = doubGammaKernel(beta, 2.);
@@ -850,7 +795,7 @@ double RandomNumberGenerator::doubBetaKernel(const double& alpha, const double& 
 }
 
 double RandomNumberGenerator::doubF()
-{ //Fisher deviates
+{ //Fisher-Snedecor deviates
 	const double nu1 = DistributionParameters[0];
 	const double nu2 = DistributionParameters[1];
 
@@ -860,8 +805,8 @@ double RandomNumberGenerator::doubF()
 }
 
 //CUSTOM_DIST step 5/6: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
-//for example, doubGauss(), pdfGauss() and cdfGauss(). Implement all of them and throw an appropriate error
-//if it's not actually there. Please also properly document them here.
+//for example, doubGauss(), pdfGauss() and cdfGauss() (or cdfNotImplemented). Please also properly document them
+//in the table at the beginning of this document.
 
 double RandomNumberGenerator::pdfNotImplemented(const double& xx) const
 { //pdfs and cdfs are often very hard - we only implement them as needed
@@ -886,17 +831,6 @@ RngXor::RngXor() : state(0), uu(0), vv(0), ww(0)
 }
 
 /* PUBLIC FUNCTIONS */
-
-/* - doc piece -
- * Random Number Generator 1 - XOR
- * - Generator with xor, shift and multiplication
- *   This is a fast combined generator that should be suitable for all but very special Monte Carlo applications.
- *   Since more than one internal states are being propagated and combined to the output, this makes it
- *   somewhat less predictable than similar generators.
- * - Seed with any value except vv.
- * - Facts:
- *   size: 64 bit, period: ~3.138e57
- */
 uint64_t RngXor::int64()
 {
 	//first, a linear congruential generator with good figures of merit:
@@ -966,20 +900,6 @@ uint64_t RngPcg::int64() //for PCG, draw two 32 bit numbers and combine them to 
 	return RngCore::combine32to64(lowpart, highpart);
 }
 
-/* - doc piece -
- * Random Number Generator 2 - PCG
- * - Permuted linear congruential generator by Prof. Melissa O'Neill (Ref. [MO14])
- *   Range is overestimated, and this generator performs very well in statistical tests, i. e. it is less
- *   predictable than related generators. Even smaller versions with only 32 bit entropy pass SmallCrunch,
- *   which is only barely theoretically possible.
- *   The key element is the hashing function from the internal states to the random number.
- *   states. The algorithm author describes this RNG family in her paper (Ref. [MO14]) and offers a huge
- *   sophisticated C-library for free download with from tiny to 128 bit generators (https://github.com/imneme/pcg-c).
- * - You should seed true 64 bit values or discard the first numbers.
- * - If drawing 64 bit naturally is slow on your machine, try this one.
- * - Facts:
- *   size: 32 bit, period: ~2^64 ~ 1.8e19
- */
 //---------- The following code is under the Apache license (do what you want and include license)
 //https://www.apache.org/licenses/LICENSE-2.0
 uint32_t RngPcg::int32()
@@ -1066,21 +986,11 @@ void RngMtw::setState(const std::vector<uint64_t>& ivec_seed)
 	} else { //initializing from scratch with NN numbers the user provides
 		current_mt_index = 0;
 	}
-
 	for (size_t i = 0; i < ivec_seed.size(); ++i)
 		vec_states[i] = (uint32_t)ivec_seed[i+offset];
 }
 
-/* - doc piece -
- * Random Number Generator 3 - Mersenne Twister
- * - Implementation of the wide-spread Mersenne Twister algorithm by M. Matsumoto and T. Nishimura (Ref. [MN98]).
- * - By using 624 internal states, the period is extremely long.
- * - This does not make it crypto-secure (the state can be derived from 624 random numbers), but it
- *   passes many statistical tests and is the standard RNG in numerous well-known software packages.
- * - It needs a few kB buffer size, which is relatively large compared to the other generators.
- * - Facts:
- *   size: 32 bit, period: 2^19937-1 (Mersenne prime) ~ 4.3e6001
- */
+
 
 //---------- The following code is adapted from copyrighted but completely free-to-use material by M. Matsumoto and T. Nishimura, Ref. [MN98]
 uint32_t RngMtw::int32() //[0, 2^32-1] 
@@ -1110,8 +1020,8 @@ uint32_t RngMtw::int32() //[0, 2^32-1]
 	current_mt_index++;
 
 	xx ^= (xx >> 11); //output tempering
-	xx ^= (xx << 7) & 0x9d2c5680UL;
-	xx ^= (xx << 15) & 0xefc60000UL;
+	xx ^= (uint32_t)( (xx << 7) & 0x9d2c5680UL );
+	xx ^= (uint32_t)( (xx << 15) & 0xefc60000UL );
 	xx ^= (xx >> 18);
 
 	return xx;
@@ -1127,7 +1037,7 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 	vec_states.clear();
 	vec_states.push_back(seed);
 	for (size_t i = 1; i < MT_NN; ++i) { //Ref. [DK81] for multiplier
-		vec_states.push_back( (1812433253UL * (vec_states[i-1] ^ (vec_states[i-1] >> 30)) + i) );
+		vec_states.push_back((uint32_t)( (1812433253UL * (vec_states[i-1] ^ (vec_states[i-1] >> 30)) + i) ));
 		vec_states[i] &= 0xffffffffUL;
 	}
 
@@ -1143,11 +1053,11 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 	}
 
 	//then, the initially generated states are mixed with the additional entropy:
-	const uint32_t sz = MT_NN > seed_states.size()? MT_NN : seed_states.size();
+	const uint32_t sz = MT_NN > seed_states.size()? MT_NN : (uint32_t)seed_states.size();
 	uint32_t i = 1, j = 0;
 	for (uint32_t k = sz; k > 0; --k) { //1st step with arbitrarily sized 2nd array
-		vec_states[i] = (vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
-		    * 1664525UL)) + seed_states[j] + j; //non-linear
+		vec_states[i] = ((uint32_t)( vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
+		    * 1664525UL)) + seed_states[j] + j ); //non-linear
 		vec_states[i] &= 0xffffffffUL;
 		i++; j++;
 		if (i >= MT_NN) {
@@ -1158,8 +1068,8 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 			j = 0;
 	}
 	for (uint32_t k = MT_NN - 1; k > 0; --k) { //2nd step over all states
-		vec_states[i] = (vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
-		    * 1566083941UL)) - i;
+		vec_states[i] = (uint32_t)( (vec_states[i] ^ ((vec_states[i-1] ^ (vec_states[i-1] >> 30))
+		    * 1566083941UL)) - i);
 		vec_states[i] &= 0xffffffffUL;
 		i++;
 		if (i >= MT_NN) {
@@ -1226,13 +1136,6 @@ double RngCore::doubFromInt(const uint64_t& rn) const
 	//Return values in [2^-11, 1] are overrepresentated, low precision for small exponents
 }
 
-/* -doc piece -
- * Uniform random double values are quite hard to generate. The code example at Ref. [TC14] provides a method to do it,
- * which is to interpret a random stream of bits as fractional part of the binary expansion of a number in [0, 1].
- * The file also goes into details about why other methods are troublesome if we rely on quality, e. g. sensitive random searches
- * on a plane due to the gap size of 1/2^(bits).
- * Another generator capable of producing doubles directly is a lagged Fibonacci generator (quick but maybe poor).
- */
 //---------- The following code is provided for free use by Taylor Campbell -- see Ref. [TC14] for full comments
 double RngCore::trueDoub() //[0, 1]
 {
@@ -1306,9 +1209,9 @@ uint32_t RngCore::hash(const uint32_t& nn) const
 	return (v & 0xffffffff); //down to 32 bits
 }
 
-size_t RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor man's clz-algorithm
+unsigned int RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor man's clz-algorithm
 { //HACK: even without __builtin_clz there are much better ways to do this
-	size_t clz = 0;
+	unsigned int clz = 0;
 
 	const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
 	for (size_t i = 0; i < bit_char * sizeof(nn); ++i) 
