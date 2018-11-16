@@ -57,7 +57,8 @@ namespace mio {
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
  * - AMUNDSEN - from the <A HREF="https://geographie.uibk.ac.at/blog/ahc/models/">Alpine, Hydro, climatology</A> group in Innsbruck;
- * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model.
+ * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model;
+ * - METEOCH - for datasets produced by <A HREF="https://www.meteoswiss.admin.ch/home/climate/swiss-climate-in-detail/raeumliche-klimaanalysen.html">Meteo Swiss</A>.
  * 
  * Moreover, when writing NetCDF files with MeteoIO, all the generated files will contain as much of the Attribute Conventions Dataset Discovery 
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> metadata as (automatically) possible, 
