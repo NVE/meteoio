@@ -473,7 +473,6 @@ void RandomNumberGenerator::setDistributionParameter(const std::string& param_na
 	switch (rng_distribution) {
 	case RNG_UNIFORM:
 		throw InvalidArgumentException("RNG: No parameters to set for uniform distribution. Switch to another one via RNG.setDistribution(RNG_GAUSS).", AT);
-		break;
 	case RNG_GAUSS: case RNG_NORMAL:
 		if (IOUtils::strToLower(param_name) == "mean")
 			DistributionParameters.at(0) = param_val;
@@ -800,16 +799,16 @@ double RandomNumberGenerator::doubF()
 //for example, doubGauss(), pdfGauss() and cdfGauss() (or cdfNotImplemented). Please also properly document them
 //in the table at the beginning of this document.
 
-double RandomNumberGenerator::pdfNotImplemented(const double& xx) const
+double RandomNumberGenerator::pdfNotImplemented(const double& /*xx*/) const
 { //pdfs and cdfs are often very hard - we only implement them as needed
 	throw InvalidArgumentException("RNG: Probability density function (pdf) not implemented for this distribution.", AT);
-	return xx;
+	//return xx;
 }
 
-double RandomNumberGenerator::cdfNotImplemented(const double& xx) const
+double RandomNumberGenerator::cdfNotImplemented(const double& /*xx*/) const
 {
 	throw InvalidArgumentException("RNG: Cumulative distribution function (cdf) not implemented for this distribution.", AT);
-	return xx;
+	//return xx;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
