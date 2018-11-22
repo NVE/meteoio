@@ -459,11 +459,11 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 	const double date_inc = static_cast<double>(vstations_refresh_rate) / (24.*3600.);
 	
 	METEO_SET vecMeteo;
-	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer
+	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer. HACK what happens if BUFFER_SIZE is smaller than dateEnd-dateStart?
 	const Date dataEnd( tsm1.getRawDataEnd() ); //we won't try to spatially interpolate after the end of data
 	if (dataEnd.isUndef()) return vecvecMeteo;
 	
-	for (Date date=buff_start; date<=dataEnd; date += date_inc) {
+	for (Date date=buff_start; date<=std::min(dataEnd, dateEnd); date += date_inc) {
 		//fill vecvecMeteo with metadata
 		for (size_t ii=0; ii<v_stations.size(); ii++) {
 			MeteoData md(date, v_stations[ii]);

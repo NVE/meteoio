@@ -161,7 +161,7 @@ void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const 
 
 /**
  * @brief Compute the sky view factors for the terrain radiation based on the DEM.
- * This is based on Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
+ * This is inspired (ie with some changes) by Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
  * topographic features for high‐resolution weather prediction"</i>, Quarterly journal of the
  * royal meteorological society, <b>138.664</b>, pp720-733, 2012.
  *

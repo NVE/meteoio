@@ -411,7 +411,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 	switch (rng_distribution) {
 	case RNG_UNIFORM:
 		throw InvalidArgumentException("RNG: No parameters associated with uniform distribution. Set another one via RNG.setDistribution(RNG_GAUSS) for example.", AT);
-		break;
 	case RNG_GAUSS: case RNG_NORMAL:
 		if (IOUtils::strToLower(param_name) == "mean")
 			return DistributionParameters.at(0);
@@ -419,7 +418,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 			return DistributionParameters.at(1);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	case RNG_GAMMA:
 		if (IOUtils::strToLower(param_name) == "alpha")
 			return DistributionParameters.at(0);
@@ -427,13 +425,11 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 			return DistributionParameters.at(1);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	case RNG_CHISQUARED:
 		if (IOUtils::strToLower(param_name) == "nu")
 			return DistributionParameters.at(0);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	case RNG_STUDENTT:
 		if (IOUtils::strToLower(param_name) == "nu")
 			return DistributionParameters.at(0);
@@ -443,7 +439,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 			return DistributionParameters.at(2);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	case RNG_BETA:
 		if (IOUtils::strToLower(param_name) == "alpha")
 			return DistributionParameters.at(0);
@@ -451,7 +446,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 			return DistributionParameters.at(1);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	case RNG_F:
 		if (IOUtils::strToLower(param_name) == "nu1")
 			return DistributionParameters.at(0);
@@ -459,11 +453,9 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 			return DistributionParameters.at(1);
 		else
 			throw InvalidArgumentException(str_param_error, AT);
-		break;
 	default:	
 		throw InvalidArgumentException("RNG: Friendly parameter fetching not implemented yet for this distribution. Use RNG_TYPE type = RNG.getDistribution(vector<double> output) and check the doc for the indices.", AT);
 	} //end switch
-	return 0.;
 }
 
 //CUSTOM_DIST step 6/6: Convenience mapping of your distribution parameters to names (not mandatory if you have many) 
