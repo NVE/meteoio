@@ -568,6 +568,25 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 	return dates_specs;
 }
 
+
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.resize( ivec.size() );
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		ovec[ii] = ivec[ii](param);
+	}
+}
+
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.resize( ivec.size() );
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		ovec[ii] =  (*ivec[ii])(param);
+	}
+}
+
 const std::string ProcessingBlock::toString() const {
 	std::ostringstream os;
 	os << "[" << block_name << " ";

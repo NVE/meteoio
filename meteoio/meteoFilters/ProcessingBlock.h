@@ -106,6 +106,11 @@ class ProcessingBlock {
 
 	protected:
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
+		                               std::vector<double>& ovec);
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
+                                               std::vector<double>& ovec);
 		
 		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;

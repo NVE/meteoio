@@ -340,16 +340,21 @@ namespace mio {
  * @page dev_processing Processing elements developer's guide
  *
  * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
- * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteoFilters (depending on the kind of filter
- * that is developed). Templates header and code files are available to get you started, look into the "meteoFilters" subdirectory of the source directory (files "template.cc" and "template.h").
+ * add a class derived from either (in meteoio/meteoFilters):
+ *    - ProcessingBlock, for filters that only look at one point at a time;
+ *    - or WindowedFilter, for filters that work on a whole time window at a time. It provides members to read the
+ * time window definition as well as to compute the proper indices matching the user-defined time window;
  *
- * It is important to understand that the processing elements operate on a "per parameter" basis.
- * This means that an element might be executed for the parameter TA and another one for the parameter PSUM, so the
- * algorithm only has to deal with a generic processing method based on double values.
+ * Of course, each developer is free to bypass the helper methods provided in these two classes and reimplement his/her own if the
+ * provided ones don't fit with the needs of a specific processing element (but it must at least be derived from ProcessingBlock).
+ * Templates header and code files are available to get you started, look into the
+ * "meteoFilters" subdirectory of the source directory (files "template.cc" and "template.h"). It is important to understand that the
+ * processing elements operate on a "per parameter" basis. This means that an element might be executed for the parameter TA
+ * and another one for the parameter PSUM, so the algorithm only has to deal with a generic processing method based on double values.
  *
  * To implement a new processing element, the following steps are necessary:
  *
- * -# Create a derived class of ProcessingBlock or FilterBlock or WindowedFilter in the meteoFilters subdirectory of the source code.
+ * -# Create a derived class of ProcessingBlock or WindowedFilter in the meteoFilters subdirectory of the source code.
  *      You can copy and rename the template files "template.cc" and "template.h" that are in the  "meteoFilters" subdirectory. 
  *      Please do not forget to rename all occurences of "TEMPLATE" in these files! Keep the <b>process</b> method as it is for now.
  * -# Add the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other filters

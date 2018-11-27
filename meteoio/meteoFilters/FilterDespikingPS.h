@@ -18,7 +18,7 @@
 #ifndef FilterDespikingPS_H
 #define FilterDespikingPS_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/libfit1D.h>
 
 #include <vector>
@@ -79,7 +79,7 @@ namespace mio {
  */
 
 
-class FilterDespikingPS : public FilterBlock {
+class FilterDespikingPS : public ProcessingBlock {
 	public:
 		FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
