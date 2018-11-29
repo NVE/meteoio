@@ -33,7 +33,7 @@ namespace mio {
  * The filter is based on total snow depth (HS), snow surface temperature (TSS), ground surface temperature (TSG)
  * and reflected shortwave radiation (RSWR). 
  * Different steps to do: 
- *    -# calculate possible offset of TSS (raison: at some stations in some springs the TSS increases 
+ *    -# calculate possible offset of TSS (reason: at some stations in some springs the TSS increases 
  * although snow is still on the ground) 
  *    -# calculate correlation of TSS and TSG in spring (normally both temperatures increase at the same 
  * time in spring which results in a high correlation; low correlation if TSS and TSG increase not parallel 

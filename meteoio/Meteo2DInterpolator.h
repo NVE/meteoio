@@ -65,9 +65,9 @@ class InterpolationAlgorithm;
  * private member to it. It then computes the private member nrOfMeasurments that contains the number of
  * stations that have this meteorological parameter available by either calling getData(param, vecData, vecMeta), which
  * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData) or
- * directly filling veMeteo and vecMeta. Custom data preparation can obviously be done in this method.
+ * directly filling vecMeteo and vecMeta. Custom data preparation can obviously be done in this method.
  *
- * The calculate method must properly erase and reste the grid that it receives before filling it. If necessary,
+ * The calculate method must properly erase and reset the grid that it receives before filling it. If necessary,
  * (as is the case for precipitation, relative humidity and snow height, for example) the grid can be checked for min/max by
  * calling checkMinMax() at the end of Meteo2DInterpolator::interpolate.It can also add extra information about the
  * interpolation process (such as a regression coefficient or error estimate) to the InterpolationAlgorithm::info

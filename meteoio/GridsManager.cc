@@ -439,7 +439,7 @@ void GridsManager::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::P
 }
 
 /** @brief Create a list of virtual stations from each grid point
- * @details Please not that the two options are mutually exclusive.
+ * @details Please note that the two options are mutually exclusive.
  * @param[in] dem the Digital Elevation Model to use (each grid point will be made into a virtual station)
  * @return a vector of virtual stations
  */
@@ -476,7 +476,7 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 }
 
 /** @brief Create a list of virtual stations from the user-provided input
- * @details Please not that the two options are mutually exclusive.
+ * @details Please note that the two options are mutually exclusive.
  * @param[in] dem the Digital Elevation Model to use
  * @param[in] adjust_coordinates should the coordinates be recomputed to match DEM cells?
  * @param[in] fourNeighbors pick the surrounding four nodes instead of only the exact one?

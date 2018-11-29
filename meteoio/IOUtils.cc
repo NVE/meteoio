@@ -679,7 +679,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	//should be and provide a much smaller search interval around it
 	const double start_date = vecM.front().date.getJulian(true);
 	const double end_date = vecM.back().date.getJulian(true);
-	if (start_date==end_date) return 0; //there is onyl one element
+	if (start_date==end_date) return 0; //there is only one element
 
 	const double curr_date = soughtdate.getJulian(true);
 	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
@@ -747,7 +747,7 @@ double unitsPrefix(const char& prefix)
 	}
 }
 
-//currently, only the most simple ase of units are handled. Composite units
+//currently, only the most simple units are handled. Composite units
 //such as 'W/m2 <-> mW/cm2' are NOT handled.
 double unitsConversion(const double& val, std::string unitIn, std::string unitOut)
 {

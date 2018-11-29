@@ -215,7 +215,7 @@ void Coords::merge(const Coords& coord2) {
 }
 
 /**
-* @brief Print the content of the Coords object (usefull for debugging)
+* @brief Print the content of the Coords object (useful for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
 const std::string Coords::toString(const FORMATS& type) const 

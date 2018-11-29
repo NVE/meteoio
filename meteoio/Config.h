@@ -132,7 +132,7 @@ class Config {
 		bool keyExists(std::string key, std::string section) const;
 
 		/**
-		 * @brief Print the content of the Config object (usefull for debugging)
+		 * @brief Print the content of the Config object (useful for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
 		const std::string toString() const;

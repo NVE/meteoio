@@ -36,7 +36,7 @@ void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoDa
 	double TSS_offset = getTSSOffset(param, ovec);
 	if (TSS_offset==IOUtils::nodata) TSS_offset = 0.;
 	
-	//find first tag of the Spring when min(TSS)>1C for 24 hours
+	//find first day of the Spring when min(TSS)>1C for 24 hours
 	size_t tssWarmDay_idx, tsgWarmDay_idx;
 	findFirstWarmDay(ovec, tssWarmDay_idx, tsgWarmDay_idx);
 	const Date warmDayTSS = (tssWarmDay_idx!=IOUtils::npos)? ovec[tssWarmDay_idx].date : Date(0., 0.); //ie disable the check if not found

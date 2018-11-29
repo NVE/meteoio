@@ -644,7 +644,7 @@ class RandomNumberGenerator : private RngCore {
 			RNG_GAUSS, //!< Gaussian deviates
 			RNG_NORMAL, //!< = RNG_GAUSS
 			RNG_GAMMA, //!< Gamma deviates
-			RNG_CHISQUARED, //!< Chi-Square deviates
+			RNG_CHISQUARED, //!< Chi-Squared deviates
 			RNG_STUDENTT, //!< Student-t deviates
 			RNG_BETA, //!< Beta deviates
 			RNG_F //!< Fisher deviates

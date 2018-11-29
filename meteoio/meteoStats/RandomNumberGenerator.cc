@@ -590,7 +590,7 @@ std::string RandomNumberGenerator::toString()
 		   << ", beta: " << DistributionParameters.at(1) << "\n";
 		break;
 	case RNG_CHISQUARED:
-		ss << "Distribution: Chi-Square\n";
+		ss << "Distribution: Chi-Squared\n";
 		ss << "Nu: " << DistributionParameters.at(0) << "\n";
 		break;
 	case RNG_STUDENTT:

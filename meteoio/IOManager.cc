@@ -33,8 +33,8 @@ namespace mio {
  *     + GRID_ALL: all grid points are extracted;
  *     + GRID_RESAMPLE: all grid points are extracted and used with an additional DEM to resample the grids to a different resolution (by calling spatial interpolations).
  * 
- * For VSTATIONS and GRID_SMART, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted 
- * point. This is done by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
+ * For VSTATIONS and GRID_SMART, it is necessary to provide a hint on how often the data should be extracted versus temporally interpolated between extracted 
+ * points. This is done by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
  * \image html vstations_sampling.png "Resampling workflow"
  * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
  *
@@ -56,7 +56,7 @@ namespace mio {
  * @note Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
  * 
  * In the example provided below, 4 stations provide the original data that will be spatially interpolated at 2 points (or virtual stations, VIR1 and VIR2) for
- * 7 meteorological parameters. Every 6 hours, with starting offset of on hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
+ * 7 meteorological parameters. Every 6 hours, with starting offset of one hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
  * Any data requested at other time steps will be temporally resampled from the spatially interpolated data.
  * @code
  * DEM = ARC

@@ -145,7 +145,7 @@ class MeteoBuffer {
 /**
  * @class GridBuffer
  * @brief A class to buffer gridded data.
- * This class buffers Grid2D objects. It implements a proper ring buffer, thus removing old bufered grids
+ * This class buffers Grid2D objects. It implements a proper ring buffer, thus removing old buffered grids
  * when necessary.
  *
  * @ingroup data_str

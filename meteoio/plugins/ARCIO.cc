@@ -209,7 +209,7 @@ bool ARCIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::
 {
 	results.clear();
 	const double TZ = cfg.get("TIME_ZONE", "Input");
-	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
+	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recursive if this changes in the plugin!
 	dirlist.sort();
 	
 	if (a3d_view_in) {

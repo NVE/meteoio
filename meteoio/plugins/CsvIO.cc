@@ -112,7 +112,7 @@ namespace mio {
  * @subsection csvio_metadata_field_types Metadata fields types
  * The following field types are supported:
  * - NAME;
- * - ID (this will the used as a handle for the station);
+ * - ID (this will be used as a handle for the station);
  * - ALT (for the altitude);
  * - LON (for the longitude);
  * - LAT (for the latitude);
@@ -136,7 +136,7 @@ namespace mio {
  * that will be applied to identify the information to extract as well as substrings that are used as "markers" delimiting 
  * the different fields (enclosed within {}).
  * 
- * For example, to parse the filename "H0118_Generoso-Calmasino_-_Precipitation.DAT" use (please note that the extension is NOT provided):
+ * For example, to parse the filename "H0118_Generoso-Calmasino_-_Precipitation.csv" use (please note that the extension is NOT provided):
  * @code
  * CSV_FILENAME_SPEC = {ID}_{NAME}-{SKIP}_-_{PARAM}
  * @endcode
@@ -160,12 +160,12 @@ namespace mio {
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
  * 
- * STATION1 = DisMa_DisEx.dat
+ * STATION1 = DisMa_DisEx.csv
  * POSITION1 = latlon 46.810325 9.806657 2060
  * CSV1_ID = DIS4
  * @endcode
  *
- * In order to read a set of files containing each only one parameter and merge them together (see \ref raw_data_editing "raw data editing" for more
+ * In order to read a set of files each containing only one parameter and merge them together (see \ref raw_data_editing "raw data editing" for more
  * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
  *@code
  * METEO = CSV
@@ -178,15 +178,15 @@ namespace mio {
  * CSV_FILENAME_SPEC = {ID}_{NAME}_-_{SKIP}-{PARAM}
  * CSV_COLUMNS_HEADERS = 1
  *
- * STATION1 = H0118_Generoso_-_Calmasino_precipitation.DAT
+ * STATION1 = H0118_Generoso_-_Calmasino_precipitation.csv
  *
- * STATION2 = H0118_Generoso_-_Calmasino_temperature.DAT    #the parameter name is ambiguous, it will not be recognized
+ * STATION2 = H0118_Generoso_-_Calmasino_temperature.csv    #the parameter name is ambiguous, it will not be recognized
  * CSV2_FIELDS = DATE TIME TA                               #so we define the parameter manually
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
- * STATION3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.DAT
- * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.DAT
- * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.DAT
+ * STATION3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.csv
+ * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.csv
+ * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.csv
  *
  * AUTOMERGE = true
  * @endcode
@@ -204,21 +204,21 @@ namespace mio {
  * CSV_NAME = Generoso
  *
  * CSV1_FIELDS = DATE TIME PSUM HS
- * STATION1 = H0118_lg23456.DAT
+ * STATION1 = H0118_lg23456.csv
  *
  * CSV2_FIELDS = DATE TIME TA
- * STATION2 = H0118_lg7850.DAT
+ * STATION2 = H0118_lg7850.csv
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
  * CSV3_FIELDS = DATE TIME RSWR ISWR
- * STATION3 = H0118_lg64520.DAT
+ * STATION3 = H0118_lg64520.csv
  *
  * CSV4_FIELDS = DATE TIME RH
- * STATION4 = H0118_lg45302.DAT
+ * STATION4 = H0118_lg45302.csv
  * CSV4_UNITS_MULTIPLIER = 1 1 0.01
  *
  * CSV5_FIELDS = DATE TIME VW
- * STATION5 = H0118_wind_velocity.DAT
+ * STATION5 = H0118_wind_velocity.csv
  *
  * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
@@ -669,7 +669,7 @@ void CsvIO::parseInputOutputSection()
 		std::list<std::string> dirlist( FileUtils::readDirectory(meteopath, csvext, is_recursive) );
 		dirlist.sort();
 
-		size_t hit = 0;	//human readable iterator
+		size_t hit = 0; //human readable iterator
 		for (std::list<std::string>::iterator it=dirlist.begin(); it!=dirlist.end(); ++it) {
 			hit++;
 			std::stringstream ss;
