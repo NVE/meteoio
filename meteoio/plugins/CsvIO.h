@@ -30,8 +30,10 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
 		
+		void setDelimiter(const std::string& delim);
+		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
@@ -42,6 +44,7 @@ class CsvParameters {
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
+		std::map<size_t, bool> skip_fields;		///< Fields that should not be read
 		
 		std::string nodata;
 		size_t date_col, time_col;

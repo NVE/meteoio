@@ -32,7 +32,7 @@ namespace mio {
  * @section csvio_format Format
  * This plugins offers a flexible way to read Comma Separated Values (<A HREF="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</A>) files. 
  * It is however assumed that:
- *     - each line contains a data record
+ *     - each line contains a data record (or is an empty line)
  *     - each line contains the same number of fields;
  *     - a single character is consistently used through the file as field delimiter (to split each record into fields);
  *     - missing data are represented by an empty value, so two delimiters follow directly each other or by a special value (see NODATA in 
@@ -43,7 +43,7 @@ namespace mio {
  * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * The final units MUST be SI. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
+ * **The final units MUST be SI**. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
  * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
@@ -60,11 +60,11 @@ namespace mio {
  * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
- * - CSV\#_DELIMITER: field delimiter to use (default: ',');
+ * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
- * - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
+ * - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  * - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
@@ -72,6 +72,7 @@ namespace mio {
  * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
  * - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  * - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -103,6 +104,9 @@ namespace mio {
  * 
  * @note When providing a timezone field, it \em must appear at the end of the string. it can either be numerical (such as "+1.") or an abbreviation
  * such as "CET" (see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
+ * 
+ * When this plugin identifies the fields by their column headers, it will look for TIMESTAMP or DATETIME for a combined date and time field, or DATE or TIME for (respectively) a
+ * date and time field. Usually, other labels will not be recognized.
  * 
  * @section csvio_metadata_extraction Metadata extraction
  * Since there is no unified way of providing metadata (such as the location, station name, etc) in CSV files, this information has to
@@ -150,6 +154,25 @@ namespace mio {
  * meteorological parameter.
  * 
  * @section csvio_examples Examples
+ * In order to read a bulletin file downloaded from IDAWEB, you need the following configuration:
+ * @code
+ * METEO = CSV
+ * METEOPATH = ./input/meteo
+ * CSV_DELIMITER = SPACE
+ * CSV_NR_HEADERS = 1
+ * CSV_COLUMNS_HEADERS = 1
+ * CSV_DATETIME_SPEC = YYYYMMDDHH24
+ * CSV_NODATA = -
+ * 
+ * STATION1 = IDA_station1.csv
+ * POSITION1 = latlon (46.80284, 9.77726, 2418)
+ * CSV1_NAME = TEST
+ * CSV1_ID = myID
+ * CSV1_FIELDS = SKIP TIMESTAMP HS RSWR TA SKIP SKIP RH SKIP SKIP ILWR
+ * CSV1_UNITS_OFFSET = 0 0 0 0 273.15 0 0 0 0 0 0
+ * CSV1_UNITS_MULTIPLIER = 1 1 0.01 1 1 1 1 0.01 1 1 1
+ * @endcode
+ * 
  * In order to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps, you need the following configuration:
  * @code
  * METEO = CSV
@@ -248,6 +271,29 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 	}
 	
 	return meta_spec;
+}
+
+//Given a list of fields to skip, fill the skip_fields map
+void CsvParameters::setSkipFields(const std::vector<size_t>& vecSkipFields)
+{
+	for (size_t ii=0; ii<vecSkipFields.size(); ii++) {
+		if (vecSkipFields[ii]==0)
+			throw InvalidArgumentException("Wrong format specification for fields to skip: first field is numbered field 1", AT);
+		
+		skip_fields[ vecSkipFields[ii]-1 ] = true;
+	}
+}
+
+void CsvParameters::setDelimiter(const std::string& delim)
+{
+	if (delim.size()==1) {
+		csv_delim = delim[0];
+	} else {
+		if (delim.compare("SPACE")==0 || delim.compare("TAB")==0) 
+			csv_delim=' ';
+		else 
+			throw InvalidArgumentException("The CSV delimiter must be a single character or SPACE or TAB", AT);
+	}
 }
 
 //Given a provided field_type, attribute the value to the proper metadata variable
@@ -377,12 +423,14 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0) {
+		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
 			dt_col = tm_col = ii;
 		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0) {
 			dt_col = ii;
 		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0) {
 			tm_col = ii;
+		} else if (tmp.compare("SKIP")==0) {
+			skip_fields[ ii ] = true;
 		}
 	}
 
@@ -459,7 +507,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
 	size_t linenr=0;
 	std::string line;
-	std::vector<std::string> headerFields;
+	std::vector<std::string> headerFields; //this contains the column headers from the file itself
+	const bool delimIsNoWS = (csv_delim!=' ');
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<header_lines; ii++) {
@@ -475,8 +524,12 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			
 			if (meta_spec.count(linenr)>0) 
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
-			if (linenr==columns_headers) //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
-				IOUtils::readLineToVec(line, headerFields, csv_delim);
+			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
+				if (delimIsNoWS)
+					IOUtils::readLineToVec(line, headerFields, csv_delim);
+				else
+					IOUtils::readLineToVec(line, headerFields);
+			}
 			if (read_units && linenr==units_headers)
 				parseUnits(line);
 		}
@@ -703,8 +756,10 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
 		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
 		
-		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", tmp_csv.csv_delim);
-		else cfg.getValue(dflt+"DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
+		std::string delim_spec;
+		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", delim_spec);
+		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
+		tmp_csv.setDelimiter(delim_spec);
 		
 		if (cfg.keyExists(pre+"NR_HEADERS", "Input")) cfg.getValue(pre+"NR_HEADERS", "Input", tmp_csv.header_lines);
 		else cfg.getValue(dflt+"NR_HEADERS", "Input", tmp_csv.header_lines, IOUtils::nothrow);
@@ -717,6 +772,11 @@ void CsvIO::parseInputOutputSection()
 		
 		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
 			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+		
+		std::vector<size_t> vecSkipFields;
+		if (cfg.keyExists(pre+"SKIP_FIELDS", "Input")) cfg.getValue(pre+"SKIP_FIELDS", "Input", vecSkipFields);
+		else cfg.getValue(dflt+"SKIP_FIELDS", "Input", vecSkipFields, IOUtils::nothrow);
+		tmp_csv.setSkipFields( vecSkipFields );
 		
 		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);
 		else cfg.getValue(dflt+"UNITS_HEADERS", "Input", tmp_csv.units_headers, IOUtils::nothrow);
@@ -814,6 +874,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	const std::string nodata( params.nodata );
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
+	const bool delimIsNoWS = (params.csv_delim!=' ');
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	while (!fin.eof()){
@@ -822,7 +883,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 		
-		const size_t nr_curr_data_fields = IOUtils::readLineToVec(line, tmp_vec, params.csv_delim);
+		const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, params.csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 		if (nr_of_data_fields==0) nr_of_data_fields = nr_curr_data_fields;
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
@@ -833,7 +894,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 				continue;
 			} else throw InvalidFormatException(ss.str(), AT);
 		}
-		
+
 		const Date dt( params.parseDate(tmp_vec[params.date_col], tmp_vec[params.time_col]) );
 		if (dt.isUndef()) {
 			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
@@ -862,6 +923,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col || ii==params.time_col) continue;
+			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
 			
