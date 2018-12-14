@@ -412,7 +412,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 	// arguments is a string of the format filename:varname
 	std::vector<std::string> vec_argument;
 	if (IOUtils::readLineToVec(arguments, vec_argument, ':')  != 2)
-		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname", AT);
+		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname, received instead '"+arguments+"'", AT);
 
 	const std::string file_and_path( out_grid2d_path + "/" + vec_argument[0] );
 	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
@@ -491,6 +491,9 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 
 
 ///////////////////////////////////////////////////// Now the ncFiles class starts //////////////////////////////////////////
+//Regarding data packing: grids are usually NOT packed (since we often write the grids just after they have been computed, so
+//we don't know what the maximum range will be). Time is almost always packed.
+//we have: unpacked_value = packed_value * scale + offset
 
 ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug)
              : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), time_precision(Date::epsilon_sec), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
@@ -766,7 +769,7 @@ void ncFiles::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, c
 		if (vars[ param ].dimids.size()>0 && vars[ param ].dimids.front()==ncpp::TIME) { //as unlimited dimension, TIME is always first
 			ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		} else {
-			ncpp::write_data(ncid, vars[ param ], data, false);
+			ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		}
 	}
 	
@@ -834,11 +837,11 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		if (param==ncpp::STATION) { //this is not present if !station_dimension
 			std::vector<std::string> txtdata( vecMeteo.size() );
 			for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
-			ncpp::write_data(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
+			ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
 		} else {
 			const std::vector<double> data( fillBufferForVar(vecMeteo, station_idx, vars[ param ]) );
 			if (data.empty()) continue;
-			ncpp::write_data(ncid, vars[ param ], data, (param==ncpp::TIME));
+			ncpp::write_1Ddata(ncid, vars[ param ], data, (param==ncpp::TIME));
 		}
 	}
 	
@@ -1178,7 +1181,7 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 	}
 }
 
-//TRICK to reduce rounding errors, we use the scale as a divisor for TIME
+//if returning TRUE, the variable must be created
 bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date)
 {
 	if (vars[ param ].varid == -1) {
@@ -1196,15 +1199,15 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 				time_precision /= 1.;
 			} else if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
-				vars[param].scale = 24.;
+				vars[param].scale = 1./24.;
 				time_precision /= 3600.;
 			} else if (units=="min") {
 				vars[param].attributes.units = "minutes since " + date_str;
-				vars[param].scale = (24.*60);
+				vars[param].scale = 1./(24.*60);
 				time_precision /= 60.;
 			} else if (units=="s") {
 				vars[param].attributes.units = "seconds since " + date_str;
-				vars[param].scale = (24.*3600.);
+				vars[param].scale = 1./(24.*3600.);
 			} else 
 				throw InvalidArgumentException("Unsupported time unit specified in schema: '"+units+"'", AT);
 			vars[param].offset = ref_date_simplified.getJulian();
@@ -1217,15 +1220,15 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 }
 
 //This function computes the NetCDF representation of time, rounded to the given precision. It is inlined for performance reasons.
-//TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 inline double transformTime(const double& julian, const double& offset, const double& scale, const double& precision)
 {
-	const double julian_transformed = (julian - offset) * scale;
+	const double packed_julian = (julian - offset) / scale;
 	double integral;
-	const double fractional = modf(julian_transformed-.5, &integral);
+	const double fractional = modf(packed_julian-.5, &integral);
 	return integral + (double)Optim::round( fractional/precision ) * precision + .5;
 }
 
+//in order to write MetoData, we need to serialize each parameter...
 const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const
 {
 	const size_t param = var.attributes.param;
@@ -1244,7 +1247,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
 					//we pre-round the data so when libnetcdf will cast, it will fall on what we want
-					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale) );
+					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) / var.scale) );
 					if (prev!=IOUtils::nodata && data[ll]==prev) 
 						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 					prev = data[ll];
@@ -1331,6 +1334,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 	}
 }
 
+//in order to write 2D grids, we need to serialize them
 const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var)
 {
 	const size_t param = var.attributes.param;
@@ -1373,9 +1377,10 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 	} else { //normal grid variable
 		std::vector<double> data( grid.size(), var.nodata );
 		const size_t nrows = grid.getNy(), ncols = grid.getNx();
-		for (size_t kk=0; kk<nrows; ++kk) {
+		for (size_t kk=nrows-1; kk-- > 0; ) {
 			for (size_t ll=0; ll<ncols; ++ll) {
-				if (grid.grid2D(ll,kk)!=IOUtils::nodata) data[kk*ncols + ll] = grid.grid2D(ll,kk);
+				const size_t serial_idx = (nrows-kk-1)*ncols + ll;
+				if (grid.grid2D(ll,kk)!=IOUtils::nodata) data[serial_idx] = grid.grid2D(ll,kk);
 			}
 		}
 		return data;
@@ -1399,7 +1404,7 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 }
 
 //this returns the index where to insert the new grid
-size_t ncFiles::addTimestamp(const int& ncid, Date date)
+size_t ncFiles::addTimestamp(const int& ncid, const Date& date)
 {
 	size_t time_pos = vecTime.size();
 	bool create_timestamp = true;
@@ -1418,17 +1423,17 @@ size_t ncFiles::addTimestamp(const int& ncid, Date date)
 	}
 	
 	if (create_timestamp) {
-		date.setTimeZone(0.);
-		const double dt = (date.getJulian(true) - vars[ncpp::TIME].offset) * vars[ncpp::TIME].scale;
+		const double packed_dt = (date.getJulian(true) - vars[ncpp::TIME].offset) / vars[ncpp::TIME].scale;
 		const size_t start[] = {time_pos};
 		const size_t count[] = {1};
-		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &dt);
+		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &packed_dt);
 		if (status != NC_NOERR) throw IOException("Could not write data for record variable '" + vars[ncpp::TIME].attributes.name + "': " + nc_strerror(status), AT);
 		if (time_pos==vecTime.size())
 			vecTime.push_back( date );
 		else
 			vecTime.insert(vecTime.begin()+time_pos, date);
 	}
+	
 	return time_pos;
 }
 
@@ -1535,7 +1540,7 @@ std::vector<Date> ncFiles::read_1Dvariable(const int& ncid) const
 	
 	if (!timestamps_as_str) {
 		const std::vector<double> tmp_results( read_1Dvariable(ncid, ncpp::TIME) );
-		std::vector<Date> results(tmp_results.size());
+		std::vector<Date> results( tmp_results.size() );
 		for (size_t ii=0; ii<tmp_results.size(); ii++)
 			results[ii].setDate(tmp_results[ii]*it->second.scale + it->second.offset, TZ);
 		return results;

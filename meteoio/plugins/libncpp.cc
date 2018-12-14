@@ -281,10 +281,10 @@ void write_data(const int& ncid, const nc_variable& var, const size_t& pos, cons
 * @param[in] data vector that has to be written
 * @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension?
 */
-void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
+void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
 {
 	if (!isUnlimited) {
-		const int status = nc_put_var_double(ncid, var.varid, &data[0]);
+		const int status = nc_put_var_double(ncid, var.varid, &data[0]); //this call only works properly with 1D data
 		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	} else {
 		//because nc_put_var_double does not work for unlimited dimensions
@@ -302,7 +302,7 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<doubl
 * @param[in] data vector that has to be written
 * @param[in] strMaxLen maximum length of the strings in the vector (this MUST have been defined as a dimension before)
 */
-void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
+void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
 {
 	//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
 	for (size_t ii=0; ii<data.size(); ii++) {
@@ -390,8 +390,8 @@ void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr
 * and return the necessary offset and multiplier compared to julian date.
 * @param[in] time_units time specification string
 * @param[in] i_TZ timezone to use to interpret the reference date
-* @param[out] o_time_offset offset to apply to convert the read values to julian date
-* @param[out] o_time_multiplier multiplier to apply to convert the read values to julian date
+* @param[out] o_time_offset offset to apply to convert the packed values to julian date
+* @param[out] o_time_multiplier multiplier to apply to convert the packed values to julian date
 */
 void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier)
 {
@@ -439,7 +439,7 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 		const int status = nc_def_dim(ncid, dimension.name.c_str(), len, &dimension.dimid);
 		if (status != NC_NOERR) throw mio::IOException("Could not define dimension '" + dimension.name + "': " + nc_strerror(status), AT);
 	} else {
-		if (dimension.length != length)
+		if (!dimension.isUnlimited && dimension.length != length)
 			throw mio::InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
 	}
 }
