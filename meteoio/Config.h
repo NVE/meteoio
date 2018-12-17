@@ -103,7 +103,7 @@ class Config {
 		 * @brief Delete keys matching a specific pattern from the internal map object, key/section are case insensitive
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
-		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @code
 		 *  Config cfg("io.ini");
 		 *  cfg.deleteKeys("STATION", "Input");
@@ -325,7 +325,7 @@ class Config {
 		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
-		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
 		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );

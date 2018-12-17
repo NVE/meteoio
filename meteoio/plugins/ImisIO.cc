@@ -911,7 +911,7 @@ std::vector<std::string> ImisIO::getStationMetaData(const std::string& stat_abk,
  * Each record returned are vector of strings which are pushed back in vecMeteoData.
  * @param stat_abk :     a string key of ams.v_ams_raw
  * @param stao_nr :      a string key of ams.v_ams_raw
- * @param dateS :        begining of the recording date
+ * @param dateS :        beginning of the recording date
  * @param dateE :        end of the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
  * @param return true if the station is a full station, false otherwise (ex: wind station)

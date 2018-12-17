@@ -215,7 +215,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 			RSWR_dat.push_back( ivec[jj](MeteoData::RSWR) );
 		}
 	}
-	if (HS_dat.empty()) return false; //this happens at the begining of the period
+	if (HS_dat.empty()) return false; //this happens at the beginning of the period
 	
 	std::vector<double> quantiles;
 	quantiles.push_back( 0.9 );

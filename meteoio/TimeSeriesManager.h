@@ -162,7 +162,7 @@ class TimeSeriesManager {
 		IOHandler& getIOHandler() const {return iohandler;}
 
 		/**
-		 * @brief Returns the begining of the raw buffer.
+		 * @brief Returns the beginning of the raw buffer.
 		 * @details This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the first data would be greater.
 		 * @return start date of the buffer
@@ -178,7 +178,7 @@ class TimeSeriesManager {
 		Date getRawBufferEnd() const {return raw_buffer.getBufferEnd();}
 		
 		/**
-		 * @brief Returns the real begining of the raw data in buffer.
+		 * @brief Returns the real beginning of the raw data in buffer.
 		 * @details This is the start date of the <b>available data</b> that is in the buffer 
 		 * (it can be much later than the requested start date).
 		 * @return start date of the data or Date::undefined if no data is available

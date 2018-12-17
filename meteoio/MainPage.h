@@ -368,7 +368,7 @@ namespace mio {
  * 	}
  *    @endcode
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
- * -# Include the filter's header file in meteoFilters/ProcessingBlocks.cc
+ * -# Include the filter's header file in meteoFilters/ProcessingBlock.cc
  * -# Try to compile and run your filter on a test data set (for example with the "meteo_reading" example)
  * -# Then really implement your filter. Its class contains two public methods: a constructor and a "process" method and at least one private method,
  *    "parse_args" to read the arguments from a provided vector of strings.

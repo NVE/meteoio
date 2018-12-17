@@ -68,7 +68,7 @@ class MeteoBuffer {
 		double getAvgSamplingRate() const;
 
 		/**
-		 * @brief Returns the begining of the buffer.
+		 * @brief Returns the beginning of the buffer.
 		 * This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the first data would be greater.
 		 * @return start date of the buffer
@@ -84,7 +84,7 @@ class MeteoBuffer {
 		Date getBufferEnd() const;
 		
 		/**
-		 * @brief Returns the real begining of the data contained in the buffer.
+		 * @brief Returns the real beginning of the data contained in the buffer.
 		 * This is the start date of the <b>available data</b> that is in the buffer (it can be much later than the requested start date).
 		 * @return start date of the data or Date::undefined if no data is available
 		 */

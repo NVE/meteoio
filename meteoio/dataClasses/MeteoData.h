@@ -245,7 +245,7 @@ class MeteoData {
 		/**
 		 * @brief Simple merge strategy within a vector of MeteoData.
 		 * All stations that can be considerd as identical (see note) will be merged in case of fields set to nodata. 
-		 * The priority goes to the stations at the begining of the vector. For example, if vec[0] has TA but no HS and 
+		 * The priority goes to the stations at the beginning of the vector. For example, if vec[0] has TA but no HS and 
 		 * vec[3] has TA and HS, then vec[0] will <i>keep</i> its TA and get HS from vec[3]. If vec[2] is further away than
 		 * 5m from vec[0], then it can not contribute to vec[0].
 		 * @note two stations are considered to be identical if they fit within a 5m 3D box

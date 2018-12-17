@@ -146,7 +146,7 @@ namespace IOUtils {
 	void stripComments(std::string& str);
 	
 	/**
-	 * @brief replace the within a given string, a substring by another one.
+	 * @brief Replace a substring within a given string by another one.
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param input string to manipulate
 	 * @param[in] search substring to be searched for 

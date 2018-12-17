@@ -808,7 +808,6 @@ double RandomNumberGenerator::pdfNotImplemented(const double& /*xx*/) const
 double RandomNumberGenerator::cdfNotImplemented(const double& /*xx*/) const
 {
 	throw InvalidArgumentException("RNG: Cumulative distribution function (cdf) not implemented for this distribution.", AT);
-	//return xx;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

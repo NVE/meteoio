@@ -368,7 +368,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 {
 	filename = FileUtils::removeExtension( FileUtils::getFilename(filename) );
 	size_t pos_fn = 0, pos_mt = 0; //current position in the filename and in the filename_spec
-	if (filename_spec[0]!='{') { //there is a constant pattern at the begining, getting rid of it
+	if (filename_spec[0]!='{') { //there is a constant pattern at the beginning, getting rid of it
 		const size_t start_var = filename_spec.find('{');
 		if (start_var==std::string::npos) throw InvalidFormatException("No variables defined for filename parsing", AT);
 		const std::string pattern( filename_spec.substr(0, start_var) );

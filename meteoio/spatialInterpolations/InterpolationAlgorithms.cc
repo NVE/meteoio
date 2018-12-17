@@ -149,7 +149,7 @@ namespace mio {
  *
  * 	//performing spatial interpolations
  * 	Grid2DObject param;
- * 	io.interpolate(date, dem, MeteoData::TA, param);
+ * 	io.getMeteoData(date, dem, MeteoData::TA, param);
  *
  * @endcode
  *

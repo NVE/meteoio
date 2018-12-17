@@ -139,7 +139,7 @@ namespace mio {
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td>ARPS ascii formatted grids</td><td></td></tr>
  * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
- * <tr><td>\subpage csvio "CSV"</td><td>meteo,</td><td>flexible reading of CSV files</td><td></td></tr>
+ * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>GeoTop meteo files</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>Grass grid files</td><td></td></tr>
@@ -239,7 +239,7 @@ namespace mio {
  * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
  *
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
- * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
  *
