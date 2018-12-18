@@ -81,7 +81,7 @@ class ncFiles {
 		std::vector<double> vecX, vecY; ///< caching the lats/lons or eastings/northings to deal with grids
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path, coord_sys, coord_param;
-		double TZ, time_precision; ///< this is the timezone used for reading data
+		double TZ; ///< this is the timezone used for reading data
 		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
 		bool debug, isLatLon;

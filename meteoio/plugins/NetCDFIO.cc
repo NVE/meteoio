@@ -496,7 +496,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 //we have: unpacked_value = packed_value * scale + offset
 
 ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug)
-             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), time_precision(Date::epsilon_sec), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
+             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
              debug(i_debug), isLatLon(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
@@ -1182,13 +1182,17 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 }
 
 //if returning TRUE, the variable must be created
+//NOTE the scale parameter is used as a divisor for TIME
 bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date)
 {
 	if (vars[ param ].varid == -1) {
 		vars[ param ].dimids.push_back( dimensions_map[ param ].dimid );
 		if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ ncpp::STATSTRLEN ].dimid );
 		if (param==ncpp::TIME) {
-			const Date ref_date_simplified(ref_date.getYear(), 1, 1, 0, 0, 0.); //force writing to GMT
+			int year, month, day;
+			ref_date.getDate(year, month, day, true); //force GMT
+			const Date ref_date_simplified(year, month, day, 0, 0, 0.); //force writing to GMT
+			//const Date ref_date_simplified(2018, 11, 30, 0, 0, 0.); 
 			std::string date_str( ref_date_simplified.toString(Date::ISO) );
 			date_str[ 10 ] = ' '; //replace "T" by " "
 			
@@ -1196,18 +1200,15 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 			if (units=="d") {
 				vars[param].attributes.units = "days since " + date_str;
 				vars[param].scale = 1.;
-				time_precision /= 1.;
 			} else if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
-				vars[param].scale = 1./24.;
-				time_precision /= 3600.;
+				vars[param].scale = 24.;
 			} else if (units=="min") {
 				vars[param].attributes.units = "minutes since " + date_str;
-				vars[param].scale = 1./(24.*60);
-				time_precision /= 60.;
+				vars[param].scale = (24.*60);
 			} else if (units=="s") {
 				vars[param].attributes.units = "seconds since " + date_str;
-				vars[param].scale = 1./(24.*3600.);
+				vars[param].scale = (24.*3600.);
 			} else 
 				throw InvalidArgumentException("Unsupported time unit specified in schema: '"+units+"'", AT);
 			vars[param].offset = ref_date_simplified.getJulian();
@@ -1222,10 +1223,11 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 //This function computes the NetCDF representation of time, rounded to the given precision. It is inlined for performance reasons.
 inline double transformTime(const double& julian, const double& offset, const double& scale, const double& precision)
 {
-	const double packed_julian = (julian - offset) / scale;
+	const double packed_julian = (julian - offset) * scale; //the scale parameter is used as a divisor for TIME
 	double integral;
 	const double fractional = modf(packed_julian-.5, &integral);
-	return integral + (double)Optim::round( fractional/precision ) * precision + .5;
+	const double rounded_time = integral + (double)Optim::round( fractional/precision ) * precision + .5;	
+	return rounded_time;
 }
 
 //in order to write MetoData, we need to serialize each parameter...
@@ -1247,12 +1249,14 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
 					//we pre-round the data so when libnetcdf will cast, it will fall on what we want
-					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) / var.scale) );
+					 //note: the scale parameter is used as a divisor for TIME
+					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale) );
 					if (prev!=IOUtils::nodata && data[ll]==prev) 
 						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 					prev = data[ll];
 				}
 			} else {
+				const double time_precision = Date::epsilon_sec / (24.*3600.) * var.scale; //packed time precision: sec_precision converted to days, converted back to user-defined units
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
 					//for better numerical consistency, we round the data to Date::epsilon_sec in NetCDF internal representation
@@ -1321,7 +1325,8 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		} else {
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				for (size_t jj=st_start; jj<st_end; jj++) {
-					if (stationHasParameter[jj-st_start] && vecMeteo[jj][ll]( meteodata_param )!=IOUtils::nodata) data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param );
+					if (stationHasParameter[jj-st_start] && vecMeteo[jj][ll]( meteodata_param )!=IOUtils::nodata) 
+						data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param );
 				}
 			}
 
@@ -1423,7 +1428,7 @@ size_t ncFiles::addTimestamp(const int& ncid, const Date& date)
 	}
 	
 	if (create_timestamp) {
-		const double packed_dt = (date.getJulian(true) - vars[ncpp::TIME].offset) / vars[ncpp::TIME].scale;
+		const double packed_dt = (date.getJulian(true) - vars[ncpp::TIME].offset) * vars[ncpp::TIME].scale; //the scale parameter is used as a divisor for TIME
 		const size_t start[] = {time_pos};
 		const size_t count[] = {1};
 		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &packed_dt);
@@ -1542,7 +1547,7 @@ std::vector<Date> ncFiles::read_1Dvariable(const int& ncid) const
 		const std::vector<double> tmp_results( read_1Dvariable(ncid, ncpp::TIME) );
 		std::vector<Date> results( tmp_results.size() );
 		for (size_t ii=0; ii<tmp_results.size(); ii++)
-			results[ii].setDate(tmp_results[ii]*it->second.scale + it->second.offset, TZ);
+			results[ii].setDate(tmp_results[ii]/it->second.scale + it->second.offset, TZ); //the scale parameter is used as a divisor for TIME
 		return results;
 	} else {
 		std::vector<std::string> tmp_results( read_1Dstringvariable(ncid, ncpp::TIME) );

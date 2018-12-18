@@ -284,7 +284,7 @@ void write_data(const int& ncid, const nc_variable& var, const size_t& pos, cons
 void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
 {
 	if (!isUnlimited) {
-		const int status = nc_put_var_double(ncid, var.varid, &data[0]); //this call only works properly with 1D data
+		const int status = nc_put_var_double(ncid, var.varid, &data[0]); //this call seems to only work properly with 1D data
 		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	} else {
 		//because nc_put_var_double does not work for unlimited dimensions
@@ -391,9 +391,9 @@ void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr
 * @param[in] time_units time specification string
 * @param[in] i_TZ timezone to use to interpret the reference date
 * @param[out] o_time_offset offset to apply to convert the packed values to julian date
-* @param[out] o_time_multiplier multiplier to apply to convert the packed values to julian date
+* @param[out] o_time_divisor multiplier to apply to convert the packed values to julian date
 */
-void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier)
+void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_divisor)
 {
 	static const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
 	
@@ -401,12 +401,12 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	const size_t nrWords = mio::IOUtils::readLineToVec(time_units, vecString);
 	if (nrWords<3 || nrWords>5) throw mio::InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
-	if (vecString[0]=="years") o_time_multiplier = equinox_year;
-	else if (vecString[0]=="months") o_time_multiplier = equinox_year/12.;
-	else if (vecString[0]=="days") o_time_multiplier = 1.;
-	else if (vecString[0]=="hours") o_time_multiplier = 1./24.;
-	else if (vecString[0]=="minutes") o_time_multiplier = 1./(24.*60.);
-	else if (vecString[0]=="seconds") o_time_multiplier = 1./(24.*3600);
+	if (vecString[0]=="years") o_time_divisor = 1./equinox_year;
+	else if (vecString[0]=="months") o_time_divisor = 12./equinox_year;
+	else if (vecString[0]=="days") o_time_divisor = 1.;
+	else if (vecString[0]=="hours") o_time_divisor = 24.;
+	else if (vecString[0]=="minutes") o_time_divisor = (24.*60.);
+	else if (vecString[0]=="seconds") o_time_divisor = (24.*3600);
 	else throw mio::InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
 	
 	std::string ref_date_str = (nrWords>3)? vecString[2]+"T"+vecString[3] : vecString[2];
