@@ -769,7 +769,12 @@ void ncFiles::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, c
 		if (vars[ param ].dimids.size()>0 && vars[ param ].dimids.front()==ncpp::TIME) { //as unlimited dimension, TIME is always first
 			ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		} else {
-			ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
+			if (param==ncpp::LATITUDE || param==ncpp::NORTHING)
+				ncpp::write_1Ddata(ncid, vars[ param ], data);
+			else if (param==ncpp::LONGITUDE || param==ncpp::EASTING)
+				ncpp::write_1Ddata(ncid, vars[ param ], data);
+			else
+				ncpp::write_data(ncid, vars[ param ], time_pos, grid_in.getNy(), grid_in.getNx(), &data[0]);
 		}
 	}
 	

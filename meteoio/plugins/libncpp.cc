@@ -279,7 +279,7 @@ void write_data(const int& ncid, const nc_variable& var, const size_t& pos, cons
 * @param[in] ncid file ID
 * @param[in] var variable to write out
 * @param[in] data vector that has to be written
-* @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension?
+* @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension? (default: false)
 */
 void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
 {
