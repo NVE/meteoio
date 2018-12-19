@@ -21,12 +21,16 @@
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/IOExceptions.h>
 
 #include <algorithm>
 #include <netcdf.h>
+#include <fstream>
+#include <cstring>
+#include <errno.h>
 
 using namespace std;
 
@@ -588,8 +592,33 @@ std::string generateHistoryAttribute()
 
 void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section)
 {
-	for (size_t ii=0; ii<name.size(); ii++)
+	for (size_t ii=0; ii<name.size(); ii++) {
 		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
+
+		if (cfg_key[ii]=="NC_SUMMARY") { //overwrite with the content of summary_file if available
+			const std::string summary_file = cfg.get("NC_SUMMARY_FILE", section, "");
+			if (!summary_file.empty()) {
+				std::string buffer;
+				std::ifstream fin( summary_file.c_str() );
+				if (fin.fail())
+					throw mio::AccessException("Error opening NC_SUMMARY_FILE \""+summary_file+"\", possible reason: "+std::strerror(errno), AT);
+
+				const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
+				try {
+					do {
+						std::string line;
+						getline(fin, line, eoln); //read complete line
+						buffer.append(line+"\n");
+					} while (!fin.eof());
+					fin.close();
+				} catch (const std::exception&){
+					if (fin.is_open()) fin.close();
+					throw;
+				}
+				value[ii] = buffer;
+			}
+		}
+	}
 }
 
 void ACDD::defaultInit()
@@ -605,13 +634,16 @@ void ACDD::defaultInit()
 	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "NC_KEYWORDS");
 	addAttribute("title", "", "NC_TITLE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "NC_INSTITUTION");
+	addAttribute("project", "", "NC_PROJECT");
 	addAttribute("id", "", "NC_ID");
 	addAttribute("naming_authority", "", "NC_NAMING_AUTHORITY");
 	addAttribute("processing_level", "", "NC_PROCESSING_LEVEL");
-	addAttribute("summary", "", "NC_SUMMARY");
+	addAttribute("summary", "", "NC_SUMMARY"); //special handling, see setUserConfig()
+	addAttribute("comment", "", "NC_COMMENT");
 	addAttribute("acknowledgement", "", "NC_ACKNOWLEDGEMENT");
 	addAttribute("metadata_link", "", "NC_METADATA_LINK");
 	addAttribute("license", "", "NC_LICENSE");
+	addAttribute("product_version", "1.0", "NC_PRODUCT_VERSION");
 }
 
 /**

@@ -1197,7 +1197,6 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 			int year, month, day;
 			ref_date.getDate(year, month, day, true); //force GMT
 			const Date ref_date_simplified(year, month, day, 0, 0, 0.); //force writing to GMT
-			//const Date ref_date_simplified(2018, 11, 30, 0, 0, 0.); 
 			std::string date_str( ref_date_simplified.toString(Date::ISO) );
 			date_str[ 10 ] = ' '; //replace "T" by " "
 			
@@ -1216,7 +1215,7 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 				vars[param].scale = (24.*3600.);
 			} else 
 				throw InvalidArgumentException("Unsupported time unit specified in schema: '"+units+"'", AT);
-			vars[param].offset = ref_date_simplified.getJulian();
+			vars[param].offset = ref_date_simplified.getJulian(true);
 		}
 		
 		ncpp::create_variable(ncid, vars[ param ]);
