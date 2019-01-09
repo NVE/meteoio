@@ -63,6 +63,7 @@ namespace mio {
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
+ * - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
  * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
  * - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  * - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
@@ -509,14 +510,20 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	std::string line;
 	std::vector<std::string> headerFields; //this contains the column headers from the file itself
 	const bool delimIsNoWS = (csv_delim!=' ');
+	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty()); 
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<header_lines; ii++) {
-			getline(fin, line, eoln); //read complete signature line
+			getline(fin, line, eoln); //read complete line
 			if (fin.eof()) {
+				if (header_repeat_at_start) linenr++; //since it was not incremented when matching the repeat header marker
 				std::ostringstream ss;
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
+			}
+			if (hasHeaderRepeatMk && !header_repeat_at_start && line.find(header_repeat_mk)!=std::string::npos) {
+				header_repeat_at_start = true; //so we won't match another header_repeat_mk marker
+				continue; //the line count it not incremented so the special headers still keep logical indices
 			}
 			linenr++;
 			if (line.empty()) continue;
@@ -761,6 +768,11 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
 		
+		std::string hdr_repeat_mk;
+		if (cfg.keyExists(pre+"HEADER_REPEAT_MK", "Input")) cfg.getValue(pre+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk);
+		else cfg.getValue(dflt+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk, IOUtils::nothrow);
+		tmp_csv.setHeaderRepeatMk(hdr_repeat_mk);
+		
 		if (cfg.keyExists(pre+"NR_HEADERS", "Input")) cfg.getValue(pre+"NR_HEADERS", "Input", tmp_csv.header_lines);
 		else cfg.getValue(dflt+"NR_HEADERS", "Input", tmp_csv.header_lines, IOUtils::nothrow);
 		
@@ -829,7 +841,34 @@ void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecS
 		vecStation.push_back( csvparam[ii].getStation() );
 }
 
-std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd)
+//build MeteoData template, based on parameters available in the csv file
+MeteoData CsvIO::createTemplate(const CsvParameters& params)
+{
+	const size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
+	
+	//build MeteoData template
+	MeteoData template_md( Date(0., 0.), params.getStation() );
+	for (size_t ii=0; ii<nr_of_data_fields; ii++)
+		template_md.addParameter( params.csv_fields[ii] );
+
+	return template_md;
+}
+
+Date CsvIO::getDate(const CsvParameters& params, const std::string& date_str, const std::string& time_str, const bool& silent_errors, const std::string& filename, const size_t& linenr)
+{
+	const Date dt( params.parseDate(date_str, time_str) );
+	if (dt.isUndef()) {
+		const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
+		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+linenr_str );
+		if (silent_errors)
+			std::cerr << err_msg << "\n";
+		else 
+			throw InvalidFormatException(err_msg, AT);
+	}
+	return dt;
+}
+
+std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd)
 {
 	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
 	const bool use_offset = !params.units_offset.empty();
@@ -837,10 +876,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields))
 		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
 
-	//build MeteoData template
-	MeteoData template_md( Date(0., 0.), params.getStation() );
-	for (size_t ii=0; ii<nr_of_data_fields; ii++)
-		template_md.addParameter( params.csv_fields[ii] );
+	const MeteoData template_md( createTemplate(params) );
 
 	//now open the file
 	const std::string filename( params.getFilename() );
@@ -861,11 +897,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	else {
 		//skip the headers (they have been read already, so we know this works)
-		while (!fin.eof() && linenr<params.header_lines) {
-			line.clear();
-			getline(fin, line, params.eoln);
-			linenr++;
-		}
+		const size_t skip_count = (params.header_repeat_at_start)? params.header_lines+1 : params.header_lines;
+		FileUtils::skipLines(fin, skip_count);
+		linenr += skip_count;
 	}
 	
 	//and now, read the data and fill the vector vecMeteo
@@ -875,6 +909,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	const bool delimIsNoWS = (params.csv_delim!=' ');
+	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	while (!fin.eof()){
@@ -882,6 +917,11 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		linenr++;
 		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
+		if (hasHeaderRepeat && line.find(params.header_repeat_mk)!=std::string::npos) {
+			FileUtils::skipLines(fin, params.header_lines);
+			linenr += params.header_lines;
+			continue;
+		}
 		
 		const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, params.csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 		if (nr_of_data_fields==0) nr_of_data_fields = nr_curr_data_fields;
@@ -895,15 +935,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			} else throw InvalidFormatException(ss.str(), AT);
 		}
 
-		const Date dt( params.parseDate(tmp_vec[params.date_col], tmp_vec[params.time_col]) );
-		if (dt.isUndef()) {
-			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-			const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+linenr_str );
-			if (silent_errors) {
-				std::cerr << err_msg << "\n";
-				continue;
-			} else throw InvalidFormatException(err_msg, AT);
-		}
+		const Date dt( getDate(params, tmp_vec[params.date_col], tmp_vec[params.time_col], silent_errors, filename, linenr) );
+		if (dt.isUndef() && silent_errors) continue;
 		if (!prev_dt.isUndef()) {
 			const bool asc = (dt>prev_dt);
 			if (asc) count_asc++;
