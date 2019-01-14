@@ -409,27 +409,24 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)
 {
-	// arguments is a string of the format filename:varname
+	// arguments is a string of the format varname@Date
 	std::vector<std::string> vec_argument;
-	if (IOUtils::readLineToVec(arguments, vec_argument, '$')  != 2)
-		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is Date$varname, received instead '"+arguments+"'", AT);
+	if (IOUtils::readLineToVec(arguments, vec_argument, '@')  != 2)
+		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is varname@Date, received instead '"+arguments+"'", AT);
 
 	const std::string file_and_path( out_grid2d_path + "/" + grid2d_out_file );
-	if (!FileUtils::validFileAndPath(file_and_path))
-  {
-    throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
-  }
+	if (!FileUtils::validFileAndPath(file_and_path)) {
+		throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
+	}
 
-  mio::Date date;
-
-  if(!mio::IOUtils::convertString(date,vec_argument[0],cfg.get("TIME_ZONE","input")))
-  {
-    throw InvalidArgumentException("Unable to convert the date: "+vec_argument[0], AT);
-  }
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_argument[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_argument[1]+"'", AT);
+	}
 
 	const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
 	ncFiles file(file_and_path, file_mode, cfg, out_schema, debug);
-	file.write2DGrid(grid_in, IOUtils::npos, vec_argument[1], date);
+	file.write2DGrid(grid_in, IOUtils::npos, vec_argument[0], date);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
