@@ -112,19 +112,20 @@ class Meteo2DInterpolator {
 		 * @param meteoparam Any MeteoData member variable as specified in the
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 * @param quiet If TRUE, missing data will print a warning but will not throw an exception (default: false)
 		 * @return some information about the interpolation process (useful for GUIs)
 		 */
 		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result);
+		                 Grid2DObject& result, const bool& quiet=false);
 
 		std::string interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
-		                 Grid2DObject& result);
+		                 Grid2DObject& result, const bool& quiet=false);
 
 		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<Coords> vec_coords, std::vector<double>& result);
+                            std::vector<Coords> vec_coords, std::vector<double>& result, const bool& quiet=false);
 		
 		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<StationData> vec_stations, std::vector<double>& result);
+                            std::vector<StationData> vec_stations, std::vector<double>& result, const bool& quiet=false);
 
 		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm

@@ -473,7 +473,7 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 		//interpolate each field and fill vecvecMeteo with data
 		for (size_t param=0; param<v_params.size(); param++) {
 			std::vector<double> result;
-			interpolator.interpolate(date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result);
+			interpolator.interpolate(date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result, true); //do not throw exceptions for missing data
 			for (size_t ii=0; ii<v_stations.size(); ii++) {
 				vecvecMeteo[ii].back()(v_params[param]) = result[ii];
 			}
