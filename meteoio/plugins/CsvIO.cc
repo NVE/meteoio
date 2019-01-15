@@ -858,8 +858,7 @@ Date CsvIO::getDate(const CsvParameters& params, const std::string& date_str, co
 {
 	const Date dt( params.parseDate(date_str, time_str) );
 	if (dt.isUndef()) {
-		const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+linenr_str );
+		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
 		if (silent_errors)
 			std::cerr << err_msg << "\n";
 		else 
@@ -962,8 +961,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
-				const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-				const std::string err_msg( "Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+linenr_str );
+				const std::string err_msg( "Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
 				if (silent_errors) {
 					std::cerr << err_msg << "\n";
 					no_errors = false;

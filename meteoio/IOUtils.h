@@ -184,6 +184,12 @@ namespace IOUtils {
 	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
+	
+	template <class T> std::string toString(const T& t) {
+		std::ostringstream os;
+		os << t;
+		return os.str();
+	}
 
 	/**
 	* @brief Convert a string to the requested type (template function).
