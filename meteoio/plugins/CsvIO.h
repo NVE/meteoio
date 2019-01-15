@@ -32,7 +32,7 @@ class CsvParameters {
 		CsvParameters(const double& tz_in)
 		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), header_repeat_at_start(false), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
 		
-		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;};
+		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setDateTimeSpec(const std::string& datetime_spec);
