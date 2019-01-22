@@ -1342,8 +1342,8 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 			}
 
 			//perform some units corrections, if necessary
-			if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 100.;
-			if (var.attributes.units=="kilometer") for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 1e-3;
+			if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 100.;
+			if (var.attributes.units=="kilometer") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 1e-3;
 		}
 
 		return data;
