@@ -515,6 +515,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<header_lines; ii++) {
 			getline(fin, line, eoln); //read complete line
+			IOUtils::trim(line);
 			if (fin.eof()) {
 				if (header_repeat_at_start) linenr++; //since it was not incremented when matching the repeat header marker
 				std::ostringstream ss;
