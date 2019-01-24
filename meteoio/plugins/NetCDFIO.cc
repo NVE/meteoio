@@ -789,10 +789,11 @@ void ncFiles::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, c
 }
 
 //When writing multiple stations in one file, this assumes that they all have the same parameters, the same timestamps and the same coordinate system
+//if station_idx==IOUtils::npos, the user has requested all stations in one file
 void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
 	const bool station_dimension = (station_idx==IOUtils::npos) || schema.force_station_dimension;
-	const size_t ref_station_idx = (station_dimension)? 0 : station_idx;
+	const size_t ref_station_idx = (station_idx==IOUtils::npos)? 0 : station_idx;
 	if (vecMeteo.empty()) return;
 	if (vecMeteo[ref_station_idx].empty()) return;
 	isLatLon = true; //for now, we force lat/lon coordinates for time series
@@ -814,7 +815,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		dimensions.push_back( ncpp::STATION );
 	}
 	const Date ref_date( getRefDate(vecMeteo, station_idx) );
-	const size_t nrStations = (station_dimension)? vecMeteo.size() : 1;
+	const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1; //only if station_idx==IOUtils::npos, has the user requested all stations in one file
 	for (size_t ii=0; ii<dimensions.size(); ii++) {
 		const size_t param = dimensions[ii];
 		const size_t length = (param==ncpp::TIME)? 0 : ((param==ncpp::STATSTRLEN)? DFLT_STAT_STR_LEN : nrStations) ;
@@ -847,9 +848,14 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		const size_t param = nc_variables[ii];
 
 		if (param==ncpp::STATION) { //this is not present if !station_dimension
-			std::vector<std::string> txtdata( vecMeteo.size() );
-			for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
-			ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
+			if (station_idx==IOUtils::npos) { //writing all stations into one file
+				std::vector<std::string> txtdata( vecMeteo.size() );
+				for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
+				ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
+			} else { //only one station per file
+				std::vector<std::string> txtdata( 1, vecMeteo[station_idx].front().meta.stationID );
+				ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
+			}
 		} else {
 			const std::vector<double> data( fillBufferForVar(vecMeteo, station_idx, vars[ param ]) );
 			if (data.empty()) continue;
@@ -879,7 +885,7 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 	acdd.addAttribute("featureType", "timeSeries");
 	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 
-	if (station_idx==IOUtils::npos) {
+	if (station_idx==IOUtils::npos) { //multiple stations per file
 		if (vecMeteo.size()<10) {
 			std::string stats_list( vecMeteo[0].front().meta.stationID );
 			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
@@ -891,7 +897,7 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 		}
 		acdd.setGeometry(vecMeteo);
 		acdd.setTimeCoverage(vecMeteo);
-	} else {
+	} else { //one station per file
 		const std::string stationName( vecMeteo[station_idx].front().meta.stationName );
 		const std::string name = (!stationName.empty())? stationName : vecMeteo[station_idx].front().meta.stationID;
 		acdd.addAttribute("title", "Meteorological data timeseries for the "+name+" station");
@@ -1128,7 +1134,7 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 
 Date ncFiles::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
-	if (station_idx==IOUtils::npos) {
+	if (station_idx==IOUtils::npos) { //multiple stations per file
 		Date refDate;
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
@@ -1136,7 +1142,7 @@ Date ncFiles::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 			if (vecMeteo[ii].front().date<refDate) refDate = vecMeteo[ii].front().date;
 		}
 		return refDate;
-	} else {
+	} else { //one station per file
 		if (vecMeteo[station_idx].empty()) return Date();
 		return vecMeteo[station_idx].front().date;
 	}
@@ -1161,6 +1167,7 @@ void ncFiles::addToVars(const size_t& param)
 	}
 }
 
+//if station_idx==IOUtils::npos, the user has requested all stations in one file
 void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
 	//add metadata variables
@@ -1242,6 +1249,7 @@ inline double transformTime(const double& julian, const double& offset, const do
 }
 
 //in order to write MetoData, we need to serialize each parameter...
+//if station_idx==IOUtils::npos, the user has requested all stations in one file
 const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const
 {
 	const size_t param = var.attributes.param;
@@ -1255,6 +1263,8 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps, var.nodata);
+			/*vecTime.resize(nrTimeSteps);
+			for (size_t ii=0; ii<nrTimeSteps; ii++) vecTime[ii] = vecMeteo[ref_station_idx][ii].date;*/
 
 			if (var.attributes.type==NC_INT) {
 				double prev = IOUtils::nodata;
@@ -1277,6 +1287,10 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 					prev = data[ll];
 				}
 			}
+
+			/*std::cout << "time has been written out. Content of vecTime:\n";
+			for(size_t ii=0; ii<vecTime.size(); ii++) std::cout << vecTime[ii] << " ";
+			std::cout << "\n";*/
 			return data;
 		} else {
 			std::vector<double> data(nrStations, var.nodata);
