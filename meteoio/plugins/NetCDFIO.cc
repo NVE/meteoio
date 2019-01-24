@@ -1263,8 +1263,6 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps, var.nodata);
-			/*vecTime.resize(nrTimeSteps);
-			for (size_t ii=0; ii<nrTimeSteps; ii++) vecTime[ii] = vecMeteo[ref_station_idx][ii].date;*/
 
 			if (var.attributes.type==NC_INT) {
 				double prev = IOUtils::nodata;
@@ -1288,9 +1286,6 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 				}
 			}
 
-			/*std::cout << "time has been written out. Content of vecTime:\n";
-			for(size_t ii=0; ii<vecTime.size(); ii++) std::cout << vecTime[ii] << " ";
-			std::cout << "\n";*/
 			return data;
 		} else {
 			std::vector<double> data(nrStations, var.nodata);
