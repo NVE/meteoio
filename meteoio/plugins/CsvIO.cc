@@ -126,6 +126,8 @@ namespace mio {
  * - NODATA (string to interpret as nodata);
  * - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
  * - SKIP (skip this field).
+ * 
+ * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
  *
  * @subsection csvio_special_headers Header metadata extraction
  * This is performed with the "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata 
@@ -297,7 +299,7 @@ void CsvParameters::setDelimiter(const std::string& delim)
 	}
 }
 
-//Given a provided field_type, attribute the value to the proper metadata variable
+//Given a provided field_type, attribute the value to the proper metadata variable.
 void CsvParameters::assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon)
 {
 	if (field_type=="ID") {
@@ -348,6 +350,7 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 	std::vector<std::string> vecStr;
 	IOUtils::readLineToVec(line, vecStr, csv_delim);
 	
+	std::string prev_ID, prev_NAME;
 	std::multimap<size_t, std::pair<size_t, std::string> >::const_iterator it;
 	for (it=meta_spec.equal_range(linenr).first; it!=meta_spec.equal_range(linenr).second; ++it) {
 		const size_t colnr = (*it).second.first;
@@ -359,7 +362,16 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		std::string field_val( vecStr[colnr-1] );
 		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
 		
-		assignMetadataVariable(field_type, field_val, lat, lon);
+		//we handle ID and NAME differently in order to support appending
+		if (field_type=="ID") {
+			id = prev_ID+field_val;
+			prev_ID = id;
+		} else if (field_type=="NAME") {
+			name = prev_NAME+field_val;
+			prev_NAME = name;
+		} else {
+			assignMetadataVariable(field_type, field_val, lat, lon);
+		}
 	}
 }
 
@@ -378,6 +390,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		pos_fn = start_var;
 	}
 	
+	std::string prev_ID, prev_NAME;
 	//we now assume that we start with a variable
 	do {
 		//the start of the next constant pattern defines the end of the current variable
@@ -400,7 +413,16 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		//read the variable type and value
 		const std::string field_type( IOUtils::strToUpper(filename_spec.substr(pos_mt+1, start_pattern-pos_mt-1)) ); //skip { and }
 		const std::string value( filename.substr(pos_fn, len_var) );
-		assignMetadataVariable(field_type, value, lat, lon);
+		//we handle ID and NAME differently in order to support appending
+		if (field_type=="ID") {
+			id = prev_ID+value;
+			prev_ID = id;
+		} else if (field_type=="NAME") {
+			name = prev_NAME+value;
+			prev_NAME = name;
+		} else {
+			assignMetadataVariable(field_type, value, lat, lon);
+		}
 
 		if (end_pattern==std::string::npos) break; //nothing more to parse
 		pos_mt = end_pattern;
