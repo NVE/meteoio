@@ -1339,51 +1339,65 @@ const std::vector<double> ncFiles::fillBufferForAssociatedVar(const std::vector<
 const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const
 {
 	const size_t param = var.attributes.param;
-	const size_t ref_station_idx = (station_idx==IOUtils::npos)? 0 : station_idx;
-	const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
-	const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
-	const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1;
 
 	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
 	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
 		return fillBufferForAssociatedVar(vecMeteo, station_idx, var);
 	} else { //normal nc_variables
-		const MeteoData md( vecMeteo[ref_station_idx].front() );
-		const size_t meteodata_param = md.getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo
-		if (meteodata_param==IOUtils::npos) return std::vector<double>(); //this should not have happened...
-
-		const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
-		std::vector<bool> stationHasParameter(nrStations, false);
-		for (size_t jj=st_start; jj<st_end; jj++) {
-			if(!vecMeteo[jj].empty()) stationHasParameter[jj-st_start] = (vecMeteo[jj].front().getNrOfParameters()>meteodata_param);
+		const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
+		const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
+		const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1;
+		
+		//build MeteoData template for each station, get the param_idx for each station
+		std::vector<size_t> param_idx(nrStations);
+		for (size_t st=st_start; st<st_end; st++) {
+			param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo
 		}
-
+		
+		//now fill the data vector
+		std::vector<size_t> st_idx(nrStations, 0); //keep the current index for each station
+		const size_t nrTimeSteps = vecTime.size();
 		std::vector<double> data(nrTimeSteps*nrStations, var.nodata);
 		const bool isPrecip = (var.attributes.param==MeteoGrids::PSUM || var.attributes.param==MeteoGrids::PSUM_S || var.attributes.param==MeteoGrids::PSUM_L);
-		if (isPrecip && var.attributes.units=="kg/m2/s") {
+		
+		if (isPrecip && var.attributes.units=="kg/m2/s") { //convert precipitation to rates
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
-				for (size_t jj=st_start; jj<st_end; jj++) {
-					const double curr_julian = vecMeteo[jj][ll].date.getJulian(true);
+				for (size_t st=st_start; st<st_end; st++) {
+					const size_t meteodata_param = param_idx[ st-st_start ];
+					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					
+					const MeteoData md( vecMeteo[st][st_idx[st]] );
+					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
+					
+					const double curr_julian = md.date.getJulian(true);
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
-					const double ts_duration_s = ((ll>0)? (curr_julian - vecMeteo[jj][ll-1].date.getJulian(true)) : (vecMeteo[jj][ll+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
-
-					if (stationHasParameter[jj-st_start] && vecMeteo[jj][ll]( meteodata_param )!=IOUtils::nodata && ts_duration_s>0.)
-						data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param ) / ts_duration_s;
+					const double ts_duration_s = ((st_idx[st]>0)? (curr_julian - vecMeteo[st][st_idx[st]-1].date.getJulian(true)) : (vecMeteo[st][st_idx[st]+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
+					
+					if (md( meteodata_param ) != IOUtils::nodata && ts_duration_s>0.) 
+						data[ll*nrStations + (st-st_start)] = md( meteodata_param ) / ts_duration_s;
+					st_idx[st]++;
 				}
 			}
-		} else {
+		} else { //normal variables
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
-				for (size_t jj=st_start; jj<st_end; jj++) {
-					if (stationHasParameter[jj-st_start] && vecMeteo[jj][ll]( meteodata_param )!=IOUtils::nodata)
-						data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param );
+				for (size_t st=st_start; st<st_end; st++) {
+					const size_t meteodata_param = param_idx[ st-st_start ];
+					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					
+					const MeteoData md( vecMeteo[st][st_idx[st]] );
+					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
+					
+					if (md( meteodata_param ) != IOUtils::nodata) 
+						data[ll*nrStations + (st-st_start)] = md( meteodata_param );
+					st_idx[st]++;
 				}
 			}
-
+			
 			//perform some units corrections, if necessary
 			if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 100.;
 			if (var.attributes.units=="kilometer") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 1e-3;
 		}
-
+		
 		return data;
 	}
 }
