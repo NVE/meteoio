@@ -810,6 +810,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 
 	std::vector<size_t> nc_variables, dimensions;
 	dimensions.push_back( ncpp::TIME );
+	vecTime = createCommonTimeBase(vecMeteo, station_idx); //create a common time base for all content of this file
 	if (station_dimension) {
 		dimensions.push_back( ncpp::STATSTRLEN ); //this MUST be before STATION
 		dimensions.push_back( ncpp::STATION );
@@ -1148,6 +1149,24 @@ Date ncFiles::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 	}
 }
 
+std::vector<Date> ncFiles::createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
+{
+	if (station_idx==IOUtils::npos) { //all stations into one file
+		std::set<Date> tmp; //a set is sorted and contains unique values
+		for (size_t st=0; st<vecMeteo.size(); st++) {
+			for (size_t ii=0; ii<vecMeteo[st].size(); ii++)
+				tmp.insert( vecMeteo[st][ii].date );
+		}
+		
+		const std::vector<Date> result(tmp.begin(), tmp.end());
+		return result;
+	} else { //one file per station
+		std::vector<Date> result(vecMeteo[station_idx].size());
+		for (size_t ii=0; ii<vecMeteo[station_idx].size(); ii++) result[ii] = vecMeteo[station_idx][ii].date;
+		return result;
+	}
+}
+
 void ncFiles::pushVar(std::vector<size_t> &nc_variables, const size_t& param)
 {
 	if (std::find(nc_variables.begin(), nc_variables.end(), param) == nc_variables.end())
@@ -1248,9 +1267,76 @@ inline double transformTime(const double& julian, const double& offset, const do
 	return rounded_time;
 }
 
+const std::vector<double> ncFiles::fillBufferForAssociatedVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const
+{
+	const size_t param = var.attributes.param;
+	const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
+	const size_t st_end = (station_idx==IOUtils::npos)? vecMeteo.size() : station_idx+1;
+	const size_t nrStations = (station_idx==IOUtils::npos)? vecMeteo.size() : 1;
+	
+	if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
+		const size_t nrTimeSteps = vecTime.size();
+		std::vector<double> data(nrTimeSteps);
+
+		if (var.attributes.type==NC_INT) {
+			double prev = IOUtils::nodata;
+			for (size_t ll=0; ll<nrTimeSteps; ll++) {
+				//we pre-round the data so when libnetcdf will cast, it will fall on what we want
+					//note: the scale parameter is used as a divisor for TIME
+				data[ll] = static_cast<double>( Optim::round( (vecTime[ll].getJulian(true) - var.offset) * var.scale) );
+				if (prev!=IOUtils::nodata && data[ll]==prev)
+					throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+				prev = data[ll];
+			}
+		} else {
+			const double time_precision = Date::epsilon_sec / (24.*3600.) * var.scale; //packed time precision: sec_precision converted to days, converted back to user-defined units
+			double prev = IOUtils::nodata;
+			for (size_t ll=0; ll<nrTimeSteps; ll++) {
+				//for better numerical consistency, we round the data to Date::epsilon_sec in NetCDF internal representation
+				data[ll] = transformTime(vecTime[ll].getJulian(true), var.offset, var.scale, time_precision);
+				if (prev!=IOUtils::nodata && data[ll]==prev)
+					throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+				prev = data[ll];
+			}
+		}
+
+		return data;
+	} else {
+		std::vector<double> data(nrStations, var.nodata);
+		for (size_t jj=st_start; jj<st_end; jj++) {
+			double value = IOUtils::nodata;
+			if (param==MeteoGrids::DEM) {
+				value = vecMeteo[jj].front().meta.position.getAltitude();
+			} else if (param==MeteoGrids::SLOPE) {
+				value = vecMeteo[jj].front().meta.getSlopeAngle();
+				if (value==IOUtils::nodata) value = dflt_slope;
+			} else if (param==MeteoGrids::AZI) {
+				value = vecMeteo[jj].front().meta.getAzimuth();
+				if (value==IOUtils::nodata) value = dflt_azi;
+			} else if (param==ncpp::EASTING) {
+				value = vecMeteo[jj].front().meta.position.getEasting();
+			} else if (param==ncpp::NORTHING) {
+				value = vecMeteo[jj].front().meta.position.getNorthing();
+			} else if (param==ncpp::LATITUDE) {
+				value = vecMeteo[jj].front().meta.position.getLat();
+			} else if (param==ncpp::LONGITUDE) {
+				value = vecMeteo[jj].front().meta.position.getLon();
+			} else if (param==ncpp::ZREF) { //this two are required by Crocus and we don't have anything better for now...
+				value = dflt_zref;
+			} else if (param==ncpp::UREF) {
+				value = dflt_uref;
+			} else
+				throw UnknownValueException("Unknown dimension found when trying to write out netcdf file", AT);
+
+			if (value!=IOUtils::nodata) data[jj-st_start] = value;
+		}
+		return data;
+	}
+}
+
 //in order to write MetoData, we need to serialize each parameter...
 //if station_idx==IOUtils::npos, the user has requested all stations in one file
-const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const
+const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const
 {
 	const size_t param = var.attributes.param;
 	const size_t ref_station_idx = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1260,64 +1346,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 
 	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
 	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
-		if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
-			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
-			std::vector<double> data(nrTimeSteps, var.nodata);
-
-			if (var.attributes.type==NC_INT) {
-				double prev = IOUtils::nodata;
-				for (size_t ll=0; ll<nrTimeSteps; ll++) {
-					//we pre-round the data so when libnetcdf will cast, it will fall on what we want
-					 //note: the scale parameter is used as a divisor for TIME
-					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale) );
-					if (prev!=IOUtils::nodata && data[ll]==prev)
-						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
-					prev = data[ll];
-				}
-			} else {
-				const double time_precision = Date::epsilon_sec / (24.*3600.) * var.scale; //packed time precision: sec_precision converted to days, converted back to user-defined units
-				double prev = IOUtils::nodata;
-				for (size_t ll=0; ll<nrTimeSteps; ll++) {
-					//for better numerical consistency, we round the data to Date::epsilon_sec in NetCDF internal representation
-					data[ll] = transformTime(vecMeteo[ref_station_idx][ll].date.getJulian(true), var.offset, var.scale, time_precision);
-					if (prev!=IOUtils::nodata && data[ll]==prev)
-						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
-					prev = data[ll];
-				}
-			}
-
-			return data;
-		} else {
-			std::vector<double> data(nrStations, var.nodata);
-			for (size_t jj=st_start; jj<st_end; jj++) {
-				double value = IOUtils::nodata;
-				if (param==MeteoGrids::DEM) {
-					value = vecMeteo[jj].front().meta.position.getAltitude();
-				} else if (param==MeteoGrids::SLOPE) {
-					value = vecMeteo[jj].front().meta.getSlopeAngle();
-					if (value==IOUtils::nodata) value = dflt_slope;
-				} else if (param==MeteoGrids::AZI) {
-					value = vecMeteo[jj].front().meta.getAzimuth();
-					if (value==IOUtils::nodata) value = dflt_azi;
-				} else if (param==ncpp::EASTING) {
-					value = vecMeteo[jj].front().meta.position.getEasting();
-				} else if (param==ncpp::NORTHING) {
-					value = vecMeteo[jj].front().meta.position.getNorthing();
-				} else if (param==ncpp::LATITUDE) {
-					value = vecMeteo[jj].front().meta.position.getLat();
-				} else if (param==ncpp::LONGITUDE) {
-					value = vecMeteo[jj].front().meta.position.getLon();
-				} else if (param==ncpp::ZREF) { //this two are required by Crocus and we don't have anything better for now...
-					value = dflt_zref;
-				} else if (param==ncpp::UREF) {
-					value = dflt_uref;
-				} else
-					throw UnknownValueException("Unknown dimension found when trying to write out netcdf file", AT);
-
-				if (value!=IOUtils::nodata) data[jj-st_start] = value;
-			}
-			return data;
-		}
+		return fillBufferForAssociatedVar(vecMeteo, station_idx, var);
 	} else { //normal nc_variables
 		const MeteoData md( vecMeteo[ref_station_idx].front() );
 		const size_t meteodata_param = md.getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo

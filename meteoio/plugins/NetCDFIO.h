@@ -64,12 +64,14 @@ class ncFiles {
 		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in);
 		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
+		static std::vector<Date> createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		void addToVars(const size_t& param);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
-		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const;
+		const std::vector<double> fillBufferForAssociatedVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
+		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		
