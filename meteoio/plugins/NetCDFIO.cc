@@ -503,7 +503,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 //we have: unpacked_value = packed_value * scale + offset
 
 ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug)
-             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
+             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata), max_unknown_param_idx(ncpp::lastdimension), 
              debug(i_debug), isLatLon(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
@@ -834,7 +834,8 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
 			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
-			if ((param<ncpp::firstdimension || param>ncpp::lastdimension) && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
+			const bool varIsDimension = (param>=ncpp::firstdimension && param<=ncpp::lastdimension);
+			if (!varIsDimension && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
 			if (station_dimension) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 
@@ -1174,7 +1175,7 @@ void ncFiles::pushVar(std::vector<size_t> &nc_variables, const size_t& param)
 }
 
 //add an out-of-schema parameter to the vars map (if necessary)
-void ncFiles::addToVars(const size_t& param)
+size_t ncFiles::addToVars(const size_t& param)
 {
 	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
 		const std::string varname( ncpp::getParameterName(param) );
@@ -1184,14 +1185,29 @@ void ncFiles::addToVars(const size_t& param)
 		const ncpp::var_attr tmp_attr(param, varname, "", long_name, units, IOUtils::nodata, schema.dflt_type);
 		vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
 	}
+	
+	return param;
 }
 
-void ncFiles::addToVars(const size_t& param, const std::string& name)
+size_t ncFiles::addToVars(const std::string& name)
 {
+	const size_t param = getParameterIndex( name );
+	
 	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
-		const ncpp::var_attr tmp_attr(param, name, "", name, "", IOUtils::nodata, schema.dflt_type);
-		vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
+		if (param<=ncpp::lastdimension) {
+			const std::string varname( ncpp::getParameterName(param) );
+			const std::string long_name( ncpp::getParameterDescription(param) );
+			const std::string units( ncpp::getParameterUnits(param) );
+
+			const ncpp::var_attr tmp_attr(param, varname, "", long_name, units, IOUtils::nodata, schema.dflt_type);
+			vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
+		} else {
+			const ncpp::var_attr tmp_attr(param, name, "", name, "", IOUtils::nodata, schema.dflt_type);
+			vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
+		}
 	}
+
+	return param;
 }
 
 //if station_idx==IOUtils::npos, the user has requested all stations in one file
@@ -1206,11 +1222,11 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 		pushVar(nc_variables, ncpp::EASTING );
 		pushVar(nc_variables, ncpp::NORTHING );
 	}
-	addToVars( MeteoGrids::SLOPE); pushVar(nc_variables, MeteoGrids::SLOPE );
-	addToVars( MeteoGrids::AZI ); pushVar(nc_variables, MeteoGrids::AZI );
+	pushVar(nc_variables, addToVars( MeteoGrids::SLOPE) );
+	pushVar(nc_variables, addToVars( MeteoGrids::AZI ) );
 	if (dflt_zref!=IOUtils::nodata || dflt_uref!=IOUtils::nodata) { //This is required by Crocus and we don't have any better solution for now...
-		addToVars( ncpp::ZREF ); pushVar(nc_variables, ncpp::ZREF );
-		addToVars( ncpp::UREF ); pushVar(nc_variables, ncpp::UREF );
+		pushVar(nc_variables, addToVars( ncpp::ZREF ) );
+		pushVar(nc_variables, addToVars( ncpp::UREF ) );
 	}
 
 	//add all vars found in vecMeteo
@@ -1220,13 +1236,7 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 		const std::set<std::string> parameters( MeteoData::listAvailableParameters( vecMeteo[st] ));
 
 		for (std::set<std::string>::const_iterator it=parameters.begin(); it!=parameters.end(); ++it) {
-			const size_t param = MeteoGrids::getParameterIndex( *it );
-			if (param>=MeteoGrids::nrOfParameters) {
-				const size_t extra_param = IOUtils::FNV_hash(*it);
-				addToVars(extra_param, *it); pushVar(nc_variables, extra_param);
-			} else {
-				addToVars(param); pushVar(nc_variables, param);
-			}
+			pushVar(nc_variables, addToVars( *it ));
 		}
 	}
 }
@@ -1353,7 +1363,8 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 	const size_t param = var.attributes.param;
 
 	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
-	if ((param>=ncpp::firstdimension && param<=ncpp::lastdimension) || varIsLocation) { //associated nc_variables
+	const bool varIsDimension = (param>=ncpp::firstdimension && param<=ncpp::lastdimension);
+	if (varIsDimension || varIsLocation) { //associated nc_variables
 		return fillBufferForAssociatedVar(vecMeteo, station_idx, var);
 	} else { //normal nc_variables
 		const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1715,6 +1726,35 @@ bool ncFiles::hasVariable(const size_t& var) const
 	if (it_var->second.varid==-1) return false;
 
 	return true;
+}
+
+/*std::string ncFiles::getParameterName(const size_t& param) const
+{
+	if (param<=ncpp::lastdimension) {
+		return ncpp::getParameterName(param);
+	} else { //this is a non-standard parameter
+		for (std::map<std::string, ncpp::nc_variable>::const_iterator it_var=unknown_vars.begin(); it_var!=unknown_vars.end(); it_var++) {
+			if (it_var->second.attributes.param==param) return it_var->second.attributes.name;
+		}
+		throw InvalidArgumentException("Parameter "+IOUtils::toString(param)+" not found", AT);
+	}
+}*/
+
+size_t ncFiles::getParameterIndex(const std::string& param_name)
+{
+	const size_t std_idx = ncpp::getParameterIndex( param_name );
+	if (std_idx!=IOUtils::npos) return std_idx;
+	
+	//then it is a non-standard parameter
+	const std::map<std::string, ncpp::nc_variable>::const_iterator it_var = unknown_vars.find( param_name );
+	if (it_var!=unknown_vars.end()) return it_var->second.attributes.param;
+	
+	//the parameter must be created
+	max_unknown_param_idx++;
+	const size_t param_idx = max_unknown_param_idx;
+	const ncpp::var_attr tmp_attr(param_idx, param_name, "", param_name, "", IOUtils::nodata, schema.dflt_type);
+	vars[param_idx] = ncpp::nc_variable(tmp_attr, schema.nodata);
+	return param_idx;
 }
 
 } //namespace
