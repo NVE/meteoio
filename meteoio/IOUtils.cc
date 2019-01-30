@@ -172,6 +172,19 @@ size_t count(const std::string &input, const std::string& search)
 	return count;
 }
 
+size_t FNV_hash(const std::string& text)
+{
+	static const size_t FNV_offset_basis = 2166136261;
+	static const size_t FNV_prime = 16777619;
+	size_t hash = FNV_offset_basis;
+	
+	for (size_t ii=0; ii<text.size(); ii++){
+		hash = hash ^ (text[ii]); //XOR the lower 8 bits
+		hash *= FNV_prime;
+	}
+	return hash;
+}
+
 void toUpper(std::string& str) {
 	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }

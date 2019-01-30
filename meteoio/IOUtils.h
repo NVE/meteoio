@@ -164,6 +164,16 @@ namespace IOUtils {
 	size_t count(const std::string &input, const std::string& search);
 	
 	/**
+	 * @brief Fowler/Noll/Vo hash function (FNV-1a)
+	 * @details This returns a non-cryptographic, 32 bits hash for the string given as argument 
+	 * (see https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+	 * or https://tools.ietf.org/html/draft-eastlake-fnv-16)
+	 * @param[in] text string to get a hash for
+	 * @return 32 bits hash 
+	 */
+	size_t FNV_hash(const std::string& text);
+	
+	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
 	* @param in_line (const string&) string to parse
 	* @param delimiter (const string&) delimiter to use for the parsing

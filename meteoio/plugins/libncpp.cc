@@ -52,7 +52,7 @@ std::vector<std::string> initDimensionNames()
 	
 	return tmp;
 }
-std::vector<std::string> dimnames( initDimensionNames() );
+const std::vector<std::string> dimnames( initDimensionNames() );
 
 void open_file(const std::string& filename, const int& omode, int& ncid)
 {

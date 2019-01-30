@@ -834,7 +834,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
 			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
-			if (param<ncpp::firstdimension && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
+			if ((param<ncpp::firstdimension || param>ncpp::lastdimension) && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
 			if (station_dimension) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 
@@ -1186,6 +1186,14 @@ void ncFiles::addToVars(const size_t& param)
 	}
 }
 
+void ncFiles::addToVars(const size_t& param, const std::string& name)
+{
+	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
+		const ncpp::var_attr tmp_attr(param, name, "", name, "", IOUtils::nodata, schema.dflt_type);
+		vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
+	}
+}
+
 //if station_idx==IOUtils::npos, the user has requested all stations in one file
 void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
@@ -1213,8 +1221,12 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 
 		for (std::set<std::string>::const_iterator it=parameters.begin(); it!=parameters.end(); ++it) {
 			const size_t param = MeteoGrids::getParameterIndex( *it );
-			if (param>=MeteoGrids::nrOfParameters) continue; //in order to be supported, a parameter must be declared in MeteoGrids
-			addToVars(param); pushVar(nc_variables, param);
+			if (param>=MeteoGrids::nrOfParameters) {
+				const size_t extra_param = IOUtils::FNV_hash(*it);
+				addToVars(extra_param, *it); pushVar(nc_variables, extra_param);
+			} else {
+				addToVars(param); pushVar(nc_variables, param);
+			}
 		}
 	}
 }
@@ -1341,7 +1353,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 	const size_t param = var.attributes.param;
 
 	const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
-	if (param>=ncpp::firstdimension || varIsLocation) { //associated nc_variables
+	if ((param>=ncpp::firstdimension && param<=ncpp::lastdimension) || varIsLocation) { //associated nc_variables
 		return fillBufferForAssociatedVar(vecMeteo, station_idx, var);
 	} else { //normal nc_variables
 		const size_t st_start = (station_idx==IOUtils::npos)? 0 : station_idx;
@@ -1351,7 +1363,10 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		//build MeteoData template for each station, get the param_idx for each station
 		std::vector<size_t> param_idx(nrStations);
 		for (size_t st=st_start; st<st_end; st++) {
-			param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo
+			if (param>ncpp::lastdimension)
+				param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( var.attributes.name );
+			else 
+				param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo
 		}
 		
 		//now fill the data vector

@@ -67,6 +67,7 @@ class ncFiles {
 		static std::vector<Date> createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		void addToVars(const size_t& param);
+		void addToVars(const size_t& param, const std::string& name);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
