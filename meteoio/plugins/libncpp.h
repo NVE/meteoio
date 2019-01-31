@@ -47,7 +47,7 @@ namespace ncpp {
 								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
 		
 		bool isUndef() const {return (type==-1);};
-		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
+		std::string toString() const {std::ostringstream os; os << "["  << ((param<=ncpp::lastdimension)? getParameterName(param) : "Unknown") << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
 		std::string name; ///< variable name (it is possible to retrieve a variable by name)
 		std::string standard_name; ///< somehow human-friendly, standardized description of the name
