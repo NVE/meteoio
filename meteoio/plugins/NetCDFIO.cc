@@ -88,6 +88,9 @@ namespace mio {
  *     - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT); [Input]
  *     - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false); [Output]
  *     - METEOFILE: NC_SINGLE_FILE is set, the output file name to use [Output];
+ *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in 
+ * MeteoGrids::Parameters are also written out); [Output]
+ *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
  *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
  *          - ZREF: the reference height for meteorological measurements;
  *          - UREF: the reference height for wind measurements;
@@ -504,7 +507,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 
 ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug)
              : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata), max_unknown_param_idx(ncpp::lastdimension), 
-             debug(i_debug), isLatLon(false)
+             strict_schema(false), lax_schema(false), debug(i_debug), isLatLon(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
 
@@ -516,6 +519,10 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 	schema.initFromSchema(vars, dimensions_map);
 
 	if (mode==WRITE) {
+		cfg.getValue("NC_STRICT_SCHEMA", "Output", strict_schema, IOUtils::nothrow);
+		cfg.getValue("NC_LAX_SCHEMA", "Output", lax_schema, IOUtils::nothrow);
+		if (strict_schema && lax_schema) 
+			throw InvalidArgumentException("It is not possible to have NC_STRICT_SCHEMA and NC_LAX_SCHEMA true at the same time!", AT);
 		acdd.setUserConfig( cfg, "Output" );
 		if (FileUtils::fileExists(filename)) initFromFile(filename);
 	} else if (mode==READ) {
@@ -828,7 +835,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 	}
 
 	appendVariablesList(nc_variables, vecMeteo, station_idx);
-
+	
 	//associate dimids to vars and create the variables
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
@@ -1194,6 +1201,7 @@ size_t ncFiles::addToVars(const std::string& name)
 	const size_t param = getParameterIndex( name );
 	
 	if (vars.count(param)==0) { //ie unrecognized in loaded schema, adding it
+		if (strict_schema) return IOUtils::npos;
 		if (param<=ncpp::lastdimension) {
 			const std::string varname( ncpp::getParameterName(param) );
 			const std::string long_name( ncpp::getParameterDescription(param) );
@@ -1201,9 +1209,11 @@ size_t ncFiles::addToVars(const std::string& name)
 
 			const ncpp::var_attr tmp_attr(param, varname, "", long_name, units, IOUtils::nodata, schema.dflt_type);
 			vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
-		} else {
-			const ncpp::var_attr tmp_attr(param, name, "", name, "", IOUtils::nodata, schema.dflt_type);
+		} else if (lax_schema) { //non-standard parameter, not even in MeteoGrids
+			const ncpp::var_attr tmp_attr(param, name, "", "Non-standard", "", IOUtils::nodata, schema.dflt_type);
 			vars[param] = ncpp::nc_variable(tmp_attr, schema.nodata);
+		} else { 
+			return IOUtils::npos;
 		}
 	}
 
@@ -1236,7 +1246,8 @@ void ncFiles::appendVariablesList(std::vector<size_t> &nc_variables, const std::
 		const std::set<std::string> parameters( MeteoData::listAvailableParameters( vecMeteo[st] ));
 
 		for (std::set<std::string>::const_iterator it=parameters.begin(); it!=parameters.end(); ++it) {
-			pushVar(nc_variables, addToVars( *it ));
+			const size_t param = addToVars( *it );
+			if (param!=IOUtils::npos) pushVar(nc_variables, param);
 		}
 	}
 }
@@ -1374,10 +1385,10 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		//build MeteoData template for each station, get the param_idx for each station
 		std::vector<size_t> param_idx(nrStations);
 		for (size_t st=st_start; st<st_end; st++) {
-			if (param>ncpp::lastdimension)
-				param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( var.attributes.name );
-			else 
+			if (param<=ncpp::lastdimension)
 				param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( MeteoGrids::getParameterName( param ) ); //retrieve the equivalent parameter in vecMeteo
+			else 
+				param_idx[ st-st_start ] = vecMeteo[ st ].front().getParameterIndex( var.attributes.name );
 		}
 		
 		//now fill the data vector
@@ -1728,18 +1739,7 @@ bool ncFiles::hasVariable(const size_t& var) const
 	return true;
 }
 
-/*std::string ncFiles::getParameterName(const size_t& param) const
-{
-	if (param<=ncpp::lastdimension) {
-		return ncpp::getParameterName(param);
-	} else { //this is a non-standard parameter
-		for (std::map<std::string, ncpp::nc_variable>::const_iterator it_var=unknown_vars.begin(); it_var!=unknown_vars.end(); it_var++) {
-			if (it_var->second.attributes.param==param) return it_var->second.attributes.name;
-		}
-		throw InvalidArgumentException("Parameter "+IOUtils::toString(param)+" not found", AT);
-	}
-}*/
-
+//This method handles non-standard parameters, ie parameters that are not even in MeteoGrids / Dimensions
 size_t ncFiles::getParameterIndex(const std::string& param_name)
 {
 	const size_t std_idx = ncpp::getParameterIndex( param_name );
@@ -1752,8 +1752,8 @@ size_t ncFiles::getParameterIndex(const std::string& param_name)
 	//the parameter must be created
 	max_unknown_param_idx++;
 	const size_t param_idx = max_unknown_param_idx;
-	const ncpp::var_attr tmp_attr(param_idx, param_name, "", param_name, "", IOUtils::nodata, schema.dflt_type);
-	vars[param_idx] = ncpp::nc_variable(tmp_attr, schema.nodata);
+	const ncpp::var_attr tmp_attr(param_idx, param_name, "", "", "", IOUtils::nodata, schema.dflt_type);
+	unknown_vars[ param_name ] = ncpp::nc_variable(tmp_attr, schema.nodata);
 	return param_idx;
 }
 

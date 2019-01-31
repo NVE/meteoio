@@ -75,7 +75,6 @@ class ncFiles {
 		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
-		//std::string getParameterName(const size_t& param) const;
 		size_t getParameterIndex(const std::string& param_name);
 		
 		ACDD acdd; ///< Object that contains the ACDD metadata
@@ -90,7 +89,7 @@ class ncFiles {
 		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
 		size_t max_unknown_param_idx; ///< when writing non-standard parameters, we have to manually assign them a parameter index
-		bool debug, isLatLon;
+		bool strict_schema, lax_schema, debug, isLatLon;
 };
 
 /**
