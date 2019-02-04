@@ -19,6 +19,9 @@ IF(WIN32)
 		${SRC_DIR}/lib
 		${SRC_DIR}/lib/Debug
 		${SRC_DIR}/lib/Release
+		${SRC_DIR}/../../lib
+		${SRC_DIR}/../../lib/Debug
+		${SRC_DIR}/../../lib/Release
 		${METEOIO_ROOT1}/lib
 		${METEOIO_ROOT2}/lib
 		${METEOIO_ROOT3}/lib
