@@ -1402,17 +1402,18 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 				for (size_t st=st_start; st<st_end; st++) {
 					const size_t meteodata_param = param_idx[ st-st_start ];
 					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
 					
-					const MeteoData md( vecMeteo[st][st_idx[st]] );
+					const MeteoData md( vecMeteo[st][ii] );
 					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
 					
 					const double curr_julian = md.date.getJulian(true);
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
-					const double ts_duration_s = ((st_idx[st]>0)? (curr_julian - vecMeteo[st][st_idx[st]-1].date.getJulian(true)) : (vecMeteo[st][st_idx[st]+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
+					const double ts_duration_s = ((ii>0)? (curr_julian - vecMeteo[st][ii-1].date.getJulian(true)) : (vecMeteo[st][ii+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
 					
 					if (md( meteodata_param ) != IOUtils::nodata && ts_duration_s>0.) 
 						data[ll*nrStations + (st-st_start)] = md( meteodata_param ) / ts_duration_s;
-					st_idx[st]++;
+					ii++;
 				}
 			}
 		} else { //normal variables
@@ -1420,13 +1421,14 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 				for (size_t st=st_start; st<st_end; st++) {
 					const size_t meteodata_param = param_idx[ st-st_start ];
 					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
 					
-					const MeteoData md( vecMeteo[st][st_idx[st]] );
+					const MeteoData md( vecMeteo[st][ii] );
 					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
 					
 					if (md( meteodata_param ) != IOUtils::nodata) 
 						data[ll*nrStations + (st-st_start)] = md( meteodata_param );
-					st_idx[st]++;
+					ii++;
 				}
 			}
 			
