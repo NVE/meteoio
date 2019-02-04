@@ -11,8 +11,12 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT4 "C:/Progra~1/MeteoI*" ABSOLUTE CACHE INTERNAL)
 	SET(SEARCH_PATH
 		ENV LIB
-		${SRC_DIR}/meteoio/lib
-		${SRC_DIR}/../../meteoio/lib
+		${SRC_DIR}/lib
+		${SRC_DIR}/lib/Debug
+		${SRC_DIR}/lib/Release
+		${SRC_DIR}/../../lib
+		${SRC_DIR}/../../lib/Debug
+		${SRC_DIR}/../../lib/Release
 		${METEOIO_ROOT1}/lib
 		${METEOIO_ROOT2}/lib
 		${METEOIO_ROOT3}/lib
@@ -37,8 +41,8 @@ ELSE(WIN32)
 		PATHS
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
-			${SRC_DIR}/meteoio/lib
-			${SRC_DIR}/../../meteoio/lib
+			${SRC_DIR}/lib
+			${SRC_DIR}/../../lib
 			"~/usr/lib"
 			"/Applications/MeteoIO/lib"
 			"/usr/local/lib"
@@ -51,8 +55,8 @@ ELSE(WIN32)
 		NAMES meteoio
 		PATHS
 			ENV LD_LIBRARY_PATH
-			${SRC_DIR}/meteoio/lib
-			${SRC_DIR}/../../meteoio/lib
+			${SRC_DIR}/lib
+			${SRC_DIR}/../../lib
 			"~/usr/lib"
 			"/usr/local/lib"
 			"/usr/lib"
