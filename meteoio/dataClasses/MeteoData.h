@@ -303,6 +303,8 @@ class MeteoData {
 		StationData meta; ///<The meta data of the measurement
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+        
+        const std::string getStationID() const;
 
 	private:
 		//static methods

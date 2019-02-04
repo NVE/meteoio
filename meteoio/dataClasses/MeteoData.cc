@@ -592,4 +592,9 @@ std::set<std::string> MeteoData::listAvailableParameters(const std::vector<Meteo
 	return results;
 }
 
+const std::string MeteoData::getStationID() const
+{
+    return meta.stationID;
+}
+
 } //namespace
