@@ -10,6 +10,9 @@ MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
+		IF(WIN32)
+			LIST(APPEND CFLAGS " /D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
+		ENDIF(WIN32)
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} /EHa")
 		ENDIF(DEBUG_ARITHM)
