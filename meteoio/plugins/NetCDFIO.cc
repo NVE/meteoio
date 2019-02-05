@@ -1401,7 +1401,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				for (size_t st=st_start; st<st_end; st++) {
 					const size_t meteodata_param = param_idx[ st-st_start ];
-					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					if (meteodata_param == IOUtils::npos) continue; //the station does not have this parameter
 					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
 					
 					const MeteoData md( vecMeteo[st][ii] );
@@ -1420,7 +1420,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				for (size_t st=st_start; st<st_end; st++) {
 					const size_t meteodata_param = param_idx[ st-st_start ];
-					if (meteodata_param == IOUtils::nodata) continue; //the station does not have this parameter
+					if (meteodata_param == IOUtils::npos) continue; //the station does not have this parameter
 					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
 					
 					const MeteoData md( vecMeteo[st][ii] );
