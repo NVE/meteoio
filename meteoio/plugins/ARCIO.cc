@@ -137,9 +137,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
 		IOUtils::getValueForKey(header, "yllcorner", yllcorner);
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
-		if (header.count("nodata_value")==0) {
-			throw IOException("Missing nodata_value in the header of file: " + full_name, AT);
-		}
+		if (cellsize<0.01) throw IOException("Very small cellsize (" + IOUtils::toString(cellsize) + " in file " + full_name +". Is the grid lat/lon instead of x/y?", AT);
+		if (header.count("nodata_value")==0) throw IOException("Missing nodata_value in the header of file " + full_name, AT);
 		IOUtils::getValueForKey(header, "nodata_value", plugin_nodata);
 
 		i_ncols = IOUtils::standardizeNodata(i_ncols, plugin_nodata);
