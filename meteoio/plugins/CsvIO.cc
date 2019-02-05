@@ -350,6 +350,8 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 	std::vector<std::string> vecStr;
 	IOUtils::readLineToVec(line, vecStr, csv_delim);
 	
+	const bool readID = (id.empty()); //if the user defined CSV_ID, it has priority
+	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
 	std::string prev_ID, prev_NAME;
 	std::multimap<size_t, std::pair<size_t, std::string> >::const_iterator it;
 	for (it=meta_spec.equal_range(linenr).first; it!=meta_spec.equal_range(linenr).second; ++it) {
@@ -363,10 +365,10 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
 		
 		//we handle ID and NAME differently in order to support appending
-		if (field_type=="ID") {
+		if (field_type=="ID" && readID) {
 			id = prev_ID+field_val;
 			prev_ID = id;
-		} else if (field_type=="NAME") {
+		} else if (field_type=="NAME" && readName) {
 			name = prev_NAME+field_val;
 			prev_NAME = name;
 		} else {
@@ -390,6 +392,8 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		pos_fn = start_var;
 	}
 	
+	const bool readID = (id.empty()); //if the user defined CSV_ID, it has priority
+	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
 	std::string prev_ID, prev_NAME;
 	//we now assume that we start with a variable
 	do {
@@ -414,10 +418,10 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		const std::string field_type( IOUtils::strToUpper(filename_spec.substr(pos_mt+1, start_pattern-pos_mt-1)) ); //skip { and }
 		const std::string value( filename.substr(pos_fn, len_var) );
 		//we handle ID and NAME differently in order to support appending
-		if (field_type=="ID") {
+		if (field_type=="ID" && readID) {
 			id = prev_ID+value;
 			prev_ID = id;
-		} else if (field_type=="NAME") {
+		} else if (field_type=="NAME" && readName) {
 			name = prev_NAME+value;
 			prev_NAME = name;
 		} else {
