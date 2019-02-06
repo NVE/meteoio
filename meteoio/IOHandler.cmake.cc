@@ -45,6 +45,7 @@
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
+#cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
 #include <meteoio/plugins/ARCIO.h>
@@ -101,6 +102,10 @@
 #include <meteoio/plugins/SASEIO.h>
 #endif
 
+#ifdef PLUGIN_ZRXPIO
+#include <meteoio/plugins/ZRXPIO.h>
+#endif
+
 using namespace std;
 
 namespace mio {
@@ -154,6 +159,7 @@ namespace mio {
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage zrxpio "ZRXP"</td><td>meteo</td><td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
  * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
@@ -333,6 +339,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(cfg);
+#endif
+#ifdef PLUGIN_ZRXPIO
+	if (plugin_name == "ZRXP") return new ZRXPIO(cfg);
 #endif
 
 	return NULL; //no plugin found
