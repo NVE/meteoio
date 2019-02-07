@@ -1,6 +1,5 @@
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
-/*            2019 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -131,7 +130,7 @@ namespace mio {
  * 20190130214500 269.28 "processed by mio"
  * @endcode
  * An arbitrary number of such blocks may be present, so in this example after all values for `TA`
- * were printed the next header starting with `##Station`... could follow below.
+ * were printed the next header starting with \c \#\#Station... could follow below.
  * Here, more information about the <a href="https://www.tbbm.at/display/TBBMAT/ZRXP">ZRXP format specifications</a>
  * is available.
  */
@@ -156,9 +155,10 @@ ZRXPIO::ZRXPIO(const Config& cfgreader) : cfg(cfgreader)
 
 /**
  * @brief Output-routine to ASCII on file system.
- * @param vecMeteo MeteoData vector containing the dataset.
+ * @param[in] vecMeteo MeteoData vector containing the dataset
+ * @param[in] name This parameter is unused
  */
-void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
+void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& /*name*/)
 {
 
 	std::string outpath; //output folder
@@ -186,7 +186,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		//assuming constant metadata per station (WISKI tracks such changes in timelines)
 		StationData sd = vecMeteo[ii][0].meta;
-		if (sd.stationID.empty())  {
+		if (sd.stationID.empty()) {
 			std::ostringstream ss;
 			ss << "Station" << ii+1;
 			sd.stationID = ss.str();
@@ -267,8 +267,8 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				outfile << std::endl;
 				outfile << "#LAYOUT" << zrxp_layout << sep << std::endl;
 
-				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) //loop through datasets
-				{ //print timestamp, value, optional status, and optional remark
+				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) { //loop through datasets
+					//print timestamp, value, optional status, and optional remark
 					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
 								<< zrxp_status << zrxp_remark << std::endl;
 				}
