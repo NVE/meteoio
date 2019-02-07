@@ -87,11 +87,11 @@ namespace mio {
  *     - METEOPATH: meteo files directory where to read the meteofiles; [Input] section
  *     - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified (the extension can be skipped if it is NC_EXT); [Input]
  *     - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false); [Output]
- *     - METEOFILE: NC_SINGLE_FILE is set, the output file name to use [Output];
+ *     - METEOFILE: when NC_SINGLE_FILE is set, the output file name to use [Output];
  *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in 
  * MeteoGrids::Parameters are also written out); [Output]
  *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
- *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus):
+ *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus), in the [Output] section:
  *          - ZREF: the reference height for meteorological measurements;
  *          - UREF: the reference height for wind measurements;
  *          - DEFAULT_SLOPE: a default value for the slope when none is available;
@@ -512,10 +512,10 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
 
 	//TODO handle these parameter in a more generic way in MeteoIO (ie outside of this plugin)
-	cfg.getValue("ZREF", "Input", dflt_zref, IOUtils::nothrow);
-	cfg.getValue("UREF", "Input", dflt_uref, IOUtils::nothrow);
-	cfg.getValue("DEFAULT_SLOPE", "Input", dflt_slope, IOUtils::nothrow);
-	cfg.getValue("DEFAULT_AZI", "Input", dflt_azi, IOUtils::nothrow);
+	cfg.getValue("ZREF", "Output", dflt_zref, IOUtils::nothrow);
+	cfg.getValue("UREF", "Output", dflt_uref, IOUtils::nothrow);
+	cfg.getValue("DEFAULT_SLOPE", "Output", dflt_slope, IOUtils::nothrow);
+	cfg.getValue("DEFAULT_AZI", "Output", dflt_azi, IOUtils::nothrow);
 	schema.initFromSchema(vars, dimensions_map);
 
 	if (mode==WRITE) {
@@ -859,10 +859,10 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		if (param==ncpp::STATION) { //this is not present if !station_dimension
 			if (station_idx==IOUtils::npos) { //writing all stations into one file
 				std::vector<std::string> txtdata( vecMeteo.size() );
-				for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID;
+				for (size_t jj=0; jj<vecMeteo.size(); jj++) txtdata[jj] = vecMeteo[jj].front().meta.stationID.substr(0, DFLT_STAT_STR_LEN-1);
 				ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
 			} else { //only one station per file
-				std::vector<std::string> txtdata( 1, vecMeteo[station_idx].front().meta.stationID );
+				std::vector<std::string> txtdata( 1, vecMeteo[station_idx].front().meta.stationID.substr(0, DFLT_STAT_STR_LEN-1));
 				ncpp::write_1Ddata(ncid, vars[param], txtdata, DFLT_STAT_STR_LEN);
 			}
 		} else {
