@@ -59,6 +59,7 @@ namespace mio {
  * 7 meteorological parameters. Every 6 hours, with starting offset of one hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).
  * Any data requested at other time steps will be temporally resampled from the spatially interpolated data.
  * @code
+ * [Input]
  * DEM = ARC
  * DEMFILE = ./input/surface-grids/davos.asc
  *
@@ -90,6 +91,7 @@ namespace mio {
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * @code
+ * [Input]
  * DEM     = NETCDF
  * DEMFILE = ./input/grids/era-interim-dem.nc
  * 
@@ -116,6 +118,7 @@ namespace mio {
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  *
  * @code
+ * [Input]
  * DEM     = NETCDF
  * DEMFILE = ./input/grids/era-interim-dem.nc
  * 
@@ -140,6 +143,7 @@ namespace mio {
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
  * @code
+ * [Input]
  * DEM     = ARC
  * DEMFILE = ./input/grids/davos.asc
  * 
