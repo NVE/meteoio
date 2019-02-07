@@ -29,7 +29,18 @@ namespace mio {
 
 class TimeSeriesManager {
 	public:
-		TimeSeriesManager(IOHandler& in_iohandler, const Config& in_cfg);
+		/**
+		 * @brief Default constructor
+		 * @details The mode and first_rank variables are used to decide which processing might have
+		 * to be skipped when running "special" modes, such as virtual stations (for example, re-accumulating
+		 * precipitation on VSTATIONS_REFRESH_RATE in the first TimeSeriesManager and as specified by
+		 * the user in the second one).
+		 * @param[in] in_iohandler IOHandler to get the data from
+		 * @param[in] in_cfg User configuration
+		 * @param[in] rank in case of multiple TimeSeriesManager, rank in the stack? (default: 1)
+		 * @param[in] mode spatial resampling operation mode (see IOUtils::OperationMode), default IOUtils::STD
+		 */
+		TimeSeriesManager(IOHandler& in_iohandler, const Config& in_cfg, const char& rank=1, const IOUtils::OperationMode &mode=IOUtils::STD);
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
 
@@ -42,9 +53,9 @@ class TimeSeriesManager {
 		* vecMeteo will be empty if no datasets were retrieved in the interval defined
 		* by dateStart and dateEnd
 		*
-		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
-		* @param dateEnd     A Date object representing the end of an interval (inclusive)
-		* @param vecVecMeteo A vector of vector<MeteoData> objects to be filled with data
+		* @param[in] dateStart   A Date object representing the beginning of an interval (inclusive)
+		* @param[in] dateEnd     A Date object representing the end of an interval (inclusive)
+		* @param[out] vecVecMeteo A vector of vector<MeteoData> objects to be filled with data
 		* @return            Number of stations for which data has been found in the interval
 		*/
 		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -61,8 +72,8 @@ class TimeSeriesManager {
 		 * NOTE:
 		 * - vecMeteo will be empty if there is no data found for any station
 		 *
-		 * @param i_date      A Date object representing the date/time for the sought MeteoData objects
-		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
+		 * @param[in] i_date      A Date object representing the date/time for the sought MeteoData objects
+		 * @param[out] vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @return            Number of stations for which data has been found in the interval
 		 */
 		size_t getMeteoData(const Date& i_date, METEO_SET& vecMeteo);
@@ -73,11 +84,11 @@ class TimeSeriesManager {
 		 *        will be performed upon this data. This method is a way to bypass the internal reading
 		 *        of MeteoData from a certain source and is useful in case the user is only interested
 		 *        in data processing and interpolation performed by the TimeSeriesManager object.
-		 * @param level Level of processing that has already been performed on the data (raw XOR filtered)
-		 * @param date_start Representing the beginning of the data
-		 * @param date_end Representing the end of the data
-		 * @param vecMeteo The actual data being pushed into the TimeSeriesManager object
-		 * @param invalidate_cache Should the point_cache be reset? (set it to false when pushing resampled data!)
+		 * @param[in] level Level of processing that has already been performed on the data (raw XOR filtered)
+		 * @param[in] date_start Representing the beginning of the data
+		 * @param[in] date_end Representing the end of the data
+		 * @param[in] vecMeteo The actual data being pushed into the TimeSeriesManager object
+		 * @param[in] invalidate_cache Should the point_cache be reset? (set it to false when pushing resampled data!)
 		 */
 		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
 		                     const std::vector< MeteoData >& vecMeteo, const bool& invalidate_cache=true);
@@ -95,7 +106,7 @@ class TimeSeriesManager {
 		 *          this only affects the function getMeteoData(const Date&, METEO_DATASET&);
 		 *
 		 *        The three values can be combined: e.g. IOUtils::filtered | IOUtils:resampled
-		 * @param i_level The ProcessingLevel values that shall be used to process data
+		 * @param[in] i_level The ProcessingLevel values that shall be used to process data
 		 */
 		void setProcessingLevel(const unsigned int& i_level);
 
@@ -104,15 +115,15 @@ class TimeSeriesManager {
 		 * @details This will compare these requirements with the ones expressed by the end user and keep the max between them.
 		 * The method can be called several times, it will NOT reset the calculated buffer's requirements but keep
 		 * on merging with new submissions. Any parameter given as IOUtils::nodata will be ignored.
-		 * @param buffer_size buffer size in days
-		 * @param buff_before buffer centering in days
+		 * @param[in] buffer_size buffer size in days
+		 * @param[in] buff_before buffer centering in days
 		 */
 		void setBufferProperties(const double& buffer_size, const double& buff_before);
 		
 		/**
 		 * @brief Get the current buffer requirements (ie user defined buffer + filters/resampling requirements)
-		 * @param o_buffer_size buffer size in days
-		 * @param o_buff_before buffer centering in days
+		 * @param[out] o_buffer_size buffer size in days
+		 * @param[out] o_buff_before buffer centering in days
 		 */
 		void getBufferProperties(Duration &o_buffer_size, Duration &o_buff_before) const;
 
@@ -137,8 +148,8 @@ class TimeSeriesManager {
 		 * MeteoData variables and be sure that the manipulated values are later used for requests
 		 * regarding that specific date (e.g. 2D interpolations)
 		 *
-		 * @param i_date Representing a point in time
-		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
+		 * @param[in] i_date Representing a point in time
+		 * @param[in] vecMeteo A vector of MeteoData objects to be copied into the point cache
 		 */
 		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
 

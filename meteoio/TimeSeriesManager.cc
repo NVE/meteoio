@@ -24,8 +24,8 @@ using namespace std;
 
 namespace mio {
 
-TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_cfg) : cfg(in_cfg), iohandler(in_iohandler),
-                                            meteoprocessor(in_cfg), dataGenerator(in_cfg),
+TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_cfg, const char& rank, const IOUtils::OperationMode &mode) : cfg(in_cfg), iohandler(in_iohandler),
+                                            meteoprocessor(in_cfg, rank, mode), dataGenerator(in_cfg),
                                             proc_properties(), point_cache(), raw_buffer(), filtered_cache(),
                                             chunk_size(), buff_before(),
                                             processing_level(IOUtils::raw | IOUtils::filtered | IOUtils::resampled | IOUtils::generated)

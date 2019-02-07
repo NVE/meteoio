@@ -58,6 +58,16 @@ namespace IOUtils {
 		num_of_levels = 1 << 4
 	};
 
+	///Keywords for mode of operation. Please keep all the GRID_xxx last!
+	enum OperationMode {
+		STD, ///< default: extract timeseries from timeseries or grids from grids or spatially interpolate timeseries
+		VSTATIONS, ///< extract virtual stations as specified in the ini file
+		GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+		GRID_SMART, ///< extract all relevant grid points from a provided grid
+		GRID_ALL, ///< extract all grid points from a provided grid
+		GRID_RESAMPLE ///< generate a grid at a different resolution
+	};
+
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
 	const unsigned int unodata = static_cast<unsigned int>(-1);
