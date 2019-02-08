@@ -535,15 +535,19 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	size_t linenr=0;
 	std::string line;
 	std::vector<std::string> headerFields; //this contains the column headers from the file itself
+	std::vector<std::string> tmp_vec; //to read a few lines of data
+	Date prev_dt;
+	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty()); 
 	try {
 		eoln = FileUtils::getEoln(fin);
-		for (size_t ii=0; ii<header_lines; ii++) {
+		for (size_t ii=0; ii<(header_lines+10); ii++) {
 			getline(fin, line, eoln); //read complete line
 			IOUtils::trim(line);
 			if (fin.eof()) {
 				if (header_repeat_at_start) linenr++; //since it was not incremented when matching the repeat header marker
+				if (linenr>header_lines) break; //eof while reading the data section
 				std::ostringstream ss;
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
@@ -566,12 +570,27 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			}
 			if (read_units && linenr==units_headers)
 				parseUnits(line);
+
+			if (linenr<=header_lines) continue; //we are still parsing the header
+
+			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
+			if (nr_curr_data_fields>date_col && nr_curr_data_fields>time_col) {
+				const Date dt( parseDate(tmp_vec[date_col], tmp_vec[time_col]) );
+				if (dt.isUndef()) continue;
+				if (!prev_dt.isUndef()) {
+					if (dt>prev_dt) count_asc++;
+					else count_dsc++;
+				}
+				prev_dt = dt;
+			}
 		}
 	} catch (...) {
 		fin.close();
 		throw;
 	}
 	fin.close();
+
+	if (count_dsc>count_asc) asc_order=false;
 	
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
 		const double alt = location.getAltitude(); //so we don't change previously set altitude
@@ -919,9 +938,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	std::string line;
 	size_t linenr=0;
 	streampos fpointer = indexer_map[filename].getIndex(dateStart);
-	if (fpointer!=static_cast<streampos>(-1))
+	if (fpointer!=static_cast<streampos>(-1) && params.asc_order) {
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
-	else {
+	} else {
 		//skip the headers (they have been read already, so we know this works)
 		const size_t skip_count = (params.header_repeat_at_start)? params.header_lines+1 : params.header_lines;
 		FileUtils::skipLines(fin, skip_count);
@@ -937,7 +956,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	const bool delimIsNoWS = (params.csv_delim!=' ');
 	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
 	Date prev_dt;
-	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
@@ -963,19 +981,18 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 
 		const Date dt( getDate(params, tmp_vec[params.date_col], tmp_vec[params.time_col], silent_errors, filename, linenr) );
 		if (dt.isUndef() && silent_errors) continue;
-		if (!prev_dt.isUndef()) {
-			const bool asc = (dt>prev_dt);
-			if (asc) count_asc++;
-			else count_dsc++;
-		}
-		prev_dt = dt;
 
 		if (linenr % streampos_every_n_lines == 0) {
 			fpointer = fin.tellg();
 			if (fpointer != static_cast<streampos>(-1)) indexer_map[filename].setIndex(dt, fpointer);
 		}
-		if (dt<dateStart) continue;
-		if (dt>dateEnd) break;
+		if (params.asc_order) {
+			if (dt<dateStart) continue;
+			if (dt>dateEnd) break;
+		} else {
+			if (dt<dateStart) break;
+			if (dt>dateEnd) continue;
+		}
 		
 		MeteoData md(template_md);
 		md.setDate(dt);
@@ -1003,8 +1020,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		}
 		if (no_errors) vecMeteo.push_back( md );
 	}
-	
-	if (count_dsc>count_asc) std::reverse(vecMeteo.begin(), vecMeteo.end()); //since we might have DST, we might have localy asc/dsc order...
+
+	if (!params.asc_order) std::reverse(vecMeteo.begin(), vecMeteo.end());
 	
 	return vecMeteo;
 }
