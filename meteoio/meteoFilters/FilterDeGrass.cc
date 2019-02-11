@@ -228,7 +228,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 }
 
 //daily values for TSS-based correction
-void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean)
+void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &o_TSS_daily_min, double &o_TSS_daily_max, double &o_TSS_daily_mean)
 {
 	const Date day_end = day_start + 1;
 	
@@ -241,9 +241,9 @@ void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Dat
 		}
 	}
 	
-	TSS_daily_min = Interpol1D::min_element(TSS_dat);
-	TSS_daily_max = Interpol1D::max_element(TSS_dat);
-	TSS_daily_mean = Interpol1D::arithmeticMean(TSS_dat);
+	o_TSS_daily_min = Interpol1D::min_element(TSS_dat);
+	o_TSS_daily_max = Interpol1D::max_element(TSS_dat);
+	o_TSS_daily_mean = Interpol1D::arithmeticMean(TSS_dat);
 }
 
 //daily values for TSG-based correction

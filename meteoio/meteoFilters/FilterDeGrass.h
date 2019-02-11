@@ -75,7 +75,7 @@ class FilterDeGrass : public ProcessingBlock {
 		static void findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx);
 		static double getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec);
 		static bool getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc);
-		static void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean);
+		static void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &o_TSS_daily_min, double &o_TSS_daily_max, double &o_TSS_daily_mean);
 		static double getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start);
 		static Date getDailyStart(const Date& resampling_date);
 		

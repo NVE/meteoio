@@ -712,6 +712,8 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 		case 3:
 			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
 			break;
+		default: // do nothing;
+			break;
 	}
 	if (!status) return Date(); //we MUST have read successfuly at least the date part
 
@@ -726,6 +728,8 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 				break;
 			case 1:
 				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], rest)>=1);
+				break;
+			default: // do nothing;
 				break;
 		}
 	}

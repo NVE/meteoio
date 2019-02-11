@@ -93,9 +93,9 @@ void Meteo2DInterpolator::setAlgorithms()
 }
 
 //get a list of all meteoparameters referenced in the Interpolations2D section
-std::set<std::string> Meteo2DInterpolator::getParameters(const Config& cfg)
+std::set<std::string> Meteo2DInterpolator::getParameters(const Config& i_cfg)
 {
-	const std::vector<std::string> vec_keys( cfg.getKeys("::algorithms", "Interpolations2D", true) );
+	const std::vector<std::string> vec_keys( i_cfg.getKeys("::algorithms", "Interpolations2D", true) );
 
 	std::set<std::string> set_parameters;
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {

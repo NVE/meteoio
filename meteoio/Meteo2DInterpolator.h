@@ -142,7 +142,7 @@ class Meteo2DInterpolator {
 	private:
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
-		static std::set<std::string> getParameters(const Config& cfg);
+		static std::set<std::string> getParameters(const Config& i_cfg);
 		static std::vector<std::string> getAlgorithmsForParameter(const Config& i_cfg, const std::string& parname);
 
 		void setAlgorithms();
