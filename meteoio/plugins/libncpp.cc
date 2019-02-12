@@ -156,7 +156,8 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
 	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
 	if (var.attributes.param!=ncpp::STATION && var.attributes.param!=ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
-	
+
+	if (var.attributes.param==ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "cf_role", "timeseries_id");
 	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
 	if (var.attributes.param==mio::MeteoGrids::DEM) {
 		ncpp::add_attribute(ncid, var.varid, "positive", "up");
@@ -997,7 +998,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 
 	//CROCUS schema
 	tmp.clear();
-	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "s", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "min", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "LAT", "latitude", "latitude", "degrees_north", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "LON", "longitude", "longitude", "degrees_east", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", mio::IOUtils::nodata, NC_CHAR) );

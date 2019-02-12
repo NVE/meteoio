@@ -840,9 +840,9 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 	for (size_t ii=0; ii<nc_variables.size(); ii++) {
 		const size_t param = nc_variables[ii];
 		if (vars[ param ].varid == -1) { //skip existing nc_variables
-			const bool varIsLocation = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI || param==ncpp::ZREF || param==ncpp::UREF);
+			const bool varIsDEM = (param==MeteoGrids::DEM || param==MeteoGrids::SLOPE || param==MeteoGrids::AZI);
 			const bool varIsDimension = (param>=ncpp::firstdimension && param<=ncpp::lastdimension);
-			if (!varIsDimension && !varIsLocation) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
+			if (!varIsDimension && !varIsDEM) vars[ param ].dimids.push_back( dimensions_map[ncpp::TIME].dimid );
 			if (station_dimension) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATION].dimid );
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 
