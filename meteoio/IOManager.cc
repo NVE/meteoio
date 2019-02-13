@@ -263,8 +263,8 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 
 void IOManager::clear_cache()
 {
-	tsm1.clear_cache();
-	tsm2.clear_cache();
+	tsm1.clear_cache( TimeSeriesManager::ALL );
+	tsm2.clear_cache( TimeSeriesManager::ALL );
 	gdm1.clear_cache();
 }
 
@@ -291,8 +291,8 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 	if (mode==IOUtils::STD) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	
 	if (mode>=IOUtils::GRID_EXTRACT) {
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm1.getBufferEnd(  TimeSeriesManager::RAW  ) );
 		
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
 			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
@@ -303,9 +303,8 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 	}
 	
 	if (mode==IOUtils::VSTATIONS || mode==IOUtils::GRID_SMART) {
-		const Date bufferStart( tsm2.getRawBufferStart() );
-		const Date bufferEnd( tsm2.getRawBufferEnd() );
-		
+		const Date bufferStart( tsm2.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm2.getBufferEnd( TimeSeriesManager::RAW ) );
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
@@ -327,8 +326,8 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 	
 	if (mode>=IOUtils::GRID_EXTRACT) {
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm1.getBufferEnd( TimeSeriesManager::RAW ) );
 		
 		if (bufferStart.isUndef() || i_date<bufferStart || i_date>bufferEnd) {
 			Duration buffer_size, buffer_before;
@@ -343,9 +342,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 	
 	if (mode==IOUtils::VSTATIONS || mode==IOUtils::GRID_SMART) {
-		const Date bufferStart( tsm2.getRawBufferStart() );
-		const Date bufferEnd( tsm2.getRawBufferEnd() );
-		
+		const Date bufferStart( tsm2.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm2.getBufferEnd( TimeSeriesManager::RAW ) );
+
 		if (bufferStart.isUndef() || i_date<bufferStart || i_date>bufferEnd) {
 			Duration buffer_size, buffer_before;
 			tsm2.getBufferProperties(buffer_size, buffer_before);
@@ -385,8 +384,8 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
                   Grid2DObject& result, std::string& info_string)
 {
 	if (mode==IOUtils::GRID_RESAMPLE) { //fill tsm1's buffer
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm1.getBufferEnd( TimeSeriesManager::RAW ) );
 		
 		if (bufferStart.isUndef() || date<bufferStart || date>bufferEnd) {
 			Duration buffer_size, buffer_before;
@@ -406,8 +405,8 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
                   Grid2DObject& result, std::string& info_string)
 {
 	if (mode==IOUtils::GRID_RESAMPLE) { //fill tsm1's buffer
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
+		const Date bufferEnd( tsm1.getBufferEnd( TimeSeriesManager::RAW ) );
 		
 		if (bufferStart.isUndef() || date<bufferStart || date>bufferEnd) {
 			Duration buffer_size, buffer_before;
@@ -456,17 +455,17 @@ void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMete
 //this is only called when mode==IOManager::VSTATIONS
 std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd)
 {
-	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );
-	//const Date buff_end( Date::rnd(dateEnd-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::UP) + vstations_refresh_offset/(24.*3600.) );
-	
 	std::vector<METEO_SET> vecvecMeteo(v_stations.size());
+	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );	
 	const double date_inc = static_cast<double>(vstations_refresh_rate) / (24.*3600.);
 
 	METEO_SET vecMeteo;
-	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer. HACK what happens if BUFFER_SIZE is smaller than dateEnd-dateStart?
-	const Date dataEnd( tsm1.getRawDataEnd() ); //we won't try to spatially interpolate after the end of data
+	tsm1.clear_cache( TimeSeriesManager::ALL );
+	tsm1.setRawBufferProperties(buff_start, dateEnd);
+	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer (we know it will contain all the necessary data thanks to the setRawBufferProperties() call)
+	const Date dataEnd( tsm1.getDataEnd( TimeSeriesManager::RAW ) ); //we won't try to spatially interpolate after the end of data
 	if (dataEnd.isUndef()) return vecvecMeteo;
-	
+
 	for (Date date=buff_start; date<=std::min(dataEnd, dateEnd); date += date_inc) {
 		//fill vecvecMeteo with metadata
 		for (size_t ii=0; ii<v_stations.size(); ii++) {

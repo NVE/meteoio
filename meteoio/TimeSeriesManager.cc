@@ -24,10 +24,14 @@ using namespace std;
 
 namespace mio {
 
+bool compare(std::pair<Date, METEO_SET> p1, pair<Date, METEO_SET> p2) {
+	return p1.first < p2.first;
+}
+
 TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_cfg, const char& rank, const IOUtils::OperationMode &mode) : cfg(in_cfg), iohandler(in_iohandler),
                                             meteoprocessor(in_cfg, rank, mode), dataGenerator(in_cfg),
                                             proc_properties(), point_cache(), raw_buffer(), filtered_cache(),
-                                            chunk_size(), buff_before(),
+                                            raw_requested_start(), raw_requested_end(), chunk_size(), buff_before(),
                                             processing_level(IOUtils::raw | IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
 {
 	meteoprocessor.getWindowSize(proc_properties);
@@ -82,6 +86,12 @@ void TimeSeriesManager::setBufferProperties(const double& i_chunk_size, const do
 	if (buff_before>chunk_size) chunk_size = buff_before;
 }
 
+void TimeSeriesManager::setRawBufferProperties(const Date& raw_buffer_start, const Date& raw_buffer_end)
+{
+	if (!raw_buffer_start.isUndef()) raw_requested_start = raw_buffer_start;
+	if (!raw_buffer_end.isUndef()) raw_requested_end = raw_buffer_end;
+}
+
 void TimeSeriesManager::getBufferProperties(Duration &o_buffer_size, Duration &o_buff_before) const
 {
 	o_buffer_size = chunk_size+proc_properties.time_before+proc_properties.time_after;
@@ -94,6 +104,62 @@ void TimeSeriesManager::setProcessingLevel(const unsigned int& i_level)
 		throw InvalidArgumentException("The processing level is invalid", AT);
 
 	processing_level = i_level;
+}
+
+Date TimeSeriesManager::getBufferStart(const cache_types& cache) const
+{
+	switch(cache) {
+		case RAW: 
+			return raw_buffer.getBufferStart();
+		case FILTERED: 
+			return filtered_cache.getBufferStart();
+		default:
+			throw InvalidArgumentException("Unsupported cache type provided", AT);
+	}
+}
+
+Date TimeSeriesManager::getBufferEnd(const cache_types& cache) const 
+{
+	switch(cache) {
+		case RAW: 
+			return raw_buffer.getBufferEnd();
+		case FILTERED: 
+			return filtered_cache.getBufferEnd();
+		default:
+			throw InvalidArgumentException("Unsupported cache type provided", AT);
+	}
+}
+
+Date TimeSeriesManager::getDataStart(const cache_types& cache) const
+{
+	switch(cache) {
+		case RAW: 
+			return raw_buffer.getDataStart();
+		case FILTERED: 
+			return filtered_cache.getDataStart();
+		case POINTS: {
+			const std::pair<Date, METEO_SET> min( *std::min_element(point_cache.begin(), point_cache.end(), compare) );
+			return min.first;
+		}
+		default:
+			throw InvalidArgumentException("Unsupported cache type provided", AT);
+	}
+}
+
+Date TimeSeriesManager::getDataEnd(const cache_types& cache) const 
+{
+	switch(cache) {
+		case RAW: 
+			return raw_buffer.getDataEnd();
+		case FILTERED: 
+			return filtered_cache.getDataEnd();
+		case POINTS: {
+			const std::pair<Date, METEO_SET> max( *std::max_element(point_cache.begin(), point_cache.end(), compare) );
+			return max.first;
+		}
+		default:
+			throw InvalidArgumentException("Unsupported cache type provided", AT);
+	}
 }
 
 void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
@@ -273,17 +339,41 @@ void TimeSeriesManager::add_to_points_cache(const Date& i_date, const METEO_SET&
 	point_cache[i_date] = vecMeteo;
 }
 
-void TimeSeriesManager::clear_cache()
+void TimeSeriesManager::clear_cache(const cache_types& cache)
 {
-	raw_buffer.clear();
-	filtered_cache.clear();
-	point_cache.clear();
+	switch(cache) {
+		case RAW: 
+			raw_buffer.clear(); 
+			break;
+		case FILTERED: 
+			filtered_cache.clear(); 
+			break;
+		case POINTS: 
+			point_cache.clear(); 
+			break;
+		case ALL: 
+			raw_buffer.clear();
+			filtered_cache.clear();
+			point_cache.clear();
+			break;
+		default:
+			throw InvalidArgumentException("Unknown cache type provided", AT);
+	}
 }
 
 void TimeSeriesManager::fillRawBuffer(const Date& date_start, const Date& date_end)
 {
-	const Date new_start( date_start-buff_before ); //taking centering into account
-	const Date new_end( max(new_start + chunk_size, date_end) );
+	//computing the start and end date of the raw data request
+	Date new_start( date_start-buff_before ); //taking centering into account
+	Date new_end( max(date_start + chunk_size, date_end) );
+	if (!raw_requested_start.isUndef()) {
+		if (raw_requested_start<new_start) new_start = raw_requested_start;
+		raw_requested_start.setUndef(true);
+	}
+	if (!raw_requested_end.isUndef()) {
+		if (raw_requested_end>new_end) new_end = raw_requested_end;
+		raw_requested_end.setUndef(true);
+	}
 
 	raw_buffer.clear(); //HACK until we have a proper ring buffer to avoid eating up all memory...
 

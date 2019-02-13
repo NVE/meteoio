@@ -29,6 +29,13 @@ namespace mio {
 
 class TimeSeriesManager {
 	public:
+		enum cache_types {
+			RAW,	///< the raw data cache
+			FILTERED,	///< the filtered data cache
+			POINTS,	///< the (interpolated) points cache
+			ALL	///< all caches
+		};
+		
 		/**
 		 * @brief Default constructor
 		 * @details The mode and first_rank variables are used to decide which processing might have
@@ -119,6 +126,8 @@ class TimeSeriesManager {
 		 * @param[in] buff_before buffer centering in days
 		 */
 		void setBufferProperties(const double& buffer_size, const double& buff_before);
+
+		void setRawBufferProperties(const Date& raw_buffer_start, const Date& raw_buffer_end);
 		
 		/**
 		 * @brief Get the current buffer requirements (ie user defined buffer + filters/resampling requirements)
@@ -154,9 +163,10 @@ class TimeSeriesManager {
 		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 		/**
-		 * @brief Clear the point cache. All resampled values are dismissed, will need to be recalculated.
+		 * @brief Clear the chosen cache.
+		 * @param[in] cache Select the cache to clear
 		 */
-		void clear_cache();
+		void clear_cache(const cache_types& cache);
 		
 		/**
 		 * @brief Returns a copy of the internal Config object.
@@ -176,33 +186,37 @@ class TimeSeriesManager {
 		 * @brief Returns the beginning of the raw buffer.
 		 * @details This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the first data would be greater.
+		 * @param[in] cache Select the cache query (obvisouly, ALL and POINTS are not supported)
 		 * @return start date of the buffer
 		 */
-		Date getRawBufferStart() const {return raw_buffer.getBufferStart();}
+		Date getBufferStart(const cache_types& cache) const;
 
 		/**
 		 * @brief Returns the end of the raw buffer.
 		 * @details This is the end date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the last data would be less.
+		 * @param[in] cache Select the cache query (obvisouly, ALL and POINTS are not supported)
 		 * @return end date of the buffer
 		 */
-		Date getRawBufferEnd() const {return raw_buffer.getBufferEnd();}
+		Date getBufferEnd(const cache_types& cache) const;
 		
 		/**
 		 * @brief Returns the real beginning of the raw data in buffer.
 		 * @details This is the start date of the <b>available data</b> that is in the buffer 
 		 * (it can be much later than the requested start date).
+		 * @param[in] cache Select the cache query
 		 * @return start date of the data or Date::undefined if no data is available
 		 */
-		Date getRawDataStart() const {return raw_buffer.getDataStart();}
+		Date getDataStart(const cache_types& cache) const;
 		
 		/**
 		 * @brief Returns the real end of the raw data in buffer.
 		 * @details This is the end date of the <b>available data</b> that is in the buffer 
 		 * (it can be much earlier than the requested end date).
+		 * @param[in] cache Select the cache query
 		 * @return end date of the data or Date::undefined if no data is available
 		 */
-		Date getRawDataEnd() const {return raw_buffer.getDataEnd();}
+		Date getDataEnd(const cache_types& cache) const;
 
 		
 	private:
@@ -220,6 +234,7 @@ class TimeSeriesManager {
 		MeteoBuffer raw_buffer; ///< stores raw data
 		MeteoBuffer filtered_cache; ///< stores already filtered data intervals
 
+		Date raw_requested_start, raw_requested_end; ///< in order to externally request that a given time period should be in the raw buffer
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int processing_level;

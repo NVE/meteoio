@@ -271,10 +271,10 @@ Date MeteoBuffer::getDataStart() const
 Date MeteoBuffer::getDataEnd() const
 {
 	Date end;
-	
+
 	for (size_t ii=0; ii<ts_buffer.size(); ii++) {
 		if (!ts_buffer[ii].empty()) {
-			if (end.isUndef() || ts_buffer[ii].back().date < end)
+			if (end.isUndef() || ts_buffer[ii].back().date > end)
 				end = ts_buffer[ii].back().date;
 		}
 	}
