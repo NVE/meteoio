@@ -332,6 +332,12 @@ class Config {
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
+		
+		/**
+		 * @brief Returns all the sections that are present in the config object
+		 * @return a set that holds all the sections names
+		 */
+		std::set<std::string> getSections() const {return sections;}
 
 	private:
 		void parseFile(const std::string& filename);
@@ -339,10 +345,11 @@ class Config {
 		static std::string extract_section(std::string key);
 		std::string clean_import_path(const std::string& in_path) const;
 
-		std::map<std::string, std::string> properties; //Save key value pairs
-		std::vector<std::string> imported; //list of files already imported (to avoid circular references)
-		std::string sourcename; //description of the data source for the key/value pair
-		std::string configRootDir; //directory of the root config file
+		std::map<std::string, std::string> properties; ///< Save key value pairs
+		std::vector<std::string> imported; ///< list of files already imported (to avoid circular references)
+ 		std::set<std::string> sections; ///< list of all the sections that have been found
+		std::string sourcename; ///< description of the data source for the key/value pair
+		std::string configRootDir; ///< directory of the root config file
 		static const char* defaultSection;
 }; //end class definition Config
 

@@ -29,9 +29,9 @@ namespace mio {
 const char* Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), imported(), sourcename(), configRootDir() {}
+Config::Config() : properties(), imported(), sections(), sourcename(), configRootDir() {}
 
-Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
+Config::Config(const std::string& i_filename) : properties(), imported(), sections(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
 {
 	addFile(i_filename);
 }
@@ -259,6 +259,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		} else {
 			section = line.substr(1,endpos-1);
 			IOUtils::toUpper(section);
+			sections.insert( section );
 			return;
 		}
 	}
