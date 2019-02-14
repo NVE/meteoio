@@ -765,7 +765,7 @@ void IOHandler::create_exclude_map()
 		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			excluded_params[ it_station->first ] = params;
@@ -841,7 +841,7 @@ void IOHandler::create_keep_map()
 		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			kept_params[ it_station->first ] = params;
