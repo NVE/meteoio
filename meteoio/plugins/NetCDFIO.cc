@@ -1099,7 +1099,7 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 		const int varid = (fromSchema)? vars[ parindex ].varid : unknown_vars[ parname ].varid;
 
 		//get the data for this variables for all stations but only the requested timesteps
-		double *data = (double*)calloc(nrStations,sizeof(double)*nrSteps);
+		double *data = (double*)calloc(nrStations, sizeof(double)*nrSteps);
 		int status;
 		if (!multiple_stations_per_file) {
 			const size_t start[] = {start_idx};
@@ -1117,8 +1117,10 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 
 		const double scale = (fromSchema)? vars[ parindex ].scale : unknown_vars[ parname ].scale;
 		const double offset = (fromSchema)? vars[ parindex ].offset : unknown_vars[ parname ].offset;
+		const double nodata = (fromSchema)? vars[ parindex ].nodata : unknown_vars[ parname ].nodata;
+		const std::string units( (fromSchema)? vars[ parindex ].attributes.units : "" );
 		const bool isPrecip = (fromSchema)? (parindex==MeteoGrids::PSUM || parindex==MeteoGrids::PSUM_S || parindex==MeteoGrids::PSUM_L) : false;
-		const bool isPrecipIntensity = (isPrecip)? vars[ parindex ].attributes.units=="kg/m2/s" : false;
+		const bool isPrecipIntensity = (isPrecip)? units=="kg/m2/s" : false;
 		if (isPrecipIntensity) { //in this case, we need to accumulate the precipitation
 			for (size_t st=0; st<nrStations; st++) {
 				for (size_t jj=0; jj<nrSteps; jj++) {
@@ -1126,16 +1128,21 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
 					const double ts_duration_s = ((jj>0)? (curr_julian - vecMeteo[st][jj-1].date.getJulian(true)) : (vecMeteo[st][jj+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
 
-					vecMeteo[st][jj](parname) = ((data[st + jj*nrStations] * scale) + offset) * ts_duration_s;
+					const double tmp( data[st + jj*nrStations] );
+					if (tmp!=nodata) vecMeteo[st][jj](parname) = ((tmp * scale) + offset) * ts_duration_s;
 				}
 			}
 		} else  {
 			for (size_t st=0; st<nrStations; st++) {
-				for (size_t jj=0; jj<nrSteps; jj++)
-					vecMeteo[st][jj](parname) = (data[st + jj*nrStations] * scale) + offset;
+				for (size_t jj=0; jj<nrSteps; jj++) {
+					const double tmp( data[st + jj*nrStations] );
+					if (tmp!=nodata) vecMeteo[st][jj](parname) = (tmp * scale) + offset;
+				}
 			}
 		}
 		free(data);
+		
+		applyUnits(vecMeteo, nrStations, nrSteps, units, parname);
 	}
 
 	return vecMeteo;
@@ -1508,6 +1515,22 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 		}
 	}
 	else if (m2mm && units=="m") grid *= 1000.;
+}
+
+void ncFiles::applyUnits(std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& nrStations, const size_t& nrSteps, const std::string& units, const std::string& parname)
+{
+	if (units.empty()) return;
+	
+	double factor = 1.;
+	if (units=="%") factor = 0.01;
+	
+	if (factor==1.) return;
+	
+	for (size_t st=0; st<nrStations; st++) {
+		for (size_t jj=0; jj<nrSteps; jj++) {
+			vecMeteo[st][jj](parname) *= factor;
+		}
+	}
 }
 
 //this returns the index where to insert the new grid
