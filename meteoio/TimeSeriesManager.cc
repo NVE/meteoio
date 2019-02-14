@@ -274,13 +274,23 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 
 	//Let's make sure we have the data we need, in the filtered_cache or in vec_cache
-	const Date buffer_start( i_date-proc_properties.time_before ), buffer_end( i_date+proc_properties.time_after );
+	Date buffer_start( i_date-proc_properties.time_before ), buffer_end( i_date+proc_properties.time_after );
+	if (!raw_requested_start.isUndef()) {
+		if (raw_requested_start<i_date) buffer_start = raw_requested_start - proc_properties.time_before;
+		raw_requested_start.setUndef(true);
+	}
+	if (!raw_requested_end.isUndef()) {
+		if (raw_requested_end>i_date) buffer_end = raw_requested_end + proc_properties.time_after;
+		raw_requested_end.setUndef(true);
+	}
 	std::vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or raw_buffer
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool rebuffer_filtered = filtered_cache.empty() || (filtered_cache.getBufferStart() > buffer_start) || (filtered_cache.getBufferEnd() < buffer_end);
 		if (rebuffer_filtered) { //explicit caching, rebuffer if necessary
 			const bool rebuffer_raw = raw_buffer.empty() || (raw_buffer.getBufferStart() > buffer_start) || (raw_buffer.getBufferEnd() < buffer_end);
-			if (rebuffer_raw && (IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(buffer_start, buffer_end);
+			if (rebuffer_raw && (IOUtils::raw & processing_level) == IOUtils::raw) {
+				fillRawBuffer(buffer_start, buffer_end);
+			}
 			fill_filtered_cache();
 		}
 		data = &filtered_cache.getBuffer();
@@ -366,15 +376,7 @@ void TimeSeriesManager::fillRawBuffer(const Date& date_start, const Date& date_e
 	//computing the start and end date of the raw data request
 	Date new_start( date_start-buff_before ); //taking centering into account
 	Date new_end( max(date_start + chunk_size, date_end) );
-	if (!raw_requested_start.isUndef()) {
-		if (raw_requested_start<new_start) new_start = raw_requested_start;
-		raw_requested_start.setUndef(true);
-	}
-	if (!raw_requested_end.isUndef()) {
-		if (raw_requested_end>new_end) new_end = raw_requested_end;
-		raw_requested_end.setUndef(true);
-	}
-
+	
 	raw_buffer.clear(); //HACK until we have a proper ring buffer to avoid eating up all memory...
 
 	if (raw_buffer.empty()) {
