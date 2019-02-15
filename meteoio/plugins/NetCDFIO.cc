@@ -940,7 +940,7 @@ std::vector<StationData> ncFiles::readStationData() const
 		if (hasSlope && (vecSlope.size()!=nrStations || vecAzi.size()!=nrStations))
 			throw InvalidFormatException("Vectors of altitudes, slopes and azimuths don't match in file "+file_and_path, AT);
 
-		std::vector<Coords> vecPosition( nrStations );
+		std::vector<Coords> vecPosition( nrStations, Coords(coord_sys, coord_param) );
 		if (hasLatLon) {
 			const std::vector<double> vecLat( read_1Dvariable(ncid, ncpp::LATITUDE) );
 			const std::vector<double> vecLon( read_1Dvariable(ncid, ncpp::LONGITUDE) );
