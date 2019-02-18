@@ -895,7 +895,7 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 
 	if (station_idx==IOUtils::npos) { //multiple stations per file
-		if (vecMeteo.size()<10) {
+		if (vecMeteo.size()<30) {
 			std::string stats_list( vecMeteo[0].front().meta.stationID );
 			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
 				stats_list = stats_list + ", " + vecMeteo[ii].front().meta.stationID;

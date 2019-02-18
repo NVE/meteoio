@@ -158,7 +158,12 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	if (var.attributes.param!=ncpp::STATION && var.attributes.param!=ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
 
 	if (var.attributes.param==ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "cf_role", "timeseries_id");
-	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+	if (var.attributes.param==ncpp::EASTING || var.attributes.param==ncpp::LONGITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "X");
+	if (var.attributes.param==ncpp::NORTHING || var.attributes.param==ncpp::LATITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "Y");
+	if (var.attributes.param==ncpp::TIME) {
+		ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+		ncpp::add_attribute(ncid, var.varid, "axis", "T");
+	}
 	if (var.attributes.param==mio::MeteoGrids::DEM) {
 		ncpp::add_attribute(ncid, var.varid, "positive", "up");
 		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
