@@ -900,7 +900,10 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
 				stats_list = stats_list + ", " + vecMeteo[ii].front().meta.stationID;
 			}
-			acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list);
+			if (stats_list.length()<=140)
+				acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list);
+			else 
+				acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		} else {
 			acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		}
