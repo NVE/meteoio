@@ -1,3 +1,12 @@
+"""
+setupPosix.py: This script will build the python-wrapper for meteoIO on Linux or Mac. The script has to be
+             executed with following arguments: 'python.exe setupPosix.py build_ext --inplace'
+
+Author: Thiemo Theile
+Date created: 4/1/2019
+Python Version: 2.7 or 3.x
+"""
+
 try:
     from setuptools import setup
     from setuptools import Extension
@@ -5,9 +14,8 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-#from distutils import sysconfig
 import sysconfig
-from Cython.Distutils import build_ext #for dll?
+from Cython.Distutils import build_ext
 
 from Cython.Build import cythonize
 import os

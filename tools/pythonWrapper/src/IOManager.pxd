@@ -1,3 +1,8 @@
+"""IOManager.pxd: This file wraps the class IOManager (from meteoio/IOManager.h).
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
+
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 #from libcpp cimport exception
