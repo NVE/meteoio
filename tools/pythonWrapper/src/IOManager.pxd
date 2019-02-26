@@ -18,8 +18,8 @@ cdef extern from "meteoio/IOManager.h" namespace "mio":
         #IOManager(const string& filename_in) except +
         IOManager(const Config& i_cfg) except +
     
-        size_t getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
+        size_t getMeteoData(const Date& i_date, METEO_SET& vecMeteo) except +
 
-        size_t getMeteoData(const Date& dateStart, const Date& dateEnd, vector[ METEO_SET ]& vecVecMeteo)
+        size_t getMeteoData(const Date& dateStart, const Date& dateEnd, vector[ METEO_SET ]& vecVecMeteo) except +
         
-        void writeMeteoData(const vector[ METEO_SET ]& vecMeteo, const string& option)
+        void writeMeteoData(const vector[ METEO_SET ]& vecMeteo, const string& option) except +

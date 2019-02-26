@@ -67,7 +67,7 @@ cdef extern from "meteoio/dataClasses/MeteoData.h" namespace "mio":
         size_t getParameterIndex(const string& parname) const
         size_t getNrOfParameters() const
 
-        void merge(const MeteoData& meteo2)
+        void merge(const MeteoData& meteo2) except +
 
         #static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 
