@@ -100,7 +100,7 @@ run the test-script:
 KNOWN PROBLEMS 
 
 Strings (only python 3.x):
-There is some issue with different handling of strings between cython, c++ and python. Therefore a python string which is passed to a c++-function has to be converted to utf-8: (e.g. cfg = mio.PyConfig("io.ini".encode('utf-8'), see test.py)
+There is some issue with different handling of strings between cython, c++ and python. Therefore a python string which is passed to a c++-function has to be converted to utf-8: (e.g. cfg = mio.PyConfig("io.ini".encode('utf-8'), see test.py, alternatively you can write: 'cfg = mio.PyConfig(b"io.ini")'
 
 Memory (only on WINDOWS, maybe because on windows only the 32bit-version works):
 -Memory problems with large input files:

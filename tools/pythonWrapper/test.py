@@ -14,8 +14,8 @@ import meteoioWrapper as mio
 #print what is inside the meteoioWrapper (classes and functions)
 print(dir(mio))
 
-cfg = mio.PyConfig("io.ini".encode('utf-8'))
-TZ = cfg.get("TIME_ZONE".encode('utf-8'), "Input".encode('utf-8'),"default".encode('utf-8'))
+cfg = mio.PyConfig(b"io.ini")
+TZ = cfg.get(b"TIME_ZONE", b"Input", b"default")
 
 io = mio.PyIOManager(cfg)
 
@@ -28,7 +28,7 @@ d_end = mio.PyDate()
 d_end.setDate(2009,1,1,15,0,float(TZ),0)
 
 print( "Powered by MeteoIO " + str(mio.PyGetLibVersion()) )
-print( "Reading data from " + str(d_start.toString("ISO".encode('utf-8'))) + " to " + str(d_end.toString("ISO_TZ".encode('utf-8'))) )
+print( "Reading data from " + str(d_start.toString(b"ISO")) + " to " + str(d_end.toString(b"ISO_TZ")) )
 
 dateList = mio.createDateList(d_start,d_end,Tstep)
 
@@ -56,8 +56,8 @@ stationID = vecVecMeteo[0][0].meta.getStationID()
 dateOfFirstDataPoint = vecVecMeteo[0][0].date.toString()
 print("station name: "+str(stationID))
 #example of how to get certain meteo-data (wind speed, temperature,...) for certain station
-temperatures = mio.getTimeSeriesOfCertainParameter("TA".encode('utf-8'),stationID, vecVecMeteo)
+temperatures = mio.getTimeSeriesOfCertainParameter(b"TA",stationID, vecVecMeteo)
 print(temperatures)
 
 print("Writing output data")
-io.writeMeteoData(vecVecMeteo,"".encode('utf-8'))
+io.writeMeteoData(vecVecMeteo,b"")
