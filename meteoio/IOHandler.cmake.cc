@@ -165,6 +165,18 @@ namespace mio {
  * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
  * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure \b BUFFER_SIZE
  * to the intended duration of the simulation (in days).
+ * 
+ * @subsection Multiple_input_plugins Multiple data sources
+ * It is possible to use multiple plugins to read \b meteorological \b timeseries from multiple sources and combine them into one stream of data. This is 
+ * achieved by declaring as many \em DATASOURCExxx sections as necessary (where xxx represent any number, to make sure that not two 
+ * sections have the same name) and declaring \em METEO plugins in each of them. Please make sure that all required keys are defined within each 
+ * new such section (such as TIMEZONE) because the plugins created this way won't have access to the original \em INPUT section. The other
+ * plugins (such as for reading grids, dem, etc) as well as the raw data editing will only be read from the standard \em INPUT section and 
+ * performed as usual after the data has been provided by the plugins.
+ * 
+ * If reading the same station from multiple sources (for example providing different time coverage), it might be useful to use 
+ * the \ref automerge "automerge" feature to merge all streams belonging to a station into one single stream.
+ * 
  */
  
  /**
@@ -275,92 +287,113 @@ namespace mio {
  * @endcode
  */
 
-IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
+IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& i_cfg) const
 {
 #ifdef PLUGIN_ALPUG
-	if (plugin_name == "ALPUG") return new ALPUG(cfg);
+	if (plugin_name == "ALPUG") return new ALPUG(i_cfg);
 #endif
 #ifdef PLUGIN_ARCIO
-	if (plugin_name == "ARC") return new ARCIO(cfg);
+	if (plugin_name == "ARC") return new ARCIO(i_cfg);
 #endif
 #ifdef PLUGIN_A3DIO
-	if (plugin_name == "A3D") return new A3DIO(cfg);
+	if (plugin_name == "A3D") return new A3DIO(i_cfg);
 #endif
 #ifdef PLUGIN_ARPSIO
-	if (plugin_name == "ARPS") return new ARPSIO(cfg);
+	if (plugin_name == "ARPS") return new ARPSIO(i_cfg);
 #endif
 #ifdef PLUGIN_CSVIO
-	if (plugin_name == "CSV") return new CsvIO(cfg);
+	if (plugin_name == "CSV") return new CsvIO(i_cfg);
 #endif
 #ifdef PLUGIN_GRASSIO
-	if (plugin_name == "GRASS") return new GrassIO(cfg);
+	if (plugin_name == "GRASS") return new GrassIO(i_cfg);
 #endif
 #ifdef PLUGIN_GEOTOPIO
-	if (plugin_name == "GEOTOP") return new GeotopIO(cfg);
+	if (plugin_name == "GEOTOP") return new GeotopIO(i_cfg);
 #endif
 #ifdef PLUGIN_SMETIO
-	if (plugin_name == "SMET") return new SMETIO(cfg);
+	if (plugin_name == "SMET") return new SMETIO(i_cfg);
 #endif
 #ifdef PLUGIN_SNIO
-	if (plugin_name == "SNOWPACK") return new SNIO(cfg);
+	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
 #endif
 #ifdef PLUGIN_PGMIO
-	if (plugin_name == "PGM") return new PGMIO(cfg);
+	if (plugin_name == "PGM") return new PGMIO(i_cfg);
 #endif
 #ifdef PLUGIN_IMISIO
-	if (plugin_name == "IMIS") return new ImisIO(cfg);
+	if (plugin_name == "IMIS") return new ImisIO(i_cfg);
 #endif
 #ifdef PLUGIN_OSHDIO
-	if (plugin_name == "OSHD") return new OshdIO(cfg);
+	if (plugin_name == "OSHD") return new OshdIO(i_cfg);
 #endif
 #ifdef PLUGIN_GRIBIO
-	if (plugin_name == "GRIB") return new GRIBIO(cfg);
+	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
 #endif
 #ifdef PLUGIN_PNGIO
-	if (plugin_name == "PNG") return new PNGIO(cfg);
+	if (plugin_name == "PNG") return new PNGIO(i_cfg);
 #endif
 #ifdef PLUGIN_BORMAIO
-	if (plugin_name == "BORMA") return new BormaIO(cfg);
+	if (plugin_name == "BORMA") return new BormaIO(i_cfg);
 #endif
 #ifdef PLUGIN_COSMOXMLIO
-	if (plugin_name == "COSMOXML") return new CosmoXMLIO(cfg);
+	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
 #endif
 #ifdef PLUGIN_DBO
-	if (plugin_name == "DBO") return new DBO(cfg);
+	if (plugin_name == "DBO") return new DBO(i_cfg);
 #endif
 #ifdef PLUGIN_GSNIO
-	if (plugin_name == "GSN") return new GSNIO(cfg);
+	if (plugin_name == "GSN") return new GSNIO(i_cfg);
 #endif
 #ifdef PLUGIN_NETCDFIO
-	if (plugin_name == "NETCDF") return new NetCDFIO(cfg);
+	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
 #endif
 #ifdef PLUGIN_PSQLIO
-	if (plugin_name == "PSQL") return new PSQLIO(cfg);
+	if (plugin_name == "PSQL") return new PSQLIO(i_cfg);
 #endif
 #ifdef PLUGIN_SASEIO
-	if (plugin_name == "SASE") return new SASEIO(cfg);
+	if (plugin_name == "SASE") return new SASEIO(i_cfg);
 #endif
 #ifdef PLUGIN_ZRXPIO
-	if (plugin_name == "ZRXP") return new ZRXPIO(cfg);
+	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);
 #endif
 
 	return NULL; //no plugin found
 }
 
-//this is actually an object factory
-IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
+/**
+ * @brief Return a pointer to a plugin object matching the provided key.
+ * @details If the plugin has not yet been constructed, it will be constructed (acting as an object factory) and then cached. It is cached per
+ * section / plugin type / plugin combination, for example "INPUT::METEO::SMET" so calling the same kind of plugin
+ * for the inputs and outputs will lead to different instances being cached.
+ * @param[in] cfgkey Configuration key giving the plugin name (example: METEO);
+ * @param[in] cfgsection Section where to find this configuration key (example: INPUT);
+ * @param[in] sec_rename New section name if the section should be renamed before being passed to the plugin's constructor 
+ * (default: empty string, so no renaming)
+ * @return Pointer to the constructed plugin
+ * 
+ */
+IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection, const std::string& sec_rename)
 {
 	const std::string op_src = cfg.get(cfgkey, cfgsection);
-
-	if (mapPlugins.find(op_src) == mapPlugins.end()) {
-		IOInterface *ioPtr = getPlugin(op_src);
+	const std::string plugin_key( cfgsection+"::"+cfgkey+"::"+op_src ); //otherwise, reading meteo+grids with the same plugin would rely on the same object
+	
+	if (mapPlugins.find(plugin_key) == mapPlugins.end()) { //the plugin has not already been constructed
+		IOInterface *ioPtr = NULL;
+		
+		if (sec_rename.empty() || sec_rename==cfgsection) {
+			ioPtr = getPlugin(op_src, cfg);
+		} else {
+			Config cfg2( cfg );
+			cfg2.moveSection(cfgsection, sec_rename, true);
+			ioPtr = getPlugin(op_src, cfg2);
+		}
+		
 		if (ioPtr==NULL)
 			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it declared in IOHandler::getPlugin?", AT);
 		else
-			mapPlugins[op_src] = ioPtr;
+			mapPlugins[plugin_key] = ioPtr;
 	}
 
-	return mapPlugins[op_src];
+	return mapPlugins[plugin_key];
 }
 
 //Copy constructor
@@ -413,6 +446,22 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 	return *this;
 }
 
+//return the list of sections that declare a certain plugin key and matching a given pattern
+//The [INPUT] section is currently always returned even if it does not match the pattern
+std::vector<std::string> IOHandler::getListOfSources(const std::string& plugin_key, const std::string& sec_pattern) const
+{
+	const std::set<std::string> sections( cfg.getSections() );
+	std::vector<std::string> results;
+	
+	for (std::set<std::string>::const_iterator it = sections.begin(); it!=sections.end(); ++it) {
+		const bool isInput = (*it=="INPUT"); //the [Input] section should always be returned
+		const size_t found_pos = it->find(sec_pattern, 0);
+		if ((isInput || found_pos==0) && cfg.keyExists(plugin_key, *it)) results.push_back( *it );
+	}
+	
+	return results;
+}
+
 bool IOHandler::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
@@ -458,9 +507,21 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 
 void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
-	IOInterface *plugin = getPlugin("METEO", "Input");
-	plugin->readStationData(date, vecStation);
+	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
+	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);;
 
+	for (size_t ii=0; ii<sources.size(); ii++) {
+		IOInterface *plugin = getPlugin("METEO", sources[ii], "INPUT");
+
+		if (ii==0) {
+			plugin->readStationData(date, vecStation);
+		} else  {
+			STATIONS_SET vectmp;
+			plugin->readStationData(date, vectmp);
+			for (size_t jj=0; jj<vectmp.size(); jj++) vecStation.push_back( vectmp[jj] );
+		}
+	}
+	
 	if (automerge) automerge_stations(vecStation);
 
 	if (!merge_ready) create_merge_map();
@@ -470,8 +531,20 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
                               std::vector<METEO_SET>& vecMeteo)
 {
-	IOInterface *plugin = getPlugin("METEO", "Input");
-	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
+	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
+	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);;
+
+	for (size_t ii=0; ii<sources.size(); ii++) {
+		IOInterface *plugin = getPlugin("METEO", sources[ii], "INPUT");
+
+		if (ii==0) {
+			plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
+		} else  {
+			std::vector<METEO_SET> vectmp;
+			plugin->readMeteoData(dateStart, dateEnd, vectmp);
+			for (size_t jj=0; jj<vectmp.size(); jj++) vecMeteo.push_back( vectmp[jj] );
+		}
+	}
 
 	if (automerge) automerge_stations(vecMeteo);
 
