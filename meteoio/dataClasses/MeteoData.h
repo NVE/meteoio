@@ -189,6 +189,10 @@ class MeteoData {
 
 		bool isResampled() const {return resampled;}
 		void setResampled(const bool& in_resampled) {resampled = in_resampled;}
+		bool isGenerated() const {return generated;} //if data_qa: is any parameter in this set generated?
+		void setGenerated(const bool& in_generated) {generated = in_generated;}
+		bool isFiltered() const {return filtered;} //if data_qa: is any parameter in this set filtered?
+		void setFiltered(const bool& in_filtered) {filtered = in_filtered;}
 
 		void standardizeNodata(const double& plugin_nodata);
 
@@ -318,6 +322,8 @@ class MeteoData {
 		std::vector<double> data;
 		size_t nrOfAllParameters;
 		bool resampled; ///<set this to true if MeteoData is result of resampling
+		bool generated; ///<true if MeteoData comes from a generator (only used when data_qa is enabled)
+		bool filtered; ///<true if MeteoData has been filtered (only used when data_qa is enabled)
 };
 
 } //end namespace

@@ -203,15 +203,18 @@ size_t MeteoData::addParameter(const std::string& i_paramname)
 }
 
 MeteoData::MeteoData()
-         : date(0.0, 0.), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(0.0, 0.), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), generated(false), filtered(false)
 { }
 
 MeteoData::MeteoData(const Date& date_in)
-         : date(date_in), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(date_in), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), generated(false), filtered(false)
 { }
 
 MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
-         : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+         : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), generated(false), filtered(false)
 { }
 
 void MeteoData::reset()
