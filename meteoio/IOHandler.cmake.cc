@@ -453,10 +453,13 @@ std::vector<std::string> IOHandler::getListOfSources(const std::string& plugin_k
 	const std::set<std::string> sections( cfg.getSections() );
 	std::vector<std::string> results;
 	
+	//the [Input] section should always be returned if available and should come first (for priority in case of a later merge)
+	if (cfg.keyExists(plugin_key, "INPUT")) results.push_back( "INPUT" );
+	
 	for (std::set<std::string>::const_iterator it = sections.begin(); it!=sections.end(); ++it) {
-		const bool isInput = (*it=="INPUT"); //the [Input] section should always be returned
+		if (*it=="INPUT") continue; //the {input] section has already been processed
 		const size_t found_pos = it->find(sec_pattern, 0);
-		if ((isInput || found_pos==0) && cfg.keyExists(plugin_key, *it)) results.push_back( *it );
+		if (found_pos==0 && cfg.keyExists(plugin_key, *it)) results.push_back( *it );
 	}
 	
 	return results;
