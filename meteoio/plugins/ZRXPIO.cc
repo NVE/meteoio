@@ -290,7 +290,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 					//print timestamp, value, optional status, and optional remark
 					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
-								<< " " << IOUtils::toString(qa_status) << zrxp_remark << std::endl;
+								<< " " << qa_status << zrxp_remark << std::endl;
 				}
 
 			} //endfor params
