@@ -199,7 +199,9 @@ namespace mio {
  * @code
  * TA::MOVE = air_temp air_temperature temperature_air
  * @endcode
- * This can be used to rename non-standard parameter names into standard ones.
+ * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep 
+ * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in 
+ * the list to have a value has the priority).
  *
  * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard)
@@ -1023,6 +1025,10 @@ void IOHandler::create_move_map()
 * TA::MOVE = air_temp air_temperature
 * means that TA will be the name of a new parameter in MeteoData with the copied value
 * of the original parameter air_temp or air_temperature
+* 
+* If TA already had some values, it will keep those and only points not having a value will
+* be filled by either air_temp or air_temperature (the first one in the list to have a value
+* has the priority)
 */
 void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 {
@@ -1043,8 +1049,10 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 
 				for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {
 					const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
-					vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
-					vecMeteo[station][jj]( src_index ) = IOUtils::nodata;
+					if (vecMeteo[station][jj]( dest_index ) == IOUtils::nodata) {
+						vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
+						vecMeteo[station][jj]( src_index ) = IOUtils::nodata;
+					}
 				}
 			}
 		}
