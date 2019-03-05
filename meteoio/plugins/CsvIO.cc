@@ -367,10 +367,10 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		//we handle ID and NAME differently in order to support appending
 		if (field_type=="ID" && readID) {
 			id = prev_ID+field_val;
-			prev_ID = id;
+			prev_ID = id+"-";
 		} else if (field_type=="NAME" && readName) {
 			name = prev_NAME+field_val;
-			prev_NAME = name;
+			prev_NAME = name+"-";
 		} else {
 			assignMetadataVariable(field_type, field_val, lat, lon);
 		}
@@ -420,10 +420,10 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		//we handle ID and NAME differently in order to support appending
 		if (field_type=="ID" && readID) {
 			id = prev_ID+value;
-			prev_ID = id;
+			prev_ID = id+"-";
 		} else if (field_type=="NAME" && readName) {
 			name = prev_NAME+value;
-			prev_NAME = name;
+			prev_NAME = name+"-";
 		} else {
 			assignMetadataVariable(field_type, value, lat, lon);
 		}
@@ -976,7 +976,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
-			ss << "but this does not match line " << linenr << ":\n'" << line << "'\n";
+			ss << "but this does not match line " << linenr << " with " << nr_curr_data_fields << "fields :\n'" << line << "'\n";
 			if (silent_errors) {
 				std::cerr << ss.str();
 				continue;
