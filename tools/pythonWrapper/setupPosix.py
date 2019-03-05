@@ -36,6 +36,11 @@ ext_modules = [
 ]
 setup(
     name='meteoioWrapper',
+    version="0.0.1",
+    author="Thiemo Theile",
+    author_email="thiemotheile@gmx.de",
+    description=("This python-wrapper uses Cython (https://cython.org/) to make "
+                 "the meteoIO-library accessible from python-scripts."),
     cmdclass={'build_ext': build_ext},
     ext_modules=ext_modules,
     include_dirs=["../../"]

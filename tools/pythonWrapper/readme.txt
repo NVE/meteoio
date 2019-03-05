@@ -35,11 +35,12 @@ WINDOWS:
 		- deactivate
 		
 2) Building the wrapper:
- -run setupWin.py with the arguments "build_ext --inplace"
- "python.exe setupWin.py build_ext --inplace"
+ -run CMake and configure + generate with the default settings (this step is necessary to generate the file IOHandler.cc from IOHandler.cmake.cc)
+ -run setupWin.py with the argument "install_lib"
+ "python.exe setupWin.py install_lib"
  (if you have several python versions installed make sure that "python 2.7 32-bit with cython" is used)
- 
- => now the file "meteoioWrapper.*.pyd" should have been created. This is the wrapper-module which can be imported in python (e.g. "import meteoioWrapper as mio", see test.py).
+  => now the file "meteoioWrapper.*.pyd" should have been created and copied to the subfolder of your python-installation ..\Lib\site-packages. The pyd-file is the wrapper-module which can be imported in python (e.g. "import meteoioWrapper as mio", see test.py).
+
  
 3) Using the wrapper
 
@@ -72,6 +73,9 @@ make sure that meteoio is installed correctly ("make install")!!!
 2) Building the wrapper
  go to the subfolder where the setupPosix.py-file is located (../tools/pythonWrapper/) and type:
  "python setupPosix.py build_ext --inplace" 
+ 
+ to build and install the wrapper try (this is not tested under Linux yet):
+ "python setupPosix.py lib_install" 
 
 3) Using the wrapper
 run the test-script:
@@ -91,6 +95,9 @@ make sure that meteoio is installed correctly ("make install")!!!
 2) Building the wrapper
  go to the subfolder where the setupPosix.py-file is located (../tools/pythonWrapper/) and type:
  "python3 setupPosix.py build_ext --inplace" 
+ 
+ to build and install the wrapper try (this is not tested under Linux yet):
+ "python setupPosix.py lib_install" 
 
 3) Using the wrapper
 run the test-script:
