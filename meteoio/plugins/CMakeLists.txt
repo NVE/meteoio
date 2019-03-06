@@ -44,6 +44,10 @@ IF(PLUGIN_DBO)
 	SET(plugins_sources ${plugins_sources} plugins/DBO.cc)
 ENDIF(PLUGIN_DBO)
 
+IF(PLUGIN_GOESIO)
+	SET(plugins_sources ${plugins_sources} plugins/Goes.cc)
+ENDIF(PLUGIN_GOESIO)
+
 IF(PLUGIN_GRASSIO)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
 ENDIF(PLUGIN_GRASSIO)

@@ -38,6 +38,7 @@
 #cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_GRIBIO
+#cmakedefine PLUGIN_GOESIO
 #cmakedefine PLUGIN_PNGIO
 #cmakedefine PLUGIN_BORMAIO
 #cmakedefine PLUGIN_COSMOXMLIO
@@ -52,6 +53,7 @@
 #include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/ARPSIO.h>
 #include <meteoio/plugins/CsvIO.h>
+#include <meteoio/plugins/Goes.h>
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/PGMIO.h>
@@ -305,6 +307,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& 
 #endif
 #ifdef PLUGIN_CSVIO
 	if (plugin_name == "CSV") return new CsvIO(i_cfg);
+#endif
+#ifdef PLUGIN_GOESIO
+	if (plugin_name == "GOES") return new GoesIO(i_cfg);
 #endif
 #ifdef PLUGIN_GRASSIO
 	if (plugin_name == "GRASS") return new GrassIO(i_cfg);
