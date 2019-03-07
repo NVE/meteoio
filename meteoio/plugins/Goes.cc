@@ -55,6 +55,10 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - TIMEZONE: timezone of the data;
  * - METEOPATH: directory where to read the data files from;
+ * - FILE#: a filename to read the data from for each key; If no FILE# keywords are provided, all files with the right extension in METEOPATH will
+ * be read.
+ *     - GOES_EXT: extension of Goes data files to use when no FILE# keyword has been provided;
+ *     - METEOPATH_RECURSIVE: when no FILE# keyword has been defined, should all files under METEOPATH be searched recursively? (default: false)
  * - GOES_NODATA: value used to represent nodata (default: -8190);
  * - GOES_DEBUG: should extra (ie very verbose) information be displayed? (default: false)
  * - METAFILE: an ini file that contains all the metadata, for each station that has to be read;
@@ -99,10 +103,19 @@ void GoesIO::parseInputOutputSection(const Config& cfg)
 	
 	cfg.getValue("GOES_DEBUG", "Input", debug, IOUtils::nothrow);
 	cfg.getValue("GOES_NODATA", "Input", in_nodata, IOUtils::nothrow);
-	cfg.getValue("METEOPATH", "Input", meteopath);
-	cfg.getValues("STATION", "Input", vecFilenames);
 	const std::string metafile = cfg.get("METAFILE", "Input");
 	metaCfg.addFile( metafile );
+	cfg.getValue("METEOPATH", "Input", meteopath);
+
+	cfg.getValues("FILE", "Input", vecFilenames);
+	if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
+		const std::string dflt_extension = cfg.get("GOES_EXT", "Input", "raw");
+		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);
+		std::list<std::string> dirlist( FileUtils::readDirectory(meteopath, dflt_extension, is_recursive) );
+		dirlist.sort();
+		vecFilenames.reserve( dirlist.size() );
+		std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
+	}
 }
 
 void GoesIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
@@ -126,8 +139,34 @@ void GoesIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 
-	for (size_t ii=0; ii<vecFilenames.size(); ii++)
-		readRawGoes( meteopath+"/"+vecFilenames[ii], dateStart, dateEnd, vecMeteo );
+	if (vecFilenames.size()==1) {
+		readRawGoes( meteopath+"/"+vecFilenames[0], dateStart, dateEnd, vecMeteo );
+		return;
+	}
+
+	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
+		std::vector< std::vector<MeteoData> > vecTmp;
+		readRawGoes( meteopath+"/"+vecFilenames[ii], dateStart, dateEnd, vecTmp );
+
+		//merge the tmp data into vecMeteo
+		for (size_t st=0; st<vecTmp.size(); st++) {
+			if (vecTmp[st].empty()) continue;
+			const std::string fromID( IOUtils::strToUpper(vecTmp[st][0].meta.stationID) );
+
+			bool found = false;
+			for (size_t jj=0; jj<vecMeteo.size(); jj++) {
+				if (vecMeteo[jj].empty()) continue; //This should not happen!
+				const std::string curr_station( IOUtils::strToUpper(vecMeteo[jj][0].meta.stationID) );
+				if (curr_station==fromID) {
+					MeteoData::mergeTimeSeries(vecMeteo[jj], vecTmp[st], MeteoData::FULL_MERGE); //merge timeseries for the two stations
+					found = true;
+				}
+			}
+
+			if (!found)
+				vecMeteo.push_back( vecTmp[st] );
+		}
+	}
 }
 
 void GoesIO::readRawGoes(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
