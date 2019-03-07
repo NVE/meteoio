@@ -46,14 +46,18 @@ class GoesIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection(const Config& cfgreader);
-		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
+		void readRawGoes(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 		Date parseDate(const std::vector<float>& raw_data) const;
-		MeteoData parseDataLine(const std::string& stationName, const Date& dt, const std::vector<float>& raw_data) const;
-		void readRawGoes(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		MeteoData parseDataLine(const std::string& goesID, const Date& dt, const std::vector<float>& raw_data) const;
+		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
+		bool addStation(const std::string& goesID);
 
 		std::vector<std::string> vecFilenames;
-		std::vector<size_t> fields_idx;
-		MeteoData md_template;
+		std::map<std::string, std::vector<size_t> > fields_idx; ///< for each stationID, vector of MeteoData field index
+		std::map<std::string, std::vector<double> > units_offset, units_multiplier;
+		std::map<std::string, MeteoData> md_template;
+		std::map<std::string, size_t> stationsIdx; ///< the station index within vecMeteo
+		Config metaCfg;
 		std::string meteopath;
 		std::string coordin, coordinparam; //projection parameters
 		double in_TZ, in_nodata;

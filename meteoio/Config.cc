@@ -146,6 +146,18 @@ bool Config::keyExists(std::string key, std::string section) const
 	return (it!=properties.end());
 }
 
+bool Config::sectionExists(std::string section) const
+{
+	IOUtils::toUpper( section );
+	std::set<std::string>::const_iterator it = sections.begin();
+
+	for (; it!=sections.end(); ++it) {
+		if (*it==section) return true;
+	}
+
+	return false;
+}
+
 void Config::moveSection(std::string org, std::string dest, const bool& overwrite)
 {
 	IOUtils::toUpper( org );

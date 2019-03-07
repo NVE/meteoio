@@ -132,6 +132,13 @@ class Config {
 		bool keyExists(std::string key, std::string section) const;
 
 		/**
+		 * @brief Return if a given section exists in the Config object
+		 * @param[in] section std::string representing a section name
+		 * @return true if the section exists
+		 */
+		bool sectionExists(std::string section) const;
+
+		/**
 		 * @brief Print the content of the Config object (useful for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
