@@ -308,7 +308,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
 			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
 		} else {
-			section = line.substr(1,endpos-1);
+			section = line.substr(1, endpos-1);
 			IOUtils::toUpper(section);
 			sections.insert( section );
 			return;

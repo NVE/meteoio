@@ -282,8 +282,7 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
 
-		std::vector<std::string> vecFilenames;
-		cfg.getValues("STATION", "INPUT", vecFilenames);
+		const std::vector<std::string> vecFilenames = cfg.get("STATION", "INPUT");
 		const std::string inpath = cfg.get("METEOPATH", "Input");
 
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {

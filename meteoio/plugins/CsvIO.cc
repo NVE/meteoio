@@ -54,7 +54,7 @@ namespace mio {
  * - METEOPATH: the directory where the data files are available (mandatory);
  * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false);
- * - POSITION\#: coordinates of the station (default: reading key "POSITION"; see (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax));
+ * - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  * - CSV_FILE_EXTENSION: When scanning the whole directory, look for these files (default: .csv). Note that this matching isn't restricted to the end of the file name so if you had files stat1_jan.csv, stat1_feb.csv and stat2_jan.csv you could select January's data by putting "_jan" here;
  * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false, has priority over CSV_ERRORS_TO_NODATA);
  * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
