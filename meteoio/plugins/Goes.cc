@@ -36,11 +36,18 @@ namespace mio {
  * (see also https://www.goes-r.gov/resources/docs.html and https://www.rtl-sdr.com/tag/goes/). In order to reduce data
  * transfers, no headers are provided with the data and therefore all the metadata will have to be provided to the plugin.
  *
- * Currently, this plugin is only designed to read data in the GOES format.
+ * Currently, this plugin is only designed to \e read data in the GOES format.
  *
  * @section goes_format Format
- *
- * @section goes_units Units
+ * This is a format where all values are encoded in Ascii on fixed-lenght lines. The first 35 characters are related to the station ID
+ * and the characters starting at position 37 until the end of the line encode the data. An example is given below:
+ * @code
+ * 8030011818095204101G44+1NN067EXE00143 FOh@_bBNvD_PFLhFbqFB@I~I~I~OQDOTROX{I~ONqOvaLMQLSpLS[LSWLRfBN[BOGFgsFmYBYlBZ`CKkI~FJ}FPBFA[F@|LS\LR~LS~LSiFykGAUFFhFGELPlI~NErLRGLQcDUg
+ * 8030011818095214101G44+1NN067EXE00143 FOh@_bBNvD`tFGdFTnFB^I~I~I~OQAOTMOX{I~ONjOveLMQLTXLTKLT@LS[BNFBODFseFzgBZBBZtCKkI~FJ}FJaFAYF@hLSnLS`LUbLUFGRXG[FLDFMHLRBI~NEFLSTLRwDUQ 
+ * 8030011818095224101G44+0NN067EXE00143 FOh@_bBNvDbXFC[FITFBSI~I~I~OQBOTMOX{I~ONbOvoLMSLUkLU`LU]LTzBN_BORFc]FiaBWaBXBCKjF@@FJ{FEFFAHF@^LT{LTkLVLLVEFusF|BFD}FEJLS~I~NCKLUILTpDTz
+ * @endcode
+ * 
+ * Since there are no headers, the decoded values need some user-provided metadata to be interpreted (see below in \ref goes_keywords).
  *
  * @section goes_keywords Keywords
  * This plugin uses the following keywords, all in the [Input] section:
@@ -98,11 +105,20 @@ void GoesIO::parseInputOutputSection(const Config& cfg)
 	metaCfg.addFile( metafile );
 }
 
-void GoesIO::readStationData(const Date& /*date*/, std::vector<StationData>& /*vecStation*/)
+void GoesIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-	//implement a way to provide station metadata: location, timezone, units_offset & units factors, fields
+	vecStation.clear();
+	
+	//read all the stations' metadata
+	const std::set<std::string> sections( metaCfg.getSections() );
+	for (std::set<std::string>::const_iterator it=sections.begin(); it!=sections.end(); ++it) {
+		if (*it=="DEFAULT") continue;
+		addStation( *it );
+	}
+	
+	//fill vecStations with the metadata
+	for (std::map<std::string, MeteoData>::const_iterator it=md_template.begin(); it!=md_template.end(); ++it)
+		vecStation.push_back( it->second.meta );
 }
 
 void GoesIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -234,6 +250,7 @@ Date GoesIO::parseDate(const std::vector<float>& raw_data) const
 
 MeteoData GoesIO::parseDataLine(const std::string& goesID, const Date& dt, const std::vector<float>& raw_data) const
 {
+	//Check that we have a md_template entry for this station as a proxy for all maps
 	const std::map<std::string, MeteoData>::const_iterator md_it = md_template.find( goesID );
 	if (md_it==md_template.end())
 		throw IOException("Station "+goesID+" has not been created, this should not have happened", AT);
@@ -241,7 +258,7 @@ MeteoData GoesIO::parseDataLine(const std::string& goesID, const Date& dt, const
 	MeteoData md( md_it->second );
 	md.date.setDate(dt);
 
-	const std::map<std::string, std::vector<size_t> >::const_iterator fields_it = fields_idx.find(goesID); //we consider that the test on md_template is enough...
+	const std::map<std::string, std::vector<size_t> >::const_iterator fields_it = fields_idx.find(goesID);
 	const std::map<std::string, std::vector<double> >::const_iterator offset_it = units_offset.find(goesID);
 	const std::map<std::string, std::vector<double> >::const_iterator multiplier_it = units_multiplier.find(goesID);
 	for (size_t ii=0; ii<raw_data.size(); ii++) {
@@ -254,19 +271,28 @@ MeteoData GoesIO::parseDataLine(const std::string& goesID, const Date& dt, const
 	return md;
 }
 
+/**
+ * @brief Create a new station in the caching maps
+ * @details Extract and parse all metadata for the given station and fill the caches for it
+ * @param[in] goesID The Goes ID of the station
+ * @return true if the station could be created, false if there was no metadata for it
+ */
 bool GoesIO::addStation(const std::string& goesID)
 {
+	if (md_template.count( goesID )>0) return true; //the station has already been created
+	
 	const bool hasStation = metaCfg.sectionExists( goesID );
 	if (!hasStation) return false;
 
+	//construct the StationData for this station
 	const std::string station_id = metaCfg.get("ID", goesID, "Goes::"+goesID);
 	const std::string station_name = metaCfg.get("NAME", goesID, "Goes::"+goesID);
-
 	const std::string section_position = (metaCfg.keyExists("position", goesID))? goesID : "default";
 	const std::string position_spec = metaCfg.get("POSITION", section_position);
 	const Coords loc(coordin, coordinparam, position_spec);
 	const StationData sd(loc, station_id, station_name);
 
+	//identify all fields for this station and build the MeteoData template
 	const std::string section_fields = (metaCfg.keyExists("fields", goesID))? goesID : "default";
 	const std::vector<std::string> fields_str = metaCfg.get("FIELDS", section_fields);
 	if (fields_str.size()!=nElems) {
@@ -281,6 +307,7 @@ bool GoesIO::addStation(const std::string& goesID)
 	fields_idx[ goesID ] = fields;
 	md_template[ goesID ] = md;
 
+	//construct the units_offset
 	const std::string section_offsets = (metaCfg.keyExists("units_offset", goesID))? goesID : "default";
 	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
 		const std::vector<double> tmp = metaCfg.get("UNITS_OFFSET", section_offsets);
@@ -289,6 +316,7 @@ bool GoesIO::addStation(const std::string& goesID)
 		units_offset[ goesID ] = std::vector<double>(fields.size(), 0.);
 	}
 
+	//construct the section_multipliers
 	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", goesID))? goesID : "default";
 	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
 		const std::vector<double> tmp = metaCfg.get("UNITS_MULTIPLIER", section_multipliers);
