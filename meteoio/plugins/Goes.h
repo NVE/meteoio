@@ -22,6 +22,27 @@
 
 namespace mio {
 
+class GoesStation {
+	public:
+		GoesStation();
+		GoesStation(const std::string& goesID, const Config& metaCfg, const double& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
+		Date parseDate(const std::vector<float>& raw_data) const;
+		MeteoData parseDataLine(const Date& dt, const std::vector<float>& raw_data) const;
+		StationData getStationData() const {return md_template.meta;};
+		bool isValid() const {return validStation;};
+
+		size_t meteoIdx; ///< index within vecMeteo
+	private:
+		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
+
+		std::vector<size_t> fields_idx; ///< vector of MeteoData field index
+		std::vector<double> units_offset, units_multiplier;
+		MeteoData md_template;
+		double TZ, nodata;
+		size_t stationID_idx, year_idx, month_idx, hour_idx, jdn_idx;
+		bool validStation;
+};
+
 /**
  * @class GoesIO
  * @brief This plugin deals with data that has been transmitted through the
@@ -47,21 +68,15 @@ class GoesIO : public IOInterface {
 	private:
 		void parseInputOutputSection(const Config& cfgreader);
 		void readRawGoes(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
-		Date parseDate(const std::vector<float>& raw_data) const;
-		MeteoData parseDataLine(const std::string& goesID, const Date& dt, const std::vector<float>& raw_data) const;
-		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
-		bool addStation(const std::string& goesID);
+		void addStation(const std::string& goesID);
 
 		std::vector<std::string> vecFilenames;
-		std::map<std::string, std::vector<size_t> > fields_idx; ///< for each stationID, vector of MeteoData field index
-		std::map<std::string, std::vector<double> > units_offset, units_multiplier;
-		std::map<std::string, MeteoData> md_template;
-		std::map<std::string, size_t> stationsIdx; ///< the station index within vecMeteo
+
+		std::map<std::string, GoesStation> stations; ///< the stations' properties for each goesID
 		Config metaCfg;
 		std::string meteopath;
 		std::string coordin, coordinparam; //projection parameters
 		double in_TZ, in_nodata;
-		size_t stationID_idx, year_idx, jdn_idx, hour_idx;
 		bool debug;
 };
 

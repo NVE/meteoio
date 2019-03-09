@@ -82,15 +82,15 @@ static const size_t nElems = 46;
 static const size_t dataStartPos = 37;
 
 GoesIO::GoesIO(const std::string& configfile)
-             : vecFilenames(), fields_idx(), units_offset(), units_multiplier(), md_template(), stationsIdx(), metaCfg(), meteopath(), coordin(), coordinparam(),
-               in_TZ(0.), in_nodata(-8190.), stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), jdn_idx(IOUtils::npos), hour_idx(IOUtils::npos), debug(false)
+             : vecFilenames(), stations(), metaCfg(), meteopath(), coordin(), coordinparam(),
+               in_TZ(0.), in_nodata(-8190.), debug(false)
 {
 	parseInputOutputSection( Config(configfile) );
 }
 
 GoesIO::GoesIO(const Config& cfgreader)
-             : vecFilenames(), fields_idx(), units_offset(), units_multiplier(), md_template(), stationsIdx(), metaCfg(), meteopath(), coordin(), coordinparam(),
-               in_TZ(0.), in_nodata(-8190.), stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), jdn_idx(IOUtils::npos), hour_idx(IOUtils::npos), debug(false)
+             : vecFilenames(), stations(), metaCfg(), meteopath(), coordin(), coordinparam(),
+               in_TZ(0.), in_nodata(-8190.), debug(false)
 
 {
 	parseInputOutputSection( cfgreader );
@@ -130,14 +130,16 @@ void GoesIO::readStationData(const Date& /*date*/, std::vector<StationData>& vec
 	}
 	
 	//fill vecStations with the metadata
-	for (std::map<std::string, MeteoData>::const_iterator it=md_template.begin(); it!=md_template.end(); ++it)
-		vecStation.push_back( it->second.meta );
+	for (std::map<std::string, GoesStation>::const_iterator it=stations.begin(); it!=stations.end(); ++it)
+		vecStation.push_back( it->second.getStationData() );
 }
 
 void GoesIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+	for (std::map<std::string, GoesStation>::iterator it = stations.begin(); it!=stations.end(); ++it)
+		it->second.meteoIdx = IOUtils::npos; //reset positions in vecMeteo
 
 	if (vecFilenames.size()==1) {
 		readRawGoes( meteopath+"/"+vecFilenames[0], dateStart, dateEnd, vecMeteo );
@@ -213,21 +215,21 @@ void GoesIO::readRawGoes(const std::string& file_and_path, const Date& dateStart
 		}
 
 		//creating the station if necessary (ie pulling its user-defined metadata)
-		if (stationsIdx.count( goesID )==0) { //create the station and get its index
-			const bool isValidStation = addStation( goesID );
-			if (isValidStation) {
-				stationsIdx[ goesID ] = vecMeteo.size();
+		if (stations.count( goesID )==0) addStation(goesID); //create the station
+		//get/refresh its index
+		size_t st_idx = stations[ goesID].meteoIdx;
+		if (st_idx==IOUtils::npos) {
+			if (stations[ goesID ].isValid()) { //there was a rebuffer, we need to refresh the index
+				st_idx = vecMeteo.size();
+				stations[ goesID ].meteoIdx = st_idx;
 				vecMeteo.push_back( std::vector<MeteoData>() );
 			} else {
-				stationsIdx[ goesID ] = IOUtils::npos;
-				std::cerr << "[W] Station " << goesID << " does not have metadata, ignoring it\n";
+				continue; //this station has not been configured by the user
 			}
 		}
-		const size_t st_idx = stationsIdx[ goesID];
-		if (st_idx==IOUtils::npos) continue; //this station has not been configured by the user
 
 		//parsing date
-		const Date dt( parseDate(raw_data) );
+		const Date dt( stations[ goesID ].parseDate(raw_data) );
 		if (dt.isUndef()) continue; //that was an invalid line
 		if (dt<dateStart) continue;
 		if (dt>dateEnd) {
@@ -235,7 +237,7 @@ void GoesIO::readRawGoes(const std::string& file_and_path, const Date& dateStart
 			return;
 		}
 
-		const MeteoData md( parseDataLine(goesID, dt, raw_data) );
+		const MeteoData md( stations[ goesID ].parseDataLine(dt, raw_data) );
 		if (vecMeteo[st_idx].size() > 0 && md.date<=vecMeteo[st_idx].back().date) continue;
 		vecMeteo[ st_idx ].push_back( md );
 		
@@ -249,11 +251,72 @@ void GoesIO::readRawGoes(const std::string& file_and_path, const Date& dateStart
 	fin.close();
 }
 
-void GoesIO::parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx)
+/**
+ * @brief Create a new station in the caching maps
+ * @details Extract and parse all metadata for the given station and fill the caches for it
+ * @param[in] goesID The Goes ID of the station
+ */
+void GoesIO::addStation(const std::string& goesID)
+{
+	const bool hasStation = metaCfg.sectionExists( goesID );
+	if (hasStation)
+		stations[ goesID ] = GoesStation(goesID, metaCfg, in_nodata, in_TZ, coordin, coordinparam);
+	else
+		stations[ goesID ] = GoesStation();
+}
+
+
+GoesStation::GoesStation()
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(0.), nodata(0.),
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
+{}
+
+GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const double& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(in_TZ), nodata(in_nodata),
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
+{
+	//construct the StationData for this station
+	const std::string station_id = metaCfg.get("ID", goesID, "Goes::"+goesID);
+	const std::string station_name = metaCfg.get("NAME", goesID, "Goes::"+goesID);
+	const std::string section_position = (metaCfg.keyExists("position", goesID))? goesID : "default";
+	const std::string position_spec = metaCfg.get("POSITION", section_position);
+	const Coords loc(coordin, coordinparam, position_spec);
+	const StationData sd(loc, station_id, station_name);
+
+	//identify all fields for this station and build the MeteoData template
+	const std::string section_fields = (metaCfg.keyExists("fields", goesID))? goesID : "default";
+	const std::vector<std::string> fields_str = metaCfg.get("FIELDS", section_fields);
+	if (fields_str.size()!=nElems) {
+		ostringstream ss;
+		ss << "Number of user-declared fields (" << fields_str.size() << ") don't match with GOES message ";
+		ss << "number of fields (" << nElems << ")";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	md_template.meta = sd;
+	parseFieldsSpecs(fields_str, md_template, fields_idx);
+
+	//construct the units_offset
+	const std::string section_offsets = (metaCfg.keyExists("units_offset", goesID))? goesID : "default";
+	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
+		units_offset = metaCfg.get("UNITS_OFFSET", section_offsets);
+	} else {
+		units_offset = std::vector<double>(fields_idx.size(), 0.);
+	}
+
+	//construct the section_multipliers
+	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", goesID))? goesID : "default";
+	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
+		units_multiplier = metaCfg.get("UNITS_MULTIPLIER", section_multipliers);
+	} else {
+		units_multiplier = std::vector<double>(fields_idx.size(), 1.);
+	}
+}
+
+void GoesStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx)
 {
 	idx.resize(fieldsNames.size(), IOUtils::npos);
 
-	for (size_t ii=0; ii<fieldsNames.size(); ii++) { //HACK: make time parsing more flexible and per station
+	for (size_t ii=0; ii<fieldsNames.size(); ii++) {
 		const std::string parname( IOUtils::strToUpper(fieldsNames[ii]) );
 		if (parname=="SKIP") continue;
 
@@ -280,91 +343,26 @@ void GoesIO::parseFieldsSpecs(const std::vector<std::string>& fieldsNames, Meteo
 	}
 }
 
-Date GoesIO::parseDate(const std::vector<float>& raw_data) const
+Date GoesStation::parseDate(const std::vector<float>& raw_data) const
 {
 	const double jdn = raw_data[ jdn_idx ] + raw_data[ hour_idx ]/24.;
 	const int year = static_cast<int>(raw_data[ year_idx ]);
-	return Date(year, jdn, in_TZ);
+	return Date(year, jdn, TZ);
 }
 
-MeteoData GoesIO::parseDataLine(const std::string& goesID, const Date& dt, const std::vector<float>& raw_data) const
+MeteoData GoesStation::parseDataLine(const Date& dt, const std::vector<float>& raw_data) const
 {
-	//Check that we have a md_template entry for this station as a proxy for all maps
-	const std::map<std::string, MeteoData>::const_iterator md_it = md_template.find( goesID );
-	if (md_it==md_template.end())
-		throw IOException("Station "+goesID+" has not been created, this should not have happened", AT);
-
-	MeteoData md( md_it->second );
+	MeteoData md( md_template );
 	md.date.setDate(dt);
 
-	const std::map<std::string, std::vector<size_t> >::const_iterator fields_it = fields_idx.find(goesID);
-	const std::map<std::string, std::vector<double> >::const_iterator offset_it = units_offset.find(goesID);
-	const std::map<std::string, std::vector<double> >::const_iterator multiplier_it = units_multiplier.find(goesID);
 	for (size_t ii=0; ii<raw_data.size(); ii++) {
-		const size_t idx = fields_it->second[ii];
+		const size_t idx = fields_idx[ii];
 		if (idx==IOUtils::npos) continue;
-		if (raw_data[ii] == in_nodata) continue;
-		md( idx ) = raw_data[ii] * multiplier_it->second[ii] + offset_it->second[ii];
+		if (raw_data[ii] == nodata) continue;
+		md( idx ) = raw_data[ii] * units_multiplier[ii] + units_offset[ii];
 	}
 
 	return md;
-}
-
-/**
- * @brief Create a new station in the caching maps
- * @details Extract and parse all metadata for the given station and fill the caches for it
- * @param[in] goesID The Goes ID of the station
- * @return true if the station could be created, false if there was no metadata for it
- */
-bool GoesIO::addStation(const std::string& goesID)
-{
-	if (md_template.count( goesID )>0) return true; //the station has already been created
-	
-	const bool hasStation = metaCfg.sectionExists( goesID );
-	if (!hasStation) return false;
-
-	//construct the StationData for this station
-	const std::string station_id = metaCfg.get("ID", goesID, "Goes::"+goesID);
-	const std::string station_name = metaCfg.get("NAME", goesID, "Goes::"+goesID);
-	const std::string section_position = (metaCfg.keyExists("position", goesID))? goesID : "default";
-	const std::string position_spec = metaCfg.get("POSITION", section_position);
-	const Coords loc(coordin, coordinparam, position_spec);
-	const StationData sd(loc, station_id, station_name);
-
-	//identify all fields for this station and build the MeteoData template
-	const std::string section_fields = (metaCfg.keyExists("fields", goesID))? goesID : "default";
-	const std::vector<std::string> fields_str = metaCfg.get("FIELDS", section_fields);
-	if (fields_str.size()!=nElems) {
-		ostringstream ss;
-		ss << "Number of user-declared fields (" << fields_str.size() << ") don't match with GOES message ";
-		ss << "number of fields (" << nElems << ")";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-	std::vector<size_t> fields;
-	MeteoData md( Date(), sd);
-	parseFieldsSpecs(fields_str, md, fields);
-	fields_idx[ goesID ] = fields;
-	md_template[ goesID ] = md;
-
-	//construct the units_offset
-	const std::string section_offsets = (metaCfg.keyExists("units_offset", goesID))? goesID : "default";
-	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
-		const std::vector<double> tmp = metaCfg.get("UNITS_OFFSET", section_offsets);
-		units_offset[ goesID ] = tmp;
-	} else {
-		units_offset[ goesID ] = std::vector<double>(fields.size(), 0.);
-	}
-
-	//construct the section_multipliers
-	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", goesID))? goesID : "default";
-	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
-		const std::vector<double> tmp = metaCfg.get("UNITS_MULTIPLIER", section_multipliers);
-		units_multiplier[ goesID ] = tmp;
-	} else {
-		units_multiplier[ goesID ] = std::vector<double>(fields.size(), 1.);
-	}
-
-	return true;
 }
 
 } //namespace
