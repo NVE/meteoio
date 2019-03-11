@@ -238,14 +238,14 @@ inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncFiles> &left
 }
 
 NetCDFIO::NetCDFIO(const std::string& configfile)
-         : cfg(configfile), cache_grid_files(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
+         : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false)
 {
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader)
-         : cfg(cfgreader), cache_grid_files(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
+         : cfg(cfgreader), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false)
 {
 	parseInputOutputSection();
@@ -426,12 +426,11 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 		throw InvalidArgumentException("Unable to convert date '"+vec_argument[1]+"'", AT);
 	}
 
-  if (cache_out_files.find(file_and_path) == cache_out_files.end())
-  {
-    const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-    cache_out_files.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
-  }
-  cache_out_files.at(file_and_path).write2DGrid(grid_in, IOUtils::npos, vec_argument[0], date);
+	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
+		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
+		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
+	}
+	cache_grids_out.at(file_and_path).write2DGrid(grid_in, IOUtils::npos, vec_argument[0], date);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -439,16 +438,15 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 	const std::string file_and_path( out_grid2d_path + "/" + grid2d_out_file );
 	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 
-  if (cache_out_files.find(file_and_path) == cache_out_files.end())
-  {
-    std::cout << "creating file" << std::endl;
-    const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-    cache_out_files.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
-  }
+	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
+		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
+		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
+	}
+	
 	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SHADE || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
-		cache_out_files.at(file_and_path).write2DGrid(grid_in, parameter, std::string(), Date()); //do not assign a date to a DEM?
+		cache_grids_out.at(file_and_path).write2DGrid(grid_in, parameter, std::string(), Date()); //do not assign a date to a DEM?
 	else
-		cache_out_files.at(file_and_path).write2DGrid(grid_in, parameter, std::string(), date);
+		cache_grids_out.at(file_and_path).write2DGrid(grid_in, parameter, std::string(), date);
 }
 
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)

@@ -78,19 +78,19 @@ namespace ncpp {
 	
 	/** This structure contains the metadata associated with a NetCDF dimension */
 	typedef struct NC_DIMENSION {
-			NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {};
-			NC_DIMENSION(const size_t& i_param, const std::string& i_name)
-			                     : name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {};
-			NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
-			                     : name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {};
-			std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
-			
-			std::string name; ///< dimension name
-			size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
-			int dimid; ///< dimension ID, set to -1 and then to a positive value after reading/writing to/from a file
-			size_t param; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
-			bool isUnlimited; ///< at most, one dimension can be "unlimited"
-		} nc_dimension;
+		NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {};
+		NC_DIMENSION(const size_t& i_param, const std::string& i_name)
+					: name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {};
+		NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
+					: name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {};
+		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
+
+		std::string name; ///< dimension name
+		size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
+		int dimid; ///< dimension ID, set to -1 and then to a positive value after reading/writing to/from a file
+		size_t param; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
+		bool isUnlimited; ///< at most, one dimension can be "unlimited"
+	} nc_dimension;
 	
 	void open_file(const std::string& filename, const int& omode, int& ncid);
 	void create_file(const std::string& filename, const int& cmode, int& ncid);
