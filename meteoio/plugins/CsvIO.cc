@@ -94,7 +94,7 @@ namespace mio {
  * - DD: the two digits day;
  * - HH24: the two digits hour of the day (0-24);
  * - MI: the two digits minutes (0-59);
- * - SS: the two digts seconds (0-59);
+ * - SS: the number of seconds (0-59.98), that can be decimal;
  * - TZ: the numerical timezone as offset to GMT (see note below).
  *
  * Any other character is interpreted as itself, present in the string. It is possible to either provide a combined datetime field (so date and time are combined into
@@ -612,9 +612,9 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 void CsvParameters::checkSpecString(const std::string& spec_string, const size_t& nr_params)
 {
 	const size_t nr_percent = (unsigned)std::count(spec_string.begin(), spec_string.end(), '%');
-	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%d");
-	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2d");
-	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4d");
+	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%f");
+	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2f");
+	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4f");
 	const size_t nr_placeholders5 = IOUtils::count(spec_string, "%32s");
 	size_t nr_placeholders = (nr_placeholders0!=std::string::npos)? nr_placeholders0 : 0;
 	nr_placeholders += (nr_placeholders2!=std::string::npos)? nr_placeholders2 : 0;
@@ -650,12 +650,12 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 		has_tz = true;
 		datetime_format.replace(tz_pos, 2, "%32s");
 	}
-	IOUtils::replace_all(datetime_format, "DD", "%2d");
-	IOUtils::replace_all(datetime_format, "MM", "%2d");
-	IOUtils::replace_all(datetime_format, "YYYY", "%4d");
-	IOUtils::replace_all(datetime_format, "HH24", "%2d");
-	IOUtils::replace_all(datetime_format, "MI", "%2d");
-	IOUtils::replace_all(datetime_format, "SS", "%d");
+	IOUtils::replace_all(datetime_format, "DD", "%2f");
+	IOUtils::replace_all(datetime_format, "MM", "%2f");
+	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
+	IOUtils::replace_all(datetime_format, "HH24", "%2f");
+	IOUtils::replace_all(datetime_format, "MI", "%2f");
+	IOUtils::replace_all(datetime_format, "SS", "%f");
 	
 	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
 	checkSpecString(datetime_format, nr_params_check);
@@ -685,19 +685,30 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 		has_tz = true;
 		time_format.replace(tz_pos, 2, "%32s");
 	}
-	IOUtils::replace_all(time_format, "HH24", "%2d");
-	IOUtils::replace_all(time_format, "MI", "%2d");
-	IOUtils::replace_all(time_format, "SS", "%d");
+	IOUtils::replace_all(time_format, "HH24", "%2f");
+	IOUtils::replace_all(time_format, "MI", "%2f");
+	IOUtils::replace_all(time_format, "SS", "%f");
 
 	const size_t nr_params_check = (has_tz)? time_idx.size()+1 : time_idx.size();
 	checkSpecString(time_format, nr_params_check);
 }
 
+//check that all arguments are integers except the seconds, then build a Date
+Date CsvParameters::createDate(const float args[6], const double i_tz)
+{
+	int i_args[5] = {0, 0, 0, 0, 0};
+	for (unsigned int ii=0; ii<5; ii++) {
+		i_args[ii] = (int)args[ii];
+		if ((float)i_args[ii]!=args[ii]) return Date();
+	}
+	
+	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], args[5], i_tz);
+}
+
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	int args[6] = {0, 0, 0, 0, 0, 0};
+	float args[6] = {0, 0, 0, 0, 0, 0};
 	char rest[32] = "";
-	
 	bool status = false;
 	switch( datetime_idx.size() ) {
 		case 6:
@@ -736,7 +747,7 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 
 	if (!status) return Date();
 	const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
-	return Date((int)args[0], (int)args[1], (int)args[2], (int)args[3], (int)args[4], (int)args[5], tz);
+	return createDate(args, tz);
 }
 
 StationData CsvParameters::getStation() const 

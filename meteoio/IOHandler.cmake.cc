@@ -184,7 +184,7 @@ namespace mio {
  
  /**
  * @page raw_data_editing Raw Data Editing
- * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
+ * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data (in the following order):
  *     -# \ref data_move "rename certain parameters for all stations;"
  *     -# \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
  *     -# \ref data_merging "merge stations together;"

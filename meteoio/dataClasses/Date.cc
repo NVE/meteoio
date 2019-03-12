@@ -166,6 +166,13 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
 }
 
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second, const double& in_timezone, const bool& in_dst)
+         : timezone(in_timezone), gmt_julian(0.),
+           dst(false), undef(true)
+{
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
+}
+
 /**
 * @brief Julian Day Number (JDN) constructor
 * @param year year to set
@@ -1191,7 +1198,8 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
-			<< setw(2) << setfill('0') << minute_out << " ("
+			<< setw(2) << setfill('0') << minute_out <<":"
+			<< setw(2) << setfill('0') << whole_sec << subsec_str << " ("
 			<< setprecision(10) << julian_out << ") GMT"
 			<< setw(2) << setfill('0') << showpos << timezone << noshowpos;
 			break;
