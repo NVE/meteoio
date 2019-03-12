@@ -74,8 +74,8 @@ make sure that meteoio is installed correctly ("make install")!!!
  go to the subfolder where the setupPosix.py-file is located (../tools/pythonWrapper/) and type:
  "python setupPosix.py build_ext --inplace" 
  
- to build and install the wrapper try (this is not tested under Linux yet):
- "python setupPosix.py lib_install" 
+ Alternatively, if you have sudo-rights, you can build and install the wrapper (this is not tested under Linux yet):
+ "sudo python setupPosix.py install_lib" 
 
 3) Using the wrapper
 run the test-script:
@@ -95,9 +95,8 @@ make sure that meteoio is installed correctly ("make install")!!!
 2) Building the wrapper
  go to the subfolder where the setupPosix.py-file is located (../tools/pythonWrapper/) and type:
  "python3 setupPosix.py build_ext --inplace" 
- 
- to build and install the wrapper try (this is not tested under Linux yet):
- "python setupPosix.py lib_install" 
+ This will build the wrapper in the current directoy, alternatively you can build and install the wrapper (this is not tested under MAC yet):
+ "python setupPosix.py install_lib" 
 
 3) Using the wrapper
 run the test-script:

@@ -29,6 +29,16 @@ cdef class PyDate:
             type=ISO_TZ
         if typeString=="ISO_Z":
             type=ISO_Z
+        if typeString=="FULL":
+            type=FULL
+        if typeString=="NUM":
+            type=NUM
+        if typeString=="DIN":
+            type=DIN
+        if typeString=="ISO_WEEK":
+            type=ISO_WEEK
+        if typeString=="ISO_DATE":
+            type=ISO_DATE
         return type
 
     def __cinit__(self):
