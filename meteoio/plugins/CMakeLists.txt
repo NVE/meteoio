@@ -88,6 +88,10 @@ IF(PLUGIN_PGMIO)
 	SET(plugins_sources ${plugins_sources} plugins/PGMIO.cc)
 ENDIF(PLUGIN_PGMIO)
 
+IF(PLUGIN_PMODIO)
+	SET(plugins_sources ${plugins_sources} plugins/PmodIO.cc)
+ENDIF(PLUGIN_PMODIO)
+
 IF(PLUGIN_PNGIO)
 	FIND_PACKAGE(PNG REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM ${PNG_INCLUDE_DIR})

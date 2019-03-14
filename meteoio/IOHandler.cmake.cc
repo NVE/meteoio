@@ -35,6 +35,7 @@
 #cmakedefine PLUGIN_SMETIO
 #cmakedefine PLUGIN_SNIO
 #cmakedefine PLUGIN_PGMIO
+#cmakedefine PLUGIN_PMODIO
 #cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_GRIBIO
@@ -90,6 +91,10 @@
 
 #ifdef PLUGIN_NETCDFIO
 #include <meteoio/plugins/NetCDFIO.h>
+#endif
+
+#ifdef PLUGIN_PMODIO
+#include <meteoio/plugins/PmodIO.h>
 #endif
 
 #ifdef PLUGIN_PNGIO
@@ -157,6 +162,7 @@ namespace mio {
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
+ * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
  * <tr><td>\subpage psqlio "PSQL"</td><td>meteo</td><td>connects to PostgreSQL database</td><td><A HREF="http://www.postgresql.org/">PostgreSQL</A>'s libpq</td></tr>
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
@@ -335,6 +341,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& 
 #endif
 #ifdef PLUGIN_GRIBIO
 	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
+#endif
+#ifdef PLUGIN_PMODIO
+	if (plugin_name == "PMOD") return new PmodIO(cfg);
 #endif
 #ifdef PLUGIN_PNGIO
 	if (plugin_name == "PNG") return new PNGIO(i_cfg);
