@@ -424,7 +424,7 @@ IOHandler::IOHandler(const IOHandler& aio)
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), dataCreator(cfgreader), timeproc(cfgreader), mapPlugins(), excluded_params(), kept_params(),
              merge_commands(), copy_commands(), move_commands(),
-             merged_stations(), merge_strategy(MeteoData::STRICT_MERGE),
+             merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE),
              copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
 {
 	cfg.getValue("AUTOMERGE", "Input",automerge, IOUtils::nothrow);
