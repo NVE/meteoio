@@ -359,7 +359,7 @@ MeteoData GoesStation::parseDataLine(const Date& dt, const std::vector<float>& r
 		const size_t idx = fields_idx[ii];
 		if (idx==IOUtils::npos) continue;
 		if (raw_data[ii] == nodata) continue;
-		md( idx ) = raw_data[ii] * units_multiplier[ii] + units_offset[ii];
+		md( idx ) = static_cast<double>(raw_data[ii]) * units_multiplier[ii] + units_offset[ii];
 	}
 
 	return md;
