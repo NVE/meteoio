@@ -702,7 +702,7 @@ Date CsvParameters::createDate(const float args[6], const double i_tz)
 		if ((float)i_args[ii]!=args[ii]) return Date();
 	}
 	
-	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], args[5], i_tz);
+	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const

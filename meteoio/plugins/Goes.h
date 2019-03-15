@@ -25,11 +25,11 @@ namespace mio {
 class GoesStation {
 	public:
 		GoesStation();
-		GoesStation(const std::string& goesID, const Config& metaCfg, const double& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
+		GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
 		Date parseDate(const std::vector<float>& raw_data) const;
 		MeteoData parseDataLine(const Date& dt, const std::vector<float>& raw_data) const;
-		StationData getStationData() const {return md_template.meta;};
-		bool isValid() const {return validStation;};
+		StationData getStationData() const {return md_template.meta;}
+		bool isValid() const {return validStation;}
 
 		size_t meteoIdx; ///< index within vecMeteo
 	private:
@@ -38,7 +38,8 @@ class GoesStation {
 		std::vector<size_t> fields_idx; ///< vector of MeteoData field index
 		std::vector<double> units_offset, units_multiplier;
 		MeteoData md_template;
-		double TZ, nodata;
+		double TZ;
+		float nodata;
 		size_t stationID_idx, year_idx, month_idx, hour_idx, jdn_idx;
 		bool validStation;
 };
@@ -76,7 +77,8 @@ class GoesIO : public IOInterface {
 		Config metaCfg;
 		std::string meteopath;
 		std::string coordin, coordinparam; //projection parameters
-		double in_TZ, in_nodata;
+		double in_TZ;
+		float in_nodata;
 		bool debug;
 };
 

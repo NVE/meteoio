@@ -271,7 +271,7 @@ GoesStation::GoesStation()
                     stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
 {}
 
-GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const double& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
+GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(in_TZ), nodata(in_nodata),
                     stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
 {
@@ -345,7 +345,7 @@ void GoesStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames, 
 
 Date GoesStation::parseDate(const std::vector<float>& raw_data) const
 {
-	const double jdn = raw_data[ jdn_idx ] + raw_data[ hour_idx ]/24.;
+	const double jdn = static_cast<double>(raw_data[ jdn_idx ]) + static_cast<double>(raw_data[ hour_idx ])/24.;
 	const int year = static_cast<int>(raw_data[ year_idx ]);
 	return Date(year, jdn, TZ);
 }
