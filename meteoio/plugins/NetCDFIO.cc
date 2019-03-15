@@ -1597,14 +1597,16 @@ void ncFiles::initDimensionsFromFile(const int& ncid)
 		status = nc_inq_dimname(ncid, dimids[idx], name);
 		const std::string dimname( name );
 		if (status != NC_NOERR) throw IOException("Could not retrieve dimension name: " + std::string(nc_strerror(status)), AT);
-
 		ncpp::nc_dimension tmp_dim( schema.getSchemaDimension(dimname) ); //set name and param
 		if (tmp_dim.param==IOUtils::npos) { //unrecognized dimension -> try harder with some typical names that are not in the schema
 			if (dimname=="lat")
 				tmp_dim.param = ncpp::LATITUDE;
 			else if (dimname=="lon")
 				tmp_dim.param = ncpp::LONGITUDE;
+			else if (IOUtils::strToLower(dimname)=="time")
+				tmp_dim.param = ncpp::TIME;
 			else continue;
+			
 			if (dimensions_map.count( tmp_dim.param )>0) {
 				//if this parameter has already been read, skip it (so the schema naming has priority)
 				if (dimensions_map[ tmp_dim.param ].dimid != -1) continue;
@@ -1644,9 +1646,12 @@ void ncFiles::initVariablesFromFile(const int& ncid)
 				tmp_attr.param = ncpp::LATITUDE;
 			else if (varname=="lon")
 				tmp_attr.param = ncpp::LONGITUDE;
+			else if (IOUtils::strToLower(varname)=="time")
+				tmp_attr.param = ncpp::TIME;
+			
 			if (vars.count( tmp_attr.param )>0) {
-				if (vars[ tmp_attr.param ].varid != -1)
-					continue; //if this parameter has already been read, skip it (so the schema naming has priority)
+				//if this parameter has already been read, skip it (so the schema naming has priority)
+				if (vars[ tmp_attr.param ].varid != -1) continue; 
 			}
 		}
 
