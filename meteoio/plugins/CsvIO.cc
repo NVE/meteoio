@@ -452,9 +452,9 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
 			dt_col = tm_col = ii;
-		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0) {
+		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
 			dt_col = ii;
-		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0) {
+		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
 			tm_col = ii;
 		} else if (tmp.compare("SKIP")==0) {
 			skip_fields[ ii ] = true;
