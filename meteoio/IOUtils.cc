@@ -352,6 +352,11 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 		vecString.push_back(word);
 	}
 
+	if (!line_in.empty()) {
+		const char lastChar = line_in[ line_in.length() - 1 ];
+		if (lastChar==delim) vecString.push_back( "" );
+	}
+
 	return vecString.size();
 }
 

@@ -186,6 +186,12 @@ class MeteoData {
 		 *        NOTE: member vars date and resampled are not affected
 		 */
 		void reset();
+		
+		/**
+		 * @brief Are all the fields set to nodata?
+		 * @return true if no meteo field has a value
+		 */
+		bool isNodata() const;
 
 		bool isResampled() const {return resampled;}
 		void setResampled(const bool& in_resampled) {resampled = in_resampled;}

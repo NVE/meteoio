@@ -303,6 +303,15 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 	return IOUtils::npos; //parameter not a part of MeteoData
 }
 
+bool MeteoData::isNodata() const
+{
+	for (size_t ii=0; ii<data.size(); ii++) {
+		if (data[ii]!=IOUtils::nodata) return false;
+	}
+	
+	return true;
+}
+
 const std::string MeteoData::toString() const {
 	std::ostringstream os;
 	os << "<meteo>\n";
