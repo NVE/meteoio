@@ -55,10 +55,10 @@ namespace mio {
  *  <tr><td>ZRXPVERSION</td><td>Used version of the file format</td><td>30 (meaning 3.0)</td></tr>
  *  <tr><td>ZRXPCREATOR</td><td>Origin of the ZRXP file</td><td>MeteoIO's library version</td></tr>
  *  <tr><td>REXCHANGE</td><td>Data exchange number</td><td>Per station and parameter: MIO_STATIONID_PARAMETER</td></tr>
- *  <tr><td>RINVAL</td><td>Code for invalid data</td><td>MeteoIO's nodata, usually -999</td></tr>
+ *  <tr><td>RINVAL</td><td>Code for invalid data</td><td>MeteoIO's nodata (-999), or the value set for `ZRXP_RINVAL`</td></tr>
  *  <tr><td>SANR</td><td>Station ID</td><td>Station ID</td></tr>
  *  <tr><td>CNR</td><td>[Optional] Parameter ID</td><td>MeteoIO's internal index for the parameter</td></tr>
- *  <tr><td>TZ</td><td>Time zone</td><td>TZ of first output datapoint</td></tr>
+ *  <tr><td>TZ</td><td>Time zone</td><td>Time zone of first output datapoint</td></tr>
  *  <tr><td>CNAME</td><td>Name of parameter</td><td>MeteoIO's short name for the parameter (if available)</td></tr>
  *  <tr><td>CUNIT</td><td>[Optional] Unit of parameter</td><td>MeteoIO's unit for the parameter (if available)</td></tr>
  *  <tr><td>LAYOUT</td><td>Parameter layout</td><td>(timestamp,value,status) and optionally remark</td></tr>
@@ -82,20 +82,25 @@ namespace mio {
  * Can be `COMMENT` (default, not used in WISKI import), `KEYWORD` (respected by the
  * WISKI import), or `OFF`;
  * - ZRXP_WRITE_CNR: Outputs MeteoIO's internal parameter index (default: true);
+ * - ZRXP_RINVAL: The value given to WISKI to interpret as missing data (default: MeteoIO's nodata, usually -999);
  * - ZRXP_REMARK: A remark that is passed through to each output line (default: empty);
  * - ZRXP_STATUS_UNALTERED: Status to give for data that was checked and left unchanged (default: 41);
  * - ZRXP_STATUS_RESAMPLED: Status for temporally interpolated data (default: 42);
  * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 43);
- * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 44).
+ * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 44);
+ * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others).
  *
- * The last four status parameters are used to transport data quality assurance flags to the database.
+ * The last five status parameters are used to transport data quality assurance flags to the database.
  * At the moment, this has to be done on a per-timestamp basis, meaning that for a given timestamp if any value
- * at all was filtered / generated / resampled, then the flag will be set for all parameters.
+ * at all was filtered / generated / resampled, then the flag will be set for all parameters. An exception is
+ * `ZRXP_STATUS_NODATA`, which will be set only if the exact value is found to be `nodata` (e. g. -999), regardless
+ * of whether this is an original gap or due to filtering. If `ZRXP_STATUS_NODATA` is not given a value, then this
+ * check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
  *
- * @note WISKI demands Latin-1 as character encoding, which can be troublesome for some symbols. For example,
- * if you want to pass units (`ZRXP_WRITE_UNITS=KEYWORD`), the wind direction in ° might not be read. This is
- * why you can turn unit output off altogether (or convert after the fact with e. g.
- * `iconv -f UTF-8 -t ISO-8859-1 "$file" -o "$file".out`).
+ * @note In addition, you can separately set `ZRXP_RINVAL`. This is necessary for a use case where original and
+ * potentially newer data is merged with filtered data. WISKI would fill data gaps with original data and
+ * therefore WISKI's nodata value (`RINVAL`) must not match MeteoIO's. This way it's possible to create
+ * persistent gaps on import according to the status flag `ZRXP_STATUS_NODATA`.
  *
  * For the file extension, sometimes `.rxp` is used. The separator should either be `|` or `;` which will
  * result in the header fields being separated by `|*|` or `;*;` respectively. The remark offers a
@@ -141,6 +146,11 @@ namespace mio {
  * were printed the next header starting with \c \#\#Station... could follow below.
  * Here, more information about the <a href="https://www.tbbm.at/display/TBBMAT/ZRXP">ZRXP format specifications</a>
  * is available.
+ *
+ * @note WISKI demands Latin-1 as character encoding, which can be troublesome for some symbols. For example,
+ * if you want to pass units (`ZRXP_WRITE_UNITS=KEYWORD`), the wind direction in ° might not be read. This is
+ * why you can turn unit output off altogether (or convert after the fact with e. g.
+ * `iconv -f UTF-8 -t ISO-8859-1 "$file" -o "$file".out`).
  */
 
 /**
@@ -185,12 +195,23 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	bool zrxp_write_cnr(true); //output parameter index
 	cfg.getValue("ZRXP_WRITE_CNR", "Output", zrxp_write_cnr, IOUtils::nothrow);
 
-	//read which quality flags should be set for filtered, resampled, and generated:
-	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44);
+	//read which quality flags should be set for filtered, resampled, generated, and nodata:
+	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44), qa_nodata;
+	bool use_qa_nodata(false); //disabled by default
 	cfg.getValue("ZRXP_STATUS_UNALTERED", "Output", qa_unaltered, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_RESAMPLED", "Output", qa_resampled, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_GENERATED", "Output", qa_generated, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_FILTERED", "Output", qa_filtered, IOUtils::nothrow);
+	if (cfg.keyExists("ZRXP_STATUS_NODATA", "Output")) { //value is nodata before and/or after filtering
+		cfg.getValue("ZRXP_STATUS_NODATA", "Output", qa_nodata);
+		use_qa_nodata = true; //if not used, nodata is not treated differently
+	}
+
+	//normally, nodata is transportet to RINVAL, but we also allow something different:
+	double zrxp_rinval = IOUtils::nodata;
+	if (cfg.keyExists("ZRXP_RINVAL", "Output")) { //now, nodata and RINVAL could be different
+		cfg.getValue("ZRXP_RINVAL", "Output", zrxp_rinval);
+	}
 
 	//read remark and then construct layout string:
 	std::string zrxp_layout("(timestamp,value,status");
@@ -210,7 +231,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		if (vecMeteo[ii].empty()) continue; //instead of .at() for speed
 
 		//assuming constant metadata per station (WISKI tracks such changes in timelines)
-		StationData sd = vecMeteo[ii][0].meta;
+		StationData sd = vecMeteo[ii].front().meta;
 		if (sd.stationID.empty()) {
 			std::ostringstream ss;
 			ss << "Station" << ii+1;
@@ -219,7 +240,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		std::vector<bool> vecUsedParams; //will be filled with true or false for each param
 		bool data_exists(false);
-		const size_t nr_of_params = vecMeteo[ii][0].getNrOfParameters();
+		const size_t nr_of_params = vecMeteo[ii].front().getNrOfParameters();
 		checkForUsedParameters(vecMeteo[ii], vecUsedParams, nr_of_params, data_exists);
 
 		if (data_exists) { //don't open the file if there is no data at all
@@ -243,7 +264,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 				if (!vecUsedParams[pp]) continue; //don't output all nodata params
 
-				const std::string param_name = vecMeteo[ii][0].getNameForParameter(pp);
+				const std::string param_name = vecMeteo[ii].front().getNameForParameter(pp);
 				const size_t param_idx = MeteoGrids::getParameterIndex(param_name);
 				//only the MeteoGrids class offers units, so get it from there, if available:
 				std::string param_unit("N/A"), param_description("N/A");
@@ -265,12 +286,12 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					outfile << " (" << param_unit << ")";
 				outfile << std::endl;
 				outfile << "#ZRXPVERSION30" << sep << "ZRXPCREATORMeteoIO" << getLibVersion(true) << sep << std::endl
-						<< "#REXCHANGE" << exchange_no << sep << "RINVAL" << IOUtils::nodata << sep << std::endl;
+						<< "#REXCHANGE" << exchange_no << sep << "RINVAL" << zrxp_rinval << sep << std::endl;
 				outfile << "#SANR" << sd.stationID << sep;
 				if (zrxp_write_cnr)
 					outfile << "CNR" << pp << sep;
 				outfile << std::endl;
-				outfile << "#TZUTC" << vecMeteo[ii][0].date.getTimeZone() << sep << std::endl;
+				outfile << "#TZUTC" << vecMeteo[ii].front().date.getTimeZone() << sep << std::endl;
 				outfile << "#CNAME" << param_name << sep;
 				if (zrxp_write_units == "KEYWORD")
 					outfile << "CUNIT" << param_unit << sep;
@@ -279,16 +300,18 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) { //loop through datasets
 
-					//transport data qa flags (same for all parameters of a timestep):
+					//transport data qa flags (same for all parameters of a timestep, except qa_nodata):
 					int qa_status(qa_unaltered);
-					if (vecMeteo[ii][jj].isFiltered())
+					if ((vecMeteo[ii][jj](pp) == IOUtils::nodata) && use_qa_nodata)
+						qa_status = qa_nodata; //this is set per timestep and parameter!
+					else if (vecMeteo[ii][jj].isFiltered())
 						qa_status = qa_filtered;
 					else if (vecMeteo[ii][jj].isResampled())
 						qa_status = qa_resampled;
 					else if (vecMeteo[ii][jj].isGenerated())
 						qa_status = qa_generated;
 
-					//print timestamp, value, optional status, and optional remark
+					//print timestamp, value, status, and optional remark
 					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
 								<< " " << qa_status << zrxp_remark << std::endl;
 				}
