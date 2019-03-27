@@ -11,6 +11,10 @@ IF(PLUGIN_ARCIO)
 	SET(plugins_sources ${plugins_sources} plugins/ARCIO.cc)
 ENDIF(PLUGIN_ARCIO)
 
+IF(PLUGIN_ARGOSIO)
+	SET(plugins_sources ${plugins_sources} plugins/Argos.cc)
+ENDIF(PLUGIN_ARGOSIO)
+
 IF(PLUGIN_A3DIO)
 	SET(plugins_sources ${plugins_sources} plugins/A3DIO.cc)
 ENDIF(PLUGIN_A3DIO)

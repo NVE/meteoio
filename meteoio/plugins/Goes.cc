@@ -142,13 +142,13 @@ void GoesIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		it->second.meteoIdx = IOUtils::npos; //reset positions in vecMeteo
 
 	if (vecFilenames.size()==1) {
-		readRawGoes( meteopath+"/"+vecFilenames[0], dateStart, dateEnd, vecMeteo );
+		readRaw( meteopath+"/"+vecFilenames[0], dateStart, dateEnd, vecMeteo );
 		return;
 	}
 
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 		std::vector< std::vector<MeteoData> > vecTmp;
-		readRawGoes( meteopath+"/"+vecFilenames[ii], dateStart, dateEnd, vecTmp );
+		readRaw( meteopath+"/"+vecFilenames[ii], dateStart, dateEnd, vecTmp );
 
 		//merge the tmp data into vecMeteo
 		for (size_t st=0; st<vecTmp.size(); st++) {
@@ -171,7 +171,7 @@ void GoesIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void GoesIO::readRawGoes(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
+void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 		throw InvalidNameException(file_and_path, AT);

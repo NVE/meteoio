@@ -15,18 +15,17 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef GOES_H
-#define GOES_H
+#ifndef ARGOS_H
+#define ARGOS_H
 
 #include <meteoio/IOInterface.h>
 
 namespace mio {
 
-class GoesStation {
+class ArgosStation {
 	public:
-		GoesStation();
-		GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
-		Date parseDate(const std::vector<float>& raw_data) const;
+		ArgosStation();
+		ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
 		MeteoData parseDataLine(const Date& dt, const std::vector<float>& raw_data) const;
 		StationData getStationData() const {return md_template.meta;}
 		bool isValid() const {return validStation;}
@@ -44,22 +43,23 @@ class GoesStation {
 		bool validStation;
 };
 
+
 /**
- * @class GoesIO
+ * @class ArgosIO
  * @brief This plugin deals with data that has been transmitted through the
- * <A HREF="https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite">GOES</A> satellites
- * (see also https://www.goes-r.gov/resources/docs.html and https://www.rtl-sdr.com/tag/goes/). In order to reduce data
- * transfers, no headers are provided with the data and therefore all the metadata will have to be provided to the plugin.
+ * <A HREF="http://www.argos-system.org/wp-content/uploads/2016/08/r286_9_argos3_metop_en.pdf">ARGOS</A> satellites. 
+ * In order to reduce data transfers, no headers are provided with the data and therefore all the metadata 
+ * will have to be provided to the plugin.
  *
  * @ingroup plugins
  * @author Mathias Bavay
- * @date   2019-03-05
+ * @date   2019-03-21
  */
-class GoesIO : public IOInterface {
+class ArgosIO : public IOInterface {
 	public:
-		GoesIO(const std::string& configfile);
-		GoesIO(const GoesIO&);
-		GoesIO(const Config& cfgreader);
+		ArgosIO(const std::string& configfile);
+		ArgosIO(const ArgosIO&);
+		ArgosIO(const Config& cfgreader);
 		
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
@@ -68,12 +68,16 @@ class GoesIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection(const Config& cfgreader);
+		static std::string readLine(std::ifstream &fin, size_t &linenr);
+		static Date parseDate(const std::string& str, const double& in_timezone, const size_t &linenr);
+		static std::vector<float> parseData(std::vector<unsigned int> &raw);
+		std::vector<float> readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const Date& dateStart, const Date& dateEnd) const;
+		void readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd) const;
 		void readRaw(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void addStation(const std::string& goesID);
+		void addStation(const std::string& argosID);
 
 		std::vector<std::string> vecFilenames;
-
-		std::map<std::string, GoesStation> stations; ///< the stations' properties for each goesID
+		std::map<std::string, ArgosStation> stations; ///< the stations' properties for each argosID
 		Config metaCfg;
 		std::string meteopath;
 		std::string coordin, coordinparam; //projection parameters
