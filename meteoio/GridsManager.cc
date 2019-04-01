@@ -38,14 +38,13 @@ GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
 
 /**
 * @brief Set the desired ProcessingLevel
-*        The processing level affects the way meteo data is read and processed
-*        Three values are possible:
-*        - IOUtils::raw data shall be read directly from the buffer
-*        - IOUtils::filtered data shall be filtered before returned to the user
-*        - IOUtils::resampled data shall be resampled before returned to the user
-*          this only affects the function getMeteoData(const Date&, METEO_DATASET&);
+* @details The processing level affects the way meteo data is read and processed. Three values are possible:
+*    - IOUtils::raw data shall be read directly from the buffer;
+*    - IOUtils::filtered data shall be filtered before returned to the user;
+*    - IOUtils::resampled data shall be resampled before returned to the user;
 *
-*        The three values can be combined: e.g. IOUtils::filtered | IOUtils:resampled
+* This only affects the function getMeteoData(const Date&, METEO_DATASET&). The three values 
+* can be combined: e.g. IOUtils::filtered | IOUtils:resampled
 * @param i_level The ProcessingLevel values that shall be used to process data
 */
 void GridsManager::setProcessingLevel(const unsigned int& i_level)
@@ -72,7 +71,13 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
 	}
 }
 
-//do we have the requested parameter either in buffer or raw?
+/**
+* @brief Check if a given parameter is available in a grid (in buffer or in raw data)
+* @param available_params list of parameters available by a direct (=raw) read from the plugin
+* @param parameter the parameter to check the availability of
+* @param date the data of availability
+* @return true if the given parameter is available (ie a "read" will return the data for this parameter)
+*/
 bool GridsManager::isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const
 {
 	const bool in_buffer = buffer.has(parameter, date);
@@ -82,17 +87,41 @@ bool GridsManager::isAvailable(const std::set<size_t>& available_params, const M
 	return in_raw;
 }
 
-//get the requested grid either from buffer or by a direct reading
-//the goal is that subsequent calls to the same grid find it in the buffer transparently
-void GridsManager::getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
+/**
+* @brief Read a grid, either from the buffer or from the plugin
+* @param parameter the parameter to get
+* @param date the data associated with the parameter
+* @return 2D grid containing the data for this parameter at this date
+*/
+Grid2DObject GridsManager::getRawGrid(const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	if (buffer.get(grid2D, parameter, date)) return;
-	iohandler.read2DGrid(grid2D, parameter, date);
+	Grid2DObject grid2D;
+	if (!buffer.get(grid2D, parameter, date)) {
+		iohandler.read2DGrid(grid2D, parameter, date);
+		buffer.push(grid2D, parameter, date);
+	}
+	
+	return grid2D;
 }
 
-//Grids of meteo params are coming out of models, so we assume that all possible parameters
-//are available at each time steps. So we don't need to search a combination of parameters and timesteps
-bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date)
+/**
+* @brief Generate a grid for a given parameter, based on the available parameters
+* @details Even if a given parameter is not available, it might be possible to generate it
+* on the fly base don the available data (for example, U and V wind components can be used to generate
+* the VW and DW vector wind components).
+* 
+* It is assumed that the meteo parameters are coming out of models, so the available_params are 
+* all available at all the timesteps, so we don't need to search a combination of parameters and timesteps
+* 
+* @param[out] grid2D a grid filled with the requested parameter or empty if it could not be generated
+* @param available_params list of parameters available by a direct (=raw) read from the plugin
+* @param parameter the parameter to get
+* @param date the data associated with the parameter
+* @return true if the requested grid could be generated
+* 
+* @note HACK missing: checking that all grids used together have the same geolocalization
+*/
+bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if (parameter==MeteoGrids::DEM) {
 		if (!dem_altimeter) return false;
@@ -101,10 +130,9 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasP_sea = isAvailable(available_params, MeteoGrids::P_SEA, date);
 		if (!hasTA || !hasP || !hasP_sea) return false;
 
-		Grid2DObject ta, p, p_sea;
-		getGrid(ta, MeteoGrids::TA, date);
-		getGrid(p, MeteoGrids::P, date);
-		getGrid(p_sea, MeteoGrids::P_SEA, date);
+		const Grid2DObject ta( getRawGrid(MeteoGrids::TA, date) );
+		const Grid2DObject p( getRawGrid(MeteoGrids::P, date) );
+		const Grid2DObject p_sea( getRawGrid(MeteoGrids::P_SEA, date) );
 
 		static const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
 		static const double k_inv = 1./k;
@@ -123,11 +151,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasV = isAvailable(available_params, MeteoGrids::V, date);
 		if (!hasU || !hasV) return false;
 		
-		Grid2DObject U,V;
-		getGrid(U, MeteoGrids::U, date);
-		buffer.push(U, MeteoGrids::U, date);
-		getGrid(V, MeteoGrids::V, date);
-		buffer.push(V, MeteoGrids::V, date);
+		const Grid2DObject V( getRawGrid(MeteoGrids::V, date) );
+		Grid2DObject U( getRawGrid(MeteoGrids::U, date) );
 		
 		grid2D.set(U, IOUtils::nodata);
 		if (parameter==MeteoGrids::VW) {
@@ -144,26 +169,21 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 	if (parameter==MeteoGrids::RH) {
 		const bool hasTA = isAvailable(available_params, MeteoGrids::TA, date);
 		if (!hasTA) return false;
-		Grid2DObject TA;
-		getGrid(TA, MeteoGrids::TA, date);
-		buffer.push(TA, MeteoGrids::TA, date);
+		const Grid2DObject TA( getRawGrid(MeteoGrids::TA, date) );
 		
 		const bool hasDEM = isAvailable(available_params, MeteoGrids::DEM, date);
 		const bool hasQI = isAvailable(available_params, MeteoGrids::QI, date);
 		const bool hasTD = isAvailable(available_params, MeteoGrids::TD, date);
 		
 		if (hasTA && hasTD) {
-			getGrid(grid2D, MeteoGrids::TD, date);
-			buffer.push(grid2D, MeteoGrids::TD, date);
+			grid2D = getRawGrid(MeteoGrids::TD, date);
 			
 			for (size_t ii=0; ii<grid2D.size(); ii++)
 				grid2D(ii) = Atmosphere::DewPointtoRh(grid2D(ii), TA(ii), false);
 			return true;
 		} else if (hasQI && hasDEM && hasTA) {
-			Grid2DObject dem;
-			getGrid(dem, MeteoGrids::DEM, date); //HACK use readDEM instead?
-			getGrid(grid2D, MeteoGrids::QI, date);
-			buffer.push(grid2D, MeteoGrids::QI, date);
+			const Grid2DObject dem( getRawGrid(MeteoGrids::DEM, date) ); //HACK use readDEM instead?
+			grid2D = getRawGrid(MeteoGrids::QI, date);
 			for (size_t ii=0; ii<grid2D.size(); ii++)
 				grid2D(ii) = Atmosphere::specToRelHumidity(dem(ii), TA(ii), grid2D(ii));
 			return true;
@@ -177,9 +197,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
 		
 		if (hasISWR_DIFF && hasISWR_DIR) {
-			Grid2DObject iswr_diff;
-			getGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date);
-			getGrid(grid2D, MeteoGrids::ISWR_DIR, date);
+			const Grid2DObject iswr_diff( getRawGrid(MeteoGrids::ISWR_DIFF, date) );
+			grid2D = getRawGrid(MeteoGrids::ISWR_DIR, date);
 			grid2D += iswr_diff;
 			buffer.push(grid2D, MeteoGrids::ISWR, date);
 			return true;
@@ -188,9 +207,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasALB = isAvailable(available_params, MeteoGrids::ALB, date);
 		const bool hasRSWR = isAvailable(available_params, MeteoGrids::ISWR, date);
 		if (hasRSWR && hasALB) {
-			Grid2DObject alb;
-			getGrid(alb, MeteoGrids::ALB, date);
-			getGrid(grid2D, MeteoGrids::RSWR, date);
+			const Grid2DObject alb( getRawGrid(MeteoGrids::ALB, date) );
+			grid2D = getRawGrid(MeteoGrids::RSWR, date);
 			grid2D /= alb;
 			buffer.push(grid2D, MeteoGrids::ISWR, date);
 			return true;
@@ -209,17 +227,15 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 			const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
 			if (!hasISWR_DIFF || !hasISWR_DIR) return false;
 			
-			Grid2DObject iswr_diff;
-			getGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date);
-			getGrid(grid2D, MeteoGrids::ISWR_DIR, date);
+			const Grid2DObject iswr_diff( getRawGrid(MeteoGrids::ISWR_DIFF, date) );
+			grid2D = getRawGrid(MeteoGrids::ISWR_DIR, date);
 			grid2D += iswr_diff;
 			buffer.push(grid2D, MeteoGrids::ISWR, date);
 		} else {
-			getGrid(grid2D, MeteoGrids::ISWR, date);
+			grid2D = getRawGrid(MeteoGrids::ISWR, date);
 		}
 		
-		Grid2DObject alb;
-		getGrid(alb, MeteoGrids::ALB, date);
+		const Grid2DObject alb( getRawGrid(MeteoGrids::ALB, date) );
 		
 		grid2D *= alb;
 		buffer.push(grid2D, MeteoGrids::RSWR, date);
@@ -231,9 +247,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasSWE = isAvailable(available_params, MeteoGrids::SWE, date);
 		
 		if (hasRSNO && hasSWE) {
-			Grid2DObject rsno;
-			getGrid(rsno, MeteoGrids::RSNO, date);
-			getGrid(grid2D, MeteoGrids::SWE, date);
+			const Grid2DObject rsno( getRawGrid(MeteoGrids::RSNO, date) );
+			grid2D = getRawGrid(MeteoGrids::SWE, date);
 			grid2D *= 1000.0; //convert mm=kg/m^3 into kg
 			grid2D /= rsno;
 			buffer.push(grid2D, MeteoGrids::HS, date);
@@ -247,11 +262,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
 		
 		if (hasPSUM_S && hasPSUM_L) {
-			Grid2DObject psum_l;
-			getGrid(grid2D, MeteoGrids::PSUM_S, date);
-			buffer.push(grid2D, MeteoGrids::PSUM_S, date);
-			getGrid(psum_l, MeteoGrids::PSUM_L, date);
-			buffer.push(psum_l, MeteoGrids::PSUM_L, date);
+			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );
+			grid2D = getRawGrid(MeteoGrids::PSUM_S, date);
 			grid2D += psum_l;
 			buffer.push(grid2D, MeteoGrids::PSUM, date);
 			return true;
@@ -263,11 +275,8 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
 		
 		if (hasPSUM_S && hasPSUM_L) {
-			Grid2DObject psum_l;
-			getGrid(grid2D, MeteoGrids::PSUM_S, date);
-			buffer.push(grid2D, MeteoGrids::PSUM_S, date);
-			getGrid(psum_l, MeteoGrids::PSUM_L, date);
-			buffer.push(psum_l, MeteoGrids::PSUM_L, date);
+			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );
+			grid2D = getRawGrid(MeteoGrids::PSUM_S, date);
 			grid2D += psum_l;
 			buffer.push(grid2D, MeteoGrids::PSUM, date);
 			
@@ -334,6 +343,14 @@ bool GridsManager::setGrids2d_list(const Date& dateStart, const Date& dateEnd)
 	return true;
 }
 
+/**
+* @brief Read the requested grid, according to the configured processing level
+* @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
+* be generated transparently. If everything fails, it will thrown an exception.
+* @param[out] grid2D a grid filled with the requested parameter
+* @param parameter the parameter to get
+* @param[in] date the timestamp that we would like to have
+*/
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if (processing_level == IOUtils::raw){
@@ -354,11 +371,10 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 				iohandler.read2DGrid(grid2D, parameter, date);
 				buffer.push(grid2D, parameter, date);
 			} else { //the right parameter could not be found, can we generate it?
-				if (!read2DGrid(grid2D, it->second, parameter, date))
+				if (!generateGrid(grid2D, it->second, parameter, date))
 					throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
 			}
 		} else {
-
 			const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
 			const std::string msg2("There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO));
 			throw NoDataException(msg1 + msg2, AT);

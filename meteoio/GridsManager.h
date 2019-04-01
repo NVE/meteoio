@@ -72,8 +72,8 @@ class GridsManager {
 
 	private:
 		bool isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const;
-		void getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date);
-		bool read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
+		Grid2DObject getRawGrid(const MeteoGrids::Parameters& parameter, const Date& date);
+		bool generateGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
 		bool setGrids2d_list(const Date& date);
 		bool setGrids2d_list(const Date& dateStart, const Date& dateEnd);
 
