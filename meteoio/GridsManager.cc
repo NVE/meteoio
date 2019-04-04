@@ -447,7 +447,7 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 /**
 * @brief Generate a grid for a given parameter, based on the available parameters
 * @details Even if a given parameter is not available, it might be possible to generate it
-* on the fly base don the available data (for example, U and V wind components can be used to generate
+* on the fly based on the available data (for example, U and V wind components can be used to generate
 * the VW and DW vector wind components).
 * 
 * It is assumed that the meteo parameters are coming out of models, so the available_params are 

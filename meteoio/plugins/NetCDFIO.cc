@@ -1477,7 +1477,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 			//this is (very cheap) approximation of some kind of projection from x/y to lat/lon
 			//There is a trick here: walking along a line of constant northing does NOT lead to a constant latitude. Both grids
 			//are shifted (even if a little), which means that the center of lat/lon is != center of east./north..
-			//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonnable approximation
+			//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonable approximation
 			double alpha;
 			double lat_length, lon_length, cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
 			for(size_t ii=0; ii<5; ii++) {
