@@ -861,17 +861,20 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
 		
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
-		std::string datetime_spec;
+		std::string datetime_spec, date_spec, time_spec;
 		if (cfg.keyExists(pre+"DATETIME_SPEC", "Input")) cfg.getValue(pre+"DATETIME_SPEC", "Input", datetime_spec);
-		else cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
-		
-		std::string date_spec;
 		if (cfg.keyExists(pre+"DATE_SPEC", "Input")) cfg.getValue(pre+"DATE_SPEC", "Input", date_spec);
-		else cfg.getValue(dflt+"DATE_SPEC", "Input", date_spec, IOUtils::nothrow);
-		
-		std::string time_spec;
 		if (cfg.keyExists(pre+"TIME_SPEC", "Input")) cfg.getValue(pre+"TIME_SPEC", "Input", time_spec);
-		else cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
+		if (datetime_spec.empty() && date_spec.empty() && time_spec.empty()) {
+			cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
+			cfg.getValue(dflt+"DATE_SPEC", "Input", date_spec, IOUtils::nothrow);
+			cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
+		}
+
+		if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
+			throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
+		if ((!date_spec.empty() && time_spec.empty()) || (date_spec.empty() && !time_spec.empty()))
+			throw InvalidArgumentException("Please define both date_spec and time_spec, ", AT);
 		
 		if (!datetime_spec.empty())
 			tmp_csv.setDateTimeSpec(datetime_spec);
