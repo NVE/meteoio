@@ -59,15 +59,22 @@ void GridsManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
-void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
+/**
+* @brief Read the requested grid, according to the configured processing level
+* @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
+* be generated transparently. If everything fails, it will thrown an exception.
+* @param[out] grid2D a grid filled with the requested parameter
+* @param option a parameter used to figure out which filename or grid to read
+*/
+void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& option)
 {
 	if (processing_level == IOUtils::raw){
-		iohandler.read2DGrid(grid2D, filename);
+		iohandler.read2DGrid(grid2D, option);
 	} else {
-		if (buffer.get(grid2D, filename)) return;
+		if (buffer.get(grid2D, option)) return;
 
-		iohandler.read2DGrid(grid2D, filename);
-		buffer.push(grid2D, filename);
+		iohandler.read2DGrid(grid2D, option);
+		buffer.push(grid2D, option);
 	}
 }
 
@@ -90,12 +97,15 @@ void GridsManager::readDEM(DEMObject& grid2D)
 	if (processing_level == IOUtils::raw){
 		iohandler.readDEM(grid2D);
 	} else {
-		if (buffer.get(grid2D, "/:DEM"))
-			return;
-
-		iohandler.readDEM(grid2D);
-		buffer.push(grid2D, "/:DEM");
+		if (!buffer.get(grid2D, "/:DEM")) {
+			iohandler.readDEM(grid2D);
+			buffer.push(grid2D, "/:DEM");
+		}
 	}
+	
+	//reproject grid if it is lat/lon
+	if (grid2D.isLatlon())
+		grid2D.reproject(); //this is currently very, very primitive
 }
 
 void GridsManager::readLanduse(Grid2DObject& grid2D)
@@ -134,8 +144,8 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 {
 	std::vector<StationData> v_stations;
 	//get virtual stations coordinates
-	std::string coordin, coordinparam, coordout, coordoutparam;
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	std::string coordin, coordinparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	Coords llcorner( dem.llcorner );
 	llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
 	const double dem_easting = llcorner.getEasting();
@@ -172,8 +182,8 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const
 {
 	//get virtual stations coordinates
-	std::string coordin, coordinparam, coordout, coordoutparam;
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	std::string coordin, coordinparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	Coords llcorner( dem.llcorner );
 	llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
 	const double dem_easting = llcorner.getEasting();
@@ -192,12 +202,14 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 		if (!dem.gridify(curr_point))
 			throw NoDataException("Virtual station "+vecStation[ii].second+" is not contained in provided DEM "+dem.toString(DEMObject::SHORT), AT);
 
+		//extract vstation number, used to build the station name and station ID
+		const std::string id_num( vecStation[ii].first.substr(std::string("Vstation").length()) );
+		
 		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
 		if (fourNeighbors) { //pick the surrounding four nodes
 			if (i==dem.getNx()) i--;
 			if (j==dem.getNy()) j--;
 
-			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
 			for (size_t mm=i; mm<=i+1; mm++) {
 				for (size_t nn=j; nn<=j+1; nn++) {
 					const double easting = dem_easting + dem.cellsize*static_cast<double>(mm);
@@ -219,8 +231,6 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			}
 
-			//extract vstation number, build the station name and station ID
-			const std::string id_num( vecStation[ii].first.substr(std::string("Vstation").length()) );
 			StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
 			sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 			v_stations.push_back( sd );
@@ -258,10 +268,10 @@ METEO_SET GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const s
 
 	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
 		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>( v_params[param] );
-		const Grid2DObject grid( getGrid(grid_param, date) ); //HACK cartesian=false
-
+		const Grid2DObject grid( getGrid(grid_param, date, false) ); //keep lat/lon grids if they are so
+		
 		if (!grid.isSameGeolocalization(dem))
-			throw InvalidArgumentException("In GRID_EXTRACT, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+date.toString(Date::ISO));
+			throw InvalidArgumentException("In GRID_EXTRACT, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+date.toString(Date::ISO), AT);
 
 		for (size_t ii=0; ii<nrStations; ii++) { //loop over all virtual stations
 			const size_t grid_i = v_stations[ii].position.getGridI(); //this should work since invalid stations have been removed in init
@@ -410,7 +420,7 @@ Grid2DObject GridsManager::getRawGrid(const MeteoGrids::Parameters& parameter, c
 * @param[in] enforce_cartesian set to true to garantee a cartesian grid (it will be reprojected if necessary)
 * @return a grid filled with the requested parameter
 */
-Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& /*enforce_cartesian*/)
+Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian)
 {
 	Grid2DObject grid2D;
 
@@ -440,6 +450,10 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 			}
 		}
 	}
+
+	 //reproject grid if it is lat/lon
+	if (enforce_cartesian && grid2D.isLatlon())
+		grid2D.reproject(); //this is currently very, very primitive
 
 	return grid2D;
 }
@@ -502,6 +516,7 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 			for (size_t ii=0; ii<grid2D.size(); ii++)
 				grid2D(ii) =  fmod( atan2( U(ii), V(ii) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
 		}
+
 		buffer.push(grid2D, parameter, date);
 		return true;
 	}

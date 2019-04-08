@@ -117,8 +117,6 @@ namespace ncpp {
 	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited=false);
 	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
 
-	double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
-	double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
 	void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder=true, const bool& normal_Yorder=true);
 	void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);

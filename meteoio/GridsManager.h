@@ -33,7 +33,7 @@ class GridsManager {
 		GridsManager(IOHandler& in_iohandler, const Config& in_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
-		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
+		void read2DGrid(Grid2DObject& grid_out, const std::string& option="");
 		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		
 		//HACK buffer 3D grids!

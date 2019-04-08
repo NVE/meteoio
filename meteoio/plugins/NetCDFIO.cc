@@ -686,15 +686,18 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	if (!isLatLon && (!hasDimension(ncpp::EASTING) || !hasDimension(ncpp::NORTHING))) throw IOException("No easting / northing could be identified in file "+file_and_path, AT);
 
 	//define the results grid
-	mio::Coords llcorner(coord_sys, coord_param); //if an EPSG was provided, this has been converted to coord_sys/coord_param
-	if (isLatLon)
+	Grid2DObject grid;
+	if (isLatLon) { //the reprojection (if necessary) will be handled by GridsManager
+		mio::Coords llcorner(coord_sys, coord_param);
 		llcorner.setLatLon( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
-	else
+		grid.set(vecX.size(), vecY.size(), IOUtils::nodata, llcorner);
+		IOInterface::set2DGridLatLon(grid, std::max(vecY.front(), vecY.back()), std::max(vecX.front(), vecX.back()));
+	} else {
+		mio::Coords llcorner(coord_sys, coord_param);
 		llcorner.setXY( std::min(vecX.front(), vecX.back()), std::min(vecY.front(), vecY.back()), IOUtils::nodata);
-	//TODO expand the definition of Grid2DObject to support lat/lon grids and reproject in GridsManager
-	double resampling_factor_x = IOUtils::nodata, resampling_factor_y = IOUtils::nodata;
-	const double cellsize = (isLatLon)? ncpp::calculate_cellsize(resampling_factor_x, resampling_factor_y, vecX, vecY) : ncpp::calculate_XYcellsize(resampling_factor_x, resampling_factor_y, vecX, vecY);
-	Grid2DObject grid(vecX.size(), vecY.size(), cellsize, llcorner);
+		const double cellsize = IOInterface::computeGridXYCellsize(vecX, vecY);
+		grid.set(vecX.size(), vecY.size(), cellsize, llcorner);
+	}
 
 	//read the raw data, copy it into the Grid2DObject
 	int ncid;
