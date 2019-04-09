@@ -307,19 +307,19 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const
 	
 	if (ur_lat!=IOUtils::nodata && ur_lon!=IOUtils::nodata) { //use lat/lon extraction if possible
 		//remember that cellsize = (ur_lon - llcorner.getLon()) / (getNx()-1.)
-		ii = (int)floor( (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1) + .5); //round to nearest
-		jj = (int)floor( (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1) + .5);
+		ii = (int)floor( (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
+		jj = (int)floor( (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
 	} else {
 		if (point.isSameProj(llcorner)==true) {
 			//same projection between the grid and the point -> precise, simple and efficient arithmetics
-			ii = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize + .5); //round to nearest
-			jj = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize + .5);
+			ii = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize); //round to lowest
+			jj = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize);
 		} else {
 			//projections are different, so we have to do an intermediate step...
 			Coords tmp_point(point);
 			tmp_point.copyProj(llcorner); //getting the east/north coordinates in the grid's projection
-			ii = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize + .5); //round to nearest
-			jj = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize + .5);
+			ii = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize); //round to lowest
+			jj = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize);
 		}
 	}
 
