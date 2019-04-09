@@ -298,7 +298,7 @@ GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const
 	//construct the units_offset
 	const std::string section_offsets = (metaCfg.keyExists("units_offset", goesID))? goesID : "default";
 	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
-		units_offset = metaCfg.get("UNITS_OFFSET", section_offsets);
+		metaCfg.getValue("UNITS_OFFSET", section_offsets, units_offset);
 	} else {
 		units_offset = std::vector<double>(fields_idx.size(), 0.);
 	}
@@ -306,7 +306,7 @@ GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const
 	//construct the section_multipliers
 	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", goesID))? goesID : "default";
 	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
-		units_multiplier = metaCfg.get("UNITS_MULTIPLIER", section_multipliers);
+		metaCfg.getValue("UNITS_MULTIPLIER", section_multipliers, units_multiplier);
 	} else {
 		units_multiplier = std::vector<double>(fields_idx.size(), 1.);
 	}
