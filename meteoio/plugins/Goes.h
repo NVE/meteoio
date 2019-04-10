@@ -36,7 +36,7 @@ class GoesStation {
 		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
 
 		std::vector<size_t> fields_idx; ///< vector of MeteoData field index
-		std::vector<double> units_offset, units_multiplier;
+		std::vector<double> units_offset, units_multiplier, units_multiplier_neg;
 		MeteoData md_template;
 		double TZ;
 		float nodata;

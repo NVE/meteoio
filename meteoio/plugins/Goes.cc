@@ -70,6 +70,7 @@ namespace mio {
  *  - NAME: the station name (default: "Goes::" followed by Goes ID);
  *  - POSITION: the station coordinates, see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax;
  *  - UNITS_MULTIPLIER: factor to apply to each field to bring the value back to SI units (default: 1 for each field);
+ *  - UNITS_MULTIPLIER_NEG: factor to apply to each field to bring the value back to SI units, \b when the raw data is \b negative (default: same as UNITS_MULTIPLIER);
  *  - UNITS_OFFSET: offset to add to each field \b after applying the UNITS_MULTIPLIER, to bring the value back to SI units (default: 0 for each field);
  *  - FIELDS: the parameter name to use for each field;
  *
@@ -269,12 +270,12 @@ void GoesIO::addStation(const std::string& goesID)
 
 
 GoesStation::GoesStation()
-                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(0.), nodata(0.),
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(0.), nodata(0.),
                     stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
 {}
 
 GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
-                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(in_TZ), nodata(in_nodata),
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(in_TZ), nodata(in_nodata),
                     stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
 {
 	//construct the StationData for this station
@@ -311,6 +312,14 @@ GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const
 		metaCfg.getValue("UNITS_MULTIPLIER", section_multipliers, units_multiplier);
 	} else {
 		units_multiplier = std::vector<double>(fields_idx.size(), 1.);
+	}
+	
+	//construct the multipliers_neg
+	const std::string section_multipliers_neg = (metaCfg.keyExists("units_multiplier_neg", goesID))? goesID : "default";
+	if (metaCfg.keyExists("UNITS_MULTIPLIER_NEG", section_multipliers_neg)) {
+		metaCfg.getValue("UNITS_MULTIPLIER_NEG", section_multipliers_neg, units_multiplier_neg);
+	} else {
+		units_multiplier_neg = units_multiplier;
 	}
 }
 
@@ -361,7 +370,11 @@ MeteoData GoesStation::parseDataLine(const Date& dt, const std::vector<float>& r
 		const size_t idx = fields_idx[ii];
 		if (idx==IOUtils::npos) continue;
 		if (raw_data[ii] == nodata) continue;
-		md( idx ) = static_cast<double>(raw_data[ii]) * units_multiplier[ii] + units_offset[ii];
+
+		if (raw_data[ii]>=0)
+			md( idx ) = static_cast<double>(raw_data[ii]) * units_multiplier[ii] + units_offset[ii];
+		else
+			md( idx ) = static_cast<double>(raw_data[ii]) * units_multiplier_neg[ii] + units_offset[ii];
 	}
 
 	return md;
