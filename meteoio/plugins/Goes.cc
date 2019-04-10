@@ -193,13 +193,15 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 
 		const std::string goesID( line.substr(0, 8) ); //only first 8 characters of the station substring
 		if (goesID[0]!='8') continue; //invalid GOES ID, this must be an invalid line
-		const std::string chain( line.substr(dataStartPos) );
+		const std::string data_section( line.substr(dataStartPos) );
 
+		if (data_section.length()<=(3*nElems)) continue;
+		
 		for (size_t ii=1; ii<=nElems; ii++) {
 			raw_data[ii-1] = 0;
-			const int A = chain[3*ii-2] & 15;
-			const int B = chain[3*ii-1] & 63;
-			const int C = chain[3*ii-0] & 63;
+			const int A = data_section[3*ii-2] & 15;
+			const int B = data_section[3*ii-1] & 63;
+			const int C = data_section[3*ii-0] & 63;
 
 			if ((A*64+B) > 1008) {
 				raw_data[ii-1] = static_cast<float>( (B-48)*64 + C + 9000 );
