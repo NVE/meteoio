@@ -61,6 +61,7 @@ namespace mio {
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
+ * - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
  * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  * - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
@@ -73,6 +74,7 @@ namespace mio {
  * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
  * - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
  * - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
@@ -121,6 +123,8 @@ namespace mio {
  * - ALT (for the altitude);
  * - LON (for the longitude);
  * - LAT (for the latitude);
+ * - EASTING (as per your input coordinate system);
+ * - NORTHING (if LON/LAT is not used);
  * - SLOPE (in degrees);
  * - AZI (for the slope azimuth, in degree as read from a compass);
  * - NODATA (string to interpret as nodata);
@@ -154,7 +158,8 @@ namespace mio {
  * into one single station.
  * 
  * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or seperate date and time) and one
- * meteorological parameter.
+ * meteorological parameter. If there are multiple (potentially unimportant) parameters in your file you have to set CSV_SINGLE_PARAM_INDEX to the column number
+ * matching your parameter.
  * 
  * @section csvio_examples Examples
  * In order to read a bulletin file downloaded from IDAWEB, you need the following configuration:
@@ -253,6 +258,7 @@ namespace mio {
 //small helper functions for removal/replacement in strings
 inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false;}
 inline bool InvalidChar(const char& c) { return (c<32 || c>126); }
+inline bool isWhitespace(const char& c) { if (c==9 || c==32) return true; return false; } //tabs and spaces
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
@@ -299,8 +305,20 @@ void CsvParameters::setDelimiter(const std::string& delim)
 	}
 }
 
+void CsvParameters::setHeaderDelimiter(const std::string& delim)
+{
+	if (delim.size()==1) {
+		header_delim = delim[0];
+	} else {
+		if (delim.compare("SPACE")==0 || delim.compare("TAB")==0)
+			header_delim=' ';
+		else
+			throw InvalidArgumentException("The CSV header delimiter must be a single character or SPACE or TAB", AT);
+	}
+}
+
 //Given a provided field_type, attribute the value to the proper metadata variable.
-void CsvParameters::assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon)
+void CsvParameters::assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing)
 {
 	if (field_type=="ID") {
 		if (id.empty()) id = field_val;
@@ -329,7 +347,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 		
 		single_field = param;
 	} else {
-		if (field_type=="ALT" || field_type=="LON" || field_type=="LAT" || field_type=="SLOPE" || field_type=="AZI") {
+		if (field_type=="ALT" || field_type=="LON" || field_type=="LAT" || field_type=="SLOPE" || field_type=="AZI" || field_type=="EASTING" || field_type=="NORTHING") {
 			double tmp;
 			if (!IOUtils::convertString(tmp, field_val))
 				throw InvalidArgumentException("Could not extract metadata '"+field_type+"' for "+file_and_path, AT);
@@ -339,16 +357,18 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 			if (field_type=="LAT") lat = tmp;
 			if (field_type=="SLOPE") slope = tmp;
 			if (field_type=="AZI") azi = tmp;
+			if (field_type=="EASTING") easting = tmp;
+			if (field_type=="NORTHING") northing = tmp;
 		} else 
 			throw InvalidFormatException("Unknown parsing key '"+field_type+"' when extracting metadata", AT);
 	}
 }
 
 //Using the special headers parsed specification (done in parseHeadersSpecs), some metadata is extracted from the headers
-void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon)
+void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon, double &easting, double &northing)
 {
 	std::vector<std::string> vecStr;
-	IOUtils::readLineToVec(line, vecStr, csv_delim);
+	IOUtils::readLineToVec(line, vecStr, header_delim);
 	
 	const bool readID = (id.empty()); //if the user defined CSV_ID, it has priority
 	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
@@ -372,14 +392,14 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 			name = prev_NAME+field_val;
 			prev_NAME = name+"-";
 		} else {
-			assignMetadataVariable(field_type, field_val, lat, lon);
+			assignMetadataVariable(field_type, field_val, lat, lon, easting, northing);
 		}
 	}
 }
 
 //Extract metadata from the filename, according to a user-provided specification.
 //filename_spec in the form of {ID}_{NAME}-{PARAM}_-_{SKIP} where {ID} is a variable and '_-_' is a constant pattern
-void CsvParameters::parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon)
+void CsvParameters::parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon, double &easting, double &northing)
 {
 	filename = FileUtils::removeExtension( FileUtils::getFilename(filename) );
 	size_t pos_fn = 0, pos_mt = 0; //current position in the filename and in the filename_spec
@@ -391,7 +411,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		pos_mt = start_var;
 		pos_fn = start_var;
 	}
-	
+
 	const bool readID = (id.empty()); //if the user defined CSV_ID, it has priority
 	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
 	std::string prev_ID, prev_NAME;
@@ -425,7 +445,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 			name = prev_NAME+value;
 			prev_NAME = name+"-";
 		} else {
-			assignMetadataVariable(field_type, value, lat, lon);
+			assignMetadataVariable(field_type, value, lat, lon, easting, northing);
 		}
 
 		if (end_pattern==std::string::npos) break; //nothing more to parse
@@ -465,16 +485,18 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	if (dt_col==tm_col) {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
-		if (fieldNames.size()==2 && !single_field.empty() && !user_provided_field_names)
+		if (fieldNames.size()==2 && !single_field.empty() && !user_provided_field_names && single_param_idx==IOUtils::npos)
 			fieldNames[1] = single_field; //we have a better name from the filename
 	} else {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DD");
 		if (time_idx.empty())
 			setTimeSpec("HH24:MI:SS");
-		if (fieldNames.size()==3 && !single_field.empty() && !user_provided_field_names)
+		else if (fieldNames.size()==3 && !single_field.empty() && !user_provided_field_names && single_param_idx==IOUtils::npos)
 			fieldNames[2] = single_field; //we have a better name from the filename
 	}
+	if (!single_field.empty() && single_param_idx!=IOUtils::npos && single_param_idx < fieldNames.size() )
+		fieldNames[single_param_idx] = single_field; //so we can rename any column with special parsed param
 }
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
@@ -518,11 +540,12 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const std::multimap< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
 	double lat = IOUtils::nodata;
 	double lon = IOUtils::nodata;
+	double easting = IOUtils::nodata, northing = IOUtils::nodata;
 	
 	//read and parse the file's headers
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon);
+	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon, easting, northing);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
@@ -561,12 +584,15 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
 			if (meta_spec.count(linenr)>0) 
-				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
+				parseSpecialHeaders(line, linenr, meta_spec, lat, lon, easting, northing);
 			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
-				if (delimIsNoWS)
+				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
+					line.erase(std::remove_if(line.begin(), line.end(), &InvalidChar), line.end());
+					line.erase(std::remove_if(line.begin(), line.end(), &isWhitespace), line.end());
 					IOUtils::readLineToVec(line, headerFields, csv_delim);
-				else
+				} else {
 					IOUtils::readLineToVec(line, headerFields);
+				}
 			}
 			if (read_units && linenr==units_headers)
 				parseUnits(line);
@@ -595,6 +621,9 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
 		const double alt = location.getAltitude(); //so we don't change previously set altitude
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
+	} else if (easting!=IOUtils::nodata || northing!=IOUtils::nodata) {
+		const double alt = location.getAltitude();
+		location.setXY(easting, northing, alt); //coord system was set on keyword parsing
 	}
 	
 	parseFields(headerFields, csv_fields, date_col, time_col);
@@ -829,6 +858,28 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
 		
+		size_t single_parameter_index;
+		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
+			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
+			tmp_csv.single_param_idx = single_parameter_index - 1; //counting starts at 1 in ini file
+		}
+		else if (cfg.keyExists(dflt+"SINGLE_PARAM_INDEX", "Input")) {
+			cfg.getValue(dflt+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
+			tmp_csv.single_param_idx = single_parameter_index - 1;
+		}
+		else {
+			tmp_csv.single_param_idx = IOUtils::npos;
+		}
+
+		std::string header_delim_spec;
+		if (cfg.keyExists(pre+"HEADER_DELIMITER", "Input"))
+			cfg.getValue(pre+"HEADER_DELIMITER", "Input", header_delim_spec);
+		else if (cfg.keyExists(dflt+"HEADER_DELIMITER", "Input"))
+			cfg.getValue(dflt+"HEADER_DELIMITER", "Input", header_delim_spec);
+		else
+			header_delim_spec = delim_spec;
+		tmp_csv.setHeaderDelimiter(header_delim_spec);
+
 		std::string hdr_repeat_mk;
 		if (cfg.keyExists(pre+"HEADER_REPEAT_MK", "Input")) cfg.getValue(pre+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk);
 		else cfg.getValue(dflt+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk, IOUtils::nothrow);
