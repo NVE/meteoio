@@ -255,10 +255,6 @@ namespace mio {
  * @endcode
  */
 
-//small helper functions for removal/replacement in strings
-inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false;}
-inline bool InvalidChar(const char& c) { return (c<32 || c>126); }
-inline bool isWhitespace(const char& c) { if (c==9 || c==32) return true; return false; } //tabs and spaces
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
@@ -335,7 +331,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 			return;
 		}
 		
-		param.erase(std::remove_if(param.begin(), param.end(), &InvalidChar), param.end()); //remove accentuated characters, etc
+		IOUtils::replaceInvalidChars(param); //remove accentuated characters, etc
 		//try to map non-standard names to mio's names
 		if (param.compare(0, 15, "TEMPERATURE_AIR")==0 || param.compare(0, 16, "TEMPERATURA_ARIA")==0) param="TA";
 		else if (param.compare(0, 13, "PRECIPITATION")==0 || param.compare(0, 14, "PRECIPITAZIONE")==0) param="PSUM";
@@ -382,7 +378,7 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		
 		//remove the quotes from the field
 		std::string field_val( vecStr[colnr-1] );
-		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
+		IOUtils::removeQuotes(field_val);
 		
 		//we handle ID and NAME differently in order to support appending
 		if (field_type=="ID" && readID) {
@@ -467,7 +463,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
 		std::string &tmp = fieldNames[ii];
 		IOUtils::toUpper( tmp );
-		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
+		IOUtils::removeQuotes(tmp);
 		if (tmp.empty()) continue;
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
@@ -514,7 +510,7 @@ void CsvParameters::parseUnits(const std::string& line)
 	for (size_t ii=0; ii<units.size(); ii++) {
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
-		tmp.erase(std::remove_if(tmp.begin(), tmp.end(), &isQuote), tmp.end());
+		IOUtils::removeQuotes(tmp);
 		if (tmp.empty()) continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
@@ -587,10 +583,10 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon, easting, northing);
 			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
-					line.erase(std::remove_if(line.begin(), line.end(), &InvalidChar), line.end());
-					line.erase(std::remove_if(line.begin(), line.end(), &isWhitespace), line.end());
+					IOUtils::cleanFieldName(line);
 					IOUtils::readLineToVec(line, headerFields, csv_delim);
 				} else {
+					IOUtils::cleanFieldName(line, false); //don't touch whitespaces
 					IOUtils::readLineToVec(line, headerFields);
 				}
 			}
