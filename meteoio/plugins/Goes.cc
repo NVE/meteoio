@@ -220,7 +220,7 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 		//creating the station if necessary (ie pulling its user-defined metadata)
 		if (stations.count( goesID )==0) addStation(goesID); //create the station
 		//get/refresh its index
-		size_t st_idx = stations[ goesID].meteoIdx;
+		size_t st_idx = stations[ goesID ].meteoIdx;
 		if (st_idx==IOUtils::npos) {
 			if (stations[ goesID ].isValid()) { //there was a rebuffer, we need to refresh the index
 				st_idx = vecMeteo.size();

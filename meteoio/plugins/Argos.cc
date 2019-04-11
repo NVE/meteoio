@@ -164,7 +164,7 @@ void ArgosIO::addStation(const std::string& argosID)
 {
 	const bool hasStation = metaCfg.sectionExists( argosID );
 	if (hasStation)
-		stations[ argosID ] = ArgosStation(argosID, metaCfg, in_nodata, in_TZ, coordin, coordinparam);
+		stations[ argosID ] = ArgosStation(argosID, metaCfg, in_nodata, in_TZ, coordin, coordinparam, debug);
 	else
 		stations[ argosID ] = ArgosStation();
 }
@@ -179,72 +179,23 @@ std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
 	return line;
 }
 
-Date ArgosIO::parseDate(const std::string& str, const double& in_timezone, const size_t &linenr)
-{
-	int year, month, day, hour, minute, second;
-	if (sscanf(str.c_str(), "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second) != 6) return Date();
-	try {
-		const Date dt(year, month, day, hour, minute, second, in_timezone);
-		return dt;
-	} catch( const IOException&) {
-		throw InvalidFormatException("Could not parse date '"+str+"' at line "+IOUtils::toString(linenr), AT);
-	}
-	
-	return Date();
-}
-
-std::vector<float> ArgosIO::parseData(std::vector<unsigned int> &raw)
-{
-	const size_t nFields = raw.size();
-	std::vector<int> In(nFields);
-	std::vector<float> out(nFields, static_cast<float>(IOUtils::nodata));
-	
-	for (size_t ii=0; ii<nFields; ii++) {
-		int binval = raw[ii];
-		for (size_t kk=0; kk<nFields; kk++) {
-			In[kk] = 0;
-			const int powerOfTwo = (1 << (15-kk));
-			if (binval >= powerOfTwo) {
-				In[kk] = 1;
-				binval -= powerOfTwo;
-			}
-		}
-		
-		int nval = 0;
-		for (size_t kk=3; kk<nFields; kk++) {
-			if (In[kk]==1) {
-				const int powerOfTwo = (1 << (15-kk));
-				nval += powerOfTwo;
-			}
-		}
-		
-		if (In[0]==1) nval *= -1;
-		if (In[1]==0 && In[2]==0) out[ii] = static_cast<float>( nval );
-		if (In[1]==0 && In[2]==1) out[ii] = static_cast<float>( nval ) * 0.1f;
-		if (In[1]==1 && In[2]==0) out[ii] = static_cast<float>( nval ) * 0.01f;
-		if (In[1]==1 && In[2]==1) out[ii] = static_cast<float>( nval ) * 0.001f;
-	}
-	
-	return out;
-}
-
-std::vector<float> ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const Date& dateStart, const Date& dateEnd) const
+bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const ArgosStation& station, const Date& dateStart, const Date& dateEnd, MeteoData &md) const
 {
 	static const size_t first_data_field = 3; //first data field on timestamp line is #4
 	static const size_t max_fields_per_line = 4;
-	static const std::vector<float> empty_results;
 	
 	//parse the message content
 	const std::string header( readLine(fin, linenr) );
-	if (header.empty()) return empty_results;
+	if (header.empty()) return false;
 
 	//parse the timestamp
-	if (header.substr(0,6)!="      ") return empty_results; //the timestamp must be preceeded by 6 spaces
+	if (header.substr(0,6)!="      ") return false; //the timestamp must be preceeded by 6 spaces
 	std::vector<std::string> vecTmp;
 	if (IOUtils::readLineToVec(header, vecTmp) < first_data_field ) //can it at least contain a timestamp?
-		return empty_results;
-	const Date dt( parseDate(vecTmp[0]+" "+vecTmp[1], 0., linenr) );
-	if (dt<dateStart || dt>dateEnd) return empty_results;
+		return false;
+	
+	const Date dt( station.parseDate(vecTmp[0]+" "+vecTmp[1], linenr) );
+	if (dt.isUndef() || dt<dateStart || dt>dateEnd) return false;
 
 	//parse the data section on the header line
 	if ((vecTmp.size()-first_data_field) > nFields) throw InvalidFormatException("Too many fields at line "+IOUtils::toString(linenr), AT);
@@ -252,37 +203,28 @@ std::vector<float> ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, co
 	
 	std::vector<unsigned int> raw(nFields);
 	for (size_t ii=first_data_field; ii<vecTmp.size(); ii++) 
-		if (!IOUtils::convertString( raw[ii-first_data_field], vecTmp[ii] )) return empty_results;
+		if (!IOUtils::convertString( raw[ii-first_data_field], vecTmp[ii] )) return false;
 	
 	//read all other data lines
 	const size_t nrTimestampLines = (nFields + max_fields_per_line) / max_fields_per_line - 1; //rounding up
 	for (size_t jj=1; jj<=nrTimestampLines; jj++) { //the first data line has been read with the date
 		const std::string data_line( readLine(fin, linenr) );
-		if (data_line.empty()) return empty_results;
-		if (data_line.substr(0,6)!="      ") return empty_results; //very primitive format validation
-		if (IOUtils::readLineToVec(data_line, vecTmp) > max_fields_per_line ) return empty_results; //too many fields
+		if (data_line.empty()) return false;
+		if (data_line.substr(0,6)!="      ") return false; //very primitive format validation
+		if (IOUtils::readLineToVec(data_line, vecTmp) > max_fields_per_line ) return false; //too many fields
 		
 		for (size_t ii=0; ii<vecTmp.size(); ii++) 
-			if (!IOUtils::convertString( raw[ii+max_fields_per_line*jj], vecTmp[ii] )) return empty_results;
+			if (!IOUtils::convertString( raw[ii+max_fields_per_line*jj], vecTmp[ii] )) return false;
 	}
 	
-	const std::vector<float> results( parseData( raw ) );
-
-	if (debug) {
-		std::cout << "raw: " << dt.toString(Date::ISO);
-		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << raw[ii];
-		std::cout << "\n";
-
-		std::cout << "parsed: " << dt.toString(Date::ISO);
-		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << results[ii];
-		std::cout << "\n";
-	}
+	if (raw[1] == (unsigned)(dt.getYear() - 1)) raw[1]++; //WSL hack
 	
-	return results;
+	md = station.parseDataLine(dt, raw);
+	return true;
 }
 
 //read one message, that starts with a header followed by several timestamps
-void ArgosIO::readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd) const
+void ArgosIO::readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	const size_t msg_start_linenr = linenr;
 	
@@ -295,14 +237,26 @@ void ArgosIO::readMessage(std::ifstream &fin, size_t &linenr, const Date& dateSt
 	if (line[0]==' ') return; //a new message starts with a station_id, not spaces
 	std::vector<std::string> vecTmp;
  	if (IOUtils::readLineToVec(line, vecTmp) != 5 ) return;
-	unsigned int id, stationID, nMessageLines, nFields;
-	if (!IOUtils::convertString(id, vecTmp[0])) return;
-	if (!IOUtils::convertString(stationID, vecTmp[1])) return;
+	
+	const std::string ArgosID( vecTmp[1] );
+	unsigned int nMessageLines, nFields;
 	if (!IOUtils::convertString(nMessageLines, vecTmp[2])) return;
 	if (!IOUtils::convertString(nFields, vecTmp[3])) return;
 	
-	while ((linenr-msg_start_linenr) < nMessageLines){ //loop over all timestamps in message
-		readTimestamp(fin, linenr, nFields, dateStart, dateEnd); //HACK use returned vector!
+	if (stations.count( ArgosID )==0) addStation( ArgosID ); //add station into vecMeteo
+	if (!stations[ ArgosID ].isValid()) return;
+	size_t meteoIdx = stations[ ArgosID ].meteoIdx;
+	if (meteoIdx==IOUtils::npos) {
+		meteoIdx = vecMeteo.size();
+		stations[ ArgosID ].meteoIdx = meteoIdx;
+		vecMeteo.push_back( std::vector<MeteoData>() );
+	}
+	
+	while ((linenr-msg_start_linenr) < nMessageLines){ //loop over all timestamps in message HACK handle message too short compared to nMessageLines
+		MeteoData md;
+		if ( !readTimestamp(fin, linenr, nFields, stations[ ArgosID ], dateStart, dateEnd, md) ) return;
+		
+		vecMeteo[ meteoIdx ].push_back( md );
 	}
 }
 
@@ -311,7 +265,11 @@ void ArgosIO::readRaw(const std::string& file_and_path, const Date& dateStart, c
 	if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
 		throw InvalidNameException(file_and_path, AT);
 
+	//make sure vecMeteo is empty and all stations' positions within vecMeteo are npos
 	vecMeteo.clear();
+	for (std::map<std::string, ArgosStation>::iterator it = stations.begin(); it != stations.end(); ++it)
+		it->second.meteoIdx = IOUtils::npos;
+	
 	errno = 0;
 	std::ifstream fin(file_and_path.c_str(), ios::in);
 	if (fin.fail()) {
@@ -323,7 +281,7 @@ void ArgosIO::readRaw(const std::string& file_and_path, const Date& dateStart, c
 
 	size_t linenr = 0;
 	while (!fin.eof()){
-		readMessage( fin, linenr, dateStart, dateEnd );
+		readMessage( fin, linenr, dateStart, dateEnd, vecMeteo ); //if a message header is not found, it will retrun after reading 1 line
 	}
 	
 	fin.close();
@@ -332,12 +290,12 @@ void ArgosIO::readRaw(const std::string& file_and_path, const Date& dateStart, c
 
 ArgosStation::ArgosStation()
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(0.), nodata(0.),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
+                    year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false), debug(false)
 {}
 
-ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
+ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam, const bool& isDebug)
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(in_TZ), nodata(in_nodata),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
+                    year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true), debug(isDebug)
 {
 	//construct the StationData for this station
 	const std::string station_id = metaCfg.get("ID", argosID, "Argos::"+argosID);
@@ -378,10 +336,6 @@ void ArgosStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames,
 		const std::string parname( IOUtils::strToUpper(fieldsNames[ii]) );
 		if (parname=="SKIP") continue;
 
-		if (parname=="STATIONID") {
-			stationID_idx=ii;
-			continue;
-		}
 		if (parname=="YEAR") {
 			year_idx=ii;
 			continue;
@@ -401,24 +355,84 @@ void ArgosStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames,
 	}
 }
 
-MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<float>& raw_data) const
+std::vector<float> ArgosStation::decodeData(const std::vector<unsigned int> &raw)
 {
-	const size_t nElems = raw_data.size();
-	if (nElems!=fields_idx.size()) {
+	const size_t nFields = raw.size();
+	std::vector<int> In(nFields);
+	std::vector<float> out(nFields, static_cast<float>(IOUtils::nodata));
+	
+	for (size_t ii=0; ii<nFields; ii++) {
+		int binval = raw[ii];
+		for (size_t kk=0; kk<nFields; kk++) {
+			In[kk] = 0;
+			const int powerOfTwo = (1 << (15-kk));
+			if (binval >= powerOfTwo) {
+				In[kk] = 1;
+				binval -= powerOfTwo;
+			}
+		}
+		
+		int nval = 0;
+		for (size_t kk=3; kk<nFields; kk++) {
+			if (In[kk]==1) {
+				const int powerOfTwo = (1 << (15-kk));
+				nval += powerOfTwo;
+			}
+		}
+		
+		if (In[0]==1) nval *= -1;
+		if (In[1]==0 && In[2]==0) out[ii] = static_cast<float>( nval );
+		if (In[1]==0 && In[2]==1) out[ii] = static_cast<float>( nval ) * 0.1f;
+		if (In[1]==1 && In[2]==0) out[ii] = static_cast<float>( nval ) * 0.01f;
+		if (In[1]==1 && In[2]==1) out[ii] = static_cast<float>( nval ) * 0.001f;
+	}
+	
+	return out;
+}
+
+Date ArgosStation::parseDate(const std::string& str, const size_t &linenr) const
+{
+	int year, month, day, hour, minute, second;
+	if (sscanf(str.c_str(), "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second) != 6) return Date();
+	try {
+		const Date dt(year, month, day, hour, minute, second, TZ);
+		return dt;
+	} catch( const IOException&) {
+		throw InvalidFormatException("Could not parse date '"+str+"' at line "+IOUtils::toString(linenr), AT);
+	}
+	
+	return Date();
+}
+
+MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data) const
+{
+	const size_t nFields = raw_data.size();
+	if (nFields!=fields_idx.size()) {
 		ostringstream ss;
 		ss << "Number of user-declared fields (" << fields_idx.size() << ") don't match with ARGOS message ";
-		ss << "number of fields (" << nElems << ")";
+		ss << "number of fields (" << nFields << ")";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
 	MeteoData md( md_template );
 	md.date.setDate(dt);
 
-	for (size_t ii=0; ii<nElems; ii++) {
+	const std::vector<float> decoded( decodeData( raw_data ) );
+	for (size_t ii=0; ii<nFields; ii++) {
 		const size_t idx = fields_idx[ii];
 		if (idx==IOUtils::npos) continue;
-		if (raw_data[ii] == nodata) continue;
-		md( idx ) = static_cast<double>(raw_data[ii]) * units_multiplier[ii] + units_offset[ii];
+		if (decoded[ii] == nodata) continue;
+		md( idx ) = static_cast<double>(decoded[ii]) * units_multiplier[ii] + units_offset[ii];
+	}
+	
+	if (debug) {
+		std::cout << "raw: " << dt.toString(Date::ISO);
+		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << raw_data[ii];
+		std::cout << "\n";
+
+		std::cout << "decoded: " << dt.toString(Date::ISO);
+		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << decoded[ii];
+		std::cout << "\n";
 	}
 
 	return md;

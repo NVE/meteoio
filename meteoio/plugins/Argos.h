@@ -25,22 +25,24 @@ namespace mio {
 class ArgosStation {
 	public:
 		ArgosStation();
-		ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam);
-		MeteoData parseDataLine(const Date& dt, const std::vector<float>& raw_data) const;
+		ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam, const bool& isDebug);
+		Date parseDate(const std::string& str, const size_t &linenr) const;
+		MeteoData parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data) const;
 		StationData getStationData() const {return md_template.meta;}
 		bool isValid() const {return validStation;}
 
 		size_t meteoIdx; ///< index within vecMeteo
 	private:
 		void parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx);
+		static std::vector<float> decodeData(const std::vector<unsigned int> &raw);
 
 		std::vector<size_t> fields_idx; ///< vector of MeteoData field index
 		std::vector<double> units_offset, units_multiplier;
 		MeteoData md_template;
 		double TZ;
 		float nodata;
-		size_t stationID_idx, year_idx, month_idx, hour_idx, jdn_idx;
-		bool validStation;
+		size_t year_idx, month_idx, hour_idx, jdn_idx;
+		bool validStation, debug;
 };
 
 
@@ -69,10 +71,8 @@ class ArgosIO : public IOInterface {
 	private:
 		void parseInputOutputSection(const Config& cfgreader);
 		static std::string readLine(std::ifstream &fin, size_t &linenr);
-		static Date parseDate(const std::string& str, const double& in_timezone, const size_t &linenr);
-		static std::vector<float> parseData(std::vector<unsigned int> &raw);
-		std::vector<float> readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const Date& dateStart, const Date& dateEnd) const;
-		void readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd) const;
+		bool readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const ArgosStation& station, const Date& dateStart, const Date& dateEnd, MeteoData &md) const;
+		void readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readRaw(const std::string& file_and_path, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void addStation(const std::string& argosID);
 
