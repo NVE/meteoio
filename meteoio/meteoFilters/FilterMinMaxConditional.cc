@@ -45,7 +45,6 @@ void FilterMinMaxConditional::process(const unsigned int& param, const std::vect
 		}
 
 		const double cond_val = ivec[ii](condition_param);
-
 		double& val = ovec[ii](param);
 		if (val == IOUtils::nodata) continue; //preserve nodata values
 
@@ -55,7 +54,7 @@ void FilterMinMaxConditional::process(const unsigned int& param, const std::vect
 			else if ( (val > max_val) && (max_val != IOUtils::nodata) )
 				val = is_soft? max_soft : IOUtils::nodata;
 			else if ( (min_val == IOUtils::nodata) && (max_val == IOUtils::nodata) )
-				val = nodata_reset; //min and max not supplied -> filter in each case
+				val = nodata_reset; //min and max not supplied -> always filter
 		}
 	} //end for
 }

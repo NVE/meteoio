@@ -16,14 +16,14 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <meteoio/IOUtils.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/meteoStats/RandomNumberGenerator.h>
+
 #include <cmath>
 #include <fstream> //for hardware seed
 #include <limits> //for numeric_limits
 #include <sstream> //for toString()
-
-#include <meteoio/IOUtils.h>
-#include <meteoio/meteoLaws/Meteoconst.h>
-#include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 namespace mio { //the holy land
 

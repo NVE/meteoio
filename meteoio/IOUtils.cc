@@ -174,12 +174,12 @@ void removeDuplicateWhitespaces(std::string& line)
 	line.erase(close_str, line.end());
 }
 
-void replaceWhitespaces(std::string& line, const char& rep)
+void replaceWhitespaces(std::string& line, const char& rep /* = '\0' */)
 { //replace/remove tabs and spaces
 	std::replace_if(line.begin(), line.end(), &isWhitespace, rep);
 }
 
-void replaceInvalidChars(std::string& line, const char& rep)
+void replaceInvalidChars(std::string& line, const char& rep /* = '\0' */)
 { //replace/remove accentuated characters etc.
 	std::replace_if(line.begin(), line.end(), &isInvalidChar, rep);
 }
