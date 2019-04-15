@@ -456,14 +456,13 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
-	if (headerFields.empty() && !user_provided_field_names) 
+	if (headerFields.empty() && !user_provided_field_names)
 		throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
 	
-	if (fieldNames.empty()) fieldNames = headerFields;
+	if (!user_provided_field_names) fieldNames = headerFields;
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
 		std::string &tmp = fieldNames[ii];
 		IOUtils::toUpper( tmp );
-		IOUtils::removeQuotes(tmp);
 		if (tmp.empty()) continue;
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
@@ -481,18 +480,29 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	if (dt_col==tm_col) {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
-		if (fieldNames.size()==2 && !single_field.empty() && !user_provided_field_names && single_param_idx==IOUtils::npos)
-			fieldNames[1] = single_field; //we have a better name from the filename
 	} else {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DD");
 		if (time_idx.empty())
 			setTimeSpec("HH24:MI:SS");
-		else if (fieldNames.size()==3 && !single_field.empty() && !user_provided_field_names && single_param_idx==IOUtils::npos)
-			fieldNames[2] = single_field; //we have a better name from the filename
 	}
-	if (!single_field.empty() && single_param_idx!=IOUtils::npos && single_param_idx < fieldNames.size() )
-		fieldNames[single_param_idx] = single_field; //so we can rename any column with special parsed param
+
+	//if there is a parameter name from the filename or header it has priority:
+	if (!single_field.empty() && !user_provided_field_names) {
+		size_t pidx;
+		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
+			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change dt_col
+		} else if (dt_col == tm_col && fieldNames.size() == 2) { //no index given but unambiguous
+			pidx = (dt_col == 0)? 1 : 0; //field that is not datetime
+			fieldNames[pidx] = single_field;
+		} else if (dt_col != tm_col && fieldNames.size() == 3) {
+			for (pidx = 0; pidx < 3; ++pidx) //look for 3rd field that is neither date nor time
+				if (pidx != dt_col && pidx != tm_col) break;
+			fieldNames[pidx] = single_field;
+		}
+	}
+
+
 }
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary

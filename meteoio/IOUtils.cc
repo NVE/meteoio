@@ -168,9 +168,9 @@ inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return 
 
 void removeDuplicateWhitespaces(std::string& line)
 { //remove consecutive occurrences of either spaces or tabs
-	std::string::iterator close_str = unique(line.begin(), line.end(), &isTwoSpaces);
+	std::string::iterator close_str = std::unique(line.begin(), line.end(), &isTwoSpaces);
 	line.erase(close_str, line.end());
-	close_str = unique(line.begin(), line.end(), &isTwoTabs);
+	close_str = std::unique(line.begin(), line.end(), &isTwoTabs);
 	line.erase(close_str, line.end());
 }
 

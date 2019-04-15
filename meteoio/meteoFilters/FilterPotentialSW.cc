@@ -70,7 +70,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		if (use_toa && (value/albedo<min_coeff*toa_h)) //top of atmosphere comparison
 			value = is_soft? min_coeff*toa_h*albedo : IOUtils::nodata;
 		else if (value/albedo<min_coeff*(direct_h+diffuse_h)) //ground comparison
-			value = is_soft? min_coeff*(direct_h+diffuse_h) : IOUtils::nodata;
+			value = is_soft? min_coeff*(direct_h+diffuse_h)*albedo : IOUtils::nodata;
 		else if (value/albedo>max_coeff*(direct_h+diffuse_h)) //for ISWR, albedo==1
 			value = is_soft? max_coeff*(direct_h+diffuse_h)*albedo : IOUtils::nodata;
 
