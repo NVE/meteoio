@@ -262,10 +262,12 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 void GoesIO::addStation(const std::string& goesID)
 {
 	const bool hasStation = metaCfg.sectionExists( goesID );
-	if (hasStation)
+	if (hasStation) {
 		stations[ goesID ] = GoesStation(goesID, metaCfg, in_nodata, in_TZ, coordin, coordinparam);
-	else
+	} else {
 		stations[ goesID ] = GoesStation();
+		std::cerr << "Station " << goesID << " not configured, skipping\n";
+	}
 }
 
 

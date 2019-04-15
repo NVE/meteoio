@@ -163,10 +163,12 @@ void ArgosIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void ArgosIO::addStation(const std::string& argosID)
 {
 	const bool hasStation = metaCfg.sectionExists( argosID );
-	if (hasStation)
+	if (hasStation){
 		stations[ argosID ] = ArgosStation(argosID, metaCfg, in_nodata, in_TZ, coordin, coordinparam, debug);
-	else
+	} else {
 		stations[ argosID ] = ArgosStation();
+		std::cerr << "Station " << argosID << " not configured, skipping\n";
+	}
 }
 
 std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
@@ -183,10 +185,12 @@ bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned i
 {
 	static const size_t first_data_field = 3; //first data field on timestamp line is #4
 	static const size_t max_fields_per_line = 4;
+	const size_t msg_start_timestamp = linenr;
 	
 	//parse the message content
 	const std::string header( readLine(fin, linenr) );
 	if (header.empty()) return false;
+	if (!station.isValidMessage(nFields)) return false;
 
 	//parse the timestamp
 	if (header.substr(0,6)!="      ") return false; //the timestamp must be preceeded by 6 spaces
@@ -198,8 +202,8 @@ bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned i
 	if (dt.isUndef() || dt<dateStart || dt>dateEnd) return false;
 
 	//parse the data section on the header line
-	if ((vecTmp.size()-first_data_field) > nFields) throw InvalidFormatException("Too many fields at line "+IOUtils::toString(linenr), AT);
-	if ((nFields>=max_fields_per_line) && (vecTmp.size()-first_data_field) < max_fields_per_line) throw InvalidFormatException("Not enough fields at line "+IOUtils::toString(linenr), AT);
+	if ((vecTmp.size()-first_data_field) > nFields) return false;
+	if ((nFields>=max_fields_per_line) && (vecTmp.size()-first_data_field) < max_fields_per_line) return false;
 	
 	std::vector<unsigned int> raw(nFields);
 	for (size_t ii=first_data_field; ii<vecTmp.size(); ii++) 
@@ -219,24 +223,25 @@ bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned i
 	
 	if (raw[1] == (unsigned)(dt.getYear() - 1)) raw[1]++; //WSL hack
 	
-	md = station.parseDataLine(dt, raw);
+	md = station.parseDataLine(dt, raw, msg_start_timestamp);
 	return true;
 }
 
 //read one message, that starts with a header followed by several timestamps
 void ArgosIO::readMessage(std::ifstream &fin, size_t &linenr, const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
+	static const size_t nr_header_fields = 5;
 	const size_t msg_start_linenr = linenr;
 	
 	//parse given header
-	//expected structure: {id} {stationID} {#of lines in message} {#of fields per timestamp} {??}
+	//expected structure: {id} {stationID} {#of lines in message} {#of fields per timestamp} {satellite ID?}
 	std::string line;
 	getline(fin, line);
 	linenr++;
 
 	if (line[0]==' ') return; //a new message starts with a station_id, not spaces
 	std::vector<std::string> vecTmp;
- 	if (IOUtils::readLineToVec(line, vecTmp) != 5 ) return;
+ 	if (IOUtils::readLineToVec(line, vecTmp) != nr_header_fields ) return;
 	
 	const std::string ArgosID( vecTmp[1] );
 	unsigned int nMessageLines, nFields;
@@ -252,11 +257,26 @@ void ArgosIO::readMessage(std::ifstream &fin, size_t &linenr, const Date& dateSt
 		vecMeteo.push_back( std::vector<MeteoData>() );
 	}
 	
-	while ((linenr-msg_start_linenr) < nMessageLines){ //loop over all timestamps in message HACK handle message too short compared to nMessageLines
+	while ((linenr-msg_start_linenr) < nMessageLines){
 		MeteoData md;
 		if ( !readTimestamp(fin, linenr, nFields, stations[ ArgosID ], dateStart, dateEnd, md) ) return;
 		
-		vecMeteo[ meteoIdx ].push_back( md );
+		if (vecMeteo[ meteoIdx ].empty()) {
+			vecMeteo[ meteoIdx ].push_back( md );
+		} else {
+			if (md.date > vecMeteo[ meteoIdx ].back().date) {
+				vecMeteo[ meteoIdx ].push_back( md );
+			} else {
+				for (size_t ii=vecMeteo[ meteoIdx ].size(); ii --> 0 ;) {
+					if (md.date==vecMeteo[ meteoIdx ][ii].date) break;
+
+					if (md.date > vecMeteo[ meteoIdx ][ii].date) {
+						vecMeteo[ meteoIdx ].insert( vecMeteo[ meteoIdx ].begin() + (ii+1), md);
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -404,13 +424,13 @@ Date ArgosStation::parseDate(const std::string& str, const size_t &linenr) const
 	return Date();
 }
 
-MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data) const
+MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data, const size_t& linenr) const
 {
 	const size_t nFields = raw_data.size();
 	if (nFields!=fields_idx.size()) {
 		ostringstream ss;
 		ss << "Number of user-declared fields (" << fields_idx.size() << ") don't match with ARGOS message ";
-		ss << "number of fields (" << nFields << ")";
+		ss << "number of fields (" << nFields << ") starting at line " << linenr;
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 

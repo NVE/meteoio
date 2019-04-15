@@ -27,9 +27,10 @@ class ArgosStation {
 		ArgosStation();
 		ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam, const bool& isDebug);
 		Date parseDate(const std::string& str, const size_t &linenr) const;
-		MeteoData parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data) const;
+		MeteoData parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data, const size_t& linenr) const;
 		StationData getStationData() const {return md_template.meta;}
 		bool isValid() const {return validStation;}
+		bool isValidMessage(const size_t& msg_length) const {return (msg_length==fields_idx.size());}
 
 		size_t meteoIdx; ///< index within vecMeteo
 	private:
