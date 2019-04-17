@@ -26,6 +26,10 @@ using namespace std;
 
 namespace mio {
 
+//TODO add the following syntax: ${key} to refer to another key
+//${env:var} to refer to an env variable
+//possibility to evaluate a numeric expression
+
 const char* Config::defaultSection = "GENERAL";
 
 //Constructors
@@ -294,15 +298,8 @@ void Config::parseFile(const std::string& filename)
 	}
 }
 
-void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
+bool Config::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
 {
-	const std::string line_backup( line ); //this might be needed in some rare cases
-	//First thing cut away any possible comments (may start with "#" or ";")
-	IOUtils::stripComments(line);
-	IOUtils::trim(line);    //delete leading and trailing whitespace characters
-	if (line.empty()) return;//ignore empty lines
-
-	//if this is a section header, read it
 	if (line[0] == '[') {
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
@@ -311,9 +308,66 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 			section = line.substr(1, endpos-1);
 			IOUtils::toUpper(section);
 			sections.insert( section );
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
+{
+	if (key=="IMPORT_BEFORE") {
+		const std::string file_and_path( clean_import_path(value) );
+		if (!accept_import_before)
+			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
+		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
+		parseFile(file_and_path);
+		return true;
+	}
+	if (key=="IMPORT_AFTER") {
+		const std::string file_and_path( clean_import_path(value) );
+		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
+		import_after.push_back(file_and_path);
+		return true;
+	}
+
+	return false;
+}
+
+void Config::handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before)
+{
+	std::string key, value;
+	if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
+		if (value==";" || value=="#") { //so we can accept the comments char if given only by themselves (for example, to define a CSV delimiter)
+			properties[section+"::"+key] = value; //save the key/value pair
+			accept_import_before = false; //this is not an import, so no further import_before allowed
 			return;
 		}
 	}
+
+	const std::string key_msg = (key.empty())? "" : "key "+key+" ";
+	const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
+	const std::string value_msg = (value.empty())? "" : value+" " ;
+	const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
+	const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
+	const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+IOUtils::toString(linenr);
+
+	throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
+}
+
+void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
+{
+	const std::string line_backup( line ); //this might be needed in some rare cases
+	//First thing cut away any possible comments (may start with "#" or ";")
+	IOUtils::stripComments(line);
+	IOUtils::trim(line);    //delete leading and trailing whitespace characters
+	if (line.empty()) return;//ignore empty lines
+
+	//if this is a section header, read it and return
+	if (processSectionHeader(line, section, linenr)) return;
 
 	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
 	if (std::count(line.begin(), line.end(), '=') != 1) {
@@ -324,41 +378,13 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	//this can only be a key value pair...
 	std::string key, value;
 	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
-		if (key=="IMPORT_BEFORE") {
-			const std::string file_and_path( clean_import_path(value) );
-			if (!accept_import_before)
-				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
-			parseFile(file_and_path);
-			return;
-		}
-		if (key=="IMPORT_AFTER") {
-			const std::string file_and_path( clean_import_path(value) );
-			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
-			import_after.push_back(file_and_path);
-			return;
-		}
+		//if this is an import, process it and return
+		if (processImports(key, value, import_after, accept_import_before)) return;
 
 		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
-		if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
-			if (value==";" || value=="#") { //so we can accept the comments char if are given only by themselves
-				properties[section+"::"+key] = value; //save the key/value pair
-				accept_import_before = false; //this is not an import, so no further import_before allowed
-				return;
-			}
-		}
-		const std::string key_msg = (key.empty())? "" : "key "+key+" ";
-		const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
-		const std::string value_msg = (value.empty())? "" : value+" " ;
-		const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
-		const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
-		const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+IOUtils::toString(linenr);
-
-		throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
+		handleNonKeyValue(line_backup, section, linenr, accept_import_before);
 	}
 
 }

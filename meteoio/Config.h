@@ -389,6 +389,9 @@ class Config {
 	private:
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
+		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
+		void handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before);
 		static std::string extract_section(std::string key);
 		std::string clean_import_path(const std::string& in_path) const;
 
