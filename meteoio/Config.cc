@@ -26,10 +26,6 @@ using namespace std;
 
 namespace mio {
 
-//TODO add the following syntax: ${key} to refer to another key
-//${env:var} to refer to an env variable
-//possibility to evaluate a numeric expression
-
 const char* Config::defaultSection = "GENERAL";
 
 //Constructors
@@ -201,194 +197,6 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 	}
 }
 
-const std::string Config::toString() const {
-	std::ostringstream os;
-	os << "<Config>\n";
-	os << "Source: " << sourcename << "\n";
-	for (map<string,string>::const_iterator it = properties.begin(); it != properties.end(); ++it){
-		os << (*it).first << " -> " << (*it).second << "\n";
-	}
-	os << "</Config>\n";
-	return os.str();
-}
-
-std::ostream& operator<<(std::ostream& os, const Config& cfg) {
-	const size_t s_source = cfg.sourcename.size();
-	os.write(reinterpret_cast<const char*>(&s_source), sizeof(size_t));
-	os.write(reinterpret_cast<const char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
-
-	const size_t s_map = cfg.properties.size();
-	os.write(reinterpret_cast<const char*>(&s_map), sizeof(size_t));
-	for (map<string,string>::const_iterator it = cfg.properties.begin(); it != cfg.properties.end(); ++it){
-		const string& key = (*it).first;
-		const size_t s_key = key.size();
-		os.write(reinterpret_cast<const char*>(&s_key), sizeof(size_t));
-		os.write(reinterpret_cast<const char*>(&key[0]), s_key*sizeof(key[0]));
-
-		const string& value = (*it).second;
-		const size_t s_value = value.size();
-		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
-		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
-	}
-
-	return os;
-}
-
-std::istream& operator>>(std::istream& is, Config& cfg) {
-	size_t s_source;
-	is.read(reinterpret_cast<char*>(&s_source), sizeof(size_t));
-	cfg.sourcename.resize(s_source);
-	is.read(reinterpret_cast<char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
-
-	cfg.properties.clear();
-	size_t s_map;
-	is.read(reinterpret_cast<char*>(&s_map), sizeof(size_t));
-	for (size_t ii=0; ii<s_map; ii++) {
-		size_t s_key, s_value;
-		is.read(reinterpret_cast<char*>(&s_key), sizeof(size_t));
-		string key;
-		key.resize(s_key);
-		is.read(reinterpret_cast<char*>(&key[0]), s_key*sizeof(key[0]));
-
-		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
-		string value;
-		value.resize(s_value);
-		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
-
-		cfg.properties[key] = value;
-	}
-	return is;
-}
-
-//Parsing
-void Config::parseFile(const std::string& filename)
-{
-	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
-
-	//Open file
-	std::ifstream fin(filename.c_str(), ifstream::in);
-	if (fin.fail()) throw AccessException(filename, AT);
-
-	std::string section( defaultSection );
-	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-	unsigned int linenr = 1;
-	std::vector<std::string> import_after; //files to import after the current one
-	bool accept_import_before = true;
-	imported.push_back(filename);
-
-	try {
-		do {
-			std::string line;
-			getline(fin, line, eoln); //read complete line
-			parseLine(linenr++, import_after, accept_import_before, line, section);
-		} while (!fin.eof());
-		fin.close();
-	} catch(const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
-		throw;
-	}
-
-	std::reverse(import_after.begin(), import_after.end());
-	while (!import_after.empty()) {
-		addFile( import_after.back() );
-		import_after.pop_back();
-	}
-}
-
-bool Config::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
-{
-	if (line[0] == '[') {
-		const size_t endpos = line.find_last_of(']');
-		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
-			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
-		} else {
-			section = line.substr(1, endpos-1);
-			IOUtils::toUpper(section);
-			sections.insert( section );
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
-{
-	if (key=="IMPORT_BEFORE") {
-		const std::string file_and_path( clean_import_path(value) );
-		if (!accept_import_before)
-			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
-		parseFile(file_and_path);
-		return true;
-	}
-	if (key=="IMPORT_AFTER") {
-		const std::string file_and_path( clean_import_path(value) );
-		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
-		import_after.push_back(file_and_path);
-		return true;
-	}
-
-	return false;
-}
-
-void Config::handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before)
-{
-	std::string key, value;
-	if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
-		if (value==";" || value=="#") { //so we can accept the comments char if given only by themselves (for example, to define a CSV delimiter)
-			properties[section+"::"+key] = value; //save the key/value pair
-			accept_import_before = false; //this is not an import, so no further import_before allowed
-			return;
-		}
-	}
-
-	const std::string key_msg = (key.empty())? "" : "key "+key+" ";
-	const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
-	const std::string value_msg = (value.empty())? "" : value+" " ;
-	const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
-	const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
-	const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+IOUtils::toString(linenr);
-
-	throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
-}
-
-void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
-{
-	const std::string line_backup( line ); //this might be needed in some rare cases
-	//First thing cut away any possible comments (may start with "#" or ";")
-	IOUtils::stripComments(line);
-	IOUtils::trim(line);    //delete leading and trailing whitespace characters
-	if (line.empty()) return;//ignore empty lines
-
-	//if this is a section header, read it and return
-	if (processSectionHeader(line, section, linenr)) return;
-
-	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
-	if (std::count(line.begin(), line.end(), '=') != 1) {
-		const std::string source_msg = (sourcename.empty())? "" : " in \""+sourcename+"\"";
-		throw InvalidFormatException("Error reading line "+IOUtils::toString(linenr)+source_msg, AT);
-	}
-	
-	//this can only be a key value pair...
-	std::string key, value;
-	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
-		//if this is an import, process it and return
-		if (processImports(key, value, import_after, accept_import_before)) return;
-
-		properties[section+"::"+key] = value; //save the key/value pair
-		accept_import_before = false; //this is not an import, so no further import_before allowed
-	} else {
-		handleNonKeyValue(line_backup, section, linenr, accept_import_before);
-	}
-
-}
-
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
 	IOUtils::toUpper(section);
@@ -457,28 +265,6 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 	return vecResult;
 }
 
-std::string Config::extract_section(std::string key)
-{
-	const std::string::size_type pos = key.find("::");
-
-	if (pos != string::npos){
-		const std::string sectionname( key.substr(0, pos) );
-		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
-		return sectionname;
-	}
-	return std::string( defaultSection );
-}
-
-std::string Config::clean_import_path(const std::string& in_path) const
-{
-	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
-	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
-	const std::string filename( FileUtils::getFilename(in_path) );
-
-	return path + "/" + filename;
-}
-
 void Config::write(const std::string& filename) const
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
@@ -518,6 +304,303 @@ void Config::write(const std::string& filename) const
 
 	if (fout.is_open()) //close fout if open
 		fout.close();
+}
+
+const std::string Config::toString() const {
+	std::ostringstream os;
+	os << "<Config>\n";
+	os << "Source: " << sourcename << "\n";
+	for (map<string,string>::const_iterator it = properties.begin(); it != properties.end(); ++it){
+		os << (*it).first << " -> " << (*it).second << "\n";
+	}
+	os << "</Config>\n";
+	return os.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const Config& cfg) {
+	const size_t s_source = cfg.sourcename.size();
+	os.write(reinterpret_cast<const char*>(&s_source), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
+	
+	const size_t s_rootDir = cfg.configRootDir.size();
+	os.write(reinterpret_cast<const char*>(&s_rootDir), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&cfg.configRootDir[0]), s_rootDir*sizeof(cfg.configRootDir[0]));
+
+	const size_t s_map = cfg.properties.size();
+	os.write(reinterpret_cast<const char*>(&s_map), sizeof(size_t));
+	for (map<string,string>::const_iterator it = cfg.properties.begin(); it != cfg.properties.end(); ++it){
+		const string& key = (*it).first;
+		const size_t s_key = key.size();
+		os.write(reinterpret_cast<const char*>(&s_key), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&key[0]), s_key*sizeof(key[0]));
+
+		const string& value = (*it).second;
+		const size_t s_value = value.size();
+		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
+	}
+	
+	const size_t s_imported = cfg.imported.size();
+	os.write(reinterpret_cast<const char*>(&s_imported), sizeof(size_t));
+	for (size_t ii=0; ii<s_imported; ii++){
+		const string& value = cfg.imported[ii];
+		const size_t s_value = value.size();
+		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
+	}
+	
+	const size_t s_set = cfg.sections.size();
+	os.write(reinterpret_cast<const char*>(&s_set), sizeof(size_t));
+	for (set<string>::const_iterator it = cfg.sections.begin(); it != cfg.sections.end(); ++it){
+		const string& value = *it;
+		const size_t s_value = value.size();
+		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
+	}
+
+	return os;
+}
+
+std::istream& operator>>(std::istream& is, Config& cfg) {
+	size_t s_source;
+	is.read(reinterpret_cast<char*>(&s_source), sizeof(size_t));
+	cfg.sourcename.resize(s_source);
+	is.read(reinterpret_cast<char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
+	
+	size_t s_rootDir;
+	is.read(reinterpret_cast<char*>(&s_rootDir), sizeof(size_t));
+	cfg.configRootDir.resize(s_rootDir);
+	is.read(reinterpret_cast<char*>(&cfg.configRootDir[0]), s_rootDir*sizeof(cfg.configRootDir[0]));
+
+	cfg.properties.clear();
+	size_t s_map;
+	is.read(reinterpret_cast<char*>(&s_map), sizeof(size_t));
+	for (size_t ii=0; ii<s_map; ii++) {
+		size_t s_key, s_value;
+		is.read(reinterpret_cast<char*>(&s_key), sizeof(size_t));
+		string key;
+		key.resize(s_key);
+		is.read(reinterpret_cast<char*>(&key[0]), s_key*sizeof(key[0]));
+
+		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
+		string value;
+		value.resize(s_value);
+		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
+
+		cfg.properties[key] = value;
+	}
+	
+	cfg.imported.clear();
+	size_t s_imported;
+	is.read(reinterpret_cast<char*>(&s_imported), sizeof(size_t));
+	for (size_t ii=0; ii<s_imported; ii++) {
+		size_t s_value;
+		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
+		string value;
+		value.resize(s_value);
+		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
+
+		cfg.imported.push_back( value );
+	}
+	
+	cfg.sections.clear();
+	size_t s_set;
+	is.read(reinterpret_cast<char*>(&s_set), sizeof(size_t));
+	for (size_t ii=0; ii<s_set; ii++) {
+		size_t s_value;
+		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
+		string value;
+		value.resize(s_value);
+		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
+
+		cfg.sections.insert( value );
+	}
+	return is;
+}
+
+///////////////////////////////////////////////////// Private members //////////////////////////////////////////
+
+/**
+* @brief Parse the whole file, line per line
+* @param[in] filename file to parse
+* @param[in] recurse_level Since the parsing could be recursive (because of the IMPORT directives), this gives the current recursion level
+*/
+void Config::parseFile(const std::string& filename, const unsigned int& recurse_level)
+{
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+
+	//Open file
+	std::ifstream fin(filename.c_str(), ifstream::in);
+	if (fin.fail()) throw AccessException(filename, AT);
+
+	std::string section( defaultSection );
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	unsigned int linenr = 1;
+	std::vector<std::string> import_after; //files to import after the current one
+	bool accept_import_before = true;
+	imported.push_back(filename);
+
+	try {
+		do {
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			parseLine(linenr++, import_after, accept_import_before, line, section);
+		} while (!fin.eof());
+		fin.close();
+	} catch(const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+
+	std::reverse(import_after.begin(), import_after.end());
+	while (!import_after.empty()) {
+		parseFile( import_after.back(), recurse_level+1 );
+		import_after.pop_back();
+	}
+}
+
+bool Config::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
+{
+	if (line[0] == '[') {
+		const size_t endpos = line.find_last_of(']');
+		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
+			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
+		} else {
+			section = line.substr(1, endpos-1);
+			IOUtils::toUpper(section);
+			sections.insert( section );
+			return true;
+		}
+	}
+
+	return false;
+}
+
+//TODO add the following syntax: ${key} to refer to another key
+//${env:var} to refer to an env variable
+//possibility to evaluate a numeric expression
+
+//expand ${env:xxx} syntax if necessary
+std::string Config::processVar(const std::string& value)
+{
+	const std::size_t length = value.length();
+	
+	if (length<4) return value;
+	
+	if (value[0]=='$' && value[1]=='{' && value[ length-1 ]=='}') { //this is a variable
+		if (value.substr(2,4)=="env:") { //this is an environment variable
+			const std::string envVar( value.substr(6, length-6-1 ) );
+			char *tmp = getenv( envVar.c_str() );
+			//std::cout << "envVar=" << envVar << " -> " << tmp << "\n";
+			
+			if (tmp!=NULL) return std::string(tmp);
+			
+			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
+		} /*else { //this is a normal variable, it will be resolved after the full parsing
+			vars.push_back( value.substr(2, length-2-1 ) );
+		}*/
+	}
+	
+	return value;
+}
+
+bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
+{
+	if (key=="IMPORT_BEFORE") {
+		const std::string file_and_path( clean_import_path(value) );
+		if (!accept_import_before)
+			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
+		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
+		parseFile(file_and_path);
+		return true;
+	}
+	if (key=="IMPORT_AFTER") {
+		const std::string file_and_path( clean_import_path(value) );
+		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
+		import_after.push_back(file_and_path);
+		return true;
+	}
+
+	return false;
+}
+
+void Config::handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before)
+{
+	std::string key, value;
+	if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
+		if (value==";" || value=="#") { //so we can accept the comments char if given only by themselves (for example, to define a CSV delimiter)
+			properties[section+"::"+key] = value; //save the key/value pair
+			accept_import_before = false; //this is not an import, so no further import_before allowed
+			return;
+		}
+	}
+
+	const std::string key_msg = (key.empty())? "" : "key "+key+" ";
+	const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
+	const std::string value_msg = (value.empty())? "" : value+" " ;
+	const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
+	const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
+	const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+IOUtils::toString(linenr);
+
+	throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
+}
+
+void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
+{
+	const std::string line_backup( line ); //this might be needed in some rare cases
+	//First thing cut away any possible comments (may start with "#" or ";")
+	IOUtils::stripComments(line);
+	IOUtils::trim(line);    //delete leading and trailing whitespace characters
+	if (line.empty()) return;//ignore empty lines
+
+	//if this is a section header, read it and return
+	if (processSectionHeader(line, section, linenr)) return;
+
+	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
+	if (std::count(line.begin(), line.end(), '=') != 1) {
+		const std::string source_msg = (sourcename.empty())? "" : " in \""+sourcename+"\"";
+		throw InvalidFormatException("Error reading line "+IOUtils::toString(linenr)+source_msg, AT);
+	}
+	
+	//this can only be a key value pair...
+	std::string key, value;
+	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
+		//if this is an import, process it and return
+		if (processImports(key, value, import_after, accept_import_before)) return;
+
+		properties[section+"::"+key] = processVar(value); //save the key/value pair
+		accept_import_before = false; //this is not an import, so no further import_before allowed
+	} else {
+		handleNonKeyValue(line_backup, section, linenr, accept_import_before);
+	}
+
+}
+
+std::string Config::extract_section(std::string key)
+{
+	const std::string::size_type pos = key.find("::");
+
+	if (pos != string::npos){
+		const std::string sectionname( key.substr(0, pos) );
+		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
+		return sectionname;
+	}
+	return std::string( defaultSection );
+}
+
+std::string Config::clean_import_path(const std::string& in_path) const
+{
+	//if this is a relative path, prefix the import path with the current path
+	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
+	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
+	const std::string filename( FileUtils::getFilename(in_path) );
+
+	return path + "/" + filename;
 }
 
 } //end namespace
