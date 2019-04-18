@@ -485,27 +485,29 @@ bool Config::processSectionHeader(const std::string& line, std::string &section,
 //possibility to evaluate a numeric expression
 
 //expand ${env:xxx} syntax if necessary
-std::string Config::processVar(const std::string& value)
+void Config::processVars(std::string& value)
 {
-	const std::size_t length = value.length();
-	
-	if (length<4) return value;
-	
-	if (value[0]=='$' && value[1]=='{' && value[ length-1 ]=='}') { //this is a variable
-		if (value.substr(2,4)=="env:") { //this is an environment variable
-			const std::string envVar( value.substr(6, length-6-1 ) );
-			char *tmp = getenv( envVar.c_str() );
-			//std::cout << "envVar=" << envVar << " -> " << tmp << "\n";
-			
-			if (tmp!=NULL) return std::string(tmp);
-			
+	size_t pos_start = 0;
+	while ((pos_start = value.find("${env:")) != std::string::npos) {
+		const size_t pos_end = value.find("}", pos_start);
+		if (pos_end==std::string::npos || pos_end<=(pos_start+6+2))
+			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
+		const size_t next_start = value.find("${", pos_start+6);
+		if (next_start!=std::string::npos && next_start<pos_end)
+			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
+		
+		const size_t len = pos_end - (pos_start+6); //we have tested above that this is >=1
+		const std::string envVar( value.substr(pos_start+6, len ) );
+		char *tmp = getenv( envVar.c_str() );
+		if (tmp==NULL) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
-		} /*else { //this is a normal variable, it will be resolved after the full parsing
-			vars.push_back( value.substr(2, length-2-1 ) );
-		}*/
+		
+		value.replace(pos_start, pos_end+1, std::string(tmp));
+		//std::cout << "envVar=" << envVar << " -> " << tmp << " -> value=" << value << "\n";
 	}
 	
-	return value;
+	
+	return;
 }
 
 bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
@@ -574,7 +576,8 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		//if this is an import, process it and return
 		if (processImports(key, value, import_after, accept_import_before)) return;
 
-		properties[section+"::"+key] = processVar(value); //save the key/value pair
+		processVars(value);
+		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
 		handleNonKeyValue(line_backup, section, linenr, accept_import_before);
