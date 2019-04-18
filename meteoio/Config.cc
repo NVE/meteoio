@@ -342,8 +342,8 @@ std::ostream& operator<<(std::ostream& os, const Config& cfg) {
 	
 	const size_t s_imported = cfg.imported.size();
 	os.write(reinterpret_cast<const char*>(&s_imported), sizeof(size_t));
-	for (size_t ii=0; ii<s_imported; ii++){
-		const string& value = cfg.imported[ii];
+	for (set<string>::const_iterator it = cfg.imported.begin(); it != cfg.imported.end(); ++it){
+		const string& value = *it;
 		const size_t s_value = value.size();
 		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
 		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
@@ -400,7 +400,7 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 		value.resize(s_value);
 		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
 
-		cfg.imported.push_back( value );
+		cfg.imported.insert( value );
 	}
 	
 	cfg.sections.clear();
@@ -423,9 +423,8 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 /**
 * @brief Parse the whole file, line per line
 * @param[in] filename file to parse
-* @param[in] recurse_level Since the parsing could be recursive (because of the IMPORT directives), this gives the current recursion level
 */
-void Config::parseFile(const std::string& filename, const unsigned int& recurse_level)
+void Config::parseFile(const std::string& filename)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
@@ -433,13 +432,13 @@ void Config::parseFile(const std::string& filename, const unsigned int& recurse_
 	//Open file
 	std::ifstream fin(filename.c_str(), ifstream::in);
 	if (fin.fail()) throw AccessException(filename, AT);
-
+	imported.insert( FileUtils::cleanPath(filename, true) ); //keep track of this file being processed to prevent circular IMPORT directives
+	
 	std::string section( defaultSection );
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 1;
 	std::vector<std::string> import_after; //files to import after the current one
 	bool accept_import_before = true;
-	imported.push_back(filename);
 
 	try {
 		do {
@@ -457,9 +456,11 @@ void Config::parseFile(const std::string& filename, const unsigned int& recurse_
 
 	std::reverse(import_after.begin(), import_after.end());
 	while (!import_after.empty()) {
-		parseFile( import_after.back(), recurse_level+1 );
+		parseFile( import_after.back());
 		import_after.pop_back();
 	}
+	
+	imported.erase( filename );
 }
 
 bool Config::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
@@ -510,18 +511,18 @@ std::string Config::processVar(const std::string& value)
 bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
 {
 	if (key=="IMPORT_BEFORE") {
-		const std::string file_and_path( clean_import_path(value) );
+		const std::string file_and_path( FileUtils::cleanPath(value, true) );
 		if (!accept_import_before)
 			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
-		parseFile(file_and_path);
+		if (imported.count( file_and_path ) != 0)
+			throw IOException("IMPORT Circular dependency with \"" + value + "\"", AT);
+		parseFile( file_and_path );
 		return true;
 	}
 	if (key=="IMPORT_AFTER") {
-		const std::string file_and_path( clean_import_path(value) );
-		if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-			throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
+		const std::string file_and_path( FileUtils::cleanPath(value, true) );
+		if (imported.count( file_and_path ) != 0)
+			throw IOException("IMPORT Circular dependency with \"" + value + "\"", AT);
 		import_after.push_back(file_and_path);
 		return true;
 	}
@@ -591,16 +592,6 @@ std::string Config::extract_section(std::string key)
 		return sectionname;
 	}
 	return std::string( defaultSection );
-}
-
-std::string Config::clean_import_path(const std::string& in_path) const
-{
-	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
-	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
-	const std::string filename( FileUtils::getFilename(in_path) );
-
-	return path + "/" + filename;
 }
 
 } //end namespace
