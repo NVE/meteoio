@@ -156,10 +156,11 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 	Date prev_date = ovec[0].date - 1.; //so we are sure to be < when checking if timestamps are increasing
 	size_t ii=0;
 
-	while (next_idx-- > 0) { //look for the latest relevant correction to start with
+	do { //look for the latest relevant correction to start with
+		next_idx--;
 		if (dst_changes[next_idx].date <= ovec.front().date)
 			break;
-	}
+	} while (next_idx > 0);
 
 	for (; ii<ovec.size(); ii++) {
 		bool apply_change = (ovec[ii].date>=dst_changes[next_idx].date);
