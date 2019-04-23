@@ -26,12 +26,12 @@ using namespace std;
 
 namespace mio {
 
-const char* Config::defaultSection = "GENERAL";
+const char* defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), imported(), sections(), sourcename(), configRootDir() {}
+Config::Config() : properties(), sections(), sourcename(), configRootDir() {}
 
-Config::Config(const std::string& i_filename) : properties(), imported(), sections(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
+Config::Config(const std::string& i_filename) : properties(), sections(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
 {
 	addFile(i_filename);
 }
@@ -90,7 +90,7 @@ void Config::addFile(const std::string& i_filename)
 {
 	if (configRootDir.empty()) configRootDir = FileUtils::getPath(i_filename, true);
 	sourcename = i_filename;
-	parseFile(i_filename);
+	const ConfigParser parser( i_filename, properties, sections );
 }
 
 void Config::addKey(std::string key, std::string section, const std::string& value)
@@ -276,7 +276,7 @@ void Config::write(const std::string& filename) const
 		unsigned int sectioncount = 0;
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const std::string key_full( it->first );
-			const std::string section( extract_section(key_full) );
+			const std::string section( ConfigParser::extract_section(key_full) );
 
 			if (current_section != section) {
 				current_section = section;
@@ -340,15 +340,6 @@ std::ostream& operator<<(std::ostream& os, const Config& cfg) {
 		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
 	}
 	
-	const size_t s_imported = cfg.imported.size();
-	os.write(reinterpret_cast<const char*>(&s_imported), sizeof(size_t));
-	for (set<string>::const_iterator it = cfg.imported.begin(); it != cfg.imported.end(); ++it){
-		const string& value = *it;
-		const size_t s_value = value.size();
-		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
-		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
-	}
-	
 	const size_t s_set = cfg.sections.size();
 	os.write(reinterpret_cast<const char*>(&s_set), sizeof(size_t));
 	for (set<string>::const_iterator it = cfg.sections.begin(); it != cfg.sections.end(); ++it){
@@ -390,19 +381,6 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 		cfg.properties[key] = value;
 	}
 	
-	cfg.imported.clear();
-	size_t s_imported;
-	is.read(reinterpret_cast<char*>(&s_imported), sizeof(size_t));
-	for (size_t ii=0; ii<s_imported; ii++) {
-		size_t s_value;
-		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
-		string value;
-		value.resize(s_value);
-		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
-
-		cfg.imported.insert( value );
-	}
-	
 	cfg.sections.clear();
 	size_t s_set;
 	is.read(reinterpret_cast<char*>(&s_set), sizeof(size_t));
@@ -418,13 +396,44 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 	return is;
 }
 
-///////////////////////////////////////////////////// Private members //////////////////////////////////////////
+///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
+
+ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(), imported(), sections(), deferred_vars(), sourcename(filename)
+{
+	parseFile(filename);
+	
+	//process potential deferred vars
+	size_t deferred_count = deferred_vars.size();
+	while (deferred_count>0) {
+		for (std::set<std::string>::iterator it = deferred_vars.begin(); it!=deferred_vars.end(); ) {
+			const std::string section( extract_section( *it ) );
+			std::string value( properties[ *it ] );
+			const bool status = processVars(value, section);
+			
+			properties[ *it ] = value; //save the key/value pair
+			if (status) //the variable could be fully expanded
+				deferred_vars.erase( it++ );
+			else
+				++it;
+		}
+		const size_t new_deferred_count = deferred_vars.size();
+		if (new_deferred_count==deferred_count)
+			throw InvalidArgumentException("Circular dependencies between variables in file "+filename, AT);
+		deferred_count = new_deferred_count;
+	}
+	
+	//make sure that local values have priority -> insert and swap
+	properties.insert(i_properties.begin(), i_properties.end()); //keep local values if they exist
+	std::swap(properties, i_properties);
+
+	i_sections.insert(sections.begin(), sections.end());
+}
 
 /**
 * @brief Parse the whole file, line per line
 * @param[in] filename file to parse
 */
-void Config::parseFile(const std::string& filename)
+void ConfigParser::parseFile(const std::string& filename)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
@@ -463,7 +472,7 @@ void Config::parseFile(const std::string& filename)
 	imported.erase( filename );
 }
 
-bool Config::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
+bool ConfigParser::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
 {
 	if (line[0] == '[') {
 		const size_t endpos = line.find_last_of(']');
@@ -480,37 +489,76 @@ bool Config::processSectionHeader(const std::string& line, std::string &section,
 	return false;
 }
 
-//TODO add the following syntax: ${key} to refer to another key
-//${env:var} to refer to an env variable
-//possibility to evaluate a numeric expression
-
-//expand ${env:xxx} syntax if necessary
-void Config::processVars(std::string& value)
+/**
+* @brief Process keys that refer to environment variables
+* @details Environment variables are used as key = ${env:envvar}.
+*/
+void ConfigParser::processEnvVars(std::string& value)
 {
-	size_t pos_start = 0;
-	while ((pos_start = value.find("${env:")) != std::string::npos) {
+	size_t pos_start;
+	
+	//process env. variables
+	static const std::string env_var_marker( "${env:" );
+	static const size_t len_env_var_marker = env_var_marker.length();
+	while ((pos_start = value.find(env_var_marker)) != std::string::npos) {
 		const size_t pos_end = value.find("}", pos_start);
-		if (pos_end==std::string::npos || pos_end<=(pos_start+6+2))
+		if (pos_end==std::string::npos || pos_end<=(pos_start+len_env_var_marker+2)) //at least 1 char between "${env:" and "}"
 			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
-		const size_t next_start = value.find("${", pos_start+6);
+		const size_t next_start = value.find("${", pos_start+len_env_var_marker);
 		if (next_start!=std::string::npos && next_start<pos_end)
 			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
 		
-		const size_t len = pos_end - (pos_start+6); //we have tested above that this is >=1
-		const std::string envVar( value.substr(pos_start+6, len ) );
+		const size_t len = pos_end - (pos_start+len_env_var_marker); //we have tested above that this is >=1
+		const std::string envVar( value.substr(pos_start+len_env_var_marker, len ) );
 		char *tmp = getenv( envVar.c_str() );
 		if (tmp==NULL) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
 		
 		value.replace(pos_start, pos_end+1, std::string(tmp));
-		//std::cout << "envVar=" << envVar << " -> " << tmp << " -> value=" << value << "\n";
 	}
-	
-	
-	return;
 }
 
-bool Config::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
+/**
+* @brief Process keys that are standard variables
+* @details Variables are used as key = ${var} and can refere to keys that will be defined later.
+* @return false if the key has to be processed later (as in the case of standard variables refering to a key
+* that has not yet been read)
+*/
+bool ConfigParser::processVars(std::string& value, const std::string& section)
+{
+	//process standard variables
+	static const std::string var_marker( "${" );
+	static const size_t len_var_marker = var_marker.length();
+	bool var_fully_parsed = true;
+	size_t pos_start, pos_end = 0;
+	
+	while ((pos_start = value.find(var_marker, pos_end)) != std::string::npos) {
+		pos_end = value.find("}", pos_start);
+		if (pos_end==std::string::npos || pos_end<=(pos_start+len_var_marker+2)) //at least one char between "${" and "}"
+			throw InvalidFormatException("Wrong syntax for variable: '"+value+"'", AT);
+		const size_t next_start = value.find("${", pos_start+len_var_marker);
+		if (next_start!=std::string::npos && next_start<pos_end)
+			throw InvalidFormatException("Wrong syntax for variable: '"+value+"'", AT);
+		
+		const size_t len = pos_end - (pos_start+len_var_marker); //we have tested above that this is >=1
+		std::string var( value.substr(pos_start+len_var_marker, len ) );
+		IOUtils::toUpper( var );
+		if (var.find("::") == std::string::npos && !section.empty()) var = section+"::"+var;
+		if (properties.count( var )!=0) {
+			const std::string replacement( properties[var] );
+			value.replace(pos_start, pos_end+1, replacement);
+			pos_end = pos_start; //so if it was replaced by another var, it will be scanned again
+		} else {
+			var_fully_parsed = false;
+		}
+	}
+	
+	if (!var_fully_parsed) return false;
+	
+	return true;
+}
+
+bool ConfigParser::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
 {
 	if (key=="IMPORT_BEFORE") {
 		const std::string file_and_path( FileUtils::cleanPath(value, true) );
@@ -532,7 +580,7 @@ bool Config::processImports(const std::string& key, const std::string& value, st
 	return false;
 }
 
-void Config::handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before)
+void ConfigParser::handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before)
 {
 	std::string key, value;
 	if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
@@ -553,7 +601,7 @@ void Config::handleNonKeyValue(const std::string& line_backup, const std::string
 	throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 }
 
-void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
+void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
 {
 	const std::string line_backup( line ); //this might be needed in some rare cases
 	//First thing cut away any possible comments (may start with "#" or ";")
@@ -576,7 +624,10 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		//if this is an import, process it and return
 		if (processImports(key, value, import_after, accept_import_before)) return;
 
-		processVars(value);
+		processEnvVars( value );
+		if (!processVars(value, section)) {
+			deferred_vars.insert( section+"::"+key );
+		}
 		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
@@ -585,7 +636,8 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 
 }
 
-std::string Config::extract_section(std::string key)
+//extract the section name from a section+"::"+key value
+std::string ConfigParser::extract_section(std::string key)
 {
 	const std::string::size_type pos = key.find("::");
 
