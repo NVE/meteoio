@@ -440,6 +440,7 @@ class ConfigParser {
 		static void processEnvVars(std::string& value);
 		bool processVars(std::string& value, const std::string& section);
 		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
+		std::string clean_import_path(const std::string& in_path) const;
 		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
 		void handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before);
 

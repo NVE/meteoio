@@ -558,10 +558,21 @@ bool ConfigParser::processVars(std::string& value, const std::string& section)
 	return true;
 }
 
+//resolve symlinks, resolve relative path w/r to the path of the current ini file
+std::string ConfigParser::clean_import_path(const std::string& in_path) const
+{
+	//if this is a relative path, prefix the import path with the current path
+	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
+	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
+	const std::string filename( FileUtils::getFilename(in_path) );
+
+	return path + "/" + filename;
+}
+
 bool ConfigParser::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
 {
 	if (key=="IMPORT_BEFORE") {
-		const std::string file_and_path( FileUtils::cleanPath(value, true) );
+		const std::string file_and_path( clean_import_path(value) );
 		if (!accept_import_before)
 			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
 		if (imported.count( file_and_path ) != 0)
@@ -570,7 +581,7 @@ bool ConfigParser::processImports(const std::string& key, const std::string& val
 		return true;
 	}
 	if (key=="IMPORT_AFTER") {
-		const std::string file_and_path( FileUtils::cleanPath(value, true) );
+		const std::string file_and_path( clean_import_path(value) );
 		if (imported.count( file_and_path ) != 0)
 			throw IOException("IMPORT Circular dependency with \"" + value + "\"", AT);
 		import_after.push_back(file_and_path);
@@ -633,7 +644,6 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 	} else {
 		handleNonKeyValue(line_backup, section, linenr, accept_import_before);
 	}
-
 }
 
 //extract the section name from a section+"::"+key value
