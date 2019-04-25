@@ -40,13 +40,18 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
- * - variables: there is a special syntax to refer to other keys or to environment variables:
+ * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
  *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key}
+ *       - evaluating an arithmetic expression: ${{arithm. expression}}
  * 
- * @anchor config_import
+ * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
+ * <A HREF="https://opensource.org/licenses/Zlib">zlib license</A>) and can use standard operators (including "^"), 
+ * standard functions (such as "sin", "sqrt", "ln", "log", "exp", "floor"...) as well as the "pi" and "e" constants.
+ * 
+ * @section config_import Imports
  * It is possible to import another ini file, by specifying as many of the keys listed below as necessary.
- *   Please not that in order to prevent circular dependencies, it is not possible to import the same file several times.
+ *   Please note that there is a check to prevent circular dependencies.
  *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
  *        key or section header. This imports the specified file before processing the current file, allowing
  *        to overwrite the imported parameters in the current configuration file.
@@ -66,9 +71,6 @@ namespace mio {
  *
  * ConfigBackup = ${user}_${smart_read}.bak	; using other keys to build a value
  * @endcode
- *
- * @author Thomas Egger & Mathias Bavay
- * @date   2008-11-30
  */
 
 class ConfigProxy;
@@ -438,6 +440,7 @@ class ConfigParser {
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
 		static void processEnvVars(std::string& value);
+		static void processExpr(std::string& value);
 		bool processVars(std::string& value, const std::string& section);
 		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
 		std::string clean_import_path(const std::string& in_path) const;

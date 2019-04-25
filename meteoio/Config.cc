@@ -17,6 +17,7 @@
 */
 #include <meteoio/Config.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/tinyexpr.h>
 
 #include <algorithm>
 #include <fstream>
@@ -502,7 +503,7 @@ void ConfigParser::processEnvVars(std::string& value)
 	static const size_t len_env_var_marker = env_var_marker.length();
 	while ((pos_start = value.find(env_var_marker)) != std::string::npos) {
 		const size_t pos_end = value.find("}", pos_start);
-		if (pos_end==std::string::npos || pos_end<=(pos_start+len_env_var_marker+2)) //at least 1 char between "${env:" and "}"
+		if (pos_end==std::string::npos || pos_end<(pos_start+len_env_var_marker+1)) //at least 1 char between "${env:" and "}"
 			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
 		const size_t next_start = value.find("${", pos_start+len_env_var_marker);
 		if (next_start!=std::string::npos && next_start<pos_end)
@@ -514,7 +515,34 @@ void ConfigParser::processEnvVars(std::string& value)
 		if (tmp==NULL) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
 		
-		value.replace(pos_start, pos_end+1, std::string(tmp));
+		value.replace(pos_start, pos_end+1, std::string(tmp)); //we also replace the closing "}"
+	}
+}
+
+void ConfigParser::processExpr(std::string& value)
+{
+	size_t pos_start;
+	
+	//process env. variables
+	static const std::string expr_marker( "${{" );
+	static const size_t len_expr_marker = expr_marker.length();
+	while ((pos_start = value.find(expr_marker)) != std::string::npos) {
+		const size_t pos_end = value.find("}}", pos_start);
+		if (pos_end==std::string::npos || pos_end<(pos_start+len_expr_marker+1)) //at least 1 char between "${{" and "}}"
+			throw InvalidFormatException("Wrong syntax for arithmetic expression: '"+value+"'", AT);
+		const size_t next_start = value.find(expr_marker, pos_start+len_expr_marker);
+		if (next_start!=std::string::npos && next_start<pos_end)
+			throw InvalidFormatException("Wrong syntax for arithmetic expression: '"+value+"'", AT);
+		
+		const size_t len = pos_end - (pos_start+len_expr_marker); //we have tested above that this is >=1
+		const std::string expression( value.substr(pos_start+len_expr_marker, len ) );
+		int status_code;
+		const double val = te_interp(expression.c_str(), &status_code);
+		
+		if (status_code!=0)
+			throw InvalidNameException("Arithmetic expression '"+expression+"' declared in ini file could not be evaluated", AT);
+		
+		value.replace(pos_start, pos_end+2, IOUtils::toString(val));  //we also replace the closing "))"
 	}
 }
 
@@ -534,7 +562,7 @@ bool ConfigParser::processVars(std::string& value, const std::string& section)
 	
 	while ((pos_start = value.find(var_marker, pos_end)) != std::string::npos) {
 		pos_end = value.find("}", pos_start);
-		if (pos_end==std::string::npos || pos_end<=(pos_start+len_var_marker+2)) //at least one char between "${" and "}"
+		if (pos_end==std::string::npos || pos_end<(pos_start+len_var_marker+1)) //at least one char between "${" and "}"
 			throw InvalidFormatException("Wrong syntax for variable: '"+value+"'", AT);
 		const size_t next_start = value.find("${", pos_start+len_var_marker);
 		if (next_start!=std::string::npos && next_start<pos_end)
@@ -546,7 +574,7 @@ bool ConfigParser::processVars(std::string& value, const std::string& section)
 		if (var.find("::") == std::string::npos && !section.empty()) var = section+"::"+var;
 		if (properties.count( var )!=0) {
 			const std::string replacement( properties[var] );
-			value.replace(pos_start, pos_end+1, replacement);
+			value.replace(pos_start, pos_end+1, replacement); //we also replace the closing "}"
 			pos_end = pos_start; //so if it was replaced by another var, it will be scanned again
 		} else {
 			var_fully_parsed = false;
@@ -636,6 +664,7 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 		if (processImports(key, value, import_after, accept_import_before)) return;
 
 		processEnvVars( value );
+		processExpr( value );
 		if (!processVars(value, section)) {
 			deferred_vars.insert( section+"::"+key );
 		}
