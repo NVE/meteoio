@@ -27,7 +27,7 @@ using namespace std;
 
 namespace mio {
 
-const char* defaultSection = "GENERAL";
+static const char* defaultSection = "GENERAL";
 
 //Constructors
 Config::Config() : properties(), sections(), sourcename(), configRootDir() {}
