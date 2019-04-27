@@ -122,18 +122,18 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
 
-		if (data_qa_logs) {
-			const std::map< std::string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
-			if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
+		if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
+			md.setResampledParam(ii);
+			if (data_qa_logs) {
+				const std::map< std::string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
 				const std::string statName( md.meta.getStationName() );
 				const std::string statID( md.meta.getStationID() );
 				const std::string stat = (!statID.empty())? statID : statName;
 				const std::string algo_name( it2->second->getAlgo() );
-				md.setResampledParam(ii);
 				cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
 			}
 		}
-	}
+	} //endfor ii
 
 	return true; //successfull resampling
 }
