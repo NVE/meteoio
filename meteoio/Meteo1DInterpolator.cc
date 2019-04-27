@@ -129,6 +129,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 				const std::string statID( md.meta.getStationID() );
 				const std::string stat = (!statID.empty())? statID : statName;
 				const std::string algo_name( it2->second->getAlgo() );
+				md.setResampledParam(ii);
 				cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
 			}
 		}
