@@ -84,19 +84,16 @@ namespace mio {
  * - ZRXP_WRITE_CNR: Outputs MeteoIO's internal parameter index (default: true);
  * - ZRXP_RINVAL: The value given to WISKI to interpret as missing data (default: MeteoIO's nodata, usually -999);
  * - ZRXP_REMARK: A remark that is passed through to each output line (default: empty);
+ * - ZRXP_NODATA_PARAMS: Parameters that are nodata throughout will be output if at least one nodata is the result of processing (default: true);
  * - ZRXP_STATUS_UNALTERED: Status to give for data that was checked and left unchanged (default: 41);
  * - ZRXP_STATUS_RESAMPLED: Status for temporally interpolated data (default: 42);
- * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 43);
- * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 44);
- * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others);
- * - ZRXP_NODATA_PARAMS: Parameters that are nodata throughout will be output if at least one nodata is the result of processing (default: true).
+ * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 43);
+ * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 44);
+ * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others).
  *
  * The last five status parameters are used to transport data quality assurance flags to the database.
- * At the moment, this has to be done on a per-timestamp basis, meaning that for a given timestamp if any value
- * at all was filtered / generated / resampled, then the flag will be set for all parameters. An exception is
- * `ZRXP_STATUS_NODATA`, which will be set only if the exact value is found to be `nodata` (e. g. -999), regardless
- * of whether this is an original gap or due to filtering. If `ZRXP_STATUS_NODATA` is not given a value, then this
- * check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
+ * `ZRXP_STATUS_NODATA` will be set only if the *filtered* value is found to be `nodata` (e. g. -999).
+ * If `ZRXP_STATUS_NODATA` is not given a value, then this check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
  *
  * @note In addition, you can separately set `ZRXP_RINVAL`. This is necessary for a use case where original and
  * potentially newer data is merged with filtered data. WISKI would fill data gaps with original data and
