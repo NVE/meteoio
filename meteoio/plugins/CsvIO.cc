@@ -1047,7 +1047,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
-			ss << "but this does not match line " << linenr << " with " << nr_curr_data_fields << "fields :\n'" << line << "'\n";
+			ss << "but this does not match line " << linenr << " with " << nr_curr_data_fields << " fields :\n'" << line << "'\n";
 			if (silent_errors) {
 				std::cerr << ss.str();
 				continue;
