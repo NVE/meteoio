@@ -70,6 +70,7 @@ namespace mio {
  * output_log = ${env:LOGNAME}_output.log	; we can even concatenate environment variables with other elements
  *
  * ConfigBackup = ${user}_${smart_read}.bak	; using other keys to build a value
+ * Target_rate = ${{24*3600}}		; arithmetic expression that will be evaluated when reading the key
  * @endcode
  */
 

@@ -140,6 +140,96 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
 	return valend - left_accumulation;
 }
 
+//return true if a valid point could be found
+bool ResamplingAlgorithms::searchBackward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
+                                              const double& i_window_size, size_t& indexP)
+{
+	const Date windowStart( resampling_date - i_window_size );
+	const bool knownGap = (!last_gap.start.isUndef() && !last_gap.end.isUndef());
+	const bool currentInGap = (knownGap)? (resampling_date>=last_gap.start && resampling_date<=last_gap.end) : false;
+	const bool windowStartInGap = (knownGap)? (windowStart>=last_gap.start && windowStart<=last_gap.end) : false;
+	
+	//the current point and window start are in a known gap, there is no hope
+	if (currentInGap && windowStartInGap) {
+		indexP = pos;
+		return false;
+	}
+	
+	//the current point is NOT in a known gap
+	if (!currentInGap) { //or !knownGap
+		const Date dateStart = (windowStartInGap)? last_gap.end : windowStart;
+		size_t ii = pos; //because idx will get decremented right away
+		for (; ii-- >0; ) {
+			if (vecM[ii].date < dateStart) break;
+			if (vecM[ii](paramindex) != IOUtils::nodata) {
+				indexP = ii;
+				last_gap.endIdx = IOUtils::npos; //invalidate the last known gap
+				last_gap.end.setUndef(true); //invalidate the last known gap
+				return true;
+			}
+		}
+		
+		indexP = ii;
+		return false;
+	} else { //what's left: the current point is in a known gap, but there might be some data before
+		size_t ii = last_gap.startIdx; //start from the begining of the last known gap (and idx will be decremented right away)
+		for (; ii-- >0; ) {
+			if (vecM[ii].date < windowStart) break;
+			if (vecM[ii](paramindex) != IOUtils::nodata) {
+				indexP = ii; //there is some data before the gap!
+				return true;
+			}
+		}
+		
+		indexP = ii;
+		return false;
+	}
+}
+
+//return true if a valid point could be found
+bool ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
+                                              const double& i_window_size, const size_t& indexP1, size_t& indexP)
+{
+	const Date windowEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+i_window_size : resampling_date+i_window_size;
+	const bool knownGap = (!last_gap.start.isUndef() && !last_gap.end.isUndef());
+	const bool currentInGap = (knownGap)? (resampling_date>=last_gap.start && resampling_date<=last_gap.end) : false;
+	const bool windowEndInGap = (knownGap)? (windowEnd>=last_gap.start && windowEnd<=last_gap.end) : false;
+	
+	//the current point and window start are in a known gap, there is no hope
+	if (currentInGap && windowEndInGap) {
+		indexP = pos;
+		return false;
+	}
+	
+	//the current point is NOT in a known gap
+	if (!currentInGap) { //or !knownGap
+		const Date dateEnd = (windowEndInGap)? last_gap.start : windowEnd;
+		size_t ii = pos;
+		for (; ii<vecM.size(); ++ii) {
+			if (vecM[ii].date > dateEnd) break;
+			if (vecM[ii](paramindex) != IOUtils::nodata) {
+				indexP = ii;
+				return true;
+			}
+		}
+		
+		indexP = ii;
+		return false;
+	} else { //what's left: the current point is in a known gap, but there might be some data after
+		size_t ii = last_gap.endIdx;
+		for (; ii<vecM.size(); ++ii) { //start from the end of the last known gap
+			if (vecM[ii].date > windowEnd) break;
+			if (vecM[ii](paramindex) != IOUtils::nodata) {
+				indexP = ii; //there is some data after the gap!
+				return true;
+			}
+		}
+		
+		indexP = ii;
+		return false;
+	}
+}
+
 /**
  * @brief This function returns the last and next valid points around a given position
  * @param pos current position (index)
@@ -153,26 +243,27 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
 void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
                                               const double& i_window_size, size_t& indexP1, size_t& indexP2)
 {
-	indexP1=IOUtils::npos;
-	indexP2=IOUtils::npos;
-
-	const Date dateStart( resampling_date - i_window_size );
-	for (size_t ii=pos; ii-- >0; ) { //because idx gets decremented right away
-		if (vecM[ii].date < dateStart) break;
-		if (vecM[ii](paramindex) != IOUtils::nodata) {
-			indexP1 = ii;
-			break;
+	const std::string stationHash( vecM[pos].getStationID() );
+	gap_info &last_gap = gaps[stationHash];
+	
+	const bool foundP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1);
+	if (!foundP1) {
+		if ((last_gap.endIdx==IOUtils::npos || last_gap.startIdx==IOUtils::npos || indexP1<last_gap.startIdx) && (indexP1!=IOUtils::npos)) { //starting a new gap or extending the current one
+			last_gap.startIdx = indexP1;
+			last_gap.start = vecM[ indexP1 ].date;
 		}
+		
+		indexP1 = IOUtils::npos;
 	}
-
-	//make sure the search window remains i_window_size
-	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+i_window_size : resampling_date+i_window_size;
-	for (size_t ii=pos; ii<vecM.size(); ++ii) {
-		if (vecM[ii].date > dateEnd) break;
-		if (vecM[ii](paramindex) != IOUtils::nodata) {
-			indexP2 = ii;
-			break;
+	
+	const bool foundP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1, indexP2);
+	if (!foundP2) {
+		if ((last_gap.endIdx==IOUtils::npos || indexP2>last_gap.endIdx) && (indexP2!=IOUtils::npos)) {
+			last_gap.endIdx = indexP2;
+			last_gap.end = vecM[ indexP2 ].date;
 		}
+		
+		indexP2 = IOUtils::npos;
 	}
 }
 
