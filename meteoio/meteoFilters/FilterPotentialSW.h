@@ -51,14 +51,13 @@ namespace mio {
  * @endcode
  *
  * If your data logger aggregates measurements this can lead to troubles at the steeper parts of the potential radiation
- * curve. For 10 minutes, the difference can be a couple of dozens W/m^2 which would be averaged and compared to the value
+ * curve. For 10 minutes, the difference can be a couple of dozens W/m^2 which would be averaged and compared to the theoretical value
  * at the end of the aggregation period. To remedy this, you can set MEAN_PERIOD. You must set it in *minutes*, because this
  * is currently the (fixed) resolution the filter samples the potential radiation with.
  * @code
  * ISWR::filter1           = PotentialSW
  * ISWR::arg1::min_coeff   = 0
  * ISWR::arg1::max_coeff   = 1.05
- * ISWR::arg1::mode        = ground
  * ISWR::arg1::soft        = true
  * ISWR::arg1::mean_period = 10 ;minutes
  * @endcode

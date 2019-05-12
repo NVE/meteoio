@@ -432,7 +432,7 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
  */
 void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy)
 {
- 	if (vec2.empty()) return; //nothing to merge
+	if (vec2.empty()) return; //nothing to merge
 	if (strategy==STRICT_MERGE && vec1.empty()) return; //optimization for STRICT_MERGE
 
 	//adding the necessary extra parameters to vec1 elements, no matter which merge strategy
