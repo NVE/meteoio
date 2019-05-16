@@ -81,8 +81,8 @@ class ResamplingAlgorithms {
 		typedef struct GAP_INFO {
 			GAP_INFO() : start(), end(), startIdx(IOUtils::npos), endIdx(IOUtils::npos) {}
 			void extend(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx<startIdx) setStart(idx, vecM); if (idx>endIdx) setEnd(idx, vecM);}
-			void setStart(const size_t& idx, const std::vector<MeteoData>& vecM) {startIdx=idx; start=vecM[idx].date;}
-			void setEnd(const size_t& idx, const std::vector<MeteoData>& vecM) {endIdx=idx; end=vecM[idx].date;}
+			void setStart(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; startIdx=idx; start=vecM[idx].date;}
+			void setEnd(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; endIdx=idx; end=vecM[idx].date;}
 			std::string toString() const {std::ostringstream os; os << start.toString(Date::ISO) << " (" << startIdx << ") - " << end.toString(Date::ISO) << " (" << endIdx << ")"; return os.str();}
 			Date start, end;
 			size_t startIdx, endIdx;
