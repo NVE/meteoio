@@ -70,7 +70,7 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 	o_properties.time_after    = Duration(window_size, 0.);
 }
 
-bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
+bool Meteo1DInterpolator::resampleData(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (vecM.empty()) //Deal with case of the empty vector
 		return false; //nothing left to do
@@ -113,13 +113,13 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) {
 		const std::string parname( md.getNameForParameter(ii) ); //Current parameter name
 		const std::map< std::string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
-		if (it!=mapAlgorithms.end()) {
-			it->second->resample(index, elementpos, ii, vecM, md);
+		if (it!=mapAlgorithms.end()) { //the parameter has been found
+			it->second->resample(stationHash, index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			const std::string algo_name( getAlgorithmsForParameter(parname) );
 			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
-			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
+			mapAlgorithms[parname]->resample(stationHash, index, elementpos, ii, vecM, md);
 		}
 
 		if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {

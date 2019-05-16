@@ -301,8 +301,10 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
+			if ((*data)[ii].empty()) continue;
+			const std::string stationHash( IOUtils::toString(ii)+"-"+(*data)[ii].front().meta.getHash() );
 			MeteoData md;
-			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
+			const bool success = meteoprocessor.resample(i_date, stationHash, (*data)[ii], md);
 			if (success) vecMeteo.push_back( md );
 		}
 	} else { //no resampling required
