@@ -47,39 +47,46 @@ namespace mio {
  * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
- * This plugin uses the following keywords, in the [Input] section:
+ * This plugin uses the keywords described below, in the [Input] section. First, there are some general plugin options:
  * - COORDSYS: coordinate system (see Coords);
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - TIME_ZONE: the timezone that should be used to interpret the dates/times (default: 0);
  * - METEOPATH: the directory where the data files are available (mandatory);
- * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false);
- * - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  * - CSV_FILE_EXTENSION: When scanning the whole directory, look for these files (default: .csv). Note that this matching isn't restricted to the end of the file name so if you had files stat1_jan.csv, stat1_feb.csv and stat2_jan.csv you could select January's data by putting "_jan" here;
  * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false, has priority over CSV_ERRORS_TO_NODATA);
  * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
  * 
- * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
+ * You can now describe the specific format for all files (prefixing the following keys by \em "CSV_") or for each particular file (prefixing the following 
+ * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a 
+ * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
- * - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
- * - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
- * - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- * - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
- * - CSV\#_FIELDS: columns headers (if they don't exist in the file or to overwrite them); optional
- * - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
- * - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
- * - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
- * - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
- * - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
- * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
- * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
- * - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
- * - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
- * - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
- * - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
- * 
+ * - Headers handling:
+ *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
+ *    - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
+ *    - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
+ *    - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
+ *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
+ *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ * - Fields parsing
+ *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
+ *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them); optional
+ *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
+ *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
+ * - Date/Time parsing
+ *    - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
+ *    - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
+ *    - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
+ * - Metadata
+ *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
+ *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ *    - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
+ *    - The following two keys provide mandatory data for each station, therefore there is no "global" version and they must be defined:
+ *       - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
+ *       - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
+ *
  * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
  * column of the file, including the date and time.
