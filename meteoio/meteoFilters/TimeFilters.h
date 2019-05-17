@@ -34,7 +34,7 @@ class TimeProcStack {
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
 		void process(std::vector< std::vector<MeteoData> >& ivec, const bool& second_pass);
-		static void checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
+		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
 	private:
@@ -76,11 +76,20 @@ class TimeSuppr : public ProcessingBlock {
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
 	private:
+		//possible modes of operation
+		typedef enum MODE {
+		            NONE,
+		            BYDATES,
+		            FRAC,
+		            INVALID
+		} Mode;
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;
+		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
 		double range;
+		Mode op_mode;
 };
 
 /**

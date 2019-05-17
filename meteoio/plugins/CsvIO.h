@@ -41,7 +41,7 @@ class CsvParameters {
 		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
-		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
+		Date parseDate(const std::vector<std::string>& vecFields) const;
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
 		
@@ -99,9 +99,8 @@ class CsvIO : public IOInterface {
 		void cleanup() throw();
 		std::string setDateParsing(const std::string& datetime_spec);
 		std::vector<std::string> readHeaders(std::ifstream& fin, CsvParameters& params) const;
-		Date parseDate(const std::string& date_str, const std::string& time_str) const;
 		static MeteoData createTemplate(const CsvParameters& params);
-		static Date getDate(const CsvParameters& params, const std::string& date_str, const std::string& time_str, const bool& silent_errors, const std::string& filename, const size_t& linenr);
+		static Date getDate(const CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr);
 		std::vector<MeteoData> readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd);
 		
 		const Config cfg;

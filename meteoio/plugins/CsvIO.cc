@@ -615,7 +615,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 
 			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 			if (nr_curr_data_fields>date_col && nr_curr_data_fields>time_col) {
-				const Date dt( parseDate(tmp_vec[date_col], tmp_vec[time_col]) );
+				const Date dt( parseDate(tmp_vec) );
 				if (dt.isUndef()) continue;
 				if (!prev_dt.isUndef()) {
 					if (dt>prev_dt) count_asc++;
@@ -748,8 +748,9 @@ Date CsvParameters::createDate(const float args[6], const double i_tz)
 	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 }
 
-Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
+Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 {
+	const std::string date_str( vecFields[date_col] ), time_str( vecFields[time_col] );
 	float args[6] = {0, 0, 0, 0, 0, 0};
 	char rest[32] = "";
 	bool status = false;
@@ -988,9 +989,9 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 	return template_md;
 }
 
-Date CsvIO::getDate(const CsvParameters& params, const std::string& date_str, const std::string& time_str, const bool& silent_errors, const std::string& filename, const size_t& linenr)
+Date CsvIO::getDate(const CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr)
 {
-	const Date dt( params.parseDate(date_str, time_str) );
+	const Date dt( params.parseDate(vecFields) );
 	if (dt.isUndef()) {
 		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
 		if (silent_errors)
@@ -1068,7 +1069,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 			} else throw InvalidFormatException(ss.str(), AT);
 		}
 
-		const Date dt( getDate(params, tmp_vec[params.date_col], tmp_vec[params.time_col], silent_errors, filename, linenr) );
+		const Date dt( getDate(params, tmp_vec, silent_errors, filename, linenr) );
 		if (dt.isUndef() && silent_errors) continue;
 
 		if (linenr % streampos_every_n_lines == 0) {
