@@ -61,24 +61,25 @@ namespace mio {
  * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a 
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
- * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
- * - Headers handling:
+ * - CSV\#_NODATA: a value that should be interpreted as \em nodata (default: NAN);
+ * - CSV\#_DEQUOTE: if set to true, all single and double quotes will be purged from each line \em before parsing (default: false);
+ * - <b>Headers handling</b>
  *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  *    - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
  *    - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
  *    - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
- * - Fields parsing
+ * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them); optional
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
- * - Date/Time parsing
+ * - <b>Date/Time parsing</b>
  *    - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *    - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *    - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- * - Metadata
+ * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
@@ -871,6 +872,11 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
 		
+		bool purgeQuotes=false;
+		if (cfg.keyExists(pre+"DEQUOTE", "Input")) cfg.getValue(pre+"DEQUOTE", "Input", purgeQuotes);
+		else cfg.getValue(dflt+"DEQUOTE", "Input", purgeQuotes, IOUtils::nothrow);
+		tmp_csv.setPurgeQuotes(purgeQuotes);
+		
 		size_t single_parameter_index;
 		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
 			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
@@ -1041,6 +1047,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
+		if (params.purgeQuotes) IOUtils::removeQuotes(line);
 		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 		if (hasHeaderRepeat && line.find(params.header_repeat_mk)!=std::string::npos) {
