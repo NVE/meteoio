@@ -277,9 +277,9 @@ void TimeProcStack::checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo)
 			if (current_date<=previous_date) {
 				const StationData& station( vecVecMeteo[stat_idx][ii].meta );
 				if (current_date==previous_date) 
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique! (either correct your data or declare a time filter)", AT);
 				else
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO), AT);
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO)+"  (either correct your data or declare a time filter)", AT);
 			}
 			previous_date = current_date;
 		}

@@ -748,9 +748,8 @@ Date CsvParameters::createDate(const float args[6], const double i_tz)
 	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 }
 
-Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
+Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	const std::string date_str( vecFields[date_col] ), time_str( vecFields[time_col] );
 	float args[6] = {0, 0, 0, 0, 0, 0};
 	char rest[32] = "";
 	bool status = false;
@@ -792,6 +791,11 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 	if (!status) return Date();
 	const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
 	return createDate(args, tz);
+}
+
+Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
+{
+	return parseDate(vecFields[date_col], vecFields[time_col]);
 }
 
 StationData CsvParameters::getStation() const 
