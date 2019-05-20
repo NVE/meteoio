@@ -48,13 +48,17 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
+ *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true;
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
  *
  * @code
  * TIME::filter1     = suppr
- * TIME::arg1::suppr = ./input/meteo/suppr.dat
+ * TIME::arg1::cleanup = true
+ * 
+ * TIME::filter2     = suppr
+ * TIME::arg2::suppr = ./input/meteo/suppr.dat
  * @endcode
  * 
  * The file <i>suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -81,7 +85,7 @@ class TimeSuppr : public ProcessingBlock {
 		            NONE,
 		            BYDATES,
 		            FRAC,
-		            INVALID
+		            CLEANUP
 		} Mode;
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;

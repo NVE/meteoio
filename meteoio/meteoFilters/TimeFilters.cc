@@ -32,21 +32,21 @@ namespace mio {
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(INVALID)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(CLEANUP)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
 	
-	if (nrArgs==0) {
-		op_mode = INVALID;
-		return;
-	}
-	
 	if (nrArgs!=1)
 		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 
-	if (vecArgs[0].first=="FRAC") {
+	if (vecArgs[0].first=="CLEANUP") {
+		bool cleanup = false;
+		if (!IOUtils::convertString(cleanup, vecArgs[0].second))
+			throw InvalidArgumentException("The \"cleanup\" key specified for "+where+" must be a boolean", AT);
+		op_mode = CLEANUP;
+	} else if (vecArgs[0].first=="FRAC") {
 		op_mode = FRAC;
 		if (!IOUtils::convertString(range, vecArgs[0].second))
 			throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
@@ -73,7 +73,7 @@ void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>&
 	if (ovec.empty()) return;
 	
 	switch(op_mode) {
-		case INVALID : supprInvalid(ovec); break;
+		case CLEANUP : supprInvalid(ovec); break;
 		case FRAC : supprFrac(ovec); break;
 		case BYDATES : supprByDates(ovec); break;
 		default :

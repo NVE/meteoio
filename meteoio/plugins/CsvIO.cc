@@ -75,10 +75,12 @@ namespace mio {
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them); optional
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
- * - <b>Date/Time parsing</b>
- *    - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
- *    - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
- *    - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
+ * - <b>Date/Time parsing</b>. There are two possibilities: either the date/time is provided as one or two strings or each component as a separate column.
+ *    - Date/Time as string(s):
+ *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
+ *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
+ *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
+ *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, MONTH, DAY, HOUR, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -459,6 +461,14 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 
 }
 
+void CsvParameters::initDtComponents(const size_t& pos, const size_t& idx)
+{
+	if (datetime_idx.size()!=6) datetime_idx.resize(6, IOUtils::npos);
+	
+	datetime_idx[ pos ] = idx;
+	dt_as_components = true;
+}
+
 //user provided field names are in fieldNames, header field names are in headerFields
 //and user provided fields have priority.
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
@@ -481,8 +491,24 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			tm_col = ii;
 		} else if (tmp.compare("SKIP")==0) {
 			skip_fields[ ii ] = true;
+		} else if (tmp.compare("YEAR")==0) {
+			initDtComponents(0, ii);
+		} else if (tmp.compare("MONTH")==0) {
+			initDtComponents(1, ii);
+		} else if (tmp.compare("DAY")==0) {
+			initDtComponents(2, ii);
+		} else if (tmp.compare("HOUR")==0) {
+			initDtComponents(3, ii);
+		} else if (tmp.compare("MINUTES")==0) {
+			initDtComponents(4, ii);
+		} else if (tmp.compare("SECONDS")==0) {
+			initDtComponents(5, ii);
 		}
 	}
+	
+	//check for time handling consistency
+	if (dt_col!=0 && dt_as_components)
+		throw InvalidArgumentException("It is not possible to provide both date/time as individual components columns and as date/time columns", AT);
 
 	//if necessary, set the format to the appropriate defaults
 	if (dt_col==tm_col) {
@@ -495,22 +521,21 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			setTimeSpec("HH24:MI:SS");
 	}
 
+	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
 	if (!single_field.empty() && !user_provided_field_names) {
-		size_t pidx;
 		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
 			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change dt_col
 		} else if (dt_col == tm_col && fieldNames.size() == 2) { //no index given but unambiguous
-			pidx = (dt_col == 0)? 1 : 0; //field that is not datetime
+			const size_t pidx = (dt_col == 0)? 1 : 0; //field that is not datetime
 			fieldNames[pidx] = single_field;
 		} else if (dt_col != tm_col && fieldNames.size() == 3) {
+			size_t pidx;
 			for (pidx = 0; pidx < 3; ++pidx) //look for 3rd field that is neither date nor time
 				if (pidx != dt_col && pidx != tm_col) break;
 			fieldNames[pidx] = single_field;
 		}
 	}
-
-
 }
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
@@ -669,7 +694,7 @@ void CsvParameters::checkSpecString(const std::string& spec_string, const size_t
 }
 
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
-//the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 and tz is handled separately
+//the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 while tz is handled separately
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 {
 	static const char* keys[6] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
@@ -795,7 +820,26 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 
 Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 {
-	return parseDate(vecFields[date_col], vecFields[time_col]);
+	if (dt_as_components) { //date and time components split as columns. We enforce when parsing user configuration that year, month, day are provided
+		int i_args[5] = {0, 0, 0, 0, 0};
+		for (size_t ii=0; ii<5; ii++) {
+			const size_t idx = datetime_idx[ii];
+			if (idx==IOUtils::npos) continue;
+			double dbl_val;
+			if (!IOUtils::convertString(dbl_val, vecFields[ idx ])) return Date();
+			i_args[ii] = (int)dbl_val;
+			if ((float)i_args[ii]!=dbl_val) return Date();
+		}
+		
+		double seconds = 0.;
+		if (datetime_idx[5]!=IOUtils::npos) {
+			if (!IOUtils::convertString(seconds, vecFields[ 5 ])) return Date();
+		}
+		
+		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], seconds, csv_tz);
+	} else {
+		return parseDate(vecFields[date_col], vecFields[time_col]);
+	}
 }
 
 StationData CsvParameters::getStation() const 
