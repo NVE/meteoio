@@ -507,8 +507,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	}
 	
 	//check for time handling consistency
-	if (dt_col!=0 && dt_as_components)
+	if (dt_as_components && dt_col!=0)
 		throw InvalidArgumentException("It is not possible to provide both date/time as individual components columns and as date/time columns", AT);
+	if (dt_as_components && !single_field.empty())
+		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
 
 	//if necessary, set the format to the appropriate defaults
 	if (dt_col==tm_col) {

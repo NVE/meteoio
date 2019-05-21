@@ -287,6 +287,9 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool rebuffer_filtered = filtered_cache.empty() || (filtered_cache.getBufferStart() > buffer_start) || (filtered_cache.getBufferEnd() < buffer_end);
 		if (rebuffer_filtered) { //explicit caching, rebuffer if necessary
+			if (!filtered_cache.empty())  //invalidate cached values in the resampling algorithms if necessary
+				meteoprocessor.resetResampling();
+				
 			const bool rebuffer_raw = raw_buffer.empty() || (raw_buffer.getBufferStart() > buffer_start) || (raw_buffer.getBufferEnd() < buffer_end);
 			if (rebuffer_raw && (IOUtils::raw & processing_level) == IOUtils::raw) {
 				fillRawBuffer(buffer_start, buffer_end);

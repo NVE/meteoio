@@ -110,6 +110,11 @@ class Meteo1DInterpolator {
 		 * @return true if successfull, false if no resampling was possible (no element created)
 		 */
 		bool resampleData(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& vecM, MeteoData& md);
+		
+		/**
+		 * @brief Call each ResamplingAlgorithms to reset its cached data (as might be needed after a rebuffer)
+		 */
+		void resetResampling();
 
 		void getWindowSize(ProcessingProperties& o_properties) const;
 

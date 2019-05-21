@@ -138,6 +138,14 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::string& stat
 	return true; //successfull resampling
 }
 
+void Meteo1DInterpolator::resetResampling()
+{
+	std::map< std::string, ResamplingAlgorithms* >::iterator it;
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+		it->second->resetResampling();
+	}
+}
+
 std::string Meteo1DInterpolator::getAlgorithmsForParameter(const std::string& parname) const
 {
 	std::string algo("linear"); //default value
