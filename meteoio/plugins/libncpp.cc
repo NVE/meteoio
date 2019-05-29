@@ -974,6 +974,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "rlds", "surface_downwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "rlus", "surface_upwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "snd", "surface_snow_thickness", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "snow_density", "snow_density", "", "kg/m3", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "swe", "lwe_thickness_of_surface_snow_amount", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
