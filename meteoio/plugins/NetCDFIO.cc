@@ -154,10 +154,9 @@ namespace mio {
  * coordinates systems assume an ellipsoid. This may lead to trouble when converting model coordinates to real world coordinates (see
  * http://www.pkrc.net/wrf-lambert.html).
  *
- * @section netcdf_ecmwf ECMWF Era Interim / Era 5
+ * @section netcdf_ecmwf ECMWF Era Interim
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A>
- * after creating an account and login in, or from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home>Copernicus Climate Data Store"</a> (either from the web interface or using the
- * <a href="https://pypi.org/project/cdsapi/">cdsapi</a>).
+ * after creating an account and login in.
  *
  * For Era Interim, it is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
  * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
@@ -201,6 +200,60 @@ namespace mio {
  * "time": "00/12",
  * "type": "fc",
  * })
+ * @endcode
+ * 
+ * @section netcdf_copernicus Copernicus Era 5
+ * @note This is a work in progress, stay tuned!
+ * 
+ * The Era 5 data can be downloaded from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home">Copernicus Climate Data Store</a> 
+ * (either from the web interface or using the <a href="https://pypi.org/project/cdsapi/">cdsapi</a>), after registering and creating an api key.
+ *
+ * Ideally, download the hourly data and select the following fields:
+ * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Near IR albedo for direct radiation, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
+ *
+ * Here we have included the *albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the
+ * "others" section on the bottom of the page where you select the data to download).
+ *
+ * @note The radiation fields are accumulated (over which period?), so they must be corrected
+ * before using them (see ProcDeAccumulate)!
+ *
+ * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, the request
+ * would be for example (the time period and spatial extend should be defined properly...):
+ * @code
+ * #!/usr/bin/env python
+ * import cdsapi
+ * c = cdsapi.Client()
+ * 
+ * c.retrieve('reanalysis-era5-single-levels', {
+ *         'product_type':'reanalysis',
+ *         'year':'2017',
+ *         'month':'01',
+ *         'day':[
+ *             '01','02','03',
+ *             '04','05','06',
+ *             '07'
+ *         ],
+ *         'time':[
+ *             '00:00','01:00','02:00',
+ *             '03:00','04:00','05:00',
+ *             '06:00','07:00','08:00',
+ *             '09:00','10:00','11:00',
+ *             '12:00','13:00','14:00',
+ *             '15:00','16:00','17:00',
+ *             '18:00','19:00','20:00',
+ *             '21:00','22:00','23:00'
+ *         ],
+ *         'format':'netcdf',
+ *         'variable':[
+ *             '10m_u_component_of_wind','10m_v_component_of_wind','2m_dewpoint_temperature',
+ *             '2m_temperature','near_ir_albedo_for_direct_radiation','skin_temperature',
+ *             'snow_density','snow_depth','soil_temperature_level_1',
+ *             'surface_pressure','surface_solar_radiation_downwards','surface_thermal_radiation_downwards',
+ *             'total_precipitation'
+ *         ]
+ *     },
+ *     'download.nc'
+ * )
  * @endcode
  *
  * @section netcdf_tricks External tools and tricks to work with NetCDF
@@ -454,6 +507,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	if (out_single_file) {
 		const std::string file_and_path( out_meteo_path + "/" + out_meteo_file );
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
+		if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 
 		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
 		ncFiles file(file_and_path, file_mode, cfg, out_schema, debug);
@@ -1423,6 +1477,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 					const size_t meteodata_param = param_idx[ st-st_start ];
 					if (meteodata_param == IOUtils::npos) continue; //the station does not have this parameter
 					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
+					if (ii>=vecMeteo[st].size()) continue; //this station does not have data anymore
 
 					const MeteoData md( vecMeteo[st][ii] );
 					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
@@ -1442,6 +1497,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 					const size_t meteodata_param = param_idx[ st-st_start ];
 					if (meteodata_param == IOUtils::npos) continue; //the station does not have this parameter
 					size_t &ii = st_idx[st-st_start]; //this is the index for the current station
+					if (ii>=vecMeteo[st].size()) continue; //this station does not have data anymore
 
 					const MeteoData md( vecMeteo[st][ii] );
 					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
