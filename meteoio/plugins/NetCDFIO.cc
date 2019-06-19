@@ -347,7 +347,7 @@ void NetCDFIO::parseInputOutputSection()
 			
 			for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
 				if (!FileUtils::validFileAndPath( *it )) throw InvalidNameException( *it , AT);
-				cache_inmeteo_files.push_back( ncFiles(*it, ncFiles::READ, cfg, in_schema, debug) );
+				cache_inmeteo_files.push_back( ncFiles(inpath+"/"+*it, ncFiles::READ, cfg, in_schema, debug) );
 			}
 		}
 		
@@ -1059,7 +1059,7 @@ std::vector<StationData> ncFiles::readStationData() const
 		ncpp::getGlobalAttribute(ncid, "station_name", stationName);
 		if (stationName.empty()) stationName = FileUtils::removeExtension( FileUtils::getFilename(file_and_path) );
 		if (stationID.empty()) stationID = stationName;
-
+		
 		Coords position;
 		if (hasLatLon) {
 			const double lat = read_0Dvariable(ncid, ncpp::LATITUDE);
@@ -1745,7 +1745,9 @@ double ncFiles::read_0Dvariable(const int& ncid, const size_t& param) const
 {
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
-
+	if (!it->second.dimids.empty())
+		throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 0D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
+	
 	double data;
 	ncpp::read_data(ncid, it->second, &data);
 	return data;
@@ -1755,6 +1757,7 @@ std::vector<Date> ncFiles::read_1Dvariable(const int& ncid) const
 {
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( ncpp::TIME );
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(ncpp::TIME)+"\" in file \""+file_and_path+"\"", AT);
+	
 	const bool timestamps_as_str = (it->second.attributes.type==NC_CHAR);
 
 	if (!timestamps_as_str) {
@@ -1779,6 +1782,9 @@ std::vector<double> ncFiles::read_1Dvariable(const int& ncid, const size_t& para
 {
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
+	if (it->second.dimids.size()!=1)
+		throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 1D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
+	
 	const size_t length = read_1DvariableLength(it->second);
 
 	std::vector<double> results( length );
@@ -1797,6 +1803,8 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const int& ncid, const s
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
 	if (it->second.attributes.type!=NC_CHAR) throw InvalidArgumentException("Wrong data type for parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
+	if (it->second.dimids.size()!=2) //strings also depend on variable str_len
+		throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 2D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
 
 	const size_t length = read_1DvariableLength(it->second); //this also checks that it depends on 2 dimensions for NC_CHAR
 	const size_t strMaxLen = readDimension(it->second.dimids[1]); //string lenght is in second position
