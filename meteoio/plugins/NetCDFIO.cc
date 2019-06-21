@@ -75,7 +75,7 @@ namespace mio {
  * This plugin uses the following keywords:
  * - General keys:
  *     - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
- *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ECMWF or WRF); [Input] and [Output] section (default: CF-1.6)
+ *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ERA-INTERIM, ERA5 or WRF); [Input] and [Output] section (default: CF-1.6)
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
  * - Gridded data handling:
