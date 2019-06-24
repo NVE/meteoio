@@ -871,7 +871,9 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_FLOAT;
 	} else if (schema=="METEOCH") {
 		dflt_type = NC_FLOAT;
-	} else
+	} else if (schema=="ECMWF") {
+		throw mio::InvalidArgumentException("The ECMWF schema has been replaced by the ERA-INTERIM and the ERA5 schemas, please update your configuration file", AT);
+	} else 
 		throw mio::InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
 
