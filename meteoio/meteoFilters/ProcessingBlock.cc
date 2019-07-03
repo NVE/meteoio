@@ -52,6 +52,7 @@
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
+#include <meteoio/meteoFilters/FilterParticle.h>
 
 namespace mio {
 /**
@@ -177,6 +178,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterPotentialSW(vecArgs, blockname);
 	} else if (blockname == "DESPIKING"){
 		return new FilterDespikingPS(vecArgs, blockname);
+	} else if (blockname == "PARTICLE"){
+		return new FilterParticle(vecArgs, blockname);
 	}
 
 	//general data transformations

@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
