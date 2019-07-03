@@ -91,6 +91,8 @@ class ProcessingBlock {
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
+		
+		//this call is for some timefilters
 		virtual void process(Date &dateStart, Date &dateEnd) {(void)dateStart; (void)dateEnd; throw InvalidArgumentException("Invalid call for this kind of filter", AT);}
 
 		std::string getName() const {return block_name;}
