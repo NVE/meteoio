@@ -6,6 +6,7 @@
 
 #include <meteoio/Eigen/Dense>
 
+#include <inttypes.h> //for interaction with RNG
 #include <string>
 #include <vector>
 
@@ -21,6 +22,8 @@ class FilterParticle : public ProcessingBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		bool fill_state(const unsigned int& param, const std::vector<MeteoData>& ivec);
+		RandomNumberGenerator::RNG_TYPE str2rngalg(const std::string& str);
+		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
 
 		typedef enum PF_FILTER_ALGORITHM {
 			SIR, //only SIR is implemented so far
@@ -37,14 +40,26 @@ class FilterParticle : public ProcessingBlock {
 		unsigned int NN; //number of particles
 		bool path_resampling; //has nothing to do with temporal or spatial meteo resampling
 
+		std::string model_appendix; //naming convention for modeled data in the meteo set
 		std::string model_expression; //model formula (as opposed to file input)
 		double model_x0; //initial state at T=0
 
 		std::vector<double> xx; //state / model
 		std::vector<double> zz; //observation
 
-		RandomNumberGenerator::RNG_TYPE rng_alg; //all RNGs will use this algorithm
+		struct rng_settings {
+			RandomNumberGenerator::RNG_TYPE algorithm;
+			RandomNumberGenerator::RNG_DISTR distribution;
+			std::vector<double> parameters;
+			std::vector<uint64_t> seed;
+			rng_settings() : algorithm(RandomNumberGenerator::RNG_XOR),
+			                 distribution(RandomNumberGenerator::RNG_GAUSS),
+			                 parameters(),
+							 seed() {}
+		};
+		struct rng_settings model_rng;
 
+		bool add_model_noise; //when the model function is calculated, add noise?
 		bool be_verbose; //output warnings/info?
 
 };

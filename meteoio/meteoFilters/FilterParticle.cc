@@ -1,9 +1,9 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/tinyexpr.h>
 
-namespace mio {
+#include <sstream> //for readLineToVec
 
-static const std::string model_appendix("_MOD");
+namespace mio {
 
 static const size_t nx = 1; //dimension of the state vector (how many observables?), fixed so far
 static const size_t nu = 1; //dimension of process noise, fixed so far
@@ -11,16 +11,15 @@ static const size_t nv = 1; //dimension of observation noise, fixed so far
 
 FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : ProcessingBlock(vecArgs, name), filter_alg(SIR), resample_alg(SYSTEMATIC), NN(2000), path_resampling(false),
-            model_expression(""), model_x0(IOUtils::nodata), xx(), zz(),
-			rng_alg(RandomNumberGenerator::RNG_XOR),
-			be_verbose(true)
+            model_appendix("_MOD"), model_expression(""), model_x0(IOUtils::nodata), xx(), zz(),
+            model_rng(), add_model_noise(true),
+            be_verbose(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
 
-void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-                        std::vector<MeteoData>& ovec)
+void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 	const size_t TT = ivec.size(); //number of time steps
 
@@ -33,7 +32,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-		if (tmp < 269){
+		if (tmp < 269) {
 			tmp = IOUtils::nodata;
 		}
 	}
@@ -49,7 +48,7 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 	//check if model data exists in meteo data as per our naming convention:
 	const std::string param_name = ivec.front().getNameForParameter(param);
 	const size_t param_mod = ivec.front().getParameterIndex(param_name + model_appendix);
-	const bool has_param_mod = param_mod != IOUtils::npos; //user has supplied model data alongside the meteo data
+	const bool has_param_mod = (param_mod != IOUtils::npos); //user has supplied model data alongside the meteo data
 
 	if (has_model_expression && has_param_mod)
 		if (be_verbose) std::cerr << "[W] Both model data and model function are supplied for the particle filter. Ignoring model function.\n";
@@ -62,7 +61,6 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 				xx.push_back(val_model);
 			else
 				throw NoDataException("No model data at " + ivec[kk].date.toString(Date::ISO, false) + ". Please refine your model output to match the timestamps or enable meteo resampling.");
-			//std::cout << kk << ": " << ivec[kk](param_mod) << std::endl;
 		}
 
 	} else if (has_model_expression) {
@@ -85,9 +83,21 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 				te_x_km1 = xx[kk-1];
 				const double res = te_eval(expr); //evaluate expression with current substitution values
 				xx.push_back(res);
-				//std::cout << kk << ": " << res << std::endl;
 			}
 			te_free(expr);
+
+			if (add_model_noise) { //user asks to add noise to model function
+				RandomNumberGenerator RNU(model_rng.algorithm); //init the generator for just this scope
+				RNU.setDistribution(model_rng.distribution, model_rng.parameters);
+				if (!model_rng.seed.empty()) //seed integers given in ini file
+					RNU.setState(model_rng.seed);
+
+				for (size_t kk = 0; kk < TT; ++kk)
+					xx[kk] += RNU.draw();
+
+			} //endif noise
+
+
 	    } else {
 	    	throw InvalidFormatException("Arithmetic expression '" + model_expression +
 	    	    "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
@@ -106,32 +116,64 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 {
 	const std::string where("Filters::"+block_name);
 
-	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="NO_OF_PARTICLES") {
-			IOUtils::parseArg(vecArgs[ii], where, NN);
-		} else if (vecArgs[ii].first=="PATH_RESAMPLING") {
-			IOUtils::parseArg(vecArgs[ii], where, path_resampling);
-		} else if (vecArgs[ii].first=="MODEL") {
-			model_expression = vecArgs[ii].second;
-		} else if (vecArgs[ii].first=="MODEL_X0") {
-			IOUtils::parseArg(vecArgs[ii], where, model_x0);
-		} else if (vecArgs[ii].first=="VERBOSE") {
-			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
+	std::string model_rng_algorithm, model_rng_distribution, model_rng_parameters;
 
-		} else if (vecArgs[ii].first=="RNG_ALGORITHM") {
-			if (vecArgs[ii].second == "XOR")
-				rng_alg = RandomNumberGenerator::RNG_XOR;
-			else if (vecArgs[ii].second == "MTW")
-				rng_alg = RandomNumberGenerator::RNG_MTW;
-			else if (vecArgs[ii].second == "PCG")
-				rng_alg = RandomNumberGenerator::RNG_PCG;
-			else
-				throw InvalidArgumentException("Unknown RNG algorithm '" + vecArgs[ii].second + "' provided for the particle filter.", AT);
+	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
+
+		/*** FILTER settings ***/
+		if (vecArgs[ii].first == "NO_OF_PARTICLES") {
+			IOUtils::parseArg(vecArgs[ii], where, NN);
+		} else if (vecArgs[ii].first == "PATH_RESAMPLING") {
+			IOUtils::parseArg(vecArgs[ii], where, path_resampling);
+
+		/*** MODEL FUNCTION settings ***/
+		} else if (vecArgs[ii].first == "MODEL_APPENDIX") {
+			model_appendix = vecArgs[ii].second;
+		} else if (vecArgs[ii].first == "MODEL_FUNCTION") {
+			model_expression = vecArgs[ii].second;
+		} else if (vecArgs[ii].first == "MODEL_X0") {
+			IOUtils::parseArg(vecArgs[ii], where, model_x0);
+		} else if (vecArgs[ii].first == "MODEL_ADD_NOISE") {
+			IOUtils::parseArg(vecArgs[ii], where, add_model_noise);
+
+		/*** MODEL RNG settings ***/
+		} else if (vecArgs[ii].first == "MODEL_RNG_ALGORITHM") {
+			std::string tmp; //everything RNG will be defaulted if not provided - cf. RNG doc
+			IOUtils::parseArg(vecArgs[ii], where, tmp);
+			model_rng.algorithm = RandomNumberGenerator::strToRngtype(tmp);
+		} else if (vecArgs[ii].first == "MODEL_RNG_DISTRIBUTION") {
+			std::string tmp;
+			IOUtils::parseArg(vecArgs[ii], where, tmp);
+			model_rng.distribution = RandomNumberGenerator::strToRngdistr(tmp); //convert from int to enum RNG_DISTR
+		} else if (vecArgs[ii].first == "MODEL_RNG_PARAMETERS") {
+			std::string tmp;
+			IOUtils::parseArg(vecArgs[ii], where, tmp);
+			IOUtils::readLineToVec(tmp, model_rng.parameters);
+		} else if (vecArgs[ii].first == "MODEL_RNG_SEED") {
+			std::string tmp;
+			IOUtils::parseArg(vecArgs[ii], where, tmp);
+			readLineToVec(tmp, model_rng.seed);
+
+		/*** MISC settings ***/
+		} else if (vecArgs[ii].first == "VERBOSE") {
+			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
 		}
+
 	} //endfor ii
 
 }
 
-
+void FilterParticle::readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out)
+{ //uint64 type version
+	vec_out.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+	uint64_t val;
+	while (!iss.eof()) {
+		iss >> std::skipws >> val;
+		if (iss.fail())
+			throw InvalidFormatException("Unable to parse process noise seed integers for particle filter.", AT);
+		vec_out.push_back(val);
+	}
+}
 
 } //namespace
