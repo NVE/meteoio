@@ -1,8 +1,6 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/tinyexpr.h>
 
-using namespace std;
-
 namespace mio {
 
 static const std::string model_appendix("_MOD");
@@ -18,7 +16,7 @@ FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::st
 			be_verbose(true)
 {
 	parse_args(vecArgs);
-	properties.stage = ProcessingProperties::second;
+	properties.stage = ProcessingProperties::first;
 }
 
 void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -28,14 +26,14 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	const bool init_success = fill_state(param, ivec);
 	if (!init_success)
-    	throw NoDataException("The Particle Filter could not initialize the state vector. There is neither good model input data nor a usable model function available.", AT);
+    	throw NoDataException("The particle filter could not initialize the state vector. Neither good model input data nor a usable model function are available.", AT);
 
 	ovec = ivec;
 	for (size_t ii = 0; ii < TT; ++ii){
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-		if (tmp < 0.8){
+		if (tmp < 269){
 			tmp = IOUtils::nodata;
 		}
 	}
@@ -46,7 +44,7 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 	const size_t TT = ivec.size(); //number of time steps
 	xx.clear();
 
-	const bool has_model_expression = model_expression.size() != 0; //user has entered a model equation, valid or not
+	const bool has_model_expression = !model_expression.empty(); //user has entered a model equation, valid or not
 
 	//check if model data exists in meteo data as per our naming convention:
 	const std::string param_name = ivec.front().getNameForParameter(param);
@@ -54,7 +52,7 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 	const bool has_param_mod = param_mod != IOUtils::npos; //user has supplied model data alongside the meteo data
 
 	if (has_model_expression && has_param_mod)
-		if (be_verbose) std::cerr << "[W] Both model data and model function are supplied for the Particle Filter. Ignoring model function.\n";
+		if (be_verbose) std::cerr << "[W] Both model data and model function are supplied for the particle filter. Ignoring model function.\n";
 
 	if (has_param_mod) {
 
@@ -62,18 +60,18 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 			const double val_model = ivec[kk](param_mod);
 			if (val_model != IOUtils::nodata && ivec[kk](param) != IOUtils::nodata)
 				xx.push_back(val_model);
-			//else
-				//throw NoDataException("No model data at " + ivec[kk].date.toString(Date::ISO, false) + ". Please refine your model output to match the timestamps or enable meteo resampling.");
+			else
+				throw NoDataException("No model data at " + ivec[kk].date.toString(Date::ISO, false) + ". Please refine your model output to match the timestamps or enable meteo resampling.");
 			//std::cout << kk << ": " << ivec[kk](param_mod) << std::endl;
 		}
 
 	} else if (has_model_expression) {
 
-		double te_kk, te_x_km1; //2 substitutions available: index and state value at last time step
-		te_variable te_vars[] = {{"kk", &te_kk, 0, 0}, {"x_km1", &te_x_km1, 0, 0}};
+		double te_kk, te_x_km1; //2 substitutions available: index and state value at previous time step
+		te_variable te_vars[] = {{"kk", &te_kk, 0, 0}, {"x_km1", &te_x_km1, 0, 0}}; //read: "x_(k-1)"
 
 		int te_err;
-		te_expr *expr = te_compile(model_expression.c_str(), te_vars, 2, &te_err); //ready equation with variables including syntax check
+		te_expr *expr = te_compile(model_expression.c_str(), te_vars, 2, &te_err); //ready the lazy equation with variables including syntax check
 
 		if (expr) {
 			if (model_x0 == IOUtils::nodata) {
@@ -91,13 +89,13 @@ bool FilterParticle::fill_state(const unsigned int& param, const std::vector<Met
 			}
 			te_free(expr);
 	    } else {
-	    	throw InvalidNameException("Arithmetic expression '" + model_expression +
+	    	throw InvalidFormatException("Arithmetic expression '" + model_expression +
 	    	    "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
 	    } //endif expr
 
 	} else {
 		throw InvalidArgumentException("No modeled data found in meteo data (expected '"
-		    + param_name + model_appendix + "' for the Particle Filter). No model function found either.");
+		    + param_name + model_appendix + "' for the particle filter). No model function found either.");
 	} //endif model_expression available
 
 	return true;
@@ -128,7 +126,7 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 			else if (vecArgs[ii].second == "PCG")
 				rng_alg = RandomNumberGenerator::RNG_PCG;
 			else
-				throw InvalidArgumentException("Unknown RNG algorithm '" + vecArgs[ii].second + "' provided for the Particle Filter.", AT);
+				throw InvalidArgumentException("Unknown RNG algorithm '" + vecArgs[ii].second + "' provided for the particle filter.", AT);
 		}
 	} //endfor ii
 
