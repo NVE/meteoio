@@ -21,9 +21,10 @@ class FilterParticle : public ProcessingBlock {
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		bool fill_state(const unsigned int& param, const std::vector<MeteoData>& ivec);
-		RandomNumberGenerator::RNG_TYPE str2rngalg(const std::string& str);
+		void fill_state(Eigen::VectorXd& xx, const unsigned int& param, const std::vector<MeteoData>& ivec,
+		        RandomNumberGenerator& RNGU);
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
+		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);
 
 		typedef enum PF_FILTER_ALGORITHM {
 			SIR, //only SIR is implemented so far
@@ -44,9 +45,6 @@ class FilterParticle : public ProcessingBlock {
 		std::string model_expression; //model formula (as opposed to file input)
 		double model_x0; //initial state at T=0
 
-		std::vector<double> xx; //state / model
-		std::vector<double> zz; //observation
-
 		struct rng_settings {
 			RandomNumberGenerator::RNG_TYPE algorithm;
 			RandomNumberGenerator::RNG_DISTR distribution;
@@ -55,9 +53,10 @@ class FilterParticle : public ProcessingBlock {
 			rng_settings() : algorithm(RandomNumberGenerator::RNG_XOR),
 			                 distribution(RandomNumberGenerator::RNG_GAUSS),
 			                 parameters(),
-							 seed() {}
+			                 seed() {}
 		};
-		struct rng_settings model_rng;
+		struct rng_settings rng_model; //noise generator for model function
+		struct rng_settings rng_prior; //prior pdf generator
 
 		bool add_model_noise; //when the model function is calculated, add noise?
 		bool be_verbose; //output warnings/info?
