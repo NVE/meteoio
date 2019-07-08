@@ -5,8 +5,9 @@
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 #include <meteoio/Eigen/Dense>
+#include <meteoio/tinyexpr.h>
 
-#include <inttypes.h> //for interaction with RNG
+#include <inttypes.h> //for RNG int types
 #include <string>
 #include <vector>
 
@@ -17,14 +18,13 @@ class FilterParticle : public ProcessingBlock {
 		FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		        std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		void fill_state(Eigen::VectorXd& xx, const unsigned int& param, const std::vector<MeteoData>& ivec,
-		        RandomNumberGenerator& RNGU);
-		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
+		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0);
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);
+		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
 
 		typedef enum PF_FILTER_ALGORITHM {
 			SIR, //only SIR is implemented so far
@@ -41,8 +41,8 @@ class FilterParticle : public ProcessingBlock {
 		unsigned int NN; //number of particles
 		bool path_resampling; //has nothing to do with temporal or spatial meteo resampling
 
-		std::string model_appendix; //naming convention for modeled data in the meteo set
 		std::string model_expression; //model formula (as opposed to file input)
+		std::string obs_model_expression;
 		double model_x0; //initial state at T=0
 
 		struct rng_settings {
@@ -56,9 +56,9 @@ class FilterParticle : public ProcessingBlock {
 			                 seed() {}
 		};
 		struct rng_settings rng_model; //noise generator for model function
-		struct rng_settings rng_prior; //prior pdf generator
+		struct rng_settings rng_obs; //observation noise pdf
+		struct rng_settings rng_prior; //generator to sample from prior pdf
 
-		bool add_model_noise; //when the model function is calculated, add noise?
 		bool be_verbose; //output warnings/info?
 
 };
