@@ -21,6 +21,7 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
+		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const int& kk);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0);
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);

@@ -18,6 +18,7 @@ FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::st
 
 void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
+
 	const size_t TT = ivec.size(); //number of time steps
 
 	if (obs_model_expression.empty()) {
@@ -69,9 +70,11 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		ww(nn, 0) = 1. / NN; //starting up, all particles have the same weight
 	}
 
+	/* PARTICLE FILTER */
+
 	for (size_t kk = 1; kk < TT; ++kk) { //for each TIME STEP (starting at 2nd)...
 
-
+		//SIR algorithm
 		for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
 			te_kk = (double)kk;
 			te_x_km1 = xx(nn, kk-1);
@@ -83,6 +86,9 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 		ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
 
+	    if (path_resampling)
+	    	resample_path(xx, ww, kk);  // This manipulates the original arrays by reference
+
 	} //endfor kk
 
 
@@ -90,15 +96,60 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	ovec = ivec; //copy with all special parameters etc.
 
-	//filtered observation (model function of mean state [= estimated likely state]):
+
 	for (size_t kk = 0; kk < TT; ++kk) {
 		te_xx = xx_mean(kk);
-		ovec[kk](param) = te_eval(expr_obs);
+		ovec[kk](param) = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
 	}
 
 	te_free(expr_model);
 	te_free(expr_obs);
 
+}
+
+void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const int& kk)
+{ //if a lot of computational power is devoted to particles with low contribution (low weight), resample the paths
+	switch(resample_alg) //choose resampling algorithm
+	{
+	case SYSTEMATIC:
+
+		double N_eff = 0.;
+		for (int nn = 0; nn < NN; ++nn)
+			N_eff += ww(nn, kk)*ww(nn, kk); //effective sample size
+		N_eff = 1. / N_eff;
+
+		static const double rc = 0.5;
+
+		RandomNumberGenerator RNU; //uniform random numbers
+
+		if (N_eff < rc * NN)
+		{
+
+			double cdf[NN];
+			cdf[0] = 0.;
+			for (int nn = 1; nn < NN; ++nn)
+				cdf[nn] = cdf[nn-1] + ww(nn, kk); //construct cumulative density function
+
+			cdf[NN-1] = 1.; //round-off protection
+
+			double rr = RNU.doub();
+
+			for (int nn = 0; nn < NN; ++nn) //for each PARTICLE...
+			{
+				size_t jj = 0;
+				while (rr > cdf[jj])
+					++jj; //check which range in the cdf the random number belongs to...
+
+				xx(nn, kk) = xx(jj, kk); //... and use that index
+
+				ww(nn, kk) = 1. / NN; //all resampled particles have the same weight
+				rr += 1. / NN; //move along CDF
+			}
+
+		} //endif N_eff
+		break;
+
+	} //end switch resampling
 }
 
 void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
@@ -176,6 +227,7 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 
 	} //endfor ii
 }
+
 
 void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0)
 { //to keep process(...) more readable
