@@ -240,6 +240,7 @@ namespace IOUtils {
 	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
+	size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim);
 	
 	template <class T> std::string toString(const T& t) {
 		std::ostringstream os;

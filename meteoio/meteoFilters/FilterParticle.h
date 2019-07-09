@@ -5,7 +5,6 @@
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 #include <meteoio/Eigen/Dense>
-#include <meteoio/tinyexpr.h>
 
 #include <inttypes.h> //for RNG int types
 #include <string>

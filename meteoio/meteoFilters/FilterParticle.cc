@@ -19,6 +19,8 @@ FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::st
 void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 
+	/* INITIALIZATION */
+
 	const size_t TT = ivec.size(); //number of time steps
 
 	if (obs_model_expression.empty()) {
@@ -47,7 +49,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	te_expr *expr_obs = te_compile(obs_model_expression.c_str(), te_vars_obs, 1, &te_err_obs);
 	if (!expr_obs)
 		throw InvalidFormatException("Arithmetic expression '" + obs_model_expression +
-		        "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
+		        "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err_obs), AT);
 
 	//init random number generators:
 	RandomNumberGenerator RNGU(rng_model.algorithm, rng_model.distribution, rng_model.parameters); //process noise
@@ -129,10 +131,9 @@ void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 			cdf[0] = 0.;
 			for (int nn = 1; nn < NN; ++nn)
 				cdf[nn] = cdf[nn-1] + ww(nn, kk); //construct cumulative density function
+			cdf[NN-1] = 1.0; //round-off protection
 
-			cdf[NN-1] = 1.; //round-off protection
-
-			double rr = RNU.doub();
+			double rr = RNU.doub() / NN;
 
 			for (int nn = 0; nn < NN; ++nn) //for each PARTICLE...
 			{
@@ -143,7 +144,7 @@ void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 				xx(nn, kk) = xx(jj, kk); //... and use that index
 
 				ww(nn, kk) = 1. / NN; //all resampled particles have the same weight
-				rr += 1. / NN; //move along CDF
+				rr += 1. / NN; //move along cdf
 			}
 
 		} //endif N_eff
@@ -165,17 +166,19 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 			IOUtils::parseArg(vecArgs[ii], where, NN);
 		} else if (vecArgs[ii].first == "PATH_RESAMPLING") {
 			IOUtils::parseArg(vecArgs[ii], where, path_resampling);
+		}
 
 		/*** MODEL FUNCTION settings ***/
-		} else if (vecArgs[ii].first == "MODEL_FUNCTION") {
+		else if (vecArgs[ii].first == "MODEL_FUNCTION") {
 			model_expression = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "MODEL_X0") {
 			IOUtils::parseArg(vecArgs[ii], where, model_x0);
 		} else if (vecArgs[ii].first == "OBS_MODEL_FUNCTION") {
 			obs_model_expression = vecArgs[ii].second;
+		}
 
 		/*** MODEL RNG settings ***/
-		} else if (vecArgs[ii].first == "MODEL_RNG_ALGORITHM") { //everything RNG will be defaulted if not provided - cf. RNG doc
+		else if (vecArgs[ii].first == "MODEL_RNG_ALGORITHM") { //everything RNG will be defaulted if not provided - cf. RNG doc
 			rng_model.algorithm = RandomNumberGenerator::strToRngtype(vecArgs[ii].second);
 		} else if (vecArgs[ii].first == "MODEL_RNG_DISTRIBUTION") {
 			rng_model.distribution = RandomNumberGenerator::strToRngdistr(vecArgs[ii].second); //convert from int to enum RNG_DISTR
@@ -183,9 +186,10 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 			IOUtils::readLineToVec(vecArgs[ii].second, rng_model.parameters);
 		} else if (vecArgs[ii].first == "MODEL_RNG_SEED") {
 			readLineToVec(vecArgs[ii].second, rng_model.seed);
+		}
 
 		/*** PRIOR PDF RNG settings ***/
-		} else if (vecArgs[ii].first == "PRIOR_RNG_ALGORITHM") {
+		else if (vecArgs[ii].first == "PRIOR_RNG_ALGORITHM") {
 			rng_prior.algorithm = RandomNumberGenerator::strToRngtype(vecArgs[ii].second);
 			has_prior = true;
 		} else if (vecArgs[ii].first == "PRIOR_RNG_DISTRIBUTION") {
@@ -197,9 +201,10 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 		} else if (vecArgs[ii].first == "PRIOR_RNG_SEED") {
 			readLineToVec(vecArgs[ii].second, rng_prior.seed);
 			has_prior = true;
+		}
 
 		/*** OBSERVATION PDF RNG settings ***/
-		} else if (vecArgs[ii].first == "OBS_RNG_ALGORITHM") {
+		else if (vecArgs[ii].first == "OBS_RNG_ALGORITHM") {
 			rng_obs.algorithm = RandomNumberGenerator::strToRngtype(vecArgs[ii].second);
 			has_obs = true;
 		} else if (vecArgs[ii].first == "OBS_RNG_DISTRIBUTION") {
@@ -211,9 +216,10 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 		} else if (vecArgs[ii].first == "OBS_RNG_SEED") {
 			readLineToVec(vecArgs[ii].second, rng_obs.seed);
 			has_obs = true;
+		}
 
 		/*** MISC settings ***/
-		} else if (vecArgs[ii].first == "VERBOSE") {
+		else if (vecArgs[ii].first == "VERBOSE") {
 			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
 		}
 

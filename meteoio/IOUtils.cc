@@ -401,6 +401,21 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 	return vecString.size();
 }
 
+size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim)
+{ //split a line into strings, and extract a double vector from there
+	vecRet.clear();
+	std::istringstream iss(line_in);
+	std::string word;
+
+	double num;
+	while (getline(iss, word, delim)) {
+		std::istringstream tok(word);
+		tok >> num;
+		vecRet.push_back(num);
+	}
+	return vecRet.size();
+}
+
 // generic template function convertString must be defined in the header
 
 static const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

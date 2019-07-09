@@ -13,6 +13,7 @@ SET(meteoFilters_sources
 	meteoFilters/FilterRate.cc
 	meteoFilters/FilterUnheatedPSUM.cc
 	meteoFilters/FilterParticle.cc
+	meteoFilters/FilterKalman.cc
 	meteoFilters/ProcAggregate.cc
 	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc

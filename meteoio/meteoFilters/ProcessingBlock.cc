@@ -53,6 +53,7 @@
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
 #include <meteoio/meteoFilters/FilterParticle.h>
+#include <meteoio/meteoFilters/FilterKalman.h>
 
 namespace mio {
 /**
@@ -180,6 +181,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterDespikingPS(vecArgs, blockname);
 	} else if (blockname == "PARTICLE"){
 		return new FilterParticle(vecArgs, blockname);
+	} else if (blockname == "KALMAN"){
+		return new FilterKalman(vecArgs, blockname);
 	}
 
 	//general data transformations
