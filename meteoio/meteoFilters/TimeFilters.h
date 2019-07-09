@@ -150,6 +150,10 @@ class TimeUnDST : public ProcessingBlock {
  * TIME::arg1::ref_end = 2018-02-01
  * TIME::arg1::match_date = 2019-03-01	;this assumes that the data from ref_start will be copied as data for 2019-03-01
  * @endcode
+ * 
+ * The example above copies over and over the timestamps from 2018-01-01T00:00:00 to 2018-02-01T00:00:00 while making sure that the timesteps 
+ * of 2018-01-01T00:00:00 are copied to 2019-03-01T00:00:00. To do a ten years simulation spin up, then run your simulation for example as
+ * "my_model 2000-01-01 2010-01-01". 
  */
 class TimeLoop : public ProcessingBlock {
 	public:
