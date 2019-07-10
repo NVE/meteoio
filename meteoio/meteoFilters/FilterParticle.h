@@ -4,7 +4,7 @@
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <meteoio/Eigen/Dense>
+#include <Dense>
 
 #include <inttypes.h> //for RNG int types
 #include <string>
