@@ -4,7 +4,7 @@
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <Dense>
+#include <Core> //<Eigen/Core>
 
 #include <inttypes.h> //for RNG int types
 #include <string>
@@ -22,6 +22,9 @@ class FilterParticle : public ProcessingBlock {
 	private:
 		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		bool dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights);
+		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights);
+		bool dumpParticlePaths(Eigen::MatrixXd& particles);
 		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
 		        RandomNumberGenerator& RNU);
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);
@@ -64,6 +67,9 @@ class FilterParticle : public ProcessingBlock {
 		std::vector<uint64_t> resample_seed;
 
 		bool be_verbose; //output warnings/info?
+		std::string dump_particles_file;
+		std::string dump_states_file;
+		std::string input_states_file;
 
 };
 

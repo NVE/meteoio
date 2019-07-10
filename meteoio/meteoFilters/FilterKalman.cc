@@ -1,3 +1,5 @@
+#include <LU> //<Eigen/LU>
+
 #include <meteoio/meteoFilters/FilterKalman.h>
 #include <meteoio/IOUtils.h>
 
@@ -17,6 +19,8 @@ FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string
 void FilterKalman::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 
+	/* INITIALIZATION */
+
 	const size_t TT = ivec.size(); //number of time steps
 
 	//TODO: allow input with brackets (no effect)
@@ -28,11 +32,12 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 	//TODO: adaptive time stepping
 
 	Eigen::MatrixXd zz;
-	const size_t nz = buildObservationsMatrix(param, ivec, zz); //check observations dimension
+	std::vector<size_t> meas_idx;
+	const size_t nz = buildObservationsMatrix(param, ivec, zz, meas_idx); //check observations dimension
 
 	//now that we know how many states and observables there are, we can size the rest of the matrices:
 	Eigen::MatrixXd HH(nz, nx);
-	if (mat_in_HH.length() == 0) { //use identity matrix
+	if (!mat_in_HH.empty()) { //use identity matrix or something similar if the matrix isn't square
 		HH.setIdentity();
 		if (be_verbose) std::cerr << "[W] No model found to relate observations to states. Setting to 'identity', but this may not make much sense.\n";
 	} else {
@@ -45,14 +50,38 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 
 	//at last, we input an optional control signal, either as scalar, matrix, or "meteo" data
 	Eigen::MatrixXd BB = bloatMatrix(mat_in_BB, nx, nx); //relates control input to state
-
 	Eigen::MatrixXd uu = buildControlSignal(nx, TT, ivec);
 
-	ovec = ivec;
+    /* KALMAN FILTER */
+
+    Eigen::MatrixXd KK; //Kalman gain
+    Eigen::MatrixXd II = Eigen::MatrixXd::Identity(nx, nx);
+
+    ovec = ivec; //copy with all special parameters etc.
+
+    for (size_t kk = 0; kk < TT; ++kk) //for each time step...
+    {
+
+        //prediction
+        xx = ( AA * xx + BB * uu.col(kk) ).eval(); //guard against aliasing
+        PP = ( AA * PP * AA.transpose() + QQ ).eval();
+
+        //update
+        KK = PP * HH.transpose() * (HH * PP * HH.transpose() + RR).inverse();
+        xx = ( xx + KK * (zz.col(kk) - HH * xx) ).eval();
+        PP = ( (II - KK * HH) * PP ).eval();
+
+        for (size_t ii = 0; ii < nz; ++ii) {
+        	ovec[kk](meas_idx[ii]) = zz(ii, kk); //Note! This will filter all specified parameters, not just param!
+        }
+
+    } // endfor kk
+
 }
 
-size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz) {
-	std::vector<size_t> meas_idx; //index map of observables
+size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz,
+		std::vector<size_t>& meas_idx) {
+	meas_idx.clear(); //index map of observables
 	meas_idx.push_back(param);
 	for (size_t jj = 0; jj < meas_params.size(); ++jj)
 		meas_idx.push_back( ivec.front().getParameterIndex(meas_params[jj]) );
@@ -67,7 +96,6 @@ size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const st
 
 Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec)
 {
-
 	Eigen::MatrixXd uu(nx, TT);
 
 	std::vector<std::string> vecU;
@@ -118,7 +146,7 @@ Eigen::MatrixXd FilterKalman::parseMatrix(const std::string& line, const size_t&
 		xcols = nr_elements;
 	} else {
 		if (rows*cols != nr_elements)
-			throw InvalidArgumentException("The Kalman filter encountered an unfit matrix size (expected: " +
+			throw InvalidArgumentException("The Kalman filter encountered an unfit input matrix size (expected: " +
 			        IOUtils::toString(rows) + "x" + IOUtils::toString(cols) + ").", AT);
 	}
 
@@ -180,8 +208,7 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
 		else if (vecArgs[ii].first == "VERBOSE") {
 			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
 		}
-	}
-
+	} //endfor vecArgs
 
 	if (!has_initial)
 		throw InvalidArgumentException("The Kalman filter needs an initial state, i. e. a vector given in INITIAL_STATE.", AT);

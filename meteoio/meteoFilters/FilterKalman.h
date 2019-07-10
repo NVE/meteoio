@@ -4,7 +4,7 @@
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <Dense>
+#include <Core> //<Eigen/Core>
 
 #include <string>
 #include <vector>
@@ -19,7 +19,8 @@ class FilterKalman : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
-		size_t buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz);
+		size_t buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz,
+				std::vector<size_t>& meas_idx);
 		Eigen::MatrixXd buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec);
 		Eigen::MatrixXd parseMatrix(const std::string& line, const size_t& rows, const size_t& cols);
 		Eigen::MatrixXd bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols);
