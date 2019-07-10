@@ -20,10 +20,12 @@ class FilterKalman : public ProcessingBlock {
 
 	private:
 		size_t buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz);
+		Eigen::MatrixXd buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec);
 		Eigen::MatrixXd parseMatrix(const std::string& line, const size_t& rows, const size_t& cols);
+		Eigen::MatrixXd bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
-		std::string matrix_input[3]; //strings from .ini to read matrices from later
+		std::string mat_in_xx, mat_in_AA, mat_in_HH, mat_in_PP, mat_in_QQ, mat_in_RR, mat_in_BB, mat_in_uu;
 		std::vector<std::string> meas_params;
 
 		bool be_verbose; //output warnings/info?

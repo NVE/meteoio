@@ -1,18 +1,14 @@
 #include <meteoio/meteoFilters/FilterKalman.h>
 #include <meteoio/IOUtils.h>
 
-
-#include <sstream> //for readLineToVec
-
 namespace mio {
 
 FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name), matrix_input(), meas_params(),
+        : ProcessingBlock(vecArgs, name),
+		  mat_in_xx(""), mat_in_AA(""), mat_in_HH(""), mat_in_PP("1"), mat_in_QQ("0"), mat_in_RR("0"), mat_in_BB("0"), mat_in_uu("0"),
+          meas_params(),
           be_verbose(true)
 {
-
-	matrix_input[0] = matrix_input[1] = matrix_input[2] = "";
-
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
@@ -21,37 +17,102 @@ FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string
 void FilterKalman::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 
-	//const size_t TT = ivec.size(); //number of time steps
+	const size_t TT = ivec.size(); //number of time steps
 
 	//TODO: allow input with brackets (no effect)
-	Eigen::MatrixXd xx = parseMatrix(matrix_input[0], IOUtils::npos, 1); //this ini line fixes our number of states
+	Eigen::MatrixXd xx = parseMatrix(mat_in_xx, IOUtils::unodata, 1); //this ini line fixes our number of states
 	const size_t nx = xx.size();
 
 	//knowing the number of states, we can init state matrix sizes
-	Eigen::MatrixXd AA = parseMatrix(matrix_input[1], nx, nx);
+	Eigen::MatrixXd AA = parseMatrix(mat_in_AA, nx, nx);
+	//TODO: adaptive time stepping
 
-	Eigen::MatrixXd zz; //check observations dimension
-	const size_t nz = buildObservationsMatrix(param, ivec, zz);
+	Eigen::MatrixXd zz;
+	const size_t nz = buildObservationsMatrix(param, ivec, zz); //check observations dimension
 
 	//now that we know how many states and observables there are, we can size the rest of the matrices:
 	Eigen::MatrixXd HH(nz, nx);
-	if (matrix_input[2].length() == 0) { //use identity matrix
+	if (mat_in_HH.length() == 0) { //use identity matrix
 		HH.setIdentity();
 		if (be_verbose) std::cerr << "[W] No model found to relate observations to states. Setting to 'identity', but this may not make much sense.\n";
 	} else {
-		HH = parseMatrix(matrix_input[2], nz, nx);
+		HH = parseMatrix(mat_in_HH, nz, nx);
 	}
+
+	Eigen::MatrixXd PP = bloatMatrix(mat_in_PP, nx, nx); //trust in initial state
+	Eigen::MatrixXd QQ = bloatMatrix(mat_in_QQ, nx, nx); //process noise covariance
+	Eigen::MatrixXd RR = bloatMatrix(mat_in_RR, nz, nz); //observation noise covariance
+
+	//at last, we input an optional control signal, either as scalar, matrix, or "meteo" data
+	Eigen::MatrixXd BB = bloatMatrix(mat_in_BB, nx, nx); //relates control input to state
+
+	Eigen::MatrixXd uu = buildControlSignal(nx, TT, ivec);
 
 	ovec = ivec;
 }
 
+size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz) {
+	std::vector<size_t> meas_idx; //index map of observables
+	meas_idx.push_back(param);
+	for (size_t jj = 0; jj < meas_params.size(); ++jj)
+		meas_idx.push_back( ivec.front().getParameterIndex(meas_params[jj]) );
+
+	zz.resize(meas_idx.size(), ivec.size()); //fill observation matrix with desired values from meteo set
+	for (size_t kk = 0; kk < ivec.size(); ++kk) {
+		for (size_t jj = 0; jj < meas_idx.size(); ++jj)
+			zz(jj, kk) = ivec[kk](meas_idx[jj]);
+	}
+	return meas_idx.size();
+}
+
+Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec)
+{
+
+	Eigen::MatrixXd uu(nx, TT);
+
+	std::vector<std::string> vecU;
+	const size_t nr_uu = IOUtils::readLineToVec(mat_in_uu, vecU, ',');
+
+	double aa;
+	std::istringstream iss(vecU.front());
+	iss >> aa; //test-read double
+
+	if (!iss.fail()) { //there's at least a numerical value in the beginning, so it should not be a meteo param name
+		if (nr_uu == 1) { //case 1: single value --> replicate to whole matrix
+			uu.setOnes();
+			uu *= aa;
+		} else if (nr_uu == nx) { //case 2: nx values --> repeat column vector
+			for (size_t jj = 0; jj < nx; ++jj) {
+				iss.clear(); iss.str(vecU[jj]);
+				iss >> aa;
+				uu(jj, 0) = aa;
+			}
+			uu.colwise() = uu.col(0);
+		} else {
+			throw InvalidArgumentException("Control signal vector for Kalman filter ill-formatted (expected: " +
+			        IOUtils::toString(nx) + " elements).", AT);
+		}
+	} else { //case 3: parameter names given --> separate vector each timestep
+		if (nr_uu != nx)
+			throw InvalidArgumentException("Control signal vector for Kalman filter cannot be constructed (expected: " +
+			        IOUtils::toString(nx) + " parameter names).", AT);
+		for (size_t jj = 0; jj < TT; ++jj)
+			for (size_t ii = 0; ii < nx; ++ii) {
+				IOUtils::trim(vecU[ii]);
+				uu(ii, jj) =  ivec[jj](vecU[ii]);
+			}
+	}
+
+	return uu;
+}
+
 Eigen::MatrixXd FilterKalman::parseMatrix(const std::string& line, const size_t& rows, const size_t& cols)
 {
-	std::vector<double> vecRet;
+	std::vector<double> vecRet; //handle growing vector with stl
 	const size_t nr_elements = IOUtils::readLineToVec(line, vecRet, ',');
 
-	size_t xrows(rows), xcols(cols); //row or column vector - unambiguous size from input line
-	if (rows == IOUtils::unodata && cols == 1) {
+	size_t xrows(rows), xcols(cols);
+	if (rows == IOUtils::unodata && cols == 1) { //row or column vector - unambiguous size from input line
 		xrows = nr_elements;
 	} else if (cols == IOUtils::unodata && rows == 1) {
 		xcols = nr_elements;
@@ -66,19 +127,20 @@ Eigen::MatrixXd FilterKalman::parseMatrix(const std::string& line, const size_t&
 	return ET; //RowMajor is the storage order and has the effect of row-wise input in the ini
 }
 
-size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz) {
-	std::vector<size_t> meas_idx; //index map of observables
-	meas_idx.push_back(param);
-	for (size_t j = 0; j < meas_params.size(); ++j)
-		meas_idx.push_back( ivec.front().getParameterIndex(meas_params[j]) );
-
-	zz.resize(meas_idx.size(), ivec.size()); //fill observation matrix with desired values from meteo set
-	for (size_t kk = 0; kk < ivec.size(); ++kk) {
-		for (size_t jj = 0; jj < meas_idx.size(); ++jj)
-			zz(jj, kk) = ivec[kk](meas_idx[jj]);
+Eigen::MatrixXd FilterKalman::bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols)
+{ //if a scalar is given put it on the diagonal, else read the matrix as usual
+	Eigen::MatrixXd ret;
+	const size_t nr = IOUtils::count(line, ",");
+	if (nr > 0) { //not an isolated double
+		ret = parseMatrix(line, rows, cols);
+	} else { //single value: put on diagonal
+		std::istringstream ss(line);
+		double aa;
+		ss >> aa;
+		ret.setIdentity(rows, cols);
+		ret *= aa;
 	}
-
-	return meas_idx.size();
+	return ret;
 }
 
 void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
@@ -89,15 +151,30 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
 
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
 		if (vecArgs[ii].first == "INITIAL_STATE") {
-			matrix_input[0] = vecArgs[ii].second;
+			mat_in_xx = vecArgs[ii].second;
 			has_initial = true;
+		} else if (vecArgs[ii].first == "INITIAL_TRUST") {
+			mat_in_PP = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "STATE_DYNAMICS") {
-			matrix_input[1] = vecArgs[ii].second;
+			mat_in_AA = vecArgs[ii].second;
 			has_dynamics = true;
-		} else if (vecArgs[ii].first == "ADD_OBSERVATIONS") {
+		} else if (vecArgs[ii].first == "PROCESS_COVARIANCE") {
+			mat_in_QQ = vecArgs[ii].second;
+
+		}
+
+		else if (vecArgs[ii].first == "ADD_OBSERVATIONS") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, meas_params);
 		} else if (vecArgs[ii].first == "OBSERVATION_RELATION") {
-			matrix_input[2] = vecArgs[ii].second;
+			mat_in_HH = vecArgs[ii].second;
+		} else if (vecArgs[ii].first == "OBSERVATION_COVARIANCE") {
+			mat_in_RR = vecArgs[ii].second;
+		}
+
+		else if (vecArgs[ii].first == "CONTROL_SIGNAL") {
+			mat_in_uu = vecArgs[ii].second;
+		} else if (vecArgs[ii].first == "CONTROL_RELATION") {
+			mat_in_BB = vecArgs[ii].second;
 		}
 
 		else if (vecArgs[ii].first == "VERBOSE") {

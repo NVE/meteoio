@@ -20,9 +20,10 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
-		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const int& kk);
+		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0);
+		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
+		        RandomNumberGenerator& RNU);
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
 
@@ -41,9 +42,11 @@ class FilterParticle : public ProcessingBlock {
 		unsigned int NN; //number of particles
 		bool path_resampling; //has nothing to do with temporal or spatial meteo resampling
 
-		std::string model_expression; //model formula (as opposed to file input)
+		std::string model_expression; //model formula
 		std::string obs_model_expression;
 		double model_x0; //initial state at T=0
+
+		float resample_percentile;
 
 		struct rng_settings {
 			RandomNumberGenerator::RNG_TYPE algorithm;
@@ -58,6 +61,7 @@ class FilterParticle : public ProcessingBlock {
 		struct rng_settings rng_model; //noise generator for model function
 		struct rng_settings rng_obs; //observation noise pdf
 		struct rng_settings rng_prior; //generator to sample from prior pdf
+		std::vector<uint64_t> resample_seed;
 
 		bool be_verbose; //output warnings/info?
 

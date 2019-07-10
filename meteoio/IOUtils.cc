@@ -411,6 +411,8 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, co
 	while (getline(iss, word, delim)) {
 		std::istringstream tok(word);
 		tok >> num;
+		if (tok.fail())
+			throw InvalidFormatException("Can not read column in data line \"" + line_in + "\"", AT);
 		vecRet.push_back(num);
 	}
 	return vecRet.size();

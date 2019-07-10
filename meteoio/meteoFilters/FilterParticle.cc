@@ -7,8 +7,8 @@ namespace mio {
 
 FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
         : ProcessingBlock(vecArgs, name), filter_alg(SIR), resample_alg(SYSTEMATIC), NN(2000), path_resampling(false),
-          model_expression(""), obs_model_expression(""), model_x0(IOUtils::nodata),
-          rng_model(), rng_prior(),
+          model_expression(""), obs_model_expression(""), model_x0(IOUtils::nodata), resample_percentile(0.5),
+          rng_model(), rng_obs(), rng_prior(), resample_seed(),
           be_verbose(true)
 {
 	parse_args(vecArgs);
@@ -55,18 +55,17 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	RandomNumberGenerator RNGU(rng_model.algorithm, rng_model.distribution, rng_model.parameters); //process noise
 	RandomNumberGenerator RNGV(rng_obs.algorithm, rng_obs.distribution, rng_obs.parameters); //observation pdf
 	RandomNumberGenerator RNG0(rng_prior.algorithm, rng_prior.distribution, rng_prior.parameters); //prior pdf
-	seedGeneratorsFromIni(RNGU, RNGV, RNG0);
+	RandomNumberGenerator RNU; //uniforms for resampling
+	seedGeneratorsFromIni(RNGU, RNGV, RNG0, RNU);
 
 	//init states and noise:
 	Eigen::MatrixXd xx(NN, TT); //particles
-	Eigen::VectorXd zz(TT); //observation
+	Eigen::VectorXd zz(TT); //observations
 	vecMeteoToEigen(ivec, zz, param);
 
 	Eigen::MatrixXd ww(NN, TT); //weights of particles
-
 	xx(0, 0) = model_x0;
 	ww(0, 0) = 1. / NN;
-
 	for (size_t nn = 1; nn < NN; ++nn) { //draw from prior pdf for initial state of particles at T=0
 		xx(nn, 0) = xx(0, 0) + RNG0.doub();
 		ww(nn, 0) = 1. / NN; //starting up, all particles have the same weight
@@ -89,7 +88,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
 
 	    if (path_resampling)
-	    	resample_path(xx, ww, kk);  // This manipulates the original arrays by reference
+	    	resample_path(xx, ww, kk, RNU);
 
 	} //endfor kk
 
@@ -109,33 +108,26 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 }
 
-void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const int& kk)
+void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU)
 { //if a lot of computational power is devoted to particles with low contribution (low weight), resample the paths
-	switch(resample_alg) //choose resampling algorithm
-	{
-	case SYSTEMATIC:
+	if (resample_alg == SYSTEMATIC) { //choose resampling algorithm
 
 		double N_eff = 0.;
-		for (int nn = 0; nn < NN; ++nn)
+		for (size_t nn = 0; nn < NN; ++nn)
 			N_eff += ww(nn, kk)*ww(nn, kk); //effective sample size
 		N_eff = 1. / N_eff;
 
-		static const double rc = 0.5;
-
-		RandomNumberGenerator RNU; //uniform random numbers
-
-		if (N_eff < rc * NN)
+		if (N_eff < resample_percentile * (float)NN)
 		{
-
-			double cdf[NN];
-			cdf[0] = 0.;
-			for (int nn = 1; nn < NN; ++nn)
+			std::vector<double> cdf(NN);
+			cdf.front() = 0.;
+			for (size_t nn = 1; nn < NN; ++nn)
 				cdf[nn] = cdf[nn-1] + ww(nn, kk); //construct cumulative density function
-			cdf[NN-1] = 1.0; //round-off protection
+			cdf.back() = 1.0; //round-off protection
 
 			double rr = RNU.doub() / NN;
 
-			for (int nn = 0; nn < NN; ++nn) //for each PARTICLE...
+			for (size_t nn = 0; nn < NN; ++nn) //for each PARTICLE...
 			{
 				size_t jj = 0;
 				while (rr > cdf[jj])
@@ -148,8 +140,9 @@ void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 			}
 
 		} //endif N_eff
-		break;
 
+	} else {
+		throw InvalidArgumentException("Resampling strategy for particle filter not implemented.", AT);
 	} //end switch resampling
 }
 
@@ -221,6 +214,10 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 		/*** MISC settings ***/
 		else if (vecArgs[ii].first == "VERBOSE") {
 			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
+		} else if (vecArgs[ii].first == "RESAMPLE_PERCENTILE") {
+			IOUtils::parseArg(vecArgs[ii], where, resample_percentile);
+		} else if (vecArgs[ii].first == "RESAMPLE_RNG_SEED") {
+			readLineToVec(vecArgs[ii].second, resample_seed);
 		}
 
 		if (!has_prior) //not one prior pdf RNG setting -> pick importance density
@@ -235,7 +232,8 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 }
 
 
-void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0)
+void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
+        RandomNumberGenerator& RNU)
 { //to keep process(...) more readable
 	if (!rng_model.seed.empty()) //seed integers given in ini file
 		RNGU.setState(rng_model.seed);
@@ -243,6 +241,8 @@ void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNu
 		RNGV.setState(rng_obs.seed);
 	if (!rng_prior.seed.empty())
 		RNG0.setState(rng_prior.seed);
+	if (!resample_seed.empty())
+		RNU.setState(resample_seed);
 }
 
 void FilterParticle::vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param)
