@@ -24,15 +24,18 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	/* INITIALIZATION */
 
 	const size_t TT = ivec.size(); //number of time steps
+	ovec = ivec; //copy with all special parameters etc.
 
 	if (obs_model_expression.empty()) {
-		std::cerr << "[W] Model to relate observations to state is missing for particle filter. Picking obs(x)=state(x).\n";
+		std::cerr << "[W] Model to relate observations to state is missing for particle filter. Picking obs(k)=state(k).\n";
 		obs_model_expression = "xx";
 	}
 
 	//prepare system model expression
-	double te_kk, te_x_km1; //2 substitutions available: index and state value at previous time step
-	te_variable te_vars[] = {{"kk", &te_kk, 0, 0}, {"x_km1", &te_x_km1, 0, 0}}; //read: "x_(k-1)"
+	double te_kk, te_x_km1, te_tt; //3 substitutions available: index, state value at previous time step, normalized time
+	te_variable te_vars[] = {{"kk", &te_kk, 0, 0},
+	                         {"x_km1", &te_x_km1, 0, 0}, //read: "x_(k-1)"
+	                         {"tt", &te_tt, 0, 0}};
 
 	int te_err;
 	te_expr *expr_model = te_compile(model_expression.c_str(), te_vars, 2, &te_err); //ready the lazy equation with variables including syntax check
@@ -40,13 +43,23 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		throw InvalidFormatException("Arithmetic expression '" + model_expression +
 		        "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
 	if (model_x0 == IOUtils::nodata) {
-		if (be_verbose) std::cerr << "[W] No initial state value x_0 provided for particle filter; using 1st measurement.\n";
-		model_x0 = ivec.front()(param); //TODO: nodata checks
+		for (size_t kk = 0; kk < TT; ++kk) { //find 1st data element for starting point
+			if (ivec[kk](param) != IOUtils::nodata) {
+				model_x0 = ivec[kk](param); //if there are many the filter will run through, but the user should really resample the meteo data
+				break;
+			}
+		}
+		if (be_verbose) std::cerr << "[W] No initial state value x_0 provided for particle filter; using 1st available measurement.\n";
+		if (model_x0 == IOUtils::nodata) { //all values are nodata
+			return;
+		}
+
 	}
 
 	//prepare observation model expression
 	double te_xx;
-	te_variable te_vars_obs[] = {{"xx", &te_xx, 0, 0}};
+	te_variable te_vars_obs[] = {{"xx", &te_xx, 0, 0},
+	                             {"tt", &te_tt, 0, 0}};
 	int te_err_obs;
 	te_expr *expr_obs = te_compile(obs_model_expression.c_str(), te_vars_obs, 1, &te_err_obs);
 	if (!expr_obs)
@@ -60,11 +73,12 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	RandomNumberGenerator RNU; //uniforms for resampling
 	seedGeneratorsFromIni(RNGU, RNGV, RNG0, RNU);
 
-	//init states and noise:
+	//init states:
 	Eigen::MatrixXd xx(NN, TT); //particles
 	Eigen::VectorXd zz(TT); //observations
 	vecMeteoToEigen(ivec, zz, param);
 	Eigen::MatrixXd ww(NN, TT); //weights of particles
+	const Eigen::VectorXd tVec = buildTimeVector(ivec);
 
 	bool instates_success(false);
 	if (!input_states_file.empty()) { //there is data saved from a previous run
@@ -81,17 +95,25 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	/* PARTICLE FILTER */
 
+	bool saw_nodata(false);
 	for (size_t kk = 1; kk < TT; ++kk) { //for each TIME STEP (starting at 2nd)...
 
-		//SIR algorithm
-		for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
-			te_kk = (double)kk;
-			te_x_km1 = xx(nn, kk-1);
+		if (ivec[kk](param) == IOUtils::nodata) {
+			xx.col(kk) = xx.col(kk-1); //repeat particles for nodata values
+			ww.col(kk) = ww.col(kk-1); //the mean gets skewed a little
+			saw_nodata = true;
+		} else {
+			//SIR algorithm
+			for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
+				te_kk = (double)kk;
+				te_tt = tVec(kk);
+				te_x_km1 = xx(nn, kk-1);
 
-			const double res = te_eval(expr_model); //evaluate expression with current substitution values
-			xx(nn, kk) = res + RNGU.doub();
-			ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - xx(nn, kk) );
-		} //endfor nn
+				const double res = te_eval(expr_model); //evaluate expression with current substitution values
+				xx(nn, kk) = res + RNGU.doub();
+				ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - xx(nn, kk) );
+			} //endfor nn
+		} //endif nodata
 
 		ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
 
@@ -102,14 +124,16 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	Eigen::VectorXd xx_mean = (xx.array() * ww.array()).colwise().sum(); //average over NN weighted particles at each time step
 
-	ovec = ivec; //copy with all special parameters etc.
 	for (size_t kk = 0; kk < TT; ++kk) {
 		te_xx = xx_mean(kk);
+		te_tt = tVec(kk);
 		ovec[kk](param) = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
 	}
 
 	te_free(expr_model);
 	te_free(expr_obs);
+
+	if (be_verbose && saw_nodata) std::cerr << "[W] Nodata value(s) encountered in particle filter. For this, the previous particle was repeated. You should probably resample beforehand.\n";
 
 	if (!dump_states_file.empty())
 		(void) dumpInternalStates(xx, ww);
@@ -118,7 +142,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 }
 
-void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU)
+void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const
 { //if a lot of computational power is devoted to particles with low contribution (low weight), resample the paths
 	if (resample_alg == SYSTEMATIC) { //choose resampling algorithm
 
@@ -154,6 +178,80 @@ void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 	} else {
 		throw InvalidArgumentException("Resampling strategy for particle filter not implemented.", AT);
 	} //end switch resampling
+}
+
+bool FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
+{ //using this, we are able to resume our filter without having to recalculate the past if new data arrives
+	std::ofstream oss(dump_states_file.c_str(), std::ofstream::out);
+	if (oss.fail()) {
+		std::ostringstream ss;
+		ss << "Particle filter could not dump internal states to \"" << dump_states_file;
+		ss << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+	oss << "# This file was generated by MeteoIO's particle filter and holds the particles and weights at the last time step." << std::endl;
+	oss << "# [particles]   [weights]" << std::endl;
+	static const int digits = std::numeric_limits<double>::digits10;
+	oss.precision(digits);
+	oss.setf(std::ios::fixed);
+	for (int ii = 0; ii < particles.rows(); ++ii) {
+		oss << std::setw(digits) << particles.rightCols(1)(ii) << "   ";
+		oss << std::setw(digits) << weights.rightCols(1)(ii) << std::endl;
+	}
+	oss.close();
+	return true;
+}
+
+bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
+{
+	std::vector<double> xx, ww;
+	readCorrections(block_name, input_states_file, xx, ww);
+	if ( (unsigned int)particles.rows() != xx.size() || (unsigned int)weights.rows() != ww.size() ) {
+		if (be_verbose) std::cerr << "[W] Particle filter file input via INPUT_STATES_FILE does not match the number of particles. Using MODEL_X0.\n";
+		return false;
+	}
+
+	Eigen::Map<Eigen::VectorXd> tmp_p(&xx.data()[0], xx.size()); //memcopy read vectors to Eigen types
+	particles.col(0) = tmp_p;
+	Eigen::Map<Eigen::VectorXd> tmp_w(&xx.data()[0], ww.size());
+	weights.col(0) = tmp_w;
+	return true;
+}
+
+bool FilterParticle::dumpParticlePaths(Eigen::MatrixXd& particles) const
+{ //to plot paths and kernel density outside of MeteoIO
+	std::ofstream oss(dump_particles_file.c_str(), std::ofstream::out);
+	if (oss.fail()) {
+		std::ostringstream ss;
+		ss << "Particle filter could not dump particle paths states to \"" << dump_states_file;
+		ss << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+	oss << "# This file was generated by MeteoIO's particle filter and holds the paths of all particles." << std::endl;
+	oss << "# Rows are the particles, columns the time steps." << std::endl;
+	const int digits = std::numeric_limits<double>::digits10;
+	oss.precision(digits);
+	oss.setf(std::ios::fixed);
+	oss << particles;
+	oss.close();
+	return true;
+}
+
+Eigen::VectorXd FilterParticle::buildTimeVector(const std::vector<MeteoData>& ivec) const
+{ //time representation of the index: shift and normalize to t(0)=0, t(1)=1
+	double base_time = ivec.front().date.getJulian();
+	double dt(1.);
+
+	if (ivec.size() > 1)
+		dt = ivec[1].date.getJulian() - base_time;
+
+	Eigen::VectorXd vecRet(ivec.size());
+	for (size_t ii = 0; ii < ivec.size(); ++ii) {
+		const double tt = (ivec[ii].date.getJulian() - base_time) / dt;
+		vecRet(ii) = tt;
+	}
+
+	return vecRet; //TODO: save last time step to disk to be able to resume?
 }
 
 void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
@@ -247,66 +345,9 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 		throw NoDataException("No model function supplied for the particle filter.", AT);
 }
 
-bool FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights)
-{ //using this, we are able to resume our filter without having to recalculate the past if new data arrives
-	std::ofstream oss(dump_states_file.c_str(), std::ofstream::out);
-	if (oss.fail()) {
-		std::ostringstream ss;
-		ss << "Particle filter could not dump internal states to \"" << dump_states_file;
-		ss << "\", possible reason: " << std::strerror(errno);
-		throw AccessException(ss.str(), AT);
-	}
-	oss << "# This file was generated by MeteoIO's particle filter and holds the particles and weights at the last time step." << std::endl;
-	oss << "# [particles]   [weights]" << std::endl;
-	const int digits = std::numeric_limits<double>::digits10;
-	oss.precision(digits);
-	oss.setf(std::ios::fixed);
-	for (int ii = 0; ii < particles.rows(); ++ii) {
-		oss << std::setw(digits) << particles.rightCols(1)(ii) << "   ";
-		oss << std::setw(digits) << weights.rightCols(1)(ii) << std::endl;
-	}
-	oss.close();
-	return true;
-}
-
-bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights)
-{
-	std::vector<double> xx, ww;
-	readCorrections(block_name, input_states_file, xx, ww);
-	if ( (unsigned int)particles.rows() != xx.size() || (unsigned int)weights.rows() != ww.size() ) {
-		if (be_verbose) std::cerr << "[W] Particle filter file input via INPUT_STATES_FILE does not match the number of particles. Using MODEL_X0.\n";
-		return false;
-	}
-
-	Eigen::Map<Eigen::VectorXd> tmp_p(&xx.data()[0], xx.size()); //memcopy read vectors to Eigen types
-	particles.col(0) = tmp_p;
-	Eigen::Map<Eigen::VectorXd> tmp_w(&xx.data()[0], ww.size());
-	weights.col(0) = tmp_w;
-	return true;
-}
-
-bool FilterParticle::dumpParticlePaths(Eigen::MatrixXd& particles)
-{ //to plot paths and kernel density outside of MeteoIO
-	std::ofstream oss(dump_particles_file.c_str(), std::ofstream::out);
-	if (oss.fail()) {
-		std::ostringstream ss;
-		ss << "Particle filter could not dump particle paths states to \"" << dump_states_file;
-		ss << "\", possible reason: " << std::strerror(errno);
-		throw AccessException(ss.str(), AT);
-	}
-	oss << "# This file was generated by MeteoIO's particle filter and holds the paths of all particles." << std::endl;
-	oss << "# Rows are the particles, columns the time steps." << std::endl;
-	const int digits = std::numeric_limits<double>::digits10;
-	oss.precision(digits);
-	oss.setf(std::ios::fixed);
-	oss << particles;
-	oss.close();
-	return true;
-}
-
 void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
-        RandomNumberGenerator& RNU)
-{ //to keep process(...) more readable
+        RandomNumberGenerator& RNU) const
+{ //to keep process(...) less cluttered
 	if (!rng_model.seed.empty()) //seed integers given in ini file
 		RNGU.setState(rng_model.seed);
 	if (!rng_obs.seed.empty())
@@ -317,14 +358,14 @@ void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNu
 		RNU.setState(resample_seed);
 }
 
-void FilterParticle::vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param)
+void FilterParticle::vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const
 { //naive copy of 1 meteo parameter in STL vector to Eigen library vector
 	eig.resize(vec.size());
 	for (size_t i = 0; i < vec.size(); ++i)
 		eig[i] = vec[i](param);
 }
 
-void FilterParticle::readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out)
+void FilterParticle::readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const
 { //uint64 type version
 	vec_out.clear();
 	std::istringstream iss(line_in);

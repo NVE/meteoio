@@ -20,15 +20,16 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
-		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU);
+		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
+		bool dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
+		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
+		bool dumpParticlePaths(Eigen::MatrixXd& particles) const;
+		Eigen::VectorXd buildTimeVector(const std::vector<MeteoData>& ivec) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		bool dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights);
-		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights);
-		bool dumpParticlePaths(Eigen::MatrixXd& particles);
 		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
-		        RandomNumberGenerator& RNU);
-		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param);
-		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out);
+		        RandomNumberGenerator& RNU) const;
+		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const;
+		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const;
 
 		typedef enum PF_FILTER_ALGORITHM {
 			SIR, //only SIR is implemented so far
