@@ -1,6 +1,6 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
-#include <meteoio/tinyexpr.h>
 
+#include <cmath> //for isnan()
 #include <limits>
 #include <fstream> //for dump files
 #include <sstream> //for readLineToVec
@@ -11,60 +11,25 @@ FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::st
         : ProcessingBlock(vecArgs, name), filter_alg(SIR), resample_alg(SYSTEMATIC), NN(2000), path_resampling(false),
           model_expression(""), obs_model_expression(""), model_x0(IOUtils::nodata), resample_percentile(0.5),
           rng_model(), rng_obs(), rng_prior(), resample_seed(),
-          be_verbose(true), dump_particles_file(""), dump_states_file(""), input_states_file("")
+          be_verbose(true), unrecognized_key(""), dump_particles_file(""), dump_states_file(""), input_states_file("")
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
 }
-
 
 void FilterParticle::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 
 	/* INITIALIZATION */
 
+	if (!unrecognized_key.empty() && be_verbose)
+		std::cerr << "[W] Unrecognized ini key(s) ignored for particle filter, one of them is: \"" + unrecognized_key + "\"\n";
 	const size_t TT = ivec.size(); //number of time steps
 	ovec = ivec; //copy with all special parameters etc.
 
-	if (obs_model_expression.empty()) {
-		std::cerr << "[W] Model to relate observations to state is missing for particle filter. Picking obs(k)=state(k).\n";
-		obs_model_expression = "xx";
-	}
-
-	//prepare system model expression
-	double te_kk, te_x_km1, te_tt; //3 substitutions available: index, state value at previous time step, normalized time
-	te_variable te_vars[] = {{"kk", &te_kk, 0, 0},
-	                         {"x_km1", &te_x_km1, 0, 0}, //read: "x_(k-1)"
-	                         {"tt", &te_tt, 0, 0}};
-
-	int te_err;
-	te_expr *expr_model = te_compile(model_expression.c_str(), te_vars, 2, &te_err); //ready the lazy equation with variables including syntax check
-	if (!expr_model)
-		throw InvalidFormatException("Arithmetic expression '" + model_expression +
-		        "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
-	if (model_x0 == IOUtils::nodata) {
-		for (size_t kk = 0; kk < TT; ++kk) { //find 1st data element for starting point
-			if (ivec[kk](param) != IOUtils::nodata) {
-				model_x0 = ivec[kk](param); //if there are many the filter will run through, but the user should really resample the meteo data
-				break;
-			}
-		}
-		if (be_verbose) std::cerr << "[W] No initial state value x_0 provided for particle filter; using 1st available measurement.\n";
-		if (model_x0 == IOUtils::nodata) { //all values are nodata
-			return;
-		}
-
-	}
-
-	//prepare observation model expression
-	double te_xx;
-	te_variable te_vars_obs[] = {{"xx", &te_xx, 0, 0},
-	                             {"tt", &te_tt, 0, 0}};
-	int te_err_obs;
-	te_expr *expr_obs = te_compile(obs_model_expression.c_str(), te_vars_obs, 1, &te_err_obs);
-	if (!expr_obs)
-		throw InvalidFormatException("Arithmetic expression '" + obs_model_expression +
-		        "'could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err_obs), AT);
+	const bool nodata_check = checkInitialState(ivec, param); //if not provided, find first valuable meteo data point for x0
+	if (!nodata_check)
+		return; //nothing to do, keep nodata values
 
 	//init random number generators:
 	RandomNumberGenerator RNGU(rng_model.algorithm, rng_model.distribution, rng_model.parameters); //process noise
@@ -81,9 +46,8 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	const Eigen::VectorXd tVec = buildTimeVector(ivec);
 
 	bool instates_success(false);
-	if (!input_states_file.empty()) { //there is data saved from a previous run
+	if (!input_states_file.empty()) //there is data saved from a previous run
 		instates_success = readInternalStates(xx, ww);  //online data aggregation
-	}
 	if (!instates_success) { //start from the initial value
 		xx(0, 0) = model_x0;
 		ww(0, 0) = 1. / NN;
@@ -93,45 +57,79 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		}
 	}
 
+	//prepare system model and observation model expressions
+	std::vector<std::string> sub_expr, sub_params;
+	parseBracketExpression(model_expression, sub_expr, sub_params); //get substitution strings and index map for the meteo parameters
+	std::vector<double> sub_values(sub_expr.size()); //empty so far but with reserved memory to point to
+
+	te_variable *te_vars = new te_variable[sub_expr.size()];
+	initFunctionVars(te_vars, sub_expr, sub_values); //build te_variables from substitution vectors
+
+	te_expr *expr_model = compileExpression(model_expression, te_vars, sub_expr.size()); //ready the lazy equation
+	te_expr *expr_obs = compileExpression(obs_model_expression, te_vars, sub_expr.size()); //(with syntax check)
+
+	/*
+	 * SUBSTITUTIONS:
+	 *     [0]: index (k)
+	 *     [1]: time index (t)
+	 *     [2]: value (x_k) - only in observations equation as x_mean
+	 *     [3]: previous value (x_km1) - arbitrarily x0 for k=0 in observations equation
+	 */
+	static const size_t nr_hardcoded_sub = 4; //in order not to forget to keep this in sync
+
 	/* PARTICLE FILTER */
 
 	bool saw_nodata(false);
-	for (size_t kk = 1; kk < TT; ++kk) { //for each TIME STEP (starting at 2nd)...
+	try {
+		for (size_t kk = 1; kk < TT; ++kk) { //for each TIME STEP (starting at 2nd)...
 
-		if (ivec[kk](param) == IOUtils::nodata) {
-			xx.col(kk) = xx.col(kk-1); //repeat particles for nodata values
-			ww.col(kk) = ww.col(kk-1); //the mean gets skewed a little
-			saw_nodata = true;
-		} else {
-			//SIR algorithm
-			for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
-				te_kk = (double)kk;
-				te_tt = tVec(kk);
-				te_x_km1 = xx(nn, kk-1);
+			sub_values[0] = (double)kk; //this vector is linked to tinyexpr expression memory
+			sub_values[1] = tVec(kk);
 
-				const double res = te_eval(expr_model); //evaluate expression with current substitution values
-				xx(nn, kk) = res + RNGU.doub();
-				ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - xx(nn, kk) );
-			} //endfor nn
-		} //endif nodata
+			for (size_t jj = 0; jj < sub_params.size(); ++jj) //fill current meteo parameters
+				sub_values[jj+nr_hardcoded_sub] = ivec[kk](IOUtils::strToUpper(sub_params[jj]));
 
-		ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
+			if (ivec[kk](param) == IOUtils::nodata) {
+				xx.col(kk) = xx.col(kk-1); //repeat particles for nodata values
+				ww.col(kk) = ww.col(kk-1); //the mean gets skewed a little
+				saw_nodata = true;
+			} else {
+				//SIR algorithm
+				for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
+					sub_values[3] = xx(nn, kk-1);
+					sub_values[2] = sub_values[3]; //we don't know x but put something for protection (meant for obs model)
+					const double res = te_eval(expr_model); //evaluate expression with current substitution values
+					xx(nn, kk) = res + RNGU.doub(); //generate system noise
+					ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - xx(nn, kk) );
+				} //endfor nn
+			} //endif nodata
 
-	    if (path_resampling)
-	    	resample_path(xx, ww, kk, RNU);
+			ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
 
-	} //endfor kk
+			if (path_resampling)
+				resamplePaths(xx, ww, kk, RNU);
+
+		} //endfor kk
+	} catch (...) { //we could get a "nonexistent meteo parameter" error above
+		te_free(expr_model);
+		te_free(expr_obs);
+		delete[] te_vars;
+		throw;
+	}
 
 	Eigen::VectorXd xx_mean = (xx.array() * ww.array()).colwise().sum(); //average over NN weighted particles at each time step
-
 	for (size_t kk = 0; kk < TT; ++kk) {
-		te_xx = xx_mean(kk);
-		te_tt = tVec(kk);
-		ovec[kk](param) = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
+		sub_values[0] = (double)kk;
+		sub_values[1] = tVec(kk);
+		sub_values[2] = xx_mean(kk);
+		sub_values[3] = (kk == 0)? model_x0 : xx_mean(kk-1); //somewhat arbitrary - this substitution is meant for the system model
+		const double res = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
+		ovec[kk](param) = isnan(res)? IOUtils::nodata : res; //NaN to nodata
 	}
 
 	te_free(expr_model);
 	te_free(expr_obs);
+	delete[] te_vars;
 
 	if (be_verbose && saw_nodata) std::cerr << "[W] Nodata value(s) encountered in particle filter. For this, the previous particle was repeated. You should probably resample beforehand.\n";
 
@@ -142,10 +140,9 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 }
 
-void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const
+void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const
 { //if a lot of computational power is devoted to particles with low contribution (low weight), resample the paths
 	if (resample_alg == SYSTEMATIC) { //choose resampling algorithm
-
 		double N_eff = 0.;
 		for (size_t nn = 0; nn < NN; ++nn)
 			N_eff += ww(nn, kk)*ww(nn, kk); //effective sample size
@@ -166,18 +163,84 @@ void FilterParticle::resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 				size_t jj = 0;
 				while (rr > cdf[jj])
 					++jj; //check which range in the cdf the random number belongs to...
-
 				xx(nn, kk) = xx(jj, kk); //... and use that index
-
 				ww(nn, kk) = 1. / NN; //all resampled particles have the same weight
 				rr += 1. / NN; //move along cdf
 			}
-
 		} //endif N_eff
 
 	} else {
 		throw InvalidArgumentException("Resampling strategy for particle filter not implemented.", AT);
 	} //end switch resampling
+}
+
+bool FilterParticle::checkInitialState(const std::vector<MeteoData>& ivec, const size_t& param)
+{ //check for nodata values in the input meteo data
+	if (model_x0 == IOUtils::nodata) {
+		for (size_t kk = 0; kk < ivec.size(); ++kk) { //find 1st data element for starting point
+			if (ivec[kk](param) != IOUtils::nodata) {
+				model_x0 = ivec[kk](param); //if there are many the filter will run through, but the user should really resample
+				break;
+			}
+		}
+		if (be_verbose) std::cerr << "[W] No initial state value x_0 provided for particle filter; using 1st available measurement.\n";
+		if (model_x0 == IOUtils::nodata) //all values are nodata
+			return false;
+	} //endif nodata
+	return true;
+}
+
+void FilterParticle::initFunctionVars(te_variable* vars, const std::vector<std::string>& expr, const std::vector<double>& values)
+{ //build a substitutions expression for tinyexpr
+	if (values.size() != expr.size())
+		throw InvalidArgumentException("Particle filter: error mapping meteo(param) fields to meteo values. Are all fields available?\n", AT);
+
+	for (size_t ii = 0; ii < expr.size(); ++ii) {
+		vars[ii].name = expr[ii].c_str();
+		vars[ii].address = &values.data()[ii];
+		vars[ii].type = 0;
+		vars[ii].context = 0;
+	}
+}
+
+te_expr* FilterParticle::compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const
+{
+	int te_err;
+	te_expr *expr = te_compile(expression.c_str(), te_vars, (int)sz, &te_err); //ready the lazy equation with variables including syntax check
+	if (!expr)
+		throw InvalidFormatException("Arithmetic expression \"" + model_expression +
+		        "\" could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
+	return expr;
+}
+
+void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::string>& sub_expr,
+        std::vector<std::string>& sub_params) const
+{ //list names of meto parameters given by meteo(...) in input matrix
+	sub_expr.clear();
+	sub_params.clear();
+	sub_expr.push_back("kk"); //hard-coded parameters
+	sub_expr.push_back("tt");
+	sub_expr.push_back("xx");
+	sub_expr.push_back("x_km1");
+
+	const std::string prefix("meteo");
+	const size_t len = prefix.length() + 1;
+	size_t pos1 = 0, pos2;
+	while (true) {
+		pos1 = line.find(prefix, pos1);
+		if (pos1 == std::string::npos)
+			break; //done
+		pos2 = line.find(")", pos1+len);
+		if (pos2 == std::string::npos || pos2-pos1-len == 0) { //no closing bracket
+			throw InvalidArgumentException("Missing closing bracket in meteo(...) part of particle filter's system model.", AT);
+		}
+
+		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
+		sub_params.push_back(pname); //meteo name
+		line.replace(pos1, pos2-pos1+1, prefix + pname + "  "); //to make parsable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
+		sub_expr.push_back(prefix + pname); //full expression, lower case and without brackets
+		pos1 += len;
+	}
 }
 
 bool FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
@@ -205,7 +268,12 @@ bool FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
 bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
 {
 	std::vector<double> xx, ww;
-	readCorrections(block_name, input_states_file, xx, ww);
+	try {
+		readCorrections(block_name, input_states_file, xx, ww); //file not available yet - will become active on next run
+	} catch (...) {
+		return false;
+	}
+
 	if ( (unsigned int)particles.rows() != xx.size() || (unsigned int)weights.rows() != ww.size() ) {
 		if (be_verbose) std::cerr << "[W] Particle filter file input via INPUT_STATES_FILE does not match the number of particles. Using MODEL_X0.\n";
 		return false;
@@ -213,7 +281,7 @@ bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
 
 	Eigen::Map<Eigen::VectorXd> tmp_p(&xx.data()[0], xx.size()); //memcopy read vectors to Eigen types
 	particles.col(0) = tmp_p;
-	Eigen::Map<Eigen::VectorXd> tmp_w(&xx.data()[0], ww.size());
+	Eigen::Map<Eigen::VectorXd> tmp_w(&ww.data()[0], ww.size());
 	weights.col(0) = tmp_w;
 	return true;
 }
@@ -251,13 +319,12 @@ Eigen::VectorXd FilterParticle::buildTimeVector(const std::vector<MeteoData>& iv
 		vecRet(ii) = tt;
 	}
 
-	return vecRet; //TODO: save last time step to disk to be able to resume?
+	return vecRet;
 }
 
 void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where("Filters::" + block_name);
-
 	bool has_prior(false), has_obs(false);
 
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
@@ -272,7 +339,7 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 		/*** MODEL FUNCTION settings ***/
 		else if (vecArgs[ii].first == "MODEL_FUNCTION") {
 			model_expression = vecArgs[ii].second;
-		} else if (vecArgs[ii].first == "MODEL_X0") {
+		} else if (vecArgs[ii].first == "INITIAL_STATE") {
 			IOUtils::parseArg(vecArgs[ii], where, model_x0);
 		} else if (vecArgs[ii].first == "OBS_MODEL_FUNCTION") {
 			obs_model_expression = vecArgs[ii].second;
@@ -332,17 +399,23 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 			IOUtils::parseArg(vecArgs[ii], where, resample_percentile);
 		} else if (vecArgs[ii].first == "RESAMPLE_RNG_SEED") {
 			readLineToVec(vecArgs[ii].second, resample_seed);
+		} else {
+			unrecognized_key = vecArgs[ii].first; //constructor is always called twice - show only when processing
 		}
 
 	} //endfor vecArgs
 
+	if (model_expression.empty())
+		throw NoDataException("No model function supplied for the particle filter.", AT);
+
+	if (obs_model_expression.empty()) {
+		if (be_verbose) std::cerr << "[W] Model to relate observations to state is missing for particle filter. Picking obs(k)=state(k).\n";
+		obs_model_expression = "xx";
+	}
 	if (!has_prior) //not one prior pdf RNG setting -> pick importance density
 		rng_prior = rng_model;
 	if (!has_obs) //no dedicated observation noise pdf - use prior for importance sampling
 		rng_obs = rng_prior;
-
-	if (model_expression.empty())
-		throw NoDataException("No model function supplied for the particle filter.", AT);
 }
 
 void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,

@@ -5,6 +5,7 @@
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 #include <Core> //<Eigen/Core>
+#include <meteoio/tinyexpr.h>
 
 #include <inttypes.h> //for RNG int types
 #include <string>
@@ -20,7 +21,12 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
-		void resample_path(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
+		void resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
+		bool checkInitialState(const std::vector<MeteoData>& ivec, const size_t& param);
+		void initFunctionVars(te_variable* vars, const std::vector<std::string>& names, const std::vector<double>& meteo);
+		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
+		void parseBracketExpression(std::string& line, std::vector<std::string>& sub_expr,
+		        std::vector<std::string>& sub_params) const;
 		bool dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
 		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
 		bool dumpParticlePaths(Eigen::MatrixXd& particles) const;
@@ -68,6 +74,7 @@ class FilterParticle : public ProcessingBlock {
 		std::vector<uint64_t> resample_seed;
 
 		bool be_verbose; //output warnings/info?
+		std::string unrecognized_key; //to warn about unknown ini keys
 		std::string dump_particles_file;
 		std::string dump_states_file;
 		std::string input_states_file;

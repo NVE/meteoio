@@ -153,6 +153,13 @@ namespace IOUtils {
 	*/
 	void trim(std::string &s);
 
+	/**
+	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
+	* @param s The string to trim
+	* @return The trimmed string
+	*/
+	std::string trim(const std::string &s);
+
 	void stripComments(std::string& str);
 	
 	/**

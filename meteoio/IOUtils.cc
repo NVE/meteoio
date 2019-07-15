@@ -147,6 +147,23 @@ void trim(std::string& str)
 	}
 }
 
+std::string trim(const std::string &str_in)
+{
+	std::string str(str_in);
+	const std::string whitespaces(" \t\f\v\n\r");
+	const size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces
+	const size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
+
+	// if all spaces or empty return an empty string
+	if (startpos!=std::string::npos && endpos!=std::string::npos) {
+		str.erase(endpos+1); //right trim
+		str.erase(0, startpos); //left trim
+	} else {
+		str.clear();
+	}
+	return str;
+}
+
 void replace_all(std::string &input, const std::string& search, const std::string& format)
 {
 	const size_t len = search.length();
