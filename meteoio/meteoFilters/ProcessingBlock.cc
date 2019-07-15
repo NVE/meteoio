@@ -144,6 +144,7 @@ namespace mio {
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
+ * - LOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
