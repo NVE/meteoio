@@ -231,7 +231,7 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "UNDST"){
 		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
-	} else if (blockname == "LOOP"){
+	} else if (blockname == "TIMELOOP"){
 		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
