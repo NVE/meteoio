@@ -462,7 +462,7 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 //CUSTOM_DIST step 6/7: Convenience mapping of your distribution parameters to names (not mandatory if you have many)
 
 /**
- * @brief Retrieve single distribution parameter
+ * @brief Set single distribution parameter
  * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
  * @param param_val Value to set
  * @return Current value of the distribution parameter

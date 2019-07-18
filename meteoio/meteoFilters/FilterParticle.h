@@ -25,12 +25,12 @@ class FilterParticle : public ProcessingBlock {
 		bool checkInitialState(const std::vector<MeteoData>& ivec, const size_t& param);
 		void initFunctionVars(te_variable* vars, const std::vector<std::string>& names, const std::vector<double>& meteo);
 		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
-		void parseBracketExpression(std::string& line, std::vector<std::string>& sub_expr,
+		void parseBracketExpression(std::string& line_m, std::string& line_o, std::vector<std::string>& sub_expr,
 		        std::vector<std::string>& sub_params) const;
 		bool dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
 		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
 		bool dumpParticlePaths(Eigen::MatrixXd& particles) const;
-		Eigen::VectorXd buildTimeVector(const std::vector<MeteoData>& ivec) const;
+		std::vector<double> buildTimeVector(const std::vector<MeteoData>& ivec) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
 		        RandomNumberGenerator& RNU) const;
@@ -38,13 +38,17 @@ class FilterParticle : public ProcessingBlock {
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const;
 
 		typedef enum PF_FILTER_ALGORITHM {
-			SIR, //only SIR is implemented so far
-			SIS
+			PF_SIR, //only SIR is implemented so far
+			PF_SIS
 		} pf_filter_algorithm;
 		typedef enum PF_RESAMPLE_ALGORITHM {
-			SYSTEMATIC, //only SYSTEMATIC implemented so far
-			EPANECHNIKOV
+			PF_SYSTEMATIC, //only SYSTEMATIC implemented so far
+			PF_EPANECHNIKOV
 		} pf_resample_algorithm;
+		typedef enum PF_ESTIMATION_MEASURE  {
+			PF_MEAN,
+			PF_MAX_WEIGHT
+		} pf_estimation_measure;
 
 		pf_filter_algorithm filter_alg;
 		pf_resample_algorithm resample_alg; //resampling of particle paths
@@ -54,9 +58,13 @@ class FilterParticle : public ProcessingBlock {
 
 		std::string model_expression; //model formula
 		std::string obs_model_expression;
+		std::string fit_expression; //fit data points to get a model function
+		std::string fit_param; //meteo parameter that will be fitted for model
+		unsigned int fit_degree; //degree of interpolation
 		double model_x0; //initial state at T=0
 
 		float resample_percentile;
+		pf_estimation_measure estim_measure; //how to choose most likely particle path
 
 		struct rng_settings {
 			RandomNumberGenerator::RNG_TYPE algorithm;
@@ -78,7 +86,6 @@ class FilterParticle : public ProcessingBlock {
 		std::string dump_particles_file;
 		std::string dump_states_file;
 		std::string input_states_file;
-
 };
 
 } //namespace

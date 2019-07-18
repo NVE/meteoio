@@ -29,6 +29,10 @@ class FilterKalman : public ProcessingBlock {
 		std::vector<std::string> parseSystemMatrix(const std::string& line, const size_t& rows) const;
 		Eigen::MatrixXd buildSystemMatrix(const std::vector<std::string>& AA_str, const size_t& sz, const double& dt,
 				const std::vector<MeteoData>& ivec, const size_t& kk) const;
+		Eigen::MatrixXd extractInputMatrix(const std::vector<std::string>& vecParams, const std::vector<MeteoData>& mvec,
+		        const size_t& kk) const;
+		void assertInputCovariances(const std::vector<MeteoData>& ivec, bool& has_RR_params, bool& has_QQ_params,
+		        const size_t& nx) const;
 		double substitute(const std::string& expr, const double& dt, const std::vector<MeteoData>& ivec, const size_t& kk) const;
 		Eigen::MatrixXd bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols, const std::string& block) const;
 		Eigen::VectorXd buildTimeVector(const std::vector<MeteoData>& ivec) const;
@@ -37,7 +41,9 @@ class FilterKalman : public ProcessingBlock {
 		void cleanBrackets(std::string& iline);
 
 		std::string mat_in_xx, mat_in_AA, mat_in_HH, mat_in_PP, mat_in_QQ, mat_in_RR, mat_in_BB, mat_in_uu;
-		std::vector<std::string> meas_params;
+		std::vector<std::string> meas_params; //parameter names of observations
+		std::vector<std::string> error_params; //output PP to these parameters
+		std::vector<std::string> QQ_params, RR_params; //input QQ and RR from these parameters
 
 		bool be_verbose; //output warnings/info?
 		std::string unrecognized_key; //to warn about unknown ini keys
