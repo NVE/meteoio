@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 Michael Reisecker                                               */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,6 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/*
+ * Showcase program for MeteoIO's random numbers generator.
+ */
 
 #include <ctime>
 #include <inttypes.h>

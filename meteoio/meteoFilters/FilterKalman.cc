@@ -9,7 +9,7 @@ FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string
         : ProcessingBlock(vecArgs, name),
 		  mat_in_xx(""), mat_in_AA(""), mat_in_HH(""), mat_in_PP("1"), mat_in_QQ("0"), mat_in_RR(""), mat_in_BB("0"), mat_in_uu("0"),
           meas_params(), error_params(), QQ_params(), RR_params(),
-          be_verbose(true), unrecognized_key("")
+          filter_all_params(false), be_verbose(true), unrecognized_keys("")
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -18,14 +18,19 @@ FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string
 	cleanBrackets(mat_in_QQ); cleanBrackets(mat_in_RR); cleanBrackets(mat_in_BB); cleanBrackets(mat_in_uu); //(they are just visual help)
 }
 
-
+/**
+ * @brief The filtering routine as called by the processing toolchain.
+ * @param[in] param Parameter index the filter is asked to run on by the user.
+ * @param[in] ivec Meteo data to filter.
+ * @param[out] ovec Filtered meteo data. Cf. main documentation.
+ */
 void FilterKalman::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 
 	/* INITIALIZATION */
 
-	if (!unrecognized_key.empty() && be_verbose) //because we have so many input keys
-		std::cerr << "[W] Unrecognized ini key(s) ignored for Kalman filter, one of them is: \"" + unrecognized_key + "\"\n";
+	if (!unrecognized_keys.empty() && be_verbose) //because we have so many input keys
+		std::cerr << "[W] Unrecognized ini key(s) ignored for Kalman filter: \"" + unrecognized_keys.substr(0, unrecognized_keys.length()-2) + "\"\n";
 
 	const size_t TT = ivec.size(); //number of time steps
 	const Eigen::VectorXd vecT = buildTimeVector(ivec);
@@ -35,7 +40,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 
 	Eigen::MatrixXd zz;
 	std::vector<size_t> meas_idx; //indices of given observables in meteo set
-	const size_t nz = buildObservationsMatrix(param, ivec, zz, meas_idx, nx); //checks observations dimension - must match nx
+	const size_t nz = buildObservationsMatrix(param, ivec, nx, zz, meas_idx); //checks observations dimension - must match nx
 
 	if (nx == 0) //special case: no initial state given
 		nx = nz; //--> number of observations fixes the states
@@ -44,9 +49,9 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 	std::vector<std::string> AA_str = parseSystemMatrix(mat_in_AA, nx); //keep as strings so we can do substitutions
 
 	//Now that we know how many states and observables there are, we can size the rest of the matrices.
-	//We keep nz for clarity, but this implementation forces nz=nx (but not all have to be actually used).
+	//We keep nz for clarity, but this implementation forces nz=nx (not all have to actually be used).
 	Eigen::MatrixXd HH(nz, nx);
-	if (mat_in_HH.empty()) { //use identity matrix or something similar if the matrix isn't square
+	if (mat_in_HH.empty()) { //use identity matrix
 		HH.setIdentity();
 		if (be_verbose) std::cerr << "[W] No Kalman filter model found to relate observations to states. Setting to \"identity\", but this may not make much sense.\n";
 	} else {
@@ -57,7 +62,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 	Eigen::MatrixXd QQ = bloatMatrix(mat_in_QQ, nx, nx, "process noise"); //process noise covariance
 	Eigen::MatrixXd RR = bloatMatrix(mat_in_RR, nz, nz, "observation noise"); //observation noise covariance
 	bool has_RR_params, has_QQ_params;
-	assertInputCovariances(ivec, has_RR_params, has_QQ_params, nx);
+	assertInputCovariances(ivec, nx, has_RR_params, has_QQ_params);
 
 	//at last, we input an optional control signal, either as scalar, matrix, or "meteo" data:
 	Eigen::MatrixXd BB = bloatMatrix(mat_in_BB, nx, nx, "control relation"); //relates control input to state
@@ -69,7 +74,6 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
     Eigen::MatrixXd II = Eigen::MatrixXd::Identity(nx, nx);
 
     ovec = ivec; //copy with all special parameters etc.
-
 
     for (size_t pp = 0; pp < error_params.size(); ++pp) //create parameters to output PP if they don't exist
     	for (size_t ii = 0; ii < ovec.size(); ++ii)
@@ -98,8 +102,10 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
     		xx = ( xx + KK * (zz.col(kk) - HH * xx) ).eval();
     		PP = ( (II - KK * HH) * PP ).eval();
 
-    		for (size_t ii = 0; ii < nz; ++ii) //nx = nz! The user is responsible to provide enough output fields.
-    			ovec[kk](meas_idx[ii]) = xx(ii); //Note! This will filter all specified parameters, not just param!
+    		ovec[kk](param) = xx(0); //filter the parameter the filter runs on
+    		if (filter_all_params) //the following will filter all specified parameters, not just param!
+    			for (size_t ii = 1; ii < nz; ++ii) //nx = nz, The user is responsible to provide enough output fields.
+    				ovec[kk](meas_idx[ii]) = xx(ii);
 
     		last_valid_idx = kk; //dt is calculated between valid data values
 
@@ -110,41 +116,46 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
     	} else { //all states stay as if this time step wasn't encountered
     		saw_nodata = true;
     	} //endif nodata
-    } // endfor kk
+    } //endfor kk
 
     if (be_verbose && saw_nodata) std::cerr << "[W] Nodata value(s) or missing parameter encountered in Kalman filter; some values were ignored. You should probably resample beforehand.\n";
 }
 
-Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>& xx_str_in, std::vector<size_t>& meas_idx,
+/**
+ * @brief Parse the initial states of the system.
+ * @details This function gets the initial states from either meteo data, substitutions, any other meteo parameter,
+ * or double values.
+ * @param[in] xx_str_in Original ini input line for the states.
+ * @param[in] meas_idx Indices of the specified observation parameters.
+ * @param[in] ivec Meteo data set the filter runs on.
+ * @param[in] nz Number of observations provided.
+ * @return Vector with the initial system states.
+ */
+Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>& xx_str_in, const std::vector<size_t>& meas_idx,
         const std::vector<MeteoData>& ivec, const size_t& nz)
 {
-	bool saw_nodata(false);
+	bool all_nodata(false);
 	Eigen::VectorXd vecRet(nz);
 	if (xx_str_in.empty()) { //rely on number of observations given
 		for (size_t jj = 0; jj < nz; ++jj) { //guaranteed to be at least 1 - the one the filter runs on
-			vecRet[jj] = ivec.front()(meas_idx[jj]); //initial_state[t] = observation[t]
-			if (vecRet[jj] == IOUtils::nodata)
-				saw_nodata = true;
+			all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[jj], vecRet[jj]); //initial_state[t] = observation[t]
 		}
 	} else { //not empty
 		for (size_t ii = 0; ii < nz; ++ii) {
 			const std::string xx_str = IOUtils::trim(xx_str_in[ii]);
 			if (xx_str == "") { //some values are given, but not this one --> fill with 1st observation
-				vecRet[ii] = ivec.front()(meas_idx[ii]);
-				if (vecRet[ii] == IOUtils::nodata)
-					saw_nodata = true;
+				all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[ii], vecRet[ii]);
 			} else if (xx_str == "average") { //take the average of all specified observables at t=0
 				double av_sum = 0.;
 				for (size_t jj = 0; jj < nz; ++jj) {
-					av_sum += ivec.front()(meas_idx[jj]);
-					if (ivec.front()(meas_idx[jj]) == IOUtils::nodata)
-						saw_nodata = true;
+					double tmp;
+					all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[jj], tmp); //once all_nodata -> always all_nodata
+					av_sum += tmp;
 				}
 				vecRet[ii] = av_sum / (double)nz;
 			} else if ( xx_str.size() > 6 && (xx_str.compare(0, 6, "meteo(") == 0) ) { //meteo parameters, e. g. "meteo(RH)"
-				vecRet[ii] = ivec.front()(xx_str.substr(6, xx_str.length()-7)); //e. g. "RH"
-				if (vecRet[ii] == IOUtils::nodata)
-					saw_nodata = true;
+				const size_t param_idx = ivec.front().getParameterIndex(xx_str.substr(6, xx_str.length()-7)); //e. g. "RH"
+				all_nodata = all_nodata || !findFirstDatapoint(ivec, param_idx, vecRet[ii]);
 			} else { //double value expected if we arrive here
 				std::istringstream iss(xx_str);
 				iss >> vecRet[ii];
@@ -154,20 +165,35 @@ Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>&
 		} //endfor ii
 	} //endif empty
 
-	if (saw_nodata && be_verbose) std::cerr << "[W] Nodata values found (and kept) in the Kalman filter's automatic state initialization!\n";
+	if (all_nodata)
+		throw NoDataException("The Kalman filter's automatic state initialization failed because some parameter was not present throughout the dataset.", AT);
 	return vecRet;
 }
 
-size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, Eigen::MatrixXd& zz,
-		std::vector<size_t>& meas_idx, const size_t& nx) const
+/**
+ * @brief Get user-specified observation parameters from the meteo data set and return in a dedicated matrix.
+ * @details In addition the the parameter the filter runs on, the user can specify more observations. Those are
+ * read from the meteo data at each time step, and put into a matrix.
+ * @param[in] param The parameter index the filter runs on.
+ * @param[in] ivec Meteo data set the filter runs on.
+ * @param[out] zz Return matrix that is built from the observations; ready to use for all calculations.
+ * @param[out] meas_idx Convenience vector with the indices of the observation parameters.
+ */
+size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, const size_t& nx,
+        Eigen::MatrixXd& zz, std::vector<size_t>& meas_idx) const
 { //extract observables from the meteo set to a dedicated vector
 	meas_idx.clear(); //index map of observables
 	meas_idx.push_back(param); //1st one is always the one the filter runs on
-	for (size_t jj = 0; jj < meas_params.size(); ++jj) //then come the ones specified in ADD_OBSERVABLES
-		meas_idx.push_back( ivec.front().getParameterIndex(meas_params[jj]) );
 
-	if ( (meas_idx.size() != nx) && (nx != 0) ) //nx = 0: pick input states --> no warning
-		throw InvalidArgumentException("You need to provide as many observation variables as you have states variables for the Kalman filter ("
+	for (size_t jj = 0; jj < meas_params.size(); ++jj) { //then come the ones specified in ADD_OBSERVABLES
+		const size_t param_idx = ivec.front().getParameterIndex(meas_params[jj]);
+		if (param_idx == IOUtils::npos)
+			throw NoDataException("Parameter name \"" + meas_params[jj] + "\" listed in ADD_OBSERVABLES not found by the Kalman filter.", AT);
+		meas_idx.push_back(param_idx);
+	}
+
+	if ( (meas_idx.size() != nx) && (nx != 0) ) //nx = 0: pick input states --> no error
+		throw InvalidArgumentException("You need to provide as many observation variables as you have state variables for the Kalman filter ("
 		        + IOUtils::toString(nx) + " including the one the filter runs on).", AT);
 
 	zz.resize(meas_idx.size(), ivec.size()); //fill observation matrix with desired values from meteo set
@@ -178,6 +204,15 @@ size_t FilterKalman::buildObservationsMatrix(const unsigned int& param, const st
 	return meas_idx.size();
 }
 
+/**
+ * @brief Get the control signal ready from various input possibilities.
+ * @details The external control signal can be input as a single value (all matrix elements will be this value), as a vector
+ * (that will be repeated for each column), or in the meteo data set (with one parameter per state).
+ * @param[in] nx Number of states.
+ * @param[in] TT Number of time steps.
+ * @param[in] ivec Meteo data set to extract control signal from.
+ * @return Complete control signal matrix ready for the whole calculation.
+ */
 Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec) const
 {
 	Eigen::MatrixXd uu(nx, TT);
@@ -198,6 +233,8 @@ Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t&
 				iss.clear();
 				iss.str(vecU[jj]);
 				iss >> aa;
+				if (iss.fail())
+					throw InvalidArgumentException("Kalman filter could not parse element " + vecU[jj] + " in control signal.", AT);
 				uu(jj, 0) = aa;
 			}
 			uu.colwise() = uu.col(0);
@@ -215,10 +252,18 @@ Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t&
 				uu(ii, jj) =  ivec[jj](vecU[ii]);
 			}
 	}
-
 	return uu;
 }
 
+/**
+ * @brief Parse a string to a matrix.
+ * @details This is the "core" parser when no substitutions are necessary and only double values are read.
+ * @param[in] line String to parse the matrix from.
+ * @param[in] rows Number of rows of the resulting matrix.
+ * @param[in] cols Number of columns of the resulting matrix.
+ * @param[in] blockname Name of the matrix that is being parsed (for error localization).
+ * @return The parsed matrix with double values.
+ */
 Eigen::MatrixXd FilterKalman::parseMatrix(const std::string& line, const size_t& rows, const size_t& cols,
         const std::string& blockname) const
 { //matrix parsing where no substitutions are done - i. e. double values only
@@ -234,6 +279,15 @@ Eigen::MatrixXd FilterKalman::parseMatrix(const std::string& line, const size_t&
 	return ET; //RowMajor is the storage order and has the effect of row-wise input in the ini
 }
 
+/**
+ * @brief Parse the system matrix from an input string.
+ * @details The system matrix is built from an input string, but its elements are still kept as strings at this point. This
+ * is to allow for substitutions later. A single input value is put on the diagonal. We used a rolled up index for the
+ * 1-dimensional vector to act as a matrix.
+ * @param[in] line String to parse the system matrix from.
+ * @param[in] sz Number of rows (= number of columns) of the system matrix.
+ * @return Vector of strings that constitute the system matrix (all elements saved after each other).
+ */
 std::vector<std::string> FilterKalman::parseSystemMatrix(const std::string& line, const size_t& sz) const
 {
 	std::vector<std::string> vecRet; //keep as strings to be able to do substitutions
@@ -244,6 +298,12 @@ std::vector<std::string> FilterKalman::parseSystemMatrix(const std::string& line
 		for (size_t ii = 0; ii < sz; ++ii)
 			for (size_t jj = 0; jj < sz; ++jj)
 				vecRet[ii*sz + jj] = (ii == jj)? vecRet.front() : "0";
+	} else if (nr_elements == sz) { //vector --> put on diagonal, rest is 0
+		const std::vector<std::string> vecTmp(vecRet); //guard aliasing
+		vecRet.resize(sz*sz);
+		for (size_t ii = 0; ii < sz; ++ii)
+			for (size_t jj = 0; jj < sz; ++jj)
+				vecRet[ii*sz + jj] = (ii == jj)? vecTmp[ii] : "0";
 	} else if (nr_elements != sz*sz) { //it's a square matrix
 		throw InvalidArgumentException("The Kalman filter encountered an unfit state input matrix size (expected: " +
 		        IOUtils::toString(sz) + "x" + IOUtils::toString(sz) + ").", AT);
@@ -251,6 +311,17 @@ std::vector<std::string> FilterKalman::parseSystemMatrix(const std::string& line
 	return vecRet;
 }
 
+/**
+ * @brief Construct a double-valued matrix from a string matrix with substitutions.
+ * @details The system matrix is kept as strings until right before the calculation. At each time step, the strings are
+ * then parsed and substitutions are performed to get the real arithmetic matrix.
+ * @param[in] AA_str The system matrix in string form.
+ * @param[in] sz Number of rows (= number of columns) of the system matrix.
+ * @param[in] dt Current time delta between measurements, can be substituted for with "dt".
+ * @param[in] ivec Meteo data set to get substitutions from.
+ * @param[in] kk Current time step.
+ * @return Double-valued system matrix with all substitutions in place.
+ */
 Eigen::MatrixXd FilterKalman::buildSystemMatrix(const std::vector<std::string>& AA_str, const size_t& sz, const double& dt,
         const std::vector<MeteoData>& ivec, const size_t& kk) const
 { //substitutions in system matrix
@@ -261,18 +332,62 @@ Eigen::MatrixXd FilterKalman::buildSystemMatrix(const std::vector<std::string>& 
 	return AA;
 }
 
+/**
+ * @brief Perform substitutions in the system matrix.
+ * @details At each time step the user can substitute some values in the system matrix, e. g. the time step and meteo parameters.
+ * Additionally, this function performs the conversion from string to double for the system matrix.
+ * @param[in] dt Current time delta that will be replicated as return value when substituting "dt".
+ * @param[in] ivec Meteo data to pull meteo value substitutions from.
+ * @param[in] kk Current time step, i. e. index of the meteo data set used to pull substitution values from.
+ * @return Double value for the current entry of the system matrix.
+ */
+double FilterKalman::substitute(const std::string& expr, const double& dt, const std::vector<MeteoData>& ivec, const size_t& kk) const
+{
+	const std::string texp = IOUtils::trim(expr);
+	if (texp == "dt") { //current time step (time between measurements)
+		return dt;
+	} else if ( texp.size() > 6 && (texp.compare(0, 6, "meteo(") == 0) ) { //meteo parameters
+		return ivec[kk](texp.substr(6, texp.length()-7));
+	} else { //double values
+		std::istringstream ss(texp);
+		double aa;
+		ss >> aa;
+		if (ss.fail())
+			throw InvalidArgumentException("Unrecognized value in the Kalman filter's system matrix: \"" + texp + "\".", AT);
+		return aa;
+	}
+}
+
+/**
+ * @brief Read a number of meteo parameters and construct diagonal matrix from them.
+ * @details This function searches a meteo data set for a list of given parameters and puts those at the diagonal of
+ * an otherwise zero-valued matrix.
+ * @param[in] vecParams Vector of parameter names (the matrix will be vecParams.size() x vecParams.size()).
+ * @param[in] mvec Meteo data set the values are extracted from.
+ * @return Matrix with the extracted meteo values on the diagonal.
+ */
 Eigen::MatrixXd FilterKalman::extractInputMatrix(const std::vector<std::string>& vecParams, const std::vector<MeteoData>& mvec,
         const size_t& kk) const
-{ //read meteo parameters (given in a vector) to a diagnoal matrix
+{ //read meteo parameters (given in a vector) to a diagonal matrix
 	Eigen::VectorXd dia(vecParams.size());
 	for (size_t ii = 0; ii < vecParams.size(); ++ii)
 		dia(ii) = mvec[kk](vecParams[ii]);
 	return dia.asDiagonal();
 }
 
-void FilterKalman::assertInputCovariances(const std::vector<MeteoData>& ivec, bool& has_RR_params, bool& has_QQ_params,
-        const size_t& nx) const
-{ //check if all given parameters to input RR and QQ exist
+/**
+ * @brief Check if meteo data can be used to read covariance matrices.
+ * @detail The process covariance matrix QQ and the observation covariance matrix RR can be read from the meteo
+ * data set. For this, one parameter per matrix column (that is specified by the user) must be present since
+ * this value is later put on the diagonal. This function checks if every specified parameter is actually accessible.
+ * @param[in] nx Number of states (= number of expected values per matrix).
+ * @param[in] ivec Meteo data set that is checked for the existance of parameters.
+ * @param[out] has_RR_params Set to true if the RR parameters exists (at least for the first measurement).
+ * @param[out] has_QQ_params True if the QQ parameters exist.
+ */
+void FilterKalman::assertInputCovariances(const std::vector<MeteoData>& ivec, const size_t& nx, bool& has_RR_params,
+        bool& has_QQ_params) const
+{ //check if all given parameters to input RR and/or QQ exist
 	if (RR_params.size() == nx) {
 		has_RR_params = true;
 		for (size_t rr = 0; rr < RR_params.size(); ++rr) {
@@ -303,30 +418,24 @@ void FilterKalman::assertInputCovariances(const std::vector<MeteoData>& ivec, bo
 		if (be_verbose) std::cerr << "[W] The Kalman filter's process covariance matrix is provided as single matrix and in the meteo data. Using the latter.\n";
 }
 
-double FilterKalman::substitute(const std::string& expr, const double& dt, const std::vector<MeteoData>& ivec, const size_t& kk) const
-{
-	const std::string texp = IOUtils::trim(expr);
-	if (texp == "dt") { //current time step (time between measurements)
-		return dt;
-	} else if ( texp.size() > 6 && (texp.compare(0, 6, "meteo(") == 0) ) { //meteo parameters
-		return ivec[kk](texp.substr(6, texp.length()-7));
-	} else { //double values
-		std::istringstream ss(texp);
-		double aa;
-		ss >> aa;
-		if (ss.fail())
-			throw InvalidArgumentException("Unrecognized value in the Kalman filter's system matrix: \"" + texp + "\".", AT);
-		return aa;
-	}
-}
-
+/**
+ * @brief Builds a matrix from a scalar, vector, or input string.
+ * @details If no elements are given the function returns an empty vector. If one element (a scalar) is given then it is put on the diagonal
+ * of an otherwise zero-valued matrix. If a vector matching the number of rows and columns is given then this vector is put on the diagonal.
+ * If the whole matrix is given in the input string then this is parsed and returned.
+ * @param[in] line Input string to build a matrix from.
+ * @param[in] rows Number of rows of the matrix.
+ * @param[in] cols Number of column of the input matrix.
+ * @param[in] blockname Name of the matrix that is being parsed (for error localization).
+ * @return The matrix that was built from the input string.
+ */
 Eigen::MatrixXd FilterKalman::bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols, const std::string& blockname) const
 { //if a scalar is given put it on the diagonal, same with a vector, else read the complete matrix
 	Eigen::MatrixXd ret;
 	if (line.length() == 0)
 		return ret;
 	const size_t nr = IOUtils::count(line, ",");
-	if ( (nr == rows - 1) && (rows == cols) ) { //parse as row vector and put that on diagonal
+	if ( (nr == rows - 1) && (rows == cols) ) { //parse as column vector and put that on diagonal
 		Eigen::MatrixXd tmp = parseMatrix(line, rows, 1, blockname);
 		ret = tmp.asDiagonal();
 	} else if (nr > 0) { //not an isolated double
@@ -343,6 +452,14 @@ Eigen::MatrixXd FilterKalman::bloatMatrix(const std::string& line, const size_t&
 	return ret;
 }
 
+/**
+ * @brief Associate time spans with vector indices.
+ * @details To evaluate functions, as well as to interpolate, it is meaningful to look at how far data points are apart
+ * in time (as opposed to looking at the vector index). For this, the first data point is set to time 0, the second one
+ * to time 1, and every other distance is relative to that.
+ * @param[in] ivec Meteo data vector holding values and dates.
+ * @return Vector holding the normalized time for each index.
+ */
 Eigen::VectorXd FilterKalman::buildTimeVector(const std::vector<MeteoData>& ivec) const
 { //time representation of the index: shift and normalize to t(0)=0, t(1)=1
 	double base_time = ivec.front().date.getJulian();
@@ -356,8 +473,13 @@ Eigen::VectorXd FilterKalman::buildTimeVector(const std::vector<MeteoData>& ivec
 		vecRet(ii) = (ivec[ii].date.getJulian() - base_time) / dt;
 
 	return vecRet;
-}
+} //NOTE: this is duplicate code found in FilterParticle.cc as well
 
+/**
+ * @brief Checks if any element in a vector is nodata.
+ * @param[in] ivec Vector with values to look through.
+ * @return True if any element is nodata, false if none of them are.
+ */
 bool FilterKalman::checkNodata(const Eigen::VectorXd& ivec) const
 { //is any vector element nodata?
 	for (int ii = 0; ii < ivec.size(); ++ii)
@@ -366,24 +488,48 @@ bool FilterKalman::checkNodata(const Eigen::VectorXd& ivec) const
 	return false;
 }
 
+/**
+ * @brief Find first data point that is not nodata.
+ * @param[in] ivec Meteo data to search.
+ * @param[in] param Parameter that is searched for.
+ * @param[out] retval Firts valid data point value, nodata if none is found.
+ * @return True if data was found, false if everything is nodata.
+ */
+bool FilterKalman::findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval)
+{
+	for (size_t ii = 0; ii < ivec.size(); ++ii) {
+		if (ivec[ii](param) != IOUtils::nodata) {
+			retval = ivec[ii](param);
+			return true;
+		}
+	}
+	retval = IOUtils::nodata;
+	return false;
+}
+
+/**
+ * @brief Called by the processing chain to read input settings.
+ * @param[in] vecArgs Vector of string-pairs holding ini keys and values.
+ */
 void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where("Filters::" + block_name);
 
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
-		if (vecArgs[ii].first == "INITIAL_STATE") {
+		if (vecArgs[ii].first == "STATE_DYNAMICS") {
+			mat_in_AA = vecArgs[ii].second;
+		} else if (vecArgs[ii].first == "INITIAL_STATE") {
 			mat_in_xx = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "INITIAL_TRUST") {
 			mat_in_PP = vecArgs[ii].second;
-		} else if (vecArgs[ii].first == "STATE_DYNAMICS") {
-			mat_in_AA = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "PROCESS_COVARIANCE") {
 			mat_in_QQ = vecArgs[ii].second;
-
 		}
 
 		else if (vecArgs[ii].first == "ADD_OBSERVABLES") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, meas_params);
+		} else if (vecArgs[ii].first == "FILTER_ALL_PARAMETERS") {
+			IOUtils::parseArg(vecArgs[ii], where, filter_all_params);
 		} else if (vecArgs[ii].first == "OBSERVATION_RELATION") {
 			mat_in_HH = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "OBSERVATION_COVARIANCE") {
@@ -396,16 +542,16 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
 			mat_in_BB = vecArgs[ii].second;
 		}
 
-		else if (vecArgs[ii].first == "VERBOSE") {
-			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
-		} else if (vecArgs[ii].first == "OUT_ESTIMATED_ERROR") {
+		else if (vecArgs[ii].first == "OUT_ESTIMATED_ERROR") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, error_params);
 		} else if (vecArgs[ii].first == "PROCESS_COVARIANCE_PARAMS") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, QQ_params);
 		} else if (vecArgs[ii].first == "OBSERVATION_COVARIANCE_PARAMS") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, RR_params);
+		} else if (vecArgs[ii].first == "VERBOSE") {
+			IOUtils::parseArg(vecArgs[ii], where, be_verbose);
 		} else {
-			unrecognized_key = vecArgs[ii].first; //constructor is always called twice - show only when processing
+			unrecognized_keys += vecArgs[ii].first + ", "; //constructor is always called twice - show only when processing
 		}
 	} //endfor vecArgs
 
@@ -413,8 +559,13 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
 		throw InvalidArgumentException("The Kalman filter needs a linear model, i. e. a matrix given in STATE_DYNAMICS.", AT);
 }
 
+/** @brief Removes brackets from a string.
+ * @details This function allows to ignore brackets that may be used as visual help for matrix input. Expected there are
+ * comma-separated values, and by removing/replacing brackets formats such as "[1, 2, 3][4, 5, 6]" are possible.
+ * @param[in,out] iline String that will be modified by removing/replacing brackets.
+ */
 void FilterKalman::cleanBrackets(std::string& iline)
-{ //allow input with brackets to no effekt
+{ //allow input with brackets to no effect
 	IOUtils::replace_all(iline, "][", ", ");
 	IOUtils::replace_all(iline, "] [", ", ");
 	IOUtils::replace_all(iline, "[", "");

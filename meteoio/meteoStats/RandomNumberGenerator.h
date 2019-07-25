@@ -28,6 +28,10 @@ namespace mio {
 
 /**
  * @class RandomNumberGenerator
+ * @ingroup stats
+ * @author Michael Reisecker
+ * @date 2018-10
+ *
  * @section rng_rng Random Number Generator
  * Random integer:
  * @code
@@ -46,7 +50,7 @@ namespace mio {
  *
  * The goal is to have a generator suite that satisfies all needs for statistical filters / Monte Carlo methods (and not
  * more), especially when working within MeteoIO. In a way, statistical filters are what ultimately justify this class,
- * and therefore it is meant to be tailored to their needs (and be ANSI C).
+ * and therefore it is meant to be tailored to their needs (and be C++98).
  *
  * So, if you are currently using this (cf. \ref rng_appendix_A):
  * @code
@@ -100,7 +104,7 @@ namespace mio {
  * double rr = RNG.doub();
  * @endcode
  *
- * You can call the doub() function with an `RNG_BOUND` argument inkluding or excluding 0 and 1 (cf. the enum below).
+ * You can call the doub() function with an `RNG_BOUND` argument including or excluding 0 and 1 (cf. the enum below).
  * This can only be done for the uniform distribution, where it's clear what the borders are.
  * @code
  *     double rr = RNG.doub(RNG_AEXCBINC); //make sure it's not 0
@@ -271,8 +275,7 @@ namespace mio {
  * The only way not to distort the (uniform) distribution is to generate lots of numbers and reject
  * out of boundary values. This is done by the trueRange32() function with a default `1e6` tries before
  * resorting to downscaling (indicated by the return boolean). You can crank this up, but to state the obvious
- * if the range gets small this gets costly quickly. The bitshift-methods above only avoid the slow modulo and
- * its possible inherent bias.
+ * if the range gets small this gets costly quickly.
  * @code
  * uint32_t rt;
  * const bool true_range_success = RNG.trueRange32(100, 3000, rt);
@@ -342,7 +345,9 @@ namespace mio {
  * seed differently. Successful hardware noise can be checked with getHardwareSeedSuccess(), and it's
  * also noted in the toString() info.
  * Manually seeding the generator is done after the fact with setState(), for example, to resume
- * experiments after the state was saved via getState().
+ * experiments after the state was saved via getState(). Note that this will not reset if you seed the generator
+ * yourself; i. e. if you seed from hardware and then later resume the chain by re-seeding, it will still show
+ * as hardware seeded.
  * Finally, we offer the getUniqueSeed() function, so if you have set up your
  * calculations with a grandfathered in, better, faster, ... RNG we can at least help with the seeding.
  *
@@ -597,10 +602,6 @@ namespace mio {
  * @endcode
  * (This table is up for revision on a better machine once the numbers are actually
  * being used within MeteoIO.)
- *
- * @ingroup stats
- * @author Michael Reisecker
- * @date 2018-10
 */
 
 class RngCore {
