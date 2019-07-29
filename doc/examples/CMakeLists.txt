@@ -59,6 +59,9 @@ TARGET_LINK_LIBRARIES(time ${METEOIO_LIBRARIES})
 ADD_EXECUTABLE(random_numbers random_numbers.cc)
 TARGET_LINK_LIBRARIES(random_numbers ${METEOIO_LIBRARIES})
 
+ADD_EXECUTABLE(statistical_filters statistical_filters.cc)
+TARGET_LINK_LIBRARIES(statistical_filters ${METEOIO_LIBRARIES})
+
 #####################################################################
 # add a distclean target
 ADD_CUSTOM_TARGET(distclean make clean
