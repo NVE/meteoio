@@ -40,8 +40,8 @@ namespace mio {
  * @details
  *
  * \ref particleintroduction <br>
- * \ref particlefilter : \ref particleoverview, \ref particlealgorithm, \ref particleexample, \ref particleexampleliterature <br>
- * \ref particlefeatures : \ref particlegridded, \ref particleresampling, \ref particleestimation, \ref particleonline, \ref particleseeding <br>
+ * \ref particlefilter : \ref particleoverview, \ref particlealgorithm, \ref particleexample, \ref particleexampleliterature, \ref particleexamplegridded <br>
+ * \ref particlefeatures : \ref particleresampling, \ref particleestimation, \ref particleonline, \ref particleseeding <br>
  * \ref particlekeys, \ref statfilterroadmap <br>
  * \ref statfilterbibliography
  *
@@ -61,8 +61,8 @@ namespace mio {
  * is in a certain state_ taking into account noisy (!) measurements via Bayesian statistics.
  *
  * Implemented is a SIR (Sampling Importance Resampling) algorithm, which is derived from the SIS (Sequential Importance Sampling) algorithm by
- * - Choosing the prior as proposed importance density
- * - Resampling at every time step (although this can be tuned with a simple heuristic here)
+ * - Choosing the prior as proposed importance density.
+ * - Resampling at every time step (although this can be tuned with a simple heuristic here).
  *
  * (For a SIS algorithm, we would not use the prior pdf as importance density q, but rather choose one that is specific to the model.
  * Then, the update formula for the weights becomes a little more complex, but the work is in actually choosing q. Such filters may be more
@@ -83,13 +83,13 @@ namespace mio {
  * Contrary to a Kalman filter (FilterKalman), a particle filter is able to emulate truly _nonlinear model functions_ aswell as _arbitrary
  * probability density functions_.
  *
- * The syntax closely follows Ref. [AM+02] and all remarks here can be investigated further therein.
+ * The syntax follows Ref. [AM+02] and all remarks here can be investigated further therein.
  *
  * INPUT:
  *
  * <b>Two models are required</b>:
- * - A model describing the _evolution of the state_ with time (the system model)
- * - A model _relating the noisy measurements_ to the state (the measurement model)
+ * - A model describing the _evolution of the state_ with time (the system model).
+ * - A model _relating the noisy measurements_ to the state (the measurement or observation model).
  *
  * OUTPUT:
  *
@@ -119,7 +119,7 @@ namespace mio {
  * distribution's probability density function.
  * 6. Set <b>weights</b> for the particles connected to this likelihood ([AM+02] Eq. 63).
  * 7. <b>Resample</b> the particle trajectories (algorithm 2 of Ref. [AM+02]).
- * 8. Repeat 2-7 for each time step.
+ * 8. Repeat 2-7 for each time step `T`.
  * 9. Take the <b>mean particle path</b> (or the one with the highest weight) and calculate the observation function.
  *
  * @note Critique about these workings welcome <a href="https://models.slf.ch/p/meteoio/issues/">here</a>. The core parts
@@ -127,7 +127,7 @@ namespace mio {
  *
  * @subsection particleexample Example: Mockup snow model
  *
- * Let's work through an example again. This time we fake an observation so we know the true process.
+ * Let's work through another example. Once more we fake an observation so we know the true process.
  * If some snow melts in the first half of the month before it starts to snow again we could describe this with:
  * \f[
  * x_k = x_{k-1} * a + b * u
@@ -135,11 +135,11 @@ namespace mio {
  * With `a` and `b` being simple scalars and `u` being a factor that depends on the time step `k`.
  * The program in `/doc/examples/statistical_filters.cc` will calculate this function for some preset \f$x_0\f$, add system and
  * observation noise to it, and write the simulated measurements to a file, as well as `u`.
- * Within MeteoIO, we act as if this was a real measurement.
+ * Within MeteoIO, we  was a real measurement.
  *
  * @note Ref. [MG+14] is a great text to see these Bayesian methods be put to use for meteorological data. You will find a lot
  * of useful information including a small snow model. [LM11] is written to similar ends. Both papers have a look at whether
- * these statistical filters are viable for snow cover estimation and they compare different methods.
+ * these statistical filters are viable for snow cover estimation and they compare different methods in basic research form.
  *
  * @code
  * HS::FILTER1 = PARTICLE
@@ -154,7 +154,7 @@ namespace mio {
  * INITIAL_STATE      = 2.5
  * @endcode
  *
- * \image html particlefilter_hs_overview.png "Fig. 1: Overview of the mockup snow model."
+ * \image html particlefilter_hs_overview.png "Fig. 1: Overview of the mockup snow model: The dark blue line is the true model function, light blue is with superimposed noise (twice actually - with system and observation noise), and the violet one is Kalman filtered."
  *
  * @note You can use the standard arithmetic operations, angular functions, exponentials, and some combinatorics. See here for a
  * <a href="https://github.com/codeplea/tinyexpr#functions-supported">list of supported functions</a>.
@@ -164,16 +164,11 @@ namespace mio {
  * 3. Current <b>state</b> variable: "xx"
  * 4. <b>State at the previous time</b> step: "x_km1" (read: \f$x_{k-1}\f$)
  * 5. Any available <b>meteo parameter</b>: "meteo(PARAM)" <br>
- * Number 3 is only available for the observations model and number 4 picks the initial state for `T=0`.
+ * Number 3 is only available for the observations model and number 4 picks the initial state for `T=0` for the observation model.
  * @note The time vector `tt` is a normalized and shifted version of the index `kk` such that the time of the first measurement is at 0 and the
  * second one is at 1. Suppose you had measurements at 00:00, 01:00, and 01:30 then `kk` would be `[0, 1, 2]` and `tt` would be `[0, 1, 1.5]`.
  *
- * We use a smaller <b>number of particles</b>:
- * @code
- * NO_OF_PARTICLES = 500
- * @endcode
- *
- * At last, we set up our <b>random numbers generators</b>:
+ * At last, we set up our <b>random number generators</b>:
  * @code
  * MODEL_RNG_DISTRIBUTION = GAUSS
  * MODEL_RNG_PARAMETERS   = 0 0.1 ;mean sigma
@@ -181,9 +176,8 @@ namespace mio {
  * OBS_RNG_PARAMETERS     = 0 0.3
  * @endcode
  *
- * @note _If the process noise is zero, then the particle filter is not appropriate_ as it is a method of estimating dynamic
- * states.
- * @note Bruteforcing the particle number helps with the _degeneracy problem_ (see section \ref particleresampling).
+ * @note _If the process noise is zero, then the particle filter is not appropriate_ as it is a method of estimating
+ * _dynamic states_.
  * @note Since we are not setting a different prior distribution via `PRIOR_RNG_DISTRIBUTION` and `PRIOR_RNG_PARAMETERS` we
  * can omit these keys and the prior distribution will be chosen to be the model distribution. Same would be true for the observation
  * distribution, but that one is slightly different here.
@@ -192,7 +186,6 @@ namespace mio {
  * Together, our ini file looks like this:
  * @code
  * HS::FILTER1                          =   PARTICLE
- * HS::ARG1::NO_OF_PARTICLES            =   500
  * HS::ARG1::MODEL_FUNCTION             =   x_km1 * 0.999 + 0.001 * meteo(CTRL)
  * HS::ARG1::OBS_MODEL_FUNCTION         =   xx
  * HS::ARG1::INITIAL_STATE              =   2.5
@@ -212,7 +205,7 @@ namespace mio {
  *
  * @subsection particleexampleliterature Example: Literature model function
  *
- * The following example function has nothing to do with meteo data, but it has been _analyzed a lot in literature_
+ * The following example function has nothing to do with meteo data, but it has been analyzed a lot in literature
  * (e. g. in Ref. [AM+02] and Ref. [CPS92]) and it's nonlinear.
  *
  * We change the functions and RNG parameters in the control program `statistical_filters.cc`:
@@ -230,36 +223,62 @@ namespace mio {
  * @code
  * HS::ARG1::MODEL_FUNCTION             =   x_km1 / 2 + 25 * x_km1 / (1 + x_km1*x_km1) + 8 * cos(1.2 * kk)
  * HS::ARG1::OBS_MODEL_FUNCTION         =   xx*xx / 20
+ * HS::ARG1::INITIAL_STATE              =   0
  * HS::ARG1::MODEL_RNG_DISTRIBUTION     =   GAUSS
  * HS::ARG1::MODEL_RNG_PARAMETERS       =   0 3.3
  * HS::ARG1::OBS_RNG_DISTRIBUTION       =   GAUSS
  * HS::ARG1::OBS_RNG_PARAMETERS         =   0 1
- * HS::ARG1::INITIAL_STATE              =   0
  * @endcode
  *
- * \image html particlefilter_literature.png "Fig. 3: Result of particle filtering a nonlinear function from literature."
+ * \image html particlefilter_literature.png "Fig. 3: Result of particle filtering a nonlinear function from literature. Also, the observation model is not trivial and we do not see a direct presentation of it which makes it harder to tell which spikes are 'real'."
  *
- * @subsection particlefeatures Other features
  *
- * @subsubsection particlegridded Gridded model input
+ * @subsubsection particleexamplegridded Example: Gridded solar model input
  *
  * For a particle filter, as well as for a Kalman filter, you _absolutely need a model function_. However, often you will only have
- * _data points_ that your or somebody else's model spits out. For this reason MeteoIO allows you to <b>fit a curve</b> against the
+ * _data points_ that your or somebody else's model spits out. For this reason the particle filter allows you to <b>fit a curve</b> against the
  * data points and use that as model function. The following fits are available: Fit1D, and the polynomial fit takes a 2nd
  * argument with the degree of interpolation.
  *
- * To fit a curve against the parameter `TA_INCA` you can write:
- * @code
- * MODEL_FUNCTION  = FIT POLYNOMIAL 3
- * MODEL_FIT_PARAM = TA_INCA
- * @endcode
- * If `TA_INCA` is available in your model data then a 3rd degree polynomial fit is now the model function and the rest of the
- * settings stay the same.
+ * Let's use a MeteoIO internal model for the global radiation:
  *
- * @subsubsection particleresampling Tuning resampling
+ * @code
+ * [INPUT]
+ * ISWR_MODEL::CREATE = CLEARSKY_SW ;depends on TA, RH
+ * @endcode
+ *
+ * Comparing the values created this way with the measurements we can see that there is up to a couple of hundret W/m^2
+ * difference between the two. This gap needs to be covered by the standard deviations of the random number generators.
+ * If you put small numbers here then the huge difference will be so unlikely that everything is filtered (as it should,
+ * because obviously it is not justified to put complete trust in this model). For example, if we say that the standard deviation for
+ * the measurement sensor is 30, and some of the discrepancy remaining is covered by a standard deviation of 100 in the model
+ * then the highest peaks are still deemed unlikely while the rest stays pretty much the same.
+ *
+ * Using a little more particles our ini section reads:
+ * @code
+ * ISWR::FILTER1                        =   PARTICLE
+ * ISWR::ARG1::NO_OF_PARTICLES          =   1000
+ * ISWR::ARG1::MODEL_FUNCTION           =   FIT POLYNOMIAL 5
+ * ISWR::ARG1::MODEL_FIT_PARAM          =   ISWR_MODEL
+ * ISWR::ARG1::OBS_MODEL_FUNCTION       =   xx
+ * ISWR::ARG1::MODEL_RNG_DISTRIBUTION   =   GAUSS
+ * ISWR::ARG1::MODEL_RNG_PARAMETERS     =   0 100
+ * ISWR::ARG1::OBS_RNG_DISTRIBUTION     =   GAUSS
+ * ISWR::ARG1::OBS_RNG_PARAMETERS       =   0 30
+ * @endcode
+ *
+ * \image html particlefilter_gridded.png "Fig. 4: A 5th degree polynomial fit is now the model function of the particle filter. Assigning different standard deviations to the model and measurements will greatly influence the results."
+ *
+ * @subsection particlefeatures Other features
+ *
+ * @subsubsection particleresampling Resampling
+ *
+ * Resampling of the particle paths is turned on and off with the `PATH_RESAMPLING` key. If resampling is turned off then a lot
+ * of computational power may be devoted to particles with low weights that do not contribute significantly to the end result,
+ * and the paths may lose track of the main line. Usually, it is needed.
  *
  * The `RESAMPLE_PERCENTILE` \f$r_p\f$ lets you pick a factor to decide whether to resample:
- * `if` \f$N_{eff} < r_p * NN\f$ `then resample` (effective sample size, [AM+02] Eq. 50). Strictly, a SIR
+ * `if` \f$N_{eff} < r_p * N\f$ `then resample` (effective sample size, [AM+02] Eq. 50). Strictly, a SIR
  * algorithm requires resampling at each time step, but in practice a heuristic like this is appropriate (e. g. Ref. [DJ09]).
  *
  * For now, only one resampling strategy is implemented:
@@ -268,6 +287,12 @@ namespace mio {
  * weights in favor of more meaningful ones (algorithm 2 of Ref. [AM+02]). However, it does decrease diversity (by selecting
  * particles with high weight multiple times) and for very small process noise the particles collapse to a single point
  * within a couple of iterations ("sample impoverishment").
+ *
+ * @note Bruteforcing the particle number helps with the _degeneracy problem_.
+ *
+ * \image html particlefilter_kerneldensity.png "Fig. 5: Kernel densities of the particles before and after resampling for the literature function example."
+ *
+ * @note The minimalistic MATLAB code used for this plot can be found as a comment in the `/doc/examples/statistical_filters.cc` program.
  *
  * @subsubsection particleestimation Final state estimation
  *
@@ -287,7 +312,7 @@ namespace mio {
  * is calculated from only the previous state then it is enough to save the last state (particles and their weights) and
  * resume from there.
  *
- * @note So far, a similar mechanism is lacking for the Kalman filter, but if needed / wanted it will be done.
+ * @note So far, a similar mechanism is lacking for the Kalman filter, but if needed / wanted it will be done if there's time.
  *
  * @code
  * DUMP_INTERNAL_STATES_FILE  = ./output/particle_states.dat
@@ -295,7 +320,7 @@ namespace mio {
  * @endcode
  *
  * If the input file is not found the filter will silently start with the initial states that are set through the ini file.
- * In the example above the filter will not find an input file in the beginning and use the initial states. In the end it
+ * In the example above the filter will not find an input file for the first run and thus use the initial states. In the end it
  * writes the states to a file. The next time the filter is started the input file will exist and the calculation is resumed
  * at this point. However, as of yet the model parameters (like `kk`, `tt`, ...) are not saved and that has to be taken
  * into account for the analytical model output. If this would be needed / wanted, it will be built in. Be aware though that
@@ -306,7 +331,7 @@ namespace mio {
  * DUMP_PARTICLES_FILE = ./output/particles.dat
  * @endcode
  *
- * @note In `/doc/examples/statistical_filters.cc` there is a comment at the end with minimalistic MATLAB code to plot kernel densities.
+ * @note This is the input for Fig. 5.
  *
  * @subsubsection particleseeding Seeding the random number generators
  *
@@ -330,7 +355,7 @@ namespace mio {
  *  <tr><td>INITIAL_STATE</td><td>State variable at T=0.</td><td>yes</td><td>1st observation</td></tr>
  *  <tr><td>OBS_MODEL_FUNCTION</td><td>Model relating the observations to the states.</td><td>yes, but you need one</td><td>"xx"</td></tr>
  *  <tr><td>ESTIMATION_MEASURE</td><td>Which measure to use for the final estimation.</td><td>yes</td><td>MEAN (choices: MAX_WEIGHT)</td></tr>
- *  <tr><td>NO_OF_PARTICLES</td><td>Number of particles per time step.</td><td>yes</td><td>2000</td></tr>
+ *  <tr><td>NO_OF_PARTICLES</td><td>Number of particles per time step.</td><td>yes</td><td>500</td></tr>
  *  <tr><td>PATH_RESAMPLING</td><td>Perform particle path resampling?</td><td>yes</td><td>TRUE, this is normally needed</td></tr>
  *  <tr><td>RESAMPLE_PERCENTILE</td><td>Scalar for simple resampling heuristic.</td><td>yes</td><td>0.5</td></tr>
  *  <tr><td>DUMP_PARTICLES_FILE</td><td>Output file path for the particles.</td><td>yes</td><td>empty</td></tr>

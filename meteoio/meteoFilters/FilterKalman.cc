@@ -1,3 +1,21 @@
+/***********************************************************************************/
+/*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <LU> //<Eigen/LU>
 
 #include <meteoio/meteoFilters/FilterKalman.h>
@@ -9,7 +27,7 @@ FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string
         : ProcessingBlock(vecArgs, name),
 		  mat_in_xx(""), mat_in_AA(""), mat_in_HH(""), mat_in_PP("1"), mat_in_QQ("0"), mat_in_RR(""), mat_in_BB("0"), mat_in_uu("0"),
           meas_params(), error_params(), QQ_params(), RR_params(),
-          filter_all_params(false), be_verbose(true), unrecognized_keys("")
+          filter_all_params(false), out_error_stddev(false), be_verbose(true), unrecognized_keys("")
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -85,6 +103,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
     {
     	const double dt = (kk == 0)? 0 : vecT(kk) - vecT(last_valid_idx); //initial state is at time of 1st measurement
     	const Eigen::MatrixXd AA = buildSystemMatrix(AA_str, nx, dt, ivec, kk);
+
     	if (has_RR_params) //if desired, get RR and QQ from input data at each time step
     		RR = extractInputMatrix(RR_params, ivec, kk);
     	if (has_QQ_params)
@@ -111,7 +130,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 
     		if (error_params.size() == nx) //output estimated error
     			for (size_t mm = 0; mm < nx; ++mm)
-    				ovec[kk](error_params[mm]) = PP(mm, mm); //save diagonal elements only
+    				ovec[kk](error_params[mm]) = out_error_stddev? sqrt(PP(mm, mm)) : PP(mm, mm); //save diagonal elements only
 
     	} else { //all states stay as if this time step wasn't encountered
     		saw_nodata = true;
@@ -143,7 +162,7 @@ Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>&
 	} else { //not empty
 		for (size_t ii = 0; ii < nz; ++ii) {
 			const std::string xx_str = IOUtils::trim(xx_str_in[ii]);
-			if (xx_str == "") { //some values are given, but not this one --> fill with 1st observation
+			if (xx_str == "" || xx_str == "1st") { //some values are given, but not this one --> fill with 1st observation
 				all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[ii], vecRet[ii]);
 			} else if (xx_str == "average") { //take the average of all specified observables at t=0
 				double av_sum = 0.;
@@ -544,6 +563,8 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
 
 		else if (vecArgs[ii].first == "OUT_ESTIMATED_ERROR") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, error_params);
+		} else if (vecArgs[ii].first == "OUT_ERROR_AS_STDDEV") {
+			IOUtils::parseArg(vecArgs[ii], where, out_error_stddev);
 		} else if (vecArgs[ii].first == "PROCESS_COVARIANCE_PARAMS") {
 			(void) IOUtils::readLineToVec(vecArgs[ii].second, QQ_params);
 		} else if (vecArgs[ii].first == "OBSERVATION_COVARIANCE_PARAMS") {

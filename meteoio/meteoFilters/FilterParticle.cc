@@ -27,7 +27,7 @@
 namespace mio {
 
 FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(2000), path_resampling(true),
+        : ProcessingBlock(vecArgs, name), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(500), path_resampling(true),
           model_expression(""), obs_model_expression(""), fit_expression(""), fit_param(""), fit_degree(3), model_x0(IOUtils::nodata),
 		  resample_percentile(0.5), estim_measure(PF_MEAN), rng_model(), rng_obs(), rng_prior(), resample_seed(),
           be_verbose(true), unrecognized_keys(""), dump_particles_file(""), dump_states_file(""), input_states_file("")
@@ -160,7 +160,8 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 		} //endfor kk
 	} catch (...) { //we could get a "nonexistent meteo parameter" error above
-		te_free(expr_model);
+		if (has_model)
+			te_free(expr_model);
 		te_free(expr_obs);
 		delete[] te_vars;
 		throw;
@@ -181,14 +182,15 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		sub_values[0] = (double)kk;
 		sub_values[1] = tVec[kk];
 		sub_values[2] = xx_meas(kk);
-		sub_values[3] = (kk == 0)? model_x0 : xx_meas(kk-1); //somewhat arbitrary at t=0 - this substitution is meant for the system model
+		sub_values[3] = (kk == 0)? model_x0 : xx_meas(kk-1); //somewhat arbitrary at T=0 - this substitution is meant for the system model
 		for (size_t jj = 0; jj < sub_params.size(); ++jj) //fill current meteo parameters
 			sub_values[jj+nr_hardcoded_sub] = ivec[kk](sub_params[jj]);
 		const double res = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
 		ovec[kk](param) = isnan(res)? IOUtils::nodata : res; //NaN to nodata
 	}
 
-	te_free(expr_model);
+	if (has_model)
+		te_free(expr_model);
 	te_free(expr_obs);
 	delete[] te_vars;
 
@@ -338,8 +340,8 @@ void FilterParticle::parseSubstitutionStrings(std::string& line_m, std::string& 
 void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::string>& sub_expr,
         std::vector<std::string>& sub_params) const
 {
-	static const std::string prefix("meteo");
-	static const size_t len = prefix.length() + 1;
+	static const std::string prefix("meteo(");
+	static const size_t len = prefix.length();
 	size_t pos1 = 0, pos2;
 
 	while (true) {
@@ -352,8 +354,8 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
 
 		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
 		sub_params.push_back(IOUtils::strToUpper(pname)); //meteo name
-		line.replace(pos1, pos2-pos1+1, prefix + pname + "  "); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
-		sub_expr.push_back(prefix + pname); //full expression, lower case and without brackets; duplicates may occur
+		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname + "  "); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
+		sub_expr.push_back(prefix.substr(0, prefix.length() - 1) + pname); //full expression, lower case and without brackets; duplicates may occur
 		pos1 += len;
 	} //end while
 }
