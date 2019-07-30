@@ -118,7 +118,7 @@ namespace mio {
  * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
- * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency
+ * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
  * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
  * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
  *
@@ -144,7 +144,7 @@ namespace mio {
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
- * - LOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
+ * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)

@@ -90,10 +90,13 @@ namespace mio {
  * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 43);
  * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 44);
  * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others).
+ * - ZRXP_STATUS_UNALTERED_NODATA: Status for when `nodata` is already present in the input file and left untouched (default: 255).
  *
  * The last five status parameters are used to transport data quality assurance flags to the database.
  * `ZRXP_STATUS_NODATA` will be set only if the *filtered* value is found to be `nodata` (e. g. -999).
  * If `ZRXP_STATUS_NODATA` is not given a value, then this check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
+ * Furthermore, if there is a nodata value in the input file that is not altered at all by MeteoIO, then `ZRXP_STATUS_UNALTERED_NODATA`
+ * is set as flag, and the value is set to `ZRXP_RINVAL`.
  *
  * @note In addition, you can separately set `ZRXP_RINVAL`. This is necessary for a use case where original and
  * potentially newer data is merged with filtered data. WISKI would fill data gaps with original data and
@@ -194,12 +197,13 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	cfg.getValue("ZRXP_WRITE_CNR", "Output", zrxp_write_cnr, IOUtils::nothrow);
 
 	//read which quality flags should be set for filtered, resampled, generated, and nodata:
-	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44), qa_nodata;
+	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44), qa_nodata, qa_unaltered_nodata(255);
 	bool use_qa_nodata(false); //disabled by default
 	cfg.getValue("ZRXP_STATUS_UNALTERED", "Output", qa_unaltered, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_RESAMPLED", "Output", qa_resampled, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_GENERATED", "Output", qa_generated, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_FILTERED", "Output", qa_filtered, IOUtils::nothrow);
+	cfg.getValue("ZRXP_STATUS_UNALTERED_NODATA", "Output", qa_unaltered_nodata, IOUtils::nothrow);
 	if (cfg.keyExists("ZRXP_STATUS_NODATA", "Output")) { //value is nodata before and/or after filtering
 		cfg.getValue("ZRXP_STATUS_NODATA", "Output", qa_nodata);
 		use_qa_nodata = true; //if not used, nodata is not treated differently
@@ -300,8 +304,9 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				outfile << "#LAYOUT" << zrxp_layout << sep << std::endl;
 
 				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) { //loop through datasets
+					double out_value = vecMeteo[ii][jj](pp);
 					//transport data qa flags (same for all parameters of a timestep, except qa_nodata):
-					//qa_unaltered(41), qa_resampled(42), qa_filtered(43), qa_generated(44), qa_nodata=190;
+					//qa_unaltered(41), qa_resampled(42), qa_filtered(43), qa_generated(44), qa_nodata=190, qa_unaltered_nodata(255);
 					int qa_status(qa_unaltered);
 					if (vecMeteo[ii][jj].isGenerated(pp)) {
 						qa_status = qa_generated;
@@ -312,9 +317,12 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 							qa_status = qa_nodata;
 						else
 							qa_status = qa_filtered;
+					} else if (vecMeteo[ii][jj](pp) == IOUtils::nodata) { //transport nodata without touching it
+						qa_status = qa_unaltered_nodata;
+						out_value = zrxp_rinval;
 					}
 					//print timestamp, value, status, and optional remark
-					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
+					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << out_value
 								<< " " << qa_status << zrxp_remark << std::endl;
 				} //endfor jj
 

@@ -140,7 +140,7 @@ namespace mio {
  * Matrices and vectors are input by a list of comma-separated elements. To init both a vector that is 4 elements long or a matrix that
  * is 2 by 2 you would write: `1, 0, 0, 1`. You can put brackets around your numbers for readability: `[1, 0][0, 1]`.
  *
- * We will use a most easy _model_:
+ * We will use a most easy <b>model</b>:
  * @code
  * STATE_DYNAMICS = 1
  * @endcode
@@ -301,16 +301,16 @@ namespace mio {
  * 0 & 0 & 0 & 1 \end{array} \right)
  * \f]
  * Keep in mind that we are only measuring the velocities, not the positions, so only the velocities can play a role in the
- * new state estimation (Eq. 2 of update step). The initial values are position (0, 0) and speed (x_0, 0), and we pick the first measured
+ * new state estimation (Eq. 2 of update step). The initial values are position \f$(0, 0)\f$ and speed \f$(x_0, 0)\f$, and we pick the first measured
  * speed as initial value:
  *
  * @code
  * STATE_DYNAMICS       = [1, 0, dt, 0][0, 1, 0, dt][0, 0, 1, 0][0, 0, 0, 1]
- * INITIAL_STATE        = [0, 0, , 0]
+ * INITIAL_STATE        = [0, 0, 1st, 0]
  * OBSERVATION_RELATION = [0, 0, 0, 0][0, 0, 0, 0][0, 0, 1, 0][0, 0, 0, 1]
  * @endcode
  *
- * @note Once again, in this case we could internally use 2 measurements only (v_x, v_y); `H` could then be a 2x4-matrix,
+ * @note Once again, in this case we could internally use 2 measurements only \f$(v_x, v_y)\f$; `H` could then be a 2x4-matrix,
  * `R` could be a 2x2-matrix and the formulas would still work out. However, since all states are propagated anyway it is
  * next to no penalty to work with square matrices and output them all.
  *
@@ -325,7 +325,7 @@ namespace mio {
  * @code
  * FILTER1                    =   KALMAN
  * STATE_DYNAMICS             =   [1, 0, dt, 0][0, 1, 0, dt][0, 0, 1, 0][0, 0, 0, 1]
- * INITIAL_STATE              =   [0, 0, , 0]
+ * INITIAL_STATE              =   [0, 0, 1st, 0]
  * INITIAL_TRUST              =   10
  * PROCESS_COVARIANCE         =   0
  * ADD_OBSERVABLES            =   YY VX VY
@@ -336,7 +336,7 @@ namespace mio {
  * OUT_ERROR_AS_STDDEV        =   TRUE
  * @endcode
  *
- * \image html kalmanfilter_velocity.png "Fig. 4: The measured velocity is all over the place, but the filtered one quickly stabilizes to the true speed (10 m/s). With a perfect model like this the estimation of the position is almost linear like it should be."
+ * \image html kalmanfilter_velocity.png "Fig. 4: The measured velocity is all over the place, but the filtered one quickly stabilizes to the true speed (10 m/s). With a perfect model like this the secondary estimation of the position is almost linear like it should be."
  *
  * @subsection kalmanfeatures Other features
  *
@@ -344,9 +344,9 @@ namespace mio {
  *
  * With `CONTROL_SIGNAL` you can input an _external control signal acting on the states_ (the vector \f$\hat{u}\f$ from above)
  * in three different ways:
- * 1. A scalar (e. g. `0.2`) that an appropriate vector is filled with
- * 2. A vector (e. g. `[0.1, 0.2]`) which will be applied for all time steps
- * 3. A list of meteo parameters holding the value for each timestep (e. g. `UU1 UU2`), i. e. a time-variant vector
+ * 1. A scalar (e. g. `0.2`) that an appropriate vector is filled with.
+ * 2. A vector (e. g. `[0.1, 0.2]`) which will be applied for all time steps.
+ * 3. A list of meteo parameters holding the value for each timestep (e. g. `UU1 UU2`), i. e. a time-variant vector.
  * The matrix \f$H\f$ is applied to this vector and can be input via `CONTROL_RELATION` as usual.
  *
  * @subsubsection kalmanerror Error estimation

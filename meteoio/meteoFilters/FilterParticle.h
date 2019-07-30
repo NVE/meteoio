@@ -105,7 +105,7 @@ namespace mio {
  *
  * This implementation propagates a single state only, but you can obviously run the filter on each meteo parameter separately
  * and you can also use every meteo parameter in the model. However, there is no way to update more than one state in the model
- * equation itself.
+ * equation itself (i. e. no vector maths).
  *
  * @subsection particlealgorithm Algorithm
  *
@@ -135,7 +135,7 @@ namespace mio {
  * With `a` and `b` being simple scalars and `u` being a factor that depends on the time step `k`.
  * The program in `/doc/examples/statistical_filters.cc` will calculate this function for some preset \f$x_0\f$, add system and
  * observation noise to it, and write the simulated measurements to a file, as well as `u`.
- * Within MeteoIO, we  was a real measurement.
+ * Within MeteoIO, we act as if this was a real measurement.
  *
  * @note Ref. [MG+14] is a great text to see these Bayesian methods be put to use for meteorological data. You will find a lot
  * of useful information including a small snow model. [LM11] is written to similar ends. Both papers have a look at whether
