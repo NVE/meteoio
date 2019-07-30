@@ -431,6 +431,7 @@ class FilterParticle : public ProcessingBlock {
 		        RandomNumberGenerator& RNU) const;
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const;
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const;
+		bool isNan(const double& xx);
 
 		typedef enum PF_FILTER_ALGORITHM {
 			PF_SIR, //only SIR is implemented so far

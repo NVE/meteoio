@@ -19,7 +19,6 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/meteoStats/libfit1D.h>
 
-#include <cmath> //for isnan()
 #include <fstream> //for the dump files
 #include <limits>
 #include <sstream> //for readLineToVec
@@ -186,7 +185,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		for (size_t jj = 0; jj < sub_params.size(); ++jj) //fill current meteo parameters
 			sub_values[jj+nr_hardcoded_sub] = ivec[kk](sub_params[jj]);
 		const double res = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
-		ovec[kk](param) = isnan(res)? IOUtils::nodata : res; //NaN to nodata
+		ovec[kk](param) = isNan(res)? IOUtils::nodata : res; //NaN to nodata
 	}
 
 	if (has_model)
@@ -639,6 +638,16 @@ void FilterParticle::readLineToVec(const std::string& line_in, std::vector<uint6
 			throw InvalidFormatException("Unable to parse process noise seed integers for particle filter.", AT);
 		vec_out.push_back(val);
 	}
+}
+
+/**
+ * @brief Check if a number is 'nan'.
+ * @param[in] Number to test against 'nan'.
+ * @return True if the number is 'nan'.
+ */
+bool FilterParticle::isNan(const double& xx)
+{
+	return (xx != xx);
 }
 
 } //namespace
