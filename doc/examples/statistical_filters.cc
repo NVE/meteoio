@@ -61,10 +61,11 @@ int main(/* int argc, char** argv */)
 	static const double aa = 0.999; //mockup model parameters
     static const double bb = 0.0005;
     static const double x_0 = 2.5; //initial value
+    static const double v_real = 10.; //scatter fake measurements around this "true" velocity
 
 	size_t kk = 0;
 	double xx = x_0;
-	static const double v_real = 10.; //scatter fake measurements around this "true" velocity
+
 	mio::Date dt(sdate);
 	while (dt <= edate) { //loop through timestamps present in the input data
 		//simulate some measurements for the particle filter:
@@ -72,13 +73,13 @@ int main(/* int argc, char** argv */)
 		xx = xx * aa + bb * uu; //system model
 		oss << dt.toString(mio::Date::ISO, false) << "  " << xx << "  ";
 		const double rr = RNGU.doub();
-		//observation model plus system noise plus observation noise
+		//observation model plus system noise plus observation noise:
 		const double obs = (xx + rr) + RNGU.doub(); //here: obs(x) = x
 		oss << obs << "  ";
 		oss << uu << "  ";
 
 		//simulate measurements for the Kalman filter:
-		oss << v_real + RNGK.doub() << std::endl; //noisy velocity measurement
+		oss << v_real + RNGK.doub() << std::endl; //noisy velocity "measurement"
 
 		kk++;
 		dt += time_step;

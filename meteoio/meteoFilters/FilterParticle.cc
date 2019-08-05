@@ -275,7 +275,7 @@ bool FilterParticle::checkInitialState(const std::vector<MeteoData>& ivec, const
  * @param[in] expr List of variable names to substitute.
  * @param[in] values List of variable values to substitute for.
  */
-void FilterParticle::initFunctionVars(te_variable* vars, const std::vector<std::string>& expr, const std::vector<double>& values)
+void FilterParticle::initFunctionVars(te_variable* vars, const std::vector<std::string>& expr, const std::vector<double>& values) const
 { //build a substitutions expression for tinyexpr
 	if (values.size() != expr.size())
 		throw InvalidArgumentException("Particle filter: error mapping meteo(param) fields to meteo values. Are all fields available?\n", AT);
@@ -300,7 +300,7 @@ te_expr* FilterParticle::compileExpression(const std::string& expression, const 
 	int te_err;
 	te_expr *expr = te_compile(expression.c_str(), te_vars, (int)sz, &te_err);
 	if (!expr)
-		throw InvalidFormatException("Arithmetic expression \"" + model_expression +
+		throw InvalidFormatException("Arithmetic expression \"" + expression +
 		        "\" could not be evaluated for particle filter; parse error at " + IOUtils::toString(te_err), AT);
 	return expr;
 }
@@ -353,7 +353,7 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
 
 		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
 		sub_params.push_back(IOUtils::strToUpper(pname)); //meteo name
-		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname + "  "); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
+		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
 		sub_expr.push_back(prefix.substr(0, prefix.length() - 1) + pname); //full expression, lower case and without brackets; duplicates may occur
 		pos1 += len;
 	} //end while
@@ -476,8 +476,6 @@ void FilterParticle::parse_args(const std::vector< std::pair<std::string, std::s
 	bool has_prior(false), has_obs(false);
 
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
-
-
 
 		/*** MODEL FUNCTION settings ***/
 		if (vecArgs[ii].first == "MODEL_FUNCTION") {
@@ -645,7 +643,7 @@ void FilterParticle::readLineToVec(const std::string& line_in, std::vector<uint6
  * @param[in] Number to test against 'nan'.
  * @return True if the number is 'nan'.
  */
-bool FilterParticle::isNan(const double& xx)
+bool FilterParticle::isNan(const double& xx) const
 {
 	return (xx != xx);
 }

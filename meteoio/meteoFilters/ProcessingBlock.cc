@@ -79,7 +79,7 @@ namespace mio {
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
  * a list of the various meteo parameters (see MeteoData) with their associated choice of filtering algorithms and
- * optional parameters.The filters are applied serialy, in the order they are given in. An example of such section is given below:
+ * optional parameters.The filters are applied serially, in the order they are given in. An example of such section is given below:
  * @code
  * [Filters]
  * TA::filter1   = min_max

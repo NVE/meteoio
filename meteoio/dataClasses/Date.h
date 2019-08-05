@@ -56,7 +56,7 @@ namespace mio {
  * - <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> variations:
  *     - YYYY-MM-DDThh:mm:ss{TZ}, for example 2017-02-02T12:35:00 in the fallback time zone
  *     - YYYY-MM-DDThh:mm{TZ}, for example 2017-02-02T12:35+01:00
- * - similar to ISO but without the 'T' marker (some systems wrongfuly reject it):
+ * - similar to ISO but without the 'T' marker (some systems wrongfully reject it):
  *     - YYYY-MM-DD hh:mm:ss{TZ}, for example 2017-02-02 11:35:00Z
  *     - YYYY-MM-DD hh:mm{TZ}, for example 2017-02-02 12:35+01
  * - simplified:

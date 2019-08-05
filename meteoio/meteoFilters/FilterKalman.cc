@@ -151,7 +151,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
  * @return Vector with the initial system states.
  */
 Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>& xx_str_in, const std::vector<size_t>& meas_idx,
-        const std::vector<MeteoData>& ivec, const size_t& nz)
+        const std::vector<MeteoData>& ivec, const size_t& nz) const
 {
 	bool all_nodata(false);
 	Eigen::VectorXd vecRet(nz);
@@ -514,7 +514,7 @@ bool FilterKalman::checkNodata(const Eigen::VectorXd& ivec) const
  * @param[out] retval Firts valid data point value, nodata if none is found.
  * @return True if data was found, false if everything is nodata.
  */
-bool FilterKalman::findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval)
+bool FilterKalman::findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval) const
 {
 	for (size_t ii = 0; ii < ivec.size(); ++ii) {
 		if (ivec[ii](param) != IOUtils::nodata) {
@@ -585,7 +585,7 @@ void FilterKalman::parse_args(const std::vector< std::pair<std::string, std::str
  * comma-separated values, and by removing/replacing brackets formats such as "[1, 2, 3][4, 5, 6]" are possible.
  * @param[in,out] iline String that will be modified by removing/replacing brackets.
  */
-void FilterKalman::cleanBrackets(std::string& iline)
+void FilterKalman::cleanBrackets(std::string& iline) const
 { //allow input with brackets to no effect
 	IOUtils::replace_all(iline, "][", ", ");
 	IOUtils::replace_all(iline, "] [", ", ");

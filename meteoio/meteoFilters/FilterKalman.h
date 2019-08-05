@@ -102,7 +102,7 @@ namespace mio {
  * K_k = P_k H^T(H P_k H^T + R)^{-1}
  * \f]
  * \f[
- * \hat{x}_k = \hat{x}_k + K_k(z_k - H\hat{x}_k)
+ * \hat{x}_k = \hat{x}_k + K_k(\hat{z}_k - H\hat{x}_k)
  * \f]
  * \f[
  * P_k = (I - K_k H)P_k
@@ -110,11 +110,12 @@ namespace mio {
  *
  * where \f$\hat{x}_k\f$ is the model value at time step \f$k\f$, \f$A\f$ is the model itself, i. e. the system transformation matrix,
  * \f$u_k\f$ is a control signal that is related to the states via \f$B\f$, \f$P\f$ is an error estimation, and \f$Q\f$ is the covariance
- * matrix of the process noise. Furthermore, \f$K\f$ denotes the Kalman gain, \f$H\f$ is the observation model relating observations to
- * the states, \f$R\f$ is the observation covariance matrix, and \f$I\f$ is the identity. For details see Ref. [AM+02] equations (8)-(16).
+ * matrix of the process noise. Furthermore, \f$\hat{z}_k\f$ is the observation at time step \f$k\f$, \f$K\f$ denotes the Kalman gain,
+ * \f$H\f$ is the observation model relating observations to the states, \f$R\f$ is the observation covariance matrix, and \f$I\f$ is
+ * the identity. For details see Ref. [AM+02] equations (8)-(16).
  *
  * @note These statistical methods stem mostly from robotics, where the state tracking is used to narrow down the position of a vehicle
- * given noisy secondary measurements. See for example Ref. [SC06] for an assessment of snow data assimilation through an
+ * given noisy secondary measurements. In contrast, see for example Ref. [SC06] for an assessment of snow data assimilation through an
  * (Ensemble) Kalman filter.
  *
  * @subsection kalmanexample Example: Sensor fusion
@@ -134,8 +135,8 @@ namespace mio {
  * First, we need the heart of the problem, our <b>system model</b>. It describes the evolution of the states through time and is read from
  * the `STATE_DYNAMICS` key. This is the matrix A from above.
  * Matrices can be input in three different ways:
- * 1. A scalar that the matrix diagonal is filled with
- * 2. A vector that is put on the diagonal
+ * 1. A scalar that the matrix diagonal is filled with.
+ * 2. A vector that is put on the diagonal.
  * 3. A complete matrix.
  * Matrices and vectors are input by a list of comma-separated elements. To init both a vector that is 4 elements long or a matrix that
  * is 2 by 2 you would write: `1, 0, 0, 1`. You can put brackets around your numbers for readability: `[1, 0][0, 1]`.
@@ -152,7 +153,7 @@ namespace mio {
  *
  * Next, we need an <b>initial state</b>. We have two internal states (both of which are energy states), namely the two temperatures.
  * For both filters, you can provide the values as a list (e. g. `268, 271`). You can also leave all of them or some of them empty to make
- * MeteoIO pick the initial state(s) from the 1st available observation(s). "1st" is a synonym for this. You can use the token "average" (case sensitive)
+ * MeteoIO pick the initial %state(s) from the 1st available observation(s). "1st" is a synonym for this. You can use the token "average" (case sensitive)
  * to let MeteoIO average over all 1st observations. We want the average between the first measurement of both stations so we write:
  * @code
  * INITIAL_STATE = [average, average]
@@ -387,10 +388,10 @@ namespace mio {
  * useful to combine meteo data and model input.
  * - <b>Important:</b> For technical reasons all filters can run on a larger time frame than is
  * requested in the getMeteoData call. This allows windowed filters to have enough data even at the beginning and end to do
- * their work. This is controlled by the `BUFF_BEFORE` and `BUFFER_SIZE` keys. If you set both to 0 then the filters receive
+ * their work and is controlled by the `BUFF_BEFORE` and `BUFFER_SIZE` keys. If you set both to 0 then the filters receive
  * exactly the time frame covered by the input dates. However, if you are using windowed filters also, then these will lack
  * data. This is important in understanding how the initial states are picked: if MeteoIO inits the states automatically with
- * the first available data point then this is the first point MeteoIO sees. Thus, with a large enough buffer the model will
+ * the first available data point then this is taken from the first point MeteoIO sees. Thus, with a large enough buffer the model will
  * start at a much earlier date and initial states are also picked a while before the input start date. Additionally, if there
  * are nodata elements in there then even if they would be ignored for the output they would make the filters display warnings.
  * You have to be careful to either start your analytical model at the date `data window - buffer`, or ideally provide exactly
@@ -422,12 +423,11 @@ namespace mio {
 class FilterKalman : public ProcessingBlock {
 	public:
 		FilterKalman(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
-
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		        std::vector<MeteoData>& ovec);
 	private:
 		Eigen::VectorXd buildInitialStates(const std::vector<std::string>& xx_str, const std::vector<size_t>& meas_idx,
-		        const std::vector<MeteoData>& ivec, const size_t& nr_observations);
+		        const std::vector<MeteoData>& ivec, const size_t& nr_observations) const;
 		size_t buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, const size_t& nx,
 		        Eigen::MatrixXd& zz, std::vector<size_t>& meas_idx) const;
 		Eigen::MatrixXd buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec) const;
@@ -444,9 +444,9 @@ class FilterKalman : public ProcessingBlock {
 		Eigen::MatrixXd bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols, const std::string& block) const;
 		Eigen::VectorXd buildTimeVector(const std::vector<MeteoData>& ivec) const;
 		bool checkNodata(const Eigen::VectorXd& ivec) const;
-		bool findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval);
+		bool findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		void cleanBrackets(std::string& iline);
+		void cleanBrackets(std::string& iline) const;
 
 		std::string mat_in_xx, mat_in_AA, mat_in_HH, mat_in_PP, mat_in_QQ, mat_in_RR, mat_in_BB, mat_in_uu;
 		std::vector<std::string> meas_params; //parameter names of observations

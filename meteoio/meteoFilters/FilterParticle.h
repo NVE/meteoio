@@ -156,8 +156,8 @@ namespace mio {
  *
  * \image html particlefilter_hs_overview.png "Fig. 1: Overview of the mockup snow model: The dark blue line is the true model function, light blue is with superimposed noise (twice actually - with system and observation noise), and the violet one is Kalman filtered."
  *
- * @note You can use the standard arithmetic operations, angular functions, exponentials, and some combinatorics. See here for a
- * <a href="https://github.com/codeplea/tinyexpr#functions-supported">list of supported functions</a>.
+ * @note You can use the standard arithmetic operations, angular functions, exponentials, and some combinatorics which are parsed by <a href="https://github.com/codeplea/tinyexpr">tinyexpr</a>.
+ * See here for a <a href="https://github.com/codeplea/tinyexpr#functions-supported">list of supported functions</a>.
  * @note Additionally, the following substitutions are available for the system and observation models:
  * 1. Current <b>index</b> (number of the time step): "kk"
  * 2. Current <b>time step</b>: "tt"
@@ -165,7 +165,7 @@ namespace mio {
  * 4. <b>State at the previous time</b> step: "x_km1" (read: \f$x_{k-1}\f$)
  * 5. Any available <b>meteo parameter</b>: "meteo(PARAM)" <br>
  * Number 3 is only available for the observations model and number 4 picks the initial state for `T=0` for the observation model.
- * @note The time vector `tt` is a normalized and shifted version of the index `kk` such that the time of the first measurement is at 0 and the
+ * @note The time vector `tt` is a normalized and shifted version of the date such that the time of the first measurement is at 0 and the
  * second one is at 1. Suppose you had measurements at 00:00, 01:00, and 01:30 then `kk` would be `[0, 1, 2]` and `tt` would be `[0, 1, 1.5]`.
  *
  * At last, we set up our <b>random number generators</b>:
@@ -238,7 +238,7 @@ namespace mio {
  * For a particle filter, as well as for a Kalman filter, you _absolutely need a model function_. However, often you will only have
  * _data points_ that your or somebody else's model spits out. For this reason the particle filter allows you to <b>fit a curve</b> against the
  * data points and use that as model function. The following fits are available: Fit1D, and the polynomial fit takes a 2nd
- * argument with the degree of interpolation.
+ * argument with the degree of interpolation (default: 3).
  *
  * Let's use a MeteoIO internal model for the global radiation:
  *
@@ -278,8 +278,9 @@ namespace mio {
  * and the paths may lose track of the main line. Usually, it is needed.
  *
  * The `RESAMPLE_PERCENTILE` \f$r_p\f$ lets you pick a factor to decide whether to resample:
- * `if` \f$N_{eff} < r_p * N\f$ `then resample` (effective sample size, [AM+02] Eq. 50). Strictly, a SIR
- * algorithm requires resampling at each time step, but in practice a heuristic like this is appropriate (e. g. Ref. [DJ09]).
+ * `if` \f$N_{eff} < r_p * N\f$ `then resample`, where `N` is the number of particles and \f$N_{eff}\f$ the effective sample size,
+ * [AM+02] Eq. 50. Strictly, a SIR algorithm requires resampling at each time step, but in practice a heuristic like this is
+ * appropriate (e. g. Ref. [DJ09]).
  *
  * For now, only one resampling strategy is implemented:
  *
@@ -384,7 +385,7 @@ namespace mio {
  * and spatial interpolations.
  *
  * See Ref. [DJ09] for smoothing algorithms of this class that would run through the data forwards and backwards and have
- * knowledge of all measurements, i. e. no online state tracking.
+ * knowledge of all measurements, i. e. no live filtering.
  *
  * @section statfilterbibliography Bibliography
  * - [AM+02] M. Sanjeev Arulampalam, Simon Maskell, Neil Gordon, and Tim Clapp.
@@ -416,7 +417,7 @@ class FilterParticle : public ProcessingBlock {
 	private:
 		void resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
 		bool checkInitialState(const std::vector<MeteoData>& ivec, const size_t& param);
-		void initFunctionVars(te_variable* vars, const std::vector<std::string>& names, const std::vector<double>& meteo);
+		void initFunctionVars(te_variable* vars, const std::vector<std::string>& names, const std::vector<double>& meteo) const;
 		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
 		void parseSubstitutionStrings(std::string& line_m, std::string& line_o, std::vector<std::string>& sub_expr,
 		        std::vector<std::string>& sub_params) const;
@@ -431,7 +432,7 @@ class FilterParticle : public ProcessingBlock {
 		        RandomNumberGenerator& RNU) const;
 		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const;
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const;
-		bool isNan(const double& xx);
+		bool isNan(const double& xx) const;
 
 		typedef enum PF_FILTER_ALGORITHM {
 			PF_SIR, //only SIR is implemented so far
