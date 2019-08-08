@@ -830,7 +830,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 			double dbl_val;
 			if (!IOUtils::convertString(dbl_val, vecFields[ idx ])) return Date();
 			i_args[ii] = (int)dbl_val;
-			if ((float)i_args[ii]!=dbl_val) return Date();
+			if ((double)i_args[ii]!=dbl_val) return Date();
 		}
 		
 		double seconds = 0.;

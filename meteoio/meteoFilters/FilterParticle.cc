@@ -218,7 +218,7 @@ void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 			N_eff += ww(nn, kk)*ww(nn, kk);
 		N_eff = 1. / N_eff; //a small N_eff indicates severe degeneracy
 
-		if (N_eff < resample_percentile * (float)NN)
+		if (N_eff < resample_percentile * (double)NN)
 		{ //Strictly, SIR resamples at each point. Practically, a simple heuristic is more suitable (e. g. Ref. [DJ09])
 			std::vector<double> cdf(NN);
 			cdf.front() = 0.;
