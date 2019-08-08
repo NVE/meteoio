@@ -147,7 +147,7 @@ namespace mio {
  *
  * We enter the <b>system model</b> with the `SYSTEM_MODEL` key. The control signal `u` from above is saved into the
  * meteo data as `CTRL`, so when MeteoIO runs it has it available as this parameter. The <b>observation model</b> is simply
- * \f$obs(x) = x\f$ again and we assume 2.5 m snow <b>initially</b>:
+ * \f$obs(x) = x\f$ again (cf. identity matrix in sensor fusion example) and we assume 2.5 m snow <b>initially</b>:
  * @code
  * MODEL_FUNCTION     = x_km1 * 0.999 + 0.001 * meteo(CTRL)
  * OBS_MODEL_FUNCTION = xx
@@ -351,7 +351,7 @@ namespace mio {
  * @subsection particlekeys List of ini keys
  *  <table>
  *  <tr><th>Keyword</th><th>Meaning</th><th>Optional</th><th>Default Value</th></tr>
- *  <tr><td>MODEL_FUNCTION</td><td>State transition function.</td><td>yes, if MODEL_FIT_PARAM is set</td><td>empty</td></tr>
+ *  <tr><td>MODEL_FUNCTION</td><td>State transition function.</td><td>no, but can also be a fit</td><td>empty</td></tr>
  *  <tr><td>MODEL_FIT_PARAM</td><td>Parameter in meteo set to fit model curve against.</td><td>yes, if MODEL_FUNCTION is set</td><td>empty</td></tr>
  *  <tr><td>INITIAL_STATE</td><td>State variable at T=0.</td><td>yes</td><td>1st observation</td></tr>
  *  <tr><td>OBS_MODEL_FUNCTION</td><td>Model relating the observations to the states.</td><td>yes, but you need one</td><td>"xx"</td></tr>
@@ -460,7 +460,7 @@ class FilterParticle : public ProcessingBlock {
 		unsigned int fit_degree; //degree of interpolation
 		double model_x0; //initial state at T=0
 
-		float resample_percentile;
+		double resample_percentile; //simple resampling heuristic
 		pf_estimation_measure estim_measure; //how to choose most likely particle path
 
 		struct rng_settings {

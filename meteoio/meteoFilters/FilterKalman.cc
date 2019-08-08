@@ -167,7 +167,7 @@ Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>&
 			} else if (xx_str == "average") { //take the average of all specified observables at t=0
 				double av_sum = 0.;
 				for (size_t jj = 0; jj < nz; ++jj) {
-					double tmp;
+					double tmp(0.); //if this default is reached, an error is thrown anyway
 					all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[jj], tmp); //once all_nodata -> always all_nodata
 					av_sum += tmp;
 				}

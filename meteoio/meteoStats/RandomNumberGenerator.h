@@ -338,6 +338,7 @@ namespace mio {
  * STL GAUSS |     |    0.48e7
  * Hardware  |  64 |    2.61e4
  *
+ * Tested on Intel Core i7-7700HQ CPU @ 2.80GHz with 32GB RAM.
  *
  * @section rng_seeding Seeding
  * Each time a RNG is constructed, it auto-seeds from hardware noise, or if that fails by hashing the
@@ -476,8 +477,6 @@ namespace mio {
  * runtime. A billion (1e9) random numbers were used per test (ca. 10.7 GB) and still
  * the file was rewound 1266 times per test; some "weak" results may be due to this.
  * The hardware seed was piped to dieharder for a continuous flow of random words.
- *
- * Tested on Intel Core i7-7700HQ CPU @ 2.80GHz with 32GB RAM.
  *
  * @code
  * #=============================================================================#

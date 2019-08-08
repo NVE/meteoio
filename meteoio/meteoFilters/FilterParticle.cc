@@ -89,7 +89,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	te_variable *te_vars = new te_variable[sub_expr.size()];
 	initFunctionVars(te_vars, sub_expr, sub_values); //build te_variables from substitution vectors
-	te_expr *expr_model; //only compile if available
+	te_expr *expr_model = NULL; //only compile if available
 	te_expr *expr_obs = compileExpression(obs_model_expression, te_vars, sub_expr.size());
 
 	/*
@@ -136,20 +136,23 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 				ww.col(kk) = ww.col(kk-1); //the mean gets skewed a little
 				saw_nodata = true;
 			} else {
-				//SIR algorithm, algorithm 4 of Ref. [AM+02]:
-				for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
-					double res;
-					if (has_model) { //arithmetic equation
-						sub_values[3] = xx(nn, kk-1);
-						res = te_eval(expr_model); //evaluate expression with current substitution values
-					} else { //model data points
-						res = model_fit.f(tVec[kk]);
-					}
-					xx(nn, kk) = res + RNGU.doub(); //generate system noise
-					sub_values[2] = xx(nn, kk);
-					const double res_obs = te_eval(expr_obs);
-					ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - res_obs ); //Ref. [AM+02] Eq. (63)
-				} //endfor nn
+				if (filter_alg == PF_SIR) { //SIR algorithm, algorithm 4 of Ref. [AM+02]:
+					for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
+						double res;
+						if (has_model) { //arithmetic equation
+							sub_values[3] = xx(nn, kk-1);
+							res = te_eval(expr_model); //evaluate expression with current substitution values
+						} else { //model data points
+							res = model_fit.f(tVec[kk]);
+						}
+						xx(nn, kk) = res + RNGU.doub(); //generate system noise
+						sub_values[2] = xx(nn, kk);
+						const double res_obs = te_eval(expr_obs);
+						ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - res_obs ); //Ref. [AM+02] Eq. (63)
+					} //endfor nn
+				} else { //should currently not be reachable since we don't yet read any ini key for this
+					throw InvalidArgumentException("This algorithm is not supported in the particle filter. Only SIR is available for now.", AT);
+				}
 			} //endif nodata
 
 			ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
@@ -353,7 +356,7 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
 
 		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
 		sub_params.push_back(IOUtils::strToUpper(pname)); //meteo name
-		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
+		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh'
 		sub_expr.push_back(prefix.substr(0, prefix.length() - 1) + pname); //full expression, lower case and without brackets; duplicates may occur
 		pos1 += len;
 	} //end while

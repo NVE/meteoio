@@ -213,6 +213,9 @@ namespace mio {
  * many, and which, observables to output. You must supply them, but you can easily discard them (e. g. by leaving
  * `FILTER_ALL_PARAMETERS = FALSE` or by designing your matrices in a way that they zero out).
  *
+ * <b>Important:</b> For technical reasons, filtering other parameters than the one the filter runs on only works as expected
+ * when the Kalman filter is the last filter that is applied!
+ *
  * @note If you want to output all filtered parameters but also keep the originals you can simply use MeteoIO's `COPY` command.
  *
  * The complete ini section now reads:
