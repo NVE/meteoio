@@ -166,8 +166,7 @@ namespace mio {
  * search for the first valid dataset, and use this for the beginning of the measurement. If any one initial state encounters
  * nodata values only, an error is thrown. If the filter itself encounters nodata values a warning is displayed.
  * This makes it run but could have undesired side effects. As the number of nodata values increases, the results will
- * become more and more skewed. A warning will be displayed. You should resample beforehand via `[INTERPOLATIONS1D]`,
- * both filters are called after resampling.
+ * become more and more skewed. A warning will be displayed; you should resample beforehand.
  *
  * We have our states initialized and our state transition matrix ready. Now we need some <b>statistical quantities</b>.
  * We provide the trust in the initial state via the `INITIAL_TRUST` key. This inputs the matrix `P` from above. <i>Set low values if you

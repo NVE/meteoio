@@ -32,7 +32,7 @@ FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::st
           be_verbose(true), unrecognized_keys(""), dump_particles_file(""), dump_states_file(""), input_states_file("")
 {
 	parse_args(vecArgs);
-	properties.stage = ProcessingProperties::first; //TODO: 2nd if it's clear it works
+	properties.stage = ProcessingProperties::first;
 }
 
 /**
@@ -245,11 +245,11 @@ void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 
 	} else {
 		throw InvalidArgumentException("Resampling strategy for particle filter not implemented.", AT);
-	} //end switch resampling
+	} //endif resample_alg
 }
 
 /**
- * @brief Check if an initial state was given and if not tries to find a valid one.
+ * @brief Checks if an initial state was given and if not tries to find a valid one.
  * @details If no initial state is provided by the user, this function will run through the meteo set until it
  * finds a valid data point (i. e. not nodata) to start with.
  * @param[in] ivec Meteo data vector to check as given by .process().

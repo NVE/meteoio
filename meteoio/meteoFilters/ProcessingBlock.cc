@@ -54,6 +54,7 @@
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/meteoFilters/FilterKalman.h>
+#include <meteoio/meteoFilters/FilterMaths.h>
 
 namespace mio {
 /**
@@ -121,6 +122,9 @@ namespace mio {
  * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
  * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
  * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
+ * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
+ * - KALMAN: dynamic state likelihood estimation via Bayesian statistics (experimental), see FilterKalman
+ * - PARTICLE: Monte Carlo sampling method for dynamic state estimation (experimental), see FilterParticle
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all or some data, see FilterSuppr
@@ -184,6 +188,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterParticle(vecArgs, blockname);
 	} else if (blockname == "KALMAN"){
 		return new FilterKalman(vecArgs, blockname);
+	} else if (blockname == "MATHS"){
+		return new FilterMaths(vecArgs, blockname);
 	}
 
 	//general data transformations

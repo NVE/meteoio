@@ -268,13 +268,13 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				if (!vecUsedParams[pp]) continue; //don't output all nodata params
 
 				const std::string param_name = vecMeteo[ii].front().getNameForParameter(pp);
-				const size_t param_idx = MeteoGrids::getParameterIndex(param_name);
 				//only the MeteoGrids class offers units, so get it from there, if available:
 				std::string param_unit("N/A"), param_description("N/A");
 				if (param_name.substr(0, 3) == "TS.") { //there are no standard names for this; SNOWPACK expects TS1, TS2, ...
 						param_unit = "K";
 						param_description = "Snow temperature " + param_name.substr(3) + " cm above ground";
 				} else {
+					const size_t param_idx = MeteoGrids::getParameterIndex(param_name);
 					if (param_idx != IOUtils::npos) {
 						param_unit = MeteoGrids::getParameterUnits(MeteoGrids::getParameterIndex(param_name));
 						param_description = MeteoGrids::getParameterDescription(MeteoGrids::getParameterIndex(param_name));
