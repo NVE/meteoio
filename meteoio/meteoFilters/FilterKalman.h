@@ -254,7 +254,7 @@ namespace mio {
  *
  * This is our model for the position and (constant) speed:
  * \f[
- * x_t = \frac{\mathrm{d}x_{t-1}}{\mathrm{d}t} * t + x_{t-1}
+ * x_t = x_{t-1} + \frac{\mathrm{d}x_{t-1}}{\mathrm{d}t} * dt
  * \f]
  * \f[
  * \frac{\mathrm{d}x_t}{\mathrm{d}t} = \frac{\mathrm{d}x_{t-1}}{\mathrm{d}t}
@@ -289,8 +289,8 @@ namespace mio {
  * Therefore, the <b>system model</b> can be written in matrix form such that \f$\hat{x}_t = A\hat{x}_{t-1}\f$:
  * \f[
  * A=\left( \begin{array}{cccc}
- * 1 & 0 & \mathrm{d}t & 0 \\
- * 0 & 1 & 0 & \mathrm{d}t \\
+ * 1 & 0 & dt & 0 \\
+ * 0 & 1 & 0 & dt \\
  * 0 & 0 & 1 & 0 \\
  * 0 & 0 & 0 & 1 \end{array} \right)
  * \f]

@@ -64,7 +64,7 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 		nx = nz; //--> number of observations fixes the states
 
 	Eigen::MatrixXd xx = buildInitialStates(xx_str, meas_idx, ivec, nz); //once the observables are known, go back to parsing the initial states
-	std::vector<std::string> AA_str = parseSystemMatrix(mat_in_AA, nx); //keep as strings so we can do substitutions
+	const std::vector<std::string> AA_str( parseSystemMatrix(mat_in_AA, nx) ); //keep as strings so we can do substitutions
 
 	//Now that we know how many states and observables there are, we can size the rest of the matrices.
 	//We keep nz for clarity, but this implementation forces nz=nx (not all have to actually be used).
@@ -76,33 +76,31 @@ void FilterKalman::process(const unsigned int& param, const std::vector<MeteoDat
 		HH = bloatMatrix(mat_in_HH, nz, nx, "observation model");
 	}
 
-	Eigen::MatrixXd PP = bloatMatrix(mat_in_PP, nx, nx, "initial trust"); //trust in initial state
-	Eigen::MatrixXd QQ = bloatMatrix(mat_in_QQ, nx, nx, "process noise"); //process noise covariance
-	Eigen::MatrixXd RR = bloatMatrix(mat_in_RR, nz, nz, "observation noise"); //observation noise covariance
+	Eigen::MatrixXd PP( bloatMatrix(mat_in_PP, nx, nx, "initial trust") ); //trust in initial state
+	Eigen::MatrixXd QQ( bloatMatrix(mat_in_QQ, nx, nx, "process noise") ); //process noise covariance
+	Eigen::MatrixXd RR( bloatMatrix(mat_in_RR, nz, nz, "observation noise") ); //observation noise covariance
 	bool has_RR_params, has_QQ_params;
 	assertInputCovariances(ivec, nx, has_RR_params, has_QQ_params);
 
 	//at last, we input an optional control signal, either as scalar, matrix, or "meteo" data:
-	Eigen::MatrixXd BB = bloatMatrix(mat_in_BB, nx, nx, "control relation"); //relates control input to state
-	Eigen::MatrixXd uu = buildControlSignal(nx, TT, ivec);
+	Eigen::MatrixXd BB( bloatMatrix(mat_in_BB, nx, nx, "control relation") ); //relates control input to state
+	Eigen::MatrixXd uu( buildControlSignal(nx, TT, ivec) );
 
-    /* KALMAN FILTER */
+	/* KALMAN FILTER */
+	Eigen::MatrixXd KK; //Kalman gain
+	Eigen::MatrixXd II( Eigen::MatrixXd::Identity(nx, nx) );
 
-    Eigen::MatrixXd KK; //Kalman gain
-    Eigen::MatrixXd II = Eigen::MatrixXd::Identity(nx, nx);
+	ovec = ivec; //copy with all special parameters etc.
 
-    ovec = ivec; //copy with all special parameters etc.
+	for (size_t pp = 0; pp < error_params.size(); ++pp) //create parameters to output PP if they don't exist
+		for (size_t ii = 0; ii < ovec.size(); ++ii)
+			ovec[ii].addParameter(error_params[pp]);
 
-    for (size_t pp = 0; pp < error_params.size(); ++pp) //create parameters to output PP if they don't exist
-    	for (size_t ii = 0; ii < ovec.size(); ++ii)
-    		ovec[ii].addParameter(error_params[pp]);
-
-    bool saw_nodata(false);
-    size_t last_valid_idx(0);
-    for (size_t kk = 0; kk < TT; ++kk) //for each time step...
-    {
-    	const double dt = (kk == 0)? 0 : vecT(kk) - vecT(last_valid_idx); //initial state is at time of 1st measurement
-    	const Eigen::MatrixXd AA = buildSystemMatrix(AA_str, nx, dt, ivec, kk);
+	bool saw_nodata(false);
+	size_t last_valid_idx(0);
+	for (size_t kk = 0; kk < TT; ++kk) { //for each time step...
+		const double dt = (kk == 0)? 0 : vecT(kk) - vecT(last_valid_idx); //initial state is at time of 1st measurement
+		const Eigen::MatrixXd AA( buildSystemMatrix(AA_str, nx, dt, ivec, kk) );
 
     	if (has_RR_params) //if desired, get RR and QQ from input data at each time step
     		RR = extractInputMatrix(RR_params, ivec, kk);
@@ -161,7 +159,7 @@ Eigen::VectorXd FilterKalman::buildInitialStates(const std::vector<std::string>&
 		}
 	} else { //not empty
 		for (size_t ii = 0; ii < nz; ++ii) {
-			const std::string xx_str = IOUtils::trim(xx_str_in[ii]);
+			const std::string xx_str( IOUtils::trim(xx_str_in[ii]) );
 			if (xx_str == "" || xx_str == "1st") { //some values are given, but not this one --> fill with 1st observation
 				all_nodata = all_nodata || !findFirstDatapoint(ivec, meas_idx[ii], vecRet[ii]);
 			} else if (xx_str == "average") { //take the average of all specified observables at t=0
@@ -268,7 +266,7 @@ Eigen::MatrixXd FilterKalman::buildControlSignal(const size_t& nx, const size_t&
 		for (size_t jj = 0; jj < TT; ++jj)
 			for (size_t ii = 0; ii < nx; ++ii) {
 				IOUtils::trim(vecU[ii]);
-				uu(ii, jj) =  ivec[jj](vecU[ii]);
+				uu(ii, jj) = ivec[jj](vecU[ii]);
 			}
 	}
 	return uu;
@@ -362,7 +360,7 @@ Eigen::MatrixXd FilterKalman::buildSystemMatrix(const std::vector<std::string>& 
  */
 double FilterKalman::substitute(const std::string& expr, const double& dt, const std::vector<MeteoData>& ivec, const size_t& kk) const
 {
-	const std::string texp = IOUtils::trim(expr);
+	const std::string texp( IOUtils::trim(expr) );
 	if (texp == "dt") { //current time step (time between measurements)
 		return dt;
 	} else if ( texp.size() > 6 && (texp.compare(0, 6, "meteo(") == 0) ) { //meteo parameters
@@ -453,9 +451,10 @@ Eigen::MatrixXd FilterKalman::bloatMatrix(const std::string& line, const size_t&
 	Eigen::MatrixXd ret;
 	if (line.length() == 0)
 		return ret;
+	
 	const size_t nr = IOUtils::count(line, ",");
 	if ( (nr == rows - 1) && (rows == cols) ) { //parse as column vector and put that on diagonal
-		Eigen::MatrixXd tmp = parseMatrix(line, rows, 1, blockname);
+		const Eigen::MatrixXd tmp( parseMatrix(line, rows, 1, blockname) );
 		ret = tmp.asDiagonal();
 	} else if (nr > 0) { //not an isolated double
 		ret = parseMatrix(line, rows, cols, blockname);
@@ -481,7 +480,7 @@ Eigen::MatrixXd FilterKalman::bloatMatrix(const std::string& line, const size_t&
  */
 Eigen::VectorXd FilterKalman::buildTimeVector(const std::vector<MeteoData>& ivec) const
 { //time representation of the index: shift and normalize to t(0)=0, t(1)=1
-	double base_time = ivec.front().date.getJulian();
+	const double base_time = ivec.front().date.getJulian();
 	double dt(1.);
 
 	if (ivec.size() > 1)

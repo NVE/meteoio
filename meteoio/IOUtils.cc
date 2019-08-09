@@ -209,6 +209,8 @@ void cleanFieldName(std::string& field, const bool& clean_whitespaces, const cha
 
 size_t count(const std::string &input, const std::string& search)
 {
+	if (search.empty() || input.empty()) return std::string::npos;
+	
 	const size_t len = search.length();
 	size_t pos = input.find(search);
 	size_t count = 0;

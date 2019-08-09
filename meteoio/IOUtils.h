@@ -212,7 +212,7 @@ namespace IOUtils {
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param[in] input string to manipulate
 	 * @param[in] search substring to be searched for 
-	 * @return number of non-overlapping matches 
+	 * @return number of non-overlapping matches or std::string::npos if nothing could be found (empty "search", etc)
 	 */
 	size_t count(const std::string &input, const std::string& search);
 	
