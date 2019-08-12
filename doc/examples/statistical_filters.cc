@@ -123,4 +123,4 @@ for i = xi
    plot3(repmat(xi(i), length(yi), 1), yi', kde(:, i));
 end
 view(3)
- */
+*/

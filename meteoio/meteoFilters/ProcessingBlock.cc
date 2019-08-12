@@ -107,7 +107,7 @@ namespace mio {
  *
  * @section processing_available Available processing elements
  * New filters can easily be developed. The filters that are currently available are the following:
- * - NONE: this does nothing (this is useful in an \ref config_import "IMPORT" to overwritte previous filters);
+ * - NONE: this does nothing (this is useful in an \ref config_import "IMPORT" to overwrite previous filters);
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax

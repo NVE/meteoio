@@ -80,6 +80,8 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 					te_free(compiled_expressions[it->first].second);
 				}
 				te_free(expr_formula);
+				if (!formula_else.empty())
+					te_free(expr_formula_else);
 				delete[] te_vars;
 				throw;
 			} //end try
@@ -91,7 +93,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 		if (skip_nodata && ivec[ii](param) == IOUtils::nodata)
 			continue; //not even a comparison to nodata is evaluated with this key
 
-		const bool sub_success = doSubstitutions(ivec, ii); //do all substitutions, check if there were nodata values
+		doSubstitutions(ivec, ii); //do all substitutions
 		bool current_logic; //iterative result of AND resp. OR operations
 		if (logic_equations.empty())
 			current_logic = true; //no conditions --> always evaluate to true
@@ -102,13 +104,8 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 			bool cond;
 			if (it->second.op.substr(0, 3) != "STR") { //arithmetic evaluation
 				double res_ex, res_cond;
-				if (sub_success) {
-					res_ex = te_eval(compiled_expressions[it->first].first); //condition expression
-					res_cond = te_eval(compiled_expressions[it->first].second); //comparison expression
-				} else { //if any expression encounters meteo nodata then both expressions are nodata
-					res_ex = IOUtils::nodata;
-					res_cond = IOUtils::nodata;
-				}
+				res_ex = te_eval(compiled_expressions[it->first].first); //condition expression
+				res_cond = te_eval(compiled_expressions[it->first].second); //comparison expression
 				cond = assertCondition(res_ex, res_cond, it->second.op); //evaluate the complete condition
 			} else { //string evaluation
 				std::string tmp_exp = doStringSubstitutions(it->second.expression, ivec[ii]);
@@ -122,18 +119,15 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 		}
 
 		double result;
-		if (sub_success) { //only valid substitutions
-			if (current_logic) { //conditions evaluated to true together
-				result = te_eval(expr_formula);
-			} else { //conditions evaluated to false together
-				if (!formula_else.empty())
-					result = te_eval(expr_formula_else);
-				else
-					result = ivec[ii](param); //default: unchanged
-			}
-		} else { //nodata substitutions: comparison makes no sense
-			result = IOUtils::nodata;
+		if (current_logic) { //conditions evaluated to true together
+			result = te_eval(expr_formula);
+		} else { //conditions evaluated to false together
+			if (!formula_else.empty())
+				result = te_eval(expr_formula_else);
+			else
+				result = ivec[ii](param); //default: unchanged
 		}
+
 		if (assign_param.empty()) { //output to same parameter as the filter runs on
 			ovec[ii](param) = isNan(result)? IOUtils::nodata : result;
 		} else { //output to a different parameter
@@ -149,6 +143,8 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 		te_free(it_expr->second.second);
 	}
 	te_free(expr_formula);
+	if (!formula_else.empty())
+		te_free(expr_formula_else);
 	delete[] te_vars;
 
 }
@@ -233,12 +229,12 @@ std::map<std::string, double> FilterMaths::parseBracketExpression(std::string& l
 		pos1 = line.find(prefix, pos1);
 		if (pos1 == std::string::npos)
 			break; //done
-		pos2 = line.find(")", pos1+len);
+		pos2 = line.find(")", pos1 + len);
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) substitution for " + where, AT);
 
 		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
-		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh  '
+		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh'
 		mapRet[prefix.substr(0, prefix.length() - 1) + pname] = IOUtils::nodata; //full expression, lower case and without brackets
 		pos1 += len;
 	} //end while
@@ -284,14 +280,14 @@ void FilterMaths::buildSubstitutions()
 	/*
 	 * Now 'substitutions' is a global map with all desired substitution strings as keys.
 	 * Some constant values are filled here once, the rest is filled per time step.
-	 * In any way it is fixed memory that we can point to for tinyexpr.
+	 * In any case it is fixed memory that we can point to for tinyexpr.
 	 */
 }
 
 /**
  * @brief Perform substitutions for all keys in the global map that do not have constant values.
  */
-bool FilterMaths::doSubstitutions(const std::vector<MeteoData>& ivec, const size_t& idx)
+void FilterMaths::doSubstitutions(const std::vector<MeteoData>& ivec, const size_t& idx)
 {
 	int year, month, day, hour, minute;
 	ivec[idx].date.getDate(year, month, day, hour, minute);
@@ -314,17 +310,12 @@ bool FilterMaths::doSubstitutions(const std::vector<MeteoData>& ivec, const size
 	for (it_sub = substitutions.begin(); it_sub != substitutions.end(); ++it_sub) {
 		if (it_sub->first.substr(0, 5) == "meteo") {
 			const size_t param_idx = ivec[idx].getParameterIndex( IOUtils::strToUpper(it_sub->first.substr(5)) );
-			if (param_idx == IOUtils::npos) { //parameter unavailable --> final result is nodata
-				return false;
-			} else {
-				if (ivec[idx](param_idx) == IOUtils::nodata) //nodata parameters also result in a final nodata
-					return false;
-				it_sub->second = ivec[idx](param_idx); //all ok - place values in tinyexpr memory location
-			}
-		}
+			if (param_idx == IOUtils::npos) //parameter unavailable, nodata instead of error
+				it_sub->second = IOUtils::nodata;
+			else
+				it_sub->second = ivec[idx](param_idx); //place values in tinyexpr memory location
+		} //endif "meteo"
 	} //endfor it_sub
-
-	return true; //no nodata value encountered
 }
 
 /**

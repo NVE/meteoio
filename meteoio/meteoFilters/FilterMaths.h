@@ -19,6 +19,7 @@
 #ifndef FILTERMATHS_H
 #define FILTERMATHS_H
 
+#include <map>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/tinyexpr.h>
 
@@ -34,7 +35,7 @@ namespace mio {
  *
  *
  * This filter evaluates an arithmetic expression and filters the meteo parameters to the result. You can use a number of
- * substitutions from you data and meta data.
+ * substitutions from your data and meta data.
  *
  * \ref mathsinikeys
  *
@@ -58,7 +59,7 @@ namespace mio {
  *
  * *Operators:* The following comparison operators are available: `LT` (less than), `LE` (less than or equal), `GT` (greater than),
  * `GE` (greater equal), `EQ` (equal), `NE` (not equal), `STRCMP` (string comparison), `STRBEG` (string comparison at the beginning
- * of a string), `STREND` (string comparison at the end of a string), or `STRINC` (search in string).
+ * of a string), `STREND` (string comparison at the end of a string), and `STRINC` (search in string).
  *
  * *Expressions:* Arithmetic expressions are evaluated with tinyexpr (<a href="https://github.com/codeplea/tinyexpr#functions-supported">
  * developer's repo</a>). You can use the standard arithmetic operations, angular functions, exponentials, and some combinatorics.
@@ -77,10 +78,6 @@ namespace mio {
  *
  * The following substitutions are available in string comparisons:
  *  - `stationid`, `stationname` for station identification.
- *
- * **Important:** If any meteo parameter used in FORMULA, EXPRESSION, or COMPARE is nodata, then all three of these expressions will
- * also be nodata. This is not true for meta data: if your slope is nodata, and you calculate with it without checking, then you will
- * calculate with the nodata value.
  *
  * **Example:** Add offset to specific station:
  * @code
@@ -106,7 +103,7 @@ namespace mio {
  * You can make use of a simple logic parser. You can supply as many conditions as you wish, but they are
  * always combined with the same logical operator, namely `CONNECTIVE` can be `AND` (default) or `OR`.
  *
- * **Example**: Allow no snow in June and August:
+ * **Example**: Allow no snow between June and August:
  * @code
  * HS::FILTER1           = MATHS
  * HS::ARG1::FORMULA     = 0
@@ -134,12 +131,28 @@ namespace mio {
  * HS::ARG1::COMPARE3    = 8
  * @endcode
  *
+ * **Important:** Save for the `SKIP_NODATA` keyword (see below), nodata values (usually -999) are kept in the calculations and so
+ * far it is up to the user to check against this!
+ *
+ * **Example:** Approximate the dew point only if air temperature and relative humidity are both available:
+ * @code
+ * TD::FILTER1            = MATHS
+ * TD::ARG1::FORMULA      = meteo(TA) - ((100 - meteo(RH)*100) / 5)
+ * TD::ARG1::FORMULA_ELSE = nodata
+ * TD::ARG1::EXPRESSION1  = meteo(RH)
+ * TD::ARG1::OPERATOR1    = NE
+ * TD::ARG1::COMPARE1     = nodata
+ * TD::ARG1::EXPRESSION2  = meteo(TA)
+ * TD::ARG1::OPERATOR2    = NE
+ * TD::ARG1::COMPARE2     = nodata
+ * @endcode
+ *
  * **Example:** Two stations are called ISEE1 and ISEE2. Suppose their humidity sensors start reporting garbage on 1st of August 2019 and
  * we want to make sure they are not used in any calculations:
  * @code
  * RH::FILTER1           = MATHS
  * RH::ARG1::FORMULA     = nodata ;throw all data away
- * RH::ARG1::EXPRESSION1 = stationname
+ * RH::ARG1::EXPRESSION1 = stationid
  * RH::ARG1::OPERATOR1   = STRBEG ;compare beginning of string
  * RH::ARG1::COMPARE1    = ISEE ;this string is as-is, i. e. no substitutions
  * RH::ARG1::EXPRESSION2 = julian
@@ -149,7 +162,7 @@ namespace mio {
  *
  * With the `ASSIGN` key you can provide a parameter that the result is saved to (instead of the one the filter runs on).
  *
- * <b>Important:</b> For technical reasons, this key only works as expected if it's the last filter that is run on the set.
+ * **Important:** For technical reasons, this key only works as expected if it's the last filter that is run on the set.
  *
  * **Example:** A copy-heavy hack to make a `SHADE` processor run on a specific station only - without even
  * calculating the heavy sun stuff for others (we must control the filter ordering to be able to do this):
@@ -161,7 +174,7 @@ namespace mio {
  * ISWR_TEMP::FILTER1            = MATHS ;keep only if station ID matches
  * ISWR_TEMP::ARG1::FORMULA      = meteo(ISWR_TEMP)
  * ISWR_TEMP::ARG1::FORMULA_ELSE = nodata
- * ISWR_TEMP::ARG1::EXPRESSION1  = stationid
+ * ISWR_TEMP::ARG1::EXPRESSION1  = stationname
  * ISWR_TEMP::ARG1::OPERATOR1    = STRCMP
  * ISWR_TEMP::ARG1::COMPARE1     = Seegrube
 
@@ -209,7 +222,7 @@ class FilterMaths : public ProcessingBlock {
 		bool assertStringCondition(const std::string& line1, const std::string& line2, const std::string& op);
 		std::map<std::string, double> parseBracketExpression(std::string& line);
 		void buildSubstitutions();
-		bool doSubstitutions(const std::vector<MeteoData>& ivec, const size_t& idx);
+		void doSubstitutions(const std::vector<MeteoData>& ivec, const size_t& idx);
 		std::string doStringSubstitutions(const std::string& line_in, const MeteoData& ielem) const;
 		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
 		void initExpressionVars(te_variable* vars);
