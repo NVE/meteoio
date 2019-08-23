@@ -35,8 +35,8 @@ namespace mio {
  * 
  * It takes the following arguments:
  *  - TYPE: either ADD (add the correction coefficient) or MULT (multiply by the correction coefficient);
- *  - PERIOD: either YEARLY, MONTHLY or DAILY. This describes the period over which the quantiles were calculated. If no argument is 
- * given, it takes the whole dataset at once (optional);
+ *  - PERIOD: either YEARLY, MONTHLY, WEEKLY or DAILY. This describes the period over which the quantiles were calculated (and is currently 
+ * used as a sliding window). If no argument is given, it takes the whole dataset at once (optional);
  *  - CORRECTIONS: the file and path containing the corrections to apply.
  *
  * @code

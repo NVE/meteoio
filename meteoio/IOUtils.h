@@ -353,13 +353,14 @@ namespace IOUtils {
 		//split value string
 		std::vector<std::string> vecUnconvertedValues;
 		const size_t counter = readLineToVec(value, vecUnconvertedValues);
+		vecT.resize( counter );
 		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
 			if (!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec) && options!=IOUtils::nothrow){
 				std::cerr << "[E] When reading \"" << key << "\" = \"" << myvar << "\"\n";
 				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
 			}
-			vecT.push_back(myvar);
+			vecT[ii] = myvar;
 		}
 	}
 

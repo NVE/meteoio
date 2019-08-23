@@ -1271,7 +1271,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 			fin.seekg(data_start_fpointer);
 
 		if (isAscii) {
-			vector<string> tmp_vec;
+			std::vector<std::string> tmp_vec;
 			read_data_ascii(fin, tmp_vec, vec_data);
 		} else {
 			read_data_binary(fin, vec_data);
@@ -1365,13 +1365,13 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)
 {
 	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
-	vector<string> tmp_vec;
-	string line;
+	std::vector<std::string> tmp_vec;
+	std::string line;
 	size_t linenr = 0;
 	streampos current_fpointer = static_cast<streampos>(-1);
 
 	while (!fin.eof()){
-		const streampos tmp_fpointer = fin.tellg();
+		const std::streampos tmp_fpointer = fin.tellg();
 		line.clear();
 		getline(fin, line, eoln);
 		linenr++;

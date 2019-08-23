@@ -58,7 +58,7 @@ class SMETIO : public IOInterface {
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
 		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
 		                     bool& julian_present, MeteoData& md);
-		void copy_data(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps,
+		void populateMeteo(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps,
 		               const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo);
 
 		void parseInputOutputSection();
@@ -84,7 +84,6 @@ class SMETIO : public IOInterface {
 		std::string outpath;                //read from the Config [Output] section
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
-		size_t nr_stations; //number of stations to read from
 		bool outputIsAscii, outputPlotHeaders, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 

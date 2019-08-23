@@ -92,7 +92,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), 
+          plugin_nodata(IOUtils::nodata), 
           outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -102,7 +102,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), 
+          plugin_nodata(IOUtils::nodata), 
           outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -175,7 +175,7 @@ void SMETIO::parseInputOutputSection()
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//HACK: It should support coordinates in the data, ie: it should use the given date! (and TZ)
 	vecStation.clear();
-	vecStation.reserve(nr_stations);
+	vecStation.resize( vecFiles.size() );
 
 	//Now loop through all requested stations, open the respective files and parse them
 	for (size_t ii=0; ii<vec_smet_reader.size(); ii++){
@@ -183,7 +183,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		smet::SMETReader& myreader = vec_smet_reader[ii];
 
 		read_meta_data(myreader, sd);
-		vecStation.push_back(sd);
+		vecStation[ii] = sd;
 	}
 }
 
@@ -316,15 +316,15 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	}
 }
 
-void SMETIO::copy_data(const smet::SMETReader& myreader,
+/*
+* This function parses the data read from a SMETReader object, a vector<double>,
+* and copies the values into their respective places in the MeteoData structure
+* Meta data, whether in header or in data is also handled
+*/
+void SMETIO::populateMeteo(const smet::SMETReader& myreader,
                        const std::vector<std::string>& timestamps,
                        const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
-	/*
-	 * This function parses the data read from a SMETReader object, a vector<double>,
-	 * and copies the values into their respective places in the MeteoData structure
-	 * Meta data, whether in header or in data is also handled
-	 */
 	const std::string myfields( myreader.get_header_value("fields") );
 	std::vector<std::string> fields;
 	IOUtils::readLineToVec(myfields, fields);
@@ -354,8 +354,11 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
 	double previous_ts = IOUtils::nodata;
+	
+	if (timestamp_present) vecMeteo.reserve( timestamps.size() );
+	MeteoData tmp_md(md);
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
-		MeteoData tmp_md(md);
+		tmp_md.reset();
 
 		if (timestamp_present)
 			IOUtils::convertString(tmp_md.date, timestamps[ii], current_timezone);
@@ -415,12 +418,12 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
-	vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
-	vecMeteo.reserve(nr_stations);
+	vecMeteo.resize( vecFiles.size() );
+	
 
 	//Loop through all requested stations, open the respective files and parse them
 	for (size_t ii=0; ii<vecFiles.size(); ii++){
-		const std::string& filename = vecFiles.at(ii); //filename of current station
+		const std::string filename( vecFiles.at(ii) ); //filename of current station
 
 		if (!FileUtils::fileExists(filename))
 			throw NotFoundException(filename, AT);
@@ -437,7 +440,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			myreader.read(dateStart.getJulian(), dateEnd.getJulian(), mydata);
 		}
 
-		copy_data(myreader, mytimestamps, mydata, vecMeteo[ii]);
+		populateMeteo(myreader, mytimestamps, mydata, vecMeteo[ii]);
 	}
 }
 
@@ -813,6 +816,7 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 	const int epsg = myreader.get_header_intvalue("epsg");
 	const double smet_nodata = myreader.get_header_doublevalue("nodata");
 
+	pts.clear();
 	if (myreader.location_in_data(smet::WGS84)==true) {
 		size_t lat_fd=IOUtils::unodata, lon_fd=IOUtils::unodata;
 		size_t alt_fd=IOUtils::unodata;

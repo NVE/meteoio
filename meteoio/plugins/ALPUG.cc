@@ -355,10 +355,11 @@ void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+	vecMeteo.resize( vecIDs.size() );
 	for (size_t ii=0; ii<vecIDs.size(); ++ii) {
 		std::vector<MeteoData> vecM;
 		readMeteoFile(ii, dateStart, dateEnd, vecM);
-		vecMeteo.push_back( vecM );
+		vecMeteo[ii] = vecM;
 	}
 }
 

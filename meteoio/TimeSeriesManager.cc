@@ -338,9 +338,16 @@ void TimeSeriesManager::fill_filtered_cache()
 {
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		filtered_cache.clear(); //HACK until we get true ringbuffers, to prevent eating up all memory
-		meteoprocessor.process(raw_buffer.getBuffer(), filtered_cache.getBuffer());
-		filtered_cache.setBufferStart( raw_buffer.getBufferStart() );
-		filtered_cache.setBufferEnd( raw_buffer.getBufferEnd() );
+		
+		const Date filtered_start( raw_buffer.getBufferStart() );
+		const Date filtered_end( raw_buffer.getBufferEnd() );
+		std::vector< std::vector<MeteoData> > ivec;
+		std::swap(ivec, raw_buffer.getBuffer()); //avoid one more copy of the whole dataset
+		raw_buffer.clear(); //invalidate the raw data buffer since it has been swapped with the temporary ivec for filtering
+		
+		meteoprocessor.process(ivec, filtered_cache.getBuffer());
+		filtered_cache.setBufferStart( filtered_start );
+		filtered_cache.setBufferEnd( filtered_end );
 	}
 }
 
@@ -379,8 +386,8 @@ void TimeSeriesManager::clear_cache(const cache_types& cache)
 void TimeSeriesManager::fillRawBuffer(const Date& date_start, const Date& date_end)
 {
 	//computing the start and end date of the raw data request
-	Date new_start( date_start-buff_before ); //taking centering into account
-	Date new_end( max(date_start + chunk_size, date_end) );
+	const Date new_start( date_start-buff_before ); //taking centering into account
+	const Date new_end( max(date_start + chunk_size, date_end) );
 	
 	raw_buffer.clear(); //HACK until we have a proper ring buffer to avoid eating up all memory...
 

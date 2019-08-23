@@ -266,12 +266,12 @@ METEO_SET GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const s
 {
 	//HACK handle extra parameters when possible
 	const size_t nrStations = v_stations.size();
-	METEO_SET vecMeteo;
+	METEO_SET vecMeteo( nrStations );
 
 	//create stations without measurements
 	for (size_t ii=0; ii<nrStations; ii++) {
 		MeteoData md(date, v_stations[ii]);
-		vecMeteo.push_back( md );
+		vecMeteo[ii] = md;
 	}
 
 	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters

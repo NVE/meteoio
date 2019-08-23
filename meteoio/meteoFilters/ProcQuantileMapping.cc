@@ -139,6 +139,8 @@ void ProcQuantileMapping::parse_args(const std::vector< std::pair<std::string, s
 				period_duration = 365.25;
 			} else if (period_str=="MONTHLY") {
 				period_duration = 365.25/12.;
+			} else if (period_str=="WEEKLY") {
+				period_duration = 7.;
 			} else if (period_str=="DAILY") {
 				period_duration = 1.;
 			} else

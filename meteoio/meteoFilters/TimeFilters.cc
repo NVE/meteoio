@@ -343,6 +343,7 @@ void TimeProcStack::process(std::vector< std::vector<MeteoData> >& ivec)
 	const size_t nr_stations = ivec.size();
 
 	std::vector<MeteoData> ovec;
+	ovec.reserve( ivec.size() );
 	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
 		

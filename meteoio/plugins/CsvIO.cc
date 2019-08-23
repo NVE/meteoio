@@ -1170,8 +1170,9 @@ void CsvIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+	vecMeteo.resize( csvparam.size() );
 	for (size_t ii=0; ii<csvparam.size(); ii++) {
-		vecMeteo.push_back( readCSVFile(csvparam[ii], dateStart, dateEnd) );
+		vecMeteo[ii] = readCSVFile(csvparam[ii], dateStart, dateEnd);
 	}
 }
 
