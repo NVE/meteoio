@@ -66,14 +66,23 @@ class Matrix {
 		Matrix(const size_t& n, const double& init);
 
 		/**
+		* @brief A constructor that takes a data vector to fill the matrix
+		* @param rows number of rows of the new matrix
+		* @param cols number of columns of the new matrix
+		* @param data data vector to init the matrix (must be of size rows*cols)
+		*/
+		Matrix(const size_t& rows, const size_t& cols, const std::vector<double> data) : vecData(data), ncols(cols), nrows(rows) {}
+
+		/**
 		* @brief Convert the current matrix to a identity matrix of size n
 		* @param n dimension of the new square matrix
-		* @param init initial value to fill the matrix with
+		* @param init initial value to fill the matrix diagonal with
 		*/
-		void identity(const size_t& n, const double& init);
+		void identity(const size_t& n, const double& init = 1.);
 
 		void resize(const size_t& rows, const size_t& cols);
 		void resize(const size_t& rows, const size_t& cols, const double& init);
+		void resize(const size_t& rows, const size_t& cols, const std::vector<double>& data);
 
 		/**
 		* @brief get the dimensions of the current object
@@ -130,6 +139,48 @@ class Matrix {
 		Matrix getInv() const;
 		bool inv();
 
+		/**
+		* @brief Copy a matrix row to a new 1-row-matrix
+		* @param i Row index
+		* @return The row as a new matrix
+		*/
+		Matrix getRow(const size_t i) const;
+
+		/**
+		* @brief Set a matrix row from a 1-row-matrix
+		* @param i Row index
+		* @param row The new row
+		*/		
+		void setRow(const size_t i, const Matrix& row);
+
+		/**
+		* @brief Copy a matrix column to a new 1-column-matrix
+		* @param j Column index
+		* @return The column as a new matrix
+		*/
+		Matrix getCol(const size_t j) const;
+
+		/**
+		* @brief Set a matrix column from a 1-column-matrix
+		* @param j Column index
+		* @param col The new column
+		*/		
+		void setCol(const size_t j, const Matrix& col);
+
+		/**
+		* @brief Copy the matrix diagonal to a new 1-column-matrix
+		* @return The diagonal as a new matrix
+		*/
+		Matrix getDiagonal() const;
+
+		/**
+		* @brief Find the first maximum value in the matrix
+		* @param max_row Row index of the maximum
+		* @param max_col Column index of the maximum
+		* @return The maximum value
+		*/
+		double maxCoeff(size_t& max_row, size_t& max_col) const;
+		
 		/**
 		* @brief matrix solving for A·X=B.
 		* It first performs LU decomposition and then solves A·X=B by

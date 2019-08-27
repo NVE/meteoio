@@ -68,6 +68,21 @@ void Matrix::resize(const size_t& rows, const size_t& cols, const double& init)
 	nrows = rows;
 }
 
+void Matrix::resize(const size_t& rows, const size_t& cols, const std::vector<double>& data)
+{
+#ifndef NOSAFECHECKS
+	if (rows*cols!=data.size()) {
+		std::ostringstream ss;
+		ss << "Trying to init matrix data that does not fit size " << rows << "x" << cols;
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+#endif
+	clear();
+	vecData = data;
+	ncols = cols;
+	nrows = rows;
+}
+
 void Matrix::size(size_t& rows, size_t& cols) const
 {
 	rows=nrows;
@@ -536,6 +551,108 @@ bool Matrix::inv()
 	}
 
 	return true;
+}
+
+Matrix Matrix::getRow(const size_t i) const
+{
+#ifndef NOSAFECHECKS
+	if ((i<1) || (i > nrows) ) {
+		std::ostringstream ss;
+		ss << "Trying to access matrix row " << i;
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+#endif
+	Matrix mRet((size_t)1, ncols);
+	for (size_t j=0; j<ncols; j++) {
+		mRet(1, j+1) = vecData[(i-1)*nrows+j];
+	}
+	return mRet;
+}
+
+void Matrix::setRow(const size_t i, const Matrix& row)
+{
+#ifndef NOSAFECHECKS
+	if ((i<1) || (i > nrows) ) {
+		std::ostringstream ss;
+		ss << "Trying to access matrix row " << i;
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+	if (row.nrows!=1) {
+		std::ostringstream ss;
+		ss << "Trying to set row " << i << ", but the given row is not a row vector.";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+#endif
+	for (size_t j=0; j<ncols; j++) {
+		vecData[(i-1)*nrows+j] = row(1, j+1);
+	}
+}
+
+Matrix Matrix::getCol(const size_t j) const
+{
+#ifndef NOSAFECHECKS
+	if ((j<1) || (j > ncols)) {
+		std::ostringstream ss;
+		ss << "Trying to access matrix column " << j;
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+#endif
+	Matrix mRet(nrows, (size_t)1);
+	for (size_t i=0; i<nrows; i++) {
+		mRet(i+1, 1) = vecData[(j-1)+i*ncols];
+	}
+	return mRet;
+}
+
+void Matrix::setCol(const size_t j, const Matrix& col)
+{
+#ifndef NOSAFECHECKS
+	if ((j<1) || (j > ncols) ) {
+		std::ostringstream ss;
+		ss << "Trying to access matrix column " << j;
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+	if (col.ncols!=1) {
+		std::ostringstream ss;
+		ss << "Trying to set column " << j << ", but the given column is not a column vector.";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+#endif
+	for (size_t i=0; i<nrows; i++) {
+		vecData[(j-1)*ncols+i] = col(i+1, 1);
+	}
+}
+
+Matrix Matrix::getDiagonal() const
+{
+#ifndef NOSAFECHECKS
+	if (nrows!=ncols) {
+		std::ostringstream ss;
+		ss << "Trying to take diagonal from a non-square matrix.";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+#endif
+	Matrix mRet((size_t)1, ncols);
+	for (size_t i=0; i<ncols; i++) {
+		mRet(1, i+1)=vecData[i+i*ncols];
+	}
+	return mRet;
+}
+
+double Matrix::maxCoeff(size_t& max_row, size_t& max_col) const
+{
+	double max=vecData[0];
+	max_row=max_col=1;
+	for (size_t ii=0; ii<nrows; ++ii) {
+		for (size_t jj=0; jj<ncols; ++jj) {
+			if (vecData[ii*nrows+jj] > max) {
+				max = vecData[ii*nrows+jj];
+				max_row = ii+1;
+				max_col = jj+1;
+			}
+		}
+	}
+	return max;
 }
 
 bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
