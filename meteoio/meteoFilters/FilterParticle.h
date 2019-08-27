@@ -19,10 +19,10 @@
 #ifndef FILTERPARTICLE_H
 #define FILTERPARTICLE_H
 
+#include <meteoio/dataClasses/Matrix.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <Core> //<Eigen/Core>
 #include <meteoio/tinyexpr.h>
 
 #include <inttypes.h> //for RNG int types
@@ -415,7 +415,7 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<MeteoData>& ovec);
 
 	private:
-		void resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
+		void resamplePaths(Matrix& xx, Matrix& ww, const size_t& kk, RandomNumberGenerator& RNU) const;
 		bool checkInitialState(const std::vector<MeteoData>& ivec, const size_t& param);
 		void initFunctionVars(te_variable* vars, const std::vector<std::string>& names, const std::vector<double>& meteo) const;
 		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
@@ -423,14 +423,14 @@ class FilterParticle : public ProcessingBlock {
 		        std::vector<std::string>& sub_params) const;
 		void parseBracketExpression(std::string& line, std::vector<std::string>& sub_expr,
 		        std::vector<std::string>& sub_params) const;
-		void dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
-		bool readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const;
-		void dumpParticlePaths(Eigen::MatrixXd& particles) const;
+		void dumpInternalStates(Matrix& particles, Matrix& weights) const;
+		bool readInternalStates(Matrix& particles, Matrix& weights) const;
+		void dumpParticlePaths(Matrix& particles) const;
 		std::vector<double> buildTimeVector(const std::vector<MeteoData>& ivec) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNumberGenerator& RNGV, RandomNumberGenerator& RNG0,
 		        RandomNumberGenerator& RNU) const;
-		void vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const;
+		void vecMeteoToMatrix(const std::vector<MeteoData>& vec, Matrix& mat, const unsigned int& param) const;
 		void readLineToVec(const std::string& line_in, std::vector<uint64_t>& vec_out) const;
 		bool isNan(const double& xx) const;
 

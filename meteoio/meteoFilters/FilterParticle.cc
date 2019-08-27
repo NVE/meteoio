@@ -64,21 +64,22 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	seedGeneratorsFromIni(RNGU, RNGV, RNG0, RNU);
 
 	//init states:
-	Eigen::MatrixXd xx(NN, TT); //particles
-	Eigen::VectorXd zz(TT); //observations
-	vecMeteoToEigen(ivec, zz, param);
-	Eigen::MatrixXd ww(NN, TT); //weights of particles
+	Matrix xx(NN, TT); //particles
+	Matrix zz(TT, (size_t)1); //observations
+	vecMeteoToMatrix(ivec, zz, param);
+	Matrix ww(NN, TT); //weights of particles
 	const std::vector<double> tVec = buildTimeVector(ivec);
 
 	bool instates_success(false);
+	
 	if (!input_states_file.empty()) //there is data saved from a previous run
-		instates_success = readInternalStates(xx, ww);  //online data aggregation
+		instates_success = readInternalStates(xx, ww);  //online data aggregation	
 	if (!instates_success) { //start from the initial value
-		xx(0, 0) = model_x0;
-		ww(0, 0) = 1. / NN;
+		xx(1, 1) = model_x0;
+		ww(1, 1) = 1. / NN;
 		for (size_t nn = 1; nn < NN; ++nn) { //draw from prior pdf for initial state of particles at T=0
-			xx(nn, 0) = xx(0, 0) + RNG0.doub();
-			ww(nn, 0) = 1. / NN; //starting up, all particles have the same weight
+			xx(nn+1, 1) = xx(1, 1) + RNG0.doub();
+			ww(nn+1, 1) = 1. / NN; //starting up, all particles have the same weight
 		}
 	}
 
@@ -123,7 +124,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	bool saw_nodata(false);
 	try {
 		for (size_t kk = 1; kk < TT; ++kk) { //for each TIME STEP (starting at 2nd)...
-
+			double col_weight_sum(0.);
 			if (has_model) {
 				sub_values[0] = (double)kk; //this vector is linked to tinyexpr expression memory
 				sub_values[1] = tVec[kk];
@@ -132,30 +133,32 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 			} //endif has_model
 
 			if (ivec[kk](param) == IOUtils::nodata) {
-				xx.col(kk) = xx.col(kk-1); //repeat particles for nodata values
-				ww.col(kk) = ww.col(kk-1); //the mean gets skewed a little
+				xx.setCol(kk+1, xx.getCol(kk)); //repeat particles for nodata values
+				ww.setCol(kk+1, ww.getCol(kk)); //the mean gets skewed a little
 				saw_nodata = true;
 			} else {
 				if (filter_alg == PF_SIR) { //SIR algorithm, algorithm 4 of Ref. [AM+02]:
 					for (size_t nn = 0; nn < NN; ++nn) { //for each PARTICLE...
 						double res;
 						if (has_model) { //arithmetic equation
-							sub_values[3] = xx(nn, kk-1);
+							sub_values[3] = xx(nn+1, kk);
 							res = te_eval(expr_model); //evaluate expression with current substitution values
 						} else { //model data points
 							res = model_fit.f(tVec[kk]);
 						}
-						xx(nn, kk) = res + RNGU.doub(); //generate system noise
-						sub_values[2] = xx(nn, kk);
+						xx(nn+1, kk+1) = res + RNGU.doub(); //generate system noise
+						sub_values[2] = xx(nn+1, kk+1);
 						const double res_obs = te_eval(expr_obs);
-						ww(nn, kk) = ww(nn, kk-1) * RNGV.pdf( zz(kk) - res_obs ); //Ref. [AM+02] Eq. (63)
+						ww(nn+1, kk+1) = ww(nn+1, kk) * RNGV.pdf( zz(kk+1, 1) - res_obs ); //Ref. [AM+02] Eq. (63)
+						col_weight_sum += ww(nn+1, kk+1);
 					} //endfor nn
 				} else { //should currently not be reachable since we don't yet read any ini key for this
 					throw InvalidArgumentException("This algorithm is not supported in the particle filter. Only SIR is available for now.", AT);
 				}
 			} //endif nodata
 
-			ww.col(kk) /= ww.col(kk).sum(); //normalize weights to sum=1 per timestep
+			for (size_t ii = 0; ii < NN; ++ii)
+				ww(ii+1, kk+1) /= col_weight_sum;
 
 			if (path_resampling)
 				resamplePaths(xx, ww, kk, RNU);
@@ -169,22 +172,26 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 		throw;
 	}
 
-	Eigen::VectorXd xx_meas(TT); //most probable particle
+	Matrix xx_meas(TT, (size_t)1); //most probable particle
 	if (estim_measure == PF_MAX_WEIGHT) { //find the highest weight and pick this path
-		std::ptrdiff_t max_idx;
+		size_t max_row, max_col;
 		for (size_t kk = 0; kk < TT; ++kk) {
-			(void) ww.col(kk).maxCoeff(&max_idx);
-			xx_meas(kk) = xx(max_idx, kk);
+			(void) ww.getCol(kk+1).maxCoeff(max_row, max_col);
+			xx_meas(kk+1, 1) = xx(max_row, max_col);
 		}
 	} else { //average by multiplying all particles with their weights
-		xx_meas = (xx.array() * ww.array()).colwise().sum();
+		for (size_t kk = 0; kk < TT; ++kk) {
+			xx_meas(kk+1, 1) = 0.;
+			for (size_t nn = 0; nn < NN; ++nn)
+				xx_meas(kk+1, 1) += xx(nn+1, kk+1) * ww(nn+1, kk+1);
+		}
 	}
 
 	for (size_t kk = 0; kk < TT; ++kk) {
 		sub_values[0] = (double)kk;
 		sub_values[1] = tVec[kk];
-		sub_values[2] = xx_meas(kk);
-		sub_values[3] = (kk == 0)? model_x0 : xx_meas(kk-1); //somewhat arbitrary at T=0 - this substitution is meant for the system model
+		sub_values[2] = xx_meas(kk+1, 1);
+		sub_values[3] = (kk == 0)? model_x0 : xx_meas(kk, 1); //somewhat arbitrary at T=0 - this substitution is meant for the system model
 		for (size_t jj = 0; jj < sub_params.size(); ++jj) //fill current meteo parameters
 			sub_values[jj+nr_hardcoded_sub] = ivec[kk](sub_params[jj]);
 		const double res = te_eval(expr_obs); //filtered observation (model function of mean state [= estimated likely state])
@@ -197,7 +204,6 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	delete[] te_vars;
 
 	if (be_verbose && saw_nodata) std::cerr << "[W] Nodata value(s) encountered in particle filter. For this, the previous particle was repeated. You should probably resample beforehand.\n";
-
 	if (!dump_states_file.empty())
 		dumpInternalStates(xx, ww);
 	if (!dump_particles_file.empty())
@@ -213,12 +219,12 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
  * @param[in,out] ww The particles' weights.
  * @param[in] RNU A generator that we keep in scope that is used for uniform random numbers.
  */
-void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, const size_t& kk, RandomNumberGenerator& RNU) const
+void FilterParticle::resamplePaths(Matrix& xx, Matrix& ww, const size_t& kk, RandomNumberGenerator& RNU) const
 { //if a lot of computational power is devoted to particles with low contribution (low weight), resample the paths
 	if (resample_alg == PF_SYSTEMATIC) { //algorithm 2 of Ref. [AM+02]
 		double N_eff = 0.; //effective sample size, Ref. [AM+02] Eq. (50)
 		for (size_t nn = 0; nn < NN; ++nn)
-			N_eff += ww(nn, kk)*ww(nn, kk);
+			N_eff += ww(nn+1, kk+1)*ww(nn+1, kk+1);
 		N_eff = 1. / N_eff; //a small N_eff indicates severe degeneracy
 
 		if (N_eff < resample_percentile * (double)NN)
@@ -226,7 +232,7 @@ void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 			std::vector<double> cdf(NN);
 			cdf.front() = 0.;
 			for (size_t nn = 1; nn < NN; ++nn)
-				cdf[nn] = cdf[nn-1] + ww(nn, kk); //construct cumulative density function
+				cdf[nn] = cdf[nn-1] + ww(nn+1, kk+1); //construct cumulative density function
 			cdf.back() = 1.0; //round-off protection
 
 			double rr = RNU.doub() / NN;
@@ -236,8 +242,8 @@ void FilterParticle::resamplePaths(Eigen::MatrixXd& xx, Eigen::MatrixXd& ww, con
 				size_t jj = 0;
 				while (rr > cdf[jj])
 					++jj; //check which range in the cdf the random number belongs to...
-				xx(nn, kk) = xx(jj, kk); //... and use that index
-				ww(nn, kk) = 1. / NN; //all resampled particles have the same weight
+				xx(nn+1, kk+1) = xx(jj+1, kk+1); //... and use that index
+				ww(nn+1, kk+1) = 1. / NN; //all resampled particles have the same weight
 				rr += 1. / NN; //move along cdf
 			} //note: bottleneck for parallelization since all particles must be known at this point
 
@@ -369,7 +375,7 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
  * @param[in] particles The particles matrix with particles as the rows, and time steps as the columns. Last column is output.
  * @param[in] weights The weights associated with the particles.
  */
-void FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
+void FilterParticle::dumpInternalStates(Matrix& particles, Matrix& weights) const
 { //using this, we are able to resume our filter without having to recalculate the past if new data arrives
 	std::ofstream oss(dump_states_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
@@ -383,9 +389,9 @@ void FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
 	static const int digits = std::numeric_limits<double>::digits10;
 	oss.precision(digits);
 	oss.setf(std::ios::fixed);
-	for (int ii = 0; ii < particles.rows(); ++ii) {
-		oss << std::setw(digits) << particles.rightCols(1)(ii) << "   ";
-		oss << std::setw(digits) << weights.rightCols(1)(ii) << std::endl;
+	for (size_t ii = 0; ii < particles.getNy(); ++ii) {
+		oss << std::setw(digits) << particles(ii+1, particles.getNx()) << "   ";
+		oss << std::setw(digits) << weights(ii+1, weights.getNx()) << std::endl;
 	}
 	oss.close();
 }
@@ -398,7 +404,7 @@ void FilterParticle::dumpInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
  * @param[in] weights Same as for particles.
  * @return True if reading was successful (file exists and has particles that fit the current settings).
  */
-bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::MatrixXd& weights) const
+bool FilterParticle::readInternalStates(Matrix& particles, Matrix& weights) const
 {
 	std::vector<double> xx, ww;
 	try {
@@ -407,15 +413,16 @@ bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
 		return false;
 	}
 
-	if ( (unsigned int)particles.rows() != xx.size() || (unsigned int)weights.rows() != ww.size() ) {
+	if ( (unsigned int)particles.getNy() != xx.size() || (unsigned int)weights.getNy() != ww.size() ) {
 		if (be_verbose) std::cerr << "[W] Particle filter file input via INPUT_STATES_FILE does not match the number of particles. Using INITIAL_STATE.\n";
 		return false;
 	}
 
-	Eigen::Map<Eigen::VectorXd> tmp_p(&xx.data()[0], xx.size()); //memcopy read vectors to Eigen types
-	particles.col(0) = tmp_p;
-	Eigen::Map<Eigen::VectorXd> tmp_w(&ww.data()[0], ww.size());
-	weights.col(0) = tmp_w;
+	for (size_t ii = 0; ii < particles.getNy(); ++ii) { //fill first columns
+		particles(ii+1, 1) = xx[ii];
+		weights(ii+1, 1) = ww[ii];
+	}
+
 	return true;
 }
 
@@ -426,7 +433,7 @@ bool FilterParticle::readInternalStates(Eigen::MatrixXd& particles, Eigen::Matri
  * is a mini MATLAB routine hidden in a comment that visualizes the kernel density.
  * @param[in] particles Particle paths with rows denoting the particles, and columns the time steps.
  */
-void FilterParticle::dumpParticlePaths(Eigen::MatrixXd& particles) const
+void FilterParticle::dumpParticlePaths(Matrix& particles) const
 { //to plot paths and kernel density outside of MeteoIO
 	std::ofstream oss(dump_particles_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
@@ -440,7 +447,11 @@ void FilterParticle::dumpParticlePaths(Eigen::MatrixXd& particles) const
 	const int digits = std::numeric_limits<double>::digits10;
 	oss.precision(digits);
 	oss.setf(std::ios::fixed);
-	oss << particles << std::endl;
+	for (size_t ii = 1; ii <= particles.getNy(); ++ii) {
+		for (size_t jj = 1; jj <= particles.getNx(); ++jj)
+			oss << std::setw(digits) << particles(ii, jj) << "   ";
+		oss << std::endl;
+	}
 	oss.close();
 }
 
@@ -614,11 +625,11 @@ void FilterParticle::seedGeneratorsFromIni(RandomNumberGenerator& RNGU, RandomNu
  * @param[out] eig Output vector with only one parameter's values.
  * @param[in] param Index of the desired meteo parameter.
  */
-void FilterParticle::vecMeteoToEigen(const std::vector<MeteoData>& vec, Eigen::VectorXd& eig, const unsigned int& param) const
-{ //naive copy of 1 meteo parameter in STL vector to Eigen library vector
-	eig.resize(vec.size());
-	for (size_t i = 0; i < vec.size(); ++i)
-		eig[i] = vec[i](param);
+void FilterParticle::vecMeteoToMatrix(const std::vector<MeteoData>& vec, Matrix& mat, const unsigned int& param) const
+{ //naive copy of 1 meteo parameter in STL vector to Matrix class vector
+	mat.resize(vec.size(), 1);
+	for (size_t ii = 0; ii < vec.size(); ++ii)
+		mat(ii+1, 1) = vec[ii](param);
 }
 
 /**

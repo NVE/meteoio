@@ -19,10 +19,9 @@
 #ifndef FILTERKALMAN_H
 #define FILTERKALMAN_H
 
+#include <meteoio/dataClasses/Matrix.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
-
-#include <Core> //<Eigen/Core>
 
 #include <string>
 #include <vector>
@@ -428,24 +427,24 @@ class FilterKalman : public ProcessingBlock {
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		        std::vector<MeteoData>& ovec);
 	private:
-		Eigen::VectorXd buildInitialStates(const std::vector<std::string>& xx_str, const std::vector<size_t>& meas_idx,
+		Matrix buildInitialStates(const std::vector<std::string>& xx_str, const std::vector<size_t>& meas_idx,
 		        const std::vector<MeteoData>& ivec, const size_t& nr_observations) const;
 		size_t buildObservationsMatrix(const unsigned int& param, const std::vector<MeteoData>& ivec, const size_t& nx,
-		        Eigen::MatrixXd& zz, std::vector<size_t>& meas_idx) const;
-		Eigen::MatrixXd buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec) const;
-		Eigen::MatrixXd parseMatrix(const std::string& line, const size_t& rows, const size_t& cols,
+		        Matrix& zz, std::vector<size_t>& meas_idx) const;
+		Matrix buildControlSignal(const size_t& nx, const size_t& TT, const std::vector<MeteoData>& ivec) const;
+		Matrix parseMatrix(const std::string& line, const size_t& rows, const size_t& cols,
 		        const std::string& block) const;
 		std::vector<std::string> parseSystemMatrix(const std::string& line, const size_t& rows) const;
-		Eigen::MatrixXd buildSystemMatrix(const std::vector<std::string>& AA_str, const size_t& sz, const double& dt,
+		Matrix buildSystemMatrix(const std::vector<std::string>& AA_str, const size_t& sz, const double& dt,
 		        const std::vector<MeteoData>& ivec, const size_t& kk) const;
 		double substitute(const std::string& expr, const double& dt, const std::vector<MeteoData>& ivec, const size_t& kk) const;
-		Eigen::MatrixXd extractInputMatrix(const std::vector<std::string>& vecParams, const std::vector<MeteoData>& mvec,
+		Matrix extractInputMatrix(const std::vector<std::string>& vecParams, const std::vector<MeteoData>& mvec,
 		        const size_t& kk) const;
 		void assertInputCovariances(const std::vector<MeteoData>& ivec, const size_t& nx, bool& has_RR_params,
 		        bool& has_QQ_params) const;
-		Eigen::MatrixXd bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols, const std::string& block) const;
-		Eigen::VectorXd buildTimeVector(const std::vector<MeteoData>& ivec) const;
-		bool checkNodata(const Eigen::VectorXd& ivec) const;
+		Matrix bloatMatrix(const std::string& line, const size_t& rows, const size_t& cols, const std::string& block) const;
+		std::vector<double> buildTimeVector(const std::vector<MeteoData>& ivec) const;
+		bool checkNodata(const Matrix& ivec) const;
 		bool findFirstDatapoint(const std::vector<MeteoData>& ivec, const size_t& param, double& retval) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void cleanBrackets(std::string& iline) const;
