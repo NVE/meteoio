@@ -108,7 +108,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 				res_cond = te_eval(compiled_expressions[it->first].second); //comparison expression
 				cond = assertCondition(res_ex, res_cond, it->second.op); //evaluate the complete condition
 			} else { //string evaluation
-				std::string tmp_exp = doStringSubstitutions(it->second.expression, ivec[ii]);
+				const std::string tmp_exp = doStringSubstitutions(it->second.expression, ivec[ii]);
 				cond = assertStringCondition(tmp_exp, it->second.compare, it->second.op);
 			}
 
@@ -146,7 +146,6 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 	if (!formula_else.empty())
 		te_free(expr_formula_else);
 	delete[] te_vars;
-
 }
 
 /**

@@ -145,6 +145,9 @@ namespace mio {
  * TD::ARG1::EXPRESSION2  = meteo(TA)
  * TD::ARG1::OPERATOR2    = NE
  * TD::ARG1::COMPARE2     = nodata
+ * TD::ARG1::EXPRESSION3  = meteo(RH)
+ * TD::ARG1::OPERATOR3    = GT
+ * TD::ARG1::COMPARE3     = 0.5 ;formula within 1 degree only for RH > 50 %
  * @endcode
  *
  * **Example:** Two stations are called ISEE1 and ISEE2. Suppose their humidity sensors start reporting garbage on 1st of August 2019 and
@@ -171,7 +174,7 @@ namespace mio {
  * ISWR_TEMP::COPY               = ISWR ;CREATE would refill
  *
  * [FILTERS]
- * ISWR_TEMP::FILTER1            = MATHS ;keep only if station ID matches
+ * ISWR_TEMP::FILTER1            = MATHS ;keep only if station name matches
  * ISWR_TEMP::ARG1::FORMULA      = meteo(ISWR_TEMP)
  * ISWR_TEMP::ARG1::FORMULA_ELSE = nodata
  * ISWR_TEMP::ARG1::EXPRESSION1  = stationname

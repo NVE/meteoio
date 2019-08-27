@@ -59,9 +59,9 @@ int main(/* int argc, char** argv */)
 	oss << "# date model_no_noise observation control_signal speed\n"; //print header
 
 	static const double aa = 0.999; //mockup model parameters
-    static const double bb = 0.0005;
-    static const double x_0 = 2.5; //initial value
-    static const double v_real = 10.; //scatter fake measurements around this "true" velocity
+	static const double bb = 0.0005;
+	static const double x_0 = 2.5; //initial value
+	static const double v_real = 10.; //scatter fake measurements around this "true" velocity
 
 	size_t kk = 0;
 	double xx = x_0;
