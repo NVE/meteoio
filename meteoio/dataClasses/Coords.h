@@ -142,7 +142,7 @@ public:
 	void setDistances(const geo_distances in_algo);
 	void setEPSG(const int& epsg);
 
-	void check();
+	void check(const std::string& pre_msg="");
 	double distance(const Coords& destination) const;
 	bool isSameProj(const Coords& target) const;
 	void copyProj(const Coords& source, const bool i_update=true);

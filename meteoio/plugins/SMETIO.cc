@@ -280,17 +280,17 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		const double lat = myreader.get_header_doublevalue("latitude");
 		const double lon = myreader.get_header_doublevalue("longitude");
 		const double alt = myreader.get_header_doublevalue("altitude");
-		meta.position.setLatLon(lat, lon, alt);
+		meta.position.setLatLon(lat, lon, alt, false);
 	}
-
 	if (myreader.location_in_header(smet::EPSG)){
 		const double east  = myreader.get_header_doublevalue("easting");
 		const double north = myreader.get_header_doublevalue("northing");
 		const double alt   = myreader.get_header_doublevalue("altitude");
 		const short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
-		meta.position.setXY(east, north, alt);
+		meta.position.setXY(east, north, alt, false);
 	}
+	meta.position.check( "Inconsistent geographic coordinates in file \""+myreader.get_filename()+"\": " ); //check coordinates consistency and compute the missing representation if necessary
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
@@ -325,6 +325,7 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
                        const std::vector<std::string>& timestamps,
                        const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
+	const std::string filename( myreader.get_filename() );
 	const std::string myfields( myreader.get_header_value("fields") );
 	std::vector<std::string> fields;
 	IOUtils::readLineToVec(myfields, fields);
@@ -391,10 +392,11 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 			}
 
 			if (data_epsg)
-				tmp_md.meta.position.setXY(east, north, alt);
-
+				tmp_md.meta.position.setXY(east, north, alt, false);
 			if (data_wgs84)
-				tmp_md.meta.position.setXY(lat, lon, alt);
+				tmp_md.meta.position.setXY(lat, lon, alt, false);
+			if (data_epsg || data_wgs84)
+				tmp_md.meta.position.check("Inconsistent geographic coordinates in file \"" + filename + "\": ");
 
 			current_index++;
 		}

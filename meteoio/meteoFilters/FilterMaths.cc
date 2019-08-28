@@ -64,8 +64,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 	std::map< size_t, std::pair<te_expr*, te_expr*> > compiled_expressions;
 
 	std::map<size_t, logic_eq>::iterator it;
-	for (it = logic_equations.begin(); it != logic_equations.end(); ++it)
-	{
+	for (it = logic_equations.begin(); it != logic_equations.end(); ++it) {
 		if (it->second.op.substr(0, 3) != "STR") { //nothing to compile for string evaluations
 			bool arrived_at_second(false);
 			try {
@@ -89,7 +88,6 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 	}
 
 	for (size_t ii = 0; ii < ivec.size(); ++ii) {
-
 		if (skip_nodata && ivec[ii](param) == IOUtils::nodata)
 			continue; //not even a comparison to nodata is evaluated with this key
 
@@ -108,7 +106,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 				res_cond = te_eval(compiled_expressions[it->first].second); //comparison expression
 				cond = assertCondition(res_ex, res_cond, it->second.op); //evaluate the complete condition
 			} else { //string evaluation
-				const std::string tmp_exp = doStringSubstitutions(it->second.expression, ivec[ii]);
+				const std::string tmp_exp( doStringSubstitutions(it->second.expression, ivec[ii]) );
 				cond = assertStringCondition(tmp_exp, it->second.compare, it->second.op);
 			}
 
@@ -232,7 +230,7 @@ std::map<std::string, double> FilterMaths::parseBracketExpression(std::string& l
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) substitution for " + where, AT);
 
-		const std::string pname = IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len));
+		const std::string pname( IOUtils::strToLower(line.substr(pos1+len, pos2-pos1-len)) );
 		line.replace(pos1, pos2-pos1+1, prefix.substr(0, prefix.length() - 1) + pname); //to make parseable with tinyexpr: 'meteo(RH)' --> 'meteorh'
 		mapRet[prefix.substr(0, prefix.length() - 1) + pname] = IOUtils::nodata; //full expression, lower case and without brackets
 		pos1 += len;
@@ -249,7 +247,7 @@ void FilterMaths::buildSubstitutions()
 	substitutions.clear();
 
 	//main formulas:
-	std::map<std::string, double> formula_items = parseBracketExpression(formula);
+	std::map<std::string, double> formula_items( parseBracketExpression(formula) );
 	substitutions.insert(formula_items.begin(), formula_items.end());
 	formula_items = parseBracketExpression(formula_else);
 	substitutions.insert(formula_items.begin(), formula_items.end());

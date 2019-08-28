@@ -661,11 +661,13 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
 		const double alt = location.getAltitude(); //so we don't change previously set altitude
-		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
-	} else if (easting!=IOUtils::nodata || northing!=IOUtils::nodata) {
-		const double alt = location.getAltitude();
-		location.setXY(easting, northing, alt); //coord system was set on keyword parsing
+		location.setLatLon(lat, lon, alt, false); //we let Coords handle possible missing data / wrong values, etc
 	}
+	if (easting!=IOUtils::nodata || northing!=IOUtils::nodata) {
+		const double alt = location.getAltitude();
+		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
+	}
+	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
 	
 	parseFields(headerFields, csv_fields, date_col, time_col);
 	
