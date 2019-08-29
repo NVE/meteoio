@@ -150,7 +150,7 @@ class Matrix {
 		* @brief Set a matrix row from a 1-row-matrix
 		* @param i Row index
 		* @param row The new row
-		*/		
+		*/
 		void setRow(const size_t i, const Matrix& row);
 
 		/**
@@ -164,7 +164,7 @@ class Matrix {
 		* @brief Set a matrix column from a 1-column-matrix
 		* @param j Column index
 		* @param col The new column
-		*/		
+		*/
 		void setCol(const size_t j, const Matrix& col);
 
 		/**
@@ -180,7 +180,7 @@ class Matrix {
 		* @return The maximum value
 		*/
 		double maxCoeff(size_t& max_row, size_t& max_col) const;
-		
+
 		/**
 		* @brief matrix solving for A·X=B.
 		* It first performs LU decomposition and then solves A·X=B by
@@ -232,6 +232,68 @@ class Matrix {
 		* @return determinant
 		*/
 		double det() const;
+
+		/**
+		* @brief Gaussian elimimination with partial pivoting.
+		* This function performs row reduction with (virtual) row-swapping.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in,out] M The matrix to reduce
+		* @param[out] p Used permutation vector (ignore p[0])
+		*/
+		static void gauss_elimination(Matrix& M, std::vector<size_t>& p);
+
+		/**
+		* @brief Equation system solver via Gaussian elimination.
+		* This function solves a set of equations M·X=A via Gauss elimination with partial pivoting.
+		* Attention: The original matrices are destroyed!
+		* @author Michael Reisecker
+		* @param[in] M The matrix M in M·X=A
+		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
+		* @param[out] X The calculated solution X in M·X=A
+		* @return False if the equations are linearly dependent
+		*/
+		static bool gauss_solve(Matrix& M, Matrix& A, Matrix& X);
+
+		/**
+		* @brief Convenience call to the solver with input matrix preservation.
+		* This function makes a copy of the input matrix and invokes the solver on that, i. e. the
+		* input matrices are not changed in the process.
+		* @author Michael Reisecker
+		* @param[in] M The matrix M in M·X=A
+		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
+		* @param[out] X The calculated solution X in M·X=A
+		* @return False if the equations are linearly dependent
+		*/
+		static bool gauss_solve(const Matrix& M, const Matrix& A, Matrix& X);
+
+		/**
+		* @brief Matrix inversion via Gaussian elimination.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in,out] M The matrix to invert
+		* @return False if the matrix is singular
+		*/
+		static bool gauss_inverse(Matrix& M);
+
+		/**
+		* @brief Convenience call for matrix inversion with input matrix preservation.
+		* This function makes a copy of the input matrix, i. e. it is left unchanged by the solver.
+		* @author Michael Reisecker
+		* @param[in] M The matrix to invert
+		* @param[out] Inv The inverse matrix
+		* @return False if the matrix is singular
+		*/
+		static bool gauss_inverse(const Matrix& M, Matrix& Inv);
+
+		/**
+		* @brief Get the matrix determinant via Gaussian elimination.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in] M Matrix to calculate the determinant for
+		* @return The determinant
+		*/
+		static double gauss_det(Matrix& M);
 
 		/**
 		* @brief matrix LU decomposition.

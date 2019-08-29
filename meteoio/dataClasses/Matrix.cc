@@ -28,7 +28,7 @@
 namespace mio {
 
 const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
-const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
+const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrices
 
 Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
 {
@@ -216,7 +216,7 @@ Matrix& Matrix::operator-=(const Matrix& rhs)
 	//check dimensions compatibility
 	if (nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::ostringstream tmp;
-		tmp << "Trying to substract two matrix with incompatible dimensions: ";
+		tmp << "Trying to substract two matrices with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);
@@ -257,7 +257,7 @@ Matrix& Matrix::operator*=(const Matrix& rhs)
 	//check dimensions compatibility
 	if (ncols!=rhs.nrows) {
 		std::ostringstream tmp;
-		tmp << "Trying to multiply two matrix with incompatible dimensions: ";
+		tmp << "Trying to multiply two matrices with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);
@@ -465,7 +465,7 @@ Matrix Matrix::getInv() const
 	Matrix Y(n, n);
 	for (size_t i=1; i<=n; i++) {
 		if (IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
-			throw IOException("The given matrix can not be inversed", AT);
+			throw IOException("The given matrix can not be inverted", AT);
 		}
 		Y(i,i) = 1./L(i,i); //j==i
 		for (size_t j=1; j<i; j++) { //j<i
@@ -484,7 +484,7 @@ Matrix Matrix::getInv() const
 	Matrix X(n,n);
 	for (size_t i=n; i>=1; i--) { //lines
 		if (IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
-			throw IOException("The given matrix is singular and can not be inversed", AT);
+			throw IOException("The given matrix is singular and can not be inverted", AT);
 		}
 		for (size_t j=1; j<=n; j++) { //lines
 			double sum=0.;
@@ -639,22 +639,6 @@ Matrix Matrix::getDiagonal() const
 	return mRet;
 }
 
-double Matrix::maxCoeff(size_t& max_row, size_t& max_col) const
-{
-	double max=vecData[0];
-	max_row=max_col=1;
-	for (size_t ii=0; ii<nrows; ++ii) {
-		for (size_t jj=0; jj<ncols; ++jj) {
-			if (vecData[ii*nrows+jj] > max) {
-				max = vecData[ii*nrows+jj];
-				max_row = ii+1;
-				max_col = jj+1;
-			}
-		}
-	}
-	return max;
-}
-
 bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
 {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
@@ -786,6 +770,119 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B)
 		throw IOException("Matrix inversion failed!", AT);
 }
 
+void Matrix::gauss_elimination(Matrix& M, std::vector<size_t>& p)
+{ //Gaussian elimination with partial pivoting (row-swapping)
+	const size_t dim = M.getNx();
+	p.reserve(dim+1); //start at 1 like the matrix class does
+	for (size_t i=1; i<=dim; i++) {
+		p[i]=i; //no permutations yet
+	}
+
+	for (size_t j=1; j<dim; j++) { //pivoting, last column remains unchanged
+		size_t ipiv = j;
+		double piv = M(p[j], j);
+		for (size_t i=j+1; i<=dim; i++) { //rows below diagonal
+			if (fabs(M(p[i], j))>fabs(piv)) { //biggest element for stability
+				ipiv=i;
+				piv=M(p[i], j);
+			}
+		}
+		const size_t tmp=p[j]; //virtual row swapping
+		p[j]=p[ipiv];
+		p[ipiv]=tmp;
+		for (size_t i=j+1; i<=dim; i++) {
+			const double f=M(p[i], j)/(double)M(p[j], j); //elimination factor
+			M(p[i], j)=f; //save factor instead of produced zeros
+			for (size_t x=j+1; x<=dim; ++x) { //multiply all elements to the right
+				M(p[i], x)=M(p[i], x)-f*M(p[j], x);
+			}
+		}
+	} //endfor j
+}
+
+bool Matrix::gauss_solve(Matrix& M, Matrix& A, Matrix& X) //solve M.X=A
+{ //solve an equation system with Gauss elimination and partial pivoting
+	if (M.getNx()!=M.getNy())
+		throw IOException("Trying to solve M·X=A for non-square matrix M.", AT);
+	if (M.getNy()!=A.getNy())
+		throw IOException("Trying to solve M·X=A, but the dimensions of M and A do not match.", AT);
+
+	const size_t dim=M.getNx();
+	const size_t sys=A.getNx();
+
+	X.resize(dim, sys);
+	std::vector<size_t> p;
+	gauss_elimination(M, p);
+
+	double det=1.;
+	for (size_t i=1; i<=dim; i++) //multiply diagonal elements
+		det*=M(p[i], i); //determinant changes sign for each permutation, but we only check against 0
+
+	if (IOUtils::checkEpsilonEquality(det, 0., epsilon))
+		return false; //singular matrix
+
+	for (size_t i=1; i<dim; i++) { //repeat elimination for solution matrix
+		for (size_t j=i+1; j<=dim; j++) {
+			for (size_t x=1; x<=sys; x++)
+				A(p[j], x)=A(p[j], x)-M(p[j], i)*A(p[i], x); //make use of saved elimination factor
+		}
+	}
+
+	for (size_t x=1; x<=sys; x++) { //backwards substitution
+		for (size_t i=dim; i>=1; i--) {
+			X(i, x)=A(p[i], x);
+			for (size_t j=i+1; j<=dim; j++)
+				X(i, x)=X(i, x)-M(p[i], j)*X(j, x); //put in X without permutation for right order
+			X(i, x)=X(i, x)/M(p[i], i); //divide by the coefficient's factor
+		}
+	}
+
+	return true;
+}
+
+bool Matrix::gauss_solve(const Matrix& M, const Matrix& A, Matrix& X)
+{
+	Matrix N(M), B(A); //copy matrices to not destroy originals
+	return gauss_solve(N, B, X);
+}
+
+bool Matrix::gauss_inverse(Matrix& M)
+{
+	Matrix I;
+	I.identity(M.getNx());
+	Matrix Inv;
+	const bool success = gauss_solve(M, I, Inv);
+	M = Inv;
+	return success;
+}
+
+bool Matrix::gauss_inverse(const Matrix& M, Matrix& Inv)
+{
+	Matrix N(M); //copy matrix to not destroy original
+	bool success = gauss_inverse(N);
+	Inv = N;
+	return success;
+}
+
+double Matrix::gauss_det(Matrix& M)
+{
+	std::vector<size_t> p;
+	gauss_elimination(M, p);
+	double det=1.;
+	for (size_t i=1; i<=M.getNx(); i++) //multiply diagonal elements
+		det*=M(p[i], i);
+
+	for (size_t i=1; i<=M.getNx(); i++) {
+		while (i!=p[i]) { //roll back permutations
+			const size_t tmp=p[i];
+			p[i]=p[tmp];
+			p[tmp]=tmp;
+			det*=-1.; //determinant changes sign for each permutation
+		}
+	}
+	return det;
+}
+
 bool Matrix::isIdentity() const
 {
 	if (nrows!=ncols) {
@@ -905,6 +1002,21 @@ size_t Matrix::findMaxInRow(const size_t &row)
 	return col_idx;
 }
 
+double Matrix::maxCoeff(size_t& max_row, size_t& max_col) const
+{
+	double max=vecData[0];
+	max_row=max_col=1;
+	for (size_t ii=0; ii<nrows; ++ii) {
+		for (size_t jj=0; jj<ncols; ++jj) {
+			if (vecData[ii*nrows+jj] > max) {
+				max = vecData[ii*nrows+jj];
+				max_row = ii+1;
+				max_col = jj+1;
+			}
+		}
+	}
+	return max;
+}
 
 void Matrix::swapRows(const size_t &i1, const size_t &i2)
 {
