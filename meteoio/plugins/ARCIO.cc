@@ -21,6 +21,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <errno.h>
+#include <cstring>
 #include <string.h>
 #include <algorithm>
 #include <limits>
@@ -120,8 +121,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	errno = 0;
 	std::ifstream fin(full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 
@@ -332,8 +333,8 @@ void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string&
 	errno = 0;
 	std::ofstream fout(full_name.c_str(), ios::out);
 	if (fout.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 

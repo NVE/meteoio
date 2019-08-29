@@ -589,8 +589,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon, easting, northing);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file " << file_and_path << " for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file " << file_and_path << " for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}
@@ -1070,8 +1070,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	errno = 0;
 	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}
