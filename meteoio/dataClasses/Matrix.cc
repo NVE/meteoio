@@ -103,28 +103,28 @@ void Matrix::random(const double& range)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;
 }
 
-double& Matrix::operator ()(const size_t& i, const size_t& j)
+double& Matrix::operator ()(const size_t& ii, const size_t& jj)
 {
 #ifndef NOSAFECHECKS
-	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
+	if ((ii<1) || (ii > nrows) || (jj<1) || (jj > ncols)) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix[" << i << "," << j << "]";
+		ss << "Trying to access matrix[" << ii << "," << jj << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
-	return vecData[(j-1) + (i-1)*ncols];
+	return vecData[(jj-1) + (ii-1)*ncols];
 }
 
-double Matrix::operator ()(const size_t& i, const size_t& j) const
+double Matrix::operator ()(const size_t& ii, const size_t& jj) const
 {
 #ifndef NOSAFECHECKS
-	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
+	if ((ii<1) || (ii > nrows) || (jj<1) || (jj > ncols)) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix[" << i << "," << j << "]";
+		ss << "Trying to access matrix[" << ii << "," << jj << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
-	return vecData[(j-1) + (i-1)*ncols];
+	return vecData[(jj-1) + (ii-1)*ncols];
 }
 
 const std::string Matrix::toString() const
@@ -267,13 +267,13 @@ Matrix& Matrix::operator*=(const Matrix& rhs)
 	Matrix result(nrows, rhs.ncols);
 
 	//fill product matrix
-	for (size_t i=1; i<=result.nrows; i++) {
-		for (size_t j=1; j<=result.ncols; j++) {
+	for (size_t ii=1; ii<=result.nrows; ii++) {
+		for (size_t jj=1; jj<=result.ncols; jj++) {
 			double sum=0.;
 			for (size_t idx=1; idx<=ncols; idx++) {
-				sum += operator()(i,idx) * rhs(idx,j);
+				sum += operator()(ii,idx) * rhs(idx,jj);
 			}
-			result(i,j) = sum;
+			result(ii,jj) = sum;
 		}
 	}
 
@@ -357,8 +357,8 @@ double Matrix::dot(const Matrix& A, const Matrix& B)
 	}
 
 	double sum=0.;
-	for (size_t i=1; i<=Arows; i++) {
-		sum += A(i,1)*B(i,1);
+	for (size_t ii=1; ii<=Arows; ii++) {
+		sum += A(ii,1)*B(ii,1);
 	}
 
 	return sum;
@@ -372,9 +372,9 @@ Matrix Matrix::T(const Matrix& m)
 Matrix Matrix::getT() const
 {
 	Matrix result(ncols, nrows);
-	for (size_t i=1; i<=result.nrows; i++) {
-		for (size_t j=1; j<=result.ncols; j++) {
-			result(i,j) = operator()(j,i);
+	for (size_t ii=1; ii<=result.nrows; ii++) {
+		for (size_t jj=1; jj<=result.ncols; jj++) {
+			result(ii,jj) = operator()(jj,ii);
 		}
 	}
 	return result;
@@ -398,7 +398,7 @@ double Matrix::det() const
 	if (LU(L,U)==false) return 0.;
 
 	double product=1.;
-	for (size_t i=1; i<=nrows; i++) product *= U(i,i);
+	for (size_t ii=1; ii<=nrows; ii++) product *= U(ii,ii);
 
 	return product;
 }
@@ -415,28 +415,27 @@ bool Matrix::LU(Matrix& L, Matrix& U) const
 	}
 
 	const size_t n = nrows;
-	U.clear();
 	U = *this;
 	L.identity(n, 1.); //initialized as identity matrix, then populated
 	const Matrix& A = *this;
 
-	for (size_t k=1; k<=n; k++) {
+	for (size_t kk=1; kk<=n; kk++) {
 		//compute U elements
-		for (size_t j=1; j<k; j++) {
-			U(k,j) = 0.;
+		for (size_t jj=1; jj<kk; jj++) {
+			U(kk,jj) = 0.;
 		}
-		for (size_t j=k; j<=n; j++) {
+		for (size_t jj=kk; jj<=n; jj++) {
 			double sum=0.;
-			for (size_t m=1; m<=(k-1); m++) sum += L(k,m)*U(m,j);
-			U(k,j) = A(k,j) - sum;
+			for (size_t mm=1; mm<=(kk-1); mm++) sum += L(kk,mm)*U(mm,jj);
+			U(kk,jj) = A(kk,jj) - sum;
 		}
 
-		if ( k<n && IOUtils::checkEpsilonEquality(U(k,k), 0., epsilon) ) return false; //we can not compute L
+		if ( kk<n && IOUtils::checkEpsilonEquality(U(kk,kk), 0., epsilon) ) return false; //we can not compute L
 		//compute L elements
-		for (size_t i=k+1; i<=n; i++) {
+		for (size_t ii=kk+1; ii<=n; ii++) {
 			double sum=0.;
-			for (size_t m=1; m<=(k-1); m++) sum += L(i,m)*U(m,k);
-			L(i,k) = (A(i,k) - sum) / U(k,k);
+			for (size_t mm=1; mm<=(kk-1); mm++) sum += L(ii,mm)*U(mm,kk);
+			L(ii,kk) = (A(ii,kk) - sum) / U(kk,kk);
 		}
 	}
 	return true;
@@ -463,35 +462,35 @@ Matrix Matrix::getInv() const
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
-	for (size_t i=1; i<=n; i++) {
-		if (IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+	for (size_t ii=1; ii<=n; ii++) {
+		if (IOUtils::checkEpsilonEquality(L(ii,ii), 0., epsilon)) {
 			throw IOException("The given matrix can not be inverted", AT);
 		}
-		Y(i,i) = 1./L(i,i); //j==i
-		for (size_t j=1; j<i; j++) { //j<i
+		Y(ii,ii) = 1./L(ii,ii); //jj==ii
+		for (size_t jj=1; jj<ii; jj++) { //jj<ii
 			double sum=0.;
-			for (size_t k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
-				sum += L(i,k) * Y(k,j);
+			for (size_t kk=ii-1; kk>=1; kk--) { //equivalent to 1 -> ii-1
+				sum += L(ii,kk) * Y(kk,jj);
 			}
-			Y(i,j) = -1./L(i,i) * sum;
+			Y(ii,jj) = -1./L(ii,ii) * sum;
 		}
-		for (size_t j=i+1; j<=n; j++) { //j>i
-			Y(i,j) = 0.;
+		for (size_t jj=ii+1; jj<=n; jj++) { //jj>i
+			Y(ii,jj) = 0.;
 		}
 	}
 
 	//now, we backward solve UX=Y
 	Matrix X(n,n);
-	for (size_t i=n; i>=1; i--) { //lines
-		if (IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
+	for (size_t ii=n; ii>=1; ii--) { //lines
+		if (IOUtils::checkEpsilonEquality(U(ii,ii), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
 			throw IOException("The given matrix is singular and can not be inverted", AT);
 		}
-		for (size_t j=1; j<=n; j++) { //lines
+		for (size_t jj=1; jj<=n; jj++) { //lines
 			double sum=0.;
-			for (size_t k=i+1; k<=n; k++) {
-				sum += U(i,k) * X(k,j);
+			for (size_t kk=ii+1; kk<=n; kk++) {
+				sum += U(ii,kk) * X(kk,jj);
 			}
-			X(i,j) = (Y(i,j) - sum) / U(i,i);
+			X(ii,jj) = (Y(ii,jj) - sum) / U(ii,ii);
 		}
 	}
 
@@ -518,108 +517,108 @@ bool Matrix::inv()
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
-	for (size_t i=1; i<=n; i++) {
-		if (IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+	for (size_t ii=1; ii<=n; ii++) {
+		if (IOUtils::checkEpsilonEquality(L(ii,ii), 0., epsilon)) {
 			return false;
 		}
-		Y(i,i) = 1./L(i,i); //j==i
-		for (size_t j=1; j<i; j++) { //j<i
+		Y(ii,ii) = 1./L(ii,ii); //jj==ii
+		for (size_t jj=1; jj<ii; jj++) { //jj<ii
 			double sum=0.;
-			for (size_t k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
-				sum += L(i,k) * Y(k,j);
+			for (size_t kk=ii-1; kk>=1; kk--) { //equivalent to 1 -> ii-1
+				sum += L(ii,kk) * Y(kk,jj);
 			}
-			Y(i,j) = -1./L(i,i) * sum;
+			Y(ii,jj) = -1./L(ii,ii) * sum;
 		}
-		for (size_t j=i+1; j<=n; j++) { //j>i
-			Y(i,j) = 0.;
+		for (size_t jj=ii+1; jj<=n; jj++) { //jj>ii
+			Y(ii,jj) = 0.;
 		}
 	}
 
 	//now, we backward solve UX=Y
 	Matrix& X = *this; //we write the solution over the input matrix
-	for (size_t i=n; i>=1; i--) { //lines
-		if (IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
+	for (size_t ii=n; ii>=1; ii--) { //lines
+		if (IOUtils::checkEpsilonEquality(U(ii,ii), 0., epsilon)) { //actually, only U(n,n) needs checking
 			return false;
 		}
-		for (size_t j=1; j<=n; j++) { //lines
+		for (size_t jj=1; jj<=n; jj++) { //lines
 			double sum=0.;
-			for (size_t k=i+1; k<=n; k++) {
-				sum += U(i,k) * X(k,j);
+			for (size_t kk=ii+1; kk<=n; kk++) {
+				sum += U(ii,kk) * X(kk,jj);
 			}
-			X(i,j) = (Y(i,j) - sum) / U(i,i);
+			X(ii,jj) = (Y(ii,jj) - sum) / U(ii,ii);
 		}
 	}
 
 	return true;
 }
 
-Matrix Matrix::getRow(const size_t i) const
+Matrix Matrix::getRow(const size_t ii) const
 {
 #ifndef NOSAFECHECKS
-	if ((i<1) || (i > nrows) ) {
+	if ((ii<1) || (ii > nrows) ) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix row " << i;
+		ss << "Trying to access matrix row " << ii;
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	Matrix mRet((size_t)1, ncols);
-	for (size_t j=0; j<ncols; j++) {
-		mRet(1, j+1) = vecData[(i-1)*nrows+j];
+	for (size_t jj=0; jj<ncols; jj++) {
+		mRet(1, jj+1) = vecData[(ii-1)*nrows+jj];
 	}
 	return mRet;
 }
 
-void Matrix::setRow(const size_t i, const Matrix& row)
+void Matrix::setRow(const size_t ii, const Matrix& row)
 {
 #ifndef NOSAFECHECKS
-	if ((i<1) || (i > nrows) ) {
+	if ((ii<1) || (ii > nrows) ) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix row " << i;
+		ss << "Trying to access matrix row " << ii;
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 	if (row.nrows!=1) {
 		std::ostringstream ss;
-		ss << "Trying to set row " << i << ", but the given row is not a row vector.";
+		ss << "Trying to set row " << ii << ", but the given row is not a row vector.";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 #endif
-	for (size_t j=0; j<ncols; j++) {
-		vecData[(i-1)*nrows+j] = row(1, j+1);
+	for (size_t jj=0; jj<ncols; jj++) {
+		vecData[(ii-1)*nrows+jj] = row(1, jj+1);
 	}
 }
 
-Matrix Matrix::getCol(const size_t j) const
+Matrix Matrix::getCol(const size_t jj) const
 {
 #ifndef NOSAFECHECKS
-	if ((j<1) || (j > ncols)) {
+	if ((jj<1) || (jj > ncols)) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix column " << j;
+		ss << "Trying to access matrix column " << jj;
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	Matrix mRet(nrows, (size_t)1);
-	for (size_t i=0; i<nrows; i++) {
-		mRet(i+1, 1) = vecData[(j-1)+i*ncols];
+	for (size_t ii=0; ii<nrows; ii++) {
+		mRet(ii+1, 1) = vecData[(jj-1)+ii*ncols];
 	}
 	return mRet;
 }
 
-void Matrix::setCol(const size_t j, const Matrix& col)
+void Matrix::setCol(const size_t jj, const Matrix& col)
 {
 #ifndef NOSAFECHECKS
-	if ((j<1) || (j > ncols) ) {
+	if ((jj<1) || (jj > ncols) ) {
 		std::ostringstream ss;
-		ss << "Trying to access matrix column " << j;
+		ss << "Trying to access matrix column " << jj;
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 	if (col.ncols!=1) {
 		std::ostringstream ss;
-		ss << "Trying to set column " << j << ", but the given column is not a column vector.";
+		ss << "Trying to set column " << jj << ", but the given column is not a column vector.";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 #endif
-	for (size_t i=0; i<nrows; i++) {
-		vecData[(j-1)*ncols+i] = col(i+1, 1);
+	for (size_t ii=0; ii<nrows; ii++) {
+		vecData[(jj-1)*ncols+ii] = col(ii+1, 1);
 	}
 }
 
@@ -633,8 +632,8 @@ Matrix Matrix::getDiagonal() const
 	}
 #endif
 	Matrix mRet((size_t)1, ncols);
-	for (size_t i=0; i<ncols; i++) {
-		mRet(1, i+1)=vecData[i+i*ncols];
+	for (size_t ii=0; ii<ncols; ii++) {
+		mRet(1, ii+1)=vecData[ii+ii*ncols];
 	}
 	return mRet;
 }
@@ -658,8 +657,8 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
 		tmp << "(" << Bnrows << "," << Bncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	const size_t n = Anrows;
-	const size_t m = Bncols;
+	const size_t nn = Anrows;
+	const size_t mm = Bncols;
 
 	Matrix U;
 	Matrix L;
@@ -669,33 +668,33 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
 
 	//we solve AX=B. Since A=LU, then LUX = B
 	//we start by forward solving LY=B with Y=UX
-	Matrix Y(n, m);
-	for (size_t i=1; i<=n; i++) {
-		if (IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+	Matrix Y(nn, mm);
+	for (size_t ii=1; ii<=nn; ii++) {
+		if (IOUtils::checkEpsilonEquality(L(ii,ii), 0., epsilon)) {
 			return false;
 		}
-		for (size_t j=1; j<=m; j++) {
+		for (size_t jj=1; jj<=mm; jj++) {
 			double sum=0.;
-			for (size_t k=1; k<i; k++) {
-				sum += L(i,k) * Y(k,j);
+			for (size_t kk=1; kk<ii; kk++) {
+				sum += L(ii,kk) * Y(kk,jj);
 			}
-			Y(i,j) = (B(i,j) - sum) / L(i,i);
+			Y(ii,jj) = (B(ii,jj) - sum) / L(ii,ii);
 		}
 	}
 
 	//now, we backward solve UX=Y
-	X.resize(n,m); //we need to ensure that X has the correct dimensions
-	for (size_t i=n; i>=1; i--) { //lines
-		if (IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
+	X.resize(nn,mm); //we need to ensure that X has the correct dimensions
+	for (size_t ii=nn; ii>=1; ii--) { //lines
+		if (IOUtils::checkEpsilonEquality(U(ii,ii), 0., epsilon)) { //actually, only U(n,n) needs checking
 			//singular matrix
 			return false;
 		}
-		for (size_t j=1; j<=m; j++) {
+		for (size_t jj=1; jj<=mm; jj++) {
 			double sum = 0.;
-			for (size_t k=i+1; k<=n; k++) {
-				sum += U(i,k) * X(k,j);
+			for (size_t kk=ii+1; kk<=nn; kk++) {
+				sum += U(ii,kk) * X(kk,jj);
 			}
-			X(i,j) = (Y(i,j) - sum) / U(i,i);
+			X(ii,jj) = (Y(ii,jj) - sum) / U(ii,ii);
 		}
 	}
 
@@ -739,22 +738,22 @@ bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 	std::vector<double> b(n+1), c(n+1), v(n+1); //so we can keep the same index as for the matrix
 
 	b[1] = A(1,1); v[1] = B(1,1); //otherwise they would never be defined
-	for (size_t i=2; i<=n; i++) {
-		if (IOUtils::checkEpsilonEquality(b[i-1], 0., epsilon))
+	for (size_t ii=2; ii<=n; ii++) {
+		if (IOUtils::checkEpsilonEquality(b[ii-1], 0., epsilon))
 			return false;
-		const double b_i = A(i,i);
-		const double v_i = B(i,1);
-		const double a_i = A(i,i-1);
-		const double m = a_i / b[i-1];
-		c[i-1] = A(i-1,i);
-		b[i] = b_i - m * c[i-1];
-		v[i] = v_i - m * v[i-1];
+		const double b_i = A(ii,ii);
+		const double v_i = B(ii,1);
+		const double a_i = A(ii,ii-1);
+		const double m = a_i / b[ii-1];
+		c[ii-1] = A(ii-1,ii);
+		b[ii] = b_i - m * c[ii-1];
+		v[ii] = v_i - m * v[ii-1];
 	}
 
 	X.resize(n,1); //we need to ensure that X has the correct dimensions
 	X(n,1) = v[n] / b[n];
-	for (size_t i=n-1; i>=1; i--) {
-		X(i,1) = ( v[i] - c[i]*X(i+1,1) ) / b[i];
+	for (size_t ii=n-1; ii>=1; ii--) {
+		X(ii,1) = ( v[ii] - c[ii]*X(ii+1,1) ) / b[ii];
 	}
 
 	return true;
@@ -773,28 +772,28 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B)
 void Matrix::gauss_elimination(Matrix& M, std::vector<size_t>& p)
 { //Gaussian elimination with partial pivoting (row-swapping)
 	const size_t dim = M.getNx();
-	p.reserve(dim+1); //start at 1 like the matrix class does
-	for (size_t i=1; i<=dim; i++) {
-		p[i]=i; //no permutations yet
+	p.resize(dim+1); //start at 1 like the matrix class does
+	for (size_t ii=1; ii<=dim; ii++) {
+		p[ii]=ii; //no permutations yet
 	}
 
-	for (size_t j=1; j<dim; j++) { //pivoting, last column remains unchanged
-		size_t ipiv = j;
-		double piv = M(p[j], j);
-		for (size_t i=j+1; i<=dim; i++) { //rows below diagonal
-			if (fabs(M(p[i], j))>fabs(piv)) { //biggest element for stability
-				ipiv=i;
-				piv=M(p[i], j);
+	for (size_t jj=1; jj<dim; jj++) { //pivoting, last column remains unchanged
+		size_t ipiv = jj;
+		double piv = M(p[jj], jj);
+		for (size_t ii=jj+1; ii<=dim; ii++) { //rows below diagonal
+			if (fabs(M(p[ii], jj))>fabs(piv)) { //biggest element for stability
+				ipiv=ii;
+				piv=M(p[ii], jj);
 			}
 		}
-		const size_t tmp=p[j]; //virtual row swapping
-		p[j]=p[ipiv];
+		const size_t tmp=p[jj]; //virtual row swapping
+		p[jj]=p[ipiv];
 		p[ipiv]=tmp;
-		for (size_t i=j+1; i<=dim; i++) {
-			const double f=M(p[i], j)/(double)M(p[j], j); //elimination factor
-			M(p[i], j)=f; //save factor instead of produced zeros
-			for (size_t x=j+1; x<=dim; ++x) { //multiply all elements to the right
-				M(p[i], x)=M(p[i], x)-f*M(p[j], x);
+		for (size_t ii=jj+1; ii<=dim; ii++) {
+			const double f=M(p[ii], jj)/(double)M(p[jj], jj); //elimination factor
+			M(p[ii], jj)=f; //save factor instead of produced zeros
+			for (size_t x=jj+1; x<=dim; ++x) { //multiply all elements to the right
+				M(p[ii], x)=M(p[ii], x)-f*M(p[jj], x);
 			}
 		}
 	} //endfor j
@@ -815,25 +814,25 @@ bool Matrix::gauss_solve(Matrix& M, Matrix& A, Matrix& X) //solve M.X=A
 	gauss_elimination(M, p);
 
 	double det=1.;
-	for (size_t i=1; i<=dim; i++) //multiply diagonal elements
-		det*=M(p[i], i); //determinant changes sign for each permutation, but we only check against 0
+	for (size_t ii=1; ii<=dim; ii++) //multiply diagonal elements
+		det *= M(p[ii], ii); //determinant changes sign for each permutation, but we only check against 0
 
 	if (IOUtils::checkEpsilonEquality(det, 0., epsilon))
 		return false; //singular matrix
 
-	for (size_t i=1; i<dim; i++) { //repeat elimination for solution matrix
-		for (size_t j=i+1; j<=dim; j++) {
+	for (size_t ii=1; ii<dim; ii++) { //repeat elimination for solution matrix
+		for (size_t jj=ii+1; jj<=dim; jj++) {
 			for (size_t x=1; x<=sys; x++)
-				A(p[j], x)=A(p[j], x)-M(p[j], i)*A(p[i], x); //make use of saved elimination factor
+				A(p[jj], x) = A(p[jj], x)-M(p[jj], ii)*A(p[ii], x); //make use of saved elimination factor
 		}
 	}
 
 	for (size_t x=1; x<=sys; x++) { //backwards substitution
-		for (size_t i=dim; i>=1; i--) {
-			X(i, x)=A(p[i], x);
-			for (size_t j=i+1; j<=dim; j++)
-				X(i, x)=X(i, x)-M(p[i], j)*X(j, x); //put in X without permutation for right order
-			X(i, x)=X(i, x)/M(p[i], i); //divide by the coefficient's factor
+		for (size_t ii=dim; ii>=1; ii--) {
+			X(ii, x)=A(p[ii], x);
+			for (size_t jj=ii+1; jj<=dim; jj++)
+				X(ii, x) = X(ii, x)-M(p[ii], jj)*X(jj, x); //put in X without permutation for right order
+			X(ii, x) = X(ii, x)/M(p[ii], ii); //divide by the coefficient's factor
 		}
 	}
 
@@ -869,13 +868,13 @@ double Matrix::gauss_det(Matrix& M)
 	std::vector<size_t> p;
 	gauss_elimination(M, p);
 	double det=1.;
-	for (size_t i=1; i<=M.getNx(); i++) //multiply diagonal elements
-		det*=M(p[i], i);
+	for (size_t ii=1; ii<=M.getNx(); ii++) //multiply diagonal elements
+		det *= M(p[ii], ii);
 
-	for (size_t i=1; i<=M.getNx(); i++) {
-		while (i!=p[i]) { //roll back permutations
-			const size_t tmp=p[i];
-			p[i]=p[tmp];
+	for (size_t ii=1; ii<=M.getNx(); ii++) {
+		while (ii!=p[ii]) { //roll back permutations
+			const size_t tmp=p[ii];
+			p[ii]=p[tmp];
 			p[tmp]=tmp;
 			det*=-1.; //determinant changes sign for each permutation
 		}
@@ -893,10 +892,10 @@ bool Matrix::isIdentity() const
 	}
 
 	bool is_identity=true;
-	for (size_t i=1; i<=nrows; i++) {
-		for (size_t j=1; j<=ncols; j++) {
-			const double val = operator()(i,j);
-			if (i!=j) {
+	for (size_t ii=1; ii<=nrows; ii++) {
+		for (size_t jj=1; jj<=ncols; jj++) {
+			const double val = operator()(ii,jj);
+			if (ii!=jj) {
 				if (IOUtils::checkEpsilonEquality(val,0.,epsilon_mtr)==false) {
 					is_identity=false;
 					break;
@@ -925,14 +924,14 @@ void Matrix::partialPivoting(std::vector<size_t>& pivot_idx)
 	//bad luck: if a row has several elements that are max of their columns,
 	//we don't optimize its position. Ie: we can end up with a small element
 	//on the diagonal
-	for (size_t j=1; j<=ncols; j++) {
-		const size_t old_i = j;
-		const size_t new_i = findMaxInCol(j);
-		if (new_i!=j) { //ie: pivoting needed
-			swapRows(old_i, new_i);
-			pivot_idx.push_back(new_i);
+	for (size_t jj=1; jj<=ncols; jj++) {
+		const size_t old_ii = jj;
+		const size_t new_ii = findMaxInCol(jj);
+		if (new_ii!=jj) { //ie: pivoting needed
+			swapRows(old_ii, new_ii);
+			pivot_idx.push_back(new_ii);
 		} else
-			pivot_idx.push_back(old_i);
+			pivot_idx.push_back(old_ii);
 	}
 }
 
@@ -947,10 +946,10 @@ void Matrix::maximalPivoting()
 	std::vector<size_t> pivot_idx;
 	Matrix tmp( *this );
 
-	for (size_t i=1; i<=nrows; i++) {
-		const double scale = operator()(i,findMaxInRow(i));
-		for (size_t j=1; j<=ncols; j++) {
-			operator()(i,j) /= scale;
+	for (size_t ii=1; ii<=nrows; ii++) {
+		const double scale = operator()(ii,findMaxInRow(ii));
+		for (size_t jj=1; jj<=ncols; jj++) {
+			operator()(ii,jj) /= scale;
 		}
 	}
 	tmp.partialPivoting(pivot_idx);
@@ -964,9 +963,9 @@ void Matrix::maximalPivoting()
 	std::vector<double> e(ncols+1); //so we remain compatible with matrix index
 	double g=0., x=0.;
 
-	for (size_t i=1; i<=ncols; i++) {
-		e[i]=g; s=0.; l=i+1;
-		for (size_t j=i; j<=m; j++) s += ( operator()(i,j)*operator()(i,j) );
+	for (size_t ii=1; ii<=ncols; ii++) {
+		e[i]=g; s=0.; l=ii+1;
+		for (size_t jj=ii; jj<=m; jj++) s += ( operator()(ii,jj)*operator()(ii,jj) );
 	}
 }*/
 
@@ -976,11 +975,11 @@ size_t Matrix::findMaxInCol(const size_t &col)
 	size_t row_idx = 0;
 	double max_val=0.;
 
-	for (size_t i=1; i<=nrows; i++) {
-		const double val = fabs( operator()(i,col) );
+	for (size_t ii=1; ii<=nrows; ii++) {
+		const double val = fabs( operator()(ii,col) );
 		if ( val>max_val) {
-			max_val=val;
-			row_idx=i;
+			max_val = val;
+			row_idx = ii;
 		}
 	}
 	return row_idx;
@@ -992,11 +991,11 @@ size_t Matrix::findMaxInRow(const size_t &row)
 	size_t col_idx = 0;
 	double max_val=0.;
 
-	for (size_t j=1; j<=ncols; j++) {
-		const double val = fabs( operator()(row,j) );
-		if ( val>max_val) {
+	for (size_t jj=1; jj<=ncols; jj++) {
+		const double val = fabs( operator()(row,jj) );
+		if ( val>max_val ) {
 			max_val=val;
-			col_idx=j;
+			col_idx=jj;
 		}
 	}
 	return col_idx;
@@ -1020,10 +1019,10 @@ double Matrix::maxCoeff(size_t& max_row, size_t& max_col) const
 
 void Matrix::swapRows(const size_t &i1, const size_t &i2)
 {
-	for (size_t j=1; j<=ncols; j++) {
-		const double tmp = operator()(i2,j);
-		operator()(i2,j) = operator()(i1,j);
-		operator()(i1,j) = tmp;
+	for (size_t jj=1; jj<=ncols; jj++) {
+		const double tmp = operator()(i2,jj);
+		operator()(i2,jj) = operator()(i1,jj);
+		operator()(i1,jj) = tmp;
 	}
 }
 
