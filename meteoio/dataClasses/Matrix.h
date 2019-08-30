@@ -257,8 +257,8 @@ class Matrix {
 
 		/**
 		* @brief Convenience call to the solver with input matrix preservation.
-		* This function makes a copy of the input matrix and invokes the solver on that, i. e. the
-		* input matrices are not changed in the process.
+		* This function makes a copy of the input matrices and invokes the solver on that, i. e. they
+		* are not changed in the process.
 		* @author Michael Reisecker
 		* @param[in] M The matrix M in M·X=A
 		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
@@ -322,6 +322,18 @@ class Matrix {
 		* (see https://secure.wikimedia.org/wikipedia/en/wiki/Bidiagonalization)
 		*/
 		//void bidiagonalize();
+
+		/**
+		* @brief Eigenvalue and eigenvector computation of symmetrical matrices.
+		* This function performs the iterative Jacobi method, cf. https://en.wikipedia.org/wiki/Jacobi_eigenvalue_algorithm
+		* Attention: The given matrix must be symmetrical on input!
+		* @author Michael Reisecker
+		* @param[in,out] AA The matrix to search eigenvalues for. They will be found on its diagonal after transformation (unsorted).
+		* @param[out] DD Eigenvectors
+		* @return Number of iterations that were needed
+		*/
+		static unsigned int eigenvalues_jacobi(Matrix& AA, Matrix& DD);
+		static double jacobi_epsilon(Matrix& AA);
 
 		const std::string toString() const;
 

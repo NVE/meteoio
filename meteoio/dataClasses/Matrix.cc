@@ -405,7 +405,7 @@ double Matrix::det() const
 
 bool Matrix::LU(Matrix& L, Matrix& U) const
 {
-//Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
+//Dolittle algorithm, cf http://mathfaculty.fullerton.edu/mathews/n2003/CholeskyMod.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 	if (nrows!=ncols) {
 		std::ostringstream tmp;
@@ -769,113 +769,109 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B)
 		throw IOException("Matrix inversion failed!", AT);
 }
 
-void Matrix::gauss_elimination(Matrix& M, std::vector<size_t>& p)
+void Matrix::gauss_elimination(Matrix& MM, std::vector<size_t>& pp)
 { //Gaussian elimination with partial pivoting (row-swapping)
-	const size_t dim = M.getNx();
-	p.resize(dim+1); //start at 1 like the matrix class does
-	for (size_t ii=1; ii<=dim; ii++) {
-		p[ii]=ii; //no permutations yet
-	}
+	const size_t dim=MM.getNx();
+	pp.resize(dim+1); //start at 1 like the matrix class does
+	for (size_t ii=1; ii<=dim; ii++)
+		pp[ii]=ii; //no permutations yet
 
 	for (size_t jj=1; jj<dim; jj++) { //pivoting, last column remains unchanged
-		size_t ipiv = jj;
-		double piv = M(p[jj], jj);
+		size_t ipiv=jj;
+		double piv=MM(pp[jj], jj);
 		for (size_t ii=jj+1; ii<=dim; ii++) { //rows below diagonal
-			if (fabs(M(p[ii], jj))>fabs(piv)) { //biggest element for stability
+			if (fabs(MM(pp[ii], jj))>fabs(piv)) { //biggest element for stability
 				ipiv=ii;
-				piv=M(p[ii], jj);
+				piv=MM(pp[ii], jj);
 			}
 		}
-		const size_t tmp=p[jj]; //virtual row swapping
-		p[jj]=p[ipiv];
-		p[ipiv]=tmp;
+		const size_t tmp=pp[jj]; //virtual row swapping
+		pp[jj]=pp[ipiv];
+		pp[ipiv]=tmp;
 		for (size_t ii=jj+1; ii<=dim; ii++) {
-			const double f=M(p[ii], jj)/(double)M(p[jj], jj); //elimination factor
-			M(p[ii], jj)=f; //save factor instead of produced zeros
-			for (size_t x=jj+1; x<=dim; ++x) { //multiply all elements to the right
-				M(p[ii], x)=M(p[ii], x)-f*M(p[jj], x);
-			}
+			const double ff=MM(pp[ii], jj)/MM(pp[jj], jj); //elimination factor
+			MM(pp[ii], jj)=ff; //save factor instead of produced zero
+			for (size_t x=jj+1; x<=dim; ++x) //multiply all elements to the right
+				MM(pp[ii], x)=MM(pp[ii], x)-ff*MM(pp[jj], x);
 		}
 	} //endfor j
 }
 
-bool Matrix::gauss_solve(Matrix& M, Matrix& A, Matrix& X) //solve M.X=A
+bool Matrix::gauss_solve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 { //solve an equation system with Gauss elimination and partial pivoting
-	if (M.getNx()!=M.getNy())
+	if (MM.getNx()!=MM.getNy())
 		throw IOException("Trying to solve M·X=A for non-square matrix M.", AT);
-	if (M.getNy()!=A.getNy())
+	if (MM.getNy()!=AA.getNy())
 		throw IOException("Trying to solve M·X=A, but the dimensions of M and A do not match.", AT);
 
-	const size_t dim=M.getNx();
-	const size_t sys=A.getNx();
-
-	X.resize(dim, sys);
-	std::vector<size_t> p;
-	gauss_elimination(M, p);
+	const size_t dim=MM.getNx();
+	const size_t sys=AA.getNx();
+	XX.resize(dim, sys);
+	std::vector<size_t> pp;
+	gauss_elimination(MM, pp);
 
 	double det=1.;
 	for (size_t ii=1; ii<=dim; ii++) //multiply diagonal elements
-		det *= M(p[ii], ii); //determinant changes sign for each permutation, but we only check against 0
-
+		det *= MM(pp[ii], ii); //determinant changes sign for each permutation, but we only check against 0
 	if (IOUtils::checkEpsilonEquality(det, 0., epsilon))
 		return false; //singular matrix
 
 	for (size_t ii=1; ii<dim; ii++) { //repeat elimination for solution matrix
 		for (size_t jj=ii+1; jj<=dim; jj++) {
-			for (size_t x=1; x<=sys; x++)
-				A(p[jj], x) = A(p[jj], x)-M(p[jj], ii)*A(p[ii], x); //make use of saved elimination factor
+			for (size_t xx=1; xx<=sys; xx++)
+				AA(pp[jj], xx) = AA(pp[jj], xx)-MM(pp[jj], ii)*AA(pp[ii], xx); //make use of saved elimination factor
 		}
 	}
 
-	for (size_t x=1; x<=sys; x++) { //backwards substitution
+	for (size_t xx=1; xx<=sys; xx++) { //backwards substitution
 		for (size_t ii=dim; ii>=1; ii--) {
-			X(ii, x)=A(p[ii], x);
+			XX(ii, xx)=AA(pp[ii], xx);
 			for (size_t jj=ii+1; jj<=dim; jj++)
-				X(ii, x) = X(ii, x)-M(p[ii], jj)*X(jj, x); //put in X without permutation for right order
-			X(ii, x) = X(ii, x)/M(p[ii], ii); //divide by the coefficient's factor
+				XX(ii, xx)=XX(ii, xx)-MM(pp[ii], jj)*XX(jj, xx); //put in X without permutation for right order
+			XX(ii, xx)=XX(ii, xx)/MM(pp[ii], ii); //divide by the coefficient's factor
 		}
 	}
 
 	return true;
 }
 
-bool Matrix::gauss_solve(const Matrix& M, const Matrix& A, Matrix& X)
+bool Matrix::gauss_solve(const Matrix& MM, const Matrix& AA, Matrix& XX)
 {
-	Matrix N(M), B(A); //copy matrices to not destroy originals
-	return gauss_solve(N, B, X);
+	Matrix NN(MM), BB(AA); //copy matrices to not destroy originals
+	return gauss_solve(NN, BB, XX);
 }
 
-bool Matrix::gauss_inverse(Matrix& M)
+bool Matrix::gauss_inverse(Matrix& MM)
 {
-	Matrix I;
-	I.identity(M.getNx());
+	Matrix II;
+	II.identity(MM.getNx());
 	Matrix Inv;
-	const bool success = gauss_solve(M, I, Inv);
-	M = Inv;
+	const bool success=gauss_solve(MM, II, Inv);
+	MM=Inv;
 	return success;
 }
 
-bool Matrix::gauss_inverse(const Matrix& M, Matrix& Inv)
+bool Matrix::gauss_inverse(const Matrix& MM, Matrix& Inv)
 {
-	Matrix N(M); //copy matrix to not destroy original
-	bool success = gauss_inverse(N);
-	Inv = N;
+	Matrix NN(MM); //copy matrix to not destroy original
+	bool success=gauss_inverse(NN);
+	Inv=NN;
 	return success;
 }
 
-double Matrix::gauss_det(Matrix& M)
+double Matrix::gauss_det(Matrix& MM)
 {
-	std::vector<size_t> p;
-	gauss_elimination(M, p);
+	std::vector<size_t> pp;
+	gauss_elimination(MM, pp);
 	double det=1.;
-	for (size_t ii=1; ii<=M.getNx(); ii++) //multiply diagonal elements
-		det *= M(p[ii], ii);
+	for (size_t ii=1; ii<=MM.getNx(); ii++) //multiply diagonal elements
+		det *= MM(pp[ii], ii);
 
-	for (size_t ii=1; ii<=M.getNx(); ii++) {
-		while (ii!=p[ii]) { //roll back permutations
-			const size_t tmp=p[ii];
-			p[ii]=p[tmp];
-			p[tmp]=tmp;
+	for (size_t ii=1; ii<=MM.getNx(); ii++) {
+		while (ii!=pp[ii]) { //roll back permutations
+			const size_t tmp=pp[ii];
+			pp[ii]=pp[tmp];
+			pp[tmp]=tmp;
 			det*=-1.; //determinant changes sign for each permutation
 		}
 	}
@@ -1025,5 +1021,76 @@ void Matrix::swapRows(const size_t &i1, const size_t &i2)
 		operator()(i1,jj) = tmp;
 	}
 }
+
+unsigned int Matrix::eigenvalues_jacobi(Matrix& AA, Matrix& DD)
+{
+	/*
+	 * Cf. http://physik.uni-graz.at/~uxh/teaching/computational-physics1/kapitel11.pdf with similar notation. In short:
+	 * Find Q for which Q^-1·A·Q=D, with D=diag(lambda_1, lambda_2, ...) the eigenvalues.
+	 * Q is built iteratively, i. e. Q=Q_1·Q_2·...·Q_N <-- the elements of Q are beta, ss, cc
+	 * The eigenvalue problem is solved because
+	 * A·Q=Q·D=Q·diag(lambda_1, lambda_2, ...) --> Q=(v_1, v_2, ...) ==> A(v_1, v_2, ...)=(lambda_1, lambda_2, ...)
+	 * Define A'=Q^T·A·Q, the result of a similarity transformation <-- beta, ss, cc are chosen such that a'_pq=0
+	 */
+
+	const size_t dim=AA.getNx(); //A assumed to be real and symmetrical! This is not checked here!
+	DD.identity(dim);
+
+	unsigned int counter=0; //count iterations
+	while(jacobi_epsilon(AA)>epsilon) {
+		counter++;
+		for (size_t pp=1; pp<dim; pp++) {
+			for (size_t qq=pp+1; qq<=dim; qq++) {
+				if ( IOUtils::checkEpsilonEquality(fabs(AA(pp, qq)), 0., epsilon) )
+					continue; //nothing to transform
+
+				const double beta=(AA(qq, qq)-AA(pp, pp))/(2.*AA(pp, qq)); //calculate all the constants, i. e. the elements of Q
+				const double ssquare=0.5-0.5*beta*(1./sqrt(1.+beta*beta)); //negative root solution is more stable
+				const double csquare=0.5+0.5*beta*(1./sqrt(1.+beta*beta));
+				const double sc=0.5*(1./sqrt(1.+beta*beta));
+				const double ss=sqrt(ssquare);
+				const double cc=sqrt(csquare);
+
+				for (size_t ii=1; ii<=dim; ii++) { //calculate a'_ip, a'_iq and fill symmetrically
+					if ((ii!=pp) && (ii!=qq)) {
+						const double aold=AA(ii, pp);
+						AA(ii, pp)=aold*cc-AA(ii, qq)*ss;
+						AA(ii, qq)=aold*ss+AA(ii, qq)*cc;
+						AA(pp, ii)=AA(ii, pp);
+						AA(qq, ii)=AA(ii, qq);
+					}
+				}
+
+				const double old=AA(pp, pp); //calculate a'_ip, a'_iq and fill symmetrically
+				AA(pp, pp)=old*csquare+AA(qq, qq)*ssquare-2.*AA(pp, qq)*sc;
+				AA(qq, qq)=old*ssquare+AA(qq, qq)*csquare+2.*AA(pp, qq)*sc;
+				AA(pp, qq)=0.;
+				AA(qq, pp)=0.;
+
+				for (size_t jj=1; jj<=dim; jj++) { //build eigenvectors
+					const double dold=DD(jj, pp);
+					DD(jj, pp)=DD(jj, pp)*cc-DD(jj, qq)*ss;
+					DD(jj, qq)=dold*ss+DD(jj, qq)*cc;
+				}
+			} //endfor qq
+		} //endfor pp
+	} //endwhile
+
+   return counter;
+}
+
+double Matrix::jacobi_epsilon(Matrix& AA) //halting criteria for Jacobi eigenvalue search
+{
+	double s1=0, s2=0;
+	for (size_t ii=1; ii<=AA.getNx(); ++ii) {
+		for (size_t jj=1; jj<=AA.getNx(); ++jj) {
+			s1+=AA(ii, jj)*AA(ii, jj); //sum of squares of matrix elements
+			if (ii!=jj)
+				s2+=AA(ii, jj)*AA(ii, jj); //sum of squares of non-diagonal elements
+		}
+	}
+	return s2/s1;
+}
+
 
 } //end namespace
