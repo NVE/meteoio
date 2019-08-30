@@ -1107,7 +1107,7 @@ void Matrix::svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV)
 	VV.resize(MM.getNx(), MM.getNx(), 0.);
 	SS.resize(MM.getNy(), MM.getNx(), 0.);
 
-	Matrix EE(MM*MM.getT()); //E is symmetrical and will be transformed to eigenvales
+	Matrix EE(MM*MM.getT()); //E is symmetrical and will be transformed to eigenvalues
 
 	(void) Matrix::eigenvaluesJacobi(EE, UU); //E gets eigenvalues at diagonal, UU are the eigenvectors
 	Matrix LL(EE.getDiagonal().getT()); //extract eigenvalues as column vector
@@ -1115,9 +1115,6 @@ void Matrix::svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV)
 	Matrix::sortEigenvalues(LL, UU); //put at diagonal from biggest to smallest
 	for (size_t ii=1; ii<=SS.getNx(); ii++) { //the diagonal matrix S is the square root of the sorted eigenvectors
 		SS(ii, ii)=sqrt(LL(ii, 1));
-	}
-
-	for (size_t ii=1; ii<=SS.getNx(); ii++) {
 		const Matrix colV = MM.getT()*UU.getCol(ii)/SS(ii, ii); //A^T·v_i=sigma_i·u_i with v_i being eigenvectors of V
 		VV.setCol(ii, colV); //eigenvectors of A^T·A and A·A^T are not independent -> no Jacobi recalculation
 	}
@@ -1127,20 +1124,18 @@ void Matrix::svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV)
 void Matrix::sortEigenvalues(Matrix& EE, Matrix& VV)
 { //Bubblesort
 	bool swapped;
-	for (size_t jj=1; jj<=EE.getNx(); jj++) { //sort each column (separately)
-		do {
-			swapped=false;
-			for (size_t ii=2; ii<=EE.getNy(); ii++) {
-				if (EE(ii-1, jj)<EE(ii, jj)) { //swap pair-wise
-					const double tmp=EE(ii, jj);
-					EE(ii, jj)=EE(ii-1, jj);
-					EE(ii-1, jj)=tmp;
-					swapped=true;
-					VV.swapCols(ii, ii-1); //also swap the eigenvector columns
-				}
+	do {
+		swapped=false;
+		for (size_t ii=2; ii<=EE.getNy(); ii++) {
+			if (EE(ii-1, 1)<EE(ii, 1)) { //swap pair-wise
+				const double tmp=EE(ii, 1);
+				EE(ii, 1)=EE(ii-1, 1);
+				EE(ii-1, 1)=tmp;
+				swapped=true;
+				VV.swapCols(ii, ii-1); //also swap the eigenvector columns
 			}
-		} while (swapped);
-	} //endfor jj
+		}
+	} while (swapped);
 }
 
 } //end namespace
