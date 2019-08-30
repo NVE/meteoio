@@ -290,7 +290,8 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
 		meta.position.setXY(east, north, alt, false);
 	}
-	meta.position.check( "Inconsistent geographic coordinates in file \""+myreader.get_filename()+"\": " ); //check coordinates consistency and compute the missing representation if necessary
+	if (!meta.position.isNodata())
+		meta.position.check( "Inconsistent geographic coordinates in file \""+myreader.get_filename()+"\": " ); //check coordinates consistency and compute the missing representation if necessary
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
@@ -390,15 +391,25 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 				else
 					tmp_md(indexes[jj]) = current_data;
 			}
-
-			if (data_epsg)
-				tmp_md.meta.position.setXY(east, north, alt, false);
-			if (data_wgs84)
-				tmp_md.meta.position.setXY(lat, lon, alt, false);
-			if (data_epsg || data_wgs84)
-				tmp_md.meta.position.check("Inconsistent geographic coordinates in file \"" + filename + "\": ");
-
+			
 			current_index++;
+		}
+		
+		//process location in the data section
+		if (data_epsg || data_wgs84) {
+			if (data_epsg) {
+				tmp_md.meta.position.setXY(east, north, alt, false);
+				east = IOUtils::nodata;
+				north = IOUtils::nodata;
+			}
+			if (data_wgs84) {
+				tmp_md.meta.position.setXY(lat, lon, alt, false);
+				lat = IOUtils::nodata;
+				lon = IOUtils::nodata;
+			}
+			alt = IOUtils::nodata;
+			
+			tmp_md.meta.position.check("Inconsistent inline geographic coordinates in file \"" + filename + "\": ");
 		}
 
 		if ((pint_present) && (tmp_md(MeteoData::PSUM) == IOUtils::nodata)) {
