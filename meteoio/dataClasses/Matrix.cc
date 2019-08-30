@@ -769,7 +769,7 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B)
 		throw IOException("Matrix inversion failed!", AT);
 }
 
-void Matrix::gauss_elimination(Matrix& MM, std::vector<size_t>& pp)
+void Matrix::gaussElimination(Matrix& MM, std::vector<size_t>& pp)
 { //Gaussian elimination with partial pivoting (row-swapping)
 	const size_t dim=MM.getNx();
 	pp.resize(dim+1); //start at 1 like the matrix class does
@@ -797,7 +797,7 @@ void Matrix::gauss_elimination(Matrix& MM, std::vector<size_t>& pp)
 	} //endfor j
 }
 
-bool Matrix::gauss_solve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
+bool Matrix::gaussSolve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 { //solve an equation system with Gauss elimination and partial pivoting
 	if (MM.getNx()!=MM.getNy())
 		throw IOException("Trying to solve M·X=A for non-square matrix M.", AT);
@@ -808,7 +808,7 @@ bool Matrix::gauss_solve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 	const size_t sys=AA.getNx();
 	XX.resize(dim, sys);
 	std::vector<size_t> pp;
-	gauss_elimination(MM, pp);
+	gaussElimination(MM, pp);
 
 	double det=1.;
 	for (size_t ii=1; ii<=dim; ii++) //multiply diagonal elements
@@ -835,34 +835,34 @@ bool Matrix::gauss_solve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 	return true;
 }
 
-bool Matrix::gauss_solve(const Matrix& MM, const Matrix& AA, Matrix& XX)
+bool Matrix::gaussSolve(const Matrix& MM, const Matrix& AA, Matrix& XX)
 {
 	Matrix NN(MM), BB(AA); //copy matrices to not destroy originals
-	return gauss_solve(NN, BB, XX);
+	return gaussSolve(NN, BB, XX);
 }
 
-bool Matrix::gauss_inverse(Matrix& MM)
+bool Matrix::gaussInverse(Matrix& MM)
 {
 	Matrix II;
 	II.identity(MM.getNx());
 	Matrix Inv;
-	const bool success=gauss_solve(MM, II, Inv);
+	const bool success=gaussSolve(MM, II, Inv);
 	MM=Inv;
 	return success;
 }
 
-bool Matrix::gauss_inverse(const Matrix& MM, Matrix& Inv)
+bool Matrix::gaussInverse(const Matrix& MM, Matrix& Inv)
 {
 	Matrix NN(MM); //copy matrix to not destroy original
-	bool success=gauss_inverse(NN);
+	bool success=gaussInverse(NN);
 	Inv=NN;
 	return success;
 }
 
-double Matrix::gauss_det(Matrix& MM)
+double Matrix::gaussDet(Matrix& MM)
 {
 	std::vector<size_t> pp;
-	gauss_elimination(MM, pp);
+	gaussElimination(MM, pp);
 	double det=1.;
 	for (size_t ii=1; ii<=MM.getNx(); ii++) //multiply diagonal elements
 		det *= MM(pp[ii], ii);
@@ -1022,7 +1022,16 @@ void Matrix::swapRows(const size_t &i1, const size_t &i2)
 	}
 }
 
-unsigned int Matrix::eigenvalues_jacobi(Matrix& AA, Matrix& DD)
+void Matrix::swapCols(const size_t &j1, const size_t &j2)
+{
+	for (size_t ii=1; ii<=nrows; ii++) {
+		const double tmp = operator()(ii,j2);
+		operator()(ii,j2) = operator()(ii,j1);
+		operator()(ii,j1) = tmp;
+	}
+}
+
+unsigned int Matrix::eigenvaluesJacobi(Matrix& AA, Matrix& DD)
 {
 	/*
 	 * Cf. http://physik.uni-graz.at/~uxh/teaching/computational-physics1/kapitel11.pdf with similar notation. In short:
@@ -1037,7 +1046,7 @@ unsigned int Matrix::eigenvalues_jacobi(Matrix& AA, Matrix& DD)
 	DD.identity(dim);
 
 	unsigned int counter=0; //count iterations
-	while(jacobi_epsilon(AA)>epsilon) {
+	while(jacobiEpsilon(AA)>epsilon) {
 		counter++;
 		for (size_t pp=1; pp<dim; pp++) {
 			for (size_t qq=pp+1; qq<=dim; qq++) {
@@ -1079,7 +1088,7 @@ unsigned int Matrix::eigenvalues_jacobi(Matrix& AA, Matrix& DD)
    return counter;
 }
 
-double Matrix::jacobi_epsilon(Matrix& AA) //halting criteria for Jacobi eigenvalue search
+double Matrix::jacobiEpsilon(Matrix& AA) //halting criteria for Jacobi eigenvalue search
 {
 	double s1=0, s2=0;
 	for (size_t ii=1; ii<=AA.getNx(); ++ii) {
@@ -1092,5 +1101,46 @@ double Matrix::jacobi_epsilon(Matrix& AA) //halting criteria for Jacobi eigenval
 	return s2/s1;
 }
 
+void Matrix::svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV)
+{
+	UU.resize(MM.getNy(), MM.getNy(), 0.); //init sizes: A(i, j)=U(i, i)·S(i, j)·V(j, j)^T
+	VV.resize(MM.getNx(), MM.getNx(), 0.);
+	SS.resize(MM.getNy(), MM.getNx(), 0.);
+
+	Matrix EE(MM*MM.getT()); //E is symmetrical and will be transformed to eigenvales
+
+	(void) Matrix::eigenvaluesJacobi(EE, UU); //E gets eigenvalues at diagonal, UU are the eigenvectors
+	Matrix LL(EE.getDiagonal().getT()); //extract eigenvalues as column vector
+
+	Matrix::sortEigenvalues(LL, UU); //put at diagonal from biggest to smallest
+	for (size_t ii=1; ii<=SS.getNx(); ii++) { //the diagonal matrix S is the square root of the sorted eigenvectors
+		SS(ii, ii)=sqrt(LL(ii, 1));
+	}
+
+	for (size_t ii=1; ii<=SS.getNx(); ii++) {
+		const Matrix colV = MM.getT()*UU.getCol(ii)/SS(ii, ii); //A^T·v_i=sigma_i·u_i with v_i being eigenvectors of V
+		VV.setCol(ii, colV); //eigenvectors of A^T·A and A·A^T are not independent -> no Jacobi recalculation
+	}
+	VV.T();
+} //cf. http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm
+
+void Matrix::sortEigenvalues(Matrix& EE, Matrix& VV)
+{ //Bubblesort
+	bool swapped;
+	for (size_t jj=1; jj<=EE.getNx(); jj++) { //sort each column (separately)
+		do {
+			swapped=false;
+			for (size_t ii=2; ii<=EE.getNy(); ii++) {
+				if (EE(ii-1, jj)<EE(ii, jj)) { //swap pair-wise
+					const double tmp=EE(ii, jj);
+					EE(ii, jj)=EE(ii-1, jj);
+					EE(ii-1, jj)=tmp;
+					swapped=true;
+					VV.swapCols(ii, ii-1); //also swap the eigenvector columns
+				}
+			}
+		} while (swapped);
+	} //endfor jj
+}
 
 } //end namespace

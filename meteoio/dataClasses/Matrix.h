@@ -241,7 +241,7 @@ class Matrix {
 		* @param[in,out] M The matrix to reduce
 		* @param[out] p Used permutation vector (ignore p[0])
 		*/
-		static void gauss_elimination(Matrix& M, std::vector<size_t>& p);
+		static void gaussElimination(Matrix& M, std::vector<size_t>& p);
 
 		/**
 		* @brief Equation system solver via Gaussian elimination.
@@ -253,7 +253,7 @@ class Matrix {
 		* @param[out] X The calculated solution X in M·X=A
 		* @return False if the equations are linearly dependent
 		*/
-		static bool gauss_solve(Matrix& M, Matrix& A, Matrix& X);
+		static bool gaussSolve(Matrix& M, Matrix& A, Matrix& X);
 
 		/**
 		* @brief Convenience call to the solver with input matrix preservation.
@@ -265,7 +265,7 @@ class Matrix {
 		* @param[out] X The calculated solution X in M·X=A
 		* @return False if the equations are linearly dependent
 		*/
-		static bool gauss_solve(const Matrix& M, const Matrix& A, Matrix& X);
+		static bool gaussSolve(const Matrix& M, const Matrix& A, Matrix& X);
 
 		/**
 		* @brief Matrix inversion via Gaussian elimination.
@@ -274,7 +274,7 @@ class Matrix {
 		* @param[in,out] M The matrix to invert
 		* @return False if the matrix is singular
 		*/
-		static bool gauss_inverse(Matrix& M);
+		static bool gaussInverse(Matrix& M);
 
 		/**
 		* @brief Convenience call for matrix inversion with input matrix preservation.
@@ -284,7 +284,7 @@ class Matrix {
 		* @param[out] Inv The inverse matrix
 		* @return False if the matrix is singular
 		*/
-		static bool gauss_inverse(const Matrix& M, Matrix& Inv);
+		static bool gaussInverse(const Matrix& M, Matrix& Inv);
 
 		/**
 		* @brief Get the matrix determinant via Gaussian elimination.
@@ -293,7 +293,7 @@ class Matrix {
 		* @param[in] M Matrix to calculate the determinant for
 		* @return The determinant
 		*/
-		static double gauss_det(Matrix& M);
+		static double gaussDet(Matrix& M);
 
 		/**
 		* @brief matrix LU decomposition.
@@ -332,8 +332,21 @@ class Matrix {
 		* @param[out] DD Eigenvectors
 		* @return Number of iterations that were needed
 		*/
-		static unsigned int eigenvalues_jacobi(Matrix& AA, Matrix& DD);
-		static double jacobi_epsilon(Matrix& AA);
+		static unsigned int eigenvaluesJacobi(Matrix& AA, Matrix& DD);
+		static double jacobiEpsilon(Matrix& AA);
+
+		/**
+		* @brief Singular Value Decomposition.
+		* This function calculates the SVD of a matrix. It uses an eigenvector search on M·M^T, which means problems may be squared.
+		* @author Michael Reisecker
+		* @param[in] MM The matrix to factorize.
+		* @param[out] UU Left singular vectors
+		* @param[out] SS Diagonal matrix with the singular values
+		* @param[out] VV Right singular vectors
+		*/
+		static void svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV);
+		static void sortEigenvalues(Matrix& EE, Matrix& VV);
+		void swapCols(const size_t &j1, const size_t &j2); //used by svd
 
 		const std::string toString() const;
 
@@ -375,6 +388,7 @@ class Matrix {
 		size_t findMaxInCol(const size_t &col);
 		size_t findMaxInRow(const size_t &row);
 		void swapRows(const size_t &i1, const size_t &i2);
+
 };
 
 } //end namespace
