@@ -554,8 +554,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 
-	//const ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
-	ofstream fout;
+	bool write_headers = false;
+	ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess
 	if (append_mode) {
 		if (!append_possible) {
 			//check where to insert the new data
@@ -565,22 +565,21 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 				reader.truncate_file(vec_timestamp[0]);
 			append_possible = true;
 		}
-		fout.open(filename.c_str(), ios::binary | ofstream::app);
-		if (fout.fail())
-			throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
+		mode_flags = ios::binary | ofstream::app;
 	} else { //normal mode
 		if (!append_possible) { //first write -> overwrite potential previous content
-			fout.open(filename.c_str(), ios::binary);
-			if (fout.fail())
-				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
-			write_header(fout); //Write the header info, always in ASCII format
+			write_headers = true;
 			append_possible = true; //now all other calls to "open" will be in append mode
 		} else { //after the first write: append
-			fout.open(filename.c_str(), ios::binary | ofstream::app);
-			if (fout.fail())
-				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
+			mode_flags = ios::binary | ofstream::app;
 		}
 	}
+	
+	std::ofstream fout(filename.c_str(), mode_flags);
+	if (fout.fail())
+		throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
+	if (write_headers) write_header(fout); //Write the header info, always in ASCII format
+	
 
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
 		fout.close();

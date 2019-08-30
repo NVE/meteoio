@@ -100,8 +100,6 @@ class Date {
 			CLOSEST ///< rounding toward closest
 		} RND;
 
-		static const int daysLeapYear[];
-		static const int daysNonLeapYear[];
 		static const double DST_shift;
 		static const double MJD_offset;
 		static const double RFC868_offset;
@@ -218,6 +216,8 @@ class Date {
 		static bool initStaticData();///<initialize the static map TZAbbrev
 
 		static std::map< std::string, double> TZAbbrev;
+		static const int daysLeapYear[];
+		static const int daysNonLeapYear[];
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
