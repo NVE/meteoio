@@ -589,10 +589,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon, easting, northing);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		std::ostringstream ss;
-		ss << "Error opening file " << file_and_path << " for reading, possible reason: " << std::strerror(errno);
-		ss << " Please check file existence and permissions!";
-		throw AccessException(ss.str(), AT);
+		const std::string msg( "Error opening file " + file_and_path + " for reading, possible reason: " + std::strerror(errno) + " Please check file existence and permissions!" );
+		throw AccessException(msg, AT);
 	}
 	
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
