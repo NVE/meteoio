@@ -263,6 +263,31 @@ namespace mio {
  *
  * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
+ * 
+ * When reading a file containing the data from multiple stations, each line containing the station ID it applies to, it is necessary
+ * to provide the requested station ID for each new station as well as declare which is the ID field (if the headers declare an "ID" column or
+ * a "STATIONID" column, this will also work)
+ * @code
+ * METEO = CSV
+ * METEOPATH = ./input
+ * CSV_DELIMITER = ,   
+ * CSV_NR_HEADERS = 1
+ * CSV_COLUMNS_HEADERS = 1
+ * CSV_DATETIME_SPEC = YYYY-MM-DD HH24:MI:SS
+ * CSV_FIELDS = ID TIMESTAMP SKIP TA RH DW VW SKIP HS SKIP SKIP P SKIP SKIP SKIP ISWR SKIP SKIP SKIP TSG SKIP SKIP ISWR ILWR TSS
+ * CSV_UNITS_OFFSET = 0 0 0 273.15 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 273.15
+ * CSV_UNITS_MULTIPLIER = 1 1 1 1 0.01 1 1 1 0.01 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+ * 
+ * STATION1 = Extracted_data.csv
+ * POSITION1 = latlon (46.8, 9.81, 1511.826)
+ * CSV1_ID = 109
+ * CSV1_NAME = Station109
+ * 
+ * STATION2 = Extracted_data.csv
+ * POSITION2 = xy (45.8018, 9.82, 111.826)
+ * CSV2_ID = 105
+ * CSV2_NAME = Station105
+ * @endcode
  */
 
 //helper function to sort the static keys used for specifying the date/time formats
