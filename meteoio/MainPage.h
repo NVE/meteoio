@@ -237,7 +237,7 @@ namespace mio {
  * \ref general documentation page before starting!
  *
  * You first need to create the various sections:
- * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that
+ * - [General] : The documentation about this section is found in \ref Config. It currently contains the PLUGIN_PATH key that
  *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
  *
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
