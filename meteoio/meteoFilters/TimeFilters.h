@@ -130,6 +130,26 @@ class TimeUnDST : public ProcessingBlock {
 };
 
 /**
+ * @class  TimeSort
+ * @ingroup processing
+ * @brief Sort out of order timesteps.
+ * @details This filter guarantees that the timestamps are sorted in increasing order. This is convenient to fix known problems, but
+ * please do not use this filter blindly: it is most probably a better idea to know that some timestamps are not in increasing
+ * order than to always resort them without knowing if there are underlying problems with the dataset...
+ * 
+ * @code
+ * TIME::filter1 = sort
+ * @endcode
+ * 
+ */
+class TimeSort : public ProcessingBlock {
+	public:
+		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+};
+
+/**
  * @class  TimeLoop
  * @ingroup processing
  * @brief Loops over a specific time period.

@@ -223,6 +223,29 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
+TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+        : ProcessingBlock(vecArgs, name)
+{
+	const std::string where( "Filters::"+block_name );
+	properties.stage = ProcessingProperties::second;
+	const size_t nrArgs = vecArgs.size();
+	
+	if (nrArgs!=0)
+		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+}
+
+void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
+{
+	if (param!=IOUtils::unodata)
+		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
+
+	ovec = ivec;
+	if (ovec.empty()) return;
+	
+	std::sort(ovec.begin(), ovec.end());
+}
+
+
 TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ)
         : ProcessingBlock(vecArgs, name), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {

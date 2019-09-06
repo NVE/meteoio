@@ -149,6 +149,7 @@ namespace mio {
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
+ * - SORT: sort the timestamps in increasing order, see TimeSort
  * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
 
@@ -240,6 +241,8 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "UNDST"){
 		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "SORT"){
+		return new TimeSort(vecArgs, blockname);
 	} else if (blockname == "TIMELOOP"){
 		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
 	} else {
