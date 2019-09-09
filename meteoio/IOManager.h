@@ -65,8 +65,8 @@ class IOManager {
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1.);       //21.7.2008 11:00 UTC+1
 		* IOManager iom("io.ini");
 		* unsigned int nstations = iom.getMeteoData(d1, d2, vecMeteo);
 		* @endcode
@@ -92,7 +92,7 @@ class IOManager {
 		 * @code
 		 * vector<MeteoData> vecMeteo;      //empty vector
 		 * IOManager iomanager("io.ini");
-		 * iomanager.getMeteoData(Date(2008,06,21,11,00), vecMeteo); //21.6.2008 11:00
+		 * iomanager.getMeteoData(Date(2008,06,21,11,0, 1.), vecMeteo); //21.6.2008 11:00 UTC+1
 		 * @endcode
 		 * @param i_date      A Date object representing the date/time for the sought MeteoData objects
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
@@ -129,7 +129,7 @@ class IOManager {
 		 * @code
 		 * Grid2DObject grid;      //empty grid
 		 * IOManager iomanager("io.ini");
-		 * iomanager.getMeteoData(Date(2008,06,21,11,00), MeteoData::TA, grid); //21.6.2008 11:00
+		 * iomanager.getMeteoData(Date(2008,06,21,11,0, 1.), MeteoData::TA, grid); //21.6.2008 11:00 UTC+1
 		 * @endcode
 		 * @param date A Date object representing the date/time for the sought MeteoData objects
 		 * @param dem Digital Elevation Model data

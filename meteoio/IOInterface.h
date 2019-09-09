@@ -122,7 +122,7 @@ class IOInterface {
 		* Example Usage:
 		* @code
 		* vector<StationData> vecStation;  //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readStationData(d1, vecStation);
 		* @endcode
@@ -144,8 +144,8 @@ class IOInterface {
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1);       //21.7.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo);
 		* @endcode
@@ -169,8 +169,8 @@ class IOInterface {
 		* An example implementation (reading and writing):
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1.);       //21.7.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo);
 		* io1.writeMeteoData(vecMeteo)
@@ -188,7 +188,7 @@ class IOInterface {
 		* Example Usage:
 		* @code
 		* Grid2DObject adata;
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readAssimilationData(d1, adata);
 		* @endcode
