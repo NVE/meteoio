@@ -43,11 +43,13 @@ class IOManager {
 		void readDEM(DEMObject& dem_out) {gdm1.readDEM(dem_out);}
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gdm1.readAssimilationData(date_in, da_out);}
 		void readLanduse(Grid2DObject& landuse_out) {gdm1.readLanduse(landuse_out);}
+		void readGlacier(Grid2DObject& glacier_out) {gdm1.readGlacier(glacier_out);}
 		void readPOI(std::vector<Coords>& pts) {iohandler.readPOI(pts);}
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gdm1.write2DGrid(grid_in, options);}
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write2DGrid(grid_in, parameter, date);}
 		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gdm1.write3DGrid(grid_in, options);}
 		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write3DGrid(grid_in, parameter, date);}
+		bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list){return iohandler.list2DGrids(start,end,list);}
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
@@ -155,10 +157,10 @@ class IOManager {
 
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
-		
+
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string);
-		
+
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
 		 *        The processing level affects the way meteo data is read and processed
@@ -219,14 +221,14 @@ class IOManager {
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
 		 */
 		void clear_cache();
-		
+
 		/**
 		 * @brief Returns the mode to be used for the IOManager
 		 * @param i_cfg configuration object
 		 * @return mode as of IOUtils::OperationMode
 		 */
 		static IOUtils::OperationMode getIOManagerMode(const Config& i_cfg);
-		
+
 	private:
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
