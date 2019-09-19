@@ -259,7 +259,6 @@ class Matrix {
 		* @brief Convenience call to the solver with input matrix preservation.
 		* This function makes a copy of the input matrices and invokes the solver on that, i. e. they
 		* are not changed in the process.
-		* @author Michael Reisecker
 		* @param[in] M The matrix M in M·X=A
 		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
 		* @param[out] X The calculated solution X in M·X=A
@@ -279,7 +278,6 @@ class Matrix {
 		/**
 		* @brief Convenience call for matrix inversion with input matrix preservation.
 		* This function makes a copy of the input matrix, i. e. it is left unchanged by the solver.
-		* @author Michael Reisecker
 		* @param[in] M The matrix to invert
 		* @param[out] Inv The inverse matrix
 		* @return False if the matrix is singular

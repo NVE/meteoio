@@ -28,7 +28,7 @@
 
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-int main(/*int argc, char** argv*/)
+int main(int /*argc*/, char** /*argv*/)
 {
 	////random integer:
 	//    mio::RandomNumberGenerator RNG;

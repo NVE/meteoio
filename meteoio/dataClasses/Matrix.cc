@@ -819,7 +819,7 @@ bool Matrix::gaussSolve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 	for (size_t ii=1; ii<dim; ii++) { //repeat elimination for solution matrix
 		for (size_t jj=ii+1; jj<=dim; jj++) {
 			for (size_t xx=1; xx<=sys; xx++)
-				AA(pp[jj], xx) = AA(pp[jj], xx)-MM(pp[jj], ii)*AA(pp[ii], xx); //make use of saved elimination factor
+				AA(pp[jj], xx)=AA(pp[jj], xx)-MM(pp[jj], ii)*AA(pp[ii], xx); //make use of saved elimination factor
 		}
 	}
 
@@ -854,7 +854,7 @@ bool Matrix::gaussInverse(Matrix& MM)
 bool Matrix::gaussInverse(const Matrix& MM, Matrix& Inv)
 {
 	Matrix NN(MM); //copy matrix to not destroy original
-	bool success=gaussInverse(NN);
+	const bool success=gaussInverse(NN);
 	Inv=NN;
 	return success;
 }
@@ -1113,9 +1113,9 @@ void Matrix::svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV)
 	Matrix LL(EE.getDiagonal().getT()); //extract eigenvalues as column vector
 
 	Matrix::sortEigenvalues(LL, UU); //put at diagonal from biggest to smallest
-	for (size_t ii=1; ii<=SS.getNx(); ii++) { //the diagonal matrix S is the square root of the sorted eigenvectors
+	for (size_t ii=1; ii<=SS.getNx(); ii++) { //the diagonal matrix S is the square root of the sorted eigenvalues
 		SS(ii, ii)=sqrt(LL(ii, 1));
-		const Matrix colV = MM.getT()*UU.getCol(ii)/SS(ii, ii); //A^T·v_i=sigma_i·u_i with v_i being eigenvectors of V
+		const Matrix colV=MM.getT()*UU.getCol(ii)/SS(ii, ii); //A^T·v_i=sigma_i·u_i with v_i being eigenvectors of V
 		VV.setCol(ii, colV); //eigenvectors of A^T·A and A·A^T are not independent -> no Jacobi recalculation
 	}
 	VV.T();

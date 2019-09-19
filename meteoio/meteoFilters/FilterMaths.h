@@ -48,7 +48,7 @@ namespace mio {
  * You can define a condition that must be met for the filter to take action. The `EXPRESSION1` and `COMPARE1` keywords denote
  * two formulas and their evaluated results will be compared by the operator given with `OPERATOR1`.
  *
- * **Example**: Allow no snow below 500m altitude:
+ * **Example**: Allow no snow below 500 m altitude:
  * @code
  * HS::FILTER1           = MATHS
  * HS::ARG1::FORMULA     = 0

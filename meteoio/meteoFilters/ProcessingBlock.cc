@@ -145,6 +145,7 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
+ * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
  *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
