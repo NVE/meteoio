@@ -27,6 +27,21 @@
 
 namespace mio {
 
+/*
+ * Sketch of the matrix class with proposed indexing:
+ *
+ *     M(row, col)                            ______________________
+ *   ~ M(i, j)        <-- ncols -->          |(1,1)|(1,2)|(1,3)|...
+ *   ~ M(y, x)           getNx()             |-----|-----|-----|
+ *                      _________            |(2,1)|(2,2)|...
+ *                  ^  |_|_|_|_|_| i,        |-----|-----|              _________
+ *           nrows  |  |_|_|_|_|_| y         |(3,1)|...                |0|1|2|3|4|
+ *          getNy() |  |_|_|_|_|_| |                                   |5|6|.|.|.|
+ *                  |  |_|_|_|_|_| v                                   |_|_|_|_|_|
+ *                  v  |_|_|_|_|_|      vecData uses a rolling index:  |_|_|_|_|_|
+ *                     j, x -->             M(i, j)=(i-1)*ncols + j-1  |_|21_|_|_|
+ */
+
 const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
 const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrices
 
@@ -127,25 +142,33 @@ double Matrix::operator ()(const size_t& ii, const size_t& jj) const
 	return vecData[(jj-1) + (ii-1)*ncols];
 }
 
-const std::string Matrix::toString() const
+const std::string Matrix::toString(const size_t& precision, const bool& prettify) const
 {
 	std::ostringstream os;
-	const size_t wd=6;
-	os << "\n┌ ";
-	for (size_t jj=1; jj<=(ncols*(wd+1)); jj++)
-		os << " ";
-	os << " ┐\n";
-	for (size_t ii=1; ii<=nrows; ii++) {
-		os << "│ ";
-		for (size_t jj=1; jj<=ncols; jj++) {
-			os << std::setw(wd) << std::fixed << std::setprecision(2) << operator()(ii,jj) << " ";
+	const size_t wd=precision+4;
+	if (prettify) {
+		os << "\n┌ ";
+		for (size_t jj=1; jj<=(ncols*(wd+1)); jj++)
+			os << " ";
+		os << " ┐\n";
+		for (size_t ii=1; ii<=nrows; ii++) {
+			os << "│ ";
+			for (size_t jj=1; jj<=ncols; jj++) {
+				os << std::setw(wd) << std::fixed << std::setprecision(precision) << operator()(ii,jj) << " ";
+			}
+			os << " │\n";
 		}
-		os << " │\n";
+		os << "└ ";
+		for (size_t jj=1; jj<=(ncols*(wd+1)); jj++)
+			os << " ";
+		os << " ┘\n";
+	} else {
+		for (size_t ii=1; ii<=nrows; ii++) {
+			for (size_t jj=1; jj<=ncols; jj++)
+				os << std::setw(wd) << std::fixed << std::setprecision(precision) << operator()(ii,jj) << " ";
+		os << "\n";
+		}
 	}
-	os << "└ ";
-	for (size_t jj=1; jj<=(ncols*(wd+1)); jj++)
-		os << " ";
-	os << " ┘\n";
 	return os.str();
 }
 
@@ -638,6 +661,23 @@ Matrix Matrix::getDiagonal() const
 	return mRet;
 }
 
+Matrix Matrix::extract(size_t r_low, size_t r_high, size_t c_low, size_t c_high) const
+{ //extract submatrix to new matrix
+	//npos means "from beginning" or "until end":
+	r_low=(r_low==IOUtils::npos)? 1 : r_low;
+	r_high=(r_high==IOUtils::npos)? nrows : r_high;
+	c_low=(c_low==IOUtils::npos)? 1 : c_low;
+	c_high=(c_high==IOUtils::npos)? ncols : c_high;
+
+	//TODO: safechecks?
+	Matrix mRet(r_high-r_low+1, c_high-c_low+1);
+	for (size_t ii=1; ii<=mRet.getNy(); ii++) {
+		for (size_t jj=1; jj<=mRet.getNx(); jj++)
+			mRet(ii, jj)=operator()(ii+r_low-1, jj+c_low-1);
+	}
+	return mRet;
+}
+
 bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
 {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
@@ -812,7 +852,7 @@ bool Matrix::gaussSolve(Matrix& MM, Matrix& AA, Matrix& XX) //solve M·X=A
 
 	double det=1.;
 	for (size_t ii=1; ii<=dim; ii++) //multiply diagonal elements
-		det *= MM(pp[ii], ii); //determinant changes sign for each permutation, but we only check against 0
+		det*=MM(pp[ii], ii); //determinant changes sign for each permutation, but we only check against 0
 	if (IOUtils::checkEpsilonEquality(det, 0., epsilon))
 		return false; //singular matrix
 
@@ -876,6 +916,22 @@ double Matrix::gaussDet(Matrix& MM)
 		}
 	}
 	return det;
+}
+
+double Matrix::normEuclid(const Matrix& vv)
+{
+	double sum=0.;
+	if (vv.getNx()==1) {
+		for (size_t jj=1; jj<=vv.getNy(); jj++)
+			sum+=vv(jj, 1)*vv(jj, 1);
+		return sqrt(sum);
+	} else if (vv.getNy()==1) {
+		for (size_t ii=1; ii<=vv.getNx(); ii++)
+			sum+=vv(1, ii)*vv(1, ii);
+		return sqrt(sum);
+	} else {
+		throw IOException("Euclidean norm l2 is only possible for vectors.", AT);
+	}
 }
 
 bool Matrix::isIdentity() const

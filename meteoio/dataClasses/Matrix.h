@@ -174,6 +174,18 @@ class Matrix {
 		Matrix getDiagonal() const;
 
 		/**
+		* @brief Extract a submatrix to a new matrix.
+		* IOUtils::npos for an index means "from beginning" (i. e. 1) or "until end"
+		* (i. e. ncols resp. nrows).
+		* @param r_low Start from this row
+		* @param r_high End at this row
+		* @param c_low Start from this column 
+		* @param c_high End at this column
+		* @return The extracted submatrix
+		*/
+		Matrix extract(size_t r_low, size_t r_high, size_t c_low, size_t c_high) const;
+		
+		/**
 		* @brief Find the first maximum value in the matrix
 		* @param max_row Row index of the maximum
 		* @param max_col Column index of the maximum
@@ -294,6 +306,14 @@ class Matrix {
 		static double gaussDet(Matrix& M);
 
 		/**
+		* @brief Calculate Euclidean norm (l2) for a vector.
+		* The matrix must either be a row or a column vector.
+		* @param[in] vv Vector to calculate norm for
+		* @return L2 norm
+		*/
+		static double normEuclid(const Matrix& vv);
+
+		/**
 		* @brief matrix LU decomposition.
 		* Perform LU decomposition by the Dolittle algorithm,
 		* (cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html)
@@ -346,7 +366,7 @@ class Matrix {
 		static void sortEigenvalues(Matrix& EE, Matrix& VV);
 		void swapCols(const size_t &j1, const size_t &j2); //used by svd
 
-		const std::string toString() const;
+		const std::string toString(const size_t& precision=2, const bool& prettify=true) const;
 
 		Matrix& operator+=(const Matrix& rhs);
 		const Matrix operator+(const Matrix& rhs) const;
