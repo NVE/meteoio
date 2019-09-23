@@ -106,6 +106,15 @@ void TimeSeriesManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
+double TimeSeriesManager::getAvgSamplingRate() const
+{
+	const double raw_rate = raw_buffer.getAvgSamplingRate();
+	if (raw_rate!=IOUtils::nodata)
+		return raw_rate;
+	else
+		return filtered_cache.getAvgSamplingRate();
+}
+
 Date TimeSeriesManager::getBufferStart(const cache_types& cache) const
 {
 	switch(cache) {
