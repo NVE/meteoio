@@ -142,10 +142,10 @@ double Matrix::operator ()(const size_t& ii, const size_t& jj) const
 	return vecData[(jj-1) + (ii-1)*ncols];
 }
 
-const std::string Matrix::toString(const size_t& precision, const bool& prettify) const
+const std::string Matrix::toString(const int& precision, const bool& prettify) const
 {
 	std::ostringstream os;
-	const size_t wd=precision+4;
+	const int wd=precision+4;
 	if (prettify) {
 		os << "\n┌ ";
 		for (size_t jj=1; jj<=(ncols*(wd+1)); jj++)

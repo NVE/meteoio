@@ -366,7 +366,7 @@ class Matrix {
 		static void sortEigenvalues(Matrix& EE, Matrix& VV);
 		void swapCols(const size_t &j1, const size_t &j2); //used by svd
 
-		const std::string toString(const size_t& precision=2, const bool& prettify=true) const;
+		const std::string toString(const int& precision=2, const bool& prettify=true) const;
 
 		Matrix& operator+=(const Matrix& rhs);
 		const Matrix operator+(const Matrix& rhs) const;
