@@ -277,15 +277,15 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 
 	meta.position.setProj(coordin, coordinparam); //set the default projection from config file
 	if (myreader.location_in_header(smet::WGS84)){
-		const double lat = myreader.get_header_doublevalue("latitude");
-		const double lon = myreader.get_header_doublevalue("longitude");
-		const double alt = myreader.get_header_doublevalue("altitude");
+		const double lat = IOUtils::standardizeNodata( myreader.get_header_doublevalue("latitude"), nodata_value);
+		const double lon = IOUtils::standardizeNodata( myreader.get_header_doublevalue("longitude"), nodata_value);
+		const double alt = IOUtils::standardizeNodata( myreader.get_header_doublevalue("altitude"), nodata_value);
 		meta.position.setLatLon(lat, lon, alt, false);
 	}
 	if (myreader.location_in_header(smet::EPSG)){
-		const double east  = myreader.get_header_doublevalue("easting");
-		const double north = myreader.get_header_doublevalue("northing");
-		const double alt   = myreader.get_header_doublevalue("altitude");
+		const double east  = IOUtils::standardizeNodata( myreader.get_header_doublevalue("easting"), nodata_value);
+		const double north = IOUtils::standardizeNodata( myreader.get_header_doublevalue("northing"), nodata_value);
+		const double alt   = IOUtils::standardizeNodata( myreader.get_header_doublevalue("altitude"), nodata_value);
 		const short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
 		meta.position.setXY(east, north, alt, false);
@@ -295,8 +295,8 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
-	const double slope_angle = myreader.get_header_doublevalue("slope_angle");
-	const double slope_azi = myreader.get_header_doublevalue("slope_azi");
+	const double slope_angle = IOUtils::standardizeNodata( myreader.get_header_doublevalue("slope_angle"), nodata_value);
+	const double slope_azi = IOUtils::standardizeNodata( myreader.get_header_doublevalue("slope_azi"), nodata_value);
 	if (slope_angle!=IOUtils::nodata && slope_azi!=IOUtils::nodata) {
 		meta.setSlope(slope_angle, slope_azi);
 	} else if (slope_angle==0.) {
