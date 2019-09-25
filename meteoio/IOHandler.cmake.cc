@@ -301,8 +301,9 @@ namespace mio {
  * @endcode
  */
 
-IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& i_cfg) const
+IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) const
 {
+	IOUtils::toUpper( plugin_name );
 #ifdef PLUGIN_ALPUG
 	if (plugin_name == "ALPUG") return new ALPUG(i_cfg);
 #endif

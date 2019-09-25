@@ -72,7 +72,7 @@ class IOHandler : public IOInterface {
 		const std::string toString() const;
 
 	private:
-		IOInterface* getPlugin(const std::string& plugin_name, const Config& i_cfg) const;
+		IOInterface* getPlugin(std::string plugin_name, const Config& i_cfg) const;
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection, const std::string& sec_rename="");
 		std::vector<std::string> getListOfSources(const std::string& plugin_key, const std::string& sec_pattern) const;
 		void create_copy_map();
