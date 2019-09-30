@@ -40,8 +40,6 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
 			phase *= -1; //shift the minimum *later* in the day
 		}
 	}
-
-	if (!has_range) throw InvalidArgumentException("Please provide a RANGE for "+where, AT);
 }
 
 std::string DailyAverage::toString() const
