@@ -108,7 +108,6 @@ double ProcQuantileMapping::getCorrection(const std::vector<double>& thresholds,
 size_t ProcQuantileMapping::getQuantile(const std::vector<double>& thresholds, const double& value)
 {
 	const size_t nrThresh = thresholds.size();
-	
 	for (size_t ii=0; ii<nrThresh; ii++) {
 		if (value<=thresholds[ii]) {
 			if (thresholds[ii]<0.5) return ii;
@@ -200,7 +199,7 @@ void ProcQuantileMapping::parse_args(const std::vector< std::pair<std::string, s
 		if (filename.empty()) { //no quantiles provided, generate all deciles
 			static const size_t nQuantiles = 10;
 			quantiles.resize(nQuantiles);
-			for (size_t ii=0; ii<nQuantiles; ii++) quantiles[ii] = static_cast<double>(ii)/static_cast<double>(nQuantiles);
+			for (size_t ii=0; ii<nQuantiles; ii++) quantiles[ii] = static_cast<double>(ii+1)/static_cast<double>(nQuantiles);
 			return;
 		}
 	}
@@ -210,9 +209,15 @@ void ProcQuantileMapping::parse_args(const std::vector< std::pair<std::string, s
 	if (quantiles.empty()) throw InvalidArgumentException("Please provide a VALID correction file for "+where, AT);
 	
 	//check that the quantiles contain both 0 and 1 and that they are in increasing order
+	if (quantiles.front()!=0.) {
+		quantiles.insert(quantiles.begin(), 0);
+		corrections.insert(corrections.begin(), corrections[1]);
+	}
+	if (quantiles.back()!=1.) {
+		quantiles.push_back(1);
+		corrections.push_back(1);
+	}
 	bool status = true;
-	if (quantiles.front()!=0.) status=false;
-	if (quantiles.back()!=1.) status=false;
 	double prevQ = 0.;
 	for (size_t ii=1; ii<quantiles.size(); ii++) {
 		if (quantiles[ii]<=prevQ) status = false;
