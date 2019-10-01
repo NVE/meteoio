@@ -33,7 +33,6 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="RANGE") {
 			IOUtils::parseArg(vecArgs[ii], where, range);
-			has_range = true;
 		} else if (vecArgs[ii].first=="PHASE") {
 			IOUtils::parseArg(vecArgs[ii], where, phase);
 			phase *= -1; //shift the minimum *later* in the day
