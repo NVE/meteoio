@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
+#include <cstdio>
 
 using namespace std;
 
@@ -52,6 +53,7 @@ namespace mio {
  * naming scheme will be used to derive the slope information (default: false).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
+ * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
@@ -89,23 +91,46 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile),
+        : cfg(configfile), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader),
+        : cfg(cfgreader), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
+}
+
+std::map<size_t, SMETIO::plot_attr> SMETIO::initPlotParams()
+{
+	std::map< size_t, plot_attr > results;
+	
+	results[ MeteoData::P ] 		= plot_attr("Pa", "local_air_pressure", "0xAEAEAE", 87000., 115650., MeteoData::P);
+	results[ MeteoData::TA ] 		= plot_attr("K", "air_temperature", "0x8324A4", 253.15, 283.15, MeteoData::TA);
+	results[ MeteoData::RH ] 		= plot_attr("-", "relative_humidity", "0x50CBDB", 0., 1., MeteoData::RH);
+	results[ MeteoData::TSG ] 		= plot_attr("K", "ground_surface_temperature", "0xDE22E2", 253.15, 283.15, MeteoData::TSG);
+	results[ MeteoData::TSS ] 		= plot_attr("K", "snow_surface_temperature", "0xFA72B7", 253.15, 283.15, MeteoData::TSS);
+	results[ MeteoData::HS ] 		= plot_attr("m", "height_of_snow", "0x000000", 0., 3., MeteoData::HS);
+	results[ MeteoData::VW ] 		= plot_attr("m/s", "wind_velocity", "0x297E24", 0., 30., MeteoData::VW);
+	results[ MeteoData::DW ] 		= plot_attr("°", "wind_direction", "0x64DD78", 0., 360., MeteoData::DW);
+	results[ MeteoData::VW_MAX ] 	= plot_attr("m/s", "max_wind_velocity", "0x244A22", 0., 30., MeteoData::VW_MAX);
+	results[ MeteoData::RSWR ] 		= plot_attr("W/m2", "outgoing_short_wave_radiation", "0x7D643A", 0., 1400., MeteoData::RSWR);
+	results[ MeteoData::ISWR ] 		= plot_attr("W/m2", "incoming_short_wave_radiation", "0xF9CA25", 0., 1400., MeteoData::ISWR);
+	results[ MeteoData::ILWR ] 		= plot_attr("W/m2", "incoming_long_wave_radiation", "0xD99521", 150., 400., MeteoData::ILWR);
+	results[ MeteoData::TAU_CLD ] 	= plot_attr("-", "cloud_transmissivity", "0xD9A48F", 0., 1., MeteoData::TAU_CLD);
+	results[ MeteoData::PSUM ] 		= plot_attr("kg/m2", "water_equivalent_precipitation_sum", "0x2431A4", 0., 20., MeteoData::PSUM);
+	results[ MeteoData::PSUM_PH ] 	= plot_attr("-", "precipitation_phase", "0x7E8EDF", 0., 1., MeteoData::PSUM_PH);
+	
+	return results;
 }
 
 void SMETIO::parseInputOutputSection()
@@ -153,6 +178,7 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
+	cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
 	cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
 	cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 
@@ -632,7 +658,9 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			if (outputPlotHeaders) getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
-
+	
+	if (randomColors)
+		srand( static_cast<unsigned int>(time(NULL)) );
 
 	mywriter.set_header_value("fields", ss.str());
 	if (outputPlotHeaders) {
@@ -646,56 +674,29 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_precision(myprecision);
 }
 
-void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max)
+void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
 {
-	if (param==MeteoData::P) {
-		plot_units << "Pa ";		plot_description << "local_air_pressure ";
-		plot_color << "0xAEAEAE ";	plot_min << "87000 "; plot_max << "115650 ";
-	} else if (param==MeteoData::TA) {
-		plot_units << "K ";			plot_description << "air_temperature ";
-		plot_color << "0x8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::RH) {
-		plot_units << "- ";			plot_description << "relative_humidity ";
-		plot_color << "0x50CBDB ";	plot_min << "0 "; plot_max << "1 ";
-	} else if (param==MeteoData::TSG) {
-		plot_units << "K ";			plot_description << "ground_surface_temperature ";
-		plot_color << "0xDE22E2 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::TSS) {
-		plot_units << "K ";			plot_description << "snow_surface_temperature ";
-		plot_color << "0xFA72B7 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::HS) {
-		plot_units << "m ";			plot_description << "height_of_snow ";
-		plot_color << "0x000000 ";	plot_min << "0 "; plot_max << "3 ";
-	} else if (param==MeteoData::VW) {
-		plot_units << "m/s ";		plot_description << "wind_velocity ";
-		plot_color << "0x297E24 ";	plot_min << "0 "; plot_max << "30 ";
-	} else if (param==MeteoData::DW) {
-		plot_units << "° ";			plot_description << "wind_direction ";
-		plot_color << "0x64DD78 ";	plot_min << "0 "; plot_max << "360 ";
-	} else if (param==MeteoData::VW_MAX) {
-		plot_units << "m/s ";		plot_description << "max_wind_velocity ";
-		plot_color << "0x244A22 ";	plot_min << "0 "; plot_max << "30 ";
-	} else if (param==MeteoData::RSWR) {
-		plot_units << "W/m2 ";		plot_description << "outgoing_short_wave_radiation ";
-		plot_color << "0x7D643A ";	plot_min << "0 "; plot_max << "1400 ";
-	} else if (param==MeteoData::ISWR) {
-		plot_units << "W/m2 ";		plot_description << "incoming_short_wave_radiation ";
-		plot_color << "0xF9CA25 ";	plot_min << "0 "; plot_max << "1400 ";
-	} else if (param==MeteoData::ILWR) {
-		plot_units << "W/m2 ";		plot_description << "incoming_long_wave_radiation ";
-		plot_color << "0xD99521 ";	plot_min << "150 "; plot_max << "400 ";
-	} else if (param==MeteoData::TAU_CLD) {
-		plot_units << "- ";			plot_description << "cloud_transmissivity ";
-		plot_color << "0xD9A48F ";	plot_min << "0 "; plot_max << "1 ";
-	} else if (param==MeteoData::PSUM) {
-		plot_units << "kg/m2 ";		plot_description << "water_equivalent_precipitation_sum ";
-		plot_color << "0x2431A4 ";	plot_min << "0 "; plot_max << "20 ";
-	} else if (param==MeteoData::PSUM_PH) {
-		plot_units << "- ";			plot_description << "precipitation_phase ";
-		plot_color << "0x7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
+	std::map<size_t, plot_attr>::const_iterator it = plot_ppt.find( param );
+	if (it!=plot_ppt.end()) { //the parameter is a known one with some preset parameters
+		plot_units << it->second.units << " ";
+		plot_description << it->second.description << " ";
+		plot_color  << it->second.color << " ";
+		plot_min << it->second.min << " ";
+		plot_max << it->second.max << " ";
 	} else {
-		plot_units << "- ";			plot_description << "- ";
-		plot_color << "0xA0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
+		plot_units << "- ";
+		plot_description << "- ";
+		
+		if (!randomColors) {
+			plot_color  << "0xA0A0A0 ";
+		} else {
+			char tmp[9];
+			static const int max_col = 256*256*256;
+			sprintf(tmp,"0x%x", rand() % max_col);
+			plot_color << tmp << " ";
+		}
+		plot_min << IOUtils::nodata << " ";
+		plot_max << IOUtils::nodata << " ";
 	}
 }
 
