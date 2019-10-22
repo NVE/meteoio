@@ -24,7 +24,7 @@ namespace mio {
 
 /**
  * @class RadiationComponents
- * @brief Compute the global radiation (ISWR) from split components (ISWR_DIR and ISWR_DIFF)
+ * @brief Compute the global radiation (ISWR) from the direct and diffuse components.
  * @details
  * The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
  * @code
