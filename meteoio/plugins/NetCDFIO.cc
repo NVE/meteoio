@@ -79,6 +79,7 @@ namespace mio {
  *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ERA-INTERIM, ERA5 or WRF); [Input] and [Output] section (default: CF-1.6)
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
+ *     - NC_DEBUG : print some low level details about the file being read (default: false); [Input] section;
  * - Gridded data handling:
  *     - DEMFILE: The filename of the file containing the DEM; [Input] section
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
