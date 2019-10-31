@@ -232,6 +232,19 @@ void read_data(const int& ncid, const nc_variable& var, double* data)
 }
 
 /**
+ * @brief Read all the data for a specific variable
+ * @param[in] ncid file ID
+ * @param[in] var variable to read
+ * @param[out] data data extracted from the file
+ */
+void read_data(const int& ncid, const nc_variable& var, int* data)
+{
+	const int status = nc_get_var_int(ncid, var.varid, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
 * @brief Read a pre-defined set of attributes for the given variable, from the provided file.
 * @details Please note that during this call, the nc_variable structure will get a positive varid.
 * If any of the predefined set of attribute does not exist, it will be silently skipped. The attributes structure

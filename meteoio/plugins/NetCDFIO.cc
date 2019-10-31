@@ -1042,7 +1042,7 @@ std::vector<StationData> ncFiles::readStationData() const
 			for (size_t ii=0; ii<nrStations; ii++) vecPosition[ii].setXY(vecEast[ii], vecNorth[ii], vecAlt[ii]);
 		}
 
-		const std::vector<std::string> vecIDs( read_1Dstringvariable(ncid, ncpp::STATION) );
+		const std::vector<std::string> vecIDs( read_stationIDs(ncid) );
 		vecStation.resize( nrStations );
 		for (size_t ii=0; ii<nrStations; ii++) {
 			StationData sd(vecPosition[ii], vecIDs[ii], vecIDs[ii]);
@@ -1822,6 +1822,32 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const int& ncid, const s
 	
 	free( data );
 	return results;
+}
+
+//This method handles the possibility of numeric station IDs by converting them to strings
+std::vector<std::string> ncFiles::read_stationIDs(const int& ncid) const
+{
+	static const size_t param = ncpp::STATION;
+	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
+	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
+
+	const int type = it->second.attributes.type;
+	if (type==NC_CHAR) {
+		return read_1Dstringvariable(ncid, param);
+	} else { //numeric station IDs
+		if (it->second.dimids.size()!=1)
+			throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 1D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
+
+		const size_t length = read_1DvariableLength(it->second);
+		std::vector<std::string> results(length);
+		int *data = new int[ length ];
+		ncpp::read_data(ncid, it->second, data);
+		for (size_t ii=0; ii<length; ii++)
+			results[ii] = IOUtils::toString( data[ii] );
+		delete[] data;
+
+		return results;
+	}
 }
 
 size_t ncFiles::read_1DvariableLength(const ncpp::nc_variable& var) const
