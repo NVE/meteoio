@@ -131,6 +131,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 {
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
+	size_t previous_idx = 0;
 	
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
@@ -139,9 +140,11 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 				std::cerr << "[W] " << stationID << ", deleting empty duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
 			else
 				std::cerr << "[W] " << stationID << ", deleting duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			if (current_date==previous_date) ovec[previous_idx].merge( ovec[ii] );
 			ovec[ii].date.setUndef(true);
 		} else {
 			previous_date = current_date;
+			previous_idx = ii;
 		}
 	}
 	
