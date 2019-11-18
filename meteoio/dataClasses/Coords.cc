@@ -685,7 +685,7 @@ void Coords::check(const std::string& pre_msg)
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if (easting==IOUtils::nodata || northing==IOUtils::nodata) {
-			throw InvalidArgumentException(pre_msg+"missing positional parameters (easting,northing) or (lat,long) for given coordinate", AT);
+			throw InvalidArgumentException(pre_msg+"missing positional parameters (easting,northing) or (lat,long) for given coordinate "+toString(FULL), AT);
 		}
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	} else {
@@ -696,7 +696,7 @@ void Coords::check(const std::string& pre_msg)
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
 			if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
-				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate", AT);
+				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate "+toString(FULL), AT);
 			}
 		}
 	}
