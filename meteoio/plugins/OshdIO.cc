@@ -436,23 +436,29 @@ void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::strin
 	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
 }
 
+//NOTE It seems that recent versions contain multibyte encoding and this is not supported by matio, leading to trucated units (at best)
 double OshdIO::convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param, const std::string& filename)
 {
 	if (units=="%") return val/100.;
+	if (units=="m") return val;
 	if (units=="cm") return val/100.;
 	if (units=="mm") {
 		if (param==MeteoData::PSUM) return val;
 		else return val/1000.;
 	}
 	if (units=="\xB0\x43") return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°C'
-// 	//usually skip these extra tests
-// 	if (units=="\xB0" && param==MeteoData::TA) return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°'
+	if (units=="\xB0" && param==MeteoData::TA) return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°'
+	if (units=="\xB0" && param==MeteoData::DW) return val; //ISO-8859-1 hex for '°'
 	if (units.empty()) return val;
 	if (units=="Pa") return val;
 	if (units=="W/m2") return val;
 	if (units=="m/s") return val;
-	else 
-		throw IOException("Unknown units '"+units+"' for parameter "+MeteoData::getParameterName(param)+" in file "+filename, AT);
+	else {
+		std::ostringstream os;
+		for(size_t ii=0; ii<units.size(); ++ii)
+			os << " " << std::hex << static_cast<unsigned int>( units[ii] );
+		throw IOException("Unknown units '"+units+"' (#"+os.str()+") for parameter "+MeteoData::getParameterName(param)+" in file "+filename, AT);
+	}
 	
 	return val;
 }
