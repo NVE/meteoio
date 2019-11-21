@@ -696,7 +696,15 @@ void Coords::check(const std::string& pre_msg)
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
 			if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
-				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate "+toString(FULL), AT);
+				std::string extra_info( toString(FULL) );
+				if (coordsystem=="UTM") {
+					std::string zone_out;
+					CoordsAlgorithms::getUTMZone(latitude, longitude, zone_out);
+					if (zone_out!=coordparam)
+						extra_info = "(UTM zone should probably be "+zone_out+" instead of "+coordparam;
+				}
+				
+				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate "+extra_info, AT);
 			}
 		}
 	}
