@@ -60,7 +60,7 @@ namespace ncpp {
 
 	/** This structure contains the metadata associated with a NetCDF variable that are file specific as well as contains the schema specific metadata */
 	typedef struct NC_VARIABLE {
-		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}; //please do NOT use this constructor!
+		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {} //please do NOT use this constructor!
 		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}
 		NC_VARIABLE(const var_attr& attr, const double& i_nodata)
 							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {}
