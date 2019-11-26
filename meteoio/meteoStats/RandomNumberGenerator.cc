@@ -1223,7 +1223,7 @@ uint64_t RngCore::timeMixer(const time_t& tt, const clock_t& cc) const
 		ht += pt[i];
 	}
 	uint32_t hc = 0;
-	const unsigned char *pt2 = (unsigned char*)& cc;
+	const unsigned char *pt2 = (const unsigned char*)& cc;
 	for (size_t i = 0; i < sizeof(cc); ++i) {
 		hc *= std::numeric_limits<unsigned char>::max() + 2U;
 		hc += pt2[i];

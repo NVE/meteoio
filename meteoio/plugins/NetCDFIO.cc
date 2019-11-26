@@ -1557,7 +1557,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 			//are shifted (even if a little), which means that the center of lat/lon is != center of east./north..
 			//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonable approximation
 			double alpha;
-			double lat_length, lon_length, cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
+			double lat_length=0., lon_length=0., cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
 			for (size_t ii=0; ii<5; ii++) {
 				lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
 				lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
