@@ -448,7 +448,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		const size_t start_var = filename_spec.find('{');
 		if (start_var==std::string::npos) throw InvalidFormatException("No variables defined for filename parsing", AT);
 		const std::string pattern( filename_spec.substr(0, start_var) );
-		if (filename.substr(0, start_var)!=pattern) throw InvalidFormatException("The filename pattern does not match with the given filename", AT);
+		if (filename.substr(0, start_var)!=pattern) throw InvalidFormatException("The filename pattern '"+filename_spec+"' does not match with the given filename ('"+filename+"') for metadata extraction", AT);
 		pos_mt = start_var;
 		pos_fn = start_var;
 	}
