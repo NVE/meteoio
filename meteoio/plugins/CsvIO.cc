@@ -471,7 +471,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 		if (end_pattern!=std::string::npos) {
 			const std::string pattern = filename_spec.substr(start_pattern+1, pattern_len); //skip } and {
 			const size_t pos_pattern_fn = filename.find(pattern, pos_fn);
-			if (pos_pattern_fn==std::string::npos) throw InvalidFormatException("The filename pattern does not match with the given filename", AT);
+			if (pos_pattern_fn==std::string::npos) throw InvalidFormatException("The filename pattern '"+filename_spec+"' does not match with the given filename ('"+filename+"') for metadata extraction", AT);
 			len_var = pos_pattern_fn - pos_fn;
 		}
 
