@@ -567,7 +567,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
 	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);
 
-	//some time filters change the requested dates
+	//some time filters change the requested dates (for example, time loop)
 	Date fakeStart( dateStart ),fakeEnd( dateEnd );
 	timeproc.process(fakeStart, fakeEnd);
 
@@ -596,6 +596,9 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	if (!merge_ready) create_merge_map();
 	merge_stations(vecMeteo);
+	
+	//remove trailing pure nodata MeteoData elements (if any)
+	purgeNodata(vecMeteo);
 
 	if (!copy_ready) create_copy_map();
 	copy_params(vecMeteo);
@@ -646,6 +649,20 @@ void IOHandler::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Para
 {
 	IOInterface *plugin = getPlugin("GRID3D", "Output");
 	plugin->write3DGrid(grid_out, parameter, date);
+}
+
+//some vector of MeteoData might have trailing elements that are purely nodata
+void IOHandler::purgeNodata(std::vector<METEO_SET>& vecMeteo)
+{
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		//purge trailing nodata
+		for (size_t jj=vecMeteo[ii].size(); jj>0; jj--) {
+			if (!vecMeteo[ii][jj-1].isNodata()) {
+				if (jj!=vecMeteo[ii].size()) vecMeteo[ii].resize( jj );
+				break;
+			}
+		}
+	}
 }
 
 void IOHandler::create_merge_map()
