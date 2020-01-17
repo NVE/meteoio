@@ -278,27 +278,6 @@ Date MeteoBuffer::getDataEnd() const
 		}
 	}
 	
-	/*for (size_t ii=0; ii<ts_buffer.size(); ii++) {
-		if (!ts_buffer[ii].empty()) {
-			if (end.isUndef()) {
-				for (size_t jj=ts_buffer[ii].size(); jj>0; jj--) {
-					if (!ts_buffer[ii][jj-1].isNodata()) {
-						end = ts_buffer[ii][jj].date;
-					}
-				}
-			} else if (ts_buffer[ii].back().date > end) {
-				for (size_t jj=ts_buffer[ii].size(); jj>0; jj--) {
-					if (ts_buffer[ii][jj-1].date <= end) break;
-					
-					if (!ts_buffer[ii][jj-1].isNodata() && ts_buffer[ii][jj-1].date >= end) {
-							end = ts_buffer[ii][jj].date;
-							break;
-					}
-				}
-			}
-		}
-	}*/
-	
 	return end;
 }
 
