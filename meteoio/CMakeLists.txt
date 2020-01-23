@@ -22,7 +22,7 @@ ENDIF(PROJ4)
 
 SET(meteoio_sources
 	${dataClasses_sources}
-	tinyexpr.c
+	${thirdParty_sources}
 	Timer.cc
 	Config.cc
 	IOExceptions.cc
