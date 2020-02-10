@@ -42,9 +42,7 @@
 #cmakedefine PLUGIN_GRIBIO
 #cmakedefine PLUGIN_GOESIO
 #cmakedefine PLUGIN_PNGIO
-#cmakedefine PLUGIN_BORMAIO
 #cmakedefine PLUGIN_COSMOXMLIO
-#cmakedefine PLUGIN_GSNIO
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
@@ -62,10 +60,6 @@
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/SNIO.h>
-
-#ifdef PLUGIN_BORMAIO
-#include <meteoio/plugins/BormaIO.h>
-#endif
 
 #ifdef PLUGIN_COSMOXMLIO
 #include <meteoio/plugins/CosmoXMLIO.h>
@@ -85,10 +79,6 @@
 
 #ifdef PLUGIN_GRIBIO
 #include <meteoio/plugins/GRIBIO.h>
-#endif
-
-#ifdef PLUGIN_GSNIO
-#include <meteoio/plugins/GSNIO.h>
 #endif
 
 #ifdef PLUGIN_NETCDFIO
@@ -153,7 +143,6 @@ namespace mio {
  * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>ESRI/ARC ascii grid files</td><td></td></tr>
  * <tr><td>\subpage argosio "ARGOS"</td><td>meteo</td><td></td>		<td>ARGOS satellite raw files - <b>plugin not functional yet!</b></td><td></td></tr>
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td></td>		<td>ARPS ascii formatted grids</td><td></td></tr>
- * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td></td>		<td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td></td>		<td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
  * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td></td>		<td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td></td>		<td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
@@ -161,7 +150,6 @@ namespace mio {
  * <tr><td>\subpage goesio "GOES"</td><td>meteo</td><td></td>		<td>Meteo files transmitted by the GOES satellites</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>Grass grid files</td><td></td></tr>
  * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
- * <tr><td>\subpage gsn "GSN"</td><td>meteo</td><td></td>		<td>connects to the Global Sensor Network web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
@@ -356,17 +344,11 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_PNGIO
 	if (plugin_name == "PNG") return new PNGIO(i_cfg);
 #endif
-#ifdef PLUGIN_BORMAIO
-	if (plugin_name == "BORMA") return new BormaIO(i_cfg);
-#endif
 #ifdef PLUGIN_COSMOXMLIO
 	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
 #endif
 #ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(i_cfg);
-#endif
-#ifdef PLUGIN_GSNIO
-	if (plugin_name == "GSN") return new GSNIO(i_cfg);
 #endif
 #ifdef PLUGIN_NETCDFIO
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
