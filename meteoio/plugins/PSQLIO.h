@@ -83,6 +83,7 @@ class PSQLIO : public IOInterface {
 		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		std::string sql_meta, sql_data;
 
+		static const std::string sqlInsertMetadata, sqlInsertSensor, sqlInsertMeasurement;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 

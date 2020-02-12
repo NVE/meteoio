@@ -79,6 +79,11 @@ namespace mio {
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
+//Hard-coded output queries HACK some selects are also made in the code!!
+const std::string PSQLIO::sqlInsertMetadata = "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES ";
+const std::string PSQLIO::sqlInsertSensor = "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES ";
+const std::string PSQLIO::sqlInsertMeasurement = "INSERT INTO FIXED_MEASUREMENT (ID_FIXED_MEASUREMENT,FK_ID_FIXED_SENSOR,MEAS_DATE,MEAS_VALUE) VALUES ";
+
 PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
                                                 in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                                 out_userid(), out_passwd(), input_configured(false), output_configured(false),
@@ -442,7 +447,7 @@ void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 		  << sd.position.getAltitude() << ","
 		  << epsg << ")";
 
-	const std::string query( "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES " + values.str() + ";" );
+	const std::string query( sqlInsertMetadata + values.str() + ";" );
 	sql_exec(query, false);
 }
 
@@ -516,7 +521,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 		const std::string sensor_id( ss.str() );
 		const std::string type( it->second );
 
-		query = "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES (" + sensor_id + "," + station_id + "," + type  + ",0.0);";
+		query = sqlInsertSensor + " (" + sensor_id + "," + station_id + "," + type  + ",0.0);";
 		sql_exec(query, false);
 
 		map_sensor_id[it->first] = sensor_id;
@@ -637,7 +642,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		int currentid = get_measurement_index();
 		stringstream ss;
-		std::string query( "INSERT INTO FIXED_MEASUREMENT (ID_FIXED_MEASUREMENT,FK_ID_FIXED_SENSOR,MEAS_DATE,MEAS_VALUE) VALUES " );
+		std::string query( sqlInsertMeasurement );
 		bool comma = false;
 
 		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
