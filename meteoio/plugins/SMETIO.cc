@@ -49,16 +49,16 @@ namespace mio {
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet";
- * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
+ * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively; [Input] section;
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
- * naming scheme will be used to derive the slope information (default: false).
- * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
+ * naming scheme will be used to derive the slope information (default: false, [Input] section).
+ * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
- * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
+ * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
  * Example:
  * @code
