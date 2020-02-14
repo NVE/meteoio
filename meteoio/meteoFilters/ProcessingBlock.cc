@@ -114,16 +114,16 @@ namespace mio {
  * - MIN_MAX: range check filter, see FilterMinMax
  * - MIN_MAX_CONDITIONAL: range check only if a different parameter holds true to a comparison, see FilterMinMaxConditional
  * - RATE: rate of change filter, see FilterRate
+ * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
+ * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
+ * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
+ * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
- * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
- * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
- * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
- * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
  * - KALMAN: dynamic state likelihood estimation via Bayesian statistics (experimental), see FilterKalman
  * - PARTICLE: Monte Carlo sampling method for dynamic state estimation (experimental), see FilterParticle
  *
