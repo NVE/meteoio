@@ -134,11 +134,11 @@ namespace mio {
  * - QM: quantile mapping, see ProcQuantileMapping
  *
  * As well as more specific data transformations:
+ * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
+ * - DEACCUMULATE: recompute instantaneous values from accumulated values, see ProcDeAccumulate
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - IIR: Low Pass or High Pass critically damped filter, see ProcIIR
- * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
- * - DEACCUMULATE: recompute instantaneous values from accumulated values, see ProcDeAccumulate
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
