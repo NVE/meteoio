@@ -227,12 +227,14 @@ namespace mio {
  * KLO3 HS PSUM
  * @endcode
  *
- * Another example relying on wildcards (the kept/excluded parameters lists are additive):
+ * Another example relying on wildcards (the kept/excluded parameters lists are <b>additive</b>):
  * @code
  * *::KEEP = TA RH                               ;all stations will keep TA and RH and reject the other parameters
  * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
  * @endcode
  *
+ * @note First the <i>exclude</i> directives are applied and then the <i>keep</i> directives.
+ * 
  * @section data_merging 3. Data merging (MERGE)
  * @subsection stations_merging 3.1 Merging different stations (MERGE)
  * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any
