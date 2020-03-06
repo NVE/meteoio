@@ -114,6 +114,7 @@ namespace mio {
  * Therefore, the following additional keys are required:
  *    + RESAMPLING_STRATEGY set to *GRID_SMART*;
  *    + VSTATION# : provide the lat, lon and altitude for the virtual station;
+ *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
