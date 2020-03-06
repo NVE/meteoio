@@ -86,7 +86,7 @@ namespace mio {
  * The meteorological time series are extracted from time series of user-provided grids. Therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys control this downscaling process:
  *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
- *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
+ *    + VSTATION# : provide the lat, lon and altitude for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
