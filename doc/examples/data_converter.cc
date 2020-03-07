@@ -14,7 +14,8 @@ using namespace mio; //The MeteoIO namespace is called mio
 void real_main(int argc, char** argv)
 {
 	setbuf(stdout, NULL); //always flush stdout
-	Config cfg("io.ini");
+	const std::string config_filename = (argc==5)? argv[4] : "io.ini";
+	Config cfg(config_filename);
 	const double TZ = cfg.get("TIME_ZONE", "Input");
 
 	double Tstep;
@@ -64,8 +65,8 @@ void real_main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	if(argc!=4) {
-		std::cout << "Invalid number of arguments! Please provide a date range and a sampling rate (in hours)\n";
+	if(argc<4 || argc>5) {
+		std::cout << "Invalid number of arguments! Please provide a date range and a sampling rate (in minutes)\n";
 		exit(0);
 	}
 
