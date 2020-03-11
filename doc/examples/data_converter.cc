@@ -4,6 +4,7 @@
 * in the io.ini configuration
 */
 #include <iostream>
+#include <cstdio>
 #include <string.h>
 #include <map>
 #include <vector>
@@ -52,7 +53,7 @@ void real_main(int argc, char** argv)
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
 	}
-	
+
 	//io.getMeteoData(d_start, d_end, vecMeteo); //This would be the call that does NOT resample the data, instead of the above "for" loop
 
 	//In both case, we write the data out
