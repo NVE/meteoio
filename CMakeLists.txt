@@ -67,7 +67,9 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
-#plugins
+#plugins and applications
+SET(METEOIO_TIMESERIES ON CACHE BOOL "Compilation METEOIO_TIMESERIES standalone ON or OFF")
+
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
 SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
 SET(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
@@ -110,6 +112,22 @@ ADD_SUBDIRECTORY(meteoio/meteoFilters)
 ADD_SUBDIRECTORY(meteoio/meteoResampling)
 ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
 ADD_SUBDIRECTORY(meteoio)
+
+IF(METEOIO_TIMESERIES)
+	#it seems that the only reliable way is to test-compile...
+	INCLUDE (CheckCXXSourceCompiles)
+	CHECK_CXX_SOURCE_COMPILES("
+	#include <fenv.h>
+	int main() {
+	feenableexcept(FE_DIVBYZERO);
+	return 0;
+	}" HAVE_FEENABLE)
+
+	IF(HAVE_FEENABLE)
+		SET(DEBUG_ARITHM ON CACHE BOOL "Force-crash the application if doing an arithmetic exception")
+	ENDIF(HAVE_FEENABLE)
+	ADD_SUBDIRECTORY(applications)
+ENDIF(METEOIO_TIMESERIES)
 
 ###########################################################
 #for the install target
