@@ -48,7 +48,8 @@ namespace mio {
  * depth measurements of IMIS stations"</i>, 2015. Swiss Geoscience Meeting 2015
  * 
  * Normally, the filter computes any potential offset on TSS before using it in its algorithms. But it is possible
- * to provide the offset that must be used, with the optional TSS_OFFSET argument. 
+ * to provide the offset that must be used, with the optional TSS_OFFSET argument (then TSS_meas + TSS_offset is compared to given thresholds to
+ * determine if snow can exist on the ground, so you can give a negative offset to more easily keep snow on the ground). 
  * 
  * Example of use:
  * @code
