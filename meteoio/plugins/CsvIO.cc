@@ -600,18 +600,18 @@ void CsvParameters::parseUnits(const std::string& line)
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
 		IOUtils::removeQuotes(tmp);
-		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1") continue; //empty unit
+		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
 		if (tmp=="%" || tmp=="CM") units_multiplier[ii] = 0.01;
-		else if (tmp=="C" || tmp=="DEGC") units_offset[ii] = Cst::t_water_freezing_pt;
+		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C") units_offset[ii] = Cst::t_water_freezing_pt;
 		else if (tmp=="MM" || tmp=="MV") units_multiplier[ii] = 1e-3;
 		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
 		else if (tmp=="FT") units_multiplier[ii] = 0.3048;
 		else if (tmp=="F") { units_multiplier[ii] = 5./9.; units_offset[ii] = -32.*5./9.;}
 		else if (tmp=="KM/H") units_multiplier[ii] = 1./3.6;
-		else if (tmp=="MPH") units_multiplier[ii] = 0.44704;
-		else if (tmp=="KT") units_multiplier[ii] = 0.5144444444445;
+		else if (tmp=="MPH") units_multiplier[ii] = 1.60934 / 3.6;
+		else if (tmp=="KT") units_multiplier[ii] = 1.852 / 3.6;
 		else {
 			throw UnknownValueException("Can not parse unit '"+tmp+"', please inform the MeteoIO developers", AT);
 		}
