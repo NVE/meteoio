@@ -33,8 +33,10 @@ IF(UNIX)
 		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
 	ENDIF()	
 	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+	SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the directory of the binary to the rpath
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 	# add the automatically determined parts of the RPATH
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 	# the RPATH to be used when installing, but only if it's not a system directory
