@@ -56,7 +56,7 @@ namespace mio {
  * *WFJ 2015-09-01T07:15 - 2015-09-10T20:30
  * STB2 2015-10-01T21:30
  * @endcode
- * Time ranges are declared by providing two dates on the same line. For more visibility, the said two dates can be separated by " - " (which a white
+ * Time ranges are declared by providing two dates on the same line. For more visibility, the said two dates can be separated by " - " (with a white
  * space character on both sides, as shown in the example above).
  */
 

@@ -35,7 +35,7 @@ FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> 
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
 
-	if (nrArgs>1)
+	if (nrArgs>2)
 		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 
 	if (nrArgs==1) {
