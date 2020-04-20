@@ -45,7 +45,7 @@ namespace mio {
  * satellite transmission) that contain multiple timestamps. Each message starts some kind of a metadata line (for us, 
  * the deploy ID is the station ID:
  * @code
- * {program ID} {deploy ID} {number of lines in the message} {number of data fields} {satellite id?}
+ * {program ID} {deploy ID} {number of lines in the message} {number of data fields per message line} {satellite id?}
  * @endcode
  * 
  * The each timestamp is made of the date and time (as "yyyy-mm-dd hh24:min:ss") followed by an unknown integer and 
@@ -171,6 +171,12 @@ void ArgosIO::addStation(const std::string& argosID)
 	}
 }
 
+/**
+ * @brief Read one line (terminated by \n) with a friendly fallback at the end of file
+ * @param[in] fin stream to read from
+ * @param[out] linenr current line number (for error messages)
+ * @return line that has been read or empty string
+ */
 std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
 {
 	std::string line;
@@ -181,6 +187,19 @@ std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
 	return line;
 }
 
+/**
+ * @brief Read one data line .
+ * @details This is from the point of view of Argos: it starts with a timestamps, spans multiple lines
+ * and end when all fields have been read (or it is not formatted as expected anymore)
+ * @param[in] fin stream to read from
+ * @param[out] linenr current line number (for error messages)
+ * @param[in] nFields expected number of fields
+ * @param[in] station argos station ID (for error messages)
+ * @param[in] dateStart expected start date
+ * @param[in] dateEnd expected end date
+ * @param[out] md read meteo data
+ * @return true if everything went alright and the read data is valid, false otherwise
+ */
 bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const ArgosStation& station, const Date& dateStart, const Date& dateEnd, MeteoData &md) const
 {
 	static const size_t first_data_field = 3; //first data field on timestamp line is #4
