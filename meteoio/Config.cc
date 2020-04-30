@@ -417,11 +417,11 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			if (status) //the variable could be fully expanded
 				deferred_vars.erase( it++ );
 			else
-				++it;
+				it++;
 		}
 		const size_t new_deferred_count = deferred_vars.size();
 		if (new_deferred_count==deferred_count)
-			throw InvalidArgumentException("Circular dependencies between variables in file "+filename, AT);
+			throw InvalidArgumentException("Can not resolve some variables in file "+filename+" (circular dependency? invalid variable name?)", AT);
 		deferred_count = new_deferred_count;
 	}
 	
