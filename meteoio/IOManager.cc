@@ -22,7 +22,8 @@ using namespace std;
 
 namespace mio {
 /**
- * @page spatial_resampling Spatial resampling handling
+ * @page spatial_resampling Spatial resampling and regridding handling
+ * @section resampling Spatial resampling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
  * This is handled as "spatial resampling" and the data **will seem to originate from these virtual stations points** where no station is present. This obviously
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword):
@@ -31,14 +32,17 @@ namespace mio {
  *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed, then the meteo fields are 
  *       spatially interpolated at the chosen locations;
  *     + GRID_ALL: all grid points are extracted;
- *     + GRID_RESAMPLE: all grid points are extracted and used with an additional DEM to resample the grids to a different resolution (by calling spatial interpolations).
  * 
  * For VSTATIONS and GRID_SMART, it is necessary to provide a hint on how often the data should be extracted versus temporally interpolated between extracted 
  * points. This is done by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
  * \image html vstations_sampling.png "Resampling workflow"
  * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
+ * 
+ * Behind the scene, this is a two stages setup: the IOManager uses either a TimeSeriesManager or a GridsManager object to retrieve the real data
+ * and then injects this data as raw data into another TimeSeriesManager (so the temporal interpolations can be computed, the data generators can be called, etc).
+ * Then the IOManager request the data as usual from the final TimeSeriesManager or from the Meteo2DInterpolator (in the case of grids resampling).
  *
- * @section vstations VSTATIONS
+ * @subsection vstations Virtual stations
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
  * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
  * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
@@ -82,7 +86,7 @@ namespace mio {
  * VSTATIONS_REFRESH_OFFSET = 3600
  * @endcode
  * 
- * @section grids_extract From gridded data
+ * @subsection grids_extract From gridded data
  * The meteorological time series are extracted from time series of user-provided grids. Therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys control this downscaling process:
  *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
@@ -108,7 +112,7 @@ namespace mio {
  * @endcode
  * @note If the temporal resolution of the gridded data is greater than the WINDOW_SIZE of the [Interpolations1D], then no data will be interpolated.
  * 
- * @subsection grids_smart From gridded data, with spatial interpolations
+ * @subsubsection grids_smart From gridded data, with spatial interpolations
  * This is a combination between \ref grids_extract "gridded data extraction" and \ref vstations "Vstations": the meteorological time series are extracted 
  * from time series of user-provided grids at 4 points around each provided location and then spatially interpolated at the said locations. 
  * Therefore, the following additional keys are required:
@@ -137,10 +141,17 @@ namespace mio {
  * @endcode
  * 
  * @section grids_resample Resampling of gridded data
- * The meteorological time series are extracted as laid out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
+ * A new keyword has been introduce and will be expanded: *REGRIDDING_STRATEGY*. It describes how to generate gridded data out of other gridded data. 
+ * It currently only accepts the "GRID_RESAMPLE" argument (all grid points are extracted and used with an additional DEM to resample the grids to 
+ * a different resolution (by calling spatial interpolations)). Ultimately, it should offer various methods... Please note that it is currently NOT 
+ * possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY
+ * 
+ * 
+ * The process is very similar to what has been laid out for the \ref resampling "spatial resampling". The meteorological time series are extracted 
+ * as described out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
  * Meteo2DInterpolator to be spatially interpolated over the provided DEM. This therefore performs grid resampling and accounts for elevation gradients, etc
  * as configured in the [2DInterpolations] section. The following keys control this downscaling process:
- *    + RESAMPLING_STRATEGY set to *GRID_RESAMPLE*;
+ *    + REGRIDDING_STRATEGY set to *GRID_RESAMPLE*;
  *    + SOURCE_DEM : filename of the DEM to be read by the GRID2D plugin. This DEM provides the elevations, slopes, etc for the source grids.
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
@@ -154,16 +165,11 @@ namespace mio {
  * SOURCE_DEM = ./input/grids/era-interim-dem.nc
  * NETCDF_SCHEMA = ECMWF
  * 
- * RESAMPLING_STRATEGY = GRID_RESAMPLE
+ * REGRIDDING_STRATEGY = GRID_RESAMPLE
  * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
  * @endcode
  * @note The resampled grids won't be provided by the read2DGrid() call but by the getMeteoData() call since they are considered as spatial interpolations.
  * 
- * @section resampling_behind_the_scene Behind the scene
- * Behind the scene, this is a two stages setup: the IOManager uses either a TimeSeriesManager or a GridsManager object to retrieve the real data
- * and then injects this data as raw data into another TimeSeriesManager (so the temporal interpolations can be computed, the data generators can be called, etc).
- * Then the IOManager request the data as usual from the final TimeSeriesManager or from the Meteo2DInterpolator (in the case of grids resampling).
- *
  */
 
 IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
