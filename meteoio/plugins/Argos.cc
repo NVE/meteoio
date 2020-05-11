@@ -354,7 +354,7 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 	//construct the units_offset
 	const std::string section_offsets = (metaCfg.keyExists("units_offset", argosID))? argosID : "default";
 	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
-		metaCfg.getValues("UNITS_OFFSET", section_offsets, units_offset);
+		metaCfg.getValue("UNITS_OFFSET", section_offsets, units_offset);
 	} else {
 		units_offset = std::vector<double>(fields_idx.size(), 0.);
 	}
@@ -362,7 +362,7 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 	//construct the section_multipliers
 	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", argosID))? argosID : "default";
 	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
-		metaCfg.getValues("UNITS_MULTIPLIER", section_multipliers, units_multiplier);
+		metaCfg.getValue("UNITS_MULTIPLIER", section_multipliers, units_multiplier);
 	} else {
 		units_multiplier = std::vector<double>(fields_idx.size(), 1.);
 	}
@@ -372,12 +372,12 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 		const std::vector<std::string> fields_str2 = metaCfg.get("FIELDS2", section_fields);
 		parseFieldsSpecs(fields_str2, md_template, fields_idx2);
 		if (metaCfg.keyExists("UNITS_OFFSET2", section_offsets)) {
-			metaCfg.getValues("UNITS_OFFSET2", section_offsets, units_offset2);
+			metaCfg.getValue("UNITS_OFFSET2", section_offsets, units_offset2);
 		} else {
 			units_offset2 = std::vector<double>(fields_idx2.size(), 0.);
 		}
 		if (metaCfg.keyExists("UNITS_MULTIPLIER2", section_multipliers)) {
-			metaCfg.getValues("UNITS_MULTIPLIER2", section_multipliers, units_multiplier2);
+			metaCfg.getValue("UNITS_MULTIPLIER2", section_multipliers, units_multiplier2);
 		} else {
 			units_multiplier2 = std::vector<double>(fields_idx2.size(), 1.);
 		}
