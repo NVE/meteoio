@@ -75,7 +75,6 @@ namespace mio {
  *     - ARGOS_EXT: extension of Argos data files to use when no FILE# keyword has been provided;
  *     - METEOPATH_RECURSIVE: when no FILE# keyword has been defined, should all files under METEOPATH be searched recursively? (default: false)
  * - ARGOS_DEBUG: should extra (ie very verbose) information be displayed? (default: false)
- * - WSL_HACK: support reading multiple messages containing information for the same station (used by some WSL stations)? (default: false)
  * - METAFILE: an ini file that contains all the metadata, for each station that has to be read;
  *
  * The METAFILE is structured like an ini file with one section per Argos ID (ie per station). An extra [Default] section
@@ -87,10 +86,26 @@ namespace mio {
  *  - UNITS_MULTIPLIER: factor to apply to each field to bring the value back to SI units (default: 1 for each field);
  *  - UNITS_OFFSET: offset to add to each field \b after applying the UNITS_MULTIPLIER, to bring the value back to SI units (default: 0 for each field);
  *  - FIELDS: the parameter name to use for each field;
+ *  - WSL_HACK: support reading multiple messages containing information for the same station (used by some WSL stations)? (default: false)
  *  - if WSL_HACK has been set to \e true, there are also FIELDS2, UNITS_MULTIPLIER2, UNITS_OFFSET2 to describe a second, interlaced message.
  *
  * The FIELDS should take their names from MeteoData::meteoparam when possible, or can be "SKIP" in order to skip the matching parameter in the output.
  * Any other name will be used as is but won't be automatically recognized within MeteoIO.
+ * 
+ * Example metafile:
+ * @code 
+ * [107282]
+ * fields = Station_nr SKIP SKIP SKIP ISWR RSWR SWR_Net TA RH VW
+ * units_offset = 0 0 0 0 0 0 0 273.15 0 0
+ * units_multiplier = 1 1 1 1 1 1 1 0.01 1 1
+ * wsl_hack = true
+ * 
+ * fields2 = Station_nr DW P HS ISWR_MAX RSWR_MAX TA VW_MAX Battery_Voltage
+ * units_offset2 = 0 0 0 0 0 0 273.15 0 0
+ * position = latlon (46.8, 9.80, 1700)
+ * id = ARG1
+ * name = Swiss Camp 2
+ * @endcode
  */
 
 ArgosIO::ArgosIO(const std::string& configfile)
@@ -381,9 +396,7 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 		} else {
 			units_multiplier2 = std::vector<double>(fields_idx2.size(), 1.);
 		}
-		
 	}
-	
 }
 
 void ArgosStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames, MeteoData &meteo_template, std::vector<size_t> &idx)
