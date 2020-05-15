@@ -80,7 +80,7 @@ class GoesIO : public IOInterface {
 		std::string coordin, coordinparam; //projection parameters
 		double in_TZ;
 		float in_nodata;
-		bool debug;
+		bool debug, OnlyFromPast;
 };
 
 } //namespace

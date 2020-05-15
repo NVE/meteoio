@@ -60,6 +60,7 @@ namespace mio {
  *     - GOES_EXT: extension of Goes data files to use when no FILE# keyword has been provided;
  *     - METEOPATH_RECURSIVE: when no FILE# keyword has been defined, should all files under METEOPATH be searched recursively? (default: false)
  * - GOES_NODATA: value used to represent nodata (default: -8190);
+ * - GOES_ONLYFROMPAST: if set to true, data point beyond the current date and time will be rejected as invalid and reading will continue (default: true);
  * - GOES_DEBUG: should extra (ie very verbose) information be displayed? (default: false)
  * - METAFILE: an ini file that contains all the metadata, for each station that has to be read;
  *
@@ -83,14 +84,14 @@ static const size_t dataStartPos = 37;
 
 GoesIO::GoesIO(const std::string& configfile)
              : vecFilenames(), stations(), metaCfg(), meteopath(), coordin(), coordinparam(),
-               in_TZ(0.), in_nodata(-8190.), debug(false)
+               in_TZ(0.), in_nodata(-8190.), debug(false), OnlyFromPast(true)
 {
 	parseInputOutputSection( Config(configfile) );
 }
 
 GoesIO::GoesIO(const Config& cfgreader)
              : vecFilenames(), stations(), metaCfg(), meteopath(), coordin(), coordinparam(),
-               in_TZ(0.), in_nodata(-8190.), debug(false)
+               in_TZ(0.), in_nodata(-8190.), debug(false), OnlyFromPast(true)
 
 {
 	parseInputOutputSection( cfgreader );
@@ -103,6 +104,7 @@ void GoesIO::parseInputOutputSection(const Config& cfg)
 	
 	cfg.getValue("GOES_DEBUG", "Input", debug, IOUtils::nothrow);
 	cfg.getValue("GOES_NODATA", "Input", in_nodata, IOUtils::nothrow);
+	cfg.getValue("GOES_ONLYFROMPAST", "Input", OnlyFromPast, IOUtils::nothrow);
 	const std::string metafile = cfg.get("METAFILE", "Input");
 	metaCfg.addFile( metafile );
 	cfg.getValue("METEOPATH", "Input", meteopath);
@@ -185,6 +187,10 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 		throw AccessException(ss.str(), AT);
 	}
 
+	//this is required for the OnlyFromPast option
+	Date now;
+	now.setFromSys();
+	
 	std::vector<float> raw_data;
 	while (!fin.eof()){
 		std::string line;
@@ -220,26 +226,22 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 			raw_data[ii-1] = (raw_data[ii-1] + static_cast<float>((B & 63)*64 + (C & 63))) * SF;
 		}
 
-		//get/refresh its index
-		size_t st_idx = stations[ goesID ].meteoIdx;
-		if (st_idx==IOUtils::npos) {
-			if (stations[ goesID ].isValid()) { //there was a rebuffer, we need to refresh the index
-				st_idx = vecMeteo.size();
-				stations[ goesID ].meteoIdx = st_idx;
-				vecMeteo.push_back( std::vector<MeteoData>() );
-			} else {
-				//this should not happen, this should have been caught above
-				continue; //this station has not been configured by the user
-			}
-		}
-
 		//parsing date
 		const Date dt( stations[ goesID ].parseDate(raw_data) );
 		if (dt.isUndef()) continue; //that was an invalid line
+		if (OnlyFromPast && dt>now) continue; //this is also an invalid line
 		if (dt<dateStart) continue;
 		if (dt>dateEnd) {
 			fin.close();
 			return;
+		}
+		
+		//get/refresh the current station's index
+		size_t st_idx = stations[ goesID ].meteoIdx;
+		if (st_idx==IOUtils::npos) { //there was a rebuffer, we need to refresh the index
+			st_idx = vecMeteo.size();
+			stations[ goesID ].meteoIdx = st_idx;
+			vecMeteo.push_back( std::vector<MeteoData>() );
 		}
 
 		const MeteoData md( stations[ goesID ].parseDataLine(dt, raw_data) );
