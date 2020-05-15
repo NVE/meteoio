@@ -72,14 +72,13 @@ namespace mio {
  *  - UNITS_MULTIPLIER: factor to apply to each field to bring the value back to SI units (default: 1 for each field);
  *  - UNITS_MULTIPLIER_NEG: factor to apply to each field to bring the value back to SI units, \b when the raw data is \b negative (default: same as UNITS_MULTIPLIER);
  *  - UNITS_OFFSET: offset to add to each field \b after applying the UNITS_MULTIPLIER, to bring the value back to SI units (default: 0 for each field);
- *  - FIELDS: the parameter name to use for each field;
+ *  - FIELDS: the parameter name to use for each field (the given number of parameters defines which lines are valid or invalid);
  *
  * The FIELDS should take their names from MeteoData::meteoparam when possible, or be either of the following: "STATIONID", "YEAR", "JDN", "HOUR", "SKIP".
  * Any other name will be used as is but won't be automatically recognized within MeteoIO.
  */
 
-//these are fixed by GOES
-static const size_t nElems = 46;
+//this is fixed by GOES
 static const size_t dataStartPos = 37;
 
 GoesIO::GoesIO(const std::string& configfile)
@@ -186,7 +185,7 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 		throw AccessException(ss.str(), AT);
 	}
 
-	std::vector<float> raw_data(nElems);
+	std::vector<float> raw_data;
 	while (!fin.eof()){
 		std::string line;
 		getline(fin, line);
@@ -194,9 +193,13 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 
 		const std::string goesID( line.substr(0, 8) ); //only first 8 characters of the station substring
 		if (goesID[0]!='8') continue; //invalid GOES ID, this must be an invalid line
+		if (stations.count( goesID )==0) addStation(goesID); //create the station if necessary (ie pulling its user-defined metadata)
+		if (!stations[ goesID ].isValid()) continue; //this station has not been configured by the user
+		const size_t nElems = stations[ goesID ].getNElems(); //getting the expected number of elements
+		
 		const std::string data_section( line.substr(dataStartPos) );
-
-		if (data_section.length()<=(3*nElems)) continue;
+		if (data_section.length()<=(3*nElems)) continue; //the line is invalid
+		raw_data.resize(nElems);
 		
 		for (size_t ii=1; ii<=nElems; ii++) {
 			raw_data[ii-1] = 0;
@@ -217,8 +220,6 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 			raw_data[ii-1] = (raw_data[ii-1] + static_cast<float>((B & 63)*64 + (C & 63))) * SF;
 		}
 
-		//creating the station if necessary (ie pulling its user-defined metadata)
-		if (stations.count( goesID )==0) addStation(goesID); //create the station
 		//get/refresh its index
 		size_t st_idx = stations[ goesID ].meteoIdx;
 		if (st_idx==IOUtils::npos) {
@@ -227,6 +228,7 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 				stations[ goesID ].meteoIdx = st_idx;
 				vecMeteo.push_back( std::vector<MeteoData>() );
 			} else {
+				//this should not happen, this should have been caught above
 				continue; //this station has not been configured by the user
 			}
 		}
@@ -273,12 +275,12 @@ void GoesIO::addStation(const std::string& goesID)
 
 GoesStation::GoesStation()
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(0.), nodata(0.),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), nElems(0), validStation(false)
 {}
 
 GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(in_TZ), nodata(in_nodata),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), nElems(0), validStation(true)
 {
 	//construct the StationData for this station
 	const std::string station_id = metaCfg.get("ID", goesID, "Goes::"+goesID);
@@ -291,12 +293,8 @@ GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const
 	//identify all fields for this station and build the MeteoData template
 	const std::string section_fields = (metaCfg.keyExists("fields", goesID))? goesID : "default";
 	const std::vector<std::string> fields_str = metaCfg.get("FIELDS", section_fields);
-	if (fields_str.size()!=nElems) {
-		ostringstream ss;
-		ss << "Number of user-declared fields (" << fields_str.size() << ") don't match with GOES message ";
-		ss << "number of fields (" << nElems << ")";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
+	nElems = fields_str.size();
+	
 	md_template.meta = sd;
 	parseFieldsSpecs(fields_str, md_template, fields_idx);
 

@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 /**
  * @page spatial_resampling Spatial resampling and regridding handling
- * @section resampling Spatial resampling
+ * @section sp_resampling Spatial resampling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
  * This is handled as "spatial resampling" and the data **will seem to originate from these virtual stations points** where no station is present. This obviously
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword):
@@ -147,7 +147,7 @@ namespace mio {
  * possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY
  * 
  * 
- * The process is very similar to what has been laid out for the \ref resampling "spatial resampling". The meteorological time series are extracted 
+ * The process is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted 
  * as described out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
  * Meteo2DInterpolator to be spatially interpolated over the provided DEM. This therefore performs grid resampling and accounts for elevation gradients, etc
  * as configured in the [2DInterpolations] section. The following keys control this downscaling process:
