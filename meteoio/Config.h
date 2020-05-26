@@ -387,7 +387,7 @@ class Config {
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
-		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
+		 *  const std::vector<std::string> myVec( cfg.findKeys("TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
