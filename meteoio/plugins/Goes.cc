@@ -204,7 +204,11 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 		const size_t nElems = stations[ goesID ].getNElems(); //getting the expected number of elements
 		
 		const std::string data_section( line.substr(dataStartPos) );
-		if (data_section.length()<=(3*nElems)) continue; //the line is invalid
+		if (data_section.length()<=(3*nElems)) { //the line is invalid
+			if (debug)
+				std::cout << goesID << ", line is " << data_section.length() << " chars long, expecting > " << 3*nElems << " -> rejecting\n";
+			continue;
+		}
 		raw_data.resize(nElems);
 		
 		for (size_t ii=1; ii<=nElems; ii++) {
