@@ -327,14 +327,14 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 /**
 * @brief Set date from a year and Julian Day Number (JDN).
 * @param year year to set
-* @param jdn Julian Day Number within the provided year
+* @param jdn Julian Day Number within the provided year (1 to 365/366)
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
 void Date::setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
 {
 	setTimeZone(in_timezone, in_dst);
-	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn;
+	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn-1;
 	gmt_julian = rnd( localToGMT(local_julian), epsilon_sec);
 	undef = false;
 }
