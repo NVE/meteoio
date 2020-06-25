@@ -127,7 +127,6 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 	if (position==ResamplingAlgorithms::begin || index==0) {
-		if (!strict) md(paramindex) = 0.;
 		return;
 	}
 
