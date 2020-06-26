@@ -27,12 +27,12 @@ fi
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
 		NAME=`basename "${SMET}" .smet`
-		ALT=`head -100 "${SMET}" | grep altitude | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f3 | cut -d'.' -f1`
-		JULIAN=`head -100 "${SMET}" | grep fields | grep julian`
-		ISO=`head -100 "${SMET}" | grep fields | grep timestamp`
-		start=`head -100 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
-		end=`tail -5 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
-		header_nr_lines=`head -100 "${SMET}" | grep -n "\[DATA\]" | cut -d':' -f1`
+		ALT=`head -100 "${SMET}" | grep --binary-files=text altitude | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f3 | cut -d'.' -f1`
+		JULIAN=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text julian`
+		ISO=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text timestamp`
+		start=`head -100 "${SMET}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		end=`tail -5 "${SMET}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		header_nr_lines=`head -100 "${SMET}" | grep --binary-files=text -n "\[DATA\]" | cut -d':' -f1`
 		full_nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
 		nr_lines=`expr ${full_nr_lines} - ${header_nr_lines}`
 
@@ -77,15 +77,15 @@ if [ "${param}" = "time" ]; then
 fi
 
 for SMET in ${files}; do
-	IJ=`head -100 ${SMET} | grep station_id | tr -s ' \t' | cut -d' ' -f3`
+	IJ=`head -100 ${SMET} | grep --binary-files=text station_id | tr -s ' \t' | cut -d' ' -f3`
 	if [ -z "${IJ}" ]; then
 		IJ=`echo ${SMET} | cut -d'.' -f 1 | cut -d'_' -f2,3 | tr "_" ","`
 	fi
-	LAT=`head -100 ${SMET} | grep latitude | tr -s ' \t' | cut -d' ' -f3`
-	LON=`head -100 ${SMET} | grep longitude | tr -s ' \t' | cut -d' ' -f3`
-	ALT=`head -100 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
-	NODATA=`head -100 ${SMET} | grep nodata | tr -s ' \t' | cut -d' ' -f3`
-	JULIAN=`head -100 "${SMET}" | grep fields | grep julian`
+	LAT=`head -100 ${SMET} | grep --binary-files=text latitude | tr -s ' \t' | cut -d' ' -f3`
+	LON=`head -100 ${SMET} | grep --binary-files=text longitude | tr -s ' \t' | cut -d' ' -f3`
+	ALT=`head -100 ${SMET} | grep --binary-files=text altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
+	NODATA=`head -100 ${SMET} | grep --binary-files=text nodata | tr -s ' \t' | cut -d' ' -f3`
+	JULIAN=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text julian`
 
 	${local_awk} '
 	function toJul(ts){
