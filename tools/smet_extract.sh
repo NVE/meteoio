@@ -96,6 +96,25 @@ if [ "$2" = "gaps" ]; then
 			date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 			return mktime(date)
 		}
+		function prettyPrintDuration(ts){
+			if (ts<299 && ts!=60 && ts!=120 && ts!=180 && ts!=240)
+				return sprintf("%3.0f s", ts)
+			else if (ts<60*60)
+				return sprintf("%3.0f min", ts/60)
+			else if (ts<2*24*3600) {
+				if (ts>23.5*3600 && ts<24.5*3600) 
+					return sprintf("%3.0f day", 1)
+				ts_h=ts/3600
+				if (ts_h==int(ts_h))
+					return sprintf("%3.0f h", ts/3600)
+				return sprintf("~%3.0f h", ts/3600)
+			} else {
+				period_days=ts/(3600*24)
+				if (period_days==int(period_days))
+					return sprintf("%3.0f days", period_days)
+				return sprintf("~%3.0f days", period_days)
+			}
+		}
 		BEGIN {
 			if("'"${USER_SAMPLING_RATE}"'"!="") {
 				period=int("'"${USER_SAMPLING_RATE}"'" * 60)
@@ -131,7 +150,8 @@ if [ "$2" = "gaps" ]; then
 			}
 			if(all_nodata==1) next;
 			if(curr_ts-prev_ts>period) {
-				printf("%s - %s\n", prev_ts_str, $1)
+				gap_size_s=(curr_ts-prev_ts)
+				printf("%s - %s\t(%s)\n", prev_ts_str, $1, prettyPrintDuration(gap_size_s))
 			}
 			
 			prev_ts=curr_ts
