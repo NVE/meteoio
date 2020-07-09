@@ -298,14 +298,14 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
-             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false), append_possible(false) {}
 
 SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
-             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true), append_possible(false)
 {
@@ -766,16 +766,17 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::of
 
 void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout)
 {
-	fout.fill(' ');
+	fout.fill(separator);
 	fout << right;
 	fout << fixed;
 
 	if ((data.empty()) && timestamp_present) fout << timestamp;
 
 	for (size_t ii = 0; ii < data.size(); ii++){
-		if (ii > 0) fout << " ";
-		if (timestamp_present && (timestamp_field == ii))	fout << timestamp << " ";
-		fout << setw(ascii_width[ii]) << setprecision(ascii_precision[ii]);
+		if (ii > 0) fout << separator;
+		if (timestamp_present && (timestamp_field == ii))	fout << timestamp << separator;
+		if (separator==' ') fout << setw(ascii_width[ii]);
+		fout << setprecision(ascii_precision[ii]);
 		if (data[ii] == nodata_value) fout << nodata_string; //to have a nicer representation
 		else fout << data[ii];
 	}

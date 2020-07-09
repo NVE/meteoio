@@ -155,6 +155,15 @@ class SMETWriter {
 		 *            (timestamp is not counted if present)
 		 */
 		void set_width(const std::vector<int>& vec_width);
+		
+		/**
+		 * @brief For some special cases (import into DB), the white space separator
+		 *        should be replaced by another one (typically, comma). In this case,
+		 *        each field will be delimited by a single separator but the headers
+		 *        will remain space-delimited.
+		 * @param[in] i_separator field separator to use instead of spaces
+		 */
+		void set_separator(const char& i_separator) {separator = i_separator;}
 
 		const std::string toString() const;
 		
@@ -180,6 +189,7 @@ class SMETWriter {
 		double nodata_value;
 		size_t nr_of_fields, julian_field, timestamp_field;
 		char location_wgs84, location_epsg;
+		char separator;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
 		bool file_is_binary, append_mode, append_possible;

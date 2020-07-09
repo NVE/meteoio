@@ -99,6 +99,7 @@ class SMETIO : public IOInterface {
 		std::string outpath;                //read from the Config [Output] section
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
+		char output_separator;         //output field separator
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
