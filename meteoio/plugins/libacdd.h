@@ -67,9 +67,11 @@ class ACDD {
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
 		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
 		void setGeometry(const mio::Coords& location, const bool& isLatLon);
+		void setGeometry(const std::vector< mio::Coords >& vecLocation, const bool& isLatLon);
 		
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
+		void setTimeCoverage(const std::vector<std::string>& vec_timestamp);
 		
 	private:
 		void defaultInit();

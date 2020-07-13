@@ -248,6 +248,61 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	addAttribute("geospatial_lon_max", lon_max);
 }
 
+void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool& isLatLon)
+{
+	if (vecLocation.empty()) return;
+	
+	std::string multiPts;
+	short int epsg = -1;
+	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
+	bool found = false;
+	for (size_t ii=0; ii<vecLocation.size(); ii++) {
+		//create the strings for the MultiPoint property
+		std::ostringstream ss;
+		if (isLatLon) {
+			ss  << std::fixed << std::setprecision(10) << "(" << vecLocation[ii].getLon() << " " << vecLocation[ii].getLat() << ")";
+		} else {
+			ss  << std::fixed << std::setprecision(0) << "(" << vecLocation[ii].getEasting() << " " << vecLocation[ii].getNorthing() << ")";
+		}
+		if (epsg==-1) { //first valid point
+			epsg = (isLatLon)? 4326 : vecLocation[ii].getEPSG();
+			multiPts = ss.str();
+		} else {
+			if (!isLatLon && epsg!=vecLocation[ii].getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
+			multiPts += ", "+ss.str();
+		}
+
+		const double curr_lat = vecLocation[ii].getLat();
+		const double curr_lon = vecLocation[ii].getLon();
+		found = true;
+		
+		if (lat_min>curr_lat) lat_min = curr_lat;
+		if (lat_max<curr_lat) lat_max = curr_lat;
+		if (lon_min>curr_lon) lon_min = curr_lon;
+		if (lon_max<curr_lon) lon_max = curr_lon;
+	}
+	if (!found) return;
+	
+	const bool singlePoint = (lat_min==lat_max && lon_min==lon_max);
+	
+	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
+		std::ostringstream os;
+		os << epsg;
+		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
+		
+		if (singlePoint)
+			addAttribute("geospatial_bounds", "Point ("+multiPts+")");
+		else
+			addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
+	}
+	if (!singlePoint) {
+		addAttribute("geospatial_lat_min", lat_min);
+		addAttribute("geospatial_lat_max", lat_max);
+		addAttribute("geospatial_lon_min", lon_min);
+		addAttribute("geospatial_lon_max", lon_max);
+	}
+}
+
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 {
 	std::string epsg_str = "4326";
@@ -307,6 +362,25 @@ void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
 	
 	const size_t npts = vecMeteo.size();
+	if (npts>1) {
+		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
+		std::ostringstream os;
+		os << "P" << sampling_period << "S"; //ISO8601 duration format
+		addAttribute("time_coverage_resolution", os.str());
+	}
+}
+
+void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp)
+{
+	if (vec_timestamp.empty()) return;
+	
+	mio::Date set_start, set_end;
+	mio::IOUtils::convertString(set_start, vec_timestamp.front(), 0.); //in GMT
+	mio::IOUtils::convertString(set_end, vec_timestamp.back(), 0.); //in GMT
+	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
+	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
+	
+	const size_t npts = vec_timestamp.size();
 	if (npts>1) {
 		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 		std::ostringstream os;

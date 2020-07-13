@@ -92,6 +92,7 @@ class SMETIO : public IOInterface {
 		static const char* dflt_extension;
 		static const double snVirtualSlopeAngle;
 		const Config cfg;
+		ACDD *acdd;
 		std::map<size_t, plot_attr> plot_ppt; ///< properties for plotting the SMET parameters
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;

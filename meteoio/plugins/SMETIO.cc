@@ -94,7 +94,7 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(nullptr), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
@@ -104,7 +104,7 @@ SMETIO::SMETIO(const std::string& configfile)
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(nullptr), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
@@ -173,33 +173,42 @@ void SMETIO::parseInputOutputSection()
 		}
 	}
 
-	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
+	//Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
 	outpath.clear();
-	outputIsAscii = true;
-
-	std::vector<std::string> vecArgs;
-	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
-	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
-	cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
-	cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
-	cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
-	cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
-
-	if (outpath.empty()) return;
-
-	if (vecArgs.empty())
-		vecArgs.push_back("ASCII");
-
-	if (vecArgs.size() > 1)
-		throw InvalidFormatException("Too many values for key METEOPARAM", AT);
-
-	if (vecArgs[0] == "BINARY")
-		outputIsAscii = false;
-	else if (vecArgs[0] == "ASCII")
+	std::string out_meteo;
+	cfg.getValue("METEO", "Output", out_meteo, IOUtils::nothrow);
+	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
-	else
-		throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+		
+		bool write_acdd=false;
+		cfg.getValue("WRITE_ACDD", "Output", write_acdd, IOUtils::nothrow);
+		if (write_acdd) {
+			acdd = new ACDD();
+			acdd->setUserConfig(cfg, "Output");
+		}
+
+		std::vector<std::string> vecArgs;
+		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
+		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
+		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
+		cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
+		cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
+		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
+		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
+		
+		if (vecArgs.empty())
+			vecArgs.push_back("ASCII");
+
+		if (vecArgs.size() > 1)
+			throw InvalidFormatException("Too many values for key METEOPARAM", AT);
+
+		if (vecArgs[0] == "BINARY")
+			outputIsAscii = false;
+		else if (vecArgs[0] == "ASCII")
+			outputIsAscii = true;
+		else
+			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+	}
 }
 
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
@@ -526,6 +535,8 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 			std::vector<std::string> vec_timestamp;
 			std::vector<double> vec_data;
+			std::vector<mio::Coords> vecLocation;
+			if (!vecMeteo[ii].empty()) vecLocation.push_back( vecMeteo[ii].front().meta.position );
 			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				if (outputIsAscii){
 					if (out_dflt_TZ != IOUtils::nodata) { //user-specified time zone
@@ -548,6 +559,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 
 				if (!isConsistent) { //Meta data changes
+					if (vecMeteo[ii][jj].meta.position != vecLocation.back())
+						vecLocation.push_back( vecMeteo[ii][jj].meta.position );
+					
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLat());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLon());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getAltitude());
@@ -559,8 +573,12 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data);
-			else mywriter->write(vec_data);
+			if (acdd!=nullptr) {
+				acdd->setTimeCoverage( vec_timestamp );
+				acdd->setGeometry(vecLocation, true);
+			}
+			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd);
+			else mywriter->write(vec_data, acdd);
 
 			delete mywriter;
 		} catch(exception&) {

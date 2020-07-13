@@ -19,6 +19,7 @@
 #define LIBSMET_H
 
 #include <meteoio/FileUtils.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <string>
 #include <iostream>
@@ -131,14 +132,14 @@ class SMETWriter {
 		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
 		 */
-		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data);
+		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD *acdd=nullptr);
 
 		/**
 		 * @brief Write a SMET file, providing a vector of doubles
 		 * @param[in] data All the data to be written sequentially into the columns, the data
 		 *            is aligned sequentially, not per line;
 		 */
-		void write(const std::vector<double>& data);
+		void write(const std::vector<double>& data, const ACDD *acdd=nullptr);
 
 		/**
 		 * @brief Set precision for each field (except timestamp), otherwise a default
@@ -170,7 +171,8 @@ class SMETWriter {
 	private:
 		void setAppendMode(std::vector<std::string> vecFields);
 		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
-		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
+		void printACDD(std::ofstream& fout, const ACDD& acdd) const;
+		void write_header(std::ofstream& fout, const ACDD *acdd); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
 		bool check_fields(const std::string& key, const std::string& value);

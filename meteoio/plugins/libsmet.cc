@@ -549,7 +549,7 @@ bool SMETWriter::valid_header()
 	return false;
 }
 
-void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
+void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD *acdd)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
@@ -578,7 +578,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	std::ofstream fout(filename.c_str(), mode_flags);
 	if (fout.fail())
 		throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
-	if (write_headers) write_header(fout); //Write the header info, always in ASCII format
+	if (write_headers) write_header(fout, acdd); //Write the header info, always in ASCII format
 	
 
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
@@ -624,7 +624,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	fout.close();
 }
 
-void SMETWriter::write(const std::vector<double>& data)
+void SMETWriter::write(const std::vector<double>& data, const ACDD *acdd)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
@@ -635,7 +635,7 @@ void SMETWriter::write(const std::vector<double>& data)
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
-	write_header(fout); //Write the header info, always in ASCII format
+	write_header(fout, acdd); //Write the header info, always in ASCII format
 
 	if (nr_of_fields == 0){
 		fout.close();
@@ -670,6 +670,23 @@ void SMETWriter::write(const std::vector<double>& data)
 	fout.close();
 }
 
+void SMETWriter::printACDD(std::ofstream& fout, const ACDD& acdd) const
+{
+	//print ACDD headers
+	const size_t nr = acdd.getNrAttributes();
+	std::string header_field, value;
+	for (size_t ii=0; ii<nr; ii++) {
+		acdd.getAttribute(ii, header_field, value);
+		if (header_field.empty() || value.empty()) continue;
+		
+		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
+		const std::streamsize width = fout.width(16);
+		fout << header_field << " = " << value << "\n";
+		fout.width(width);
+		fout.setf(flags);
+	}
+}
+
 void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream& fout) const
 {
 	const std::map<string,string>::const_iterator it = header.find(header_field);
@@ -682,7 +699,7 @@ void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream&
 	}
 }
 
-void SMETWriter::write_header(std::ofstream& fout)
+void SMETWriter::write_header(std::ofstream& fout, const ACDD *acdd)
 {
 	if (!valid_header()) {
 		fout.close();
@@ -731,6 +748,7 @@ void SMETWriter::write_header(std::ofstream& fout)
 	}
 
 	print_if_exists("fields", fout);
+	if (acdd!=nullptr) printACDD(fout, *acdd);
 	fout << "[DATA]" << endl;
 }
 
