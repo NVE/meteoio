@@ -121,6 +121,22 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 }
 
 /**
+* @brief Add all the ACDD attributes contained in the acdd object to the file pointed to by ncid.
+* @param[in] ncid file ID
+* @param[in] acdd ACDD object containing all ACDD attributes (only those that have a value will be written)
+*/
+void writeACDDAttributes(const int& ncid, const ACDD& acdd)
+{
+	const size_t nr = acdd.getNrAttributes();
+	std::string name, value;
+	for (size_t ii=0; ii<nr; ii++) {
+		acdd.getAttribute(ii, name, value);
+		if (name.empty() || value.empty()) continue;
+		ncpp::add_attribute(ncid, NC_GLOBAL, name, value);
+	}
+}
+
+/**
 * @brief Check if a variable has a given attribute
 * @param[in] ncid file ID
 * @param[in] varid ID of the variable those attributes should be checked
@@ -576,7 +592,12 @@ std::string generateHistoryAttribute()
 } //end namespace
 
 ///////////////////////////////////////////////////// Now the ACDD class starts //////////////////////////////////////////
-
+/**
+* @brief Read all config keys from the selected section and apply some special processing for some keys.
+* @details This is used as some sort of caching, only keeping the section of interest.
+* @param[in] cfg Config object to read the configuration keys from
+* @param[in] section section to read the keys from (all keys from the section will be read at this point)
+*/
 void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section)
 {
 	for (size_t ii=0; ii<name.size(); ii++) {
@@ -684,11 +705,14 @@ void ACDD::addAttribute(const std::string& att_name, const double& att_value, co
 	addAttribute(att_name, os.str(), att_cfg_key, mode);
 }
 
-void ACDD::writeAttributes(const int& ncid) const
+void ACDD::getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const
 {
-	for (size_t ii=0; ii<name.size(); ii++) {
-		if (name[ii].empty() || value[ii].empty()) continue;
-		ncpp::add_attribute(ncid, NC_GLOBAL, name[ii], value[ii]);
+	if (ii<name.size()) {
+		att_name=name[ii];
+		att_value=value[ii];
+	} else {
+		att_name="";
+		att_value="";
 	}
 }
 

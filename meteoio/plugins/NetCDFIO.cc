@@ -1047,7 +1047,7 @@ void ncFiles::writeGridMetadataHeader(const Grid2DObject& grid_in)
 	acdd.addAttribute("title", "Gridded data for various parameters and timesteps");
 	acdd.setGeometry(grid_in, isLatLon);
 
-	acdd.writeAttributes(ncid);
+	ncpp::writeACDDAttributes(ncid, acdd);
 }
 
 void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
@@ -1083,7 +1083,7 @@ void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData>
 		acdd.setTimeCoverage(vecMeteo[station_idx]);
 	}
 
-	acdd.writeAttributes(ncid);
+	ncpp::writeACDDAttributes(ncid, acdd);
 }
 
 std::vector<StationData> ncFiles::readStationData()

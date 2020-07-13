@@ -66,7 +66,7 @@ if [ "${param}" = "time" ]; then
 						sampling=sprintf("%3.0f h  ", period/3600)
 					else {
 						period_days=period/(3600*24)
-						if (period_days==1) sampling=sprintf("%3.0f days", period_days)
+						if (period_days==1) sampling=sprintf("%3.0f day", period_days)
 						else sampling=sprintf("%3.0f days", period_days)
 					}
 					printf( "%04d m\t[ %s - %s ]\t~%s\t(%s)\n", "'"${ALT}"'", ISO_start, ISO_end, sampling, "'"${NAME}"'")
