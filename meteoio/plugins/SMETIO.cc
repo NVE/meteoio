@@ -58,6 +58,8 @@ namespace mio {
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
+ * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+ * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
  * - SMET_SEPARATOR: set a different output field separator as required by some import software. But this <b>makes the smet files non-conformant</b>! [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
@@ -94,7 +96,7 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), acdd(nullptr), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(NULL), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
@@ -104,7 +106,7 @@ SMETIO::SMETIO(const std::string& configfile)
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), acdd(nullptr), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(NULL), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
@@ -181,10 +183,10 @@ void SMETIO::parseInputOutputSection()
 		outputIsAscii = true;
 		
 		bool write_acdd=false;
-		cfg.getValue("WRITE_ACDD", "Output", write_acdd, IOUtils::nothrow);
+		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow); //HACK write documentation!!
 		if (write_acdd) {
 			acdd = new ACDD();
-			acdd->setUserConfig(cfg, "Output");
+			acdd->setUserConfig(cfg, "Output", false); //do not allow multi-line keys
 		}
 
 		std::vector<std::string> vecArgs;
@@ -573,7 +575,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (acdd!=nullptr) {
+			if (acdd!=NULL) {
 				acdd->setTimeCoverage( vec_timestamp );
 				acdd->setGeometry(vecLocation, true);
 			}

@@ -33,22 +33,22 @@
  * @details A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
  * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
  * following keys:
- *  - NC_CREATOR: the name of the creator of the data set (default: login name);
- *  - NC_EMAIL: the email of the creator;
- *  - NC_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
- *  - NC_TITLE: a short title for the data set;
- *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
- *  - NC_PROJECT: the scientific project that created the data;
- *  - NC_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
- *  - NC_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
- *  - NC_PROCESSING_LEVEL: a textual description of the processing level
- *  - NC_SUMMARY: a paragraph describing the dataset;
- *  - NC_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of NC_SUMMARY if present;
- *  - NC_COMMENT: miscellaneous informartion about the dataset;
- *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
- *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata;
- *  - NC_LICENSE: describes the license applicable to the dataset;
- *  - NC_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0).
+ *  - ACDD_CREATOR: the name of the creator of the data set (default: login name);
+ *  - ACDD_EMAIL: the email of the creator;
+ *  - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
+ *  - ACDD_TITLE: a short title for the data set;
+ *  - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
+ *  - ACDD_PROJECT: the scientific project that created the data;
+ *  - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
+ *  - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
+ *  - ACDD_PROCESSING_LEVEL: a textual description of the processing level
+ *  - ACDD_SUMMARY: a paragraph describing the dataset;
+ *  - ACDD_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present;
+ *  - ACDD_COMMENT: miscellaneous informartion about the dataset;
+ *  - ACDD_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
+ *  - ACDD_METADATA_LINK: A URL/DOI that gives more complete metadata;
+ *  - ACDD_LICENSE: describes the license applicable to the dataset;
+ *  - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0).
 */
 class ACDD {
 	public:
@@ -56,7 +56,7 @@ class ACDD {
 		
 		ACDD() : name(), cfg_key(), value() {defaultInit();}
 		
-		void setUserConfig(const mio::Config& cfg, const std::string& section);
+		void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line=true);
 		
 		void addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key="", Mode mode=MERGE);
 		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);

@@ -131,15 +131,17 @@ class SMETWriter {
 		 *            is aligned sequentially, not per line; Total size of the vector:
 		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
+		 * @param[in] acdd Pointer to an ACDD object that contains acdd metadata, or NULL to skip writing ACDD metadata
 		 */
-		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD *acdd=nullptr);
+		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD *acdd=NULL);
 
 		/**
 		 * @brief Write a SMET file, providing a vector of doubles
 		 * @param[in] data All the data to be written sequentially into the columns, the data
 		 *            is aligned sequentially, not per line;
+		 * @param[in] acdd Pointer to an ACDD object that contains acdd metadata, or NULL to skip writing ACDD metadata
 		 */
-		void write(const std::vector<double>& data, const ACDD *acdd=nullptr);
+		void write(const std::vector<double>& data, const ACDD *acdd=NULL);
 
 		/**
 		 * @brief Set precision for each field (except timestamp), otherwise a default

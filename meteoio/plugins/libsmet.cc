@@ -748,7 +748,7 @@ void SMETWriter::write_header(std::ofstream& fout, const ACDD *acdd)
 	}
 
 	print_if_exists("fields", fout);
-	if (acdd!=nullptr) printACDD(fout, *acdd);
+	if (acdd!=NULL) printACDD(fout, *acdd);
 	fout << "[DATA]" << endl;
 }
 
