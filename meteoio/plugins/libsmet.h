@@ -131,17 +131,19 @@ class SMETWriter {
 		 *            is aligned sequentially, not per line; Total size of the vector:
 		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
-		 * @param[in] acdd Pointer to an ACDD object that contains acdd metadata, or NULL to skip writing ACDD metadata
+		 * @param[in] acdd ACDD object that contains acdd metadata
+		 * @param[in] write_acdd should the acdd metadata be written out? (default: false)
 		 */
-		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD *acdd=NULL);
+		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD& acdd, const bool& write_acdd=false);
 
 		/**
 		 * @brief Write a SMET file, providing a vector of doubles
 		 * @param[in] data All the data to be written sequentially into the columns, the data
 		 *            is aligned sequentially, not per line;
-		 * @param[in] acdd Pointer to an ACDD object that contains acdd metadata, or NULL to skip writing ACDD metadata
+		 * @param[in] acdd ACDD object that contains acdd metadata
+		 * @param[in] write_acdd should the acdd metadata be written out? (default: false)
 		 */
-		void write(const std::vector<double>& data, const ACDD *acdd=NULL);
+		void write(const std::vector<double>& data, const ACDD& acdd, const bool& write_acdd=false);
 
 		/**
 		 * @brief Set precision for each field (except timestamp), otherwise a default
@@ -174,7 +176,7 @@ class SMETWriter {
 		void setAppendMode(std::vector<std::string> vecFields);
 		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
 		void printACDD(std::ofstream& fout, const ACDD& acdd) const;
-		void write_header(std::ofstream& fout, const ACDD *acdd); //only writes when all necessary header values are set
+		void write_header(std::ofstream& fout, const ACDD& acdd, const bool& write_acdd=false); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
 		bool check_fields(const std::string& key, const std::string& value);
