@@ -30,6 +30,8 @@
 
 using namespace std;
 
+namespace mio {
+
 /**
 * @brief Read all config keys from the selected section and apply some special processing for some keys.
 * @details This is used as some sort of caching, only keeping the section of interest.
@@ -391,3 +393,6 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp)
 		addAttribute("time_coverage_resolution", os.str());
 	}
 }
+
+} //namespace
+

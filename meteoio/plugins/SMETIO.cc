@@ -96,21 +96,21 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), acdd(), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
-          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), acdd(), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
-          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -182,8 +182,10 @@ void SMETIO::parseInputOutputSection()
 	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
 		
+		bool write_acdd = false;
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
 		if (write_acdd) {
+			acdd.setEnabled( true );
 			acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
 		}
 
@@ -573,12 +575,12 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (write_acdd) {
+			if (acdd.isEnabled()) {
 				acdd.setTimeCoverage( vec_timestamp );
 				acdd.setGeometry(vecLocation, true);
 			}
-			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd, write_acdd);
-			else mywriter->write(vec_data, acdd, write_acdd);
+			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd);
+			else mywriter->write(vec_data, acdd);
 
 			delete mywriter;
 		} catch(exception&) {

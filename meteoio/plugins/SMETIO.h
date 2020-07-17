@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/plugins/libsmet.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <string>
 #include <vector>
@@ -101,7 +102,7 @@ class SMETIO : public IOInterface {
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		char output_separator;         //output field separator
-		bool write_acdd, outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
 } //namespace

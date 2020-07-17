@@ -125,7 +125,7 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 * @param[in] ncid file ID
 * @param[in] acdd ACDD object containing all ACDD attributes (only those that have a value will be written)
 */
-void writeACDDAttributes(const int& ncid, const ACDD& acdd)
+void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd)
 {
 	const size_t nr = acdd.getNrAttributes();
 	std::string name, value;
