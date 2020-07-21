@@ -538,7 +538,7 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		if (vec1_end!=vec2.size()) {
 			MeteoData md_pattern( vec1.back() ); //This assumes that station1 is not moving!
 			md_pattern.reset(); //keep metadata and extra params
-			for (size_t ii=vec1_end+1; ii<vec2.size(); ii++) {
+			for (size_t ii=vec1_end; ii<vec2.size(); ii++) {
 				vec1.push_back( md_pattern );
 				vec1.back().date = vec2[ii].date;
 				vec1.back().merge( vec2[ii] );
