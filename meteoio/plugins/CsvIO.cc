@@ -589,9 +589,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::string stdUnits[12] = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "kg/m2"};
-	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+9 );
-	
+	static const size_t nrStdUnits = 12; //NOTE: do not forget to update this index when editing stdUnits!!
+	static const std::string stdUnits[nrStdUnits] = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2"};
+	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+nrStdUnits );
+
 	std::vector<std::string> units;
 	IOUtils::readLineToVec(csv_units, units, delim);
 	units_offset.resize(units.size(), 0.);
@@ -615,7 +616,7 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		else if (tmp=="MPH") units_multiplier[ii] = 1.60934 / 3.6;
 		else if (tmp=="KT") units_multiplier[ii] = 1.852 / 3.6;
 		else {
-			throw UnknownValueException("Can not parse unit '"+tmp+"', please inform the MeteoIO developers", AT);
+			std::cerr << "CsvIO: Can not parse unit '" << tmp << "', please inform the MeteoIO developers\n";
 		}
 	}
 }
