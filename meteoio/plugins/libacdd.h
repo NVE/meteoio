@@ -40,6 +40,7 @@ namespace mio {
  *  - ACDD_TITLE: a short title for the data set;
  *  - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
  *  - ACDD_PROJECT: the scientific project that created the data;
+ *  - ACDD_PROGRAM: The overarching program(s) of which the dataset is a part;
  *  - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
  *  - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
  *  - ACDD_PROCESSING_LEVEL: a textual description of the processing level

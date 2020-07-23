@@ -86,6 +86,7 @@ void ACDD::defaultInit()
 	addAttribute("title", "", "ACDD_TITLE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
 	addAttribute("project", "", "ACDD_PROJECT");
+	addAttribute("program", "", "ACDD_PROGRAM");
 	addAttribute("id", "", "ACDD_ID");
 	addAttribute("naming_authority", "", "ACDD_NAMING_AUTHORITY");
 	addAttribute("processing_level", "", "ACDD_PROCESSING_LEVEL");
