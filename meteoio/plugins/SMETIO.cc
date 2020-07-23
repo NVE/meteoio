@@ -121,7 +121,7 @@ std::map<std::string, SMETIO::plot_attr> SMETIO::initPlotParams()
 	
 	results[ MeteoGrids::getParameterName(MeteoGrids::P) ] 		= plot_attr(MeteoGrids::P, "0xAEAEAE", 87000., 115650.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::TA) ] 	= plot_attr(MeteoGrids::TA, "0x8324A4", 253.15, 283.15);
-	results[ MeteoGrids::getParameterName(MeteoGrids::RH) ] 	= plot_attr(MeteoGrids::RH, "0x50CBDB", 0., 100.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::RH) ] 	= plot_attr(MeteoGrids::RH, "0x50CBDB", 0., 1.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::TSG) ] 	= plot_attr(MeteoGrids::TSG, "0xDE22E2", 253.15, 283.15);
 	results[ MeteoGrids::getParameterName(MeteoGrids::TSS) ] 	= plot_attr(MeteoGrids::TSS, "0xFA72B7", 253.15, 283.15);
 	results[ MeteoGrids::getParameterName(MeteoGrids::HS) ] 	= plot_attr(MeteoGrids::HS, "0x000000", 0., 3.);
