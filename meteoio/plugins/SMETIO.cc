@@ -60,7 +60,7 @@ namespace mio {
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
  * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
- * - SMET_SEPARATOR: set a different output field separator as required by some import software. But this <b>makes the smet files non-conformant</b>! [Output] section
+ * - SMET_SEPARATOR: set a different output field separator as required by some import software (the header key "column_delimiter" will be set to the character that has been used as a delimiter). But this <b>makes the smet files non-conformant</b>! [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
  * Example:
