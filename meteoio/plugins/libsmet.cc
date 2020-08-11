@@ -69,6 +69,7 @@ bool SMETCommon::initStaticData()
 
 	all_optional_header_keys.insert("station_name");
 	all_optional_header_keys.insert("tz");
+	all_optional_header_keys.insert("column_delimiter");
 	all_optional_header_keys.insert("creation");
 	all_optional_header_keys.insert("source");
 	all_optional_header_keys.insert("units_offset");
@@ -714,6 +715,7 @@ void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
 	fout << "[HEADER]" << "\n";
 	print_if_exists("station_id", fout);
 	print_if_exists("station_name", fout);
+	print_if_exists("column_delimiter", fout);
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
@@ -819,6 +821,16 @@ void SMETWriter::check_formatting()
 void SMETWriter::set_width(const std::vector<int>& vec_width)
 {
 	ascii_width = vec_width;
+}
+
+void SMETWriter::set_separator(const char& i_separator)
+{
+	separator = i_separator;
+	if (i_separator==' ') {
+		set_header_value( "column_delimiter", "[:space:]" );
+	} else {
+		set_header_value( "column_delimiter", std::string(1,separator) );
+	}
 }
 
 void SMETWriter::set_precision(const std::vector<int>& vec_precision)

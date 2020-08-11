@@ -530,7 +530,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
 				
 				mywriter = new smet::SMETWriter(filename, type);
-				mywriter->set_separator( output_separator );
+				if (output_separator!=' ') mywriter->set_separator( output_separator );
 				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
@@ -622,7 +622,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	}
 	plot_units << "time ";
 	plot_description << "time ";
-	plot_color << "0x000000 ";
+	plot_color << "- ";
 	plot_min << IOUtils::nodata << " ";
 	plot_max << IOUtils::nodata << " ";
 
@@ -709,7 +709,7 @@ void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		plot_description << "- ";
 		
 		if (!randomColors) {
-			plot_color  << "0xA0A0A0 ";
+			plot_color  << "- ";
 		} else {
 			char tmp[9];
 			static const int max_col = 256*256*256;

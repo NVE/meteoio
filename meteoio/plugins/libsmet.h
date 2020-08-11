@@ -166,7 +166,7 @@ class SMETWriter {
 		 *        will remain space-delimited.
 		 * @param[in] i_separator field separator to use instead of spaces
 		 */
-		void set_separator(const char& i_separator) {separator = i_separator;}
+		void set_separator(const char& i_separator);
 
 		const std::string toString() const;
 		
