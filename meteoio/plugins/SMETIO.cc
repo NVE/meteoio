@@ -685,7 +685,9 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	if (outputPlotHeaders) {
 		mywriter.set_header_value("plot_unit", plot_units.str());
 		mywriter.set_header_value("plot_description", plot_description.str());
-		mywriter.set_header_value("plot_color", plot_color.str());
+		const size_t pos_color = plot_color.str().find_first_not_of(" -");
+		if (pos_color!=std::string::npos) //only write plot_color if at least one column has a defined color
+			mywriter.set_header_value("plot_color", plot_color.str());
 		mywriter.set_header_value("plot_min", plot_min.str());
 		mywriter.set_header_value("plot_max", plot_max.str());
 	}
