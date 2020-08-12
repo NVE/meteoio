@@ -102,6 +102,7 @@ class SMETIO : public IOInterface {
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		char output_separator;         //output field separator
+		bool outputCommentedHeaders;   //prefix all headers with a '#' for easy import into dbs but breaks SMET conformance
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 

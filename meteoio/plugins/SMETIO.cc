@@ -60,9 +60,12 @@ namespace mio {
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
  * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
- * - SMET_SEPARATOR: set a different output field separator as required by some import software (the header key "column_delimiter" will be set to the character that has been used as a delimiter). But this <b>makes the smet files non-conformant</b>! [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
+ * In order to be able to use this plugin for some software that require less structured text files (ie more like classical CSV files, for example for databases imports), the following options exist, but please keep in mind that these make the produced SMET file <b>non-conformant</b>:
+ * - SMET_SEPARATOR: set a different output field separator (the header key "column_delimiter" will be set to the character that has been used as a delimiter so this plugin can re-read such files); [Output] section
+ * - SMET_COMMENTED_HEADERS: prefix all header lines with a '#' sign to comment them out (currently this plugin won't be able to re-read such files); [Output] section
+ * 
  * Example:
  * @code
  * [Input]
@@ -99,7 +102,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -109,7 +112,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -197,6 +200,7 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
 		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
+		cfg.getValue("SMET_COMMENTED_HEADERS", "Output", outputCommentedHeaders, IOUtils::nothrow); //allow prefixing headers by a '#' character for easy import into Dbs, etc
 		
 		if (vecArgs.empty())
 			vecArgs.push_back("ASCII");
@@ -531,6 +535,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				
 				mywriter = new smet::SMETWriter(filename, type);
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
+				mywriter->set_commented_headers( outputCommentedHeaders );
 				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
