@@ -525,26 +525,36 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
 			dt_col = tm_col = ii;
+			skip_fields[ ii ] = true; //all special fields are marked as SKIP since they are read in a special way
 		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
 			dt_col = ii;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
 			tm_col = ii;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("SKIP")==0) {
 			skip_fields[ ii ] = true;
 		} else if (tmp.compare("YEAR")==0) {
 			initDtComponents(0, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("MONTH")==0) {
 			initDtComponents(1, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("DAY")==0) {
 			initDtComponents(2, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("HOUR")==0) {
 			initDtComponents(3, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("MINUTES")==0) {
 			initDtComponents(4, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("SECONDS")==0) {
 			initDtComponents(5, ii);
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
 			ID_col = ii;
+			skip_fields[ ii ] = true;
 		}
 		
 		//tmp = identifyField( tmp ); //try to identify known fields
@@ -1204,8 +1214,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		md.setDate(dt);
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
-			if (ii==params.date_col || ii==params.time_col || ii==params.ID_col) continue;
-			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped
+			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped or this is a special field
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
 			
