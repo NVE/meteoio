@@ -500,6 +500,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 
 void CsvParameters::initDtComponents(const size_t& pos, const size_t& idx)
 {
+	//datetime_idx potentially contains Year Month Day Hour Minutes Seconds
 	if (datetime_idx.size()!=6) datetime_idx.resize(6, IOUtils::npos);
 	
 	datetime_idx[ pos ] = idx;
@@ -523,7 +524,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::replaceWhitespaces(tmp, '-');
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
+		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
 			dt_col = tm_col = ii;
 			skip_fields[ ii ] = true; //all special fields are marked as SKIP since they are read in a special way
 		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
@@ -537,6 +538,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		} else if (tmp.compare("YEAR")==0) {
 			initDtComponents(0, ii);
 			skip_fields[ ii ] = true;
+		} else if (tmp.compare("JDAY")==0) {
+			//initDtComponents(1, ii); //HACK
+			skip_fields[ ii ] = true;
+			dt_as_year_and_jDay = true;
 		} else if (tmp.compare("MONTH")==0) {
 			initDtComponents(1, ii);
 			skip_fields[ ii ] = true;
@@ -693,8 +698,12 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			if (read_units && linenr==units_headers)
 				setUnits(line, csv_delim);
 
-			if (linenr<=header_lines) continue; //we are still parsing the header
-
+			if (linenr<header_lines) continue; //we are still parsing the header
+			if (linenr==header_lines) { //we should now have all the information from the headers, so build what we need for data parsing
+				parseFields(headerFields, csv_fields, date_col, time_col);
+				continue;
+			}
+			
 			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 			if (nr_curr_data_fields>date_col && nr_curr_data_fields>time_col) {
 				const Date dt( parseDate(tmp_vec) );
@@ -723,8 +732,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
 	}
 	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
-	
-	parseFields(headerFields, csv_fields, date_col, time_col);
 	
 	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
 	if (id.empty()) {
@@ -896,6 +903,12 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 		}
 		
 		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], seconds, csv_tz);
+	} else if (dt_as_year_and_jDay) {
+		if (time_idx.empty()) { //simple case: decimal jday, so it also contains the time
+			
+		} else {
+			
+		}
 	} else {
 		return parseDate(vecFields[date_col], vecFields[time_col]);
 	}
