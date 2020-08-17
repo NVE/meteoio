@@ -72,7 +72,8 @@ namespace mio {
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; optional
+ *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below; optional
+ *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
@@ -81,7 +82,7 @@ namespace mio {
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, MONTH, DAY, HOUR, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
+ *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, TIME_NUM (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -546,7 +547,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.time = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("HOUR")==0) {
+		} else if (tmp.compare("HOURS")==0) {
 			date_cols.hours = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
@@ -1122,6 +1123,9 @@ void CsvIO::parseInputOutputSection()
 		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
 			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
 		
+		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
+		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);
+		
 		std::vector<size_t> vecSkipFields;
 		if (cfg.keyExists(pre+"SKIP_FIELDS", "Input")) cfg.getValue(pre+"SKIP_FIELDS", "Input", vecSkipFields);
 		else cfg.getValue(dflt+"SKIP_FIELDS", "Input", vecSkipFields, IOUtils::nothrow);
@@ -1260,7 +1264,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	const bool delimIsNoWS = (params.csv_delim!=' ');
 	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
-	const std::string filterID( template_md.getStationID() ); //necessary if filtering on stationID field
+	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
