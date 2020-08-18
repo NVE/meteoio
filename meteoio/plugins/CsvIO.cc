@@ -894,7 +894,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 {
 	//year + integer jdn + time string
 	if (!time_idx.empty()) {
-		int year=0, hour=0, minute=0, second=0;
+		int year=0;
 		double jdn=0.;
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
@@ -967,7 +967,7 @@ bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields
 		return true;
 	}
 	
-	if (!IOUtils::convertString(value, vecFields[ idx ])) return false;
+	return IOUtils::convertString(value, vecFields[ idx ]);
 }
 
 bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value)
@@ -977,7 +977,7 @@ bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields
 		return true;
 	}
 	
-	if (!IOUtils::convertString(value, vecFields[ idx ])) return false;
+	return IOUtils::convertString(value, vecFields[ idx ]);
 }
 
 Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
