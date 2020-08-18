@@ -1116,12 +1116,13 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"COLUMNS_HEADERS", "Input")) cfg.getValue(pre+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers);
 		else cfg.getValue(dflt+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
+		if (tmp_csv.columns_headers>tmp_csv.header_lines) tmp_csv.columns_headers = IOUtils::npos;
 		
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
 		
 		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
-			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS (make sure it is <= CSV_NR_HEADERS) or CSV_FIELDS", AT);
 		
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
 		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);
