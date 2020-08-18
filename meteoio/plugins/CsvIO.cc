@@ -82,7 +82,7 @@ namespace mio {
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, TIME_NUM (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
+ *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -531,7 +531,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.year = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0) {
+		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0) {
 			date_cols.jdn = ii;
 			skip_fields[ ii ] = true;
 			dt_as_year_and_jdn = true;
@@ -543,7 +543,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.day = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("NUM_TIME")==0) {
+		} else if (tmp.compare("NTIME")==0) {
 			date_cols.time = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
