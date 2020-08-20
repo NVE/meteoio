@@ -663,6 +663,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	}
 
 	//Add all other used parameters
+	bool some_params_identified = false;
 	int tmpwidth, tmpprecision;
 	for (size_t ll=0; ll<nr_of_parameters; ll++) {
 		if (vecParamInUse[ll]) {
@@ -674,20 +675,18 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
 
-			if (outputPlotHeaders) getPlotProperties(param, plot_units, plot_description, plot_color, plot_min, plot_max);
+			if (outputPlotHeaders) some_params_identified |= getPlotProperties(param, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
-	
+
 	if (randomColors)
 		srand( static_cast<unsigned int>(time(NULL)) );
 
 	mywriter.set_header_value("fields", ss.str());
-	if (outputPlotHeaders) {
+	if (outputPlotHeaders && some_params_identified) {
 		mywriter.set_header_value("plot_unit", plot_units.str());
 		mywriter.set_header_value("plot_description", plot_description.str());
-		const size_t pos_color = plot_color.str().find_first_not_of(" -");
-		if (pos_color!=std::string::npos) //only write plot_color if at least one column has a defined color
-			mywriter.set_header_value("plot_color", plot_color.str());
+		mywriter.set_header_value("plot_color", plot_color.str());
 		mywriter.set_header_value("plot_min", plot_min.str());
 		mywriter.set_header_value("plot_max", plot_max.str());
 	}
@@ -695,7 +694,8 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_precision(myprecision);
 }
 
-void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
+//return true if the plot could be identified and therefore received special properties, false otherwise
+bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
 {
 	//handling different versions of the same parameter, ex TA_1 and TA_2
 	const size_t numbering_start = param.find_last_of( '_' );
@@ -711,20 +711,23 @@ void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		plot_color  << it->second.color << " ";
 		plot_min << it->second.min << " ";
 		plot_max << it->second.max << " ";
+		return true;
 	} else {
 		plot_units << "- ";
 		plot_description << "- ";
+		plot_min << IOUtils::nodata << " ";
+		plot_max << IOUtils::nodata << " ";
 		
 		if (!randomColors) {
 			plot_color  << "- ";
+			return false;
 		} else {
 			char tmp[9];
 			static const int max_col = 256*256*256;
 			sprintf(tmp,"0x%x", rand() % max_col);
 			plot_color << tmp << " ";
+			return true;
 		}
-		plot_min << IOUtils::nodata << " ";
-		plot_max << IOUtils::nodata << " ";
 	}
 }
 
