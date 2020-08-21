@@ -547,15 +547,15 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.time = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("HOURS")==0) {
+		} else if (tmp.compare("HOUR")==0 || tmp.compare("HOURS")==0) {
 			date_cols.hours = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("MINUTES")==0) {
+		} else if (tmp.compare("MINUTE")==0 || tmp.compare("MINUTES")==0) {
 			date_cols.minutes = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("SECONDS")==0) {
+		} else if (tmp.compare("SECOND")==0 || tmp.compare("SECONDS")==0) {
 			date_cols.seconds = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
@@ -569,8 +569,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) 
-		throw UnknownValueException("Please define how to parse the date and time information (as strings or components)", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings or components). Identified fields: "+date_cols.toString(), AT);
 	if (dt_as_components && !single_field.empty())
 		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
 

@@ -53,7 +53,7 @@ namespace mio {
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
- * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section)
+ * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section

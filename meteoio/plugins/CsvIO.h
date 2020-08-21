@@ -76,7 +76,18 @@ class CsvParameters {
 			
 			std::string toString() const {
 				std::ostringstream os;
-				os << "date_str=" << date_str << " time_str=" << time_str << " year=" << year << " jdn=" << jdn << " month=" << month << " day=" << day << " time=" << time << " hours=" << hours << " minutes=" << minutes << " seconds=" << seconds;
+				os << "[";
+				if (date_str!=IOUtils::npos) os << "date_str→" << date_str << " ";
+				if (time_str!=IOUtils::npos) os << "time_str→" << time_str << " ";
+				if (year!=IOUtils::npos) os << "year→" << year << " ";
+				if (jdn!=IOUtils::npos) os << "jdn→" << jdn << " ";
+				if (month!=IOUtils::npos) os << "month→" << month << " ";
+				if (day!=IOUtils::npos) os << "day→" << day << " ";
+				if (time!=IOUtils::npos) os << "time_num→" << time << " ";
+				if (hours!=IOUtils::npos) os << "hours→" << hours << " ";
+				if (minutes!=IOUtils::npos) os << "minutes→" << minutes << " ";
+				if (seconds!=IOUtils::npos) os << "seconds→" << seconds << " ";
+				os << "]";
 				return os.str();
 			}
 			
