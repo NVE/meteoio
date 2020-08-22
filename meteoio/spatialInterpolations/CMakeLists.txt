@@ -25,4 +25,5 @@ SET(spatialInterpolations_sources
 	spatialInterpolations/UserAlgorithm.cc
 	spatialInterpolations/WinstralAlgorithm.cc
 	spatialInterpolations/WinstralListonAlgorithm.cc
+	spatialInterpolations/SnowlineAlgorithm.cc
 )
