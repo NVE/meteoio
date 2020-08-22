@@ -35,11 +35,13 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 	private:
 		typedef enum METHOD //assimilation method
 		{
+			BANDS, //!< elevation bands multiplied by from 0 (lowewst band) to 1 (highest band)
 			CUTOFF //!< set all below snowline to zero
 		} assimilation_method;
 
 		void baseInterpol(const DEMObject& dem, Grid2DObject& grid);
 		void assimilateCutoff(const DEMObject& dem, Grid2DObject& grid);
+		void assimilateBands(const DEMObject& dem, Grid2DObject& grid);
 		double readSnowlineFile();
 		void getSnowline();
 		void msg(const std::string& message);
@@ -51,6 +53,8 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		assimilation_method assim_method;
 		std::string snowline_file;
 		std::string where;
+		double band_height;
+		unsigned int band_no;
 		bool quiet; //suppress warnings
 };
 

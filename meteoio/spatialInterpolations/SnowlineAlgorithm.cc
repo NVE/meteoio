@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
 #include <meteoio/spatialInterpolations/SnowlineAlgorithm.h>   
@@ -30,6 +31,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     GridsManager& i_gdm, Meteo2DInterpolator& i_mi) : 
     InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), mi(i_mi), base_alg("IDW_LAPSE"),
     snowline(IOUtils::nodata), assim_method(CUTOFF), snowline_file(), where("Interpolations2D::" + algo),
+    band_height(10.), band_no(10),
     quiet(false)
 {
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
@@ -39,15 +41,22 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			IOUtils::parseArg(vecArgs[ii], where, snowline);
 		} else if (vecArgs[ii].first == "SNOWLINEFILE") {
 			snowline_file = vecArgs[ii].second;
-		} else if (vecArgs[ii].first == "MODE") {
+		} else if (vecArgs[ii].first == "METHOD") {
 			const std::string mode( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (mode == "CUTOFF")
 				assim_method = CUTOFF;
+			else if (mode == "BANDS")
+				assim_method = BANDS;
 			else
 				throw InvalidArgumentException("Snowline assimilation mode \"" + mode +
 				    "\" supplied for " + where + " not known.", AT);
 		} else if (vecArgs[ii].first == "QUIET") {
 			IOUtils::parseArg(vecArgs[ii], where, quiet);
+		/* args of method BANDS */
+		} else if (vecArgs[ii].first == "BAND_HEIGHT") {
+			IOUtils::parseArg(vecArgs[ii], where, band_height);
+		} else if (vecArgs[ii].first == "BAND_NO") {
+			IOUtils::parseArg(vecArgs[ii], where, band_no);
 		}
 	}
 }
@@ -67,13 +76,15 @@ double SnowlineAlgorithm::getQualityRating(const Date& i_date)
 void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	getSnowline();
+	baseInterpol(dem, grid);
+	
 	if (snowline == IOUtils::nodata) //we already gave notice for this
 		return; 
 
-	if (assim_method == CUTOFF) {
-		baseInterpol(dem, grid);
+	if (assim_method == CUTOFF)
 		assimilateCutoff(dem, grid);
-	}
+	else if (assim_method == BANDS)
+		assimilateBands(dem, grid);
 }
 
 void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
@@ -104,6 +115,26 @@ void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& gri
 				continue;
 			if (dem(ii, jj) < snowline)
 				grid(ii, jj) = 0.;
+		}
+	}
+}
+
+void SnowlineAlgorithm::assimilateBands(const DEMObject& dem, Grid2DObject& grid)
+{ //multiply elevation bands above snowline with factors from 0 to 1
+	for (size_t ii = 0; ii < grid.getNx(); ii++) {
+		for (size_t jj = 0; jj < grid.getNy(); jj++) {
+			if (dem(ii, jj) == IOUtils::nodata) {
+				continue;
+			} else if (dem(ii, jj) > snowline + band_no * band_height) {
+				continue;
+			} else if (dem(ii, jj) < snowline) {
+				grid(ii, jj) = 0;
+				continue;
+			}
+			for (unsigned int bb = 0; bb < band_no; ++bb) { //bin DEM into bands
+				if ( (dem(ii, jj) >= snowline + bb * band_height) && (dem(ii, jj) < snowline + (bb + 1.) * band_height) )
+					grid(ii, jj) = grid(ii, jj) * bb / band_no;
+			}
 		}
 	}
 }
