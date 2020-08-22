@@ -31,7 +31,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     GridsManager& i_gdm, Meteo2DInterpolator& i_mi) : 
     InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), mi(i_mi), base_alg("IDW_LAPSE"),
     snowline(IOUtils::nodata), assim_method(CUTOFF), snowline_file(), where("Interpolations2D::" + algo),
-    band_height(10.), band_no(10),
+    cutoff_val(0.), band_height(10.), band_no(10),
     quiet(false)
 {
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
@@ -52,6 +52,9 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 				    "\" supplied for " + where + " not known.", AT);
 		} else if (vecArgs[ii].first == "QUIET") {
 			IOUtils::parseArg(vecArgs[ii], where, quiet);
+		/* args of method CUTOFF */
+		} else if (vecArgs[ii].first == "SET") {
+			IOUtils::parseArg(vecArgs[ii], where, cutoff_val);
 		/* args of method BANDS */
 		} else if (vecArgs[ii].first == "BAND_HEIGHT") {
 			IOUtils::parseArg(vecArgs[ii], where, band_height);
@@ -114,7 +117,7 @@ void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& gri
 			if (dem(ii, jj) == IOUtils::nodata)
 				continue;
 			if (dem(ii, jj) < snowline)
-				grid(ii, jj) = 0.;
+				grid(ii, jj) = cutoff_val;
 		}
 	}
 }

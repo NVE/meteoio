@@ -53,6 +53,7 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		assimilation_method assim_method;
 		std::string snowline_file;
 		std::string where;
+		double cutoff_val;
 		double band_height;
 		unsigned int band_no;
 		bool quiet; //suppress warnings
