@@ -34,6 +34,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     cutoff_val(0.), band_height(10.), band_no(10),
     quiet(false)
 {
+	std::string algo_info( "CUTOFF" );
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
 		if (vecArgs[ii].first == "BASE") {
 			base_alg = IOUtils::strToUpper(vecArgs[ii].second);
@@ -50,6 +51,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			else
 				throw InvalidArgumentException("Snowline assimilation mode \"" + mode +
 				    "\" supplied for " + where + " not known.", AT);
+			algo_info = mode;
 		} else if (vecArgs[ii].first == "QUIET") {
 			IOUtils::parseArg(vecArgs[ii], where, quiet);
 		/* args of method CUTOFF */
@@ -62,6 +64,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			IOUtils::parseArg(vecArgs[ii], where, band_no);
 		}
 	}
+	info << "method: " << algo_info << ", ";
 }
 
 double SnowlineAlgorithm::getQualityRating(const Date& i_date)
