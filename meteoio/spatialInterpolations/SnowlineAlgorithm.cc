@@ -114,9 +114,9 @@ void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
 }
 
 void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& grid)
-{ //set everything below snowlin elevation to zero
-	for (size_t ii = 0; ii < grid.getNx(); ii++) {
-		for (size_t jj = 0; jj < grid.getNy(); jj++) {
+{ //set everything below snowlin elevation to fixed value
+	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
+		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata)
 				continue;
 			if (dem(ii, jj) < snowline)
@@ -127,14 +127,14 @@ void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& gri
 
 void SnowlineAlgorithm::assimilateBands(const DEMObject& dem, Grid2DObject& grid)
 { //multiply elevation bands above snowline with factors from 0 to 1
-	for (size_t ii = 0; ii < grid.getNx(); ii++) {
-		for (size_t jj = 0; jj < grid.getNy(); jj++) {
+	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
+		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata) {
 				continue;
 			} else if (dem(ii, jj) > snowline + band_no * band_height) {
 				continue;
 			} else if (dem(ii, jj) < snowline) {
-				grid(ii, jj) = 0;
+				grid(ii, jj) = 0.;
 				continue;
 			}
 			for (unsigned int bb = 0; bb < band_no; ++bb) { //bin DEM into bands

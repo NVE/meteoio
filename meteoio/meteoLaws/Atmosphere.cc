@@ -901,7 +901,7 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	static const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
 	static const double Tfreeze = 0.;                          //freezing temperature
 	static const double Tnucl = -16.0;                         //nucleation temperature
-	double Es, E, Rhi, Rhw;                         //saturation and current water vapro pressure
+	double Es, E, Rhi, Rhw;                         //saturation and current water vapor pressure
 
 	if (TA >= Tfreeze || force_water==true) {
 		//above freezing point, water
