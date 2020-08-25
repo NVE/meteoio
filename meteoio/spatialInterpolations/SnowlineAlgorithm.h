@@ -15,12 +15,16 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifndef SNOWLINE_ALGORITHM_H
 #define SNOWLINE_ALGORITHM_H
 
-#include <string>
-
 #include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
+
+#include <meteoio/thirdParty/tinyexpr.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace mio {
 
@@ -36,12 +40,16 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		typedef enum METHOD //assimilation method
 		{
 			BANDS, //!< elevation bands multiplied by from 0 (lowewst band) to 1 (highest band)
-			CUTOFF //!< set all below snowline to zero
+			CUTOFF, //!< set all below snowline to zero
+			FORMULA //!< evaluate formula at grid points
 		} assimilation_method;
 
 		void baseInterpol(const DEMObject& dem, Grid2DObject& grid);
 		void assimilateCutoff(const DEMObject& dem, Grid2DObject& grid);
 		void assimilateBands(const DEMObject& dem, Grid2DObject& grid);
+		void assimilateFormula(const DEMObject& dem, Grid2DObject& grid);
+		void initExpressionVars(const std::vector< std::pair<std::string, double> >& substitutions, te_variable* vars) const;
+		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
 		double readSnowlineFile();
 		void getSnowline();
 		void msg(const std::string& message);
@@ -56,7 +64,8 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		double cutoff_val;
 		double band_height;
 		unsigned int band_no;
-		bool quiet; //suppress warnings
+		std::string formula;
+		bool verbose; //suppress warnings?
 };
 
 } //end namespace mio

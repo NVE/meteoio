@@ -31,8 +31,8 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     GridsManager& i_gdm, Meteo2DInterpolator& i_mi) : 
     InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), mi(i_mi), base_alg("IDW_LAPSE"),
     snowline(IOUtils::nodata), assim_method(CUTOFF), snowline_file(), where("Interpolations2D::" + algo),
-    cutoff_val(0.), band_height(10.), band_no(10),
-    quiet(false)
+    cutoff_val(0.), band_height(10.), band_no(10), formula(std::string()),
+    verbose(true)
 {
 	std::string algo_info( "CUTOFF" );
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
@@ -48,13 +48,14 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 				assim_method = CUTOFF;
 			else if (mode == "BANDS")
 				assim_method = BANDS;
+			else if (mode == "FORMULA")
+				assim_method = FORMULA;
 			else
 				throw InvalidArgumentException("Snowline assimilation mode \"" + mode +
 				    "\" supplied for " + where + " not known.", AT);
 			algo_info = mode;
-		} else if (vecArgs[ii].first == "QUIET") {
-			IOUtils::parseArg(vecArgs[ii], where, quiet);
-		/* args of method CUTOFF */
+		} else if (vecArgs[ii].first == "VERBOSE") {
+			IOUtils::parseArg(vecArgs[ii], where, verbose);
 		} else if (vecArgs[ii].first == "SET") {
 			IOUtils::parseArg(vecArgs[ii], where, cutoff_val);
 		/* args of method BANDS */
@@ -62,6 +63,9 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			IOUtils::parseArg(vecArgs[ii], where, band_height);
 		} else if (vecArgs[ii].first == "BAND_NO") {
 			IOUtils::parseArg(vecArgs[ii], where, band_no);
+		/* args of method FORMULA */
+		} else if (vecArgs[ii].first == "FORMULA") {
+			formula = vecArgs[ii].second;
 		}
 	}
 	info << "method: " << algo_info << ", ";
@@ -91,6 +95,8 @@ void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		assimilateCutoff(dem, grid);
 	else if (assim_method == BANDS)
 		assimilateBands(dem, grid);
+	else if (assim_method == FORMULA)
+		assimilateFormula(dem, grid);
 }
 
 void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
@@ -114,7 +120,7 @@ void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
 }
 
 void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& grid)
-{ //set everything below snowlin elevation to fixed value
+{ //set everything below snowline elevation to fixed value
 	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
 		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata)
@@ -134,7 +140,7 @@ void SnowlineAlgorithm::assimilateBands(const DEMObject& dem, Grid2DObject& grid
 			} else if (dem(ii, jj) > snowline + band_no * band_height) {
 				continue;
 			} else if (dem(ii, jj) < snowline) {
-				grid(ii, jj) = 0.;
+				grid(ii, jj) = cutoff_val;
 				continue;
 			}
 			for (unsigned int bb = 0; bb < band_no; ++bb) { //bin DEM into bands
@@ -143,6 +149,65 @@ void SnowlineAlgorithm::assimilateBands(const DEMObject& dem, Grid2DObject& grid
 			}
 		}
 	}
+}
+
+void SnowlineAlgorithm::assimilateFormula(const DEMObject& dem, Grid2DObject& grid)
+{ //set to result of formula evaluated at grid points
+	std::vector< std::pair<std::string, double> > substitutions; //fixed memory for tinyexpr
+
+	static const size_t nr_sub = 3;
+	static const std::string sub[nr_sub] = {"snowline", "altitude", "param"};
+	for (size_t ii = 0; ii < nr_sub; ++ii) {
+		std::pair<std::string, double> item(sub[ii], IOUtils::nodata);
+		substitutions.push_back(item);
+	}
+	substitutions[0].second = snowline; //this is the same for all points
+
+	te_variable *te_vars = new te_variable[substitutions.size()];
+	initExpressionVars(substitutions, te_vars); //build te_variables from substitution vector
+	te_expr *expr_formula = compileExpression(formula, te_vars, nr_sub);
+
+	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
+		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
+			if (dem(ii, jj) == IOUtils::nodata)
+				continue;
+			if (dem(ii, jj) < snowline) {
+				grid(ii, jj) = cutoff_val;
+				continue;
+			}
+
+			substitutions[1].second = dem(ii, jj); //point-dependent substitutions
+			substitutions[2].second = grid(ii, jj);
+			grid(ii, jj) = te_eval(expr_formula);
+		}
+	}
+
+	te_free(expr_formula);
+	delete[] te_vars;
+}
+
+
+void SnowlineAlgorithm::initExpressionVars(const std::vector< std::pair<std::string, double> >& substitutions, te_variable* vars) const
+{ //build a substitutions expression for tinyexpr
+	size_t cc = 0;
+	for (std::vector< std::pair<std::string, double> >::const_iterator it = substitutions.begin();
+	    it != substitutions.end(); ++it) {
+		vars[cc].name = it->first.c_str();
+		vars[cc].address = &it->second;
+		vars[cc].type = 0;
+		vars[cc].context = 0;
+		cc++;
+	}
+}
+
+te_expr* SnowlineAlgorithm::compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const
+{ //ready the lazy expressions (with syntax check)
+	int te_err;
+	te_expr *expr = te_compile(expression.c_str(), te_vars, static_cast<int>(sz), &te_err);
+	if (!expr)
+		throw InvalidFormatException("Arithmetic expression \"" + expression +
+		        "\" could not be evaluated for " + where + "; parse error at " + IOUtils::toString(te_err), AT);
+	return expr;
 }
 
 double SnowlineAlgorithm::readSnowlineFile()
@@ -197,7 +262,7 @@ void SnowlineAlgorithm::getSnowline()
 
 void SnowlineAlgorithm::msg(const std::string& message)
 {
-	if (!quiet)
+	if (verbose)
 		std::cerr << message << std::endl;
 }
 
