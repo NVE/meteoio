@@ -90,7 +90,7 @@ namespace mio {
  *    - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  *    - The following two keys provide mandatory data for each station, therefore there is no "global" version and they must be defined:
  *       - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
- *       - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
+ *       - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). This key can only be omitted if lat/lon/altitude are provided in the file name or in the headers (see CSV\#_FILENAME_SPEC and CSV\#_SPECIAL_HEADERS);
  *
  * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
@@ -531,7 +531,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.year = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0) {
+		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0 || tmp.compare("DAY_OF_YEAR")==0) {
 			date_cols.jdn = ii;
 			skip_fields[ ii ] = true;
 			dt_as_year_and_jdn = true;
@@ -735,6 +735,9 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		const double alt = location.getAltitude();
 		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
 	}
+	//location is either coming from POSITIONxx ini keys or from file name parsing or from header parsing
+	if (location.isNodata()) 
+		throw NoDataException("Missing geographic coordinates for '"+i_file_and_path+"', please consider providing the POSITION ini key", AT);
 	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
 	
 	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
@@ -1062,8 +1065,7 @@ void CsvIO::parseInputOutputSection()
 		CsvParameters tmp_csv(in_TZ);
 		std::string coords_specs;
 		if (cfg.keyExists("POSITION"+idx, "INPUT")) cfg.getValue("POSITION"+idx, "INPUT", coords_specs);
-		else cfg.getValue("POSITION", "INPUT", coords_specs);
-		const Coords loc(coordin, coordinparam, coords_specs);
+		else cfg.getValue("POSITION", "INPUT", coords_specs, IOUtils::nothrow);
 		
 		std::string name;
 		if (cfg.keyExists(pre+"NAME", "Input")) cfg.getValue(pre+"NAME", "Input", name);
@@ -1072,7 +1074,12 @@ void CsvIO::parseInputOutputSection()
 		std::string id;
 		if (cfg.keyExists(pre+"ID", "Input")) cfg.getValue(pre+"ID", "Input", id);
 		else cfg.getValue(dflt+"ID", "Input", id, IOUtils::nothrow);
-		tmp_csv.setLocation(loc, name, id);
+		if (!coords_specs.empty()) {
+			const Coords loc(coordin, coordinparam, coords_specs);
+			tmp_csv.setLocation(loc, name, id);
+		} else {
+			tmp_csv.setLocation(Coords(), name, id);
+		}
 		
 		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
 		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
