@@ -52,15 +52,21 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		te_expr* compileExpression(const std::string& expression, const te_variable* te_vars, const size_t& sz) const;
 		double readSnowlineFile();
 		void getSnowline();
+		double probeTrend();
+		double calculateRate();
+		std::vector< std::pair<std::string, std::string> > prepareBaseArgs(const std::string& base_alg_fallback);
 		void msg(const std::string& message);
 
 		GridsManager& gdm;
 		Meteo2DInterpolator& mi;
 		std::string base_alg;
-		double snowline;
-		assimilation_method assim_method;
-		std::string snowline_file;
+		Trend trend;
 		std::string where;
+		double snowline;
+		std::string snowline_file;
+		assimilation_method assim_method;
+		bool enforce_positive_rate; //deduce lapse rate from snowline if data has "reversed" rate
+		bool calc_base_rate; //deduce lapse rate from snowline in any case
 		double cutoff_val;
 		double band_height;
 		unsigned int band_no;
