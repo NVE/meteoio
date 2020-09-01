@@ -109,7 +109,7 @@ using namespace std;
 
 namespace mio {
  /**
- * @page data_sources Data input overview
+ * @page data_sources Data input/output overview
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
