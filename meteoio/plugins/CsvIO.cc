@@ -619,7 +619,7 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
 		IOUtils::removeQuotes(tmp);
-		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1" || tmp=="1" || tmp=="??") continue; //empty unit
+		if (tmp.empty() || tmp=="1" || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1" || tmp=="??") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
 		if (tmp=="%" || tmp=="pc" || tmp=="CM") units_multiplier[ii] = 0.01;
