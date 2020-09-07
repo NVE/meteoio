@@ -240,6 +240,19 @@ IF(CPACK_BUNDLE_ALL)
 	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
 	
+	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+		IF(CPACK_BUNDLE_STDLIBS)
+			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+			IF("${stdlibs}" STREQUAL "")
+ 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+			ENDIF("${stdlibs}" STREQUAL "")
+			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		ENDIF(CPACK_BUNDLE_STDLIBS)
+	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	
 	#bundle inishell
 # 	IF(APPLE)
 # 		MESSAGE("Inishell can currently not be bundled on Mac!")
@@ -282,7 +295,7 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}-${CPACK_ARCH}")
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
-SET(CPACK_COMPONENTS_ALL libraries headers documentation examples resources)
+SET(CPACK_COMPONENTS_ALL libraries headers documentation examples exe resources)
 SET(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "Inishell resources")
 SET(CPACK_COMPONENT_RESOURCES_DESCRIPTION "Additional files to use Inishell")
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "MeteoIO library")
@@ -292,6 +305,11 @@ SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
 SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
 SET(CPACK_COMPONENT_HEADERS_GROUP Development)
 SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "MeteoIO's applications")
+SET(CPACK_COMPONENT_EXE_DESCRIPTION "MeteoIO's standalone applications")
+SET(CPACK_COMPONENT_EXE_GROUP Runtime)
+SET(CPACK_COMPONENT_RUNTIME_GROUP "Runtime")
+SET(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "What you need to run an application based on MeteoIO")
 IF(INSTALL_DOC)
 	SET(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
 	SET(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
@@ -363,6 +381,10 @@ ELSE(UNIX)
 			"${DOC_PATH}/examples" "MeteoIO examples"
 			)
 		ENDIF(INSTALL_DOC)
+		#SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries' 'c:\\\\Program Files\\\\MeteoIO\\\\bin\\\\meteoio_timeseries.exe'
+		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries\\\\path' 'c:\\\\Program Files\\\\MeteoIO\\\\lib'
+		#	")
 		
 		#all other links: inishell
 		IF(CPACK_BUNDLE_ALL)
