@@ -465,7 +465,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
  * @brief Set single distribution parameter
  * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
  * @param param_val Value to set
- * @return Current value of the distribution parameter
  */
 void RandomNumberGenerator::setDistributionParameter(const std::string& param_name, const double& param_val)
 { //convenience
