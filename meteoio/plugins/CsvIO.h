@@ -40,6 +40,7 @@ class CsvParameters {
 		void setUnits(const std::string& csv_units,  const char& delim);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
+		void setFixedYear(const double& i_year);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		Date parseDate(const std::vector<std::string>& vecFields) const;
@@ -60,7 +61,7 @@ class CsvParameters {
 	private:
 		///structure to contain date and time parsing information
 		typedef struct DATETIME_COLS {
-			DATETIME_COLS() : date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0) {}
+			DATETIME_COLS() : year_cst(IOUtils::nodata), date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0) {}
 			void updateMaxCol() {
 				if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
 				if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
@@ -80,6 +81,7 @@ class CsvParameters {
 				if (date_str!=IOUtils::npos) os << "date_str→" << date_str << " ";
 				if (time_str!=IOUtils::npos) os << "time_str→" << time_str << " ";
 				if (year!=IOUtils::npos) os << "year→" << year << " ";
+				if (year_cst!=IOUtils::nodata) os << "year_cst→" << year << " ";
 				if (jdn!=IOUtils::npos) os << "jdn→" << jdn << " ";
 				if (month!=IOUtils::npos) os << "month→" << month << " ";
 				if (day!=IOUtils::npos) os << "day→" << day << " ";
@@ -95,7 +97,7 @@ class CsvParameters {
 				//date and time strings
 				if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
 				const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
-				const bool components_date = (year!=IOUtils::npos && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
+				const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::nodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
 				
 				//date string and components time
 				//if (date_str!=IOUtils::npos && components_time) return true;
@@ -108,7 +110,8 @@ class CsvParameters {
 				return false;
 			}
 			
-			//time is a field that contains numerical time, for exmaple 0920
+			//time is a field that contains numerical time, for example 0920
+			double year_cst;
 			size_t date_str, time_str, year, jdn, month, day, time, hours, minutes, seconds;
 			size_t max_dt_col;
 		} datetime_cols;

@@ -82,7 +82,9 @@ namespace mio {
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
+ *    - Date/Time as separate components: 
+ *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero);
+ *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key.
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -834,6 +836,11 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 	checkSpecString(time_format, nr_params_check);
 }
 
+void CsvParameters::setFixedYear(const double& i_year)
+{
+	date_cols.year_cst = i_year;
+}
+
 //check that all arguments are integers except the seconds, then build a Date
 Date CsvParameters::createDate(const float args[6], const double i_tz)
 {
@@ -899,6 +906,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 		int year=0;
 		double jdn=0.;
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		
 		//parse the timer information and compute the decimal jdn
@@ -930,6 +938,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 	if (date_cols.time!=IOUtils::npos) {
 		int year=0, jdn=0, time=0;
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.time, time)) return Date();
 		const int hours = time / 100;
@@ -943,6 +952,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 		int year=0, jdn=0, hours=0, minutes=0;
 		double seconds=0;
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.hours, hours)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.minutes, minutes)) return Date();
@@ -952,10 +962,11 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 	}
 	
 	//year + decimal jdn
-	{
+	{ //ensure own scope to avoid variable names conflicts
 		int year=0;
 		double jdn = 0.;
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		
 		return Date(year, jdn, csv_tz);
@@ -994,6 +1005,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 		double seconds = 0.;
 		
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
@@ -1180,6 +1192,11 @@ void CsvIO::parseInputOutputSection()
 			if (!time_spec.empty()) 
 				tmp_csv.setTimeSpec(time_spec);
 		}
+		
+		double fixed_year=IOUtils::nodata;
+		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
+		else cfg.getValue(dflt+"FALLBACK_YEAR", "Input", fixed_year, IOUtils::nothrow);
+		if (fixed_year!=IOUtils::nodata) tmp_csv.setFixedYear( fixed_year );
 		
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
