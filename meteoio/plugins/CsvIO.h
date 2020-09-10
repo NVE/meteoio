@@ -40,10 +40,10 @@ class CsvParameters {
 		void setUnits(const std::string& csv_units,  const char& delim);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
-		void setFixedYear(const double& i_year);
+		void setFixedYear(const double& i_year, const bool& auto_wrap);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
-		Date parseDate(const std::vector<std::string>& vecFields) const;
+		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
 		
@@ -61,7 +61,7 @@ class CsvParameters {
 	private:
 		///structure to contain date and time parsing information
 		typedef struct DATETIME_COLS {
-			DATETIME_COLS() : year_cst(IOUtils::nodata), date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0) {}
+			DATETIME_COLS() : year_cst(IOUtils::nodata), date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0), auto_wrap(true) {}
 			void updateMaxCol() {
 				if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
 				if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
@@ -73,6 +73,18 @@ class CsvParameters {
 				if (hours!=IOUtils::npos && hours>max_dt_col) max_dt_col=hours;
 				if (minutes!=IOUtils::npos && minutes>max_dt_col) max_dt_col=minutes;
 				if (seconds!=IOUtils::npos && seconds>max_dt_col) max_dt_col=seconds;
+			}
+			
+			int getFixedYear(const double& jdn) {
+				if (jdn<273.) auto_wrap = false;
+				if (auto_wrap) return year_cst - 1;
+				return year_cst;
+			}
+			
+			int getFixedYear(const int& month) {
+				if (month<10) auto_wrap = false;
+				if (auto_wrap) return year_cst - 1;
+				return year_cst;
 			}
 			
 			std::string toString() const {
@@ -89,6 +101,7 @@ class CsvParameters {
 				if (hours!=IOUtils::npos) os << "hours→" << hours << " ";
 				if (minutes!=IOUtils::npos) os << "minutes→" << minutes << " ";
 				if (seconds!=IOUtils::npos) os << "seconds→" << seconds << " ";
+				if (auto_wrap) os << "auto_wrap";
 				os << "]";
 				return os.str();
 			}
@@ -114,6 +127,7 @@ class CsvParameters {
 			double year_cst;
 			size_t date_str, time_str, year, jdn, month, day, time, hours, minutes, seconds;
 			size_t max_dt_col;
+			bool auto_wrap; ///< if true, dates >= October will be assumed to belong to (year_cst-1) until a date < October is encountered
 		} datetime_cols;
 		
 		static std::string identifyField(const std::string& fieldname);
@@ -125,7 +139,7 @@ class CsvParameters {
 		static Date createDate(const float args[6], const double i_tz);
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value);
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value);
-		Date parseJdnDate(const std::vector<std::string>& vecFields) const;
+		Date parseJdnDate(const std::vector<std::string>& vecFields);
 		Date parseDate(const std::string& date_str, const std::string& time_str) const;
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
@@ -167,8 +181,8 @@ class CsvIO : public IOInterface {
 		std::string setDateParsing(const std::string& datetime_spec);
 		std::vector<std::string> readHeaders(std::ifstream& fin, CsvParameters& params) const;
 		static MeteoData createTemplate(const CsvParameters& params);
-		static Date getDate(const CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr);
-		std::vector<MeteoData> readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd);
+		static Date getDate(CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr);
+		std::vector<MeteoData> readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd);
 		
 		const Config cfg;
 		std::map<std::string, FileUtils::FileIndexer> indexer_map;

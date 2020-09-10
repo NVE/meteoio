@@ -84,7 +84,9 @@ namespace mio {
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  *    - Date/Time as separate components: 
  *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero);
- *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key.
+ *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key;
+ *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
+ * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -659,6 +661,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		throw AccessException(msg, AT);
 	}
 	
+	const bool user_auto_wrap = date_cols.auto_wrap; //we might trigger it, so we must reset it after the pre-reading
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
 	size_t linenr=0;
 	std::string line;
@@ -726,6 +729,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		throw;
 	}
 	fin.close();
+	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
 
 	if (count_dsc>count_asc) asc_order=false;
 	
@@ -836,9 +840,10 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 	checkSpecString(time_format, nr_params_check);
 }
 
-void CsvParameters::setFixedYear(const double& i_year)
+void CsvParameters::setFixedYear(const double& i_year, const bool& auto_wrap)
 {
 	date_cols.year_cst = i_year;
+	date_cols.auto_wrap = auto_wrap;
 }
 
 //check that all arguments are integers except the seconds, then build a Date
@@ -899,15 +904,15 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	return createDate(args, tz);
 }
 
-Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) const
+Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 {
 	//year + integer jdn + time string
 	if (!time_idx.empty()) {
 		int year=0;
 		double jdn=0.;
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( jdn ); //here jdn must be double
 		
 		//parse the timer information and compute the decimal jdn
 		const std::string time_str( vecFields[ date_cols.time_str ] );
@@ -937,9 +942,9 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 	//year + integer jdn + time numerical time, for example "952" for 09:52
 	if (date_cols.time!=IOUtils::npos) {
 		int year=0, jdn=0, time=0;
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
 		if (!parseDateComponent(vecFields, date_cols.time, time)) return Date();
 		const int hours = time / 100;
 		const int minutes = time - hours*100;
@@ -951,9 +956,9 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 	if (date_cols.hours!=IOUtils::npos) {
 		int year=0, jdn=0, hours=0, minutes=0;
 		double seconds=0;
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
 		if (!parseDateComponent(vecFields, date_cols.hours, hours)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.minutes, minutes)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
@@ -965,9 +970,9 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) cons
 	{ //ensure own scope to avoid variable names conflicts
 		int year=0;
 		double jdn = 0.;
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( jdn );
 		
 		return Date(year, jdn, csv_tz);
 	}
@@ -993,7 +998,7 @@ bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields
 	return IOUtils::convertString(value, vecFields[ idx ]);
 }
 
-Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
+Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 {
 	//TODO: one of the strings + components
 	if (dt_as_components) { //date and time components split as columns.
@@ -1004,9 +1009,9 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 		int year=0, month=0, day=0, hour=0, minute=0;
 		double seconds = 0.;
 		
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.year_cst;
 		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( month );
 		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
@@ -1196,7 +1201,10 @@ void CsvIO::parseInputOutputSection()
 		double fixed_year=IOUtils::nodata;
 		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
 		else cfg.getValue(dflt+"FALLBACK_YEAR", "Input", fixed_year, IOUtils::nothrow);
-		if (fixed_year!=IOUtils::nodata) tmp_csv.setFixedYear( fixed_year );
+		bool auto_wrap_year=true;
+		if (cfg.keyExists(pre+"FALLBACK_AUTO_WRAP", "Input")) cfg.getValue(pre+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year);
+		else cfg.getValue(dflt+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year, IOUtils::nothrow);
+		if (fixed_year!=IOUtils::nodata) tmp_csv.setFixedYear( fixed_year, auto_wrap_year );
 		
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
@@ -1231,7 +1239,7 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 	return template_md;
 }
 
-Date CsvIO::getDate(const CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr)
+Date CsvIO::getDate(CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr)
 {
 	const Date dt( params.parseDate(vecFields) );
 	if (dt.isUndef()) {
@@ -1244,7 +1252,7 @@ Date CsvIO::getDate(const CsvParameters& params, const std::vector<std::string>&
 	return dt;
 }
 
-std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd)
+std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd)
 {
 	const std::string filename( params.getFilename() );
 	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
