@@ -90,6 +90,8 @@ namespace mio {
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ *    - CSV\#_SLOPE: the slope angle in degrees at the station (either none or both slope and azimuth must be provided);
+ *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station (either none or both slope and azimuth must be provided);
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
  *    - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  *    - The following two keys provide mandatory data for each station, therefore there is no "global" version and they must be defined:
@@ -1026,7 +1028,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 StationData CsvParameters::getStation() const 
 {
 	StationData sd(location, id, name);
-	if (slope!=IOUtils::nodata && azi!=IOUtils::nodata)
+	if (slope==0. || (slope!=IOUtils::nodata && azi!=IOUtils::nodata))
 		sd.setSlope(slope, azi);
 	return sd;
 }
@@ -1097,6 +1099,14 @@ void CsvIO::parseInputOutputSection()
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
 		}
+		
+		double slope=IOUtils::nodata;
+		if (cfg.keyExists(pre+"SLOPE", "INPUT")) cfg.getValue(pre+"SLOPE", "INPUT", slope);
+		else cfg.getValue(dflt+"SLOPE", "INPUT", slope, IOUtils::nothrow);
+		double azimuth=IOUtils::nodata;
+		if (cfg.keyExists(pre+"AZIMUTH", "INPUT")) cfg.getValue(pre+"AZIMUTH", "INPUT", azimuth);
+		else cfg.getValue(dflt+"AZIMUTH", "INPUT", azimuth, IOUtils::nothrow);
+		tmp_csv.setSlope(slope, azimuth);
 		
 		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
 		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);

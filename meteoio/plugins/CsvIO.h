@@ -43,6 +43,7 @@ class CsvParameters {
 		void setFixedYear(const double& i_year, const bool& auto_wrap);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
+		void setSlope(const double& i_slope, const double& i_azimuth) {slope=i_slope; azi=i_azimuth;}
 		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
