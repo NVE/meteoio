@@ -185,16 +185,21 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
-		if (current_date<=previous_date) {
-			if (ovec[ii].isNodata()) 
-				std::cerr << "[W] " << stationID << ", deleting empty duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-			else
-				std::cerr << "[W] " << stationID << ", deleting duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-			if (current_date==previous_date) ovec[previous_idx].merge( ovec[ii] );
-			ovec[ii].date.setUndef(true);
-		} else {
+		if (current_date>previous_date) {
 			previous_date = current_date;
 			previous_idx = ii;
+		} else if (current_date==previous_date) {
+			if (ovec[ii].isNodata()) 
+				std::cerr << "[W] " << stationID << ", deleting empty duplicated timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			else {
+				std::cerr << "[W] " << stationID << ", merging duplicated timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+				ovec[previous_idx].merge( ovec[ii] );
+			}
+		} else { //current_date<previous_date
+			if (ovec[ii].isNodata()) 
+				std::cerr << "[W] " << stationID << ", deleting empty out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			else
+				std::cerr << "[W] " << stationID << ", deleting out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
 		}
 	}
 	
