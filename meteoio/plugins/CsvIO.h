@@ -40,7 +40,7 @@ class CsvParameters {
 		void setUnits(const std::string& csv_units,  const char& delim);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
-		void setFixedYear(const double& i_year, const bool& auto_wrap);
+		void setFixedYear(const int& i_year, const bool& auto_wrap);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		void setSlope(const double& i_slope, const double& i_azimuth) {slope=i_slope; azi=i_azimuth;}
@@ -62,7 +62,7 @@ class CsvParameters {
 	private:
 		///structure to contain date and time parsing information
 		typedef struct DATETIME_COLS {
-			DATETIME_COLS() : year_cst(IOUtils::nodata), date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0), auto_wrap(true) {}
+			DATETIME_COLS() : date_str(IOUtils::npos), time_str(IOUtils::npos), year(IOUtils::npos), jdn(IOUtils::npos), month(IOUtils::npos), day(IOUtils::npos), time(IOUtils::npos), hours(IOUtils::npos), minutes(IOUtils::npos), seconds(IOUtils::npos), max_dt_col(0), year_cst(IOUtils::inodata), auto_wrap(true) {}
 			void updateMaxCol() {
 				if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
 				if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
@@ -76,14 +76,14 @@ class CsvParameters {
 				if (seconds!=IOUtils::npos && seconds>max_dt_col) max_dt_col=seconds;
 			}
 			
-			int getFixedYear(const double& jdn) {
-				if (jdn<273.) auto_wrap = false;
+			int getFixedYear(const double& i_jdn) {
+				if (i_jdn<273.) auto_wrap = false;
 				if (auto_wrap) return year_cst - 1;
 				return year_cst;
 			}
 			
-			int getFixedYear(const int& month) {
-				if (month<10) auto_wrap = false;
+			int getFixedYear(const int& i_month) {
+				if (i_month<10) auto_wrap = false;
 				if (auto_wrap) return year_cst - 1;
 				return year_cst;
 			}
@@ -111,7 +111,7 @@ class CsvParameters {
 				//date and time strings
 				if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
 				const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
-				const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::nodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
+				const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
 				
 				//date string and components time
 				//if (date_str!=IOUtils::npos && components_time) return true;
@@ -125,9 +125,9 @@ class CsvParameters {
 			}
 			
 			//time is a field that contains numerical time, for example 0920
-			double year_cst;
 			size_t date_str, time_str, year, jdn, month, day, time, hours, minutes, seconds;
 			size_t max_dt_col;
+			int year_cst;
 			bool auto_wrap; ///< if true, dates >= October will be assumed to belong to (year_cst-1) until a date < October is encountered
 		} datetime_cols;
 		

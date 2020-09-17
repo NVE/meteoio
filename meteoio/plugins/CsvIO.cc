@@ -90,8 +90,8 @@ namespace mio {
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
- *    - CSV\#_SLOPE: the slope angle in degrees at the station (either none or both slope and azimuth must be provided);
- *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station (either none or both slope and azimuth must be provided);
+ *    - CSV\#_SLOPE: the slope angle in degrees at the station (if providing a slope, also provide an azimuth);
+ *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station ;
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
  *    - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  *    - The following two keys provide mandatory data for each station, therefore there is no "global" version and they must be defined:
@@ -842,7 +842,7 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 	checkSpecString(time_format, nr_params_check);
 }
 
-void CsvParameters::setFixedYear(const double& i_year, const bool& auto_wrap)
+void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
 {
 	date_cols.year_cst = i_year;
 	date_cols.auto_wrap = auto_wrap;
@@ -914,7 +914,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		double jdn=0.;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( jdn ); //here jdn must be double
+		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( jdn ); //here jdn must be double
 		
 		//parse the timer information and compute the decimal jdn
 		const std::string time_str( vecFields[ date_cols.time_str ] );
@@ -946,7 +946,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		int year=0, jdn=0, time=0;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
+		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
 		if (!parseDateComponent(vecFields, date_cols.time, time)) return Date();
 		const int hours = time / 100;
 		const int minutes = time - hours*100;
@@ -960,7 +960,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		double seconds=0;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
+		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
 		if (!parseDateComponent(vecFields, date_cols.hours, hours)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.minutes, minutes)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
@@ -974,7 +974,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		double jdn = 0.;
 		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( jdn );
+		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( jdn );
 		
 		return Date(year, jdn, csv_tz);
 	}
@@ -1013,7 +1013,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 		
 		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::nodata) year = date_cols.getFixedYear( month );
+		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
 		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
@@ -1208,13 +1208,13 @@ void CsvIO::parseInputOutputSection()
 				tmp_csv.setTimeSpec(time_spec);
 		}
 		
-		double fixed_year=IOUtils::nodata;
+		int fixed_year=IOUtils::inodata;
 		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
 		else cfg.getValue(dflt+"FALLBACK_YEAR", "Input", fixed_year, IOUtils::nothrow);
 		bool auto_wrap_year=true;
 		if (cfg.keyExists(pre+"FALLBACK_AUTO_WRAP", "Input")) cfg.getValue(pre+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year);
 		else cfg.getValue(dflt+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year, IOUtils::nothrow);
-		if (fixed_year!=IOUtils::nodata) tmp_csv.setFixedYear( fixed_year, auto_wrap_year );
+		if (fixed_year!=IOUtils::inodata) tmp_csv.setFixedYear( fixed_year, auto_wrap_year );
 		
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);

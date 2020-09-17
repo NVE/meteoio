@@ -1248,9 +1248,8 @@ unsigned int RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor
 	unsigned int clz = 0;
 
 	static const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
-	for (size_t i = 0; i < bit_char * sizeof(nn); ++i) 
-	{
-		if ((nn & (1 << i)) == 0)
+	for (size_t ii = 0; ii < bit_char * sizeof(nn); ++ii) {
+		if ((nn & (uint64_t(1) << ii)) == 0)
 			clz++;
 		else //first non-zero character hit
 			break;
