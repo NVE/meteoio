@@ -1369,6 +1369,11 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
 			
+			if (tmp_vec[ii]=="NAN" || tmp_vec[ii]=="NULL") {
+				md( params.csv_fields[ii] ) = IOUtils::nodata;
+				continue;
+			}
+			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string err_msg( "Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
