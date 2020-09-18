@@ -101,7 +101,7 @@ class SMETIO : public IOInterface {
 		std::string outpath;                //read from the Config [Output] section
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
-		char default_prec, default_width; //output default precision and width
+		int default_prec, default_width; //output default precision and width
 		char output_separator;         //output field separator
 		bool outputCommentedHeaders;   //prefix all headers with a '#' for easy import into dbs but breaks SMET conformance
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
