@@ -60,9 +60,7 @@ class ProcessingProperties {
 
 /**
  * @class  ProcessingBlock
- * @brief  An abstract class
- * @author Thomas Egger
- * @date   2011-01-02
+ * @brief  The base class for all filters that provides the interface and a few helper methods
  */
 class ProcessingBlock {
 	public:
@@ -117,6 +115,7 @@ class ProcessingBlock {
                                                std::vector<double>& ovec);
 		
 		const std::set<std::string> excluded_stations, kept_stations;
+		
 		ProcessingProperties properties;
 		const std::string block_name;
 
