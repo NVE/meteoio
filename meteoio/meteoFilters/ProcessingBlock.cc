@@ -319,11 +319,6 @@ std::vector<ProcessingBlock::dates_range> ProcessingBlock::initTimeRestrictions(
 			ii--; //we must redo the current element
 		}
 	}
-	
-	if (!dates_specs.empty()) std::cout << "dates_specs contains:\n";
-	for (size_t ii=0; ii<dates_specs.size(); ii++) {
-		std::cout << dates_specs[ii].start.toString(Date::ISO) << " - " << dates_specs[ii].end.toString(Date::ISO) <<"\n";
-	}
 
 	return dates_specs;
 }
