@@ -89,8 +89,10 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 	}
 }
 
-bool ProcessingStack::applyFilter(const size_t& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
+bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
 {
+	//we know there is at least 1 element
+	//const Date start( ivec.back().date ), end( ivec.front().date );
 	filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
 	return true;
 }
@@ -119,7 +121,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
 			continue;
 
-		filterApplied = applyFilter(param, ivec, ovec[stat_idx]);
+		filterApplied = applyFilter(param, jj, ivec, ovec[stat_idx]);
 		const size_t output_size = ovec[stat_idx].size();
 
 		if (ivec.size() != output_size) {
