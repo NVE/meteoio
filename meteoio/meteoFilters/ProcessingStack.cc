@@ -89,6 +89,12 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 	}
 }
 
+bool ProcessingStack::applyFilter(const size_t& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
+{
+	filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
+	return true;
+}
+
 //ivec is passed by value, so it makes an efficient copy
 bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
@@ -113,8 +119,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
 			continue;
 
-		filterApplied = true;
-		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec[stat_idx]);
+		filterApplied = applyFilter(param, ivec, ovec[stat_idx]);
 		const size_t output_size = ovec[stat_idx].size();
 
 		if (ivec.size() != output_size) {

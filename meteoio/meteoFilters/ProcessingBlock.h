@@ -102,7 +102,7 @@ class ProcessingBlock {
 		const std::string toString() const;
 		bool skipStation(const std::string& station_id) const;
 		bool noStationsRestrictions() const {return excluded_stations.empty() && kept_stations.empty();}
-		bool noTimeRestrictions() const {return time_restrictions.empty();}
+		const std::vector<dates_range> getTimeRestrictions() const {return time_restrictions;}
 
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);
