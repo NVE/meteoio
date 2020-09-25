@@ -78,6 +78,9 @@ namespace mio {
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
  * 
+ * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** options followed by a comma delimited list of
+ * date intervals (represented by two ISO formatted dates seperated by ' - ').
+ * 
  * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
  *
  * @section processing_section Filtering section
@@ -106,6 +109,12 @@ namespace mio {
  * PSUM::filter3    = undercatch_wmo
  * PSUM::arg3::type = Hellmannsh
  * PSUM::arg3::exclude = DAV3 WFJ2
+ * 
+ * #Correct a wrongly mounted wind sensor for two time periods
+ * DW::filter1   = add
+ * DW::arg1::type = Cst
+ * DW::arg1::cst = 45
+ * DW::arg1::when = 2020-07-01 - 2020-07-10, 2020-07-20T12:00 - 2020-08-01
  * @endcode
  *
  * @section processing_available Available processing elements
@@ -262,7 +271,7 @@ const double ProcessingBlock::snow_thresh = .1; //if snow height greater than th
 
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
                             : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), 
-                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, 1.) ), properties(), block_name(name) {}
+                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
 
 std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {
