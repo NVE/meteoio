@@ -32,8 +32,8 @@ namespace mio {
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
-TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
+TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::second;	
@@ -66,11 +66,11 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 			has_width = true;
 		} else if (vecArgs[ii].first=="FILE") {
 			const std::string in_filename( vecArgs[ii].second );
-			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			suppr_dates = ProcessingBlock::readDates(block_name, filename, cfg.get("TIME_ZONE", "Input"));
 			has_file = true;
 		}
 	}
@@ -210,8 +210,8 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
-TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-        : ProcessingBlock(vecArgs, name), dst_changes()
+TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), dst_changes()
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::second;
@@ -222,11 +222,11 @@ TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& v
 
 	if (vecArgs[0].first=="CORRECTIONS") {
 		const std::string in_filename( vecArgs[0].second );
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
 		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-		dst_changes = ProcessingBlock::readCorrections(block_name, filename, TZ, 2);
+		dst_changes = ProcessingBlock::readCorrections(block_name, filename, cfg.get("TIME_ZONE", "Input"), 2);
 		if (dst_changes.empty())
 			throw InvalidArgumentException("Please provide at least one DST correction for " + where, AT);
 	} else
@@ -283,8 +283,8 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
-TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name)
+TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::second;
@@ -306,12 +306,13 @@ void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
-TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ)
-        : ProcessingBlock(vecArgs, name), req_start(), req_end(), match_date(), ref_start(), ref_end()
+TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
+	const double TZ = cfg.get("TIME_ZONE", "Input");
 	
 	if (nrArgs!=3) throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 	

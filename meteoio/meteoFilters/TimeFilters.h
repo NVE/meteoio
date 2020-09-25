@@ -81,7 +81,7 @@ class TimeProcStack {
  */
 class TimeSuppr : public ProcessingBlock {
 	public:
-		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
@@ -127,7 +127,7 @@ class TimeSuppr : public ProcessingBlock {
  */
 class TimeUnDST : public ProcessingBlock {
 	public:
-		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
@@ -150,7 +150,7 @@ class TimeUnDST : public ProcessingBlock {
  */
 class TimeSort : public ProcessingBlock {
 	public:
-		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 };
@@ -183,7 +183,7 @@ class TimeSort : public ProcessingBlock {
  */
 class TimeLoop : public ProcessingBlock {
 	public:
-		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ);
+		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 		void process(Date &dateStart, Date &dateEnd);

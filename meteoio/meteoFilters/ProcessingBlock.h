@@ -113,7 +113,7 @@ class ProcessingBlock {
 		static std::vector<ProcessingBlock::dates_range> initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ);
 
 	protected:
-		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg); ///< protected constructor only to be called by children
 
 		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);

@@ -29,8 +29,8 @@ namespace mio {
  * @param[in] name Name of the filter (used to report errors)
  * @param[in] skipWindowParams if set to true, do NOT read and initialize the Window parameters (default: false) so they can be initialized later.
  */
-WindowedFilter::WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const bool& skipWindowParams)
-               : ProcessingBlock(vecArgs, name), min_time_span(0.0, 0.), centering(WindowedFilter::center), min_data_points(1),
+WindowedFilter::WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg, const bool& skipWindowParams)
+               : ProcessingBlock(vecArgs, name, cfg), min_time_span(0.0, 0.), centering(WindowedFilter::center), min_data_points(1),
                  last_start(0), last_end(0), vec_window(), is_soft(false)
 {
 	if (!skipWindowParams) setWindowFParams( vecArgs );

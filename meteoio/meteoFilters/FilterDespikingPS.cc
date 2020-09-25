@@ -25,8 +25,8 @@ using namespace std;
 
 namespace mio {
 
-FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50),
+FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50),
 			degreeOfInterpolation(3), windowWidth(24)
 {
 	parse_args(vecArgs);
