@@ -91,10 +91,48 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 
 bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
 {
-	//we know there is at least 1 element
-	//const Date start( ivec.back().date ), end( ivec.front().date );
-	filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
-	return true;
+	const std::vector<ProcessingBlock::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
+	
+	if (time_restrictions.empty()) {
+		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
+		return true;
+	} else {
+		//we know there is at least 1 element
+		const Date start( ivec.front().date ), end( ivec.back().date );
+		bool filterApplied = false;
+		
+		//filter for all time restrictions that fit into ivec
+		for (size_t ii=0; ii<time_restrictions.size(); ii++) {
+			if (time_restrictions[ii].end<start) continue; //sub-range before our data
+			if (time_restrictions[ii].start>end) break; //sub-range after our data
+			
+			const Date sub_start( std::max(time_restrictions[ii].start, start) );
+			const Date sub_end( std::min(time_restrictions[ii].end, end) );
+			
+			//now cut a buffer to this sub-range and filter it
+			size_t ivec_start_idx=0; //position of the first sub-range within the full ivec/ovec
+			while (ivec[ivec_start_idx].date<sub_start) ivec_start_idx++;
+			
+			//prepare the sub-range input data from the original ivec
+			std::vector<MeteoData> tmp_ivec, tmp_ovec;
+			tmp_ivec.reserve( ivec.size()-ivec_start_idx ); //worst case scenario
+			for (size_t kk=ivec_start_idx; kk<ivec.size(); kk++) {
+				if (ivec[kk].date>sub_end) break;
+				tmp_ivec.push_back( ivec[kk] );
+			}
+			
+			filter_stack[jj]->process(static_cast<unsigned int>(param), tmp_ivec, tmp_ovec);
+			
+			//put back the sub-range filtered data into the full ovec
+			for (size_t kk=0; kk<tmp_ovec.size(); kk++) {
+				ovec[kk+ivec_start_idx] = tmp_ovec[kk];
+			}
+			
+			filterApplied = true;
+		}
+		
+		return filterApplied;
+	}
 }
 
 //ivec is passed by value, so it makes an efficient copy
@@ -121,7 +159,10 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
 			continue;
 
-		filterApplied = applyFilter(param, jj, ivec, ovec[stat_idx]);
+		//if the filter has not been applied (ie time restriction), move to the next one directly
+		if (!applyFilter(param, jj, ivec, ovec[stat_idx])) continue;
+		
+		filterApplied = true; //at least one filter has been applied in the whole stack
 		const size_t output_size = ovec[stat_idx].size();
 
 		if (ivec.size() != output_size) {

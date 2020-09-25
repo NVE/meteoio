@@ -262,7 +262,7 @@ const double ProcessingBlock::snow_thresh = .1; //if snow height greater than th
 
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
                             : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), 
-                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, 0.) ), properties(), block_name(name) {}
+                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, 1.) ), properties(), block_name(name) {}
 
 std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {
