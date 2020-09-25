@@ -356,7 +356,7 @@ class MeteoData {
 
 		//data qa containers:
 		bool resampled; ///<set this to true if MeteoData is result of resampling
-		std::vector<flag_field> flags; ///<Per-parameter data quality flags
+		std::vector<flag_field> flags; ///<Per-parameter data quality flags BUG these are currently not serialized!!
 		static flag_field zero_flag; //TODO: is there a way to make this const?
 };
 

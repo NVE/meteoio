@@ -187,10 +187,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		}
 
 		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-			for (size_t kk=0; kk<output_size; kk++) {
-				ivec[kk](param) = ovec[stat_idx][kk](param);
-				ivec[kk].setFiltered(param, ovec[stat_idx][kk].isFiltered(param));
-			}
+			ivec = ovec[stat_idx];
 		}
 	}
 
