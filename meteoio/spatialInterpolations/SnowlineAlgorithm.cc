@@ -30,10 +30,10 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
     GridsManager& i_gdm, Meteo2DInterpolator& i_mi) : 
     InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm_(i_gdm), mi_(i_mi), base_alg_("IDW_LAPSE"),
-    trend_(vecArgs, i_algo, i_param), where_("Interpolations2D::" + algo),
+    input_args_(vecArgs), where_("Interpolations2D::" + algo),
     assimilateFunction_(&SnowlineAlgorithm::assimilateCutoff), smoothing_(false),
     snowlines_(), snowlines_file_(),
-    enforce_positive_rate_(false), calc_base_rate_(false), 
+    enforce_positive_rate_(false), calc_base_rate_(false), fallback_rate_(IOUtils::nodata),
     cutoff_val_(0.), band_height_(10.), band_no_(10), formula_(std::string()),
     verbose_(true)
 {
@@ -69,6 +69,8 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			IOUtils::parseArg(vecArgs[ii], where_, enforce_positive_rate_);
 		} else if (vecArgs[ii].first == "CALC_BASE_RATE") {
 			IOUtils::parseArg(vecArgs[ii], where_, calc_base_rate_);
+		} else if (vecArgs[ii].first == "FALLBACK_RATE") {
+			IOUtils::parseArg(vecArgs[ii], where_, fallback_rate_);
 		/* args of method BANDS */
 		} else if (vecArgs[ii].first == "BAND_HEIGHT") {
 			IOUtils::parseArg(vecArgs[ii], where_, band_height_);
@@ -202,7 +204,7 @@ void SnowlineAlgorithm::assimilateFormula(const double& snowline, const DEMObjec
 }
 
 Grid2DObject SnowlineAlgorithm::mergeSlopes(const DEMObject& dem, const std::vector<Grid2DObject>& azi_grids)
-{ //merge separate slope aspects together
+{ //merge separate slope aspects back together
 
 	DEMObject dem_copy(dem);
 	dem_copy.setUpdatePpt(DEMObject::SLOPE);
@@ -297,7 +299,8 @@ std::vector<SnowlineAlgorithm::aspect> SnowlineAlgorithm::readSnowlineFile()
 					snowline_elevations.push_back(sl_aspect);
 					break;
 				} else {
-					throw InvalidFormatException("The snowline elevations file is ill-formatted (encountered line with fewer columns than a previous one).", AT);
+					throw InvalidFormatException(
+					    "The snowline elevations file is ill-formatted (encountered line with fewer columns than a previous one).", AT);
 				}
 
 			}
@@ -343,10 +346,11 @@ void SnowlineAlgorithm::getSnowlines()
 
 double SnowlineAlgorithm::probeTrend()
 {
-	//this Trend object is local and only used to calculate model parameters - we don't want to change data yet 
+	//calculate model parameters - we don't want to change data yet:
+	Trend trend(input_args_, algo, param);
 	std::vector<double> vecData_copy( vecData );
 	std::vector<StationData> vecMeta_copy( vecMeta );
-	trend_.detrend(vecMeta_copy, vecData_copy);
+	trend.detrend(vecMeta_copy, vecData_copy);
 	
 	/*
 	 * Regression parameters are available only in low-level function calls when
@@ -354,7 +358,7 @@ double SnowlineAlgorithm::probeTrend()
 	 * But: they are propagated in the info string, so we parse this here.
 	 */
 	const std::string str_tag( "Model parameters:" );
-	std::string fit_info( trend_.toString() );
+	std::string fit_info( trend.toString() );
 	const size_t beg = fit_info.find(str_tag) + str_tag.length();
 	const size_t end = fit_info.find("\n", beg);
 	fit_info = IOUtils::trim(fit_info.substr(beg, end - beg));
@@ -383,18 +387,29 @@ double SnowlineAlgorithm::calculateRate(const double& snowline)
 std::vector< std::pair<std::string, std::string> > SnowlineAlgorithm::prepareBaseArgs(const double& snowline, const std::string& base_alg_fallback)
 { //inject calculated lapse rate into base algorithm arguments
 	std::vector< std::pair<std::string, std::string> > vecArgs( mi_.getArgumentsForAlgorithm(param, base_alg_fallback, "Interpolations2D") );
-	if (snowline != IOUtils::nodata && (enforce_positive_rate_ || calc_base_rate_)) {
+	if (enforce_positive_rate_ || calc_base_rate_) {
 		const double fit_slope = probeTrend();
-		if (fit_slope > 0 || calc_base_rate_) {
-			const std::string reason( (fit_slope > 0? "Reverse trend" : "Trend") );
-			msg("[i] " + reason + " in data is being subsituted with a fixed rate (for algorithms with a lapse rate).");
+		if (snowline != IOUtils::nodata && (fit_slope > 0. || calc_base_rate_)) {
+			const std::string reason( (fit_slope > 0.? "Reverse trend" : "Trend") );
+			msg("[i] " + reason + " in data is being substituted with rate deduced from snowline elevation.");
+			if (snowline != IOUtils::nodata) {
+				for(std::vector< std::pair<std::string, std::string> >::iterator it = vecArgs.begin(); it != vecArgs.end(); ++it) {
+					if ((*it).first == "RATE" || (*it).first == "FRAC")
+						vecArgs.erase(it);
+				}
+				const double snowline_rate = calculateRate(snowline);
+				vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(snowline_rate) ));
+				vecArgs.push_back(std::pair<std::string, std::string>( "FRAC", "FALSE" ));
+			}
+		} else if (snowline == IOUtils::nodata && fit_slope > 0. && fallback_rate_ != IOUtils::nodata) {
+			//reversed lapse rate but no snowline: switch to fixed fallback rate
 			for(std::vector< std::pair<std::string, std::string> >::iterator it = vecArgs.begin(); it != vecArgs.end(); ++it) {
 				if ((*it).first == "RATE" || (*it).first == "FRAC")
-				       vecArgs.erase(it);
+					vecArgs.erase(it);
 			}
-			const double snowline_rate = calculateRate(snowline);
-			vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(snowline_rate) ));
+			vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(fallback_rate_) ));
 			vecArgs.push_back(std::pair<std::string, std::string>( "FRAC", "FALSE" ));
+			msg("[i] Reverse trend in data is being substituted with a fixed fallback rate.");
 		}
 	}
 	return(vecArgs);

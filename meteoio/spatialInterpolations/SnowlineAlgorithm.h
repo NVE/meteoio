@@ -65,16 +65,14 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		{ //check if a vector is sorted (with 'strict', duplicates are not allowed either)
 			if (vec.empty())
 				return true;
-			T last = vec.at(0);
-			for (typename std::vector<T>::iterator it = vec.begin(); it != vec.end(); ++it) {
+			for (typename std::vector<T>::iterator it = vec.begin() + 1; it != vec.end(); ++it) {
 				if (strict) {
-					if (*it <= last)
+					if (*it <= *(it - 1))
 						return false;
 				} else {
-					if (*it < last)
+					if (*it < *(it - 1))
 						return false;
 				}
-				last = *it;
 			}
 			return true;
 		}
@@ -82,7 +80,7 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		GridsManager& gdm_;
 		Meteo2DInterpolator& mi_;
 		std::string base_alg_;
-		Trend trend_;
+		std::vector< std::pair<std::string, std::string> > input_args_; //store ini input args from constructor
 		std::string where_;
 		void (SnowlineAlgorithm::*assimilateFunction_)(const double& snowline, const DEMObject& dem, Grid2DObject& grid); //points to enabled assimilation function
 		bool smoothing_;
@@ -90,6 +88,7 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		std::string snowlines_file_;
 		bool enforce_positive_rate_; //deduce lapse rate from snowline if data has "reversed" rate
 		bool calc_base_rate_; //deduce lapse rate from snowline in any case
+		double fallback_rate_;
 		double cutoff_val_;
 		double band_height_;
 		unsigned int band_no_;
