@@ -611,7 +611,7 @@ MeteoData MeteoData::merge(MeteoData meteo1, const MeteoData& meteo2)
 	return meteo1;
 }
 
-void MeteoData::merge(const MeteoData& meteo2)
+bool MeteoData::merge(const MeteoData& meteo2, const bool& check_for_conflicts)
 {
 	if (!date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) {
 		//the data must be time synchronized!
@@ -619,6 +619,10 @@ void MeteoData::merge(const MeteoData& meteo2)
 		ss << "Trying to merge MeteoData at " << date.toString(Date::ISO);
 		ss << " with MeteoData at " << meteo2.date.toString(Date::ISO);
 		throw InvalidArgumentException(ss.str(), AT);
+	}
+	
+	if (check_for_conflicts) {
+		if (hasConflicts(meteo2)) return false;
 	}
 
 	if (date.isUndef()) date=meteo2.date;
@@ -629,15 +633,15 @@ void MeteoData::merge(const MeteoData& meteo2)
 	//merge standard parameters
 	for (size_t ii=0; ii<nrOfParameters; ii++) {
 		if (data[ii]==IOUtils::nodata) {
-			data[ii]=meteo2.data[ii];
-			flags[ii]=meteo2.flags[ii];
+			data[ii] = meteo2.data[ii];
+			flags[ii] = meteo2.flags[ii];
 		}
 	}
 
 	//for each meteo2 extra parameter, check if a matching parameter exist
 	const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
 	for (size_t ii=0; ii<nrExtra2; ii++) {
-		const string extra_name = meteo2.extra_param_name[ii];
+		const std::string extra_name( meteo2.extra_param_name[ii] );
 		const size_t extra_param_idx = getParameterIndex(extra_name);
 		if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
 			const size_t new_idx = addParameter( extra_name );
@@ -648,6 +652,29 @@ void MeteoData::merge(const MeteoData& meteo2)
 			flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
 		}
 	}
+}
+
+bool MeteoData::hasConflicts(const MeteoData& meteo2) const
+{
+	if (!date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) return true;
+	
+	//check for conflicts in standard parameters
+	for (size_t ii=0; ii<nrOfParameters; ii++) {
+		if (data[ii]!=IOUtils::nodata && meteo2.data[ii]!=IOUtils::nodata && data[ii]!=meteo2.data[ii])
+			return true;
+	}
+	
+	//check for conflicts in extra parameters
+	const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+	for (size_t ii=0; ii<nrExtra2; ii++) {
+		const std::string extra_name = meteo2.extra_param_name[ii];
+		const size_t extra_param_idx = getParameterIndex(extra_name);
+		if (extra_param_idx==IOUtils::npos) continue;
+		if (data[extra_param_idx]!=IOUtils::nodata && meteo2.data[ii]!=IOUtils::nodata && data[extra_param_idx]!=meteo2.data[ii])
+			return true;
+	}
+	
+	return false;
 }
 
 std::set<std::string> MeteoData::listAvailableParameters(const std::vector<MeteoData>& vecMeteo)

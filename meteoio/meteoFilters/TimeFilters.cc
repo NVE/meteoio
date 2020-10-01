@@ -181,29 +181,48 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 {
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
-	size_t previous_idx = 0;
+	Date start_ooo_period;
+	size_t count_ooo_points = 0, previous_idx = 0;
 	
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date>previous_date) {
+			if (!start_ooo_period.isUndef()) {
+				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " points\n";
+				start_ooo_period.setUndef(true);
+				count_ooo_points = 0;
+			}
 			previous_date = current_date;
 			previous_idx = ii;
-		} else if (current_date==previous_date) {
-			if (ovec[ii].isNodata()) 
-				std::cerr << "[W] " << stationID << ", deleting empty duplicated timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-			else {
-				std::cerr << "[W] " << stationID << ", merging duplicated timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-				ovec[previous_idx].merge( ovec[ii] );
-			}
-			ovec[ii].date.setUndef(true); //mark for removal
-		} else { //current_date<previous_date
-			if (ovec[ii].isNodata()) 
-				std::cerr << "[W] " << stationID << ", deleting empty out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-			else
-				std::cerr << "[W] " << stationID << ", deleting out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
-			ovec[ii].date.setUndef(true); //mark for removal
+		} else if (current_date<previous_date) {
+			if (start_ooo_period.isUndef()) start_ooo_period = current_date;
+			count_ooo_points++;
 		}
 	}
+	
+	//Now sort the vector and merge the duplicates
+	bool has_conflicts = false;
+	std::sort(ovec.begin(), ovec.end());
+	for (size_t ii=1; ii<ovec.size(); ++ii) {
+		const Date current_date( ovec[ii].date );
+		if (current_date!=previous_date) {
+			previous_date = current_date;
+			previous_idx = ii;
+		} else {
+			if (ovec[previous_idx]==ovec[ii]) {
+				ovec[ii].date.setUndef(true); //mark for removal
+			} else {
+				if (!ovec[previous_idx].merge(ovec[ii], true)) {
+					std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamp " << ovec[previous_idx].date.toString(Date::ISO) << "\n";
+					has_conflicts = true;
+				}
+				ovec[ii].date.setUndef(true); //mark for removal
+			}
+		}
+	}
+	
+	if (has_conflicts) 
+		throw InvalidArgumentException("Duplicated timestamps have merge conflicts for station "+stationID, AT);
 	
 	//now really remove the points from the vector
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());

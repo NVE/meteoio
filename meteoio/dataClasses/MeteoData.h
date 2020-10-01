@@ -290,9 +290,20 @@ class MeteoData {
 		 * provided argument.
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
 		 * @param meteo2 extra MeteoData to merge, lowest priority
+		 * @param check_for_conflicts If set to true, the merge will not proceed and return false in case of 
+		 * conflicts.
 		 */
-		void merge(const MeteoData& meteo2);
+		bool merge(const MeteoData& meteo2, const bool& check_for_conflicts=false);
 
+		/**
+		 * @brief Check for data conflicts between two MeteoData objects
+		 * Conflicts are defined as two identical data fields having different 
+		 * non-nodata values. The metadata are NOT checked for conflict.
+		 * @param meteo2 other MeteoData to compare to
+		 * @return true if meteo2 has conflicts with the current MeteoData object
+		 */
+		bool hasConflicts(const MeteoData& meteo2) const;
+		
 		/**
 		 * @brief Parse a string containing a merge type and return the proper enum member for it.
 		 * @param[in] merge_type

@@ -50,7 +50,7 @@ class TimeProcStack {
  * @details
  * This filter deletes some timesteps based on the provided arguments:
  *  - TYPE: defines the strategy to delete timesteps. It is one of:
- *       - CLEANUP: suppress duplicated and out-of-order timestamps (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
+ *       - CLEANUP: merge duplicated and out-of-order timestamps (a warning will be emitted anyway for the problematic timestamp). Merge are only performed when they don't conflict (two identical fields with different, non-nodata value is a conflict)
  *       - BYDATES: delete specific timesteps
  *       - FRAC: suppress a given fraction of the data at random
  *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
