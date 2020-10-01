@@ -201,7 +201,6 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	}
 	
 	//Now sort the vector and merge the duplicates
-	bool has_conflicts = false;
 	std::sort(ovec.begin(), ovec.end());
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
@@ -212,17 +211,13 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 			if (ovec[previous_idx]==ovec[ii]) {
 				ovec[ii].date.setUndef(true); //mark for removal
 			} else {
-				if (!ovec[previous_idx].merge(ovec[ii], true)) {
+				if (!ovec[previous_idx].merge(ovec[ii], MeteoData::CONFLICTS_AVERAGE)) {
 					std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamp " << ovec[previous_idx].date.toString(Date::ISO) << "\n";
-					has_conflicts = true;
 				}
 				ovec[ii].date.setUndef(true); //mark for removal
 			}
 		}
 	}
-	
-	if (has_conflicts) 
-		throw InvalidArgumentException("Duplicated timestamps have merge conflicts for station "+stationID, AT);
 	
 	//now really remove the points from the vector
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());

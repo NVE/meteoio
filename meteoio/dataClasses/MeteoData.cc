@@ -611,7 +611,7 @@ MeteoData MeteoData::merge(MeteoData meteo1, const MeteoData& meteo2)
 	return meteo1;
 }
 
-bool MeteoData::merge(const MeteoData& meteo2, const bool& check_for_conflicts)
+bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy)
 {
 	if (!date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) {
 		//the data must be time synchronized!
@@ -621,36 +621,70 @@ bool MeteoData::merge(const MeteoData& meteo2, const bool& check_for_conflicts)
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 	
-	if (check_for_conflicts) {
-		if (hasConflicts(meteo2)) return false;
-	}
-
-	if (date.isUndef()) date=meteo2.date;
-	meta.merge(meteo2.meta);
-
+	meta.merge(meteo2.meta); //no brainer merging of metadata
+	if (date.isUndef()) date=meteo2.date; //we don't accept different dates, see above
 	if (meteo2.resampled==true ) resampled=true;
-
-	//merge standard parameters
-	for (size_t ii=0; ii<nrOfParameters; ii++) {
-		if (data[ii]==IOUtils::nodata) {
-			data[ii] = meteo2.data[ii];
-			flags[ii] = meteo2.flags[ii];
+	
+	if (conflicts_strategy==CONFLICTS_PRIORITY) {
+		//merge standard parameters
+		for (size_t ii=0; ii<nrOfParameters; ii++) {
+			if (data[ii]==IOUtils::nodata) {
+				data[ii] = meteo2.data[ii];
+				flags[ii] = meteo2.flags[ii];
+			}
 		}
-	}
 
-	//for each meteo2 extra parameter, check if a matching parameter exist
-	const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
-	for (size_t ii=0; ii<nrExtra2; ii++) {
-		const std::string extra_name( meteo2.extra_param_name[ii] );
-		const size_t extra_param_idx = getParameterIndex(extra_name);
-		if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
-			const size_t new_idx = addParameter( extra_name );
-			data[new_idx] = meteo2.data[nrOfParameters+ii];
-			flags[new_idx] = meteo2.flags[nrOfParameters+ii];
-		} else if (data[extra_param_idx]==IOUtils::nodata) {
-			data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
-			flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+		//for each meteo2 extra parameter, check if a matching parameter exist
+		const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+		for (size_t ii=0; ii<nrExtra2; ii++) {
+			const std::string extra_name( meteo2.extra_param_name[ii] );
+			const size_t extra_param_idx = getParameterIndex(extra_name);
+			if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+				const size_t new_idx = addParameter( extra_name );
+				data[new_idx] = meteo2.data[nrOfParameters+ii];
+				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
+			} else if (data[extra_param_idx]==IOUtils::nodata) {
+				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+			}
 		}
+		return true;
+	} else if (conflicts_strategy==CONFLICTS_AVERAGE) {
+		bool has_conflicts = false;
+		//merge standard parameters
+		for (size_t ii=0; ii<nrOfParameters; ii++) {
+			if (data[ii]==IOUtils::nodata) {
+				data[ii] = meteo2.data[ii];
+				flags[ii] = meteo2.flags[ii];
+			} else if (meteo2.data[ii]!=IOUtils::nodata) {
+				data[ii] = .5 * (data[ii] + meteo2.data[ii]);
+				flags[ii].resampled = true;
+				has_conflicts = true;
+			}
+		}
+
+		//for each meteo2 extra parameter, check if a matching parameter exist
+		const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+		for (size_t ii=0; ii<nrExtra2; ii++) {
+			const std::string extra_name( meteo2.extra_param_name[ii] );
+			const size_t extra_param_idx = getParameterIndex(extra_name);
+			if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+				const size_t new_idx = addParameter( extra_name );
+				data[new_idx] = meteo2.data[nrOfParameters+ii];
+				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
+			} else {
+				if (data[extra_param_idx]==IOUtils::nodata) {
+					data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+					flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+				} else if (meteo2.data[ii]!=IOUtils::nodata) { 
+					data[extra_param_idx] = .5 * (data[extra_param_idx] + meteo2.data[nrOfParameters+ii]);
+					flags[ii].resampled = true;
+					has_conflicts = true;
+				}
+			}
+		}
+		
+		return has_conflicts;
 	}
 }
 

@@ -124,6 +124,11 @@ class MeteoData {
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
 				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
 		} Merge_Type;
+		
+		typedef enum MERGE_CONFLICTS {
+				CONFLICTS_PRIORITY=0, ///< Station1 has priority over station 2
+				CONFLICTS_AVERAGE=1 ///< The merged value is the average of station1 and station2 
+		} Merge_Conflicts;
 
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
@@ -290,10 +295,10 @@ class MeteoData {
 		 * provided argument.
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
 		 * @param meteo2 extra MeteoData to merge, lowest priority
-		 * @param check_for_conflicts If set to true, the merge will not proceed and return false in case of 
-		 * conflicts.
+		 * @param conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts)
+		 * @return true if no conflicts were found
 		 */
-		bool merge(const MeteoData& meteo2, const bool& check_for_conflicts=false);
+		bool merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
 
 		/**
 		 * @brief Check for data conflicts between two MeteoData objects
