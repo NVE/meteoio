@@ -202,6 +202,8 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	
 	//Now sort the vector and merge the duplicates
 	std::sort(ovec.begin(), ovec.end());
+	previous_date = ovec.front().date;
+	previous_idx = 0;
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date!=previous_date) {
