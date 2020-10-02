@@ -238,6 +238,11 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 		}
 	}
 	
+	//print any remaining conflicts, if any
+	if (!start_conflicts_period.isUndef()) {
+		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+	}
+	
 	//now really remove the points from the vector
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
