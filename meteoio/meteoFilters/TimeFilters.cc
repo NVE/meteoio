@@ -182,39 +182,56 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
 	Date start_ooo_period;
-	size_t count_ooo_points = 0, previous_idx = 0;
+	size_t count_ooo_points, previous_idx = 0;
 	
+	//Generate the warnings for non-chronological order
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date>previous_date) {
 			if (!start_ooo_period.isUndef()) {
 				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " points\n";
 				start_ooo_period.setUndef(true);
-				count_ooo_points = 0;
 			}
 			previous_date = current_date;
 			previous_idx = ii;
 		} else if (current_date<previous_date) {
-			if (start_ooo_period.isUndef()) start_ooo_period = current_date;
+			if (start_ooo_period.isUndef()) {
+				start_ooo_period = current_date;
+				count_ooo_points = 0;
+			}
 			count_ooo_points++;
 		}
 	}
 	
-	//Now sort the vector and merge the duplicates
+	//Now sort the vector so points jumping back now appear as duplicates
 	std::sort(ovec.begin(), ovec.end());
+	
+	//merge the duplicates
 	previous_date = ovec.front().date;
+	Date start_conflicts_period;
+	size_t nr_conflict_free_pts = 0, nr_conflicts_pts = 0;
 	previous_idx = 0;
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date!=previous_date) {
 			previous_date = current_date;
 			previous_idx = ii;
+			nr_conflict_free_pts++;
+			if (!start_conflicts_period.isUndef() && nr_conflict_free_pts>1) {
+				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+				start_conflicts_period.setUndef(true);
+			}
 		} else {
 			if (ovec[previous_idx]==ovec[ii]) {
 				ovec[ii].date.setUndef(true); //mark for removal
 			} else {
 				if (!ovec[previous_idx].merge(ovec[ii], MeteoData::CONFLICTS_AVERAGE)) {
-					std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamp " << ovec[previous_idx].date.toString(Date::ISO) << "\n";
+					if (start_conflicts_period.isUndef()) {
+						start_conflicts_period = current_date;
+						nr_conflicts_pts = 0;
+					}
+					nr_conflicts_pts++;
+					nr_conflict_free_pts = 0;
 				}
 				ovec[ii].date.setUndef(true); //mark for removal
 			}
