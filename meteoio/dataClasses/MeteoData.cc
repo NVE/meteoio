@@ -449,10 +449,10 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
  *                 ↓                 ↓
  * ------[---------|-----------------|--------------]-------------	vec2
  */
-void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy, const Merge_Conflicts& conflicts_strategy)
+size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy, const Merge_Conflicts& conflicts_strategy)
 {
-	if (vec2.empty()) return; //nothing to merge
-	if (strategy==STRICT_MERGE && vec1.empty()) return; //optimization for STRICT_MERGE
+	if (vec2.empty()) return 0; //nothing to merge
+	if (strategy==STRICT_MERGE && vec1.empty()) return 0; //optimization for STRICT_MERGE
 
 	//adding the necessary extra parameters to vec1 elements, no matter which merge strategy
 	if (!vec1.empty()) {
@@ -466,10 +466,11 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 	}
 
 	if (strategy==STRICT_MERGE) { //optimization for STRICT_MERGE
-		if (vec1.back().date<vec2.front().date) return; //vec1 is before vec2
-		if (vec1.front().date>vec2.back().date) return; //vec1 is after vec2
+		if (vec1.back().date<vec2.front().date) return 0; //vec1 is before vec2
+		if (vec1.front().date>vec2.back().date) return 0; //vec1 is after vec2
 	}
 
+	size_t nr_conflicts = 0; //track the number of merge conflicts
 	size_t vec1_start = 0; //the index in vec2 that matches the original start of vec1
 	size_t vec1_end = 0; //the index in vec2 that matches the original end of vec1
 
@@ -489,7 +490,7 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		vec1.insert(vec1.begin(), vec1_start, md_pattern);
 		for (size_t ii=0; ii<vec1_start; ii++) {
 			vec1[ii].date = vec2[ii].date;
-			vec1[ii].merge( vec2[ii], conflicts_strategy );
+			if (!vec1[ii].merge( vec2[ii], conflicts_strategy )) nr_conflicts++;
 		}
 	}
 
@@ -507,13 +508,13 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) {
 				tmp.push_back( md_pattern );
 				tmp.back().date = vec2[idx2].date;
-				tmp.back().merge( vec2[idx2], conflicts_strategy ); //so the extra params are properly handled
+				if (!tmp.back().merge( vec2[idx2], conflicts_strategy )) nr_conflicts++; //so the extra params are properly handled
 				idx2++;
 			}
 			if (idx2==vec2.size())  break; //nothing left to merge
 
 			if (curr_date==vec2[idx2].date) {
-				vec1[ii].merge( vec2[idx2], conflicts_strategy );
+				if (!vec1[ii].merge( vec2[idx2], conflicts_strategy )) nr_conflicts++;
 				idx2++;
 			}
 			tmp.push_back( vec1[ii] );
@@ -534,8 +535,10 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			const Date curr_date( vec1[ii].date );
 			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) idx2++;
 
-			if (idx2==vec2.size()) return; //nothing left to merge
-			if (curr_date==vec2[idx2].date) vec1[ii].merge( vec2[idx2], conflicts_strategy ); //merging
+			if (idx2==vec2.size()) return nr_conflicts; //nothing left to merge
+			if (curr_date==vec2[idx2].date) { //merging
+				if (!vec1[ii].merge( vec2[idx2], conflicts_strategy )) nr_conflicts++;
+			}
 		}
 		vec1_end = idx2;
 	}
@@ -548,10 +551,12 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 			for (size_t ii=vec1_end; ii<vec2.size(); ii++) {
 				vec1.push_back( md_pattern );
 				vec1.back().date = vec2[ii].date;
-				vec1.back().merge( vec2[ii], conflicts_strategy );
+				if (!vec1.back().merge( vec2[ii], conflicts_strategy )) nr_conflicts++;
 			}
 		}
 	}
+	
+	return nr_conflicts;
 }
 
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge, const Merge_Conflicts& conflicts_strategy)
@@ -655,7 +660,7 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 			if (data[ii]==IOUtils::nodata) {
 				data[ii] = meteo2.data[ii];
 				flags[ii] = meteo2.flags[ii];
-			} else if (meteo2.data[ii]!=IOUtils::nodata) {
+			} else if (meteo2.data[ii]!=IOUtils::nodata && data[ii]!=meteo2.data[ii]) {
 				data[ii] = .5 * (data[ii] + meteo2.data[ii]);
 				flags[ii].resampled = true;
 				has_no_conflicts = false;
@@ -675,9 +680,9 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 				if (data[extra_param_idx]==IOUtils::nodata) {
 					data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
 					flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
-				} else if (meteo2.data[ii]!=IOUtils::nodata) { 
+				} else if (meteo2.data[nrOfParameters+ii]!=IOUtils::nodata  && data[extra_param_idx]!=meteo2.data[nrOfParameters+ii]) {
 					data[extra_param_idx] = .5 * (data[extra_param_idx] + meteo2.data[nrOfParameters+ii]);
-					flags[ii].resampled = true;
+					flags[nrOfParameters+ii].resampled = true;
 					has_no_conflicts = false;
 				}
 			}

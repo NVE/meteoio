@@ -240,8 +240,9 @@ class MeteoData {
 		 * @param[in] vec2 extra vector to merge, lowest priority
 		 * @param[in] strategy how should the merge be done? (default: STRICT_MERGE)
 		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @return number of merge conflicts
 		 */
-		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static size_t mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.

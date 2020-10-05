@@ -796,16 +796,20 @@ void IOHandler::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
 		const std::string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		size_t nr_conflicts = 0;
+		
 		for (size_t jj=ii+1; jj<vecVecMeteo.size(); jj++) { //loop over the stations
 			if (vecVecMeteo[jj].empty())  continue;
 			const std::string fromStationID( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
 			if (fromStationID==toStationID) {
-				MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy)); //merge timeseries for the two stations
+				nr_conflicts += MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy), MeteoData::CONFLICTS_AVERAGE); //merge timeseries for the two stations
 				std::swap( vecVecMeteo[jj], vecVecMeteo.back() );
 				vecVecMeteo.pop_back();
 				jj--; //we need to redo the current jj, because it contains another station
 			}
 		}
+		
+		if (nr_conflicts>0) std::cerr << "[E] " << nr_conflicts << " automerge conflicts on station " <<  toStationID << "\n";
 	}
 }
 
