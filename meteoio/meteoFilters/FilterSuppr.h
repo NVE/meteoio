@@ -41,7 +41,7 @@ namespace mio {
  *
  * @code
  * ILWR::filter1     = suppr
- * ILWR::arg1::suppr = ALL
+ * ILWR::arg1::type = ALL
  * 
  * PSUM::filter1     = suppr
  * PSUM::arg1::type  = FILE
