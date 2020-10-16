@@ -540,12 +540,12 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 				if (!vec1[ii].merge( vec2[idx2], conflicts_strategy )) nr_conflicts++;
 			}
 		}
-		vec1_end = idx2;
+		vec1_end = idx2 + 1; //element at idx2 has already been merged
 	}
 	
 	//filling data after vec1
 	if (strategy!=STRICT_MERGE && vec1.back().date<vec2.back().date) {
-		if (vec1_end!=vec2.size()) {
+		if (vec1_end<vec2.size()) {
 			MeteoData md_pattern( vec1.back() ); //This assumes that station1 is not moving!
 			md_pattern.reset(); //keep metadata and extra params
 			for (size_t ii=vec1_end; ii<vec2.size(); ii++) {
