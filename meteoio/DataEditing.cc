@@ -149,10 +149,10 @@ namespace mio {
  */
 
 DataEditing::DataEditing(const Config& cfgreader)
-           : timeproc(cfgreader), cfg(cfgreader), dataCreator(cfgreader), excluded_params(), kept_params(),
-             merge_commands(), copy_commands(), move_commands(),
-             merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE),
-             copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
+           : timeproc(cfgreader), cfg(cfgreader), dataCreator(cfgreader), move_commands(), excluded_params(),
+             kept_params(), merge_commands(), merged_stations(),
+             copy_commands(), merge_strategy(MeteoData::EXPAND_MERGE),
+             move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false), copy_ready(false)
 {
 	cfg.getValue("AUTOMERGE", "InputEditing",automerge, IOUtils::nothrow);
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "InputEditing", "");
@@ -165,18 +165,18 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 	if (this != &source) {
 		timeproc = source.timeproc;
 		dataCreator = source.dataCreator;
+		move_commands = source.move_commands;
 		excluded_params = source.excluded_params;
 		kept_params = source.kept_params;
 		merge_commands = source.merge_commands;
 		merged_stations = source.merged_stations;
-		copy_commands = source.copy_commands;
-		move_commands = source.move_commands;
 		merge_strategy = source.merge_strategy;
-		copy_ready = source.copy_ready;
+		copy_commands = source.copy_commands;
 		move_ready = source.move_ready;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
 		merge_ready = source.merge_ready;
+		copy_ready = source.copy_ready;
 	}
 	return *this;
 }

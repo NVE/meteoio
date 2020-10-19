@@ -49,13 +49,12 @@ class DataEditing {
 		TimeProcStack timeproc;
 		
 	private:
-		void create_copy_map();
 		void create_move_map();
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
+		void create_copy_map();
 
-		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
 		void move_params(std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -63,17 +62,18 @@ class DataEditing {
 		void merge_stations(STATIONS_SET& vecStation) const;
 		void automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
 		void automerge_stations(STATIONS_SET& vecStation) const;
+		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
 		DataCreator dataCreator;
+		std::map< std::string, std::set<std::string> > move_commands;
 		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
 		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params
 		std::map< std::string, std::vector<std::string> > merge_commands;
-		std::map< std::string, std::string > copy_commands;
-		std::map< std::string, std::set<std::string> > move_commands;
 		std::vector<std::string> merged_stations;
+		std::map< std::string, std::string > copy_commands;
 		int merge_strategy;
-		bool copy_ready, move_ready, excludes_ready, keeps_ready, merge_ready, automerge;
+		bool move_ready, excludes_ready, keeps_ready, merge_ready, automerge, copy_ready;
 };
 
 } //namespace
