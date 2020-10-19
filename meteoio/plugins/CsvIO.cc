@@ -936,7 +936,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		}
 		if (!status) return Date();
 		
-		jdn += (args[0]*3600. + args[1]*60. + args[2]) / (24.*3600.);
+		jdn += (static_cast<double>(args[0])*3600. + static_cast<double>(args[1])*60. + static_cast<double>(args[2])) / (24.*3600.);
 		const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
 		return Date(year, jdn, tz);
 	}

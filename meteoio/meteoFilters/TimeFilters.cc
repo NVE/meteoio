@@ -182,7 +182,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
 	Date start_ooo_period;
-	size_t count_ooo_points, previous_idx = 0;
+	size_t count_ooo_points = 0, previous_idx = 0;
 	
 	//Generate the warnings for non-chronological order
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
