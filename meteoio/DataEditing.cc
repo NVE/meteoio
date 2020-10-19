@@ -29,7 +29,7 @@ using namespace std;
 namespace mio {
 
 /**
- * @page raw_data_editing Raw Data Editing
+ * @page data_editing Input Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data (in the following order):
  *     -# \ref data_move "rename certain parameters for all stations;"
  *     -# \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
@@ -46,6 +46,7 @@ namespace mio {
  * order of declaration. The syntax is new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
  * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
  * @code
+ * [InputEditing]
  * TA::MOVE = air_temp air_temperature temperature_air
  * @endcode
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
@@ -62,6 +63,7 @@ namespace mio {
  * per line followed by a space delimited list of \ref meteoparam "meteorological parameters" to keep for the station).
  *
  * @code
+ * [InputEditing]
  * WFJ2::EXCLUDE = HS PSUM                       ;inline declaration of parameters exclusion
  * KLO3::KEEP = TA RH VW DW                      ;inline declaration of parameters to keep
  *
@@ -77,6 +79,7 @@ namespace mio {
  *
  * Another example relying on wildcards (the kept/excluded parameters lists are <b>additive</b>):
  * @code
+ * [InputEditing]
  * *::KEEP = TA RH                               ;all stations will keep TA and RH and reject the other parameters
  * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
  * @endcode
@@ -93,12 +96,16 @@ namespace mio {
  * note that only common timestamps will be merged! (ie if the stations have different sampling rates, it might end up that no merge gets performed)
  *
  * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
  * STATION1 = STB
  * STATION2 = WFJ2
  * STATION3 = WFJ1
  * STATION4 = DAV1
  * [...]
  *
+ * [InputEditing]
  * STB::EXCLUDE = ILWR PSUM
  * WFJ2::KEEP = PSUM ILWR RSWR
  *
@@ -107,7 +114,7 @@ namespace mio {
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a
  * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
- * the [Input] section (by default it is "EXPAND_MERGE", see MeteoData::Merge_Type).
+ * the [InputEditing] section (by default it is "EXPAND_MERGE", see MeteoData::Merge_Type).
  *
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
  * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
@@ -115,13 +122,14 @@ namespace mio {
  * the start of the first station to the start of the second station)
  *
  * @subsection automerge 3.2 Automerge
- * If the key \em AUTOMERGE is set to true in the Input section, all stations that have identical IDs will be merged together. The first station
+ * If the key \em AUTOMERGE is set to true in the [InputEditing] section, all stations that have identical IDs will be merged together. The first station
  * to come (usually, the first that was defined in the plugin) has the priority over the next ones.
  *
  * @section data_copy 4. Data copy (COPY)
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
  * @code
+ * [InputEditing]
  * VW_avg::COPY = VW
  * @endcode
  * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
@@ -132,9 +140,9 @@ namespace mio {
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
  * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
- * data generators, they are listed in the \ref generators_keywords "data generators section" (but the data creators must be declared in the [Input] section).
+ * data generators, they are listed in the \ref generators_keywords "data generators section" (but the data creators must be declared in the [InputEditing] section).
  * @code
- * [Input]
+ * [InputEditing]
  * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
  * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
  * @endcode
@@ -146,8 +154,8 @@ DataEditing::DataEditing(const Config& cfgreader)
              merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE),
              copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
 {
-	cfg.getValue("AUTOMERGE", "Input",automerge, IOUtils::nothrow);
-	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", "");
+	cfg.getValue("AUTOMERGE", "InputEditing",automerge, IOUtils::nothrow);
+	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "InputEditing", "");
 	if (!merge_strategy_str.empty())
 		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
 }
@@ -227,7 +235,7 @@ void DataEditing::create_merge_map()
 {
 	merge_ready = true;
 
-	const std::vector<std::string> merge_keys( cfg.getKeys("::MERGE", "Input", true) );
+	const std::vector<std::string> merge_keys( cfg.getKeys("::MERGE", "InputEditing", true) );
 	const size_t nrOfStations = merge_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = merge_keys[ii].find_first_of(":");
@@ -235,7 +243,7 @@ void DataEditing::create_merge_map()
 
 		const std::string station( IOUtils::strToUpper(merge_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
-		cfg.getValue(merge_keys[ii], "Input", vecString);
+		cfg.getValue(merge_keys[ii], "InputEditing", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+merge_keys[ii]+"\"", AT);
 
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
@@ -388,7 +396,7 @@ void DataEditing::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 void DataEditing::create_exclude_map()
 {
 	excludes_ready = true;
-	const std::string exclude_file = cfg.get("EXCLUDE_FILE", "Input", "");
+	const std::string exclude_file = cfg.get("EXCLUDE_FILE", "InputEditing", "");
 
 	if (!exclude_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
@@ -428,7 +436,7 @@ void DataEditing::create_exclude_map()
 		fin.close();
 	}
 
-	const std::vector<std::string> exclude_keys( cfg.getKeys("::EXCLUDE", "Input", true) );
+	const std::vector<std::string> exclude_keys( cfg.getKeys("::EXCLUDE", "InputEditing", true) );
 	const size_t nrOfStations = exclude_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = exclude_keys[ii].find_first_of(":");
@@ -436,7 +444,7 @@ void DataEditing::create_exclude_map()
 
 		const std::string station( IOUtils::strToUpper(exclude_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
-		cfg.getValue(exclude_keys[ii], "Input", vecString);
+		cfg.getValue(exclude_keys[ii], "InputEditing", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper( *it );
@@ -464,7 +472,7 @@ void DataEditing::create_exclude_map()
 void DataEditing::create_keep_map()
 {
 	keeps_ready = true;
-	const std::string keep_file = cfg.get("KEEP_FILE", "Input", "");
+	const std::string keep_file = cfg.get("KEEP_FILE", "InputEditing", "");
 
 	if (!keep_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
@@ -504,7 +512,7 @@ void DataEditing::create_keep_map()
 		fin.close();
 	}
 
-	const std::vector<std::string> keep_keys( cfg.getKeys("::KEEP", "Input", true) );
+	const std::vector<std::string> keep_keys( cfg.getKeys("::KEEP", "InputEditing", true) );
 	const size_t nrOfStations = keep_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
 		const size_t found = keep_keys[ii].find_first_of(":");
@@ -512,7 +520,7 @@ void DataEditing::create_keep_map()
 
 		const std::string station( IOUtils::strToUpper(keep_keys[ii].substr(0,found)) );
 		std::vector<std::string> vecString;
-		cfg.getValue(keep_keys[ii], "Input", vecString);
+		cfg.getValue(keep_keys[ii], "InputEditing", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper( *it );
@@ -602,18 +610,18 @@ void DataEditing::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 }
 
 /**
-* Parse [Input] section for potential parameters that the user wants
+* Parse [InputEditing] section for potential parameters that the user wants
 * renamed (as '%%::MOVE = %%')
 */
 void DataEditing::create_move_map()
 {
-	const std::vector<std::string> move_keys( cfg.getKeys("::MOVE", "Input", true) );
+	const std::vector<std::string> move_keys( cfg.getKeys("::MOVE", "InputEditing", true) );
 	const size_t nrOfMatches = move_keys.size();
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const std::string dest_param( move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") ) );
 		std::vector<std::string> vecString;
-		cfg.getValue(move_keys[ii], "Input", vecString); //multiple source can be provided
+		cfg.getValue(move_keys[ii], "InputEditing", vecString); //multiple source can be provided
 
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+move_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
@@ -630,8 +638,8 @@ void DataEditing::create_move_map()
 /**
 * This procedure runs through the MeteoData objects in vecMeteo and according to user
 * configuration renames a certain present meteo parameter to another one, named by the
-* user in the [Input] section of the io.ini, e.g.
-* [Input]
+* user in the [InputEditing] section of the io.ini, e.g.
+* [InputEditing]
 * TA::MOVE = air_temp air_temperature
 * means that TA will be the name of a new parameter in MeteoData with the copied value
 * of the original parameter air_temp or air_temperature
@@ -671,17 +679,17 @@ void DataEditing::move_params(std::vector< METEO_SET >& vecMeteo) const
 
 
 /**
-* Parse [Input] section for potential parameters that the user wants
+* Parse [InputEditing] section for potential parameters that the user wants
 * duplicated (as '%%::COPY = %%')
 */
 void DataEditing::create_copy_map()
 {
-	const std::vector<std::string> copy_keys( cfg.getKeys("::COPY", "Input", true) );
+	const std::vector<std::string> copy_keys( cfg.getKeys("::COPY", "InputEditing", true) );
 	const size_t nrOfMatches = copy_keys.size();
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const std::string dest_param( copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") ) );
-		const std::string src_param = cfg.get(copy_keys[ii], "Input");
+		const std::string src_param = cfg.get(copy_keys[ii], "InputEditing");
 		if (!dest_param.empty() && !src_param.empty())
 			copy_commands[ dest_param ] = src_param;
 	}
@@ -692,8 +700,8 @@ void DataEditing::create_copy_map()
 /**
 * This procedure runs through the MeteoData objects in vecMeteo and according to user
 * configuration copies a certain present meteo parameter to another one, named by the
-* user in the [Input] section of the io.ini, e.g.
-* [Input]
+* user in the [InputEditing] section of the io.ini, e.g.
+* [InputEditing]
 * TA2::COPY = TA
 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
 * of the meteo parameter MeteoData::TA

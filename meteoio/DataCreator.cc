@@ -25,7 +25,7 @@ namespace mio {
 DataCreator::DataCreator(const Config& cfg)
               : mapAlgorithms()
 {
-	static const std::string section( "Input" );
+	static const std::string section( "InputEditing" );
 	static const std::string key_pattern( "::create" );
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
 
