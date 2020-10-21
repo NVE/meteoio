@@ -31,7 +31,7 @@ namespace mio {
 /**
  * @page data_editing Input Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data (in the following order):
- *     -# \ref data_move "rename certain parameters for all stations;"
+ *     -# \ref data_renaming "rename certain parameters;"
  *     -# \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
  *     -# \ref data_merging "merge stations together;"
  *     -# \ref data_copy "make a copy of a certain parameter under a new parameter name for all stations;"
@@ -41,9 +41,11 @@ namespace mio {
  * then the KEEP directives, then the MERGE directives and finally the COPY directives. The CREATE directives only come after all the raw data
  * has been edited.
  *
- * @section data_move 1. Data renaming (MOVE)
- * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take multiple source names that will be processed in the
- * order of declaration. The syntax is new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
+ * @section data_renaming 1. Data renaming (MOVE or SWAP)
+ * @subsection data_move 1.1 Data renaming (MOVE)
+ * It is possible to rename a meteorological parameter for all stations at once thanks to the MOVE key. This key can take 
+ * multiple source names that will be processed in the order of declaration. The syntax is 
+ * new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
  * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
  * @code
  * [InputEditing]
@@ -52,6 +54,17 @@ namespace mio {
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
  * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
  * the list to have a value has the priority).
+ * 
+ * @subsection data_swap 1.2 Swapping parameters (SWAP)
+ * It is possible to swap pairs of parameters (on a per station basis) with the SWAP key. This is either done by using the station ID (or the '*' wildcard)
+ * followed by "::swap" as key with a space delimited pair of \ref meteoparam "meteorological parameters" to swap (non-standard parameters not in this
+ * list are also supported, any missing parameter will transparently be added with a nodata value). 
+ * 
+ * @code
+ * [InputEditing]
+ * WFJ2::SWAP = ISWR RSWR                       ;swap two standard parameters
+ * DFB2::SWAP = TA unventillated_TA             ;swap a standard parameter with a non-standard one
+ * @endcode
  *
  * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard)
@@ -149,10 +162,10 @@ namespace mio {
  */
 
 DataEditing::DataEditing(const Config& cfgreader)
-           : timeproc(cfgreader), cfg(cfgreader), dataCreator(cfgreader), move_commands(), excluded_params(),
-             kept_params(), merge_commands(), merged_stations(),
+           : timeproc(cfgreader), cfg(cfgreader), dataCreator(cfgreader), move_commands(), swap_commands(),
+             excluded_params(), kept_params(), merge_commands(), merged_stations(),
              copy_commands(), merge_strategy(MeteoData::EXPAND_MERGE),
-             move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false), copy_ready(false)
+             move_ready(false), swap_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false), copy_ready(false)
 {
 	cfg.getValue("AUTOMERGE", "InputEditing",automerge, IOUtils::nothrow);
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "InputEditing", "");
@@ -166,6 +179,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 		timeproc = source.timeproc;
 		dataCreator = source.dataCreator;
 		move_commands = source.move_commands;
+		swap_commands = source.swap_commands;
 		excluded_params = source.excluded_params;
 		kept_params = source.kept_params;
 		merge_commands = source.merge_commands;
@@ -173,6 +187,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 		merge_strategy = source.merge_strategy;
 		copy_commands = source.copy_commands;
 		move_ready = source.move_ready;
+		swap_ready = source.swap_ready;
 		excludes_ready = source.excludes_ready;
 		keeps_ready = source.keeps_ready;
 		merge_ready = source.merge_ready;
@@ -195,6 +210,9 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 	if (!move_ready) create_move_map();
 	move_params(vecMeteo);
+	
+	if (!swap_ready) create_swap_map();
+	swap_params(vecMeteo);
 
 	if (!excludes_ready) create_exclude_map();
 	exclude_params(vecMeteo);
@@ -677,6 +695,69 @@ void DataEditing::move_params(std::vector< METEO_SET >& vecMeteo) const
 	}
 }
 
+/**
+* Parse [InputEditing] section for potential parameters that the user wants
+* renamed (as '%%::SWAP = %%')
+*/
+void DataEditing::create_swap_map()
+{
+	const std::vector<std::string> swap_keys( cfg.getKeys("::SWAP", "InputEditing", true) );
+	const size_t nrOfMatches = swap_keys.size();
+
+	for (size_t ii=0; ii<nrOfMatches; ++ii) {
+		std::string stationID( swap_keys[ii].substr( 0, swap_keys[ii].find_first_of(":") ) );
+		IOUtils::toUpper( stationID );
+		
+		std::vector<std::string> vecString;
+		cfg.getValue(swap_keys[ii], "InputEditing", vecString); //two parameters to swap must be provided
+		
+		if (vecString.size()!=2) throw InvalidArgumentException("Key \""+swap_keys[ii]+"\" requires two paraneters to swap as values", AT);
+		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+			IOUtils::toUpper( *it );
+		}
+		
+		swap_commands[ stationID ] = std::make_pair(vecString[0], vecString[1]);
+	}
+
+	swap_ready = true;
+}
+
+/**
+* This procedure runs through the MeteoData objects in vecMeteo and according to user
+* configuration swaps a certain present meteo parameter with another one, named by the
+* user in the [InputEditing] section of the io.ini, e.g.
+* [InputEditing]
+* SLF2::SWAP = ISWR RSWR
+* means that ISWR and RSWR will be swapped for the station SLF2
+*/
+void DataEditing::swap_params(std::vector< METEO_SET >& vecMeteo) const
+{
+	if (swap_commands.empty()) return; //Nothing configured
+
+	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
+		if (vecMeteo[station].empty()) continue;
+		
+		const std::string stationID( IOUtils::strToUpper(vecMeteo[station][0].meta.stationID) );
+		std::map< std::string, std::pair< std::string, std::string > >::const_iterator it = swap_commands.find( stationID );
+		if (it == swap_commands.end()) {
+			it = swap_commands.find("*"); //fallback: is there a wildcard like "*::KEEP"?
+			if (it == swap_commands.end()) continue;
+		}
+
+		const std::string src_param( it->second.first );
+		const std::string dest_param( it->second.second );
+		
+		for (size_t ii=0; ii<vecMeteo[station].size(); ++ii) {
+			const size_t src_index = vecMeteo[station][ii].addParameter( src_param ); //either add or just return the proper index
+			const double src_value = vecMeteo[station][ii]( src_param );
+			
+			const size_t dest_index = vecMeteo[station][ii].addParameter( dest_param ); //either add or just return the proper index
+			
+			vecMeteo[station][ii]( src_index ) = vecMeteo[station][ii]( dest_index );
+			vecMeteo[station][ii]( dest_index ) = src_value;
+		}
+	}
+}
 
 /**
 * Parse [InputEditing] section for potential parameters that the user wants

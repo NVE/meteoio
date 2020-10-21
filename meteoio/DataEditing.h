@@ -50,12 +50,14 @@ class DataEditing {
 		
 	private:
 		void create_move_map();
+		void create_swap_map();
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
 		void create_copy_map();
 
 		void move_params(std::vector< METEO_SET >& vecMeteo) const;
+		void swap_params(std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -66,14 +68,15 @@ class DataEditing {
 
 		const Config& cfg;
 		DataCreator dataCreator;
-		std::map< std::string, std::set<std::string> > move_commands;
+		std::map< std::string, std::set<std::string> > move_commands;  //destination param, set of names to map
+		std::map< std::string, std::pair< std::string, std::string > > swap_commands; //station_id, pair of params to swap
 		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
 		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params
 		std::map< std::string, std::vector<std::string> > merge_commands;
 		std::vector<std::string> merged_stations;
 		std::map< std::string, std::string > copy_commands;
 		int merge_strategy;
-		bool move_ready, excludes_ready, keeps_ready, merge_ready, automerge, copy_ready;
+		bool move_ready, swap_ready, excludes_ready, keeps_ready, merge_ready, automerge, copy_ready;
 };
 
 } //namespace
