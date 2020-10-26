@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/DataCreator.h>
+#include <meteoio/DataEditingAlgorithms.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
 #include <map>
@@ -38,6 +39,8 @@ class DataEditing {
 		DataEditing(const Config&);
 		
 		DataEditing& operator=(const DataEditing&); ///<Assignement operator
+		
+		virtual ~DataEditing();
 
 		static void purgeTrailingNodata(std::vector<METEO_SET>& vecMeteo);
 		
@@ -49,34 +52,15 @@ class DataEditing {
 		TimeProcStack timeproc;
 		
 	private:
-		void create_move_map();
-		void create_swap_map();
-		void create_exclude_map();
-		void create_keep_map();
-		void create_merge_map();
-		void create_copy_map();
-
-		void move_params(std::vector< METEO_SET >& vecMeteo) const;
-		void swap_params(std::vector< METEO_SET >& vecMeteo) const;
-		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
-		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
-		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
-		void merge_stations(STATIONS_SET& vecStation) const;
-		void automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
-		void automerge_stations(STATIONS_SET& vecStation) const;
-		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
-
-		const Config& cfg;
+		static std::set<std::string> getEditableStations(const Config& cfg);
+		static std::vector< std::pair<std::string, std::string> > parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& stationID);
+		static std::vector< EditingBlock* > buildStack(const std::string& station_ID, const Config& cfg);
+		std::set<std::string> getMergedFromIDs() const;
+		
 		DataCreator dataCreator;
-		std::map< std::string, std::set<std::string> > move_commands;  //destination param, set of names to map
-		std::map< std::string, std::pair< std::string, std::string > > swap_commands; //station_id, pair of params to swap
-		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
-		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params
-		std::map< std::string, std::vector<std::string> > merge_commands;
-		std::vector<std::string> merged_stations;
-		std::map< std::string, std::string > copy_commands;
-		int merge_strategy;
-		bool move_ready, swap_ready, excludes_ready, keeps_ready, merge_ready, automerge, copy_ready;
+		std::map< std::string, std::vector< EditingBlock* > > editingStack;
+		static const std::string command_key, arg_key;
+		static const char NUM[];
 };
 
 } //namespace

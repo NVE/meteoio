@@ -34,6 +34,7 @@ SET(meteoio_sources
 	TimeSeriesManager.cc
 	IOManager.cc
 	DataEditing.cc
+	DataEditingAlgorithms.cc
 	IOHandler.cc
 	MeteoProcessor.cc
 	Meteo1DInterpolator.cc
