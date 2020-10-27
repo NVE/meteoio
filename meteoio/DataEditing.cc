@@ -128,35 +128,94 @@ std::vector< EditingBlock* > DataEditing::buildStack(const std::string& station_
 	return cmd_stack;
 }
 
-std::set<std::string> DataEditing::getMergedFromIDs() const
+std::map< std::string, std::set<std::string> > DataEditing::getDependencies() const
 {
+	std::map< std::string, std::set<std::string> > dependencies; //stationID -> set of IDs it depends on
+	
 	//build the list of stations that are merged to and merged from
-	std::set<std::string> mergedToIDs, mergedFromIDs;
 	std::map< std::string, std::vector< EditingBlock* > >::const_iterator it_blocks;
 	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
+		const std::string stat_id( it_blocks->first );
 		for (size_t jj=0; jj<it_blocks->second.size(); jj++) {
-			const std::set<std::string> tmp_set( it_blocks->second[jj]->getPurgeIDs() );
+			const std::set<std::string> tmp_set( it_blocks->second[jj]->getDependencies() );
 			if (!tmp_set.empty()) {
-				mergedToIDs.insert( it_blocks->first );
-				mergedFromIDs.insert(tmp_set.begin(), tmp_set.end());
+				dependencies[ stat_id ].insert(tmp_set.begin(), tmp_set.end());
+			} else {
+				if (dependencies.count(stat_id)==0) 
+					dependencies[stat_id] = std::set<std::string>();
 			}
 		}
 	}
 	
-	//make sure there is no "circular merge": station A merging station B and station C merging station A
-	//we simply make sure that no destination station ID is also a source data for a merge
-	for (std::set<std::string>::const_iterator it = mergedToIDs.begin(); it != mergedToIDs.end(); ++it) {
-		if (mergedFromIDs.count( *it )>0)
-			throw InvalidArgumentException("\'chain merge\' detected for station \'"+*it+"\', this is not supported (see documentation)", AT);
+	return dependencies;
+}
+
+std::set<std::string> DataEditing::getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies)
+{
+	std::set<std::string> mergedFromIDs;
+	
+	std::map< std::string, std::set<std::string> >::const_iterator it_deps;
+	for (it_deps = dependencies.begin(); it_deps != dependencies.end(); ++it_deps) {
+		if (it_deps->second.empty()) continue;
+		mergedFromIDs.insert( it_deps->second.begin(), it_deps->second.end() );
 	}
 	
 	return mergedFromIDs;
 }
 
+// For each station ID declared in [InputEditing], we have a list of stations it depends on (dependencies):
+// Ex: station A -> B, C ; station B -> C, E ; station C -> nothing ; station E -> nothing ; processing_order = []
+// each station that has an empty list (ie does not depends on another) is ready to be processed 
+// and is pushed to processing_order vector as well as removed from the dependencies map.
+// Ex: station A -> B, C ; station B -> C, E ; processing_order = [C, E]
+// Each dependency element in a dependency set that does not have dependencies itself is removed from the set of dependencies of
+// any station that has it (as it does not block processing anymore).
+// Ex: station A -> B ; station B -> nothing ; processing_order = [C, E]
+// Then we redo the whole logic until the dependency map is empty (if nothing gets rmeoved in a round, this means we have a circular dependency)
+// Ex: station A -> nothing ; processing_order = [C, E, B]
+// Then empty dependency map ; processing_order = [C, E, B, A]
+std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies)
+{
+	std::vector<std::string> processing_order;
+	
+	//find what is the appropriate processing order
+	while (!dependencies.empty()) {
+		bool dependency_removed = false;
+		std::map< std::string, std::set<std::string> >::iterator it_deps;
+		//because 'erase' invalidates the iterators, the increment syntax is a little special...
+		for (it_deps = dependencies.begin(); it_deps != dependencies.end(); ) {
+			const std::string stat_id = it_deps->first;
+			for (std::set<std::string>::iterator it = it_deps->second.begin(); it != it_deps->second.end(); ) {
+				if (dependencies.count( *it )==0) it_deps->second.erase( it++ );
+				else ++it;
+			}
+			
+			if (it_deps->second.empty()) {
+				processing_order.push_back( stat_id );
+				dependencies.erase( it_deps++ );
+				dependency_removed = true;
+			} else {
+				++it_deps;
+			}
+		}
+		
+		if (!dependency_removed)
+			throw InvalidArgumentException("Potential \'circular merge\', this is not supported (see documentation)", AT);
+	}
+	
+	//debug output
+	std::cout << "processing order: all others, then ... ";
+	for (size_t ii=0; ii<processing_order.size(); ii++) std::cout << " " << processing_order[ii];
+	std::cout << "\n";
+	
+	return processing_order;
+}
+
 void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 {
-	//check for "circular merge", build the list of stations that will be purged in the end 
-	const std::set<std::string> mergedFromIDs( getMergedFromIDs() );
+	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
+	const std::set<std::string> mergedFromIDs( getMergedFromIDs(dependencies) );
+	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	
 	//process widlcard commands first, knowing that '*' merges are prohibited
 	if (editingStack.count("*")>0) {
@@ -164,11 +223,16 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 			editingStack["*"][jj]->editTimeSeries(vecStation);
 	}
 	
-	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		const std::string current_ID( vecStation[ii].getStationID() );
-		if (editingStack.count(current_ID)>0) {
-			for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
-				editingStack[current_ID][jj]->editTimeSeries(vecStation);
+	for (size_t ll=0; ll<processing_order.size(); ll++) {
+		const std::string current_ID( processing_order[ll] );
+		
+		for (size_t ii=0; ii<vecStation.size(); ii++) {
+			if (vecStation[ii].getStationID()==current_ID) {
+				if (editingStack.count(current_ID)>0) {
+					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
+						editingStack[current_ID][jj]->editTimeSeries(vecStation);
+					}
+				}
 			}
 		}
 	}
@@ -187,13 +251,8 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	//TODO handle CREATE command
-	//TODO there is a problem: to exclude some parameters from one
-	//station and then merge with another is not guaranteed to work
-	//in this new architecture...
-	//TODO: handle checking for circular dependencies
-	
-	//check for "circular merge", build the list of stations that will be purged in the end 
-	const std::set<std::string> mergedFromIDs( getMergedFromIDs() );
+	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
+	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	
 	//process widlcard commands first, knowing that '*' merges are prohibited
 	if (editingStack.count("*")>0) {
@@ -201,18 +260,24 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			editingStack["*"][jj]->editTimeSeries(vecMeteo);
 	}
 	
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (vecMeteo[ii].empty()) continue;
+	//process in the order that has been computed above
+	for (size_t ll=0; ll<processing_order.size(); ll++) {
+		const std::string current_ID( processing_order[ll] );
 		
-		const std::string current_ID( vecMeteo[ii].front().getStationID() );
-		if (editingStack.count(current_ID)>0) {
-			for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
-				editingStack[current_ID][jj]->editTimeSeries(vecMeteo);
+		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+			if (vecMeteo[ii].empty()) continue;
+			if (vecMeteo[ii].front().getStationID()==current_ID) {
+				if (editingStack.count(current_ID)>0) {
+					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
+						editingStack[current_ID][jj]->editTimeSeries(vecMeteo);
+					}
+				}
 			}
 		}
 	}
 	
 	//remove the stations that have been merged into other ones, if necessary
+	const std::set<std::string> mergedFromIDs( getMergedFromIDs(dependencies) );
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty())  continue;
 		const std::string stationID( IOUtils::strToUpper(vecMeteo[ii][0].meta.stationID) );

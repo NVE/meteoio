@@ -37,7 +37,7 @@ class EditingBlock {
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) {(void)vecMeteo;}
 		virtual void editTimeSeries(STATIONS_SET& vecStation) {(void)vecStation;}
 		
-		virtual std::set<std::string> getPurgeIDs() const {return std::set<std::string>();}
+		virtual std::set<std::string> getDependencies() const {return std::set<std::string>();}
 		const std::string toString() const;
 		
 	protected:
@@ -98,7 +98,7 @@ class EditingMerge : public EditingBlock {
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
 		
-		std::set<std::string> getPurgeIDs() const;
+		std::set<std::string> getDependencies() const;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);

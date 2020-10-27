@@ -55,7 +55,9 @@ class DataEditing {
 		static std::set<std::string> getEditableStations(const Config& cfg);
 		static std::vector< std::pair<std::string, std::string> > parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& stationID);
 		static std::vector< EditingBlock* > buildStack(const std::string& station_ID, const Config& cfg);
-		std::set<std::string> getMergedFromIDs() const;
+		std::map< std::string, std::set<std::string> > getDependencies() const;
+		static std::set<std::string> getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies);
+		static std::vector<std::string> getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies);
 		
 		DataCreator dataCreator;
 		std::map< std::string, std::vector< EditingBlock* > > editingStack;

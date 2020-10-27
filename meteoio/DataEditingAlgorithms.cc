@@ -562,7 +562,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 }
 
-std::set<std::string> EditingMerge::getPurgeIDs() const
+std::set<std::string> EditingMerge::getDependencies() const
 {
 	const std::set<std::string> stations_to_purge(merged_stations.begin(), merged_stations.end());
 	return stations_to_purge;
