@@ -328,6 +328,13 @@ class MeteoData {
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
+		
+		/**
+		 * @brief Parse a string containing a merge conflcits type and return the proper enum member for it.
+		 * @param[in] merge_conflicts
+		 * @return Merge_Conflicts
+		 */
+		static MeteoData::Merge_Conflicts getMergeConflicts(std::string merge_conflicts);
 
 		/**
 		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.

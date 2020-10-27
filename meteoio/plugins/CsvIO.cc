@@ -103,7 +103,7 @@ namespace mio {
  * column of the file, including the date and time.
  * 
  * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
- * This is done either by using the CSV_FIELDS key or using the \ref data_move "data renaming" feature of the 
+ * This is done either by using the CSV_FIELDS key or using the EditingMove feature of the 
  * \ref data_editing "Input Data Editing" stage.
  * 
  * @section csvio_date_specs Date and time specification

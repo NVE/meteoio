@@ -30,132 +30,30 @@ namespace mio {
 /**
  * @page data_editing Input Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data. There are several
- * edition commands that can be stacked at will, per station ID. It is also possible to apply a stack of edits to all stations
- * by using the '*' wildcard instead of the station ID (in such a case, the wildcard stack will be applied before any other
- * stack). Currently, the data creation is applied after all stacks have been processed but this will change in the near future...
- *
- * The editing command that are available are the following:
- *     - \ref data_renaming "rename certain parameters;"
- *     - \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
- *     - \ref data_merging "merge stations together;"
- *     - \ref data_copy "make a copy of a certain parameter under a new parameter name for all stations;"
- *     - \ref data_creation "create certain parameters based on some parametrizations."
- *
- * The general syntax is <i>{stationID}\:\:edit# = {command}</i> followed by the command's arguments as 
- * <i>{stationID}\:\:arg#::{argument name} = {values}</i> where '#' represent a number (so each key remains unique).
- * 
- * @section data_renaming 1. Data renaming (MOVE or SWAP)
- * @subsection data_move 1.1 Data renaming (MOVE)
- * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take 
- * multiple source names that will be processed in the order of declaration. Original names that are not found in the current
- * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
+ * edition commands that can be stacked at will, per station ID. This is similar to the way that filters (processing elements) are
+ * also stacked together. The general syntax is ('#' represent a number, so each key remains unique):
  * @code
- * [InputEditing]
- * SLF2::edit1 = MOVE
- * SLF2::arg1::dest = TA
- * SLF2::arg1::src = air_temp air_temperature temperature_air
- * @endcode
- * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
- * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
- * the list to have a value has the priority).
+ * {stationID}::edit# = {command}
+ * {stationID}::arg#::{argument name} = {values}
  * 
- * @subsection data_swap 1.2 Swapping parameters (SWAP)
- * It is possible to swap pairs of parameters with the SWAP key. This supports both standard \ref meteoparam "meteorological parameters" as well
- * as non-standard parameters (ie not in the list in the link). If a parameter does not exists, it will be transparently added with a nodata value.
- * 
- * @code
- * [InputEditing]
- * FLU2::edit2 = SWAP
- * FLU2::arg2::dest = ISWR
- * FLU2::arg2::src = RSWR
- * @endcode
- *
- * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
- * It is possible to exclude specific parameters with the "exclude" command. This is either done by providing a space delimited list of 
- * \ref meteoparam "meteorological parameters" to exclude for the station as key.
- *
- * The exact opposite can also be done, excluding ALL parameters except the ones declared with the "keep" command.
- *
- * @code
- * [InputEditing]
- * FLU2::edit3 = EXCLUDE
- * FLU2::arg3::exclude = TA RH TSS TSG
- * @endcode
- *
- * Another example relying on wildcards (the kept/excluded parameters lists are <b>additive</b>):
- * @code
- * [InputEditing]
- * *::edit1 = KEEP                               ;all stations will keep TA and RH and reject the other parameters
- * *::arg1::keep = TA RH
- * 
- * WFJ2::edit1 = KEEP                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
- * WFJ2::arg1::keep = HS PSUM
+ * #here is an example
+ * WFJ2::edit1 = EXCLUDE
+ * WFJ2::arg1::exclude = VW DW ISWR RSWR
  * @endcode
  * 
- * @section data_merging 3. Data merging (MERGE)
- * @subsection stations_merging 3.1 Merging different stations (MERGE)
- * It is possible to merge different data sets together, with the MERGE command. This is useful, for example, to 
- * provide measurements from different stations that actually share the same measurement location or to build 
- * "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP commands to fine tune 
- * how the composite station(s) is/are built).
- * Please note that the order of declaration defines the priority (ie the first station that has a value for a given parameter has priority). Please also
- * note that which timestamps will be merged depends on the chosen merge strategy (see MeteoData::MERGE_TYPE).
- *
- * @code
- * [Input]
- * METEO = SMET
- * METEOPATH = ./input
- * STATION1 = STB
- * STATION2 = WFJ2
- * STATION3 = WFJ1
- * STATION4 = DAV1
- * [...]
- *
- * [InputEditing]
- * STB::edit1 = EXCLUDE
- * STB::arg1::exclude = ILWR PSUM
+ * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
+ * (in such a case, the wildcard stack will be applied before any other stack). Currently, the data creation is applied 
+ * after all stacks have been processed but this will change in the near future...
  * 
- * WFJ2::edit1 = KEEP
- * WFJ2::arg1::keep = PSUM ILWR RSWR
- *
- * STB::edit2 = MERGE
- * STB::arg2::merge = WFJ2 WFJ1
- * STB::arg2::merge_strategy = FULL_MERGE
+ * The following Input Data Editing commands are available:
+ *     - SWAP: swap two parameters, see EditingSwap
+ *     - MOVE: rename one or more parameters into a new name, see EditingMove
+ *     - EXCLUDE: delete a list of parameters, see EditingExclude
+ *     - KEEP: only keep a list of parameters and reject the others, see EditingKeep
+ *     - AUTOMERGE: merge together stations sharing the same station ID, see EditingAutoMerge
+ *     - MERGE: merge together one or more stations, see EditingMerge
+ *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
  * 
- * DAV1::edit1 = MERGE
- * DAV1::arg1::merge = WFJ2
- * @endcode
- * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a
- * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY 
- * optional argument (by default it is "EXPAND_MERGE", see MeteoData::Merge_Type).
- *
- * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
- * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
- * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
- * the start of the first station to the start of the second station)
- *
- * @subsection automerge 3.2 Automerge
- * This is a special case of merge: only station's have the exact same ID will get merge together. This is useful when reading data
- * for the same station from multiple source in order to rebuild a consistent dataset. If merge conflicts are encountered (such as 
- * identical fields having different values at the same timestamp), warnings will be printed out.
- * 
- * @code
- * [InputEditing]
- * *::edit1 = AUTOMERGE                        ;all stations having the same ID will be merged together
- * @endcode
- *
- * @section data_copy 4. Data copy (COPY)
- * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done with the COPY command, 
- * such as:
- * @code
- * [InputEditing]
- * DAV::edit1 = COPY
- * DAV::arg1::dest = TA_copy
- * DAV::arg1::src = TA
- * @endcode
- * This creates a new parameter TA_copy that starts as an exact copy of the raw data of TA, for the DAV station. This newly created parameter is
- * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). 
- *
  * @section data_creation 5. Data creation (CREATE)
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
@@ -479,7 +377,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// MERGE
 EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE)
+            : EditingBlock(i_stationID, vecArgs, name), merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);
@@ -498,6 +396,8 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 			has_merges = true;
 		} else if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
+		} else if (vecArgs[ii].first=="MERGE_CONFLICTS") {
+			merge_conflicts = MeteoData::getMergeConflicts( vecArgs[ii].second );
 		}
 	}
 	
@@ -557,7 +457,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			if (vecMeteo[ii].empty()) continue;
 			if (vecMeteo[ii].front().getStationID()!=fromStationID) continue;
 			
-			MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy );
+			MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy, merge_conflicts );
 		}
 	}
 }

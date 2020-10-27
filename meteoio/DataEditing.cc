@@ -203,11 +203,6 @@ std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, 
 			throw InvalidArgumentException("Potential \'circular merge\', this is not supported (see documentation)", AT);
 	}
 	
-	//debug output
-	std::cout << "processing order: all others, then ... ";
-	for (size_t ii=0; ii<processing_order.size(); ii++) std::cout << " " << processing_order[ii];
-	std::cout << "\n";
-	
 	return processing_order;
 }
 

@@ -439,6 +439,15 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 		throw UnknownValueException("Unknown merge type '"+merge_type+"'", AT);
 }
 
+MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_conflicts)
+{
+	IOUtils::toUpper( merge_conflicts );
+	if (merge_conflicts=="CONFLICTS_PRIORITY") return CONFLICTS_PRIORITY;
+	else if (merge_conflicts=="CONFLICTS_AVERAGE") return CONFLICTS_AVERAGE;
+	else
+		throw UnknownValueException("Unknown merge conflicts type '"+merge_conflicts+"'", AT);
+}
+
 /*
  * In the cases != STRICT_MERGE, it matters if vec2 is bigger than vec1. So we define the following indices
  * in order to store the information about the insertion positions:
