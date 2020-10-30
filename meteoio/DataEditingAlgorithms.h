@@ -110,9 +110,10 @@ class EditingMove : public EditingBlock {
  * @ingroup processing
  * @brief EXCLUDE input editing command
  * @details
- * It is possible to exclude specific parameters with the "exclude" command. This is either done by providing a space delimited list of 
- * \ref meteoparam "meteorological parameters" to exclude for the station as key. The exact opposite can also be done, excluding 
- * ALL parameters except the ones declared with the "keep" command.
+ * It is possible to exclude specific parameters with the "exclude" command. This is done by providing a space delimited list of 
+ * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument. The exact opposite can also be done, excluding 
+ * ALL parameters except the ones declared with the "keep" command. If such a command has been used for the wildcard station ID '*', the parameters
+ * are additive with the ones declared for a specific station ID.
  *
  * @code
  * [InputEditing]
@@ -136,9 +137,10 @@ class EditingExclude : public EditingBlock {
  * @ingroup processing
  * @brief KEEP input editing command
  * @details
- * It is possible to excluding ALL parameters except the ones declared with the "keep" command (it is the exact opposite of the
- * EditingExclude command). Here below an example 
- * relying on wildcards (the kept/excluded parameters lists are <b>additive</b>):
+ * It is possible to exclude ALL parameters except the ones declared with the "keep" command (it is the exact opposite of the
+ * EditingExclude command). If such a command has been used for the wildcard station ID '*', the parameters
+ * are additive with the ones declared for a specific station ID. Here below an example 
+ * relying on wildcards:
  * @code
  * [InputEditing]
  * *::edit1 = KEEP                               ;all stations will keep TA and RH and reject the other parameters
@@ -171,9 +173,9 @@ class EditingKeep : public EditingBlock {
  * 
  * Please note that the order of declaration defines the priority (ie the first station that has a value for a given 
  * parameter has priority). Please also note that which timestamps will be merged depends on the chosen merge 
- * strategy with the MERGE_STRATEGY option (see MeteoData::MERGE_TYPE, by default it is EXPAND_MERGE). The handling 
- * of merge conflicts can be configured with the MERGE_CONFLICTS optional argument (see MeteoData::MERGE_CONFLICTS, 
- * by default it is CONFLICTS_PRIORITY). Furthermore, a station can be merged into multiple other stations, 
+ * strategy with the MERGE_STRATEGY option (see MeteoData::Merge_Type, by default it is MeteoData::EXPAND_MERGE). The handling 
+ * of merge conflicts can be configured with the MERGE_CONFLICTS optional argument (see MeteoData::Merge_Conflicts, 
+ * by default it is MeteoData::CONFLICTS_PRIORITY). Furthermore, a station can be merged into multiple other stations, 
  * but circular dependencies are prohibited (and checked for).
  *
  * @code
@@ -229,7 +231,8 @@ class EditingMerge : public EditingBlock {
  * @details
  * This is a special case of merge: only station's have the exact same ID will get merge together. This is useful when reading data
  * for the same station from multiple source in order to rebuild a consistent dataset. If merge conflicts are encountered (such as 
- * identical fields having different values at the same timestamp), warnings will be printed out.
+ * identical fields having different values at the same timestamp), warnings will be printed out and the 
+ * MeteoData::CONFLICTS_AVERAGE conflict resolution will be used.
  * 
  * @code
  * [InputEditing]
