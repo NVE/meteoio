@@ -67,6 +67,20 @@ namespace IOUtils {
 		GRID_ALL, ///< extract all grid points from a provided grid
 		GRID_RESAMPLE ///< generate a grid at a different resolution
 	};
+	
+	typedef struct DATES_RANGE {
+		DATES_RANGE() : start(), end() {}
+		DATES_RANGE(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+		bool operator<(const DATES_RANGE& a) const { //needed for "sort"
+			if (start==a.start) return end < a.end;
+			return start < a.start;
+		}
+		bool operator==(const DATES_RANGE& a) const { //needed to check for uniqueness
+			return (start==a.start) && (end==a.end);
+		}
+
+		Date start, end;
+	} dates_range;
 
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value

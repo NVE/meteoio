@@ -20,6 +20,7 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
+#include <meteoio/meteoFilters/ProcessingBlock.h> //needed for the time restrictions
 
 #include <algorithm>
 #include <fstream>
@@ -54,7 +55,7 @@ namespace mio {
  *     - MERGE: merge together one or more stations, see EditingMerge
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
  * 
- * @section data_creation 5. Data creation (CREATE)
+ * @section data_creation Data creation (CREATE)
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
  * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the

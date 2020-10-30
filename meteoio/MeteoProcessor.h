@@ -70,6 +70,9 @@ class MeteoProcessor {
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
+		
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		static std::vector<IOUtils::dates_range> initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ);
 
  	private:
 		static std::set<std::string> getParameters(const Config& cfg);

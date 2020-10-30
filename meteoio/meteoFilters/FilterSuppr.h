@@ -84,7 +84,7 @@ class FilterSuppr : public ProcessingBlock {
 		void supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
 		
-		std::map< std::string, std::vector<dates_range> > suppr_dates;
+		std::map< std::string, std::vector<IOUtils::dates_range> > suppr_dates;
 		double range, width;
 		filter_type type;
 };
