@@ -279,7 +279,7 @@ void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// AUTOMERGE
 EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), merge_strategy(MeteoData::EXPAND_MERGE)
+            : EditingBlock(i_stationID, vecArgs, name), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
 {
 	parse_args(vecArgs);
 }
@@ -291,6 +291,8 @@ void EditingAutoMerge::parse_args(const std::vector< std::pair<std::string, std:
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
+		} else if (vecArgs[ii].first=="MERGE_CONFLICTS") {
+			merge_conflicts = MeteoData::getMergeConflicts( vecArgs[ii].second );
 		}
 	}
 }
@@ -341,7 +343,7 @@ void EditingAutoMerge::mergeMeteo(const size_t& toStationIdx, std::vector<METEO_
 		if (vecMeteo[jj].empty())  continue;
 		const std::string fromStationID( IOUtils::strToUpper(vecMeteo[jj].front().getStationID()) );
 		if (fromStationID==toStationID) {
-			nr_conflicts += MeteoData::mergeTimeSeries(vecMeteo[toStationIdx], vecMeteo[jj], merge_strategy, MeteoData::CONFLICTS_AVERAGE); //merge timeseries for the two stations
+			nr_conflicts += MeteoData::mergeTimeSeries(vecMeteo[toStationIdx], vecMeteo[jj], merge_strategy, merge_conflicts); //merge timeseries for the two stations
 			std::swap( vecMeteo[jj], vecMeteo.back() );
 			vecMeteo.pop_back();
 			jj--; //we need to redo the current jj, because it contains another station

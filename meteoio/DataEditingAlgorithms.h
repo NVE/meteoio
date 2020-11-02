@@ -231,8 +231,10 @@ class EditingMerge : public EditingBlock {
  * @details
  * This is a special case of merge: only station's have the exact same ID will get merge together. This is useful when reading data
  * for the same station from multiple source in order to rebuild a consistent dataset. If merge conflicts are encountered (such as 
- * identical fields having different values at the same timestamp), warnings will be printed out and the 
- * MeteoData::CONFLICTS_AVERAGE conflict resolution will be used.
+ * identical fields having different values at the same timestamp), warnings will be printed out and the chosen 
+ * conflict resolution (provided by the MERGE_CONFLICTS option) will be used (default: MeteoData::CONFLICTS_AVERAGE). 
+ * By default, it does a MeteoData::FULL_MERGE but it is possible to provide a different type of merge with 
+ * the MERGE_STRATEGY option.
  * 
  * @code
  * [InputEditing]
@@ -251,6 +253,7 @@ class EditingAutoMerge : public EditingBlock {
 		static void mergeStations(const size_t& toStationIdx, STATIONS_SET& vecStation);
 		void mergeMeteo(const size_t& toStationIdx, std::vector<METEO_SET>& vecMeteo) const;
 		MeteoData::Merge_Type merge_strategy;
+		MeteoData::MERGE_CONFLICTS merge_conflicts;
 };
 
 /** 
