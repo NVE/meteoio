@@ -253,26 +253,31 @@ void EditingKeep::parse_args(const std::vector< std::pair<std::string, std::stri
 	if (!has_excludes || keep_params.empty()) throw InvalidArgumentException("Please provide a valid KEEP value for "+where, AT);
 }
 
+void EditingKeep::applyKeepToStation(METEO_SET& vecMeteo, const std::set< std::string >& params)
+{
+	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {//loop over the timesteps
+		MeteoData& md_ref( vecMeteo[ii] );
+		MeteoData md( md_ref );
+		md.reset(); //delete all meteo fields
+
+		for (std::set<std::string>::const_iterator it_set=params.begin(); it_set != params.end(); ++it_set) { //loop over the parameters to keep
+			const std::string param( *it_set);
+			if (!md.param_exists(param)) continue;
+			md(param) = md_ref(param);
+		}
+
+		//copy back the new object into vecMeteo
+		md_ref = md;
+	}
+}
+
 void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
 		if (vecMeteo[station].empty()) continue; //no data for this station
 		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
 		
-		for (size_t ii=0; ii<vecMeteo[station].size(); ++ii) {//loop over the timesteps
-			MeteoData& md_ref( vecMeteo[station][ii] );
-			MeteoData md( md_ref );
-			md.reset(); //delete all meteo fields
-
-			for (std::set<std::string>::const_iterator it_set=keep_params.begin(); it_set != keep_params.end(); ++it_set) { //loop over the parameters to keep
-				const std::string param( *it_set);
-				if (!md.param_exists(param)) continue;
-				md(param) = md_ref(param);
-			}
-
-			//copy back the new object into vecMeteo
-			md_ref = md;
-		}
+		applyKeepToStation(vecMeteo[station], keep_params);
 	}
 }
 
@@ -380,7 +385,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// MERGE
 EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), merged_stations(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+            : EditingBlock(i_stationID, vecArgs, name), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);
@@ -391,12 +396,12 @@ EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< st
 void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
-	bool has_merges=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MERGE") {
 			IOUtils::readLineToVec( IOUtils::strToUpper(vecArgs[ii].second), merged_stations);
-			has_merges = true;
+		} else if (vecArgs[ii].first=="PARAMS") {
+			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), merged_params);
 		} else if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
 		} else if (vecArgs[ii].first=="MERGE_CONFLICTS") {
@@ -413,7 +418,7 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 	if (tmp.count(stationID)>0)
 		throw InvalidArgumentException("A station can not merge with itself! Wrong argument in "+where, AT);
 	
-	if (!has_merges || merged_stations.empty()) throw InvalidArgumentException("Please provide a valid MERGE value for "+where, AT);
+	if (merged_stations.empty()) throw InvalidArgumentException("Please provide a valid MERGE value for "+where, AT);
 }
 
 void EditingMerge::editTimeSeries(STATIONS_SET& vecStation)
@@ -442,25 +447,34 @@ void EditingMerge::editTimeSeries(STATIONS_SET& vecStation)
 void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	//find our current station in vecStation
-	size_t toStationIdx=IOUtils::npos;
+	size_t toStationIdx = IOUtils::npos;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
-		if (vecMeteo[ii].front().getStationID()==stationID) {
+		if (vecMeteo[ii].front().getStationID() == stationID) {
 			toStationIdx = ii;
 			break;
 		}
 	}
 	
-	if (toStationIdx==IOUtils::npos) return;
+	if (toStationIdx == IOUtils::npos) return;
+	
 	
 	for (size_t jj=0; jj<merged_stations.size(); jj++) {
 		const std::string fromStationID( IOUtils::strToUpper( merged_stations[jj] ) );
 		
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			if (vecMeteo[ii].front().getStationID()!=fromStationID) continue;
+			if (vecMeteo[ii].front().getStationID() != fromStationID) continue;
 			
-			MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy, merge_conflicts );
+			if (merged_params.empty()) { //merge all parameters
+				MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy, merge_conflicts );
+			} else { //only merge some specific parameters
+				//apply a KEEP to a temporary copy of the vector to merge from
+				std::vector<MeteoData> tmp_meteo( vecMeteo[ii] );
+				EditingKeep::applyKeepToStation(tmp_meteo, merged_params);
+				
+				MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], tmp_meteo, merge_strategy, merge_conflicts );
+			}
 		}
 	}
 }

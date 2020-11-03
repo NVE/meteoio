@@ -30,19 +30,21 @@ namespace mio {
 
 class EditingBlock {
 	public:
-		EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : stationID(i_stationID), block_name(name) {(void)vecArgs;}
+		EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : time_restrictions(), stationID(i_stationID), block_name(name) {(void)vecArgs;}
 		
 		virtual ~EditingBlock() {}
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) {(void)vecMeteo;}
 		virtual void editTimeSeries(STATIONS_SET& vecStation) {(void)vecStation;}
 		
+		const std::vector<IOUtils::dates_range> getTimeRestrictions() const {return time_restrictions;}
 		virtual std::set<std::string> getDependencies() const {return std::set<std::string>();}
 		const std::string toString() const;
 		
 	protected:
 		std::string getName() const {return block_name;}
 		
+		const std::vector<IOUtils::dates_range> time_restrictions;
 		const std::string stationID, block_name;
 };
 
@@ -155,6 +157,7 @@ class EditingKeep : public EditingBlock {
 		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		static void applyKeepToStation(METEO_SET& vecMeteo, const std::set< std::string >& params); //for use in DataEditingAlgorithms
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -169,7 +172,8 @@ class EditingKeep : public EditingBlock {
  * It is possible to merge different data sets together, with the MERGE command. This is useful, for example, to 
  * provide measurements from different stations that actually share the same measurement location or to build 
  * "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP commands to fine tune 
- * how the composite station(s) is/are built).
+ * how the composite station(s) is/are built). It is also possible to restrict which parameters are to be merged
+ * with the PARAMS keyword (providing a space-delimited list of parameters).
  * 
  * Please note that the order of declaration defines the priority (ie the first station that has a value for a given 
  * parameter has priority). Please also note that which timestamps will be merged depends on the chosen merge 
@@ -220,6 +224,7 @@ class EditingMerge : public EditingBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;
+		std::set< std::string > merged_params;
 		MeteoData::Merge_Type merge_strategy;
 		MeteoData::MERGE_CONFLICTS merge_conflicts;
 };
