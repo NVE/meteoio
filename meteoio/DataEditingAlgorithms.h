@@ -30,7 +30,7 @@ namespace mio {
 
 class EditingBlock {
 	public:
-		EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : time_restrictions(), stationID(i_stationID), block_name(name) {(void)vecArgs;}
+		EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual ~EditingBlock() {}
 		
@@ -65,7 +65,7 @@ class EditingBlock {
  */
 class EditingSwap : public EditingBlock {
 	public:
-		EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
@@ -97,7 +97,7 @@ class EditingSwap : public EditingBlock {
  */
 class EditingMove : public EditingBlock {
 	public:
-		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
@@ -125,7 +125,7 @@ class EditingMove : public EditingBlock {
  */
 class EditingExclude : public EditingBlock {
 	public:
-		EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
@@ -154,7 +154,7 @@ class EditingExclude : public EditingBlock {
  */
 class EditingKeep : public EditingBlock {
 	public:
-		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		static void applyKeepToStation(METEO_SET& vecMeteo, const std::set< std::string >& params); //for use in DataEditingAlgorithms
@@ -214,7 +214,7 @@ class EditingKeep : public EditingBlock {
  */
 class EditingMerge : public EditingBlock {
 	public:
-		EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
@@ -248,7 +248,7 @@ class EditingMerge : public EditingBlock {
  */
 class EditingAutoMerge : public EditingBlock {
 	public:
-		EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
@@ -281,7 +281,7 @@ class EditingAutoMerge : public EditingBlock {
  */
 class EditingCopy : public EditingBlock {
 	public:
-		EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
@@ -292,7 +292,7 @@ class EditingCopy : public EditingBlock {
 
 class EditingBlockFactory {
 	public:
-		static EditingBlock* getBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		static EditingBlock* getBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 };
 
 } //namespace

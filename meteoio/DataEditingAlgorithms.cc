@@ -20,7 +20,7 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
-#include <meteoio/meteoFilters/ProcessingBlock.h> //needed for the time restrictions
+#include <meteoio/MeteoProcessor.h> //needed for the time restrictions
 
 #include <algorithm>
 #include <fstream>
@@ -67,6 +67,9 @@ namespace mio {
  * @endcode
  */
 
+EditingBlock::EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
+             : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "InputEditing::"+name+" for station "+i_stationID, cfg.get("TIME_ZONE", "Input")) ), stationID(i_stationID), block_name(name) {}
+
 const std::string EditingBlock::toString() const 
 {
 	std::ostringstream os;
@@ -74,22 +77,22 @@ const std::string EditingBlock::toString() const
 	return os.str();
 }
 
-EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
 {
 	if (name == "SWAP"){
-		return new EditingSwap(i_stationID, vecArgs, name);
+		return new EditingSwap(i_stationID, vecArgs, name, cfg);
 	} else if (name == "MOVE"){
-		return new EditingMove(i_stationID, vecArgs, name);
+		return new EditingMove(i_stationID, vecArgs, name, cfg);
 	} else if (name == "EXCLUDE"){
-		return new EditingExclude(i_stationID, vecArgs, name);
+		return new EditingExclude(i_stationID, vecArgs, name, cfg);
 	} else if (name == "KEEP"){
-		return new EditingKeep(i_stationID, vecArgs, name);
+		return new EditingKeep(i_stationID, vecArgs, name, cfg);
 	} else if (name == "MERGE"){
-		return new EditingMerge(i_stationID, vecArgs, name);
+		return new EditingMerge(i_stationID, vecArgs, name, cfg);
 	} else if (name == "AUTOMERGE"){
-		return new EditingAutoMerge(i_stationID, vecArgs, name);
+		return new EditingAutoMerge(i_stationID, vecArgs, name, cfg);
 	} if (name == "COPY"){
-		return new EditingCopy(i_stationID, vecArgs, name);
+		return new EditingCopy(i_stationID, vecArgs, name, cfg);
 	} else {
 		throw IOException("The input data editing block '"+name+"' does not exist! " , AT);
 	}
@@ -97,8 +100,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 
 
 ////////////////////////////////////////////////// SWAP
-EditingSwap::EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), dest_param(), src_param()
+EditingSwap::EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), dest_param(), src_param()
 {
 	parse_args(vecArgs);
 }
@@ -144,8 +147,8 @@ void EditingSwap::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// MOVE
-EditingMove::EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), src_params(), dest_param()
+EditingMove::EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), src_params(), dest_param()
 {
 	parse_args(vecArgs);
 }
@@ -193,8 +196,8 @@ void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// EXCLUDE
-EditingExclude::EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), exclude_params()
+EditingExclude::EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), exclude_params()
 {
 	parse_args(vecArgs);
 }
@@ -232,8 +235,8 @@ void EditingExclude::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// KEEP
-EditingKeep::EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), keep_params()
+EditingKeep::EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), keep_params()
 {
 	parse_args(vecArgs);
 }
@@ -283,8 +286,8 @@ void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// AUTOMERGE
-EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
 {
 	parse_args(vecArgs);
 }
@@ -384,8 +387,8 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// MERGE
-EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);
@@ -487,8 +490,8 @@ std::set<std::string> EditingMerge::getDependencies() const
 
 
 ////////////////////////////////////////////////// COPY
-EditingCopy::EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-            : EditingBlock(i_stationID, vecArgs, name), dest_param(), src_param()
+EditingCopy::EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), dest_param(), src_param()
 {
 	parse_args(vecArgs);
 }

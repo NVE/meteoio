@@ -122,7 +122,7 @@ std::vector< EditingBlock* > DataEditing::buildStack(const std::string& station_
 		if (cmd_name=="NONE") continue;
 		
 		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecCommands[ii].first, station_ID) );
-		cmd_stack.push_back( EditingBlockFactory::getBlock(station_ID, vecArgs, cmd_name) );
+		cmd_stack.push_back( EditingBlockFactory::getBlock(station_ID, vecArgs, cmd_name, cfg) );
 	}
 	
 	return cmd_stack;
@@ -184,12 +184,14 @@ std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, 
 		std::map< std::string, std::set<std::string> >::iterator it_deps;
 		//because 'erase' invalidates the iterators, the increment syntax is a little special...
 		for (it_deps = dependencies.begin(); it_deps != dependencies.end(); ) {
-			const std::string stat_id = it_deps->first;
+			const std::string stat_id( it_deps->first );
 			for (std::set<std::string>::iterator it = it_deps->second.begin(); it != it_deps->second.end(); ) {
-				if (dependencies.count( *it )==0) it_deps->second.erase( it++ );
+				//if A depends on B and C but C is not listed in dependencies, remove C from A's list
+				if (dependencies.count( *it ) == 0) it_deps->second.erase( it++ );
 				else ++it;
 			}
 			
+			//if A does not depend on anything anymore: add it to the processing order and remove it from dependencies
 			if (it_deps->second.empty()) {
 				processing_order.push_back( stat_id );
 				dependencies.erase( it_deps++ );
@@ -251,8 +253,10 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	
 	//process widlcard commands first, knowing that '*' merges are prohibited
 	if (editingStack.count("*")>0) {
-		for (size_t jj=0; jj<editingStack["*"].size(); jj++)
+		for (size_t jj=0; jj<editingStack["*"].size(); jj++) {
+			//const std::vector<IOUtils::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
 			editingStack["*"][jj]->editTimeSeries(vecMeteo);
+		}
 	}
 	
 	//process in the order that has been computed above
@@ -264,6 +268,7 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			if (vecMeteo[ii].front().getStationID()==current_ID) {
 				if (editingStack.count(current_ID)>0) {
 					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
+						//const std::vector<IOUtils::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
 						editingStack[current_ID][jj]->editTimeSeries(vecMeteo);
 					}
 				}
