@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009-2012 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS        */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -35,11 +35,10 @@ const std::string DataEditing::arg_key( "::ARG" );
 DataEditing::DataEditing(const Config& cfgreader)
            : timeproc(cfgreader), dataCreator(cfgreader), editingStack()
 {
-	//cfgreader.getValue("AUTOMERGE", "InputEditing",automerge, IOUtils::nothrow);
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
 	
 	for (std::set<std::string>::const_iterator it = editableStations.begin(); it != editableStations.end(); ++it) {
-		editingStack[ *it ] = buildStack(*it, cfgreader);
+		editingStack[ *it ] = buildStack(cfgreader, *it);
 	}
 }
 
@@ -63,6 +62,11 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 	return *this;
 }
 
+/**
+ * @brief Build a list of station IDs that will be edited
+ * @param[in] cfg Config object to read the configuration from
+ * @return set of station IDs
+ */
 std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 {
 	const std::vector<std::string> vec_keys( cfg.getKeys(command_key, "INPUTEDITING", true) );
@@ -84,6 +88,14 @@ std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 	return set_stations;
 }
 
+/**
+ * @brief Extract the arguments for a given station ID and Input Data Editing command and store them into a 
+ * vector of key / value pairs.
+ * @param[in] cfg Config object to read the configuration from
+ * @param[in] cmd_key the base command key, such as "SLF2::EDIT1" that will be used to extract the command number
+ * @param[in] stationID the station ID to process
+ * @return All arguments for this command and this station, as vector of key / value pairs
+ */
 std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& stationID)
 {
 	//extract the cmd number and perform basic checks on the syntax
@@ -110,7 +122,13 @@ std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const 
 	return vecArgs;
 }
 
-std::vector< EditingBlock* > DataEditing::buildStack(const std::string& station_ID, const Config& cfg)
+/**
+ * @brief For a given station ID, build the stack of EditingBlock
+ * @param[in] cfg Config object to read the configuration from
+ * @param[in] stationID the station ID to process
+ * @return vector of EditingBlock* to process in this order
+ */
+std::vector< EditingBlock* > DataEditing::buildStack(const Config& cfg, const std::string& station_ID)
 {
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecCommands( cfg.getValues(station_ID+command_key, "INPUTEDITING") );
@@ -128,6 +146,10 @@ std::vector< EditingBlock* > DataEditing::buildStack(const std::string& station_
 	return cmd_stack;
 }
 
+/**
+ * @brief Build the list of all station IDs each station ID depends on
+ * @return for each station IDs, a set of IDs it depends on
+ */
 std::map< std::string, std::set<std::string> > DataEditing::getDependencies() const
 {
 	std::map< std::string, std::set<std::string> > dependencies; //stationID -> set of IDs it depends on
@@ -150,6 +172,11 @@ std::map< std::string, std::set<std::string> > DataEditing::getDependencies() co
 	return dependencies;
 }
 
+/**
+ * @brief Build the list of all station IDs that are merged from and therefore will be purged in the end
+ * @param[in] dependencies the map of which station ID depends on which ones
+ * @return All station IDs that should be purged
+ */
 std::set<std::string> DataEditing::getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies)
 {
 	std::set<std::string> mergedFromIDs;
@@ -163,17 +190,24 @@ std::set<std::string> DataEditing::getMergedFromIDs(const std::map< std::string,
 	return mergedFromIDs;
 }
 
-// For each station ID declared in [InputEditing], we have a list of stations it depends on (dependencies):
-// Ex: station A -> B, C ; station B -> C, E ; station C -> nothing ; station E -> nothing ; processing_order = []
-// each station that has an empty list (ie does not depends on another) is ready to be processed 
-// and is pushed to processing_order vector as well as removed from the dependencies map.
-// Ex: station A -> B, C ; station B -> C, E ; processing_order = [C, E]
-// Each dependency element in a dependency set that does not have dependencies itself is removed from the set of dependencies of
-// any station that has it (as it does not block processing anymore).
-// Ex: station A -> B ; station B -> nothing ; processing_order = [C, E]
-// Then we redo the whole logic until the dependency map is empty (if nothing gets rmeoved in a round, this means we have a circular dependency)
-// Ex: station A -> nothing ; processing_order = [C, E, B]
-// Then empty dependency map ; processing_order = [C, E, B, A]
+/**
+ * @brief Resolve the dependencies in order to find out in which order the station IDs should be processed
+ * @details
+ * For each station ID declared in [InputEditing], we have a list of stations it depends on (dependencies):
+ * Ex: station A -> B, C ; station B -> C, E ; station C -> nothing ; station E -> nothing ; processing_order = []
+ * each station that has an empty list (ie does not depends on another) is ready to be processed 
+ * and is pushed to processing_order vector as well as removed from the dependencies map.
+ * Ex: station A -> B, C ; station B -> C, E ; processing_order = [C, E]
+ * Each dependency element in a dependency set that does not have dependencies itself is removed from the set of dependencies of
+ * any station that has it (as it does not block processing anymore).
+ * Ex: station A -> B ; station B -> nothing ; processing_order = [C, E]
+ * Then we redo the whole logic until the dependency map is empty (if nothing gets rmeoved in a round, this means we have a circular dependency)
+ * Ex: station A -> nothing ; processing_order = [C, E, B]
+ * Then empty dependency map ; processing_order = [C, E, B, A]
+ * 
+ * @param[in] dependencies the map of which station ID depends on which ones
+ * @return station IDs in the order they should be processed
+ */
 std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies)
 {
 	std::vector<std::string> processing_order;
@@ -224,8 +258,8 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 		const std::string current_ID( processing_order[ll] );
 		
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			if (vecStation[ii].getStationID()==current_ID) {
-				if (editingStack.count(current_ID)>0) {
+			if (vecStation[ii].getStationID() == current_ID) {
+				if (editingStack.count(current_ID) > 0) {
 					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
 						editingStack[current_ID][jj]->editTimeSeries(vecStation);
 					}
@@ -254,7 +288,6 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	//process widlcard commands first, knowing that '*' merges are prohibited
 	if (editingStack.count("*")>0) {
 		for (size_t jj=0; jj<editingStack["*"].size(); jj++) {
-			//const std::vector<IOUtils::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
 			editingStack["*"][jj]->editTimeSeries(vecMeteo);
 		}
 	}
@@ -265,10 +298,9 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			if (vecMeteo[ii].front().getStationID()==current_ID) {
-				if (editingStack.count(current_ID)>0) {
+			if (vecMeteo[ii].front().getStationID() == current_ID) {
+				if (editingStack.count(current_ID) > 0) {
 					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
-						//const std::vector<IOUtils::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
 						editingStack[current_ID][jj]->editTimeSeries(vecMeteo);
 					}
 				}
