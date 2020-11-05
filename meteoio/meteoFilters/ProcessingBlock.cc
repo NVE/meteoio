@@ -79,7 +79,7 @@ namespace mio {
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
  * 
- * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** options followed by a comma delimited list of
+ * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** option followed by a comma delimited list of
  * date intervals (represented by two ISO formatted dates seperated by ' - ').
  * 
  * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
