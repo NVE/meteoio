@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -28,23 +28,69 @@
 
 namespace mio {
 
+/** 
+ * @class RestrictionsIdx
+ * @brief Convenience class for processing data with time restriction periods.
+ * @details Given a vector of DateRange and a vector of MeteoData, compute which start/end indices
+ * fit within the time restriction periods. Then repeatedly calling getStart() / getEnd() will provide
+ * these indices while calling the \b ++ operator increment the time restriction period. 
+ * Once isValid() returns false, there are no time restriction periods left.
+ * @author Mathias Bavay
+ */
+class RestrictionsIdx {
+	public:
+		RestrictionsIdx() : start(), end(), index(IOUtils::npos) {}
+		RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions);
+		
+		bool isValid() const {return (index != IOUtils::npos);}
+		size_t getStart() const;
+		size_t getEnd() const;
+		RestrictionsIdx& operator++();
+		const std::string toString() const;
+		
+	private:
+		std::vector<size_t> start, end;
+		size_t index;
+};
+
+/** 
+ * @class EditingBlock
+ * @brief Base class for DataEditing algorithms
+ */
 class EditingBlock {
 	public:
 		EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual ~EditingBlock() {}
 		
+		/**
+		 * @brief Apply this editing block
+		 * @details This applies the editing block for its station that has been declared in the constructor
+		 * on the provided MeteoData timeseries.
+		 * @param vecMeteo MeteoData timeseries for all stations
+		 */
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) {(void)vecMeteo;}
+		
+		/**
+		 * @brief Apply this editing block to the StationData
+		 * @details This applies the editing block for its station that has been declared in the constructor
+		 * on the provided StationData timeseries.
+		 * @param vecStation StationData timeseries for all stations
+		 */
 		virtual void editTimeSeries(STATIONS_SET& vecStation) {(void)vecStation;}
 		
-		const std::vector<IOUtils::dates_range> getTimeRestrictions() const {return time_restrictions;}
+		/**
+		 * @brief Get the station IDs this editing block depends on for this station
+		 * @return a set station IDs it depends on
+		 */
 		virtual std::set<std::string> getDependencies() const {return std::set<std::string>();}
+		
 		const std::string toString() const;
 		
 	protected:
 		std::string getName() const {return block_name;}
 		
-		const std::vector<IOUtils::dates_range> time_restrictions;
+		const std::vector<DateRange> time_restrictions;
 		const std::string stationID, block_name;
 };
 
