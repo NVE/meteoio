@@ -31,8 +31,11 @@ namespace mio {
 /**
  * @page data_editing Input Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data. There are several
- * edition commands that can be stacked at will, per station ID. This is similar to the way that filters (processing elements) are
- * also stacked together. The general syntax is ('#' represent a number, so each key remains unique):
+ * edition commands that can be stacked at will, per station ID. This is similar to the way that filters (\ref processing "processing elements") are
+ * also stacked together. In order to rectrict any editing to a specific set of time ranges, use the **when** option followed by a comma 
+ * delimited list of date intervals (represented by two ISO formatted dates seperated by ' - '), similarly to the 
+ * \ref processing "Filters" (but right now, the automerge and merge commands don't support these time restrictions). The general 
+ * syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit# = {command}
  * {stationID}::arg#::{argument name} = {values}
@@ -40,6 +43,7 @@ namespace mio {
  * #here is an example
  * WFJ2::edit1 = EXCLUDE
  * WFJ2::arg1::exclude = VW DW ISWR RSWR
+ * WFJ2::arg1::when = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
@@ -202,8 +206,10 @@ void EditingSwap::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		if (vecMeteo[station].empty()) continue;
 		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
 		
+		//the next two lines are required to offer time restrictions
 		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
-			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) {
+			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+				
 				const size_t src_index = vecMeteo[station][jj].addParameter( src_param ); //either add or just return the proper index
 				const double src_value = vecMeteo[station][jj]( src_param );
 				
@@ -254,11 +260,15 @@ void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			const size_t src_index = vecMeteo[station].front().getParameterIndex( *it_set );
 			if (src_index == IOUtils::npos) continue; //no such parameter for this station, skipping
 			
-			for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {
-				const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
-				if (vecMeteo[station][jj]( dest_index ) == IOUtils::nodata) {
-					vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
-					vecMeteo[station][jj]( src_index ) = IOUtils::nodata;
+			//the next two lines are required to offer time restrictions
+			for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+				for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+					
+					const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
+					if (vecMeteo[station][jj]( dest_index ) == IOUtils::nodata) {
+						vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
+						vecMeteo[station][jj]( src_index ) = IOUtils::nodata;
+					}
 				}
 			}
 		}
@@ -288,18 +298,26 @@ void EditingExclude::parse_args(const std::vector< std::pair<std::string, std::s
 	if (!has_excludes || exclude_params.empty()) throw InvalidArgumentException("Please provide a valid EXCLUDE value for "+where, AT);
 }
 
+void EditingExclude::processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params)
+{
+	for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
+		for (std::set<std::string>::const_iterator it_set=params.begin(); it_set != params.end(); ++it_set) { //loop over the parameters to exclude
+			const std::string param( *it_set );
+			if (vecMeteo[jj].param_exists(param))
+				vecMeteo[jj](param) = IOUtils::nodata;
+		}
+	}
+}
+
 void EditingExclude::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
 		if (vecMeteo[station].empty()) continue; //no data for this station
 		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
 		
-		for (size_t ii=0; ii<vecMeteo[station].size(); ++ii) { //loop over the timesteps
-			for (std::set<std::string>::const_iterator it_set=exclude_params.begin(); it_set != exclude_params.end(); ++it_set) { //loop over the parameters to exclude
-				const std::string param( *it_set );
-				if (vecMeteo[station][ii].param_exists(param))
-					vecMeteo[station][ii](param) = IOUtils::nodata;
-			}
+		//the next two lines are required to offer time restrictions
+		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			processStation(vecMeteo[station], editPeriod.getStart(), editPeriod.getEnd(), exclude_params);
 		}
 	}
 }
@@ -327,10 +345,10 @@ void EditingKeep::parse_args(const std::vector< std::pair<std::string, std::stri
 	if (!has_excludes || keep_params.empty()) throw InvalidArgumentException("Please provide a valid KEEP value for "+where, AT);
 }
 
-void EditingKeep::applyKeepToStation(METEO_SET& vecMeteo, const std::set< std::string >& params)
+void EditingKeep::processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params)
 {
-	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {//loop over the timesteps
-		MeteoData& md_ref( vecMeteo[ii] );
+	for (size_t jj=startIdx; jj<endIdx; ++jj) {//loop over the timesteps
+		MeteoData& md_ref( vecMeteo[jj] );
 		MeteoData md( md_ref );
 		md.reset(); //delete all meteo fields
 
@@ -351,7 +369,10 @@ void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		if (vecMeteo[station].empty()) continue; //no data for this station
 		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
 		
-		applyKeepToStation(vecMeteo[station], keep_params);
+		//the next two lines are required to offer time restrictions
+		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			processStation(vecMeteo[station], editPeriod.getStart(), editPeriod.getEnd(), keep_params);
+		}
 	}
 }
 
@@ -545,7 +566,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			} else { //only merge some specific parameters
 				//apply a KEEP to a temporary copy of the vector to merge from
 				std::vector<MeteoData> tmp_meteo( vecMeteo[ii] );
-				EditingKeep::applyKeepToStation(tmp_meteo, merged_params);
+				EditingKeep::processStation(tmp_meteo, 0, tmp_meteo.size(), merged_params);
 				
 				MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], tmp_meteo, merge_strategy, merge_conflicts );
 			}
@@ -594,11 +615,15 @@ void EditingCopy::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		if (vecMeteo[station].empty()) continue;
 		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
 		
-		for (size_t ii=0; ii<vecMeteo[station].size(); ++ii) {
-			const size_t dest_index = vecMeteo[station][ii].addParameter( dest_param ); //either add or just return the proper index
-			
-			if (vecMeteo[station][ii].param_exists(src_param))
-				vecMeteo[station][ii](dest_index) = vecMeteo[station][ii].param_exists(src_param);
+		//the next two lines are required to offer time restrictions
+		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+				
+				const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
+				
+				if (vecMeteo[station][jj].param_exists(src_param))
+					vecMeteo[station][jj](dest_index) = vecMeteo[station][jj].param_exists(src_param);
+			}
 		}
 	}
 }

@@ -177,6 +177,7 @@ class EditingExclude : public EditingBlock {
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params);
 		std::set< std::string > exclude_params;
 };
 
@@ -203,7 +204,7 @@ class EditingKeep : public EditingBlock {
 		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		static void applyKeepToStation(METEO_SET& vecMeteo, const std::set< std::string >& params); //for use in DataEditingAlgorithms
+		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params); //for use in DataEditingAlgorithms
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
