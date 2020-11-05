@@ -519,7 +519,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 	return corrections;
 }
 
-std::map< std::string, std::vector<IOUtils::dates_range> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
+std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
@@ -532,7 +532,7 @@ std::map< std::string, std::vector<IOUtils::dates_range> > ProcessingBlock::read
 		throw AccessException(ss.str(), AT);
 	}
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-	std::map< std::string, std::vector<IOUtils::dates_range> > dates_specs;
+	std::map< std::string, std::vector<DateRange> > dates_specs;
 
 	Date d1, d2;
 	try {
@@ -554,21 +554,21 @@ std::map< std::string, std::vector<IOUtils::dates_range> > ProcessingBlock::read
 			if (nrElems==2) {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
-				const IOUtils::dates_range range(d1, d1);
+				const DateRange range(d1, d1);
 				dates_specs[ station_ID ].push_back( range );
 			} else if (nrElems==3) {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[2], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[2]+" in file \""+filename+"\"", AT);
-				const IOUtils::dates_range range(d1, d2);
+				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else if (nrElems==4 && vecString[2]=="-") {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[3], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[3]+" in file \""+filename+"\"", AT);
-				const IOUtils::dates_range range(d1, d2);
+				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else
 				throw InvalidFormatException("Unrecognized syntax in file \""+filename+"\": '"+line+"'\n", AT);
@@ -580,7 +580,7 @@ std::map< std::string, std::vector<IOUtils::dates_range> > ProcessingBlock::read
 	}
 
 	//sort all the suppr_specs
-	std::map< std::string, std::vector<IOUtils::dates_range> >::iterator station_it( dates_specs.begin() );
+	std::map< std::string, std::vector<DateRange> >::iterator station_it( dates_specs.begin() );
 	for (; station_it!=dates_specs.end(); ++station_it) {
 		std::sort(station_it->second.begin(), station_it->second.end());
 	}

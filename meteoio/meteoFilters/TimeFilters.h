@@ -99,7 +99,7 @@ class TimeSuppr : public ProcessingBlock {
 		void supprFrac(std::vector<MeteoData>& ovec) const;
 		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
-		std::map< std::string, std::vector<IOUtils::dates_range> > suppr_dates;
+		std::map< std::string, std::vector<DateRange> > suppr_dates;
 		double range, width;
 		suppr_mode op_mode;
 };

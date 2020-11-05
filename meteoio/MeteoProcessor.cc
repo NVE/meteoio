@@ -117,9 +117,9 @@ std::set<std::string> MeteoProcessor::initStationSet(const std::vector< std::pai
 	return results;
 }
 
-std::vector<IOUtils::dates_range> MeteoProcessor::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
+std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
 {
-	std::vector<IOUtils::dates_range> dates_specs;
+	std::vector<DateRange> dates_specs;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first==keyword) {
 			std::vector<std::string> vecString;
@@ -135,7 +135,7 @@ std::vector<IOUtils::dates_range> MeteoProcessor::initTimeRestrictions(const std
 					throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
 				if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
 					throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
-				dates_specs.push_back( IOUtils::dates_range(d1, d2) );
+				dates_specs.push_back( DateRange(d1, d2) );
 			}
 		}
 	}

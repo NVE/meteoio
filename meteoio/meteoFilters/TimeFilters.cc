@@ -101,14 +101,14 @@ void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>&
 	}
 }
 
-//this assumes that the DATES_RANGEs in suppr_dates have been sorted by increasing starting dates
+//this assumes that the DateRange in suppr_dates have been sorted by increasing starting dates
 void TimeSuppr::supprByDates(std::vector<MeteoData>& ovec) const
 {
 	const std::string station_ID( ovec[0].meta.stationID ); //we know it is not empty
-	const std::map< std::string, std::vector<IOUtils::dates_range> >::const_iterator station_it( suppr_dates.find( station_ID ) );
+	const std::map< std::string, std::vector<DateRange> >::const_iterator station_it( suppr_dates.find( station_ID ) );
 	if (station_it==suppr_dates.end()) return;
 
-	const std::vector<IOUtils::dates_range> &suppr_specs = station_it->second;
+	const std::vector<DateRange> &suppr_specs = station_it->second;
 	const size_t Nset = suppr_specs.size();
 	size_t curr_idx = 0; //we know there is at least one
 	for (size_t ii=0; ii<ovec.size(); ii++) {
