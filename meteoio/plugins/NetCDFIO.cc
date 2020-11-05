@@ -305,7 +305,7 @@ NetCDFIO::NetCDFIO(const Config& cfgreader)
 
 void NetCDFIO::parseInputOutputSection()
 {
-	const std::string in_grid2d = cfg.get("GRID2D", "Input", "");
+	const std::string in_grid2d = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
 	if (in_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
@@ -321,14 +321,14 @@ void NetCDFIO::parseInputOutputSection()
 		}
 	}
 
-	const std::string out_grid2d = cfg.get("GRID2D", "Output", "");
+	const std::string out_grid2d = IOUtils::strToUpper( cfg.get("GRID2D", "Output", "") );
 	if (out_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
 		cfg.getValue("GRID2DFILE", "Output", grid2d_out_file);
 	}
 
-	const std::string in_meteo = cfg.get("METEO", "Input", "");
+	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
@@ -367,7 +367,7 @@ void NetCDFIO::parseInputOutputSection()
 		in_stations = std::set<std::string>(vecTmp.begin(), vecTmp.end());
 	}
 
-	const std::string out_meteo = cfg.get("METEO", "Output", "");
+	const std::string out_meteo = IOUtils::strToUpper( cfg.get("METEO", "Output", "") );
 	if (out_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
