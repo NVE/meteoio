@@ -122,7 +122,8 @@ class MeteoData {
 		typedef enum MERGE_TYPE {
 				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
-				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				FULL_MERGE=2, ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				WINDOW_MERGE=3 ///< Similar to a full merge but within the time range of station1
 		} Merge_Type;
 		
 		/** @brief Available %MeteoData conflict resolution strategies.

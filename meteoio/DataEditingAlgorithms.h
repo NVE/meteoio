@@ -252,6 +252,7 @@ class EditingKeep : public EditingBlock {
  * 
  * DAV1::edit1 = MERGE
  * DAV1::arg1::merge = WFJ2
+ * DAV1::arg1::params = HS RSWR PSUM
  * @endcode
  * 
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
