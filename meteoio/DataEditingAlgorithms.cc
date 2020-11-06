@@ -622,7 +622,7 @@ void EditingCopy::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 				const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
 				
 				if (vecMeteo[station][jj].param_exists(src_param))
-					vecMeteo[station][jj](dest_index) = vecMeteo[station][jj].param_exists(src_param);
+					vecMeteo[station][jj](dest_index) = vecMeteo[station][jj](src_param);
 			}
 		}
 	}
