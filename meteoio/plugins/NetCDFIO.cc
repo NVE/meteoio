@@ -131,6 +131,7 @@ namespace mio {
  * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
  *
  * #The lines below have nothing to do with this plugin
+ * [InputEditing]
  * Downscaling = true
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = TA RH PSUM ISWR ILWR P VW DW TSS HS RSWR TSG ;this has to fit the parameter set in the data files
@@ -148,6 +149,7 @@ namespace mio {
  * NETCDF_VAR::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
  *
  * #The lines below have nothing to do with this plugin
+ * [InputEditing]
  * Downscaling = true
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = PSUM ;this has to fit the parameter set in the data files
