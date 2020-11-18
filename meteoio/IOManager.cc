@@ -175,8 +175,8 @@ namespace mio {
 IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
 {
 	//HACK for now, we consider that EITHER Resampling_strategy or Regridding_strategy is provided
-	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", "");
-	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "Input", "");
+	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "InputEditing", "");
+	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "InputEditing", "");
 	if (!resampling_strategy_str.empty() && !regridding_strategy_str.empty())
 		throw InvalidArgumentException("Currently, it is not posible to use both resampling_strategy and regridding_strategy", AT);
 	
@@ -197,7 +197,7 @@ IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
 
 IOUtils::OperationMode IOManager::getIOManagerGridMode(const Config& i_cfg)
 {
-	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "Input", "");
+	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "InputEditing", "");
 	if (regridding_strategy_str.empty())
 		return IOUtils::STD;
 	if (regridding_strategy_str=="GRID_RESAMPLE")
@@ -226,7 +226,7 @@ void IOManager::initIOManager()
 	//TODO support extra parameters by getting the param index from vecTrueMeteo[0]
 	if (ts_mode>=IOUtils::GRID_EXTRACT) {
 		std::vector<std::string> vecStr;
-		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		cfg.getValue("Virtual_parameters", "InputEditing", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			const size_t param_idx = MeteoGrids::getParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
@@ -237,7 +237,7 @@ void IOManager::initIOManager()
 	
 	if (ts_mode==IOUtils::VSTATIONS || ts_mode==IOUtils::GRID_SMART) {
 		std::vector<std::string> vecStr;
-		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		cfg.getValue("Virtual_parameters", "InputEditing", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			const size_t param_idx = MeteoData::getStaticParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
@@ -254,7 +254,7 @@ void IOManager::initVirtualStations()
 {
 	if (ts_mode==IOUtils::GRID_RESAMPLE) {
 		source_dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE));
-		const std::string source_dem_str = cfg.get("Source_dem", "Input");
+		const std::string source_dem_str = cfg.get("Source_dem", "InputEditing");
 		gdm1.read2DGrid(source_dem, source_dem_str);
 		source_dem.update();
 	} else {
@@ -270,8 +270,8 @@ void IOManager::initVirtualStations()
 		}
 		
 		if (ts_mode==IOUtils::VSTATIONS || ts_mode==IOUtils::GRID_SMART) {
-			cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate);
-			cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
+			cfg.getValue("VSTATIONS_REFRESH_RATE", "InputEditing", vstations_refresh_rate);
+			cfg.getValue("VSTATIONS_REFRESH_OFFSET", "InputEditing", vstations_refresh_offset, IOUtils::nothrow);
 			v_stations = gdm1.initVirtualStations(source_dem, false, false);
 		}
 	}
