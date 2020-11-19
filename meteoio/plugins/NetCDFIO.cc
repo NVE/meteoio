@@ -392,7 +392,7 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
 		nc_files.push_back( make_pair(file.getDateRange(), file) );
-		it++;
+		++it;
 	}
 	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);
 }
@@ -706,8 +706,8 @@ void ncFiles::initFromFile(const std::string& filename)
 	initDimensionsFromFile();
 	initVariablesFromFile();
 
-	isLatLon = hasDimension(ncpp::LATITUDE) && hasDimension(ncpp::LONGITUDE);
-	const bool isXY = hasDimension(ncpp::EASTING) && hasDimension(ncpp::NORTHING);
+	isLatLon = ( hasDimension(ncpp::LATITUDE) && hasDimension(ncpp::LONGITUDE) );
+	const bool isXY = ( hasDimension(ncpp::EASTING) && hasDimension(ncpp::NORTHING) );
 	if (isLatLon) {
 		vecY = read_1Dvariable(ncpp::LATITUDE);
 		vecX = read_1Dvariable(ncpp::LONGITUDE);
@@ -716,7 +716,7 @@ void ncFiles::initFromFile(const std::string& filename)
 		vecY = read_1Dvariable(ncpp::NORTHING);
 	}
 	if (hasDimension(ncpp::TIME)) {
-		std::vector<Date> tmp(read_1Dvariable()); //watch out: this might be unsorted
+		const std::vector<Date> tmp( read_1Dvariable() ); //watch out: this might be unsorted
 		vecTime.resize( tmp.size() );
 		for (size_t ii=0; ii<tmp.size(); ii++) vecTime[ii] = std::make_pair( tmp[ii], ii);
 		std::sort( vecTime.begin(), vecTime.end()); //by default sorts on the first element
