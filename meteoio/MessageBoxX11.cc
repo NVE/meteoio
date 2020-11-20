@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
    I, David Oberhollenzer, author of this file hereby place the contents of
    this file into the public domain. Please feel free to use this file in any
