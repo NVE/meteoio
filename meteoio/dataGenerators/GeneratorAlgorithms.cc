@@ -39,13 +39,12 @@ namespace mio {
 /**
  * @page generators Data generators
  * New data can be generated based on some parametrizations at two very different stages:
- *    + in raw data editing, when calling a data creator;
- *    + when the requested data could not be provided as last resort as data generator.
+ *    + in \ref data_editing "Input Data Editing", by calling a *CREATE* editing command;
+ *    + when the requested data could not be provided as last resort, as data generator.
  *
- * In the first case, the goal is to create new parameters fully based on parametrizations. In such a case, the "generator" is called
- * a "creator" and behaves the same way as a generator, except that it creates an additional parameter. It is declared as
- * {new_parameter}::%create = {data generators} in the [InputEditing] section (see \ref data_creation "data creation" in the
- * \ref data_editing "Input Data Editing" section).
+ * In the first case, the parametrizations are used just after reading the data with the 
+ * input plugins and before any filtering and/or resampling has taken place. It is however 
+ * necessary to provide a few additional arguments, as documented in \ref data_editing "Input Data Editing".
  *
  * The second case takes place once the data has been read, filtered and resampled, if some data points are still missing.
  * These are either a few isolated periods (a sensor was not functioning) that are too large for performing
@@ -71,10 +70,15 @@ namespace mio {
  * in mind that at this stage, all data <b>must be in SI</b> units!
  * @code
  * [InputEditing]
- * TAU_CLD::create    = CST   ;here the parametrization is called as raw data editing
- * TA_CLD::Cst::value = 0.5
+ * #calling the parametrizations very early on, just after reading the raw data
+ * *::edit1 = CREATE
+ * *::arg1::type = CST
+ * *::arg1::param = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
+ * *::arg1::param = 0.5
  *
  * [Generators]
+ * #calling the parametrizations after everything else happened 
+ * #but before spatial interpolations
  * RH::generators = CST
  * RH::Cst::value = .7
  *

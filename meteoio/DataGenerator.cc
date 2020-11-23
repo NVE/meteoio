@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 DataGenerator::DataGenerator(const Config& cfg)
-              : DataCreator(cfg), data_qa_logs(false)
+              : mapAlgorithms(), data_qa_logs(false)
 {
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	
@@ -46,6 +46,17 @@ DataGenerator::DataGenerator(const Config& cfg)
 		if (nrOfAlgorithms>0) {
 			mapAlgorithms[parname] = vecGenerators;
 		}
+	}
+}
+
+DataGenerator::~DataGenerator()
+{ //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
+	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
+
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+		std::vector<GeneratorAlgorithm*> &vec( it->second );
+		for (size_t ii=0; ii<vec.size(); ii++)
+			delete vec[ii];
 	}
 }
 
@@ -150,6 +161,58 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			}
 		}
 	}
+}
+
+std::set<std::string> DataGenerator::getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section)
+{
+	std::set<std::string> set_parameters;
+	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, section, true) ); //search anywhere in key
+
+	for (size_t ii=0; ii<vec_keys.size(); ii++) {
+		const size_t found = vec_keys[ii].find_first_of(":");
+		if (found != std::string::npos){
+			if (vec_keys[ii].length()<=(found+2))
+				throw InvalidFormatException("Invalid syntax: \""+vec_keys[ii]+"\"", AT);
+			if (vec_keys[ii][found+1]!=':')
+				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
+			std::string tmp( vec_keys[ii].substr(0,found) );
+			IOUtils::toUpper( tmp );
+			set_parameters.insert( tmp );
+		}
+	}
+
+	return set_parameters;
+}
+
+// This function retrieves the user defined generator algorithms for
+// parameter 'parname' by querying the Config object
+std::vector<std::string> DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname)
+{
+	std::vector<std::string> vecAlgorithms;
+	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, section) );
+
+	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + key_pattern + " in config file", AT);;
+	if (vecKeys.empty()) return vecAlgorithms;
+
+	cfg.getValue(vecKeys[0], section, vecAlgorithms, IOUtils::nothrow);
+	return vecAlgorithms;
+}
+
+std::vector< std::pair<std::string, std::string> > DataGenerator::getArgumentsForAlgorithm(const Config& cfg,
+                                               const std::string& parname, const std::string& algorithm, const std::string& section)
+{
+	const std::string key_prefix( parname+"::"+algorithm+"::" );
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, section) );
+
+	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
+		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	}
+
+	return vecArgs;
 }
 
 const std::string DataGenerator::toString() const {

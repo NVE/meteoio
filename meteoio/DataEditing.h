@@ -20,7 +20,6 @@
 #define DATAEDITING_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/DataCreator.h>
 #include <meteoio/DataEditingAlgorithms.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
@@ -68,7 +67,6 @@ class DataEditing {
 		static std::set<std::string> getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies);
 		static std::vector<std::string> getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies);
 		
-		DataCreator dataCreator;
 		std::map< std::string, std::vector< EditingBlock* > > editingStack;
 		static const std::string command_key, arg_key;
 		static const char NUM[];

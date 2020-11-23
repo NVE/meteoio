@@ -22,6 +22,7 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 #include <meteoio/MeteoProcessor.h> //needed for the time restrictions
+#include <meteoio/dataGenerators/GeneratorAlgorithms.h> //required for the CREATE editing
 
 #include <algorithm>
 #include <fstream>
@@ -47,7 +48,7 @@ namespace mio {
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
- * (in such a case, the wildcard stack will be applied before any other stack). Please note that all station IDs are
+ * (in such a case, <b>the wildcard stack will be applied before any other stack</b>). Please note that all station IDs are
  * handled case insensitive while all meteo parameter are case sensitive. Currently, the data creation is 
  * applied after all stacks have been processed but this will change in the near future...
  * 
@@ -60,17 +61,8 @@ namespace mio {
  *     - AUTOMERGE: merge together stations sharing the same station ID, see EditingAutoMerge
  *     - MERGE: merge together one or more stations, see EditingMerge
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
+ *     - CREATE: fill missing values or create new parameters based on basic transformations or parametrizations, see EditingCreate
  * 
- * @section data_creation Data creation (CREATE)
- * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
- * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
- * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
- * data generators, they are listed in the \ref generators_keywords "data generators section" (but the data creators must be declared in the [InputEditing] section).
- * @code
- * [InputEditing]
- * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
- * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
- * @endcode
  */
 
 EditingBlock::EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
@@ -99,6 +91,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 		return new EditingAutoMerge(i_stationID, vecArgs, name, cfg);
 	} if (name == "COPY"){
 		return new EditingCopy(i_stationID, vecArgs, name, cfg);
+	} else if (name == "CREATE"){
+		return new EditingCreate(i_stationID, vecArgs, name, cfg);
 	} else {
 		throw IOException("The input data editing block '"+name+"' does not exist! " , AT);
 	}
@@ -668,6 +662,55 @@ void EditingCopy::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 					vecMeteo[station][jj](dest_index) = vecMeteo[station][jj](src_param);
 			}
 		}
+	}
+}
+
+////////////////////////////////////////////////// CREATE
+EditingCreate::EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), cfg_copy(cfg), vecArgs_copy(vecArgs), type(), dest_param()
+{
+	parse_args(vecArgs);
+}
+
+void EditingCreate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			IOUtils::parseArg(vecArgs[ii], where, type);
+		} else if (vecArgs[ii].first=="PARAM") {
+			IOUtils::parseArg(vecArgs[ii], where, dest_param);
+		} 
+	}
+
+	if (dest_param.empty()) throw InvalidArgumentException("Please provide a PARAM value for "+where, AT);
+	if (type.empty()) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+}
+
+void EditingCreate::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
+{
+	GeneratorAlgorithm *creator = GeneratorAlgorithmFactory::getAlgorithm(cfg_copy, type, vecArgs_copy);
+	
+	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
+		if (vecMeteo[station].empty()) continue;
+		if (stationID!="*" && stationID!=IOUtils::strToUpper(vecMeteo[station][0].meta.stationID)) continue;
+		
+		//the next two lines are required to offer time restrictions
+		/*for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+				const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
+			}
+			creator.create(dest_index, vecMeteo[station], editPeriod.getStart(), editPeriod.getEnd());
+		}*/
+		
+		//create the new parameter
+		for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {
+			vecMeteo[station][jj].addParameter( dest_param );  //either add or just return the proper index
+		}
+		const size_t param_idx = vecMeteo[station].front().getParameterIndex( dest_param );
+		
+		creator->create(param_idx, vecMeteo[station]);
 	}
 }
 

@@ -20,7 +20,6 @@
 #define DATAEDITINGALGS_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/DataCreator.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
 #include <map>
@@ -162,8 +161,7 @@ class EditingMove : public EditingBlock {
  * @details
  * It is possible to exclude specific parameters with the "exclude" command. This is done by providing a space delimited list of 
  * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument. The exact opposite can also be done, excluding 
- * ALL parameters except the ones declared with the "keep" command. If such a command has been used for the wildcard station ID '*', the parameters
- * are additive with the ones declared for a specific station ID.
+ * ALL parameters except the ones declared with the "keep" command.
  *
  * @code
  * [InputEditing]
@@ -189,16 +187,16 @@ class EditingExclude : public EditingBlock {
  * @brief KEEP input editing command
  * @details
  * It is possible to exclude ALL parameters except the ones declared with the "keep" command (it is the exact opposite of the
- * EditingExclude command). If such a command has been used for the wildcard station ID '*', the parameters
- * are additive with the ones declared for a specific station ID. Here below an example 
- * relying on wildcards:
+ * EditingExclude command). If such a command has been used for the wildcard station ID '*', it will be applied first so 
+ * it is not possible to "keep" some parameters that have already been excluded with the wildcard station ID. 
+ * Here below an example relying on wildcards:
  * @code
  * [InputEditing]
- * *::edit1 = KEEP                               ;all stations will keep TA and RH and reject the other parameters
- * *::arg1::keep = TA RH
+ * *::edit1 = KEEP                               ;all stations will keep TA, RH and HS and reject the other parameters
+ * *::arg1::keep = TA RH HS
  * 
- * WFJ2::edit1 = KEEP                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
- * WFJ2::arg1::keep = HS PSUM
+ * WFJ2::edit1 = KEEP                          ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
+ * WFJ2::arg1::keep = HS ISWR
  * @endcode
  */
 class EditingKeep : public EditingBlock {
@@ -337,6 +335,48 @@ class EditingCopy : public EditingBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::string dest_param, src_param;
+};
+
+/** 
+ * @class EditingCreate
+ * @ingroup processing
+ * @brief CREATE input editing command
+ * @details
+ * By calling a choice of algorithms, it is possible to convert a parameter into another one (for example, a dew point
+ * temperature to a relative humidity), to generate a parameter thanks to a parametrization based on other parameters
+ * (for example ILWR based on TA, RH and ISWR) or to generate synthetic values (for example, a purely yearly sinusoidal
+ * variation for TA). The *type* argument provides the \ref generators "generator algorithm" to use, the *param* argument
+ * provides the meteorological parameter to generate values for (either a MeteoData::Parameters or any other, non-standard name)
+ * and then the arguments for the chosen algorithm are provided.
+ * 
+ * If the destination parameter does not exists, it will be created. Otherwise, any pre-existing data is kept and only 
+ * missing values in the original data set are filled with the generated values, keeping the original sampling rate. As the 
+ * available algorithms are the same as for the data generators, they are listed in the 
+ * \ref generators_keywords "data generators section" (but the data creators must be declared here in the [InputEditing] section
+ * as part of the Input Data Editing stack).
+ * 
+ * @note time restrictions are NOT supported yet for this command
+ * 
+ * @code
+ * [InputEditing]
+ * DAV::edit1 = CREATE
+ * DAV::arg1::type = CST	;use a constant data generator
+ * DAV::arg1::param = RH	;generate data for the Relative Humidity (RH)
+ * DAV::arg1::value = 0.7	;generate a constant value of 0.7 whenever there is no other data for RH
+ * @endcode
+ */
+class EditingCreate : public EditingBlock {
+	public:
+		EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		
+		const Config &cfg_copy;
+		const std::vector< std::pair<std::string, std::string> > vecArgs_copy;
+		std::string type, dest_param;
 };
 
 class EditingBlockFactory {

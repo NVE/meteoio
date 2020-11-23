@@ -34,7 +34,7 @@ const std::string DataEditing::command_key( "::EDIT" );
 const std::string DataEditing::arg_key( "::ARG" );
 
 DataEditing::DataEditing(const Config& cfgreader)
-           : timeproc(cfgreader), dataCreator(cfgreader), editingStack()
+           : timeproc(cfgreader), editingStack()
 {
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
 	
@@ -56,7 +56,6 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 {
 	if (this != &source) {
 		timeproc = source.timeproc;
-		dataCreator = source.dataCreator;
 		editingStack = source.editingStack;
 	}
 	
@@ -282,11 +281,10 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 
 void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
-	//TODO handle CREATE command
 	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
 	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	
-	//process widlcard commands first, knowing that '*' merges are prohibited
+	//process widlcard commands first, knowing that '*' merges are prohibited, so there are no dependencies
 	if (editingStack.count("*")>0) {
 		for (size_t jj=0; jj<editingStack["*"].size(); jj++) {
 			editingStack["*"][jj]->editTimeSeries(vecMeteo);
@@ -322,12 +320,10 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 	
 	//remove trailing pure nodata MeteoData elements (if any)
-	purgeTrailingNodata(vecMeteo);
+	purgeTrailingNodata(vecMeteo); //HACK using "create" might fill pure nodata elements with something...
 
 	timeproc.process(vecMeteo);
 	TimeProcStack::checkUniqueTimestamps(vecMeteo);
-
-	dataCreator.createParameters(vecMeteo);
 }
 
 //some vector of MeteoData might have trailing elements that are purely nodata
@@ -348,9 +344,14 @@ const std::string DataEditing::toString() const
 {
 	std::ostringstream os;
 	os << "<DataEditing>\n";
-
-	os << dataCreator.toString();
-
+	
+	std::map< std::string, std::vector< EditingBlock* > >::const_iterator it_blocks;
+	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
+		os << "\t";
+		for (size_t ii=0; ii<it_blocks->second.size(); ii++) os << " " << it_blocks->second[ii]->toString();
+		os << "\n";
+	}
+	
 	os << "</DataEditing>\n";
 	return os.str();
 }
