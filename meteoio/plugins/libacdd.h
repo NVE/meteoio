@@ -88,7 +88,7 @@ class ACDD {
 		
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
-		void setTimeCoverage(const std::vector<std::string>& vec_timestamp);
+		void setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ);
 		
 	private:
 		void defaultInit();

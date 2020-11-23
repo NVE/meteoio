@@ -584,7 +584,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			}
 
 			if (acdd.isEnabled()) {
-				acdd.setTimeCoverage( vec_timestamp );
+				acdd.setTimeCoverage( vecMeteo[ii] );
 				acdd.setGeometry(vecLocation, true);
 			}
 			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd);
