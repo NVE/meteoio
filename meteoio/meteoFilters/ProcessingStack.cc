@@ -29,15 +29,8 @@ const std::string ProcessingStack::arg_key( "::ARG" );
 
 std::vector< std::pair<std::string, std::string> > ProcessingStack::parseArgs(const Config& cfg, const std::string& key, const std::string& parname)
 {
-	//extract the filter number and perform basic checks on the syntax
-	const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
-	const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
-	const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
-	if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
-
-	unsigned int filter_nr;
-	const std::string filter_nr_str( key.substr(start_filter_nr) );
-	if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
+	const unsigned int filter_nr = Config::getCommandNr(parname+filter_key, key);
+	if (filter_nr==IOUtils::unodata) throw InvalidArgumentException("Can not parse filter number in "+key, AT);
 
 	//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
 	std::ostringstream arg_str;

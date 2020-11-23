@@ -29,6 +29,7 @@ using namespace std;
 namespace mio {
 
 static const char* defaultSection = "GENERAL";
+static const char NUM[] = "0123456789";
 
 //Constructors
 Config::Config() : properties(), sections(), sourcename(), configRootDir() {}
@@ -399,6 +400,22 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 		cfg.sections.insert( value );
 	}
 	return is;
+}
+
+unsigned int Config::getCommandNr(const std::string& cmd_pattern, const std::string& cmd_key)
+{
+	//extract the cmd number and perform basic checks on the syntax
+	const size_t end_cmd = cmd_key.find(cmd_pattern);
+	if (end_cmd==std::string::npos) return IOUtils::unodata;
+
+	const size_t start_cmd_nr = cmd_key.find_first_of(NUM, end_cmd+cmd_pattern.length());
+	const size_t end_cmd_nr = cmd_key.find_first_not_of(NUM, end_cmd+cmd_pattern.length());
+	if (start_cmd_nr==std::string::npos || end_cmd_nr!=std::string::npos) return IOUtils::unodata;
+
+	unsigned int cmd_nr;
+	const std::string cmd_nr_str( cmd_key.substr(start_cmd_nr) );
+	if ( !IOUtils::convertString(cmd_nr, cmd_nr_str) ) InvalidArgumentException("Can not parse command number in "+cmd_key, AT);
+	return cmd_nr;
 }
 
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////

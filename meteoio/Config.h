@@ -410,6 +410,16 @@ class Config {
 		 * @param[in] overwrite if true, all keys in the destination section are erased before creating the new keys
 		 */
 		void moveSection(std::string org, std::string dest, const bool& overwrite);
+		
+		/**
+		 * @brief Extract the command number from a given command string, given the command root
+		 * @details For example, a filter command will have as command pattern "TA::FILTER", as command key
+		 * "TA::FILTER3" and this call will return *3*.
+		 * @param[in] cmd_pattern Pattern used to build the stack of commands
+		 * @param[in] cmd_key The specific key to extract the number from
+		 * @return the key index contained in the cmd_key or IOUtils::unodata if a number could not be extracted
+		 */
+		static unsigned int getCommandNr(const std::string& cmd_pattern, const std::string& cmd_key);
 
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs

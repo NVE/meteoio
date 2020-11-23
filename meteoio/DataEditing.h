@@ -68,7 +68,7 @@ class DataEditing {
 		static std::vector<std::string> getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies);
 		
 		std::map< std::string, std::vector< EditingBlock* > > editingStack;
-		static const std::string command_key, arg_key;
+		static const std::string cmd_pattern, arg_pattern;
 		static const char NUM[];
 };
 
