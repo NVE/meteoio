@@ -433,12 +433,13 @@ const std::string TimeProcStack::timeParamName( "TIME" );
 TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
 {
 	//extract each filter and its arguments, then build the filter stack
-	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_key, "FILTERS") );
+	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_pattern, ProcessingStack::filter_section) );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
 		
-		const std::vector< std::pair<std::string, std::string> > vecArgs( ProcessingStack::parseArgs(cfg, vecFilters[ii].first, timeParamName) );
+		const unsigned int cmd_nr = Config::getCommandNr(ProcessingStack::filter_section, timeParamName+ProcessingStack::filter_pattern, vecFilters[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(ProcessingStack::filter_section, timeParamName, cmd_nr, ProcessingStack::arg_pattern) );
 		filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
 	}
 }

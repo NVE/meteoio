@@ -402,20 +402,38 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 	return is;
 }
 
-unsigned int Config::getCommandNr(const std::string& cmd_pattern, const std::string& cmd_key)
+unsigned int Config::getCommandNr(const std::string& section, const std::string& cmd_pattern, const std::string& cmd_key)
 {
 	//extract the cmd number and perform basic checks on the syntax
 	const size_t end_cmd = cmd_key.find(cmd_pattern);
-	if (end_cmd==std::string::npos) return IOUtils::unodata;
+	if (end_cmd==std::string::npos) 
+		throw InvalidArgumentException("Can not parse command number in "+section+"::"+cmd_key, AT);
 
 	const size_t start_cmd_nr = cmd_key.find_first_of(NUM, end_cmd+cmd_pattern.length());
 	const size_t end_cmd_nr = cmd_key.find_first_not_of(NUM, end_cmd+cmd_pattern.length());
-	if (start_cmd_nr==std::string::npos || end_cmd_nr!=std::string::npos) return IOUtils::unodata;
+	if (start_cmd_nr==std::string::npos || end_cmd_nr!=std::string::npos) 
+		throw InvalidArgumentException("Can not parse command number in "+section+"::"+cmd_key, AT);
 
 	unsigned int cmd_nr;
 	const std::string cmd_nr_str( cmd_key.substr(start_cmd_nr) );
 	if ( !IOUtils::convertString(cmd_nr, cmd_nr_str) ) InvalidArgumentException("Can not parse command number in "+cmd_key, AT);
 	return cmd_nr;
+}
+
+std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const
+{
+	//read the arguments and clean them up (ie get all key/values matching {cmd_id}::{arg_pattern}#:: and remove this prefix)
+	std::ostringstream arg_str;
+	arg_str << cmd_id << arg_pattern << cmd_nr;
+	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
+	for (size_t jj=0; jj<vecArgs.size(); jj++) {
+		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
+		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+	}
+	
+	return vecArgs;
 }
 
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////

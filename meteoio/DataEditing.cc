@@ -29,6 +29,7 @@ using namespace std;
 
 namespace mio {
 
+const std::string DataEditing::cmd_section( "INPUTEDITING" );
 const std::string DataEditing::cmd_pattern( "::EDIT" );
 const std::string DataEditing::arg_pattern( "::ARG" );
 
@@ -68,7 +69,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
  */
 std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 {
-	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, "INPUTEDITING", true) );
+	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
 
 	std::set<std::string> set_stations;
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
@@ -88,33 +89,6 @@ std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 }
 
 /**
- * @brief Extract the arguments for a given station ID and Input Data Editing command and store them into a 
- * vector of key / value pairs.
- * @param[in] cfg Config object to read the configuration from
- * @param[in] cmd_key the base command key, such as "SLF2::EDIT1" that will be used to extract the command number
- * @param[in] cmd_id the station ID to process
- * @return All arguments for this command and this station, as vector of key / value pairs
- */
-std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& cmd_id)
-{
-	const unsigned int cmd_nr = Config::getCommandNr(cmd_id+cmd_pattern, cmd_key);
-	if (cmd_nr ==IOUtils::unodata) throw InvalidArgumentException("Can not parse command number in "+cmd_key, AT);
-	
-	//read the arguments and clean them up (ie get all key/values matching {cmd_id}::{arg_pattern#}:: and remove this prefix)
-	std::ostringstream arg_str;
-	arg_str << cmd_id << arg_pattern << cmd_nr;
-	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "INPUTEDITING") );
-	for (size_t jj=0; jj<vecArgs.size(); jj++) {
-		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
-		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
-	}
-	
-	return vecArgs;
-}
-
-/**
  * @brief For a given station ID, build the stack of EditingBlock
  * @param[in] cfg Config object to read the configuration from
  * @param[in] stationID the station ID to process
@@ -123,7 +97,7 @@ std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const 
 std::vector< EditingBlock* > DataEditing::buildStack(const Config& cfg, const std::string& station_ID)
 {
 	//extract each filter and its arguments, then build the filter stack
-	const std::vector< std::pair<std::string, std::string> > vecCommands( cfg.getValues(station_ID+cmd_pattern, "INPUTEDITING") );
+	const std::vector< std::pair<std::string, std::string> > vecCommands( cfg.getValues(station_ID+cmd_pattern, cmd_section) );
 	std::vector< EditingBlock* > cmd_stack;
 	cmd_stack.reserve( vecCommands.size() );
 	
@@ -131,7 +105,8 @@ std::vector< EditingBlock* > DataEditing::buildStack(const Config& cfg, const st
 		const std::string cmd_name( IOUtils::strToUpper( vecCommands[ii].second ) );
 		if (cmd_name=="NONE") continue;
 		
-		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecCommands[ii].first, station_ID) );
+		const unsigned int cmd_nr = Config::getCommandNr(cmd_section, station_ID+cmd_pattern, vecCommands[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(cmd_section, station_ID, cmd_nr, arg_pattern) );
 		cmd_stack.push_back( EditingBlockFactory::getBlock(station_ID, vecArgs, cmd_name, cfg) );
 	}
 	

@@ -412,14 +412,35 @@ class Config {
 		void moveSection(std::string org, std::string dest, const bool& overwrite);
 		
 		/**
-		 * @brief Extract the command number from a given command string, given the command root
-		 * @details For example, a filter command will have as command pattern "TA::FILTER", as command key
+		 * @brief Extract the command number from a given command string, given the command pattern
+		 * @details Each new command is defined as {cmd_id}::{cmd_pattern}# = {value} and this call
+		 * extracts the command number out of a given "{cmd_id}::{cmd_pattern}#" string.
+		 * 
+		 * For example, a filter command will have as command pattern "TA::FILTER", as command key
 		 * "TA::FILTER3" and this call will return *3*.
-		 * @param[in] cmd_pattern Pattern used to build the stack of commands
-		 * @param[in] cmd_key The specific key to extract the number from
+		 * @param[in] section The section this command belongs to (for error messages)
+		 * @param[in] cmd_pattern Pattern used to build the stack of commands, such as "TA::FILTER" or even just "::FILTER"
+		 * @param[in] cmd_key the base command key, such as "TA::FILTER3" that will be parsed as {cmd_id}::{cmd_pattern}# to extract the command number
 		 * @return the key index contained in the cmd_key or IOUtils::unodata if a number could not be extracted
 		 */
-		static unsigned int getCommandNr(const std::string& cmd_pattern, const std::string& cmd_key);
+		static unsigned int getCommandNr(const std::string& section, const std::string& cmd_pattern, const std::string& cmd_key);
+		
+		/**
+		* @brief Extract the arguments for a given command and store them into a vector of key / value pairs.
+		* @details The goal of this call is to provide an algorithm with easy to parse arguments, independent
+		* of the entry syntax. The syntax that is supported here is the following:
+		*    - each new command is defined as {cmd_id}::{cmd_pattern}# = {value}
+		*    - each argument for this command is defined as {cmd_id}::{arg_pattern}#::{argument_name} = {value}
+		* From the command definition, the command number will be retrieved by a call to getCommandNr(). Then all its arguments 
+		* will be extracted by the current call and saved into a vector of pairs {argument_name} / {value}.
+		* 
+		* @param[in] section The section where to look for this command
+		* @param[in] cmd_id the command ID to process
+		* @param[in] cmd_nr the command number to process (most probably provided by a call to getCommandNr())
+		* @param[in] arg_pattern as part of the argument definition
+		* @return All arguments for this command, as vector of key / value pairs, {argument_name} / {value}
+		*/
+		std::vector< std::pair<std::string, std::string> > parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const;
 
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs
