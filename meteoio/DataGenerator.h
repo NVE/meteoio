@@ -53,12 +53,11 @@ class DataGenerator {
 
 		const std::string toString() const;
 	private:
-		static std::set<std::string> getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section);
-		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname);
-		static std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
-		                                const std::string& algorithm, const std::string& section);
+		static std::set<std::string> getParameters(const Config& cfg);
+		static std::vector< GeneratorAlgorithm* > buildStack(const Config& cfg, const std::string& parname);
 		
 		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data creators algorithms
+		static const std::string cmd_section, cmd_pattern, arg_pattern;
 		bool data_qa_logs;
 };
 

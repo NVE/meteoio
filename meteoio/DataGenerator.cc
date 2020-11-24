@@ -22,30 +22,21 @@
 using namespace std;
 
 namespace mio {
+const std::string DataGenerator::cmd_section( "GENERATORS" );
+const std::string DataGenerator::cmd_pattern( "::GENERATOR" );
+const std::string DataGenerator::arg_pattern( "::ARG" );
+
 DataGenerator::DataGenerator(const Config& cfg)
               : mapAlgorithms(), data_qa_logs(false)
 {
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	
-	static const std::string section( "Generators" );
-	static const std::string key_pattern( "::generators" );
-	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
+	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
 	std::set<std::string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
 		const std::string parname( *it );
-		const std::vector<std::string> tmpAlgorithms( getAlgorithmsForParameter(cfg, key_pattern, section, parname) );
-		const size_t nrOfAlgorithms = tmpAlgorithms.size();
-
-		std::vector<GeneratorAlgorithm*> vecGenerators( nrOfAlgorithms );
-		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
-			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
-		}
-
-		if (nrOfAlgorithms>0) {
-			mapAlgorithms[parname] = vecGenerators;
-		}
+		mapAlgorithms[parname] = buildStack(cfg, parname); //a stack of all generators for this parameter
 	}
 }
 
@@ -163,56 +154,55 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 	}
 }
 
-std::set<std::string> DataGenerator::getParameters(const Config& cfg, const std::string& key_pattern, const std::string& section)
+/**
+ * @brief Build a list of station IDs that will be edited
+ * @param[in] cfg Config object to read the configuration from
+ * @return set of station IDs
+ */
+std::set<std::string> DataGenerator::getParameters(const Config& cfg)
 {
-	std::set<std::string> set_parameters;
-	const std::vector<std::string> vec_keys( cfg.getKeys(key_pattern, section, true) ); //search anywhere in key
+	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
 
-	for (size_t ii=0; ii<vec_keys.size(); ii++) {
+	std::set<std::string> set_stations;
+	for (size_t ii=0; ii<vec_keys.size(); ++ii){
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
 			if (vec_keys[ii].length()<=(found+2))
 				throw InvalidFormatException("Invalid syntax: \""+vec_keys[ii]+"\"", AT);
 			if (vec_keys[ii][found+1]!=':')
 				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
-			std::string tmp( vec_keys[ii].substr(0,found) );
-			IOUtils::toUpper( tmp );
-			set_parameters.insert( tmp );
+				
+			const std::string tmp( vec_keys[ii].substr(0,found) );
+			set_stations.insert(tmp); //we keep the case of the parameters
 		}
 	}
 
-	return set_parameters;
+	return set_stations;
 }
 
-// This function retrieves the user defined generator algorithms for
-// parameter 'parname' by querying the Config object
-std::vector<std::string> DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& section, const std::string& parname)
+/**
+ * @brief For a given parameter name, build the stack of GeneratorAlgorithm
+ * @param[in] cfg Config object to read the configuration from
+ * @param[in] parname the parameter to process
+ * @return vector of GeneratorAlgorithm* to process in this order
+ */
+std::vector< GeneratorAlgorithm* > DataGenerator::buildStack(const Config& cfg, const std::string& parname)
 {
-	std::vector<std::string> vecAlgorithms;
-	const std::vector<std::string> vecKeys( cfg.getKeys(parname+key_pattern, section) );
-
-	if (vecKeys.size() > 1) throw IOException("Multiple definitions of " + parname + key_pattern + " in config file", AT);;
-	if (vecKeys.empty()) return vecAlgorithms;
-
-	cfg.getValue(vecKeys[0], section, vecAlgorithms, IOUtils::nothrow);
-	return vecAlgorithms;
-}
-
-std::vector< std::pair<std::string, std::string> > DataGenerator::getArgumentsForAlgorithm(const Config& cfg,
-                                               const std::string& parname, const std::string& algorithm, const std::string& section)
-{
-	const std::string key_prefix( parname+"::"+algorithm+"::" );
-	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, section) );
-
-	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
-		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
-		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	//extract each filter and its arguments, then build the filter stack
+	const std::vector< std::pair<std::string, std::string> > vecGenerators( cfg.getValues(parname+cmd_pattern, cmd_section) );
+	std::vector< GeneratorAlgorithm* > generators_stack;
+	generators_stack.reserve( vecGenerators.size() );
+	
+	for (size_t ii=0; ii<vecGenerators.size(); ii++) {
+		const std::string cmd_name( IOUtils::strToUpper( vecGenerators[ii].second ) );
+		if (cmd_name=="NONE") continue;
+		
+		const unsigned int cmd_nr = Config::getCommandNr(cmd_section, parname+cmd_pattern, vecGenerators[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(cmd_section, parname, cmd_nr, arg_pattern) );
+		generators_stack.push_back( GeneratorAlgorithmFactory::getAlgorithm( cfg, cmd_name, vecArgs) );
 	}
-
-	return vecArgs;
+	
+	return generators_stack;
 }
 
 const std::string DataGenerator::toString() const {
