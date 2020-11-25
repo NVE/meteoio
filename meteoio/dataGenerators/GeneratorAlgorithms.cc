@@ -92,6 +92,7 @@ namespace mio {
  *
  * @section generators_keywords Available generators
  * The keywords defining the algorithms are the following:
+ * - NONE: does nothing, it allows overwriting an existing generator in an included ini file
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - HUMIDITY: generate any of the humidity parameters from the others (see HumidityGenerator)
  * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TsGenerator)
