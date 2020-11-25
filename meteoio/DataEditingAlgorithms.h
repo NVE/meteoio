@@ -105,9 +105,9 @@ class EditingBlock {
  * 
  * @code
  * [InputEditing]
- * FLU2::edit2 = SWAP
+ * FLU2::edit2      = SWAP
  * FLU2::arg2::dest = ISWR
- * FLU2::arg2::src = RSWR
+ * FLU2::arg2::src  = RSWR
  * @endcode
  */
 class EditingSwap : public EditingBlock {
@@ -133,9 +133,9 @@ class EditingSwap : public EditingBlock {
  * 
  * @code
  * [InputEditing]
- * SLF2::edit1 = MOVE
+ * SLF2::edit1      = MOVE
  * SLF2::arg1::dest = TA
- * SLF2::arg1::src = air_temp air_temperature temperature_air
+ * SLF2::arg1::src  = air_temp air_temperature temperature_air
  * @endcode
  * 
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
@@ -165,7 +165,7 @@ class EditingMove : public EditingBlock {
  *
  * @code
  * [InputEditing]
- * FLU2::edit3 = EXCLUDE
+ * FLU2::edit3         = EXCLUDE
  * FLU2::arg3::exclude = TA RH TSS TSG
  * @endcode
  */
@@ -192,10 +192,10 @@ class EditingExclude : public EditingBlock {
  * Here below an example relying on wildcards:
  * @code
  * [InputEditing]
- * *::edit1 = KEEP                               ;all stations will keep TA, RH and HS and reject the other parameters
+ * *::edit1      = KEEP           ;all stations will keep TA, RH and HS and reject the other parameters
  * *::arg1::keep = TA RH HS
  * 
- * WFJ2::edit1 = KEEP                          ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
+ * WFJ2::edit1      = KEEP        ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
  * WFJ2::arg1::keep = HS ISWR
  * @endcode
  */
@@ -233,25 +233,25 @@ class EditingKeep : public EditingBlock {
  * [Input]
  * METEO = SMET
  * METEOPATH = ./input
- * STATION1 = STB
- * STATION2 = WFJ2
- * STATION3 = WFJ1
- * STATION4 = DAV1
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
  * [...]
  *
  * [InputEditing]
- * STB::edit1 = EXCLUDE
+ * STB::edit1         = EXCLUDE
  * STB::arg1::exclude = ILWR PSUM
  * 
- * WFJ2::edit1 = KEEP
+ * WFJ2::edit1      = KEEP
  * WFJ2::arg1::keep = PSUM ILWR RSWR
  *
- * STB::edit2 = MERGE
+ * STB::edit2       = MERGE
  * STB::arg2::merge = WFJ2 WFJ1
  * STB::arg2::merge_strategy = FULL_MERGE
  * 
- * DAV1::edit1 = MERGE
- * DAV1::arg1::merge = WFJ2
+ * DAV1::edit1        = MERGE
+ * DAV1::arg1::merge  = WFJ2
  * DAV1::arg1::params = HS RSWR PSUM
  * @endcode
  * 
@@ -318,9 +318,9 @@ class EditingAutoMerge : public EditingBlock {
  * 
  * @code
  * [InputEditing]
- * DAV::edit1 = COPY
+ * DAV::edit1      = COPY
  * DAV::arg1::dest = TA_copy
- * DAV::arg1::src = TA
+ * DAV::arg1::src  = TA
  * @endcode
  * 
  * This creates a new parameter TA_copy that starts as an exact copy of the raw data of TA, for the DAV station. This newly created parameter is
@@ -345,9 +345,13 @@ class EditingCopy : public EditingBlock {
  * By calling a choice of algorithms, it is possible to convert a parameter into another one (for example, a dew point
  * temperature to a relative humidity), to generate a parameter thanks to a parametrization based on other parameters
  * (for example ILWR based on TA, RH and ISWR) or to generate synthetic values (for example, a purely yearly sinusoidal
- * variation for TA). The *type* argument provides the \ref generators "generator algorithm" to use, the *param* argument
- * provides the meteorological parameter to generate values for (either a MeteoData::Parameters or any other, non-standard name)
- * and then the arguments for the chosen algorithm are provided.
+ * variation for TA). This input editing command takes two fixed options as well as an undefined number of options 
+ * depending on the \ref generators "generator algorithm" that has been chosen:
+ *     - ALGORITHM: specify which \ref generators "generator algorithm" to use;
+ *     - PARAM: provides the meteorological parameter to generate values for 
+ * (either a MeteoData::Parameters or any other, non-standard name).
+ * 
+ * Then the arguments of the chosen data generator algorithm must also be provided (according to its documentation).
  * 
  * If the destination parameter does not exists, it will be created. Otherwise, any pre-existing data is kept and only 
  * missing values in the original data set are filled with the generated values, keeping the original sampling rate. As the 
@@ -359,10 +363,10 @@ class EditingCopy : public EditingBlock {
  * 
  * @code
  * [InputEditing]
- * DAV::edit1 = CREATE
- * DAV::arg1::type = CST	;use a constant data generator
- * DAV::arg1::param = RH	;generate data for the Relative Humidity (RH)
- * DAV::arg1::value = 0.7	;generate a constant value of 0.7 whenever there is no other data for RH
+ * DAV::edit1           = CREATE
+ * DAV::arg1::algorithm = CST	;use a constant data generator
+ * DAV::arg1::param     = RH	;generate data for the Relative Humidity (RH)
+ * DAV::arg1::value     = 0.7	;generate a constant value of 0.7 whenever there is no other data for RH
  * @endcode
  */
 class EditingCreate : public EditingBlock {

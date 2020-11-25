@@ -39,7 +39,7 @@ namespace mio {
  * for the precipitable water vapor).
  * @code
  * [Generators]
- * ISWR::generators = allsky_SW
+ * ISWR::generator1 = allsky_SW
  * @endcode
  * @note This relies on SunObject to perform the heavy duty computation.
  */

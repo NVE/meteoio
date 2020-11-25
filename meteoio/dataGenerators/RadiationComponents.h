@@ -26,11 +26,10 @@ namespace mio {
 /**
  * @class RadiationComponents
  * @brief Compute the global radiation (ISWR) from the direct and diffuse components.
- * @details
- * The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
+ * @details The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
  * @code
- * [InputEditing]
- * ISWR::create = RadComponents
+ * [Generators]
+ * ISWR::generator1 = RadComponents
  * @endcode
  */
 class RadiationComponents : public GeneratorAlgorithm {

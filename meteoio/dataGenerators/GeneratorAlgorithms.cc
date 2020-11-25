@@ -71,23 +71,23 @@ namespace mio {
  * @code
  * [InputEditing]
  * #calling the parametrizations very early on, just after reading the raw data
- * *::edit1 = CREATE
- * *::arg1::type = CST
- * *::arg1::param = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
- * *::arg1::param = 0.5
+ * *::edit1            = CREATE
+ * *::arg1::algorithgm = CST
+ * *::arg1::param      = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
+ * *::arg1::param      = 0.5
  *
  * [Generators]
  * #calling the parametrizations after everything else happened 
  * #but before spatial interpolations
- * RH::generator1 = CST
+ * RH::generator1  = CST
  * RH::arg1::value = .7
  *
- * P::generator1  = STD_PRESS
+ * P::generator1 = STD_PRESS
  *
- * ILWR::generator1         = AllSky_LW
- * ILWR::arg1::exclude      = DAV3 DAV5
- * ILWR::generator2         = ClearSky_LW
- * ILWR::arg2::only         = *WFJ *DAV
+ * ILWR::generator1    = AllSky_LW
+ * ILWR::arg1::exclude = DAV3 DAV5
+ * ILWR::generator2    = ClearSky_LW
+ * ILWR::arg2::only    = *WFJ *DAV
  * @endcode
  *
  * @section generators_keywords Available generators

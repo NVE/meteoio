@@ -30,8 +30,8 @@ namespace mio {
  * The U and V wind velocity components are expected to be in m/s and either called U or VW_U or WIND_U (respectively, V).
  * For example:
  * @code
- * [InputEditing]
- * VW::create = Windcomponents
+ * [Generators]
+ * VW::generator1 = Windcomponents
  * @endcode
  */
 class WindComponents : public GeneratorAlgorithm {

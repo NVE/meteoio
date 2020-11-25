@@ -45,8 +45,8 @@ namespace mio {
  *
  * @code
  * [Generators]
- * TAU_CLD::generators = TAU_CLD
- * TAU_CLD::tau_cld::use_rswr = false
+ * TAU_CLD::generator1     = TAU_CLD
+ * TAU_CLD::arg1::use_rswr = false
  * @endcode
  */
 class TauCLDGenerator : public GeneratorAlgorithm {

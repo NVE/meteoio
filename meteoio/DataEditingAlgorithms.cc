@@ -38,19 +38,18 @@ namespace mio {
  * delimited list of date intervals (represented by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), 
  * similarly to the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
- * {stationID}::edit# = {command}
- * {stationID}::arg#::{argument name} = {values}
+ * {stationID}::edit#            = {command}
+ * {stationID}::arg#::{argument} = {values}
  * 
  * #here is an example
- * WFJ2::edit1 = EXCLUDE
+ * WFJ2::edit1         = EXCLUDE
  * WFJ2::arg1::exclude = VW DW ISWR RSWR
- * WFJ2::arg1::when = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
+ * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
  * (in such a case, <b>the wildcard stack will be applied before any other stack</b>). Please note that all station IDs are
- * handled case insensitive while all meteo parameter are case sensitive. Currently, the data creation is 
- * applied after all stacks have been processed but this will change in the near future...
+ * handled case insensitive while all meteo parameter are case sensitive.
  * 
  * The following Input Data Editing commands are available:
  *     - NONE: this is used when importing another ini file to overwrite a command with an empty one
@@ -677,7 +676,7 @@ void EditingCreate::parse_args(const std::vector< std::pair<std::string, std::st
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="TYPE") {
+		if (vecArgs[ii].first=="ALGORITHM") {
 			IOUtils::parseArg(vecArgs[ii], where, type);
 		} else if (vecArgs[ii].first=="PARAM") {
 			IOUtils::parseArg(vecArgs[ii], where, dest_param);

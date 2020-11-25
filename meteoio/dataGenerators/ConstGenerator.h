@@ -31,8 +31,8 @@ namespace mio {
  * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).
  * @code
  * [Generators]
- * RH::generators = Cst
- * RH::Cst::value = .7
+ * RH::generator1  = Cst
+ * RH::arg1::value = .7
  * @endcode
  */
 class ConstGenerator : public GeneratorAlgorithm {

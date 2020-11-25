@@ -41,7 +41,7 @@ namespace mio {
  *
  * @code
  * [Generators]
- * PSUM::generators = ESOLIP
+ * PSUM::generator1 = ESOLIP
  * @endcode
  */
 class ESOLIPGenerator : public GeneratorAlgorithm {

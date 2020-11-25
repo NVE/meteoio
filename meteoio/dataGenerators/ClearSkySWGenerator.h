@@ -37,7 +37,7 @@ namespace mio {
  * for the precipitable water vapor).
  * @code
  * [Generators]
- * ISWR::generators = clearSky_SW
+ * ISWR::generator1 = clearSky_SW
  * @endcode
  * @note This relies on SunObject to perform the heavy duty computation. If it is used on RSWR, then a snow or grassy soil albedo is used (depending on the snow height).
  */

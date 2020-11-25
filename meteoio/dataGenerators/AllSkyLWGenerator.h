@@ -60,8 +60,8 @@ namespace mio {
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
  * [Generators]
- * ILWR::generators      = allsky_LW
- * ILWR::allsky_lw::type = Omstedt
+ * ILWR::generator1 = allsky_LW
+ * ILWR::arg1::type = Omstedt
  * @endcode
  *
  *

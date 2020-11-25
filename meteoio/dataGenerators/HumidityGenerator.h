@@ -33,8 +33,8 @@ namespace mio {
  * what is available).The parameter that should be generated is provided as argument (default: RH).
  * @code
  * [Generators]
- * RH::generators = HUMIDITY
- * RH::humidity::type = RH
+ * RH::generator1 = HUMIDITY
+ * RH::arg1::type = RH
  * @endcode
  */
 class HumidityGenerator : public GeneratorAlgorithm {

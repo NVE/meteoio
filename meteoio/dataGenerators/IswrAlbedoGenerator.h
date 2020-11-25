@@ -34,7 +34,7 @@ namespace mio {
  *
  * @code
  * [Generators]
- * ISWR::generators = ISWR_ALBEDO
+ * ISWR::generator1 = ISWR_ALBEDO
  * @endcode
  */
 class IswrAlbedoGenerator : public GeneratorAlgorithm {

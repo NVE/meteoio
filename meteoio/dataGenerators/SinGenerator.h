@@ -41,11 +41,11 @@ namespace mio {
  * of the period (which practically means, at the end of the first month).
  * @code
  * [Generators]
- * TA::generators = Sin
- * TA::Sin::type  = yearly
- * TA::Sin::min   = 268.26
- * TA::Sin::max   = 285.56
- * TA::Sin::phase = 0.0833
+ * TA::generator1  = Sin
+ * TA::arg1::type  = yearly
+ * TA::arg1::min   = 268.26
+ * TA::arg1::max   = 285.56
+ * TA::arg1::phase = 0.0833
  * @endcode
  */
 class SinGenerator : public GeneratorAlgorithm {
