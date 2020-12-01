@@ -244,11 +244,11 @@ class DateRange {
 		}
 		
 		bool operator<(const Date& a) const {
-			return a < start;
+			return end < a;
 		}
 		
 		bool operator>(const Date& a) const {
-			return a > end;
+			return start > a;
 		}
 		
 		bool operator<(const DateRange& a) const { //needed for "sort"
