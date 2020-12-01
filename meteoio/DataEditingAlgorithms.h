@@ -29,31 +29,6 @@
 namespace mio {
 
 /** 
- * @class RestrictionsIdx
- * @brief Convenience class for processing data with time restriction periods.
- * @details Given a vector of DateRange and a vector of MeteoData, compute which start/end indices
- * fit within the time restriction periods. Then repeatedly calling getStart() / getEnd() will provide
- * these indices while calling the \b ++ operator increment the time restriction period. 
- * Once isValid() returns false, there are no time restriction periods left.
- * @author Mathias Bavay
- */
-class RestrictionsIdx {
-	public:
-		RestrictionsIdx() : start(), end(), index(IOUtils::npos) {}
-		RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions);
-		
-		bool isValid() const {return (index != IOUtils::npos);}
-		size_t getStart() const;
-		size_t getEnd() const;
-		RestrictionsIdx& operator++();
-		const std::string toString() const;
-		
-	private:
-		std::vector<size_t> start, end;
-		size_t index;
-};
-
-/** 
  * @class EditingBlock
  * @brief Base class for DataEditing algorithms
  */
@@ -89,8 +64,11 @@ class EditingBlock {
 		
 	protected:
 		std::string getName() const {return block_name;}
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		bool skipStation(const std::vector<MeteoData>& vecMeteo) const;
 		METEO_SET timeFilterFromStation(const METEO_SET& vecMeteo) const; //merge and automerge need this method
 		
+		const std::set<std::string> excluded_stations, kept_stations;
 		const std::vector<DateRange> time_restrictions;
 		const std::string stationID, block_name;
 };
@@ -166,7 +144,7 @@ class EditingMove : public EditingBlock {
  * @code
  * [InputEditing]
  * FLU2::edit3         = EXCLUDE
- * FLU2::arg3::exclude = TA RH TSS TSG
+ * FLU2::arg3::params  = TA RH TSS TSG
  * @endcode
  */
 class EditingExclude : public EditingBlock {
@@ -192,11 +170,11 @@ class EditingExclude : public EditingBlock {
  * Here below an example relying on wildcards:
  * @code
  * [InputEditing]
- * *::edit1      = KEEP           ;all stations will keep TA, RH and HS and reject the other parameters
- * *::arg1::keep = TA RH HS
+ * *::edit1        = KEEP           ;all stations will keep TA, RH and HS and reject the other parameters
+ * *::arg1::params = TA RH HS
  * 
- * WFJ2::edit1      = KEEP        ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
- * WFJ2::arg1::keep = HS ISWR
+ * WFJ2::edit1        = KEEP        ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
+ * WFJ2::arg1::params = HS ISWR
  * @endcode
  */
 class EditingKeep : public EditingBlock {
@@ -240,11 +218,11 @@ class EditingKeep : public EditingBlock {
  * [...]
  *
  * [InputEditing]
- * STB::edit1         = EXCLUDE
- * STB::arg1::exclude = ILWR PSUM
+ * STB::edit1        = EXCLUDE
+ * STB::arg1::params = ILWR PSUM
  * 
- * WFJ2::edit1      = KEEP
- * WFJ2::arg1::keep = PSUM ILWR RSWR
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
  *
  * STB::edit2       = MERGE
  * STB::arg2::merge = WFJ2 WFJ1
@@ -359,8 +337,6 @@ class EditingCopy : public EditingBlock {
  * \ref generators_keywords "data generators section" (but the data creators must be declared here in the [InputEditing] section
  * as part of the Input Data Editing stack).
  * 
- * @note time restrictions are NOT supported yet for this command
- * 
  * @code
  * [InputEditing]
  * DAV::edit1           = CREATE
@@ -380,7 +356,7 @@ class EditingCreate : public EditingBlock {
 		
 		const Config &cfg_copy;
 		const std::vector< std::pair<std::string, std::string> > vecArgs_copy;
-		std::string type, dest_param;
+		std::string algorithm, dest_param;
 };
 
 class EditingBlockFactory {

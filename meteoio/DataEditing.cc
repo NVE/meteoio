@@ -37,7 +37,6 @@ DataEditing::DataEditing(const Config& cfgreader)
            : timeproc(cfgreader), editingStack()
 {
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
-	
 	for (std::set<std::string>::const_iterator it = editableStations.begin(); it != editableStations.end(); ++it) {
 		editingStack[ *it ] = buildStack(cfgreader, *it);
 	}

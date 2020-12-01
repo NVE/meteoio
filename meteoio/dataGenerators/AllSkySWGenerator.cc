@@ -71,12 +71,12 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool AllSkySWGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkySWGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
 	bool all_filled = true;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		const bool status = generate(param, vecMeteo[ii]);
 		if (status==false) all_filled=false;
 	}

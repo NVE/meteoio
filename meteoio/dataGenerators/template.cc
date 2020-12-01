@@ -24,7 +24,7 @@ namespace mio {
 void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	//Get the optional arguments for the algorithm. For example, process 1 argument
-	/*const std::string where( "generators::"+algo );
+	/*const std::string where( section+"::"+algo );
 	bool has_val=false; //so we can check the syntax
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -49,11 +49,11 @@ bool TEMPLATE::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool TEMPLATE::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool TEMPLATE::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		//either call generate() on each point or process the vector in one go.
 		//when working on the whole vector, some optimizations might be implemented.
 		if (!generate(param, vecMeteo[ii])) return false;

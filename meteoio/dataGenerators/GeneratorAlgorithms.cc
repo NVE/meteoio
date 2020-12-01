@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
+#include <meteoio/MeteoProcessor.h> //required to init the time restrictions
 
 #include <meteoio/dataGenerators/AllSkyLWGenerator.h>
 #include <meteoio/dataGenerators/AllSkySWGenerator.h>
@@ -54,7 +55,9 @@ namespace mio {
  * run over the data gap).
  *
  * Finally, it is possible to disable a given data generator / creator for specific stations, using the <i>exclude</i> or <i>only</i>
- * options followed by a list of station IDs (see example below). This is supported automatically by all generators.
+ * options followed by a list of station IDs (see example below) as well as restrict the operation of a data generator / creator
+ * to specific time ranges using the **when** option followed by a comma delimited list of date intervals (represented by 
+ * two ISO formatted dates seperated by ' - ').
  *
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
@@ -83,6 +86,7 @@ namespace mio {
  * RH::arg1::value = .7
  *
  * P::generator1 = STD_PRESS
+ * P::arg1::when = 2020-07-01 - 2020-07-10 , 2020-07-20T12:00 - 2020-08-01
  *
  * ILWR::generator1    = AllSky_LW
  * ILWR::arg1::exclude = DAV3 DAV5
@@ -134,41 +138,42 @@ const double GeneratorAlgorithm::soil_albedo = .23; //grass
 const double GeneratorAlgorithm::snow_albedo = .85; //snow
 const double GeneratorAlgorithm::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*/, const std::string& i_algoname, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::string& i_section, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	std::string algoname(i_algoname);
 	IOUtils::toUpper(algoname);
+	const double TZ = cfg.get("TIME_ZONE", "Input");
 
 	if (algoname == "CST"){
-		return new ConstGenerator(vecArgs, i_algoname);
+		return new ConstGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "SIN"){
-		return new SinGenerator(vecArgs, i_algoname);
+		return new SinGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "STD_PRESS"){
-		return new StandardPressureGenerator(vecArgs, i_algoname);
+		return new StandardPressureGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "HUMIDITY"){
-		return new HumidityGenerator(vecArgs, i_algoname);
+		return new HumidityGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "TAU_CLD"){
-		return new TauCLDGenerator(vecArgs, i_algoname);
+		return new TauCLDGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "TS_OLWR"){
-		return new TsGenerator(vecArgs, i_algoname);
+		return new TsGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ISWR_ALBEDO"){
-		return new IswrAlbedoGenerator(vecArgs, i_algoname);
+		return new IswrAlbedoGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "CLEARSKY_LW"){
-		return new ClearSkyLWGenerator(vecArgs, i_algoname);
+		return new ClearSkyLWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ALLSKY_LW"){
-		return new AllSkyLWGenerator(vecArgs, i_algoname);
+		return new AllSkyLWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ALLSKY_SW"){
-		return new AllSkySWGenerator(vecArgs, i_algoname);
+		return new AllSkySWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "CLEARSKY_SW"){
-		return new ClearSkySWGenerator(vecArgs, i_algoname);
+		return new ClearSkySWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "WINDCOMPONENTS"){
-		return new WindComponents(vecArgs, i_algoname);
+		return new WindComponents(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "RADCOMPONENTS"){ 
-		return new RadiationComponents(vecArgs, i_algoname);
+		return new RadiationComponents(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ESOLIP"){
-		return new ESOLIPGenerator(vecArgs, i_algoname);
+		return new ESOLIPGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "PRECSPLITTING"){
-		return new PrecSplitting(vecArgs, i_algoname);
+		return new PrecSplitting(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "PPHASE"){
 		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
 	} else {
@@ -176,8 +181,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 	}
 }
 
-GeneratorAlgorithm::GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-                                   : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), algo(i_algo) {}
+GeneratorAlgorithm::GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+                                   : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", i_section+"::"+i_algo+" for station ", TZ) ), excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), algo(i_algo), section(i_section) {}
 
 std::set<std::string> GeneratorAlgorithm::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {
@@ -201,6 +206,19 @@ bool GeneratorAlgorithm::skipStation(const std::string& station_id) const
 	if (kept_stations.empty()) return false; //there are no kept stations -> do not skip
 
 	return (kept_stations.count(station_id)==0);
+}
+
+bool GeneratorAlgorithm::skipTimeStep(const Date& dt) const
+{
+	const size_t nrRestrictions = time_restrictions.size();
+	if (nrRestrictions==0) return false; //no restrictions -> always apply
+		
+	for (size_t ii=0; ii<nrRestrictions; ii++) {
+		if (time_restrictions[ii].in(dt)) return false; //within period -> don't skip but apply
+		if (time_restrictions[ii] > dt) return true; //only periods after dt are left -> skip this dt
+	}
+	
+	return true; //not within a period -> skip this dt
 }
 
 } //namespace

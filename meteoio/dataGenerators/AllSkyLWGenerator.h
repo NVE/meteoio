@@ -74,11 +74,11 @@ namespace mio {
  */
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
 		                 last_cloudiness(), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 

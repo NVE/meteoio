@@ -18,6 +18,7 @@
 */
 
 #include <meteoio/DataGenerator.h>
+#include <meteoio/MeteoProcessor.h> //required to provide RestrictionsIdx
 
 using namespace std;
 
@@ -55,6 +56,7 @@ DataGenerator& DataGenerator::operator=(const DataGenerator& source)
 {
 	if (this != &source) {
 		mapAlgorithms = source.mapAlgorithms;
+		data_qa_logs = source.data_qa_logs;
 	}
 	return *this;
 }
@@ -87,7 +89,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 			bool status = false;
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
-				if (!vecGenerators[jj]->skipStation( statID )) {
+				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) ) {
 					status = vecGenerators[jj]->generate(param, vecMeteo[station]);
 					if (vecMeteo[station](param) != old_val) {
 						vecMeteo[station].setGenerated(param);
@@ -136,7 +138,13 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID )) {
-					status = vecGenerators[jj]->create(param, vecVecMeteo[station]);
+					
+					//loop over time restrictions periods
+					status = true; //so if any time restriction period returns false, status will be set to false
+					for (RestrictionsIdx editPeriod(vecVecMeteo[station], vecGenerators[jj]->getTimeRestrictions()); editPeriod.isValid(); ++editPeriod) 
+						status &= vecGenerators[jj]->create(param, editPeriod.getStart(), editPeriod.getEnd(), vecVecMeteo[station]);
+					
+					//compare the resulting data with the original copy to see if there are some changes for DATA_QA
 					for (size_t kk=0; kk<old_val.size(); kk++) {
 						if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
 							vecVecMeteo[station][kk].setGenerated(param);
@@ -199,7 +207,7 @@ std::vector< GeneratorAlgorithm* > DataGenerator::buildStack(const Config& cfg, 
 		
 		const unsigned int cmd_nr = Config::getCommandNr(cmd_section, parname+cmd_pattern, vecGenerators[ii].first);
 		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(cmd_section, parname, cmd_nr, arg_pattern) );
-		generators_stack.push_back( GeneratorAlgorithmFactory::getAlgorithm( cfg, cmd_name, vecArgs) );
+		generators_stack.push_back( GeneratorAlgorithmFactory::getAlgorithm( cfg, cmd_name, cmd_section, vecArgs) );
 	}
 	
 	return generators_stack;

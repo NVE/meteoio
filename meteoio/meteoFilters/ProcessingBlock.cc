@@ -116,7 +116,7 @@ namespace mio {
  * DW::filter1   = add
  * DW::arg1::type = Cst
  * DW::arg1::cst = 45
- * DW::arg1::when = 2020-07-01 - 2020-07-10, 2020-07-20T12:00 - 2020-08-01
+ * DW::arg1::when = 2020-07-01 - 2020-07-10 , 2020-07-20T12:00 - 2020-08-01
  * @endcode
  *
  * @section processing_available Available processing elements
