@@ -229,7 +229,7 @@ template<class T> class Array3D {
 		const T operator ()(const size_t& x, const size_t& y, const size_t& z) const;
 		Array3DProxy<T> operator[](const size_t& i);
 
-		Array3D<T>& operator =(const Array3D<T>&);
+		Array3D<T>& operator =(const Array3D<T>& source);
 		Array3D<T>& operator =(const T& value);
 
 		Array3D<T>& operator+=(const T& rhs);

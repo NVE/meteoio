@@ -144,9 +144,9 @@ template<class T> class Array2D {
 		*/
 		bool getKeepNodata() const;
 
-		void resize(const size_t& nx, const size_t& ny);
-		void resize(const size_t& nx, const size_t& ny, const T& init);
-		void size(size_t& nx, size_t& ny) const;
+		void resize(const size_t& anx, const size_t& any);
+		void resize(const size_t& anx, const size_t& any, const T& init);
+		void size(size_t& anx, size_t& any) const;
 		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
@@ -196,7 +196,7 @@ template<class T> class Array2D {
 		const T operator ()(const size_t& i) const;
 		Array2DProxy<T> operator[](const size_t& i);
 
-		Array2D<T>& operator =(const Array2D<T>&);
+		Array2D<T>& operator =(const Array2D<T>& source);
 		Array2D<T>& operator =(const T& value);
 
 		Array2D<T>& operator+=(const T& rhs);
