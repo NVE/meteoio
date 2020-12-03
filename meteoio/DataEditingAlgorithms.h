@@ -56,9 +56,21 @@ class EditingBlock {
 		
 		/**
 		 * @brief Get the station IDs this editing block depends on for this station
-		 * @return a set station IDs it depends on
+		 * @return a set of station IDs it depends on
 		 */
-		virtual std::set<std::string> getDependencies() const {return std::set<std::string>();}
+		virtual std::set<std::string> requiredIDs() const {return std::set<std::string>();}
+		
+		/**
+		 * @brief Get the station IDs this editing block provides based on this station
+		 * @return a set of station IDs it provides
+		 */
+		virtual std::set<std::string> providedIDs() const {return std::set<std::string>();}
+		
+		/**
+		 * @brief Get the station IDs to purge after using them for this station ID
+		 * @return a set of station IDs to purge after processing
+		 */
+		virtual std::set<std::string> purgeIDs() const {return requiredIDs();}
 		
 		const std::string toString() const;
 		
@@ -245,7 +257,7 @@ class EditingMerge : public EditingBlock {
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
 		
-		std::set<std::string> getDependencies() const;
+		std::set<std::string> requiredIDs() const;
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;
@@ -357,6 +369,62 @@ class EditingCreate : public EditingBlock {
 		const Config &cfg_copy;
 		const std::vector< std::pair<std::string, std::string> > vecArgs_copy;
 		std::string algorithm, dest_param;
+};
+
+/** 
+ * @class EditingMetadata
+ * @ingroup processing
+ * @brief METADATA input editing command
+ * @details
+ * This Input Data Editing algorithm allows to manipulate the metadata of a given station. it takes the following arguments:
+ *     - NAME: set a new station name;
+ *     - ID: set a new station ID;
+ *     - LATITUDE: set a new latitude (then the longitude argument MUST also be provided);
+ *     - LONGITUDE: set a new longitude (then the latitude argument MUST also be provided);
+ *     - ALTITUDE: set a new altitude;
+ *     - SLOPE: set a new slope (then the aziumth argument MUST also be provided);
+ *     - AZIMUTH: set a new azimuth (then the slope argument MUST also be provided).
+ * 
+ * Please note that setting a new ID in effect creates a new station. If there are no time restrictions, the old station will
+ * disappear and be replaced by the new one. If there are time restrictions, both stations will remain side by side, although with
+ * an obviously different time coverage. Since there is a dependency resolution, you can declare some Input Data Editing on the
+ * new station ID, it will be applied properly and any editing declared *after* the ID editing command will only apply for data
+ * outside of time restrictions (if any) for the renaming command.
+ * 
+ * @code
+ * SLF2::edit1 = METADATA
+ * SLF2::arg1::altitude = 1560	;set the altitude to 1560m
+ * 
+ * 
+ * FLU2::edit1 = METADATA
+ * FLU2::arg1::id = TST2
+ * FLU2::arg1::WHEN = 2020-01-01 - 2020-02-01	;all data in this time range will move to the new TST2 station
+ * 
+ * FLU2::edit2 = EXCLUDE				;this will only be applied to data outside the above-defined range
+ * FLU2::arg2::params = TA
+ * 
+ * TST2::edit1 = SWAP				; data in the above-defined range will come to this new station
+ * TST2::arg1::dest = TA1				; and then this SWAP will be applied
+ * TST2::arg1::src = TA2
+ * @endcode
+ */
+class EditingMetadata : public EditingBlock {
+	public:
+		EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		
+		std::set<std::string> providedIDs() const;
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static size_t moveTimestamp(METEO_SET& vecMeteo, MeteoData& md);
+		
+		std::string new_name, new_id;
+		double lat, lon, alt, slope, azi;
+		bool insert_new_station;
 };
 
 class EditingBlockFactory {

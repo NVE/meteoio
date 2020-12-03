@@ -64,7 +64,8 @@ namespace mio {
  *     - MERGE: merge together one or more stations, see EditingMerge
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
  *     - CREATE: fill missing values or create new parameters based on basic transformations or parametrizations, see EditingCreate
- * 
+ *     - METADATA: edit station's metadata, see EditingMetadata
+ *
  */
 
 EditingBlock::EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
@@ -132,6 +133,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 		return new EditingCopy(i_stationID, vecArgs, name, cfg);
 	} else if (name == "CREATE"){
 		return new EditingCreate(i_stationID, vecArgs, name, cfg);
+	} else if (name == "METADATA"){
+		return new EditingMetadata(i_stationID, vecArgs, name, cfg);
 	} else {
 		throw IOException("The input data editing block '"+name+"' does not exist! " , AT);
 	}
@@ -550,7 +553,6 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	
 	if (toStationIdx == IOUtils::npos) return;
 	
-	
 	for (size_t jj=0; jj<merged_stations.size(); jj++) {
 		const std::string fromStationID( IOUtils::strToUpper( merged_stations[jj] ) );
 		
@@ -578,7 +580,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 }
 
-std::set<std::string> EditingMerge::getDependencies() const
+std::set<std::string> EditingMerge::requiredIDs() const
 {
 	const std::set<std::string> stations_to_purge(merged_stations.begin(), merged_stations.end());
 	return stations_to_purge;
@@ -671,6 +673,188 @@ void EditingCreate::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 				creator->create(dest_index, editPeriod.getStart(), editPeriod.getEnd(), vecMeteo[station]);
 		}
 	}
+}
+
+////////////////////////////////////////////////// METADATA
+EditingMetadata::EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), new_name(), new_id(), lat(IOUtils::nodata), lon(IOUtils::nodata), alt(IOUtils::nodata), slope(IOUtils::nodata), azi(IOUtils::nodata), insert_new_station(false)
+{
+	parse_args(vecArgs);
+}
+
+void EditingMetadata::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="NAME") {
+			IOUtils::parseArg(vecArgs[ii], where, new_name);
+		} else if (vecArgs[ii].first=="ID") {
+			IOUtils::parseArg(vecArgs[ii], where, new_id);
+		} else if (vecArgs[ii].first=="LATITUDE") {
+			IOUtils::parseArg(vecArgs[ii], where, lat);
+		} else if (vecArgs[ii].first=="LONGITUDE") {
+			IOUtils::parseArg(vecArgs[ii], where, lon);
+		} else if (vecArgs[ii].first=="ALTITUDE") {
+			IOUtils::parseArg(vecArgs[ii], where, alt);
+		} else if (vecArgs[ii].first=="SLOPE") {
+			IOUtils::parseArg(vecArgs[ii], where, slope);
+		} else if (vecArgs[ii].first=="AZIMUTH") {
+			IOUtils::parseArg(vecArgs[ii], where, azi);
+		}
+	}
+
+	if ( (lat!=IOUtils::nodata && lon==IOUtils::nodata) || (lat==IOUtils::nodata && lon!=IOUtils::nodata))
+		throw InvalidArgumentException("Please provide both latitude and longitude for "+where, AT);
+	if ( (slope!=IOUtils::nodata && azi==IOUtils::nodata) || (slope==IOUtils::nodata && azi!=IOUtils::nodata))
+		throw InvalidArgumentException("Please provide both slope and azimuth for "+where, AT);
+	
+	insert_new_station = (!new_id.empty() && !time_restrictions.empty());
+	if (insert_new_station && stationID=="*")
+		throw InvalidArgumentException("It is not possible to set a new station ID for the '*' wildcard station when time restrictions are active, please change some options for "+where, AT);
+}
+
+std::set<std::string> EditingMetadata::providedIDs() const
+{
+	if (new_id.empty()) return std::set<std::string>();
+	
+	std::set<std::string> tmp_set;
+	tmp_set.insert( new_id );
+	return tmp_set;
+}
+
+/**
+* @brief Move the provided timestamp into the given vector
+* @details 
+* if dispatching some parts of one station to another one through an ID rename, then it is necessary to
+* move the data to the new station by inserting a new element into the new station and reseting the original
+* element (so it does not contain data anymore). This methods looks for the appropriate insertion point, 
+* copies the MeteoData into it and resets the original element (so it's now empty). 
+* if there is already an element in vecMeteo for the same timestamp, it will be overwritten
+* @param vecMeteo MeteoData timeseries for the new station
+* @param md original MeteoData element to copy the data from and reset
+* @return the index of the new element in vecMeteo
+*/
+size_t EditingMetadata::moveTimestamp(METEO_SET& vecMeteo, MeteoData& md)
+{
+	const Date dt( md.date );
+	
+	//easy case: continuously appending data
+	if (vecMeteo.empty() || vecMeteo.back().date < dt) {
+		vecMeteo.push_back( md );
+		md.reset();
+		return vecMeteo.size()-1;
+	}
+	
+	//insert new timestamp before the first position
+	if (vecMeteo[0].date>dt) {
+		vecMeteo.insert(vecMeteo.begin(), md);
+		md.reset();
+		return 0;
+	}
+	
+	//look for the proper insertion position
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		//found the exact timestamp
+		if (vecMeteo[ii].date==dt) {
+			vecMeteo[ii] = md;
+			md.reset();
+			return ii;
+		}
+		
+		//already too far
+		if (vecMeteo[ii].date>dt) {
+			vecMeteo.insert(vecMeteo.begin()+ii-1, md);
+			md.reset();
+			return ii-1;
+		}
+	}
+	
+	//this should never be executed
+	return 0;
+}
+
+void EditingMetadata::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
+{
+	const size_t nrStations = vecMeteo.size();
+	
+	//if a new station must be inserted, search where
+	size_t new_station_pos = IOUtils::npos;
+	if (insert_new_station) {
+		for (size_t station=0; station<vecMeteo.size(); ++station) {
+			if (vecMeteo[station].front().getStationID()==new_id) {
+				new_station_pos = station;
+				break;
+			}
+		}
+		
+		if (new_station_pos == IOUtils::npos) {
+			vecMeteo.push_back( std::vector<MeteoData>() );
+			new_station_pos = vecMeteo.size()-1;
+		}
+	}
+	
+	//now perform the edition on the data, populating a new station if necessary
+	for (size_t station=0; station<nrStations; ++station) { //for each station
+		if (skipStation(vecMeteo[station])) continue;
+		
+		//if a new station is created, track where the new timestamps must be inserted
+		size_t insert_idx = IOUtils::npos;
+		
+		//the next two lines are required to offer time restrictions
+		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+				
+				if (insert_new_station) insert_idx = moveTimestamp(vecMeteo[new_station_pos], vecMeteo[station][jj]);
+				StationData &sd = (insert_new_station)? vecMeteo[new_station_pos][insert_idx].meta : vecMeteo[station][jj].meta;
+				
+				if (!new_name.empty()) sd.stationName = new_name;
+				if (!new_id.empty()) sd.stationID = new_id;
+				if (lat!=IOUtils::nodata) sd.position.setLatLon(lat, lon, sd.getAltitude());
+				if (alt!=IOUtils::nodata) sd.position.setAltitude(alt, false);
+				if (slope!=IOUtils::nodata) sd.setSlope(slope, azi);
+			}
+		}
+	}
+}
+
+void EditingMetadata::editTimeSeries(STATIONS_SET& vecStation)
+{
+	//find the source station
+	size_t src_index = IOUtils::npos;
+	for (size_t station=0; station<vecStation.size(); ++station) {
+		if (vecStation[station].stationID==stationID) {
+			src_index = station;
+			break;
+		}
+	}
+	
+	 //the source station could not be found, no changes to vecStation
+	if (src_index == IOUtils::npos) return;
+	
+	//if a new station must be inserted, search where
+	size_t new_station_pos = IOUtils::npos;
+	if (insert_new_station) {
+		for (size_t station=0; station<vecStation.size(); ++station) {
+			if (vecStation[station].getStationID()==new_id) {
+				new_station_pos = station;
+				break;
+			}
+		}
+		
+		if (new_station_pos == IOUtils::npos) {
+			vecStation.push_back( vecStation[src_index] );
+			new_station_pos = vecStation.size()-1;
+		}
+	}
+	
+	//now do the metadata changes
+	StationData &sd = (insert_new_station)? vecStation[new_station_pos] : vecStation[src_index];
+	if (!new_name.empty()) sd.stationName = new_name;
+	if (!new_id.empty()) sd.stationID = new_id;
+	if (lat!=IOUtils::nodata) sd.position.setLatLon(lat, lon, sd.position.getAltitude());
+	if (alt!=IOUtils::nodata) sd.position.setAltitude(alt, false);
+	if (slope!=IOUtils::nodata) sd.setSlope(slope, azi);
 }
 
 } //end namespace
