@@ -48,8 +48,8 @@ namespace mio {
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
- * (in such a case, <b>the wildcard stack will be applied before any other stack</b>). Please note that all station IDs are
- * handled case insensitive while all meteo parameter are case sensitive. On the wildcard stack, it is possible to restrict the 
+ * (in such a case, <b>the wildcard stack will be applied before any other stack</b>). Please note that all station IDs 
+ * and meteo parameters are handled case insensitive in comparisons. On the wildcard stack, it is possible to restrict the 
  * processing to specific station IDs, using the <i>exclude</i> or <i>only</i> options followed by a list of 
  * station IDs (see an example in the \ref generators "Data Generators" exemples). This is supported automatically by 
  * all generators *except* MERGE as it makes little sense to apply an identical merge to all stations...
@@ -81,7 +81,7 @@ std::set<std::string> EditingBlock::initStationSet(const std::vector< std::pair<
 			std::istringstream iss(vecArgs[ii].second);
 			std::string word;
 			while (iss >> word){
-				results.insert(word);
+				results.insert( IOUtils::strToUpper(word) );
 			}
 		}
 	}
@@ -187,7 +187,7 @@ void EditingSwap::parse_args(const std::vector< std::pair<std::string, std::stri
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			//IOUtils::toUpper( src_param ),
+			IOUtils::toUpper( src_param ),
 			has_src = true;
 		}
 	}
@@ -236,8 +236,7 @@ void EditingMove::parse_args(const std::vector< std::pair<std::string, std::stri
 			//IOUtils::toUpper( dest_param );
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
-			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
-			IOUtils::readLineToSet( vecArgs[ii].second, src_params);
+			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
 			has_src = true;
 		}
 	}
@@ -285,8 +284,7 @@ void EditingExclude::parse_args(const std::vector< std::pair<std::string, std::s
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="PARAMS") {
-			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), exclude_params);
-			IOUtils::readLineToSet( vecArgs[ii].second, exclude_params);
+			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), exclude_params);
 			has_excludes = true;
 		}
 	}
@@ -342,8 +340,7 @@ void EditingKeep::parse_args(const std::vector< std::pair<std::string, std::stri
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="PARAMS") {
-			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), keep_params);
-			IOUtils::readLineToSet( vecArgs[ii].second, keep_params);
+			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), keep_params);
 			has_excludes = true;
 		}
 	}
@@ -507,8 +504,7 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 		if (vecArgs[ii].first=="MERGE") {
 			IOUtils::readLineToVec( IOUtils::strToUpper(vecArgs[ii].second), merged_stations);
 		} else if (vecArgs[ii].first=="PARAMS") {
-			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), merged_params);
-			IOUtils::readLineToSet( vecArgs[ii].second, merged_params);
+			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), merged_params);
 		} else if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
 		} else if (vecArgs[ii].first=="MERGE_CONFLICTS") {
@@ -618,7 +614,7 @@ void EditingCopy::parse_args(const std::vector< std::pair<std::string, std::stri
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			//IOUtils::toUpper( src_param ),
+			IOUtils::toUpper( src_param ),
 			has_src = true;
 		}
 	}
@@ -699,19 +695,20 @@ void EditingMetadata::parse_args(const std::vector< std::pair<std::string, std::
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="NAME") {
+		const std::string cmd( IOUtils::strToUpper(vecArgs[ii].first) );
+		if (cmd=="NAME") {
 			IOUtils::parseArg(vecArgs[ii], where, new_name);
-		} else if (vecArgs[ii].first=="ID") {
+		} else if (cmd=="ID") {
 			IOUtils::parseArg(vecArgs[ii], where, new_id);
-		} else if (vecArgs[ii].first=="LATITUDE") {
+		} else if (cmd=="LATITUDE") {
 			IOUtils::parseArg(vecArgs[ii], where, lat);
-		} else if (vecArgs[ii].first=="LONGITUDE") {
+		} else if (cmd=="LONGITUDE") {
 			IOUtils::parseArg(vecArgs[ii], where, lon);
-		} else if (vecArgs[ii].first=="ALTITUDE") {
+		} else if (cmd=="ALTITUDE") {
 			IOUtils::parseArg(vecArgs[ii], where, alt);
-		} else if (vecArgs[ii].first=="SLOPE") {
+		} else if (cmd=="SLOPE") {
 			IOUtils::parseArg(vecArgs[ii], where, slope);
-		} else if (vecArgs[ii].first=="AZIMUTH") {
+		} else if (cmd=="AZIMUTH") {
 			IOUtils::parseArg(vecArgs[ii], where, azi);
 		}
 	}
