@@ -68,6 +68,8 @@ namespace mio {
  *
  */
 
+static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
+
 EditingBlock::EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
              : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "InputEditing::"+name+" for station "+i_stationID, cfg.get("TIME_ZONE", "Input")) ), stationID( IOUtils::strToUpper(i_stationID) ), block_name(name) {}
  
@@ -294,6 +296,16 @@ void EditingExclude::parse_args(const std::vector< std::pair<std::string, std::s
 
 void EditingExclude::processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params)
 {
+	//special case for the wildcard parameter
+	if (params.size()==1 && *params.begin()=="*") {
+		for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
+			vecMeteo[jj].date.setUndef(true);
+		}
+		
+		vecMeteo.erase( std::remove_if(vecMeteo.begin(), vecMeteo.end(), IsUndef), vecMeteo.end());
+		return;
+	}
+	
 	for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
 		for (std::set<std::string>::const_iterator it_set=params.begin(); it_set != params.end(); ++it_set) { //loop over the parameters to exclude
 			const std::string param( *it_set );
@@ -731,6 +743,9 @@ std::set<std::string> EditingMetadata::providedIDs() const
 * element (so it does not contain data anymore). This methods looks for the appropriate insertion point, 
 * copies the MeteoData into it and resets the original element (so it's now empty). 
 * if there is already an element in vecMeteo for the same timestamp, it will be overwritten
+* 
+* @note at this point, there is no guarantee that the vectors are sorted (this comes after the Data Editing)
+* 
 * @param vecMeteo MeteoData timeseries for the new station
 * @param md original MeteoData element to copy the data from and reset
 * @return the index of the new element in vecMeteo

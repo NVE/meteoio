@@ -150,13 +150,17 @@ class EditingMove : public EditingBlock {
  * @brief EXCLUDE input editing command
  * @details
  * It is possible to exclude specific parameters with the "exclude" command. This is done by providing a space delimited list of 
- * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument. The exact opposite can also be done, excluding 
- * ALL parameters except the ones declared with the "keep" command.
+ * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument (the exact opposite can also be done, excluding 
+ * ALL parameters except the ones declared with the "keep" command). Giving as parameters the wildcard character \em * deletes the whole timestamp.
  *
  * @code
  * [InputEditing]
  * FLU2::edit3         = EXCLUDE
  * FLU2::arg3::params  = TA RH TSS TSG
+ * 
+ * SLF2::edit1         = EXCLUDE
+ * SLF2::arg3::params  = *
+ * SLF2::arg3::when    = 2020-09-01 - 2020-09-03
  * @endcode
  */
 class EditingExclude : public EditingBlock {
