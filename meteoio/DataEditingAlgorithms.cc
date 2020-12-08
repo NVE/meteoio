@@ -273,7 +273,7 @@ void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// EXCLUDE
 EditingExclude::EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), exclude_params()
+            : EditingBlock(i_stationID, vecArgs, name, cfg), exclude_params(), wildcard(false)
 {
 	parse_args(vecArgs);
 }
@@ -292,25 +292,22 @@ void EditingExclude::parse_args(const std::vector< std::pair<std::string, std::s
 	}
 
 	if (!has_excludes || exclude_params.empty()) throw InvalidArgumentException("Please provide a valid EXCLUDE value for "+where, AT);
+	if (exclude_params.size()==1 && *exclude_params.begin()=="*") wildcard = true;
 }
 
-void EditingExclude::processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params)
+void EditingExclude::processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params) const
 {
-	//special case for the wildcard parameter
-	if (params.size()==1 && *params.begin()=="*") {
+	if (wildcard) { //special case for the wildcard parameter
 		for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
 			vecMeteo[jj].date.setUndef(true);
 		}
-		
-		vecMeteo.erase( std::remove_if(vecMeteo.begin(), vecMeteo.end(), IsUndef), vecMeteo.end());
-		return;
-	}
-	
-	for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
-		for (std::set<std::string>::const_iterator it_set=params.begin(); it_set != params.end(); ++it_set) { //loop over the parameters to exclude
-			const std::string param( *it_set );
-			if (vecMeteo[jj].param_exists(param))
-				vecMeteo[jj](param) = IOUtils::nodata;
+	} else {
+		for (size_t jj = startIdx; jj < endIdx; ++jj) { //loop over the timesteps
+			for (std::set<std::string>::const_iterator it_set=params.begin(); it_set != params.end(); ++it_set) { //loop over the parameters to exclude
+				const std::string param( *it_set );
+				if (vecMeteo[jj].param_exists(param))
+					vecMeteo[jj](param) = IOUtils::nodata;
+			}
 		}
 	}
 }
@@ -324,6 +321,9 @@ void EditingExclude::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
 			processStation(vecMeteo[station], editPeriod.getStart(), editPeriod.getEnd(), exclude_params);
 		}
+		
+		if (wildcard) 
+			vecMeteo[station].erase( std::remove_if(vecMeteo[station].begin(), vecMeteo[station].end(), IsUndef), vecMeteo[station].end());
 	}
 }
 

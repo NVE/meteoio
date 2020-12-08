@@ -171,8 +171,9 @@ class EditingExclude : public EditingBlock {
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params);
+		void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params) const;
 		std::set< std::string > exclude_params;
+		bool wildcard;
 };
 
 /** 
