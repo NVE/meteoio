@@ -75,8 +75,8 @@ namespace mio {
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
-		                 last_cloudiness(), use_rswr(false) { parse_args(vecArgs); }
+		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
+		                 last_cloudiness(), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -89,11 +89,11 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 			OMSTEDT,
 			UNSWORTH
 		} parametrization;
-		parametrization model;
 
 		SunObject sun;
-		TauCLDGenerator::clf_parametrization clf_model;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		parametrization model;
+		TauCLDGenerator::clf_parametrization clf_model;
 		bool use_rswr;
 };
 

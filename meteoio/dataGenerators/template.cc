@@ -53,13 +53,15 @@ bool TEMPLATE::create(const size_t& param, const size_t& ii_min, const size_t& i
 {
 	if (vecMeteo.empty()) return true;
 
+	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		//either call generate() on each point or process the vector in one go.
 		//when working on the whole vector, some optimizations might be implemented.
-		if (!generate(param, vecMeteo[ii])) return false;
+		const bool status = generate(param, vecMeteo[ii]);
+		if (status==false) all_filled=false;
 	}
 
-	return true; //all missing values could be filled
+	return all_filled; //could all missing values be filled?
 }
 
 } //namespace
