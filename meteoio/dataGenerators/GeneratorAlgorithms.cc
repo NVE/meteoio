@@ -25,15 +25,16 @@
 #include <meteoio/dataGenerators/ClearSkySWGenerator.h>
 #include <meteoio/dataGenerators/ConstGenerator.h>
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
-#include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
-#include <meteoio/dataGenerators/PrecSplitting.h>
 #include <meteoio/dataGenerators/HumidityGenerator.h>
+#include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
+#include <meteoio/dataGenerators/MeteoIndexGenerator.h>
+#include <meteoio/dataGenerators/PrecSplitting.h>
+#include <meteoio/dataGenerators/RadiationComponents.h>
 #include <meteoio/dataGenerators/SinGenerator.h>
 #include <meteoio/dataGenerators/StdPressGenerator.h>
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
 #include <meteoio/dataGenerators/TsGenerator.h>
 #include <meteoio/dataGenerators/WindComponents.h>
-#include <meteoio/dataGenerators/RadiationComponents.h>
 
 namespace mio {
 
@@ -112,6 +113,7 @@ namespace mio {
  * - PRECSPLITTING: generate the precipitation phase and/or convert between amount / phase and split precipitation (see PrecSplitting)
  * - RADCOMPONENTS: generate the global radiation ISWR from the direct and diffuse components (see RadiationComponents)
  * - WINDCOMPONENTS: generate the wind velocity and/or wind direction from the U and V wind components (see WindComponents)
+ * - METEOINDEX: generate common meteorological indices (see MeteoIndex)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -174,6 +176,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, c
 		return new ESOLIPGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "PRECSPLITTING"){
 		return new PrecSplitting(vecArgs, i_algoname, i_section, TZ);
+	} else if (algoname == "METEOINDEX"){
+		return new MeteoIndex(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "PPHASE"){
 		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
 	} else {
