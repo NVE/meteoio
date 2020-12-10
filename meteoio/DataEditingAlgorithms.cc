@@ -643,9 +643,25 @@ void EditingCopy::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// CREATE
 EditingCreate::EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), cfg_copy(cfg), vecArgs_copy(vecArgs), algorithm(), dest_param()
+            : EditingBlock(i_stationID, vecArgs, name, cfg), cfg_copy(cfg), vecArgs_copy( cleanGeneratorArgs(vecArgs) ), algorithm(), dest_param()
 {
 	parse_args(vecArgs);
+}
+
+//removes the arguments for the InputDataEditing stage before forwarding them to the dataGenerators 
+//since they might otherwise complain of an unknown argument...
+const std::vector< std::pair<std::string, std::string> > EditingCreate::cleanGeneratorArgs(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	std::vector< std::pair<std::string, std::string> > vecTmp;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const std::string argument( vecArgs[ii].first );
+		if (argument=="ALGORITHM" || argument=="PARAM") continue;
+		
+		vecTmp.push_back( vecArgs[ii] );
+	}
+	
+	return vecTmp;
 }
 
 void EditingCreate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)

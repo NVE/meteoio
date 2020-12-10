@@ -369,6 +369,7 @@ class EditingCreate : public EditingBlock {
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
 	private:
+		static const std::vector< std::pair<std::string, std::string> > cleanGeneratorArgs(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		
 		const Config &cfg_copy;
