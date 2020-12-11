@@ -395,22 +395,23 @@ class EditingCreate : public EditingBlock {
  * disappear and be replaced by the new one. If there are time restrictions, both stations will remain side by side, although with
  * an obviously different time coverage. Since there is a dependency resolution, you can declare some Input Data Editing on the
  * new station ID, it will be applied properly and any editing declared *after* the ID editing command will only apply for data
- * outside of time restrictions (if any) for the renaming command.
+ * outside of time restrictions (if any) for the renaming command. When creating a new station, it makes sense to also provide the
+ * geographic coordinates for it...
  * 
  * @code
  * SLF2::edit1 = METADATA
- * SLF2::arg1::altitude = 1560	;set the altitude to 1560m
+ * SLF2::arg1::altitude = 1560     ;set the altitude to 1560m
  * 
  * 
  * FLU2::edit1 = METADATA
  * FLU2::arg1::id = TST2
  * FLU2::arg1::WHEN = 2020-01-01 - 2020-02-01	;all data in this time range will move to the new TST2 station
  * 
- * FLU2::edit2 = EXCLUDE				;this will only be applied to data outside the above-defined range
+ * FLU2::edit2 = EXCLUDE            ;this will only be applied to data outside the above-defined range
  * FLU2::arg2::params = TA
  * 
- * TST2::edit1 = SWAP				; data in the above-defined range will come to this new station
- * TST2::arg1::dest = TA1				; and then this SWAP will be applied
+ * TST2::edit1 = SWAP               ; data in the above-defined range will come to this new station
+ * TST2::arg1::dest = TA1           ; and then this SWAP will be applied
  * TST2::arg1::src = TA2
  * @endcode
  */
@@ -426,11 +427,11 @@ class EditingMetadata : public EditingBlock {
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		static size_t moveTimestamp(METEO_SET& vecMeteo, MeteoData& md);
+		void mergeMigratedData(std::vector<METEO_SET>& vecMeteo, const std::vector<METEO_SET>& vecTmp) const;
 		
 		std::string new_name, new_id;
 		double lat, lon, alt, slope, azi;
-		bool insert_new_station;
+		bool edit_in_place;
 };
 
 class EditingBlockFactory {

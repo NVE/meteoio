@@ -701,7 +701,7 @@ void EditingCreate::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// METADATA
 EditingMetadata::EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), new_name(), new_id(), lat(IOUtils::nodata), lon(IOUtils::nodata), alt(IOUtils::nodata), slope(IOUtils::nodata), azi(IOUtils::nodata), insert_new_station(false)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), new_name(), new_id(), lat(IOUtils::nodata), lon(IOUtils::nodata), alt(IOUtils::nodata), slope(IOUtils::nodata), azi(IOUtils::nodata), edit_in_place(true)
 {
 	parse_args(vecArgs);
 }
@@ -734,9 +734,7 @@ void EditingMetadata::parse_args(const std::vector< std::pair<std::string, std::
 	if ( (slope!=IOUtils::nodata && azi==IOUtils::nodata) || (slope==IOUtils::nodata && azi!=IOUtils::nodata))
 		throw InvalidArgumentException("Please provide both slope and azimuth for "+where, AT);
 	
-	insert_new_station = (!new_id.empty() && !time_restrictions.empty());
-	if (insert_new_station && stationID=="*")
-		throw InvalidArgumentException("It is not possible to set a new station ID for the '*' wildcard station when time restrictions are active, please change some options for "+where, AT);
+	edit_in_place = (new_id.empty() || (!new_id.empty() && time_restrictions.empty()));
 }
 
 std::set<std::string> EditingMetadata::providedIDs() const
@@ -749,93 +747,62 @@ std::set<std::string> EditingMetadata::providedIDs() const
 }
 
 /**
-* @brief Move the provided timestamp into the given vector
+* @brief Insert the migrated timestamps into their proper position
 * @details 
-* if dispatching some parts of one station to another one through an ID rename, then it is necessary to
-* move the data to the new station by inserting a new element into the new station and reseting the original
-* element (so it does not contain data anymore). This methods looks for the appropriate insertion point, 
-* copies the MeteoData into it and resets the original element (so it's now empty). 
-* if there is already an element in vecMeteo for the same timestamp, it will be overwritten
+* If dispatching some parts of one station to another one through an ID rename, then it is necessary to
+* move the data to the new station by inserting new elements into the new station and reseting the original
+* element (so it does not contain data anymore). This is handled through a merge: a temporary storage (vecTmp)
+* contains all the data to migrate and is then merged with the new station (it gets created if necessary).
 * 
-* @note at this point, there is no guarantee that the vectors are sorted (this comes after the Data Editing)
+* This way, renaming multiple stations' subsets to the same ID works smoothly (although if they overlap, 
+* a conflcit resolution will kick in and the user might not be aware of this).
 * 
 * @param vecMeteo MeteoData timeseries for the new station
-* @param md original MeteoData element to copy the data from and reset
-* @return the index of the new element in vecMeteo
+* @param vecTmp temportary storage
 */
-size_t EditingMetadata::moveTimestamp(METEO_SET& vecMeteo, MeteoData& md)
+void EditingMetadata::mergeMigratedData(std::vector<METEO_SET>& vecMeteo, const std::vector<METEO_SET>& vecTmp) const
 {
-	const Date dt( md.date );
+	size_t new_station_pos = IOUtils::npos;
 	
-	//easy case: continuously appending data
-	if (vecMeteo.empty() || vecMeteo.back().date < dt) {
-		vecMeteo.push_back( md );
-		md.reset();
-		return vecMeteo.size()-1;
-	}
-	
-	//insert new timestamp before the first position
-	if (vecMeteo[0].date>dt) {
-		vecMeteo.insert(vecMeteo.begin(), md);
-		md.reset();
-		return 0;
-	}
-	
-	//look for the proper insertion position
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		//found the exact timestamp
-		if (vecMeteo[ii].date==dt) {
-			vecMeteo[ii] = md;
-			md.reset();
-			return ii;
-		}
-		
-		//already too far
-		if (vecMeteo[ii].date>dt) {
-			vecMeteo.insert(vecMeteo.begin()+ii-1, md);
-			md.reset();
-			return ii-1;
+	//do we already have a station with this ID?
+	for (size_t station=0; station<vecMeteo.size(); ++station) {
+		if (vecMeteo[station].empty()) continue;
+		if (vecMeteo[station].front().getStationID()==new_id) {
+			new_station_pos = station;
+			break;
 		}
 	}
 	
-	//this should never be executed
-	return 0;
+	//create a new station
+	if (new_station_pos == IOUtils::npos) {
+		vecMeteo.push_back( std::vector<MeteoData>() );
+		new_station_pos = vecMeteo.size()-1;
+	}
+	
+	for (size_t station=0; station<vecTmp.size(); ++station) {
+		MeteoData::mergeTimeSeries(vecMeteo[new_station_pos], vecTmp[station], MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY);
+	}
 }
+
 
 void EditingMetadata::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	const size_t nrStations = vecMeteo.size();
-	
-	//if a new station must be inserted, search where
-	size_t new_station_pos = IOUtils::npos;
-	if (insert_new_station) {
-		for (size_t station=0; station<vecMeteo.size(); ++station) {
-			if (vecMeteo[station].empty()) continue;
-			if (vecMeteo[station].front().getStationID()==new_id) {
-				new_station_pos = station;
-				break;
-			}
-		}
-		
-		if (new_station_pos == IOUtils::npos) {
-			vecMeteo.push_back( std::vector<MeteoData>() );
-			new_station_pos = vecMeteo.size()-1;
-		}
-	}
+	std::vector<METEO_SET> vecTmp; //in case of !edit_in_place, temporary storage for the migrated data
 	
 	//now perform the edition on the data, populating a new station if necessary
 	for (size_t station=0; station<nrStations; ++station) { //for each station, excluding the potential new one
+		if (!edit_in_place) vecTmp.push_back( std::vector<MeteoData>() );
 		if (skipStation(vecMeteo[station])) continue;
-		
-		//if a new station is created, track where the new timestamps must be inserted
-		size_t insert_idx = IOUtils::npos;
 		
 		//the next two lines are required to offer time restrictions
 		for (RestrictionsIdx editPeriod(vecMeteo[station], time_restrictions); editPeriod.isValid(); ++editPeriod) {
 			for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
-				
-				if (insert_new_station) insert_idx = moveTimestamp(vecMeteo[new_station_pos], vecMeteo[station][jj]);
-				StationData &sd = (insert_new_station)? vecMeteo[new_station_pos][insert_idx].meta : vecMeteo[station][jj].meta;
+				if (!edit_in_place) {
+					vecTmp[station].push_back( vecMeteo[station][jj] );
+					vecMeteo[station][jj].reset();
+				}
+				StationData &sd = (!edit_in_place)? vecTmp[station].back().meta : vecMeteo[station][jj].meta;
 				
 				if (!new_name.empty()) sd.stationName = new_name;
 				if (!new_id.empty()) sd.stationID = new_id;
@@ -845,6 +812,9 @@ void EditingMetadata::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			}
 		}
 	}
+	
+	if (!edit_in_place) //if migrating data between stations (ie editing the station ID)
+		mergeMigratedData(vecMeteo, vecTmp);
 }
 
 void EditingMetadata::editTimeSeries(STATIONS_SET& vecStation)
@@ -863,7 +833,7 @@ void EditingMetadata::editTimeSeries(STATIONS_SET& vecStation)
 	
 	//if a new station must be inserted, search where
 	size_t new_station_pos = IOUtils::npos;
-	if (insert_new_station) {
+	if (!edit_in_place) {
 		for (size_t station=0; station<vecStation.size(); ++station) {
 			if (vecStation[station].getStationID()==new_id) {
 				new_station_pos = station;
@@ -878,7 +848,7 @@ void EditingMetadata::editTimeSeries(STATIONS_SET& vecStation)
 	}
 	
 	//now do the metadata changes
-	StationData &sd = (insert_new_station)? vecStation[new_station_pos] : vecStation[src_index];
+	StationData &sd = (!edit_in_place)? vecStation[new_station_pos] : vecStation[src_index];
 	if (!new_name.empty()) sd.stationName = new_name;
 	if (!new_id.empty()) sd.stationID = new_id;
 	if (lat!=IOUtils::nodata) sd.position.setLatLon(lat, lon, sd.position.getAltitude());
