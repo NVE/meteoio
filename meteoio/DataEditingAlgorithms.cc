@@ -810,6 +810,7 @@ void EditingMetadata::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	size_t new_station_pos = IOUtils::npos;
 	if (insert_new_station) {
 		for (size_t station=0; station<vecMeteo.size(); ++station) {
+			if (vecMeteo[station].empty()) continue;
 			if (vecMeteo[station].front().getStationID()==new_id) {
 				new_station_pos = station;
 				break;
@@ -823,7 +824,7 @@ void EditingMetadata::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 	
 	//now perform the edition on the data, populating a new station if necessary
-	for (size_t station=0; station<nrStations; ++station) { //for each station
+	for (size_t station=0; station<nrStations; ++station) { //for each station, excluding the potential new one
 		if (skipStation(vecMeteo[station])) continue;
 		
 		//if a new station is created, track where the new timestamps must be inserted
