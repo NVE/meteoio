@@ -249,7 +249,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
-TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+TimeShift::TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), dst_changes()
 {
 	const std::string where( "Filters::"+block_name );
@@ -267,12 +267,12 @@ TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& v
 
 		dst_changes = ProcessingBlock::readCorrections(block_name, filename, cfg.get("TIME_ZONE", "Input"), 2);
 		if (dst_changes.empty())
-			throw InvalidArgumentException("Please provide at least one DST correction for " + where, AT);
+			throw InvalidArgumentException("Please provide at least one time shift for " + where, AT);
 	} else
 		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
 }
 
-void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
+void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 	if (param!=IOUtils::unodata)
 		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
