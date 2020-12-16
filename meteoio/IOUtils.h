@@ -188,6 +188,8 @@ namespace IOUtils {
 
 	void stripComments(std::string& str);
 	
+	void stripComments(std::string& str, const char& comment_mk);
+	
 	/**
 	 * @brief Replace a substring within a given string by another one.
 	 * @details This should be quite similar to Boost::replace_all.

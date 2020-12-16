@@ -133,6 +133,14 @@ void stripComments(std::string& str)
 	}
 }
 
+void stripComments(std::string& str, const char& comment_mk)
+{
+	const size_t found = str.find_first_of(comment_mk);
+	if (found != std::string::npos){
+		str.erase(found); //rest of line disregarded
+	}
+}
+
 void trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
