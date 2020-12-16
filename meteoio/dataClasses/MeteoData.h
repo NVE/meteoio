@@ -108,6 +108,7 @@ class MeteoData {
 		///Keywords for selecting the toString formats
 		typedef enum {
 			DFLT, ///< Shows detailed information, skipping nodata fields
+			FULL, ///< Shows detailed information, including nodata fields
 			COMPACT ///< output optimized to print the content of vector<MeteoData>
 		} FORMATS;
 		

@@ -795,7 +795,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 			//There is an inconsistency in the fields, print out a warning and proceed
 			cerr << "[W] While writing SMET file: Inconsistency in number of meteo "
 				<< "parameters for station " << stationname << " at " << vecMeteo[ii].date.toString(Date::ISO) << endl;
-				std::cout << "before: " << vecMeteo[ii-1].toString() << "\nAfter: " << vecMeteo[ii].toString() << "\n";
+				std::cout << "before: " << vecMeteo[ii-1].toString(MeteoData::FULL) << "\nAfter: " << vecMeteo[ii].toString(MeteoData::FULL) << "\n";
 			return MeteoData::nrOfParameters;
 		}
 	}
