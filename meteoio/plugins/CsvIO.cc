@@ -1256,8 +1256,10 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 	
 	//build MeteoData template
 	MeteoData template_md( Date(0., 0.), params.getStation() );
-	for (size_t ii=0; ii<nr_of_data_fields; ii++)
+	for (size_t ii=0; ii<nr_of_data_fields; ii++) {
+		if (params.skip_fields.count(ii)>0) continue;
 		template_md.addParameter( params.csv_fields[ii] );
+	}
 
 	return template_md;
 }
