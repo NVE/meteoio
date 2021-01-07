@@ -158,7 +158,6 @@ class Grid3DObject{
 		*/
 		void extractLayer(const size_t& i_z, Grid2DObject& layer);
 
-		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
 		Grid3DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid3DObject& operator+=(const double& rhs);

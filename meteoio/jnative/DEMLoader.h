@@ -31,7 +31,7 @@ private:
 
 
   static DEMLoader *getInstance (){
-    if (NULL == singleton){
+    if (nullptr == singleton){
         singleton =  new DEMLoader;
      }
     return singleton;
@@ -78,9 +78,9 @@ public:
 	* Public static access to destroy (interest ?!?)
 	*/
 	static void kill (){
-		if (NULL != singleton) {
+		if (nullptr != singleton) {
 			delete singleton; //call destructor
-			singleton = NULL;
+			singleton = nullptr;
 		  }
 	  }
 

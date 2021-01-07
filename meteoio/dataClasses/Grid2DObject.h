@@ -74,8 +74,6 @@ class Grid2DObject {
 
 		Grid2DObject(const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
-		virtual ~Grid2DObject() {}
-
 		/**
 		* @brief constructs an object as a subset of another grid object
 		* @param i_grid2Dobj initial grid object
@@ -177,7 +175,6 @@ class Grid2DObject {
 		*/
 		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
-		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		Grid2DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid2DObject& operator+=(const double& rhs);

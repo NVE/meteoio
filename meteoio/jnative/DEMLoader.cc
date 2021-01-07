@@ -21,7 +21,7 @@
 using namespace mio;
 
 // Initialisation
-DEMLoader *DEMLoader::singleton = NULL;
+DEMLoader *DEMLoader::singleton = nullptr;
 
 // DEMLoader::_singleton->demMap is a critical resource in a multithread context
 //Any writting needs to be synchrionized first !
@@ -36,7 +36,7 @@ IOInterface* DEMLoader::generateIOInterface(
 		const std::string  cDemCoordSystem,
 		const std::string cInterfaceType){
 
-	IOInterface *io = NULL;
+	IOInterface *io = nullptr;
 	try {
 		cfg.addKey("DEMFILE", "Input", FileUtils::cleanPath(cDemFile));
 		cfg.addKey("COORDSYS", "Input", cDemCoordSystem);
@@ -64,7 +64,7 @@ IOInterface* DEMLoader::generateIOInterface(
 	}catch (const IOException&){
 		std::cerr << "Problem with IOInterface ganeration in DEMLoader singleton, cause: "
 					<< e.what() << std::endl;
-		return NULL ;
+		return nullptr ;
 	}
 	return io;
 }
@@ -100,7 +100,7 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 		try{
 			if ( iter == demMap.end() ){
 				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
-				if (io!=NULL){
+				if (io!=nullptr){
 					std::cerr << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 					DEMObject dem;
 					dem.setUpdatePpt(DEMObject::NO_UPDATE);
@@ -157,7 +157,7 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 		if ( iter == demMap.end() ){
 			try{
 				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
-				if (io!=NULL){
+				if (io!=nullptr){
 					std::cerr << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 					DEMObject dem;
 					dem.setUpdatePpt(DEMObject::NO_UPDATE);

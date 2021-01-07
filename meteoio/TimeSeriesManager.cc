@@ -289,7 +289,7 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		if (raw_requested_end>i_date) buffer_end = raw_requested_end + proc_properties.time_after;
 		raw_requested_end.setUndef(true);
 	}
-	std::vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or raw_buffer
+	std::vector< vector<MeteoData> >* data = nullptr; //reference to either filtered_cache or raw_buffer
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool rebuffer_filtered = filtered_cache.empty() || (filtered_cache.getBufferStart() > buffer_start) || (filtered_cache.getBufferEnd() < buffer_end);
 		if (rebuffer_filtered) { //explicit caching, rebuffer if necessary

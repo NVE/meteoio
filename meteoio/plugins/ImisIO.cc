@@ -264,12 +264,12 @@ void ImisIO::openDBConnection(oracle::occi::Environment*& env, oracle::occi::Con
 void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn) const
 {
 	try {
-		if (conn != NULL)
+		if (conn != nullptr)
 			env->terminateConnection(conn);
-		if (env != NULL)
+		if (env != nullptr)
 			Environment::terminateEnvironment(env); // static OCCI function
-		conn = NULL;
-		env = NULL;
+		conn = nullptr;
+		env = nullptr;
 	} catch (const exception&){
 		Environment::terminateEnvironment(env); // static OCCI function
 	}
@@ -280,8 +280,8 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation.clear();
 
 	if (vecStationMetaData.empty()){//Imis station meta data cannot change between time steps
-		Environment *env = NULL;
-		Connection *conn = NULL;
+		Environment *env = nullptr;
+		Connection *conn = nullptr;
 
 		try {
 			openDBConnection(env, conn);
@@ -404,9 +404,9 @@ std::vector<std::string> ImisIO::readStationIDs()
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	Environment *env = NULL;
-	Connection *conn = NULL;
-	Statement *stmt = NULL;
+	Environment *env = nullptr;
+	Connection *conn = nullptr;
+	Statement *stmt = nullptr;
 
 	try {
 		if (vecStationMetaData.empty()) {
@@ -422,7 +422,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		vecMeteo.clear();
 		vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
-		if ((env == NULL) || (conn == NULL))
+		if ((env == nullptr) || (conn == nullptr))
 			openDBConnection(env, conn);
 		stmt = conn->createStatement();
 

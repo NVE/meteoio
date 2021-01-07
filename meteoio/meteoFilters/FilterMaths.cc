@@ -49,7 +49,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 	te_variable *te_vars = new te_variable[substitutions.size()]; //substitutions are built in constructor
 	initExpressionVars(te_vars); //build te_variables from substitution vectors
 	te_expr *expr_formula = compileExpression(formula, te_vars, substitutions.size()); //main formula
-	te_expr *expr_formula_else = NULL; //only compile if available
+	te_expr *expr_formula_else = nullptr; //only compile if available
 	if (!formula_else.empty()) {
 		try {
 			expr_formula_else = compileExpression(formula_else, te_vars, substitutions.size());

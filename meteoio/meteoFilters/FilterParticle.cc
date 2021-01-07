@@ -93,7 +93,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	te_variable *te_vars = new te_variable[sub_expr.size()];
 	initFunctionVars(te_vars, sub_expr, sub_values); //build te_variables from substitution vectors
-	te_expr *expr_model = NULL; //only compile if available
+	te_expr *expr_model = nullptr; //only compile if available
 	te_expr *expr_obs = compileExpression(obs_model_expression, te_vars, sub_expr.size());
 
 	/*

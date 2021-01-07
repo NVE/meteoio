@@ -102,9 +102,9 @@ jdoubleArray __internalWrapper
 	jboolean isCopyClusterThresholds;
 	jboolean isCopyClusterIds;
 	jboolean isCopyOptions;
-	double *cClusterThresholds = NULL;
-	double *cClusterIds = NULL;
-	double *cOptions = NULL;
+	double *cClusterThresholds = nullptr;
+	double *cClusterIds = nullptr;
+	double *cOptions = nullptr;
 	std::vector<double> vecClusterThresholds;
 	std::vector<double> vecClusterIds;
 	if (bClusterization || bPolygonize){

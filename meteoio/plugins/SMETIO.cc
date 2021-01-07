@@ -522,7 +522,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
-			smet::SMETWriter *mywriter = NULL;
+			smet::SMETWriter *mywriter = nullptr;
 			const bool fileExists = FileUtils::fileExists(filename);
 			if (fileExists && allowAppend) {
 				std::string fields = (outputIsAscii)? "timestamp" : "julian"; //we force the first field to have the time

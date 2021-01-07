@@ -155,7 +155,7 @@ void SMETCommon::copy_file(const std::string& src, const std::string& dest)
 
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
-	char* conversion_end = NULL;
+	char* conversion_end = nullptr;
 	const double conversion_value = strtod(in_string.c_str(), &conversion_end);
 
 	if (*conversion_end == '\0') {

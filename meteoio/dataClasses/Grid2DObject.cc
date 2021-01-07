@@ -28,18 +28,6 @@ using namespace std;
 
 namespace mio {
 
-Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
-	if (this != &source) {
-		grid2D = source.grid2D;
-		cellsize = source.cellsize;
-		llcorner = source.llcorner;
-		ur_lat = source.ur_lat;
-		ur_lon = source.ur_lon;
-		isLatLon = source.isLatLon;
-	}
-	return *this;
-}
-
 Grid2DObject& Grid2DObject::operator=(const double& value) {
 	grid2D = value;
 	return *this;

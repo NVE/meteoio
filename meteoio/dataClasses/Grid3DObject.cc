@@ -24,17 +24,6 @@ using namespace std;
 
 namespace mio {
 
-Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
-	if (this != &source) {
-		grid3D = source.grid3D;
-		cellsize = source.cellsize;
- 		llcorner = source.llcorner;
-		z = source.z;
-		z_is_absolute = source.z_is_absolute;
-	}
-	return *this;
-}
-
 Grid3DObject& Grid3DObject::operator=(const double& value) {
 	grid3D = value;
 	return *this;

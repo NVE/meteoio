@@ -551,7 +551,7 @@ void ConfigParser::processEnvVars(std::string& value)
 		const size_t len = pos_end - (pos_start+len_env_var_marker); //we have tested above that this is >=1
 		const std::string envVar( value.substr(pos_start+len_env_var_marker, len ) );
 		char *tmp = getenv( envVar.c_str() );
-		if (tmp==NULL) 
+		if (tmp==nullptr) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
 		
 		value.replace(pos_start, pos_end+1, std::string(tmp)); //we also replace the closing "}"

@@ -67,18 +67,18 @@ void MessageBoxX11( const char* title, const char* text ) {
 	XSetBackground( dpy, gc, white );
 
 	/* Split the text down into a list of lines */
-	char **strvec = NULL;
+	char **strvec = nullptr;
 	size_t strvec_size = 0, text_len = strlen(text)+1;
 	char *temp = (char *)malloc( text_len );
 	strncpy( temp, text, text_len );
 
 	char *pch = strtok( temp, "\n" );
-	while ( pch!=NULL ) {
+	while ( pch!=nullptr ) {
 		strvec = (char **)realloc( strvec, (strvec_size+1)*sizeof(char**) );
 		strvec[ strvec_size ] = (char *)malloc( strlen(pch)+1 );
 		strncpy( strvec[ strvec_size ], pch, strlen(pch)+1 );
 		++strvec_size;
-		pch = strtok( NULL, "\n" );
+		pch = strtok( nullptr, "\n" );
 	}
 	free( temp );
 

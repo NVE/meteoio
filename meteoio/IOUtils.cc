@@ -310,13 +310,13 @@ std::string getLogName()
 {
 	char *tmp;
 
-	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
-		if ((tmp=getenv("LOGNAME"))==NULL) { //Unix
+	if ((tmp=getenv("USERNAME"))==nullptr) { //Windows & Unix
+		if ((tmp=getenv("LOGNAME"))==nullptr) { //Unix
 			tmp=getenv("USER"); //Windows & Unix
 		}
 	}
 
-	if (tmp==NULL) return std::string("");
+	if (tmp==nullptr) return std::string("");
 	return std::string(tmp);
 }
 
