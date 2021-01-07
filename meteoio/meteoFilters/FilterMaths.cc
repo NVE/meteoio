@@ -362,7 +362,7 @@ void FilterMaths::initExpressionVars(te_variable* vars)
 		vars[cc].name = it->first.c_str();
 		vars[cc].address = &it->second;
 		vars[cc].type = 0;
-		vars[cc].context = 0;
+		vars[cc].context = nullptr;
 		cc++;
 	}
 }

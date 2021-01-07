@@ -45,7 +45,6 @@ enum LocationType {WGS84, EPSG};
 class SMETException : public std::exception {
 	public:
 		SMETException(const std::string& message="SMETException occured", const std::string& position="");
-		~SMETException() noexcept;
 		const char* what() const noexcept;
 
 	protected:
@@ -226,7 +225,6 @@ class SMETReader {
 		 * @param[in] in_fname The filename of the SMET file
 		 */
 		SMETReader(const std::string& in_fname);
-		~SMETReader(){}
 
 		/**
 		 * @brief Read the data in a SMET file for a given interval of time

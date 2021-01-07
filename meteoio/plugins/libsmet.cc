@@ -47,8 +47,6 @@ set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 SMETException::SMETException(const std::string& message, const std::string& position)
               : msg( (position.empty())? "At unknown position: " + message : position + ": " + message + "\n") {}
 
-SMETException::~SMETException() noexcept {}
-
 const char* SMETException::what() const noexcept
 {
 	return msg.c_str();

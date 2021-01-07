@@ -296,7 +296,7 @@ void FilterParticle::initFunctionVars(te_variable* vars, const std::vector<std::
 		vars[ii].name = expr[ii].c_str();
 		vars[ii].address = &values.data()[ii];
 		vars[ii].type = 0;
-		vars[ii].context = 0;
+		vars[ii].context = nullptr;
 	}
 }
 
