@@ -225,7 +225,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			false, NULL, NULL, false, NULL);
+			false, nullptr, nullptr, false, nullptr);
 }
 
 
@@ -239,7 +239,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			false, NULL, NULL, false, NULL);
+			false, nullptr, nullptr, false, nullptr);
 }
 
 
@@ -253,7 +253,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			true, jClusterThresholds, jClusterIds, false, NULL);
+			true, jClusterThresholds, jClusterIds, false, nullptr);
 }
 
 

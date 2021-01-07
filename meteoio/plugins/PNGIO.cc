@@ -277,7 +277,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(std::strerror(errno)), AT);
 
 	// Initialize write structure
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	if (png_ptr == nullptr) {
 		fclose(fp); fp=nullptr;
 		throw IOException("Could not allocate write structure. Are you running with the same version of libpng that you linked to?", AT);
@@ -466,7 +466,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
-	png_write_end(png_ptr, NULL);
+	png_write_end(png_ptr, nullptr);
 
 	closePNG(png_ptr, info_ptr, palette);
 }
@@ -615,7 +615,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
-	png_write_end(png_ptr, NULL);
+	png_write_end(png_ptr, nullptr);
 
 	closePNG(png_ptr, info_ptr, palette);
 }

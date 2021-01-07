@@ -55,7 +55,7 @@ namespace mio {
  *
  * So, if you are currently using this (cf. \ref rng_appendix_A):
  * @code
- *     srand( time(NULL) );
+ *     srand( time(nullptr) );
  *     return rand() % range;
  *     return rand() / double(RAND_MAX + 1);
  * @endcode
@@ -433,7 +433,7 @@ namespace mio {
  * @section rng_appendix_A Appendix A
  * Why is
  * @code
- * srand( time(NULL) );
+ * srand( time(nullptr) );
  * return rand() % range;
  * return rand() / double(RAND_MAX + 1);
  * @endcode

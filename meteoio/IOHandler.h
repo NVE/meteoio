@@ -39,7 +39,7 @@ class IOHandler : public IOInterface {
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
 
-		virtual ~IOHandler() throw();
+		virtual ~IOHandler() noexcept;
 
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 

@@ -304,7 +304,7 @@ IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), preProcessor(cfgreader), mapPlugins()
 {}
 
-IOHandler::~IOHandler() throw()
+IOHandler::~IOHandler() noexcept
 {
 	// Get rid of the objects
 	std::map<std::string, IOInterface*>::iterator mapit( mapPlugins.begin() );

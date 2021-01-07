@@ -112,7 +112,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 	const int okBaseX = okX1 + 15;
 	const int okBaseY = okY1 + 2 + okHeight;
 
-	//XFreeFontInfo( NULL, font, 1 ); /* We don't need that anymore */
+	//XFreeFontInfo( nullptr, font, 1 ); /* We don't need that anymore */
 
 	/* Make the window non resizeable */
 	XUnmapWindow( dpy, w );

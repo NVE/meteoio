@@ -464,8 +464,6 @@ class ConfigProxy {
 			proxycfg.getValue(key, section, tmp, IOUtils::dothrow);
 			return tmp;
 		}
-
-		ConfigProxy& operator =(const ConfigProxy& /*i_cfg*/) {return *this;} //making VC++ happy...
 };
 
 class ConfigParser {

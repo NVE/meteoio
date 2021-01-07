@@ -683,7 +683,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	}
 
 	if (randomColors)
-		srand( static_cast<unsigned int>(time(NULL)) );
+		srand( static_cast<unsigned int>(time(nullptr)) );
 
 	mywriter.set_header_value("fields", ss.str());
 	if (outputPlotHeaders && some_params_identified) {

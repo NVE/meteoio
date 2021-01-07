@@ -62,7 +62,7 @@ public:
 #ifdef WIN32
         InitializeCriticalSection(&m_criticalSection);
 #else
-        pthread_mutex_init(&m_criticalSection, NULL);
+        pthread_mutex_init(&m_criticalSection, nullptr);
 #endif
     }
 
