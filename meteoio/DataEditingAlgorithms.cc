@@ -187,7 +187,7 @@ void EditingSwap::parse_args(const std::vector< std::pair<std::string, std::stri
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			IOUtils::toUpper( src_param ),
+			IOUtils::toUpper( src_param );
 			has_src = true;
 		}
 	}
@@ -614,7 +614,7 @@ void EditingCopy::parse_args(const std::vector< std::pair<std::string, std::stri
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			IOUtils::toUpper( src_param ),
+			IOUtils::toUpper( src_param );
 			has_src = true;
 		}
 	}
