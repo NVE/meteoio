@@ -158,7 +158,7 @@ PNGIO& PNGIO::operator=(const PNGIO& source) {
 	return *this;
 }
 
-PNGIO::~PNGIO() throw() 
+PNGIO::~PNGIO() noexcept 
 {
 	if (fp!=nullptr) fclose(fp); 
 	fp=nullptr;

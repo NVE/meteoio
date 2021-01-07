@@ -174,7 +174,7 @@ GRIBIO& GRIBIO::operator=(const GRIBIO& source) {
 	return *this;
 }
 
-GRIBIO::~GRIBIO() throw()
+GRIBIO::~GRIBIO() noexcept
 {
 	cleanup();
 }
@@ -1050,7 +1050,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	free(values); free(values2);
 }
 
-void GRIBIO::cleanup() throw()
+void GRIBIO::cleanup() noexcept
 {
 	if (fp!=nullptr) fclose(fp); fp=nullptr;
 	if (idx!=nullptr) grib_index_delete(idx); idx=nullptr;

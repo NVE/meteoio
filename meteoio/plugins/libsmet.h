@@ -45,8 +45,8 @@ enum LocationType {WGS84, EPSG};
 class SMETException : public std::exception {
 	public:
 		SMETException(const std::string& message="SMETException occured", const std::string& position="");
-		~SMETException() throw();
-		const char* what() const throw();
+		~SMETException() noexcept;
+		const char* what() const noexcept;
 
 	protected:
 		std::string msg;
@@ -345,7 +345,7 @@ class SMETReader {
 		std::string getLastTimestamp() const;
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);
-		void cleanup(std::ifstream& fin) throw();
+		void cleanup(std::ifstream& fin) noexcept;
 		void checkSignature(const std::vector<std::string>& vecSignature, bool& o_isAscii);
 		void read_header(std::ifstream& fin);
 		void process_header();

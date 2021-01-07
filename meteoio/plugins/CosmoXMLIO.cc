@@ -206,7 +206,7 @@ CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
 	return *this;
 }
 
-CosmoXMLIO::~CosmoXMLIO() throw()
+CosmoXMLIO::~CosmoXMLIO() noexcept
 {
 	closeIn_XML();
 }
@@ -272,7 +272,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	}
 }
 
-void CosmoXMLIO::closeIn_XML() throw()
+void CosmoXMLIO::closeIn_XML() noexcept
 {
 	if (in_xpathCtx!=nullptr) {
 		xmlXPathFreeContext(in_xpathCtx);

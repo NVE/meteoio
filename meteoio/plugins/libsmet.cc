@@ -47,9 +47,9 @@ set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 SMETException::SMETException(const std::string& message, const std::string& position)
               : msg( (position.empty())? "At unknown position: " + message : position + ": " + message + "\n") {}
 
-SMETException::~SMETException() throw() {}
+SMETException::~SMETException() noexcept {}
 
-const char* SMETException::what() const throw()
+const char* SMETException::what() const noexcept
 {
 	return msg.c_str();
 }
@@ -909,7 +909,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	cleanup(fin); //closes file
 }
 
-void SMETReader::cleanup(std::ifstream& fin) throw()
+void SMETReader::cleanup(std::ifstream& fin) noexcept
 {
 	if (fin.is_open()) //close fin if open
 		fin.close();

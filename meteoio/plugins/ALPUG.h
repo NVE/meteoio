@@ -39,7 +39,6 @@ class ALPUG : public IOInterface {
 		ALPUG(const std::string& configfile);
 		ALPUG(const ALPUG&);
 		ALPUG(const Config& cfgreader);
-		~ALPUG() throw() {}
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,

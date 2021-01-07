@@ -62,7 +62,7 @@ TEMPLATE::TEMPLATE(const Config& cfgreader) : cfg(cfgreader)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-TEMPLATE::~TEMPLATE() throw()
+TEMPLATE::~TEMPLATE() noexcept
 {
 	//if there is no need to cleanup some pointers before exiting, do not even declare a destructor!
 }
@@ -125,7 +125,7 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	 */
 }
 
-void TEMPLATE::cleanup() throw()
+void TEMPLATE::cleanup() noexcept
 {
 	//if there is nothing to cleanup, remove this method
 }

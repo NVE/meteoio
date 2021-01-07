@@ -179,7 +179,7 @@ class CsvIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection();
-		void cleanup() throw();
+		void cleanup() noexcept;
 		std::string setDateParsing(const std::string& datetime_spec);
 		std::vector<std::string> readHeaders(std::ifstream& fin, CsvParameters& params) const;
 		static MeteoData createTemplate(const CsvParameters& params);

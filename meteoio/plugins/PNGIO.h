@@ -39,7 +39,7 @@ class PNGIO : public IOInterface {
 		PNGIO(const std::string& configfile);
 		PNGIO(const PNGIO&);
 		PNGIO(const Config& cfgreader);
-		~PNGIO() throw();
+		~PNGIO() noexcept;
 
 		PNGIO& operator=(const PNGIO&); ///<Assignement operator, required because of pointer member
 
