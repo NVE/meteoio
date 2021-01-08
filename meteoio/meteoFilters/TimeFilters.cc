@@ -444,6 +444,24 @@ TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
 	}
 }
 
+TimeProcStack::TimeProcStack(const TimeProcStack& source) : filter_stack()
+{
+	const size_t nFilters = source.filter_stack.size();
+	filter_stack.resize( nFilters, nullptr );
+	for(size_t ii=0; ii<nFilters; ii++) filter_stack[ii] = source.filter_stack[ii];
+}
+
+TimeProcStack& TimeProcStack::operator=(const TimeProcStack& source)
+{
+	if (this != &source) {
+		const size_t nFilters = source.filter_stack.size();
+		filter_stack.resize( nFilters, nullptr );
+		for(size_t ii=0; ii<nFilters; ii++) filter_stack[ii] = source.filter_stack[ii];
+	}
+	
+	return *this;
+}
+
 void TimeProcStack::process(Date &dateStart, Date &dateEnd)
 {
 	const size_t nr_of_filters = filter_stack.size();

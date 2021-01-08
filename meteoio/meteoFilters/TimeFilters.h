@@ -32,12 +32,14 @@ namespace mio {
  */
 class TimeProcStack {
 	public:
-		TimeProcStack(const Config& cfg);
+		TimeProcStack(const Config& i_cfg);
+		TimeProcStack(const TimeProcStack& source);
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
 		void process(std::vector< std::vector<MeteoData> >& ivec);
 		void process(Date &dateStart, Date &dateEnd);
 
+		TimeProcStack& operator=(const TimeProcStack& source);
 		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
