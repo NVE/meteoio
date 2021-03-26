@@ -982,7 +982,7 @@ std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, 
 	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
 		double *data = new double;
 		if (time_pos!=IOUtils::npos)
-			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, var.dimid_time, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in
+			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, var.dimid_time, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
 		else
 			ncpp::read_data_point(ncid, var, it->second, it->first, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
 		//handle data packing and units, if necessary
