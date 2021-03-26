@@ -40,6 +40,7 @@ class ncFiles {
 		std::vector<Date> getTimestamps() const;
 		Grid2DObject read2DGrid(const size_t& param, const Date& date);
 		Grid2DObject read2DGrid(const std::string& varname);
+		std::vector< double > readPointsIn2DGrid(const size_t& param, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 
 		void write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, const Date& date);
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
@@ -57,6 +58,7 @@ class ncFiles {
 		void initDimensionsFromFile();
 
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false);
+		std::vector< double > readPointsIn2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const std::vector< std::pair<size_t, size_t> >& Pts, const bool& m2mm=false);
 		double read_0Dvariable(const size_t& param) const;
 		std::vector<Date> read_1Dvariable() const;
 		std::vector<double> read_1Dvariable(const size_t& param) const;
@@ -81,6 +83,7 @@ class ncFiles {
 		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
+		void applyUnits(double& val, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		static void applyUnits(std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& nrStations, const size_t& nrSteps, const std::string& units, const std::string& parname);
 		size_t getParameterIndex(const std::string& param_name);
 
@@ -117,6 +120,7 @@ class NetCDFIO : public IOInterface {
 		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list);
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 		virtual void readDEM(DEMObject& dem_out);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
