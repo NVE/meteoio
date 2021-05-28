@@ -52,6 +52,7 @@
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 #include <meteoio/meteoFilters/ProcRHWaterToIce.h>
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
+#include <meteoio/meteoFilters/ProcShift.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
@@ -221,6 +222,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcMult(vecArgs, blockname, cfg);
 	} else if (blockname == "QM"){
 		return new ProcQuantileMapping(vecArgs, blockname, cfg);
+	} else if (blockname == "SHIFT"){
+		return new ProcShift(vecArgs, blockname, cfg);
 	} 
 
 	//more specific data transformations
