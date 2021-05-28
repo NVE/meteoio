@@ -35,7 +35,8 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	
 	//getShiftOffset(ivec);
-	getPearson(ivec, Date(2019, 4, 1, 0, 0, +1.), 2.);
+	//getPearson(ivec, Date(2019, 4, 1, 0, 0, +1.), 2.);
+	getOffset(ivec, Date(2019, 4, 1, 0, 0, +1.), 2.);
 	return;
 	
 	/*for (size_t ii=0; ii<ovec.size(); ii++){
@@ -116,14 +117,31 @@ std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vect
 	return vecResults;
 }
 
+std::vector< std::pair<Date, double> > ProcShift::extractVector(const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const
+{
+	//compute the reference vector vecX
+	//find the indices to cover the right extend for TA_1
+	size_t ii_start=0;
+	while (ii_start<ivec.size() && ivec[ii_start].date<(dt_start+offset)) ii_start++;
+	if (ii_start>0) ii_start--; //to include the last timestamp before the period
+	size_t ii_end=ii_start;
+	while (ii_end<ivec.size() && ivec[ii_end].date<(dt_start+width_d+offset)) ii_end++;
+	if (ii_end<ivec.size()-1) ii_end++; //to include the first timestamp after the period
+	
+	std::vector< std::pair<Date, double> > vecX(ii_end-ii_start+1);
+	for (size_t ii=0; ii<vecX.size(); ii++) vecX[ii] = make_pair(ivec[ii+ii_start].date + offset, ivec[ii+ii_start](param));
+	
+	return vecX;
+}
+
 //Pearson's coefficient between two datasets, X and Y which for us are extracted from the same ivec but for different parameters
 //the sums for X are recomputed to make sure that if Y[ii] is nodata, no value is taken for the matching X
-double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t &ii_start, const size_t &ii_end) const
+double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const
 {
 	if (vecX.size() != vecY.size()) throw IOException("Both vectors must have the same size, "+IOUtils::toString(vecX.size())+" != "+IOUtils::toString(vecY.size()), AT);
 	size_t count=0;
 	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
-	for (size_t ii=ii_start; ii<ii_end; ii++) {
+	for (size_t ii=0; ii<vecX.size(); ii++) {
 		const double valueX = vecX[ii].second;
 		const double valueY = vecY[ii].second;
 		if (valueX!=IOUtils::nodata && valueY!=IOUtils::nodata) {
@@ -146,47 +164,27 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
 	return pearson;
 }
 
-double ProcShift::getPearson(const std::vector<MeteoData>& ivec, const Date& dt_start, const double& width_d) const
+double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_start, const double& width_d) const
 {
 	if (ivec.empty()) return IOUtils::nodata;
 	
+	//build the reference vector vecX
+	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start, width_d, 0.) );
+	
 	const int nrSteps = 24*6;
 	const double step = width_d / static_cast<double>(nrSteps);
-	
-	//compute the reference vector vecX
-	//find the indices to cover the right extend for TA_1
-	size_t ii_Xstart=0;
-	while (ii_Xstart<ivec.size() && ivec[ii_Xstart].date<dt_start) ii_Xstart++;
-	if (ii_Xstart>0) ii_Xstart--; //to include the last timestamp before the period
-	size_t ii_Xend=ii_Xstart;
-	while (ii_Xend<ivec.size() && ivec[ii_Xend].date<(dt_start+width_d)) ii_Xend++;
-	if (ii_Xend<ivec.size()-1) ii_Xend++; //to include the first timestamp after the period
-	std::vector< std::pair<Date, double> > vecX(ii_Xend-ii_Xstart+1);
-	for (size_t ii=0; ii<vecX.size(); ii++) vecX[ii] = make_pair(ivec[ii+ii_Xstart].date, ivec[ii+ii_Xstart]("TA_1"));
-	
-	//try nrSteps offsets, from -width_d/2 to +width_d/2
-	//for each, compute the average Pearson's coefficient
-	for (int ss=0; ss<nrSteps; ss++) {
+	int ss=0;
+	while (ss<nrSteps) {
 		const double offset = static_cast<double>(ss)*step - 0.5*width_d;
-		
-		//compute the comparison vector vecY
-		//find the indices to cover the right extend for TA_2
-		size_t ii_Ystart=0;
-		while (ii_Ystart<ivec.size() && ivec[ii_Ystart].date<(dt_start+offset)) ii_Ystart++;
-		if (ii_Ystart>0) ii_Ystart--; //to include the last timestamp before the period
-		size_t ii_Yend=ii_Ystart;
-		while (ii_Yend<ivec.size() && ivec[ii_Yend].date<(dt_start+offset+width_d)) ii_Yend++;
-		if (ii_Yend<ivec.size()-1) ii_Yend++; //to include the first timestamp after the period
-		std::vector< std::pair<Date, double> > vecY(ii_Yend-ii_Ystart+1);
-		for (size_t ii=0; ii<vecY.size(); ii++) vecY[ii] = make_pair(ivec[ii+ii_Ystart].date + offset, ivec[ii+ii_Ystart]("TA_2"));
-		
-		std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
+		//build the comparison vector vecY that contains the second parameter with an offset shift
+		const std::vector< std::pair<Date, double> > vecY( extractVector(ivec, "TA_2", dt_start, width_d, offset) );
+		//build the resampled comparison vector
+		const std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
 		
 		double sum=0.;
 		size_t count=0;
 		for (size_t ii=0; ii<vecResults.size(); ii++) {
-			const Date dt_middle( 0.5*(vecX.front().first.getJulian() + vecX.back().first.getJulian()), vecX.front().first.getTimeZone() );
-			const double Pearson = getPearson(vecX, vecResults, 0, vecX.size());
+			const double Pearson = getPearson(vecX, vecResults);
 			if (Pearson!=IOUtils::nodata) {
 				sum += Pearson;
 				count++;
@@ -195,34 +193,10 @@ double ProcShift::getPearson(const std::vector<MeteoData>& ivec, const Date& dt_
 		
 		if (count>0)
 			std::cout << offset*24.*60. << " " << sum/static_cast<double>(count) << "\n";
-			//std::cout << "Offset=" << offset*24.*60. << " Pearson_avg=" << sum/static_cast<double>(count) << "\n";
-	}
-}
-
-double ProcShift::getShiftOffset(const std::vector<MeteoData>& ivec) const
-{
-	if (ivec.empty()) return IOUtils::nodata;
-	static const double width_d = 1.; //in days
-	const size_t n = ivec.size();
-	
-	//build vecX and vecY
-	std::vector< std::pair<Date, double> > vecX(n), vecY(n);
-	for (size_t ii=0; ii<n; ii++) vecX[ii] = make_pair(ivec[ii].date, ivec[ii]("TA_1"));
-	for (size_t ii=0; ii<n; ii++) vecY[ii] = make_pair(ivec[ii].date, ivec[ii]("TA_2"));
-	
-	std::cout << "Pearson's coefficients\n"; 
-	std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
-	for (size_t ii=0; ii<n; ii++) {
-		const Date dt_end( vecX[ii].first+width_d );
-		size_t ii_end = ii;
-		while (ii_end<n && vecX[ii_end].first<dt_end) ii_end++;
-		if (ii_end==n) break;
-		const Date dt_middle( 0.5*(vecX[ii].first.getJulian() + vecX[ii_end].first.getJulian()), vecX[ii].first.getTimeZone() );
-		const double Pearson = getPearson(vecX, vecResults, ii, ii_end);
-		if (Pearson!=IOUtils::nodata) 
-			std::cout << dt_middle.toString(Date::ISO) << " " << fabs(Pearson) << "\n";
 		else
-			std::cout << dt_middle.toString(Date::ISO) << " " << IOUtils::nodata << "\n";
+			std::cout << offset*24.*60. << " " << IOUtils::nodata << "\n";
+		
+		ss++;
 	}
 	
 	return IOUtils::nodata;

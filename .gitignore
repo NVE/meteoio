@@ -11,3 +11,6 @@ lib/*.so*
 /CPackConfig.cmake
 /CPackSourceConfig.cmake
 /cmake_uninstall.cmake
+/bin/meteoio_timeseries
+/applications/Makefile
+/meteoio/IOHandler.cc
