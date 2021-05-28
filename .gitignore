@@ -1,0 +1,13 @@
+*CMakeFiles/*
+**/CMakeFiles/*
+**/cmake_install.cmake
+meteoio/**/Makefile
+lib/*.so*
+**/*~
+
+/CMakeCache.txt
+/CMakeDoxyfile.in
+/CMakeDoxygenDefaults.cmake
+/CPackConfig.cmake
+/CPackSourceConfig.cmake
+/cmake_uninstall.cmake
