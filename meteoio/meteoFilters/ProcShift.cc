@@ -34,9 +34,9 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 {
 	ovec = ivec;
 	
-	//getShiftOffset(ivec);
-	//getPearson(ivec, Date(2019, 4, 1, 0, 0, +1.), 2.);
-	getOffset(ivec, Date(2019, 4, 1, 0, 0, +1.), 2.);
+	const Date dt_offset(2019, 4, 1, 0, 0, +1.);
+	const double width_d = 1.;
+	getOffset(ivec, dt_offset, width_d);
 	return;
 	
 	/*for (size_t ii=0; ii<ovec.size(); ii++){
@@ -164,40 +164,90 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
 	return pearson;
 }
 
+double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const
+{
+	//build the comparison vector vecY that contains the second parameter with an offset shift
+	const std::vector< std::pair<Date, double> > vecY( extractVector(ivec, param, dt_start, width_d, offset) );
+	//build the resampled comparison vector
+	const std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
+	
+	//compute the average Pearson's coefficient over the data window width_d
+	double sum=0.;
+	size_t count=0;
+	for (size_t ii=0; ii<vecResults.size(); ii++) {
+		const double Pearson = getPearson(vecX, vecResults);
+		if (Pearson!=IOUtils::nodata) {
+			sum += Pearson;
+			count++;
+		}
+	}
+	
+	if (count>0)
+		return sum/static_cast<double>(count);
+	else
+		return IOUtils::nodata;
+}
+
 double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_start, const double& width_d) const
 {
 	if (ivec.empty()) return IOUtils::nodata;
 	
 	//build the reference vector vecX
-	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start, width_d, 0.) );
+	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start-width_d, width_d*2, 0.) ); //to have enough overlap with vecY and various offsets
 	
-	const int nrSteps = 24*6;
-	const double step = width_d / static_cast<double>(nrSteps);
-	int ss=0;
-	while (ss<nrSteps) {
-		const double offset = static_cast<double>(ss)*step - 0.5*width_d;
-		//build the comparison vector vecY that contains the second parameter with an offset shift
-		const std::vector< std::pair<Date, double> > vecY( extractVector(ivec, "TA_2", dt_start, width_d, offset) );
-		//build the resampled comparison vector
-		const std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
-		
-		double sum=0.;
-		size_t count=0;
-		for (size_t ii=0; ii<vecResults.size(); ii++) {
-			const double Pearson = getPearson(vecX, vecResults);
-			if (Pearson!=IOUtils::nodata) {
-				sum += Pearson;
-				count++;
-			}
+// 	const int nrSteps = 24*6;
+// 	const double step = width_d / static_cast<double>(nrSteps);
+// 	int ss=0;
+// 	while (ss<nrSteps) {
+// 		const double offset = static_cast<double>(ss)*step - 0.5*width_d;
+// 		
+// 		const double pearson = getPearson(vecX, ivec, "TA_2", dt_start, width_d, offset);
+// 		//std::cout << offset*24.*60. << " " << pearson << "\n";
+// 		
+// 
+// 		ss++;
+// 	}
+	static const double r = Cst::phi - 1.;
+	static const double c = 1. - r;
+	static const double eps = 1e-5;
+	
+	double range_min = -0.5*width_d;
+	double pearson_min = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_min);
+	double range_max = 0.5*width_d;
+	double pearson_max = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_max);
+	double offset_c = IOUtils::nodata, offset_r = IOUtils::nodata;
+	double pearson_c, pearson_r;
+	while (true) {
+		if (offset_c==IOUtils::nodata) {
+			offset_c = (range_max - range_min)*c + range_min;
+			pearson_c = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_c);
 		}
 		
-		if (count>0)
-			std::cout << offset*24.*60. << " " << sum/static_cast<double>(count) << "\n";
-		else
-			std::cout << offset*24.*60. << " " << IOUtils::nodata << "\n";
+		const double pearson_avg = (pearson_min + pearson_max + pearson_c) / 3.;
+		if (fabs(pearson_min-pearson_avg)<eps && fabs(pearson_max-pearson_avg)<eps && fabs(pearson_c-pearson_avg)<eps)
+			break;
 		
-		ss++;
+		if (offset_r==IOUtils::nodata) {
+			offset_r = (range_max - range_min)*r + range_min;
+			pearson_r = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_r);
+		}
+		
+		if (pearson_c>pearson_r) {
+			range_max = offset_r;
+			pearson_max = pearson_r;
+			offset_r = offset_c;
+			pearson_r = pearson_c;
+			offset_c = IOUtils::nodata;
+		} else {
+			range_min = offset_c;
+			pearson_min = pearson_c;
+			offset_c = offset_r;
+			pearson_c = pearson_r;
+			offset_r = IOUtils::nodata;
+		}
 	}
+	
+	std::cout << dt_start.toString(Date::ISO) << " " << offset_c*24.*60. << " " << pearson_c << "\n";
 	
 	return IOUtils::nodata;
 }

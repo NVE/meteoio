@@ -53,6 +53,7 @@ class ProcShift : public ProcessingBlock { //use this one for simple filter that
 		std::vector< std::pair<Date, double> > resampleVector(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const;
 		std::vector< std::pair<Date, double> > extractVector(const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const;
 		double getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const;
+		double getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const;
 		double getOffset(const std::vector<MeteoData>& ivec, const Date& dt_start, const double& width_d) const;
 };
 
