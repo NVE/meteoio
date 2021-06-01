@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoFilters/ProcShift.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
 
 using namespace std;
 
@@ -34,10 +35,17 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 {
 	ovec = ivec;
 	
-	const Date dt_offset(2019, 4, 1, 0, 0, +1.);
+	/*const Date dt_offset(2019, 4, 1, 0, 0, +1.);
 	const double width_d = 1.;
 	getOffset(ivec, dt_offset, width_d);
-	return;
+	return;*/
+	
+	static const double width_d = 0.8;
+	for (size_t ii=0; ii<ivec.size(); ii++){
+		if (ivec[ii]("TA_1") == IOUtils::nodata) continue; //preserve nodata values
+
+		getOffset(ivec, ivec[ii].date, width_d);
+	}
 	
 	/*for (size_t ii=0; ii<ovec.size(); ii++){
 		//here, implement what has to be done on each data point
@@ -49,6 +57,17 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 			tmp = IOUtils::nodata;
 		}
 	}*/
+}
+
+double ProcShift::getMedianSampling(const unsigned int& param, const std::vector<MeteoData>& ivec) const
+{
+	std::vector<double> vecSampling(ivec.size()-1);
+	
+	for (size_t ii=0; ii<(ivec.size()-1); ii++){
+		vecSampling[ii] = ivec[ii+1].date.getJulian(true) - ivec[ii].date.getJulian(true);
+	}
+	
+	return Interpol1D::getMedian(vecSampling, false);
 }
 
 //resample vecY to the exact same timestamps as vecX with linear interpolation within a given gap width in days
@@ -138,7 +157,10 @@ std::vector< std::pair<Date, double> > ProcShift::extractVector(const std::vecto
 //the sums for X are recomputed to make sure that if Y[ii] is nodata, no value is taken for the matching X
 double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const
 {
-	if (vecX.size() != vecY.size()) throw IOException("Both vectors must have the same size, "+IOUtils::toString(vecX.size())+" != "+IOUtils::toString(vecY.size()), AT);
+	if (vecX.size() != vecY.size())  {
+		return IOUtils::nodata;
+		throw IOException("Both vectors must have the same size, "+IOUtils::toString(vecX.size())+" != "+IOUtils::toString(vecY.size()), AT);
+	}
 	size_t count=0;
 	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
 	for (size_t ii=0; ii<vecX.size(); ii++) {
@@ -193,23 +215,12 @@ double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_s
 	if (ivec.empty()) return IOUtils::nodata;
 	
 	//build the reference vector vecX
-	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start-width_d, width_d*2, 0.) ); //to have enough overlap with vecY and various offsets
+	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start-0.5*width_d, width_d, 0.) ); //to have enough overlap with vecY and various offsets
 	
-// 	const int nrSteps = 24*6;
-// 	const double step = width_d / static_cast<double>(nrSteps);
-// 	int ss=0;
-// 	while (ss<nrSteps) {
-// 		const double offset = static_cast<double>(ss)*step - 0.5*width_d;
-// 		
-// 		const double pearson = getPearson(vecX, ivec, "TA_2", dt_start, width_d, offset);
-// 		//std::cout << offset*24.*60. << " " << pearson << "\n";
-// 		
-// 
-// 		ss++;
-// 	}
+	//https://en.wikipedia.org/wiki/Golden-section_search
 	static const double r = Cst::phi - 1.;
 	static const double c = 1. - r;
-	static const double eps = 1e-5;
+	static const double eps = 1e-4;
 	
 	double range_min = -0.5*width_d;
 	double pearson_min = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_min);
@@ -217,19 +228,33 @@ double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_s
 	double pearson_max = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_max);
 	double offset_c = IOUtils::nodata, offset_r = IOUtils::nodata;
 	double pearson_c, pearson_r;
+	size_t count = 0;
 	while (true) {
 		if (offset_c==IOUtils::nodata) {
 			offset_c = (range_max - range_min)*c + range_min;
 			pearson_c = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_c);
 		}
 		
+		if (pearson_min==IOUtils::nodata || pearson_max==IOUtils::nodata || pearson_c==IOUtils::nodata) {
+			std::cout << "Wrong vector length at " << dt_start.toString(Date::ISO) << "\n";
+			break;
+		}
 		const double pearson_avg = (pearson_min + pearson_max + pearson_c) / 3.;
 		if (fabs(pearson_min-pearson_avg)<eps && fabs(pearson_max-pearson_avg)<eps && fabs(pearson_c-pearson_avg)<eps)
 			break;
 		
+		if (count>100) {
+			std::cout << "No convergence at " << dt_start.toString(Date::ISO) << " pearson_avg=" << pearson_avg << " offset_c=" << offset_c*24.*60. << " offset_r=" << offset_r*24.*60. << "\n";
+			break;
+		}
+		
 		if (offset_r==IOUtils::nodata) {
 			offset_r = (range_max - range_min)*r + range_min;
 			pearson_r = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_r);
+		}
+		if (pearson_r==IOUtils::nodata) {
+			std::cout << "Wrong vector length at " << dt_start.toString(Date::ISO) << "\n";
+			break;
 		}
 		
 		if (pearson_c>pearson_r) {
@@ -245,11 +270,13 @@ double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_s
 			pearson_c = pearson_r;
 			offset_r = IOUtils::nodata;
 		}
+		count++;
 	}
 	
-	std::cout << dt_start.toString(Date::ISO) << " " << offset_c*24.*60. << " " << pearson_c << "\n";
+	if (offset_c!=IOUtils::nodata)
+		std::cout << dt_start.toString(Date::ISO) << " " << offset_c*24.*60. << " " << pearson_c << "\n";
 	
-	return IOUtils::nodata;
+	return offset_c;
 }
 
 void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
