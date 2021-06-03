@@ -34,20 +34,41 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
+	if (ivec.empty()) return;
 	
-	/*const Date dt_offset(2019, 4, 1, 0, 0, +1.);
-	const double width_d = 1.;
-	getOffset(ivec, dt_offset, width_d);
-	return;*/
+	const size_t param_ta1 = ivec[0].getParameterIndex("TA_1");
+	const size_t param_ta2 = ivec[0].getParameterIndex("TA_2");
+	const double sampling_rate = getMedianSampling(param_ta1, ivec);
+	const std::vector< std::pair<Date, double> > vecX( resampleVector(ivec, param_ta1, sampling_rate) );
+	const std::vector< std::pair<Date, double> > vecY( resampleVector(ivec, param_ta2, sampling_rate) );
 	
-	static const double width_d = 0.8;
-	for (size_t ii=0; ii<ivec.size(); ii++){
-		if (ivec[ii]("TA_1") == IOUtils::nodata) continue; //preserve nodata values
+// 	//const Date dt_offset(2019, 4, 1, 0, 0, +1.);
+// 	const Date dt_offset(2019, 1, 29, 4, 0, +1.);
+// 	const double width_d = 2.;
+// 	static const size_t width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
+// 	size_t ii=0;
+// 	for (; ii<ivec.size(); ii++) if (vecX[ii].first>=dt_offset) break;
+// 	getOffset(vecX, vecY, ii, width_idx);
+// 	return;
+	
+	/*std::cout << "ta1\n";
+	for (size_t ii=0; ii<vecX.size(); ii++) {
+		std::cout << "@ " << vecX[ii].first.toString(Date::ISO) << " " << vecX[ii].second << "\n";
+	}
+	std::cout << "\n";
+	exit;*/
+	
+	static const double width_d = 3.;
+	static const size_t width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		//if (vecX[ii].second == IOUtils::nodata) continue; //preserve nodata values
 
-		getOffset(ivec, ivec[ii].date, width_d);
+		getOffset(vecX, vecY, ii, width_idx);
 	}
 	
-	/*for (size_t ii=0; ii<ovec.size(); ii++){
+	
+	
+	/*for (size_t ii=0; ii<ovec.size(); ii++) {
 		//here, implement what has to be done on each data point
 		//for example:
 		double& tmp = ovec[ii](param);
@@ -59,113 +80,90 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 	}*/
 }
 
-double ProcShift::getMedianSampling(const unsigned int& param, const std::vector<MeteoData>& ivec) const
+double ProcShift::getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec) const
 {
-	std::vector<double> vecSampling(ivec.size()-1);
+	std::vector<double> vecSampling;
 	
 	for (size_t ii=0; ii<(ivec.size()-1); ii++){
-		vecSampling[ii] = ivec[ii+1].date.getJulian(true) - ivec[ii].date.getJulian(true);
+		if (ivec[ii](param)!=IOUtils::nodata && ivec[ii+1](param)!=IOUtils::nodata)
+			vecSampling.push_back( ivec[ii+1].date.getJulian(true) - ivec[ii].date.getJulian(true) );
 	}
 	
 	return Interpol1D::getMedian(vecSampling, false);
 }
 
-//resample vecY to the exact same timestamps as vecX with linear interpolation within a given gap width in days
-std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const
+std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vector<MeteoData>& ivec, const size_t& param, const double& sampling_rate) const
 {
-	//if (vecX.size() != vecY.size()) throw IOException("Both vectors must have the same size", AT);
+	const size_t n_ivec = ivec.size();
+	const Date dt_start( ivec.front().date );
+	const size_t nrSteps = static_cast<size_t>(round( (ivec.back().date.getJulian(true) - dt_start.getJulian(true)) / sampling_rate ));
 	std::vector< std::pair<Date, double> > vecResults;
-	size_t jj = 0; //index in vecY
 	
-	for (size_t ii=0; ii<vecX.size(); ii++) {
-		if (jj==vecY.size()) { //fill with nodata since there is nothing else to do to keep all vector the same size
-			vecResults.push_back( make_pair(vecX[ii].first, IOUtils::nodata) );
+	size_t jj=0; //position within ivec
+	for (size_t ii=0; ii<nrSteps; ii++) {
+		const Date dt( dt_start+(static_cast<double>(ii)*sampling_rate) );
+		
+		if (ivec[jj].date==dt) {
+			vecResults.push_back( make_pair(dt, ivec[jj](param)) );
+			jj++;
 			continue;
 		}
 		
-		if (vecY[jj].first==vecX[ii].first) {
-			vecResults.push_back( vecY[jj] );
+		//find the first element >= dt
+		while (ivec[jj].date<dt) {
+			if (jj==(n_ivec-1)) {
+				return vecResults;
+			}
 			jj++;
-		} else { //either the point is before / after or we need to interpolate
-			bool not_found=false;
-			while (vecY[jj].first<vecX[ii].first) {
-				if (jj==(vecY.size()-1)) {
-					vecResults.push_back( make_pair(vecX[ii].first, IOUtils::nodata) );
-					not_found = true;
-					break;
-				}
-				jj++;
-			}
-			while (vecY[jj].first>vecX[ii].first) {
-				if (jj==0) {//vecY starts after vecX, skipping all points until they overlap
-					vecResults.push_back( make_pair(vecX[ii].first, IOUtils::nodata) );
-					not_found = true;
-					break;
-				}
-				jj--;
+		}
+		
+		if (jj>0) {
+			if (jj==n_ivec) return vecResults;
+			const double x1 = ivec[jj-1].date.getJulian(true);
+			const double x2 = ivec[jj].date.getJulian(true);
+			if ((x2-x1) > 2.*sampling_rate) { //only interpolate between nearby points
+				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
+				continue;
 			}
 			
-			if (not_found) continue;
+			const double y1 = ivec[jj-1](param);
+			const double y2 = ivec[jj](param);
+			if (x1==x2) throw IOException("Attempted division by zero", AT);
 			
-			//now vecY[jj].first<=vecX[ii].first
-			if (vecY[jj].first==vecX[ii].first) {
-				vecResults.push_back( vecY[jj] );
-				jj++;
-			} else { //we need to interpolate between jj and jj+1
-				if (jj==vecY.size()-1) return vecResults;
-				const double x1 = vecY[jj].first.getJulian();
-				const double x2 = vecY[jj+1].first.getJulian();
-				const double y1 = vecY[jj].second;
-				const double y2 = vecY[jj+1].second;
-				if (x1==x2) throw IOException("Attempted division by zero", AT);
+			if (y1!=IOUtils::nodata && y2!=IOUtils::nodata) {
+				const double a = (y2 - y1) / (x2 - x1);
+				const double b = y2 - a*x2;
+				const double x = dt.getJulian(true);
+				const double y = (a*x + b);
 				
-				if (y1!=IOUtils::nodata && y2!=IOUtils::nodata) {
-					const double a = (y2 - y1) / (x2 - x1);
-					const double b = y2 - a*x2;
-					const double x = vecX[ii].first.getJulian();
-					const double y = (a*x + b);
-					
-					vecResults.push_back( make_pair(vecX[ii].first, y) );
-				} else {
-					vecResults.push_back( make_pair(vecX[ii].first, IOUtils::nodata) );
-				}
+				vecResults.push_back( make_pair(dt, y) );
+			} else {
+				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
 			}
+		} else {
+			vecResults.push_back( make_pair(dt, IOUtils::nodata) );
 		}
 	}
-	
-	return vecResults;
 }
 
-std::vector< std::pair<Date, double> > ProcShift::extractVector(const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const
-{
-	//compute the reference vector vecX
-	//find the indices to cover the right extend for TA_1
-	size_t ii_start=0;
-	while (ii_start<ivec.size() && ivec[ii_start].date<(dt_start+offset)) ii_start++;
-	if (ii_start>0) ii_start--; //to include the last timestamp before the period
-	size_t ii_end=ii_start;
-	while (ii_end<ivec.size() && ivec[ii_end].date<(dt_start+width_d+offset)) ii_end++;
-	if (ii_end<ivec.size()-1) ii_end++; //to include the first timestamp after the period
-	
-	std::vector< std::pair<Date, double> > vecX(ii_end-ii_start+1);
-	for (size_t ii=0; ii<vecX.size(); ii++) vecX[ii] = make_pair(ivec[ii+ii_start].date + offset, ivec[ii+ii_start](param));
-	
-	return vecX;
-}
-
-//Pearson's coefficient between two datasets, X and Y which for us are extracted from the same ivec but for different parameters
+//Pearson's coefficient between two datasets
 //the sums for X are recomputed to make sure that if Y[ii] is nodata, no value is taken for the matching X
-double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY) const
+//indices given for vecX
+double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& offset) const
 {
-	if (vecX.size() != vecY.size())  {
-		return IOUtils::nodata;
-		throw IOException("Both vectors must have the same size, "+IOUtils::toString(vecX.size())+" != "+IOUtils::toString(vecY.size()), AT);
-	}
+	//compute the required data window, accounting for offsets in vecY that could 
+	//bring us outside vecY
+	size_t startIdx = curr_idx-width_idx/2;
+	if (-offset>(signed)startIdx) startIdx = static_cast<size_t>(-offset);
+	size_t endIdx = curr_idx+width_idx/2;
+	if (endIdx+static_cast<size_t>(offset)>vecX.size()) endIdx = vecX.size() - static_cast<size_t>(offset);
+	
+	//std::cout << "curr_idx=" << curr_idx << " width_idx=" << width_idx << " offset=" << offset << " startIdx=" << startIdx << " endIdx=" << endIdx << "\n";
 	size_t count=0;
 	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
-	for (size_t ii=0; ii<vecX.size(); ii++) {
+	for (size_t ii=startIdx; ii<endIdx; ii++) {
 		const double valueX = vecX[ii].second;
-		const double valueY = vecY[ii].second;
+		const double valueY = vecY[static_cast<size_t>((signed)ii+offset)].second;
 		if (valueX!=IOUtils::nodata && valueY!=IOUtils::nodata) {
 			sumX += valueX;
 			sumX2 += valueX * valueX;
@@ -186,95 +184,91 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
 	return pearson;
 }
 
-double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector<MeteoData>& ivec, const std::string& param, const Date& dt_start, const double& width_d, const double& offset) const
+int ProcShift::getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& range_min, const int& range_max) const
 {
-	//build the comparison vector vecY that contains the second parameter with an offset shift
-	const std::vector< std::pair<Date, double> > vecY( extractVector(ivec, param, dt_start, width_d, offset) );
-	//build the resampled comparison vector
-	const std::vector< std::pair<Date, double> > vecResults( resampleVector(vecX, vecY) );
-	
-	//compute the average Pearson's coefficient over the data window width_d
-	double sum=0.;
-	size_t count=0;
-	for (size_t ii=0; ii<vecResults.size(); ii++) {
-		const double Pearson = getPearson(vecX, vecResults);
-		if (Pearson!=IOUtils::nodata) {
-			sum += Pearson;
-			count++;
+	int offset_max = IOUtils::inodata;
+	double pearson_max = IOUtils::nodata;
+	unsigned int count = 0;
+	for (int offset=range_min; offset<=range_max; offset++) {
+		const double pearson = getPearson(vecX, vecY, curr_idx, width_idx, offset);
+		if (pearson==IOUtils::nodata) continue;
+		
+		//std::cout << offset << " " << pearson << "\n";
+		count++;
+		if (pearson>pearson_max) {
+			offset_max = offset;
+			pearson_max = pearson;
 		}
 	}
 	
-	if (count>0)
-		return sum/static_cast<double>(count);
-	else
-		return IOUtils::nodata;
+	if (pearson_max!=IOUtils::inodata)
+		std::cout << vecX[curr_idx].first.toString(Date::ISO) << " " << offset_max << " " << pearson_max << "\n";
+	
+	//we want to avoid looking for a maximum among too few points
+	if (count<10 || pearson_max==IOUtils::nodata)
+		return IOUtils::inodata;
+	
+	return offset_max;
 }
 
-double ProcShift::getOffset(const std::vector<MeteoData>& ivec, const Date& dt_start, const double& width_d) const
+double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx) const
 {
-	if (ivec.empty()) return IOUtils::nodata;
-	
-	//build the reference vector vecX
-	const std::vector< std::pair<Date, double> > vecX( extractVector(ivec, "TA_1", dt_start-0.5*width_d, width_d, 0.) ); //to have enough overlap with vecY and various offsets
-	
 	//https://en.wikipedia.org/wiki/Golden-section_search
 	static const double r = Cst::phi - 1.;
 	static const double c = 1. - r;
-	static const double eps = 1e-4;
 	
-	double range_min = -0.5*width_d;
-	double pearson_min = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_min);
-	double range_max = 0.5*width_d;
-	double pearson_max = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, range_max);
-	double offset_c = IOUtils::nodata, offset_r = IOUtils::nodata;
-	double pearson_c, pearson_r;
+	/*int range_min = -static_cast<int>(width_idx)/4;
+	int range_max = static_cast<int>(width_idx)/4;*/
+	int range_min = -12*6; //12 hours, times 10 minutes sampling rate
+	int range_max = 12*6;
+	int offset_c = IOUtils::inodata, offset_r = IOUtils::inodata;
+	double pearson_c = IOUtils::nodata, pearson_r = IOUtils::nodata;
 	size_t count = 0;
+	
+	//offset_c = getOffsetFullScan(vecX, vecY, curr_idx, width_idx, range_min, range_max);
+	
 	while (true) {
-		if (offset_c==IOUtils::nodata) {
-			offset_c = (range_max - range_min)*c + range_min;
-			pearson_c = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_c);
+		if (offset_c==IOUtils::inodata) {
+			offset_c = static_cast<int>( round(((double)range_max - (double)range_min)*c) ) + range_min;
+			pearson_c = getPearson(vecX, vecY, curr_idx, width_idx, offset_c);
 		}
 		
-		if (pearson_min==IOUtils::nodata || pearson_max==IOUtils::nodata || pearson_c==IOUtils::nodata) {
-			std::cout << "Wrong vector length at " << dt_start.toString(Date::ISO) << "\n";
-			break;
-		}
-		const double pearson_avg = (pearson_min + pearson_max + pearson_c) / 3.;
-		if (fabs(pearson_min-pearson_avg)<eps && fabs(pearson_max-pearson_avg)<eps && fabs(pearson_c-pearson_avg)<eps)
-			break;
-		
-		if (count>100) {
-			std::cout << "No convergence at " << dt_start.toString(Date::ISO) << " pearson_avg=" << pearson_avg << " offset_c=" << offset_c*24.*60. << " offset_r=" << offset_r*24.*60. << "\n";
-			break;
+		if (offset_r==IOUtils::inodata) {
+			offset_r = static_cast<int>( round(((double)range_max - (double)range_min)*r) ) + range_min;
+			pearson_r = getPearson(vecX, vecY, curr_idx, width_idx, offset_r);
 		}
 		
-		if (offset_r==IOUtils::nodata) {
-			offset_r = (range_max - range_min)*r + range_min;
-			pearson_r = getPearson(vecX, ivec, "TA_2", dt_start-0.5*width_d, width_d, offset_r);
-		}
-		if (pearson_r==IOUtils::nodata) {
-			std::cout << "Wrong vector length at " << dt_start.toString(Date::ISO) << "\n";
+		if (pearson_c==IOUtils::nodata || pearson_r==IOUtils::nodata) { //we must do a full scan
+			std::cout << "must do a full scan, curr_idx=" << curr_idx << "\n";
+			offset_c = getOffsetFullScan(vecX, vecY, curr_idx, width_idx, range_min, range_max);
 			break;
 		}
 		
-		if (pearson_c>pearson_r) {
+		if (pearson_c > pearson_r) {
 			range_max = offset_r;
-			pearson_max = pearson_r;
 			offset_r = offset_c;
 			pearson_r = pearson_c;
-			offset_c = IOUtils::nodata;
+			offset_c = IOUtils::inodata;
 		} else {
 			range_min = offset_c;
-			pearson_min = pearson_c;
 			offset_c = offset_r;
 			pearson_c = pearson_r;
-			offset_r = IOUtils::nodata;
+			offset_r = IOUtils::inodata;
 		}
+		
+		//check convergence
+		if ((range_max-range_min) < 2) 
+			break; //convergence criteria: within 1 cell of optimum
+		if (count>100) {
+			std::cout << "No convergence at " << vecX[curr_idx].first.toString(Date::ISO) << " offset_c=" << offset_c*24.*60. << " offset_r=" << offset_r*24.*60. << "\n";
+			break;
+		}
+		
 		count++;
 	}
 	
-	if (offset_c!=IOUtils::nodata)
-		std::cout << dt_start.toString(Date::ISO) << " " << offset_c*24.*60. << " " << pearson_c << "\n";
+	if (offset_c!=IOUtils::inodata)
+		std::cout << vecX[curr_idx].first.toString(Date::ISO) << " " << offset_c << " " << pearson_c << "\n";
 	
 	return offset_c;
 }
