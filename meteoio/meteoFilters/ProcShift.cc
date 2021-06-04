@@ -31,7 +31,7 @@ namespace mio {
 ProcShift::ProcShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), ref_param(), root_path(cfg.getConfigRootDir()), offsets_file(), cst_offset(IOUtils::nodata),
             sampling_rate(IOUtils::nodata), offset_range(1.), width_d(2.), width_idx(0), 
-            offsets_interp(stepwise), extract_offsets(false)
+            offsets_interp(cst), extract_offsets(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;

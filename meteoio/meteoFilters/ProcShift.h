@@ -29,14 +29,47 @@ namespace mio {
 
 /**
  * @class ProcShift
- * @brief This (empty) class is to be used as a template for developing new filters
+ * @brief Time shifting filter for the selected meteo parameter
  * @details
- * Here, write a description of how the filter operates, references to papers, etc
+ * This filter can correct the time base of a single parameter within a station, either with a constant offset or
+ * by reading time varying offsets from a provided file. Compared to the TimeShift time filter, this filter operates
+ * on only one parameter so it can shift parameters compared to each other within a given station dataset.
+ * 
+ * It can also compute the offset between two meteo parameter 
+ * (one being used as reference parameter) by computing at each timestamp the offset that leads to the highest
+ * Pearson's correlation coefficient and writing this timeseries of offsets to a file. This correlation 
+ * coefficient is evaluated over a given time window and sampling rate (the data is first temporarily forced-resampled
+ * at this constant sampling rate before computing the correlation coefficient). A large data window is more accurate
+ * but will fail to properly capture sudden changes while a short data window might generate some spurious offsets.
+ * In any case, it is advised to plot and tweak the generated timeseries of offsets first before using it to 
+ * correct the meteo parameter (keeping in mind that you have to swap the offsets' signs in order to perform 
+ * the correction).
+ * 
+ * This filter takes the following arguments:
+ *  - EXTRACT_OFFSETS: if set to TRUE, no correction is applied but the offsets between two meteo parameters
+ *                     are computed (defaut: false);
+ *      - OFFSETS_FILE: the file where the computed time offsets will be written (mandatory);
+ *      - REF_PARAM: the name of the reference meteo parameter (mandatory);
+ *      - SAMPLING_RATE: the sampling rate to use when computing the time offsets (default: automatically extracted from the data)
+ *      - WIDTH: data window width (in seconds) over which to compute each correlation coefficient (default: 2 days);
+ *      - OFFSET_RANGE: range of allowed variation for the offset when searching for the maximum correlation (default: 1 day, so looking for 
+ *                      a maximum between 1/2 a day before and after the current point);
+ *  - if EXTRACT_OFFSETS is set to false, the meteo parameter will be corrected.
+ *      - TYPE: the type of cortrection to apply, either CST (constant over the whole dataset), LINEAR (linear interpolation between the provided
+ *              offsets) or STEPWISE (keeping the last correction until finding a new correction). Default is CST;
+ *      - CST: when using the CST type, the offset value (in seconds, mandatory in this case);
+ *      - OFFSETS_FILE: for other correction types, a timeseries of offsets (in seconds, mandatory in this case).
+ * 
  * @ingroup processing
  * @author Mathias Bavay
- * @date   2014-02-19
+ * @date   2021-06-04
+ * 
+ * Example of configuration to compute the time offset between TA_2 and TA_1 used as reference:
  * @code
- * ILWR::filter1	= TEMPLATE
+ * TA_2::FILTER5 = SHIFT
+ * TA_2::ARG5::EXTRACT_OFFSETS = TRUE
+ * TA_2::ARG5::OFFSETS_FILE = TA_2_OFFSETS.dat
+ * TA_2::ARG5::REF_PARAM = TA_1
  * @endcode
  */
 

@@ -148,6 +148,7 @@ namespace mio {
  * - SUPPR: delete all or some data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
+ * - SHIFT: shift a specific meteo parameter in time, see ProcShift
  * - QM: quantile mapping, see ProcQuantileMapping
  *
  * As well as more specific data transformations:
