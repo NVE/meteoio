@@ -41,7 +41,6 @@ namespace mio {
  */
 
 class ProcShift : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class ProcShift : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
 		ProcShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
@@ -49,12 +48,34 @@ class ProcShift : public ProcessingBlock { //use this one for simple filter that
 		                     std::vector<MeteoData>& ovec);
 
 	private:
+		typedef enum INTERPOL_TYPE {
+			cst,
+			stepwise,
+			linear
+		} interpol_type;
+		
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		double getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec) const;
-		std::vector< std::pair<Date, double> > resampleVector(const std::vector<MeteoData>& ivec, const size_t& param, const double& sampling_rate) const;
-		double getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& offset) const;
-		int getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& range_min, const int& range_max) const;
-		double getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx) const;
+		void writeOffsets(const unsigned int& param, const std::vector<MeteoData>& ivec);
+		void correctOffsets(const unsigned int& param, std::vector<MeteoData>& ovec);
+		
+		static bool isAllNodata(const std::vector< std::pair<Date, double> >& vecX, const size_t& startIdx, const size_t& endIdx);
+		static double getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec);
+		
+		std::vector< std::pair<Date, double> > resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const;
+		double getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& offset) const;
+		int getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const;
+		double getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx) const;
+		
+		std::string ref_param; ///< The reference parameter to compare to
+		std::string root_path;
+		std::string offsets_file; ///< File name that contains the extracted offsets or the correction offsets
+		double cst_offset; ///< Constant correction offset, to be provided by the user
+		double sampling_rate; ///< dataset sampling rate to use, either automatically extracted or provided by the user
+		double offset_range; ///< range of time offsets to consider, in days
+		double width_d; ///< size of the data window in days
+		size_t width_idx; ///< size of the data window over which to compute the correlation
+		interpol_type offsets_interp; ///< type of interpolation to use to interpolate the provided offsets
+		bool extract_offsets; ///< do not apply any correcxtion but extract the time-varying offsets from the data
 };
 
 } //end namespace

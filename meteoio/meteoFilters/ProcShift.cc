@@ -18,13 +18,20 @@
 */
 #include <meteoio/meteoFilters/ProcShift.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/FileUtils.h>
+
+#include <cerrno>
+#include <cstring>
+#include <fstream>
 
 using namespace std;
 
 namespace mio {
 
 ProcShift::ProcShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-          : ProcessingBlock(vecArgs, name, cfg) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
+          : ProcessingBlock(vecArgs, name, cfg), ref_param(), root_path(cfg.getConfigRootDir()), offsets_file(), cst_offset(IOUtils::nodata),
+            sampling_rate(IOUtils::nodata), offset_range(1.), width_d(2.), width_idx(0), 
+            offsets_interp(stepwise), extract_offsets(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -36,51 +43,61 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ivec.empty()) return;
 	
-	const size_t param_ta1 = ivec[0].getParameterIndex("TA_1");
-	const size_t param_ta2 = ivec[0].getParameterIndex("TA_2");
-	const double sampling_rate = getMedianSampling(param_ta1, ivec);
-	const std::vector< std::pair<Date, double> > vecX( resampleVector(ivec, param_ta1, sampling_rate) );
-	const std::vector< std::pair<Date, double> > vecY( resampleVector(ivec, param_ta2, sampling_rate) );
-	
-// 	//const Date dt_offset(2019, 4, 1, 0, 0, +1.);
-// 	const Date dt_offset(2019, 1, 29, 4, 0, +1.);
-// 	const double width_d = 2.;
-// 	static const size_t width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
-// 	size_t ii=0;
-// 	for (; ii<ivec.size(); ii++) if (vecX[ii].first>=dt_offset) break;
-// 	getOffset(vecX, vecY, ii, width_idx);
-// 	return;
-	
-	/*std::cout << "ta1\n";
-	for (size_t ii=0; ii<vecX.size(); ii++) {
-		std::cout << "@ " << vecX[ii].first.toString(Date::ISO) << " " << vecX[ii].second << "\n";
+	if (extract_offsets) { //compute the offsets between two parameters
+		writeOffsets(param, ivec);
+	} else { //apply a correction file or a fixed correction
+		correctOffsets(param, ovec);
 	}
-	std::cout << "\n";
-	exit;*/
-	
-	static const double width_d = 3.;
-	static const size_t width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
-	for (size_t ii=0; ii<ivec.size(); ii++) {
-		//if (vecX[ii].second == IOUtils::nodata) continue; //preserve nodata values
+}
 
-		getOffset(vecX, vecY, ii, width_idx);
+void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoData>& ivec)
+{
+	//check and open the output file that will contain the extracted offsets
+	if (!FileUtils::validFileAndPath(offsets_file)) throw AccessException("Invalid file name \""+offsets_file+"\"", AT);
+	errno = 0;
+	
+	std::ofstream fout(offsets_file.c_str(), std::ofstream::out | ios::binary);
+	if (fout.fail())
+		throw AccessException("Error opening file \"" + offsets_file + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
+	
+	const size_t param_ref = ivec[0].getParameterIndex(ref_param);
+	if (sampling_rate==IOUtils::nodata) sampling_rate = getMedianSampling(param_ref, ivec);
+	width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
+	
+	const std::vector< std::pair<Date, double> > vecX( resampleVector(ivec, param_ref) );
+	const std::vector< std::pair<Date, double> > vecY( resampleVector(ivec, param) );
+	
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		const double offset = getOffset(vecX, vecY, ii);
+		if (offset!=IOUtils::inodata)
+			fout << vecX[ii].first.toString(Date::ISO) << " " << offset << "\n";
 	}
 	
-	
-	
-	/*for (size_t ii=0; ii<ovec.size(); ii++) {
-		//here, implement what has to be done on each data point
-		//for example:
+	fout.close();
+}
+
+void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>& ovec)
+{
+	for (size_t ii=0; ii<ovec.size(); ii++) {
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 		if (tmp < 0.){ //delete all values less than zero
 			tmp = IOUtils::nodata;
 		}
-	}*/
+	}
 }
 
-double ProcShift::getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec) const
+bool ProcShift::isAllNodata(const std::vector< std::pair<Date, double> >& vecX, const size_t& startIdx, const size_t& endIdx)
+{
+	for (size_t ii=startIdx; ii<endIdx; ii++) {
+		if (vecX[ii].second!=IOUtils::nodata) return false;
+	}
+	
+	return true;
+}
+
+double ProcShift::getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec)
 {
 	std::vector<double> vecSampling;
 	
@@ -92,44 +109,48 @@ double ProcShift::getMedianSampling(const size_t& param, const std::vector<Meteo
 	return Interpol1D::getMedian(vecSampling, false);
 }
 
-std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vector<MeteoData>& ivec, const size_t& param, const double& sampling_rate) const
+std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const
 {
 	const size_t n_ivec = ivec.size();
 	const Date dt_start( ivec.front().date );
 	const size_t nrSteps = static_cast<size_t>(round( (ivec.back().date.getJulian(true) - dt_start.getJulian(true)) / sampling_rate ));
-	std::vector< std::pair<Date, double> > vecResults;
 	
+	std::vector< std::pair<Date, double> > vecResults;
 	size_t jj=0; //position within ivec
+	
 	for (size_t ii=0; ii<nrSteps; ii++) {
 		const Date dt( dt_start+(static_cast<double>(ii)*sampling_rate) );
 		
-		if (ivec[jj].date==dt) {
+		if (ivec[jj].date==dt) { //do we have the exact element that we are looking for?
 			vecResults.push_back( make_pair(dt, ivec[jj](param)) );
 			jj++;
 			continue;
 		}
 		
-		//find the first element >= dt
-		while (ivec[jj].date<dt) {
+		while (ivec[jj].date<dt) { //find the first element >= dt
 			if (jj==(n_ivec-1)) {
 				return vecResults;
 			}
 			jj++;
 		}
 		
-		if (jj>0) {
+		if (jj>0) { //interpolate the value based on the left and right neighbors
 			if (jj==n_ivec) return vecResults;
+			
 			const double x1 = ivec[jj-1].date.getJulian(true);
 			const double x2 = ivec[jj].date.getJulian(true);
-			if ((x2-x1) > 2.*sampling_rate) { //only interpolate between nearby points
+			if (x1==x2) { //skip duplicate timestamps if any
+				jj++;
+				continue;
+			}
+			
+			if ((x2-x1) > 2.*sampling_rate) { //only interpolate between nearby points, otherwise keep nodata
 				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
 				continue;
 			}
 			
 			const double y1 = ivec[jj-1](param);
 			const double y2 = ivec[jj](param);
-			if (x1==x2) throw IOException("Attempted division by zero", AT);
-			
 			if (y1!=IOUtils::nodata && y2!=IOUtils::nodata) {
 				const double a = (y2 - y1) / (x2 - x1);
 				const double b = y2 - a*x2;
@@ -140,25 +161,34 @@ std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vect
 			} else {
 				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
 			}
-		} else {
+		} else { //we are at the start of the vector, there is no jj-1
 			vecResults.push_back( make_pair(dt, IOUtils::nodata) );
 		}
 	}
+	
+	return vecResults;
 }
 
-//Pearson's coefficient between two datasets
-//the sums for X are recomputed to make sure that if Y[ii] is nodata, no value is taken for the matching X
-//indices given for vecX
-double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& offset) const
+/**
+ * @brief Pearson's correlation coefficient between two datasets when one will be time shifted
+ * It is assumed that the two datasets have the exact same timestamps. The sums for X are 
+ * recomputed to make sure that if Y[ii] is nodata, no value is taken for the matching X[ii]
+ * See https://en.wikipedia.org/wiki/Pearson_correlation_coefficient for more
+ * @param vecX Reference values
+ * @param vecY dataset to compare with
+ * @param curr_idx position that should be attributed the Pearson's coefficient
+ * @param offset index offset to apply to the vecY vector
+ * @return Pearson's correlation coefficient
+ */
+double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& offset) const
 {
-	//compute the required data window, accounting for offsets in vecY that could 
-	//bring us outside vecY
-	size_t startIdx = curr_idx-width_idx/2;
+	//compute the required data window, 
+	//accounting for offsets in vecY that could bring us outside vecY
+	size_t startIdx = std::max(curr_idx-width_idx/2, static_cast<size_t>(0));
 	if (-offset>(signed)startIdx) startIdx = static_cast<size_t>(-offset);
-	size_t endIdx = curr_idx+width_idx/2;
+	size_t endIdx = std::min(curr_idx+width_idx/2, vecX.size());
 	if (endIdx+static_cast<size_t>(offset)>vecX.size()) endIdx = vecX.size() - static_cast<size_t>(offset);
 	
-	//std::cout << "curr_idx=" << curr_idx << " width_idx=" << width_idx << " offset=" << offset << " startIdx=" << startIdx << " endIdx=" << endIdx << "\n";
 	size_t count=0;
 	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
 	for (size_t ii=startIdx; ii<endIdx; ii++) {
@@ -184,63 +214,79 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
 	return pearson;
 }
 
-int ProcShift::getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx, const int& range_min, const int& range_max) const
+/**
+ * @brief Find optimal time shift between two datasets to have the highest possible correlation coefficient
+ * All possible time shift (expressed as index shift between the two vectors) are evaluated in order to find
+ * the absolute maximum.
+ * @param vecX Reference values
+ * @param vecY dataset to compare with
+ * @param curr_idx position that should be attributed the optimal time shift
+ * @param range_min minimum time shift (expressed as index shift) to start the scan
+ * @param range_max maximum time shift (expressed as index shift) to end the scan
+ * @return index shift that leads to the highest correlation coefficient for the given position
+ */
+int ProcShift::getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const
 {
-	int offset_max = IOUtils::inodata;
+	static const unsigned int minPts = 10; //minimum number of valid points to consider
+	int offset_at_max = IOUtils::inodata;
 	double pearson_max = IOUtils::nodata;
 	unsigned int count = 0;
+	
 	for (int offset=range_min; offset<=range_max; offset++) {
-		const double pearson = getPearson(vecX, vecY, curr_idx, width_idx, offset);
+		const double pearson = getPearson(vecX, vecY, curr_idx, offset);
 		if (pearson==IOUtils::nodata) continue;
 		
-		//std::cout << offset << " " << pearson << "\n";
 		count++;
 		if (pearson>pearson_max) {
-			offset_max = offset;
+			offset_at_max = offset;
 			pearson_max = pearson;
 		}
 	}
 	
-	if (pearson_max!=IOUtils::inodata)
-		std::cout << vecX[curr_idx].first.toString(Date::ISO) << " " << offset_max << " " << pearson_max << "\n";
-	
 	//we want to avoid looking for a maximum among too few points
-	if (count<10 || pearson_max==IOUtils::nodata)
+	if (count<minPts || pearson_max==IOUtils::nodata)
 		return IOUtils::inodata;
 	
-	return offset_max;
+	return offset_at_max;
 }
 
-double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const size_t& width_idx) const
+/**
+ * @brief Find optimal time shift between two datasets to have the highest possible correlation coefficient
+ * A golden section search is performed in order to find the optimal time shift (offset) that leads to the maximum
+ * correlation coefficient between the reference data and the time-shifted one. In some cases, all possible
+ * offsets are evaluated (for example if some nodata values prevent the evaluation of the correlation coefficient
+ * as required by the golden section search algorithm).
+ * See https://en.wikipedia.org/wiki/Golden-section_search for more
+ * @param vecX Reference values
+ * @param vecY dataset to compare with
+ * @param curr_idx position that should be attributed the optimal time shift
+ * @return index shift that leads to the highest correlation coefficient for the given position
+ */
+double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx) const
 {
-	//https://en.wikipedia.org/wiki/Golden-section_search
 	static const double r = Cst::phi - 1.;
 	static const double c = 1. - r;
 	
-	/*int range_min = -static_cast<int>(width_idx)/4;
-	int range_max = static_cast<int>(width_idx)/4;*/
-	int range_min = -12*6; //12 hours, times 10 minutes sampling rate
-	int range_max = 12*6;
+	int range_min = static_cast<int>(-0.5*offset_range/sampling_rate);
+	int range_max = static_cast<int>(0.5*offset_range/sampling_rate);
+	
 	int offset_c = IOUtils::inodata, offset_r = IOUtils::inodata;
 	double pearson_c = IOUtils::nodata, pearson_r = IOUtils::nodata;
 	size_t count = 0;
 	
-	//offset_c = getOffsetFullScan(vecX, vecY, curr_idx, width_idx, range_min, range_max);
-	
 	while (true) {
 		if (offset_c==IOUtils::inodata) {
 			offset_c = static_cast<int>( round(((double)range_max - (double)range_min)*c) ) + range_min;
-			pearson_c = getPearson(vecX, vecY, curr_idx, width_idx, offset_c);
+			pearson_c = getPearson(vecX, vecY, curr_idx, offset_c);
 		}
 		
 		if (offset_r==IOUtils::inodata) {
 			offset_r = static_cast<int>( round(((double)range_max - (double)range_min)*r) ) + range_min;
-			pearson_r = getPearson(vecX, vecY, curr_idx, width_idx, offset_r);
+			pearson_r = getPearson(vecX, vecY, curr_idx, offset_r);
 		}
 		
 		if (pearson_c==IOUtils::nodata || pearson_r==IOUtils::nodata) { //we must do a full scan
-			std::cout << "must do a full scan, curr_idx=" << curr_idx << "\n";
-			offset_c = getOffsetFullScan(vecX, vecY, curr_idx, width_idx, range_min, range_max);
+			offset_c = getOffsetFullScan(vecX, vecY, curr_idx, range_min, range_max);
 			break;
 		}
 		
@@ -267,18 +313,74 @@ double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, 
 		count++;
 	}
 	
-	if (offset_c!=IOUtils::inodata)
-		std::cout << vecX[curr_idx].first.toString(Date::ISO) << " " << offset_c << " " << pearson_c << "\n";
-	
 	return offset_c;
 }
 
 void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( "Filters::"+block_name );
-	//for a filter that does not take any arguments
-	if ( !vecArgs.empty() ) //ie if there are arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for "+where, AT);
+	bool has_type=false, has_cst=false, has_sampling_rate=false;
+	bool has_width=false, has_offset_range=false;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="EXTRACT_OFFSETS") {
+			IOUtils::parseArg(vecArgs[ii], where, extract_offsets);
+		} else if (vecArgs[ii].first=="TYPE") {
+			has_type=true;
+			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
+			if (type_str=="CST") {
+				offsets_interp = cst;
+			} else if (type_str=="LINEAR") {
+				offsets_interp = linear;
+			} else if (type_str=="STEPWISE") {
+				offsets_interp = stepwise;
+			} else
+				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for "+where, AT);
+		} if (vecArgs[ii].first=="CST") {
+			has_cst=true;
+			IOUtils::parseArg(vecArgs[ii], where, cst_offset);
+		} else if (vecArgs[ii].first=="OFFSETS_FILE") { //both for input & output
+			//if this is a relative path, prefix the path with the current path
+			//since the file might not exist yet, we have to clean its potential path component before re-assembling it
+			const std::string in_path( FileUtils::getPath(vecArgs[ii].second, false) ); //only clean
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
+			offsets_file = path + "/" + FileUtils::getFilename(in_path) + "/" + FileUtils::getFilename(vecArgs[ii].second);
+		} if (vecArgs[ii].first=="REF_PARAM") {
+			IOUtils::parseArg(vecArgs[ii], where, ref_param);
+		} else if (vecArgs[ii].first=="SAMPLING_RATE") { //assumed to be in seconds
+			has_sampling_rate=true;
+			IOUtils::parseArg(vecArgs[ii], where, sampling_rate);
+			sampling_rate /= 3600.*24.; //convert to days
+		} else if (vecArgs[ii].first=="WIDTH") { //assumed to be in seconds
+			has_width=true;
+			IOUtils::parseArg(vecArgs[ii], where, width_d);
+			width_d /= 3600.*24.; //convert to days
+		} else if (vecArgs[ii].first=="OFFSET_RANGE") { //assumed to be in seconds
+			has_offset_range=true;
+			IOUtils::parseArg(vecArgs[ii], where, offset_range);
+			offset_range /= 3600.*24.; //convert to days
+		}
+	}
+	
+	//check consistency of provided configuration options
+	if (extract_offsets==false) { //correction mode
+		if (!ref_param.empty() || has_sampling_rate || has_width || has_offset_range)
+			throw InvalidArgumentException("Please only provide the interpolation type and the correction constant or file for "+where, AT);
+		if (has_cst && !offsets_file.empty())
+			throw InvalidArgumentException("It is not possible to provide both a correction constant and a correction file for "+where, AT);
+		if (!has_cst && offsets_file.empty())
+			throw InvalidArgumentException("Please either provide a correction constant or a correction file for "+where+" or set the EXTRACT_OFFSETS option to TRUE", AT);
+	} else { //extracting the offsets
+		if (offsets_file.empty())
+			throw InvalidArgumentException("Please set OFFSETS_FILE where to write the extracted offsets for "+where, AT);
+		if (ref_param.empty())
+			throw InvalidArgumentException("Please provide the parameter name REF_PARAM to use as reference to extract the time offsets for "+where, AT);
+		if (has_type || has_cst)
+			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
+		if (sampling_rate!=IOUtils::nodata && 0.5*offset_range<=sampling_rate)
+			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
+	}
 }
 
 } //end namespace
