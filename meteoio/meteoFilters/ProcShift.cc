@@ -70,7 +70,7 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const double offset = getOffset(vecX, vecY, ii);
 		if (offset!=IOUtils::inodata)
-			fout << vecX[ii].first.toString(Date::ISO) << " " << offset << "\n";
+			fout << vecX[ii].first.toString(Date::ISO) << " " << offset*sampling_rate*24.*3600. << "\n";
 	}
 	
 	fout.close();
