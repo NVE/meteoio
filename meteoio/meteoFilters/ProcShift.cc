@@ -64,13 +64,14 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	if (sampling_rate==IOUtils::nodata) sampling_rate = getMedianSampling(param_ref, ivec);
 	width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
 	
-	const std::vector< std::pair<Date, double> > vecX( resampleVector(ivec, param_ref) );
-	const std::vector< std::pair<Date, double> > vecY( resampleVector(ivec, param) );
+	const std::vector<offset_spec> vecX( resampleVector(ivec, param_ref) );
+	const std::vector<offset_spec> vecY( resampleVector(ivec, param) );
 	
+	//the offsets are written in seconds
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const double offset = getOffset(vecX, vecY, ii);
 		if (offset!=IOUtils::inodata)
-			fout << vecX[ii].first.toString(Date::ISO) << " " << offset*sampling_rate*24.*3600. << "\n";
+			fout << vecX[ii].date.toString(Date::ISO) << " " << offset*sampling_rate*24.*3600. << "\n";
 	}
 	
 	fout.close();
@@ -88,10 +89,10 @@ void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>
 	}
 }
 
-bool ProcShift::isAllNodata(const std::vector< std::pair<Date, double> >& vecX, const size_t& startIdx, const size_t& endIdx)
+bool ProcShift::isAllNodata(const std::vector<offset_spec>& vecX, const size_t& startIdx, const size_t& endIdx)
 {
 	for (size_t ii=startIdx; ii<endIdx; ii++) {
-		if (vecX[ii].second!=IOUtils::nodata) return false;
+		if (vecX[ii].value!=IOUtils::nodata) return false;
 	}
 	
 	return true;
@@ -109,20 +110,20 @@ double ProcShift::getMedianSampling(const size_t& param, const std::vector<Meteo
 	return Interpol1D::getMedian(vecSampling, false);
 }
 
-std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const
+std::vector<ProcessingBlock::offset_spec> ProcShift::resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const
 {
 	const size_t n_ivec = ivec.size();
 	const Date dt_start( ivec.front().date );
 	const size_t nrSteps = static_cast<size_t>(round( (ivec.back().date.getJulian(true) - dt_start.getJulian(true)) / sampling_rate ));
 	
-	std::vector< std::pair<Date, double> > vecResults;
+	std::vector<ProcessingBlock::offset_spec> vecResults;
 	size_t jj=0; //position within ivec
 	
 	for (size_t ii=0; ii<nrSteps; ii++) {
 		const Date dt( dt_start+(static_cast<double>(ii)*sampling_rate) );
 		
 		if (ivec[jj].date==dt) { //do we have the exact element that we are looking for?
-			vecResults.push_back( make_pair(dt, ivec[jj](param)) );
+			vecResults.push_back( ProcessingBlock::offset_spec(dt, ivec[jj](param)) );
 			jj++;
 			continue;
 		}
@@ -145,7 +146,7 @@ std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vect
 			}
 			
 			if ((x2-x1) > 2.*sampling_rate) { //only interpolate between nearby points, otherwise keep nodata
-				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
+				vecResults.push_back( ProcessingBlock::offset_spec(dt, IOUtils::nodata) );
 				continue;
 			}
 			
@@ -157,12 +158,12 @@ std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vect
 				const double x = dt.getJulian(true);
 				const double y = (a*x + b);
 				
-				vecResults.push_back( make_pair(dt, y) );
+				vecResults.push_back( ProcessingBlock::offset_spec(dt, y) );
 			} else {
-				vecResults.push_back( make_pair(dt, IOUtils::nodata) );
+				vecResults.push_back( ProcessingBlock::offset_spec(dt, IOUtils::nodata) );
 			}
 		} else { //we are at the start of the vector, there is no jj-1
-			vecResults.push_back( make_pair(dt, IOUtils::nodata) );
+			vecResults.push_back( ProcessingBlock::offset_spec(dt, IOUtils::nodata) );
 		}
 	}
 	
@@ -180,7 +181,7 @@ std::vector< std::pair<Date, double> > ProcShift::resampleVector(const std::vect
  * @param offset index offset to apply to the vecY vector
  * @return Pearson's correlation coefficient
  */
-double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& offset) const
+double ProcShift::getPearson(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& offset) const
 {
 	//compute the required data window, 
 	//accounting for offsets in vecY that could bring us outside vecY
@@ -192,8 +193,8 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
 	size_t count=0;
 	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
 	for (size_t ii=startIdx; ii<endIdx; ii++) {
-		const double valueX = vecX[ii].second;
-		const double valueY = vecY[static_cast<size_t>((signed)ii+offset)].second;
+		const double valueX = vecX[ii].value;
+		const double valueY = vecY[static_cast<size_t>((signed)ii+offset)].value;
 		if (valueX!=IOUtils::nodata && valueY!=IOUtils::nodata) {
 			sumX += valueX;
 			sumX2 += valueX * valueX;
@@ -225,7 +226,7 @@ double ProcShift::getPearson(const std::vector< std::pair<Date, double> >& vecX,
  * @param range_max maximum time shift (expressed as index shift) to end the scan
  * @return index shift that leads to the highest correlation coefficient for the given position
  */
-int ProcShift::getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const
+int ProcShift::getOffsetFullScan(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const
 {
 	static const unsigned int minPts = 10; //minimum number of valid points to consider
 	int offset_at_max = IOUtils::inodata;
@@ -262,8 +263,9 @@ int ProcShift::getOffsetFullScan(const std::vector< std::pair<Date, double> >& v
  * @param curr_idx position that should be attributed the optimal time shift
  * @return index shift that leads to the highest correlation coefficient for the given position
  */
-double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx) const
+double ProcShift::getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const
 {
+	static const size_t max_count = 100; //after more than max_count iterations, we consider there is no convergence
 	static const double r = Cst::phi - 1.;
 	static const double c = 1. - r;
 	
@@ -305,8 +307,8 @@ double ProcShift::getOffset(const std::vector< std::pair<Date, double> >& vecX, 
 		//check convergence
 		if ((range_max-range_min) < 2) 
 			break; //convergence criteria: within 1 cell of optimum
-		if (count>100) {
-			std::cout << "No convergence at " << vecX[curr_idx].first.toString(Date::ISO) << " offset_c=" << offset_c*24.*60. << " offset_r=" << offset_r*24.*60. << "\n";
+		if (count>max_count) {
+			std::cout << "No convergence at " << vecX[curr_idx].date.toString(Date::ISO) << " offset_c=" << offset_c*24.*60. << " offset_r=" << offset_r*24.*60. << "\n";
 			break;
 		}
 		

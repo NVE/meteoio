@@ -19,7 +19,6 @@
 #ifndef PROCSHIFT_H
 #define PROCSHIFT_H
 
-//#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 #include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 
 #include <vector>
@@ -91,13 +90,13 @@ class ProcShift : public ProcessingBlock { //use this one for simple filter that
 		void writeOffsets(const unsigned int& param, const std::vector<MeteoData>& ivec);
 		void correctOffsets(const unsigned int& param, std::vector<MeteoData>& ovec);
 		
-		static bool isAllNodata(const std::vector< std::pair<Date, double> >& vecX, const size_t& startIdx, const size_t& endIdx);
+		static bool isAllNodata(const std::vector<ProcessingBlock::offset_spec>& vecX, const size_t& startIdx, const size_t& endIdx);
 		static double getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec);
 		
-		std::vector< std::pair<Date, double> > resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const;
-		double getPearson(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& offset) const;
-		int getOffsetFullScan(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const;
-		double getOffset(const std::vector< std::pair<Date, double> >& vecX, const std::vector< std::pair<Date, double> >& vecY, const size_t& curr_idx) const;
+		std::vector<offset_spec> resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const;
+		double getPearson(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& offset) const;
+		int getOffsetFullScan(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const;
+		double getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const;
 		
 		std::string ref_param; ///< The reference parameter to compare to
 		std::string root_path;
