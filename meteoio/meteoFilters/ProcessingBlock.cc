@@ -283,6 +283,11 @@ ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::
                             : excluded_stations( MeteoProcessor::initStationSet(vecArgs, "EXCLUDE") ), kept_stations( MeteoProcessor::initStationSet(vecArgs, "ONLY") ), 
                               time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
 
+/**
+ * @brief Should the provided station be skipped in the processing?
+ * @param[in] station_id stationID to test
+ * @return true if the startion should be skipped, false otherwise
+ */
 bool ProcessingBlock::skipStation(const std::string& station_id) const
 {
 	if (excluded_stations.count(station_id)!=0) return true; //the station is in the excluded list -> skip
@@ -291,6 +296,13 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
 	return (kept_stations.count(station_id)==0);
 }
 
+/**
+ * @brief Read a data file structured as X Y value on each lines
+ * @param[in] filter Calling filter name for error reporting
+ * @param[in] filename file and path to open and read the data from
+ * @param[out] X vector of X values
+ * @param[out] Y vector of Y values
+ */
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y)
 {
 	std::ifstream fin( filename.c_str() );
@@ -340,6 +352,14 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 	}
 }
 
+/**
+ * @brief Read a data file structured as X Y1 Y2 value on each lines
+ * @param[in] filter Calling filter name for error reporting
+ * @param[in] filename file and path to open and read the data from
+ * @param[out] X vector of X values
+ * @param[out] Y1 vector of Y1 values
+ * @param[out] Y2 vector of Y2 values
+ */
 void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2)
 {
 	std::ifstream fin( filename.c_str() );
@@ -397,6 +417,18 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 	}
 }
 
+/**
+ * @brief Read a correction file applicable to repeating time period.
+ * @details This reads corrections to apply to repeating time periods, such as hours, dyas, months or years. 
+ * Not all values must be provided as a default initial value is set. Depending on the time period, a check on
+ * the index range is performed (hours must be <=24, days <=366, months <=12, years have no maximum).
+ * @param[in] filter Calling filter name for error reporting
+ * @param[in] filename file and path to open and read the data from
+ * @param[in] col_idx column to read the data from (column 1 contains the timestamps)
+ * @param[in] c_type expected time period
+ * @param[in] init default value to initalize the results
+ * @return a vector of corrections as read from the provided file, the indices matching the indices of the chosen time period
+ */
 std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init)
 {
 	std::ifstream fin( filename.c_str() );
@@ -462,6 +494,14 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 	return corrections;
 }
 
+/**
+ * @brief Read a correction file, ie a file structured as timestamps followed by values on each lines
+ * @param[in] filter Calling filter name for error reporting
+ * @param[in] filename file and path to open and read the data from
+ * @param[in] TZ default timezone for the timestamps
+ * @param[in] col_idx column to read the data from (column 1 contains the timestamps)
+ * @return a vector of <Date, value> as read from the provided file
+ */
 std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx)
 {
 	if (col_idx<2)
@@ -528,6 +568,21 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 	return corrections;
 }
 
+/**
+ * @brief Read a list of date ranges by stationIDs from a file
+ * @details Each station ID read in the provided file is attributed a list fo date ranges. For example, the file
+ * to read the data from can contain:
+ * @code
+ * *WFJ 2015-11-10T06:00
+ * *WFJ 2015-12-25T01:00 2015-12-27T13:30
+ * @endcode
+ * All these time ranges will populate a vector that will be mapped to the "*WFJ" station ID.
+ * 
+ * @param[in] filter Calling filter name for error reporting
+ * @param[in] filename file and path to open and read the data from
+ * @param[in] TZ default timezone for the timestamps
+ * @return a map of <stationID, std::vector<DateRange>> as read from the provided file
+ */
 std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
