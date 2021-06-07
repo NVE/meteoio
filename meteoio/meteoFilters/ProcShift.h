@@ -41,8 +41,9 @@ namespace mio {
  * at this constant sampling rate before computing the correlation coefficient). A large data window is more accurate
  * but will fail to properly capture sudden changes while a short data window might generate some spurious offsets.
  * In any case, it is advised to plot and tweak the generated timeseries of offsets first before using it to 
- * correct the meteo parameter (keeping in mind that you have to swap the offsets' signs in order to perform 
- * the correction).
+ * correct the meteo parameter (keep in mind that the offsets are given as the correction that should be applied to
+ * temporally re-synchronize the meteo parameter of choice, so for example +600 means that the signal would need 
+ * to be moved forward by 600 seconds in order to be synchronized with the reference parameter).
  * 
  * This filter takes the following arguments:
  *  - EXTRACT_OFFSETS: if set to TRUE, no correction is applied but the offsets between two meteo parameters
@@ -58,6 +59,8 @@ namespace mio {
  *              offsets) or STEPWISE (keeping the last correction until finding a new correction). Default is CST;
  *      - CST: when using the CST type, the offset value (in seconds, mandatory in this case);
  *      - OFFSETS_FILE: for other correction types, a timeseries of offsets (in seconds, mandatory in this case).
+ * 
+ * @note Applying the corrections is NOT supported yet
  * 
  * @ingroup processing
  * @author Mathias Bavay

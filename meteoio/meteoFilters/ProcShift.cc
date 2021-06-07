@@ -67,11 +67,11 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	const std::vector<offset_spec> vecX( resampleVector(ivec, param_ref) );
 	const std::vector<offset_spec> vecY( resampleVector(ivec, param) );
 	
-	//the offsets are written in seconds
+	//the offsets are written in seconds as corrections that should be applied to re-synchronize the data
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const double offset = getOffset(vecX, vecY, ii);
 		if (offset!=IOUtils::inodata)
-			fout << vecX[ii].date.toString(Date::ISO) << " " << offset*sampling_rate*24.*3600. << "\n";
+			fout << vecX[ii].date.toString(Date::ISO) << " " << -offset*sampling_rate*24.*3600. << "\n";
 	}
 	
 	fout.close();
@@ -367,6 +367,8 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 	
 	//check consistency of provided configuration options
 	if (extract_offsets==false) { //correction mode
+		throw InvalidArgumentException("Applying corrections is not supported yet in "+where, AT);
+		
 		if (!ref_param.empty() || has_sampling_rate || has_width || has_offset_range)
 			throw InvalidArgumentException("Please only provide the interpolation type and the correction constant or file for "+where, AT);
 		if (has_cst && !offsets_file.empty())
