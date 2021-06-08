@@ -128,8 +128,6 @@ void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>
 				shifted_param.push_back( md );
 				ovec[ii](param) = IOUtils::nodata;
 			}
-		} else if (offsets_interp==linear) {
-			throw InvalidArgumentException("Linear interpolations of offsets not implemented yet", AT);
 		}
 	}
 	
@@ -387,9 +385,9 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (type_str=="CST") {
 				offsets_interp = cst;
-			} else if (type_str=="LINEAR") {
+			} /*else if (type_str=="LINEAR") { //not implemented for now
 				offsets_interp = linear;
-			} else if (type_str=="STEPWISE") {
+			} */else if (type_str=="STEPWISE") {
 				offsets_interp = stepwise;
 			} else
 				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for "+where, AT);
@@ -428,14 +426,12 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 		if (!has_cst && (offsets_file.empty() || !has_TZ))
 			throw InvalidArgumentException("Please either provide a correction constant or a correction file with its default time zone TZ for "+where+" or set the EXTRACT_OFFSETS option to TRUE", AT);
 		
-		//now read the corrections file if any
+		//now read the corrections file if necessary
 		if (!offsets_file.empty()) {
 			//if this is a relative path, prefix the path with the current path
 			const std::string prefix = ( FileUtils::isAbsolutePath(offsets_file) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+offsets_file, true) );  //clean & resolve path
 			offsets_file = path + "/" + FileUtils::getFilename(offsets_file);
-			
-// 			std::cout << " root_path=" << root_path << " prefix=" << prefix << " path=" << path << "\n";
 			
 			corrections = ProcessingBlock::readCorrections(block_name, offsets_file, TZ);
 			std::sort(corrections.begin(), corrections.end());
@@ -450,13 +446,6 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
 		if (sampling_rate!=IOUtils::nodata && 0.5*offset_range<=sampling_rate)
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
-		
-		//if this is a relative path, prefix the path with the current path
-		//since the file might not exist yet, we have to clean its potential path component before re-assembling it
-		const std::string in_path( FileUtils::getPath(offsets_file, false) ); //only clean
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : root_path+"/";
-		const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
-		offsets_file = path + "/" + FileUtils::getFilename(in_path) + "/" + FileUtils::getFilename(offsets_file);
 	}
 }
 

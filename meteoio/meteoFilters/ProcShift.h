@@ -55,23 +55,38 @@ namespace mio {
  *      - OFFSET_RANGE: range of allowed variation for the offset when searching for the maximum correlation (default: 1 day, so looking for 
  *                      a maximum between 1/2 a day before and after the current point);
  *  - if EXTRACT_OFFSETS is set to false, the meteo parameter will be corrected.
- *      - TYPE: the type of cortrection to apply, either CST (constant over the whole dataset), LINEAR (linear interpolation between the provided
- *              offsets) or STEPWISE (keeping the last correction until finding a new correction). Default is CST;
+ *      - TYPE: the type of correction to apply, either CST (constant over the whole dataset) or STEPWISE 
+ *              (keeping the last correction until finding a new correction). Default is CST;
  *      - CST: when using the CST type, the offset value (in seconds, mandatory in this case);
- *      - OFFSETS_FILE: for other correction types, a timeseries of offsets (in seconds, mandatory in this case).
- * 
- * @note Applying the corrections is NOT supported yet
+ *      - OFFSETS_FILE: for other correction types, a timeseries of offsets (in seconds, mandatory in this case);
+ *      - TZ: the time zone for the timestamps given in the OFFSETS_FILE (mandatory).
  * 
  * @ingroup processing
  * @author Mathias Bavay
  * @date   2021-06-04
  * 
- * Example of configuration to compute the time offset between TA_2 and TA_1 used as reference:
+ * Example of configuration to compute the time offset between TA_2 and TA_1 used as reference and write the
+ * results in the TA2_extracted.dat file (located in the current working directory):
  * @code
  * TA_2::FILTER5 = SHIFT
  * TA_2::ARG5::EXTRACT_OFFSETS = TRUE
- * TA_2::ARG5::OFFSETS_FILE = TA_2_OFFSETS.dat
+ * TA_2::ARG5::OFFSETS_FILE = TA2_extracted.dat
  * TA_2::ARG5::REF_PARAM = TA_1
+ * @endcode
+ * 
+ * Applying the corrections provided in the TA2_corrections.dat file (located in the same directory as the ini file):
+ * @code
+ * TA_2::FILTER5 = SHIFT
+ * TA_2::ARG5::TYPE = STEPWISE
+ * TA_2::ARG5::OFFSETS_FILE = TA2_offsets.dat
+ * TA_2::ARG5::TZ = 1
+ * @endcode
+ * The TA2_corrections.dat file gives a an hour forward correction from 2018-12-03T00:00, then 2 
+ * hours backward from 2019-03-12T12:00 until 2019-10-01T15:30 when there is no correction any more:
+ * @code
+ * 2018-12-03T00:00 3600
+ * 2019-03-12T12:00 -7200
+ * 2019-10-01T15:30 0
  * @endcode
  */
 
