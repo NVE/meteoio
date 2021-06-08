@@ -23,14 +23,15 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
 namespace mio {
 
 ProcShift::ProcShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-          : ProcessingBlock(vecArgs, name, cfg), ref_param(), root_path(cfg.getConfigRootDir()), offsets_file(), cst_offset(IOUtils::nodata),
-            sampling_rate(IOUtils::nodata), offset_range(1.), width_d(2.), width_idx(0), 
+          : ProcessingBlock(vecArgs, name, cfg), corrections(), ref_param(), root_path(cfg.getConfigRootDir()), offsets_file(), 
+            cst_offset(IOUtils::nodata), sampling_rate(IOUtils::nodata), offset_range(1.), width_d(2.), width_idx(0), 
             offsets_interp(cst), extract_offsets(false)
 {
 	parse_args(vecArgs);
@@ -77,16 +78,63 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	fout.close();
 }
 
+//the strategy is: we created a new vector<MeteoData> that only contains the shifted parameter
+//and then we merge it with ovec
 void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>& ovec)
 {
-	for (size_t ii=0; ii<ovec.size(); ii++) {
-		double& tmp = ovec[ii](param);
-		if (tmp == IOUtils::nodata) continue; //preserve nodata values
-
-		if (tmp < 0.){ //delete all values less than zero
-			tmp = IOUtils::nodata;
+	const std::string paramname( ovec.front().getNameForParameter(param) );
+	std::vector<MeteoData> shifted_param;
+	shifted_param.reserve( ovec.size() );
+	
+	if (offsets_interp==cst) {
+		for (size_t ii=0; ii<ovec.size(); ii++) {
+			MeteoData md( ovec[ii].date + cst_offset );
+			md.addParameter(paramname);
+			md(paramname) = ovec[ii](param);
+			shifted_param.push_back( md );
+			ovec[ii](param) = IOUtils::nodata;
+		}
+	} else {
+		const size_t nCorr = corrections.size();
+		if (nCorr==0) return;
+		size_t jj=0; //index for the corrections
+		double offset = 0.;
+		
+		if (offsets_interp==stepwise) {
+			for (size_t ii=0; ii<ovec.size(); ii++) {
+				const Date curr_date(ovec[ii].date);
+				
+				//update the offset?
+				if (jj<nCorr && corrections[jj].date <= curr_date) {
+					//find the next user provided offset
+					while (jj<nCorr && corrections[jj].date <= curr_date) jj++;
+					const double last_offset = offset;
+					if (jj>0) offset = corrections[jj-1].value / (3600.*24.);
+					
+					//remove the points that would otherwise be duplicates
+					//this happens for example if first moving data forward by 1 hour
+					//and then moving data backward by 2 hours -> there is an overlap
+					if (offset<last_offset) {
+						const Date last_valid( curr_date + offset );
+						size_t kk = shifted_param.size() - 1;
+						while (kk>0 && shifted_param[kk].date>last_valid) kk--;
+						shifted_param.erase( shifted_param.begin()+kk, shifted_param.end() );
+					}
+				}
+				
+				MeteoData md( curr_date + offset );
+				md.addParameter(paramname);
+				md(paramname) = ovec[ii](param);
+				shifted_param.push_back( md );
+				ovec[ii](param) = IOUtils::nodata;
+			}
+		} else if (offsets_interp==linear) {
+			throw InvalidArgumentException("Linear interpolations of offsets not implemented yet", AT);
 		}
 	}
+	
+	//now merge back the results
+	MeteoData::mergeTimeSeries(ovec, shifted_param, MeteoData::WINDOW_MERGE, MeteoData::CONFLICTS_PRIORITY_LAST);
 }
 
 bool ProcShift::isAllNodata(const std::vector<offset_spec>& vecX, const size_t& startIdx, const size_t& endIdx)
@@ -98,6 +146,12 @@ bool ProcShift::isAllNodata(const std::vector<offset_spec>& vecX, const size_t& 
 	return true;
 }
 
+/**
+ * @brief Get the median sampling rate for a given parameter with a meteo timeseries
+ * @param param Meteorological parameter to consider
+ * @param ivec meteorological timeseries
+ * @return median sampling rate in days
+ */
 double ProcShift::getMedianSampling(const size_t& param, const std::vector<MeteoData>& ivec)
 {
 	std::vector<double> vecSampling;
@@ -321,7 +375,8 @@ double ProcShift::getOffset(const std::vector<ProcessingBlock::offset_spec>& vec
 void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( "Filters::"+block_name );
-	bool has_type=false, has_cst=false, has_sampling_rate=false;
+	double TZ=0.;
+	bool has_type=false, has_cst=false, has_TZ=false, has_sampling_rate=false;
 	bool has_width=false, has_offset_range=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -338,17 +393,16 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 				offsets_interp = stepwise;
 			} else
 				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for "+where, AT);
-		} if (vecArgs[ii].first=="CST") {
+		} else if (vecArgs[ii].first=="TZ") {
+			has_TZ=true;
+			IOUtils::parseArg(vecArgs[ii], where, TZ);
+		} else if (vecArgs[ii].first=="CST") {
 			has_cst=true;
 			IOUtils::parseArg(vecArgs[ii], where, cst_offset);
+			cst_offset /= 3600.*24.; //convert to days
 		} else if (vecArgs[ii].first=="OFFSETS_FILE") { //both for input & output
-			//if this is a relative path, prefix the path with the current path
-			//since the file might not exist yet, we have to clean its potential path component before re-assembling it
-			const std::string in_path( FileUtils::getPath(vecArgs[ii].second, false) ); //only clean
-			const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : root_path+"/";
-			const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
-			offsets_file = path + "/" + FileUtils::getFilename(in_path) + "/" + FileUtils::getFilename(vecArgs[ii].second);
-		} if (vecArgs[ii].first=="REF_PARAM") {
+			offsets_file = vecArgs[ii].second;
+		} else if (vecArgs[ii].first=="REF_PARAM") {
 			IOUtils::parseArg(vecArgs[ii], where, ref_param);
 		} else if (vecArgs[ii].first=="SAMPLING_RATE") { //assumed to be in seconds
 			has_sampling_rate=true;
@@ -367,14 +421,26 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 	
 	//check consistency of provided configuration options
 	if (extract_offsets==false) { //correction mode
-		throw InvalidArgumentException("Applying corrections is not supported yet in "+where, AT);
-		
 		if (!ref_param.empty() || has_sampling_rate || has_width || has_offset_range)
 			throw InvalidArgumentException("Please only provide the interpolation type and the correction constant or file for "+where, AT);
 		if (has_cst && !offsets_file.empty())
 			throw InvalidArgumentException("It is not possible to provide both a correction constant and a correction file for "+where, AT);
-		if (!has_cst && offsets_file.empty())
-			throw InvalidArgumentException("Please either provide a correction constant or a correction file for "+where+" or set the EXTRACT_OFFSETS option to TRUE", AT);
+		if (!has_cst && (offsets_file.empty() || !has_TZ))
+			throw InvalidArgumentException("Please either provide a correction constant or a correction file with its default time zone TZ for "+where+" or set the EXTRACT_OFFSETS option to TRUE", AT);
+		
+		//now read the corrections file if any
+		if (!offsets_file.empty()) {
+			//if this is a relative path, prefix the path with the current path
+			const std::string prefix = ( FileUtils::isAbsolutePath(offsets_file) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+offsets_file, true) );  //clean & resolve path
+			offsets_file = path + "/" + FileUtils::getFilename(offsets_file);
+			
+// 			std::cout << " root_path=" << root_path << " prefix=" << prefix << " path=" << path << "\n";
+			
+			corrections = ProcessingBlock::readCorrections(block_name, offsets_file, TZ);
+			std::sort(corrections.begin(), corrections.end());
+		}
+		
 	} else { //extracting the offsets
 		if (offsets_file.empty())
 			throw InvalidArgumentException("Please set OFFSETS_FILE where to write the extracted offsets for "+where, AT);
@@ -384,6 +450,13 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
 		if (sampling_rate!=IOUtils::nodata && 0.5*offset_range<=sampling_rate)
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
+		
+		//if this is a relative path, prefix the path with the current path
+		//since the file might not exist yet, we have to clean its potential path component before re-assembling it
+		const std::string in_path( FileUtils::getPath(offsets_file, false) ); //only clean
+		const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : root_path+"/";
+		const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
+		offsets_file = path + "/" + FileUtils::getFilename(in_path) + "/" + FileUtils::getFilename(offsets_file);
 	}
 }
 
