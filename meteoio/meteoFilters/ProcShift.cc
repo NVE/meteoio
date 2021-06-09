@@ -168,11 +168,16 @@ std::vector<ProcessingBlock::offset_spec> ProcShift::resampleVector(const std::v
 	const Date dt_start( ivec.front().date );
 	const size_t nrSteps = static_cast<size_t>(round( (ivec.back().date.getJulian(true) - dt_start.getJulian(true)) / sampling_rate ));
 	
+	//rounding the sampling rate to 1‰ in seconds so the resampled timestamps don't accumulate rounding errors
+	const int sampling_decimal_range = static_cast<int>(floor( log10(sampling_rate*24.*3600.) ));
+	const double rounding_precision = pow(10, sampling_decimal_range-3);
+	const double rounded_sampling = round(sampling_rate*24.*3600./rounding_precision) * rounding_precision / (3600.*24.);
+	
 	std::vector<ProcessingBlock::offset_spec> vecResults;
 	size_t jj=0; //position within ivec
 	
 	for (size_t ii=0; ii<nrSteps; ii++) {
-		const Date dt( dt_start+(static_cast<double>(ii)*sampling_rate) );
+		const Date dt( dt_start+(static_cast<double>(ii)*rounded_sampling) );
 		
 		if (ivec[jj].date==dt) { //do we have the exact element that we are looking for?
 			vecResults.push_back( ProcessingBlock::offset_spec(dt, ivec[jj](param)) );
