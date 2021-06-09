@@ -114,7 +114,7 @@ class ProcShift : public ProcessingBlock { //use this one for simple filter that
 		std::vector<offset_spec> resampleVector(const std::vector<MeteoData>& ivec, const size_t& param) const;
 		double getPearson(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& offset) const;
 		int getOffsetFullScan(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx, const int& range_min, const int& range_max) const;
-		double getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const;
+		int getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const;
 		
 		std::vector<ProcessingBlock::offset_spec> corrections; ///< Corrections to apply to the data, read from the user provided file
 		std::string ref_param; ///< The reference parameter to compare to

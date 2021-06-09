@@ -53,24 +53,32 @@ void ProcShift::process(const unsigned int& param, const std::vector<MeteoData>&
 
 void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoData>& ivec)
 {
+	//prepare the parameters that we need: reference parameter index, clean sampling rate and vectors with the two parameters
+	const size_t param_ref = ivec[0].getParameterIndex(ref_param);
+	if (sampling_rate==IOUtils::nodata) {
+		sampling_rate = getMedianSampling(param_ref, ivec);
+		//rounding the sampling rate to 1‰ in seconds so the resampled timestamps don't accumulate rounding errors
+		const int sampling_decimal_range = static_cast<int>(floor( log10(sampling_rate*24.*3600.) ));
+		const double rounding_precision = pow(10, sampling_decimal_range-3);
+		sampling_rate = round(sampling_rate*24.*3600./rounding_precision) * rounding_precision / (3600.*24.);
+	}
+	width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
+	const std::vector<offset_spec> vecX( resampleVector(ivec, param_ref) );
+	const std::vector<offset_spec> vecY( resampleVector(ivec, param) );
+	
 	//check and open the output file that will contain the extracted offsets
 	if (!FileUtils::validFileAndPath(offsets_file)) throw AccessException("Invalid file name \""+offsets_file+"\"", AT);
 	errno = 0;
 	
-	std::ofstream fout(offsets_file.c_str(), std::ofstream::out | ios::binary);
+	//if the filter runs multiple times (because of rebuffering for example), we need to append the results
+	//so the output file has been deleted in the constructor
+	std::ofstream fout(offsets_file.c_str(), std::ofstream::out | std::ios_base::app | ios::binary);
 	if (fout.fail())
 		throw AccessException("Error opening file \"" + offsets_file + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
 	
-	const size_t param_ref = ivec[0].getParameterIndex(ref_param);
-	if (sampling_rate==IOUtils::nodata) sampling_rate = getMedianSampling(param_ref, ivec);
-	width_idx = static_cast<size_t>( round( width_d / sampling_rate ) );
-	
-	const std::vector<offset_spec> vecX( resampleVector(ivec, param_ref) );
-	const std::vector<offset_spec> vecY( resampleVector(ivec, param) );
-	
 	//the offsets are written in seconds as corrections that should be applied to re-synchronize the data
-	for (size_t ii=0; ii<ivec.size(); ii++) {
-		const double offset = getOffset(vecX, vecY, ii);
+	for (size_t ii=0; ii<vecX.size(); ii++) {
+		const int offset = getOffset(vecX, vecY, ii);
 		if (offset!=IOUtils::inodata)
 			fout << vecX[ii].date.toString(Date::ISO) << " " << -offset*sampling_rate*24.*3600. << "\n";
 	}
@@ -168,16 +176,11 @@ std::vector<ProcessingBlock::offset_spec> ProcShift::resampleVector(const std::v
 	const Date dt_start( ivec.front().date );
 	const size_t nrSteps = static_cast<size_t>(round( (ivec.back().date.getJulian(true) - dt_start.getJulian(true)) / sampling_rate ));
 	
-	//rounding the sampling rate to 1‰ in seconds so the resampled timestamps don't accumulate rounding errors
-	const int sampling_decimal_range = static_cast<int>(floor( log10(sampling_rate*24.*3600.) ));
-	const double rounding_precision = pow(10, sampling_decimal_range-3);
-	const double rounded_sampling = round(sampling_rate*24.*3600./rounding_precision) * rounding_precision / (3600.*24.);
-	
 	std::vector<ProcessingBlock::offset_spec> vecResults;
 	size_t jj=0; //position within ivec
 	
 	for (size_t ii=0; ii<nrSteps; ii++) {
-		const Date dt( dt_start+(static_cast<double>(ii)*rounded_sampling) );
+		const Date dt( dt_start+(static_cast<double>(ii)*sampling_rate) );
 		
 		if (ivec[jj].date==dt) { //do we have the exact element that we are looking for?
 			vecResults.push_back( ProcessingBlock::offset_spec(dt, ivec[jj](param)) );
@@ -320,7 +323,7 @@ int ProcShift::getOffsetFullScan(const std::vector<ProcessingBlock::offset_spec>
  * @param curr_idx position that should be attributed the optimal time shift
  * @return index shift that leads to the highest correlation coefficient for the given position
  */
-double ProcShift::getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const
+int ProcShift::getOffset(const std::vector<ProcessingBlock::offset_spec>& vecX, const std::vector<ProcessingBlock::offset_spec>& vecY, const size_t& curr_idx) const
 {
 	static const size_t max_count = 100; //after more than max_count iterations, we consider there is no convergence
 	static const double r = Cst::phi - 1.;
@@ -451,6 +454,11 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
 		if (sampling_rate!=IOUtils::nodata && 0.5*offset_range<=sampling_rate)
 			throw InvalidArgumentException("It is not possible to provide the interpolation type or the correction constant when extracting offsets for "+where, AT);
+		
+		if (FileUtils::fileExists(offsets_file)) {
+			if (remove( offsets_file.c_str() ) != 0)
+				throw AccessException("File \""+offsets_file+"\" already exists and can not be deleted before running "+where, AT);
+		}
 	}
 }
 
