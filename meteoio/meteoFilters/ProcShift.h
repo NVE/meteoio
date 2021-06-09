@@ -29,6 +29,7 @@ namespace mio {
 /**
  * @class ProcShift
  * @brief Time shifting filter for the selected meteo parameter
+ * @ingroup processing
  * @details
  * This filter can correct the time base of a single parameter within a station, either with a constant offset or
  * by reading time varying offsets from a provided file. Compared to the TimeShift time filter, this filter operates
@@ -61,9 +62,13 @@ namespace mio {
  *      - OFFSETS_FILE: for other correction types, a timeseries of offsets (in seconds, mandatory in this case);
  *      - TZ: the time zone for the timestamps given in the OFFSETS_FILE (mandatory).
  * 
- * @ingroup processing
- * @author Mathias Bavay
- * @date   2021-06-04
+ * A typical workflow for this filter would be:
+ *    1. run on the data with EXTRACT_OFFSETS = TRUE in order to compute the temporal offsets between the
+ *       meteo parameter of interest and a reference one;
+ *    2. plot the resulting offsets timeseries and manually pickup the points to keep in the correction file
+ *       (the computed offsets might be noisy, specially around periods of nodata). In doubt, look back at the
+ *       original data to decide if you want to keep or reject a given offset.
+ *    3. run on the data with EXTRACT_OFFSETS = FALSE, providing your correction file.
  * 
  * Example of configuration to compute the time offset between TA_2 and TA_1 used as reference and write the
  * results in the TA2_extracted.dat file (located in the current working directory):
