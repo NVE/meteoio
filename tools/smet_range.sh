@@ -1,5 +1,6 @@
 #!/bin/sh
-#prints min/max/mean for a given parameter in all smet files
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# prints min/max/mean for a given parameter in all smet files
 
 if [ $# -lt 2 ]; then
 	me=`basename $0`
