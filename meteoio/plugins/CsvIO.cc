@@ -1246,6 +1246,8 @@ void CsvIO::parseInputOutputSection()
 		if (!coords_specs.empty()) {
 			const Coords loc(coordin, coordinparam, coords_specs);
 			tmp_csv.setLocation(loc, name, id);
+		} else if (!coordin.empty() && !coordinparam.empty()) { //coord system parameters in [INPUT], coordinates in csv files
+			tmp_csv.setLocation(Coords(coordin, coordinparam), name, id);
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
 		}
