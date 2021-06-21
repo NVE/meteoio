@@ -610,7 +610,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::replaceWhitespaces(tmp, '_');
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
+		if (tmp.compare("PARAM")==0) {
+			//single_param_idx = ii;
+			tmp = single_field;
+		} else if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
 			if (dt_as_decimal) 
 				date_cols.decimal_date = ii;
 			else 
@@ -686,7 +689,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
 	if (!single_field.empty() && !user_provided_field_names) {
-		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
+		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible to set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
 		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
 			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change date_cols.date_str
 		} else if (date_cols.date_str == date_cols.time_str && fieldNames.size() == 2) { //no index given but unambiguous
@@ -1246,7 +1249,7 @@ void CsvIO::parseInputOutputSection()
 		if (!coords_specs.empty()) {
 			const Coords loc(coordin, coordinparam, coords_specs);
 			tmp_csv.setLocation(loc, name, id);
-		} else if (!coordin.empty() && !coordinparam.empty()) { //coord system parameters in [INPUT], coordinates in csv files
+		} else if (!coordin.empty()) { //coord system parameters in [INPUT], coordinates in csv files
 			tmp_csv.setLocation(Coords(coordin, coordinparam), name, id);
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
@@ -1311,7 +1314,7 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
 		
-		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
+		if (tmp_csv.single_param_idx==IOUtils::npos && tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
 			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS (make sure it is <= CSV_NR_HEADERS) or CSV_FIELDS", AT);
 		
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
