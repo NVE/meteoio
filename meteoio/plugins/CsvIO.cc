@@ -254,7 +254,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * AUTOMERGE = true
  * @endcode
  * Please note that here the file's headers will look like 'DATE;TIME;PARAM' which will allow PARAM to be replaced by
- * the PARAM special value extracted from the file name
+ * the PARAM special value extracted from the file name.
  * 
  * In order to read a set of files and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature):
