@@ -159,10 +159,22 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 	}
 }
 
-void signal_handler( int signal_num ) 
+static void signal_handler( int signal_num ) 
 {
 	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
 }
+
+static void signals_catching(void) 
+{
+	struct sigaction catch_signal;
+	catch_signal.sa_handler = signal_handler;
+	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
+	catch_signal.sa_flags = 0;
+	
+	sigaction(SIGTERM, &catch_signal, NULL);
+	//sigaction(SIGHUP, &catch_signal, NULL);
+}
+
 
 static void real_main(int argc, char* argv[])
 {
@@ -242,7 +254,7 @@ int main(int argc, char** argv)
 #ifdef DEBUG_ARITHM
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW ); //for halting the process at arithmetic exceptions, see also ReSolver1d
 #endif
-	signal(SIGTERM, signal_handler); //trigger call stack print in case of SIGTERM
+	signals_catching(); //trigger call stack print in case of SIGTERM
 	
 	try {
 		real_main(argc, argv);
