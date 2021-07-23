@@ -20,8 +20,8 @@
 
 #include <string.h>
 #if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
-	#include <execinfo.h> //needed for the backtracing of the stack
 	#if defined(__GNUC__)
+		#include <execinfo.h> //needed for the backtracing of the stack
 		#include <sstream>
 		#include <cxxabi.h>
 	#endif
@@ -119,7 +119,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__linux) && defined(__GNUC__) && !defined(ANDROID) && !defined(__CYGWIN__)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
