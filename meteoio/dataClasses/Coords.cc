@@ -801,7 +801,7 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 		else if (coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if (coordsystem=="PROJ") CoordsAlgorithms::PROJ_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {
 		o_latitude = IOUtils::nodata;
 		o_longitude = IOUtils::nodata;
@@ -829,7 +829,7 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 		else if (coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
 		else if (coordsystem=="PROJ") CoordsAlgorithms::WGS84_to_PROJ(i_latitude, i_longitude, coordparam, o_easting, o_northing);
 		else if (coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
-		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {
 		o_easting = IOUtils::nodata;
 		o_northing = IOUtils::nodata;
