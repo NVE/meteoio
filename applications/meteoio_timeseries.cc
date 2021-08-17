@@ -170,7 +170,7 @@ static void signals_catching(void)
 	typedef void(*SignalHandlerPointer)(int);
 	SignalHandlerPointer previousHandler;
 	previousHandler = signal(SIGTERM, signal_handler);
-#elif
+#else
 	struct sigaction catch_signal;
 	catch_signal.sa_handler = signal_handler;
 	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
