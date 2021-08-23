@@ -471,7 +471,7 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 	                     grid2D.getNy()==target.grid2D.getNy() &&
 	                     llcorner==target.llcorner &&
 	                     (cellsize==target.cellsize 
-	                     || (ur_lat==target.ur_lat && ur_lon==target.ur_lon));
+	                     || (fabs(ur_lat-target.ur_lat) < 1.e-6 && fabs(ur_lon-target.ur_lon) < 1.e-6));
 
 	return isSameLoc;
 }
