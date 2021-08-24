@@ -45,7 +45,7 @@ void ProcTransformWindVector::process(const unsigned int&, const std::vector<Met
 
 #else
 
-bool isEPSG(const std::string &c) {
+inline bool isEPSG(const std::string &c) {
 	// Check if EPSG code, in which case the string should only contain numbers
 	return c.find_first_not_of("0123456789") == std::string::npos;
 }
