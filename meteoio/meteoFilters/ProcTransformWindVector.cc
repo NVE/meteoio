@@ -22,7 +22,7 @@
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/FileUtils.h>
 #ifdef PROJ
-        #include <proj_api.h>
+	#include <proj_api.h>
 #endif
 #include <stdio.h>
 
@@ -88,7 +88,7 @@ ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformW
 
 void ProcTransformWindVector::initPROJ()
 {
-	std::string src_param("");
+	std::string src_param;
 	if (s_coordparam == "") {
 		src_param = std::string("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	} else if (isEPSG(s_coordparam)) {
@@ -98,7 +98,7 @@ void ProcTransformWindVector::initPROJ()
 		src_param = s_coordparam;
 	}
 
-	std::string dest_param("");
+	std::string dest_param;
 	if (t_coordparam == "") {
 		dest_param = std::string("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	} else if (isEPSG(t_coordparam)) {
@@ -116,21 +116,21 @@ void ProcTransformWindVector::initPROJ()
 	}
 }
 
-void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, const std::string&, double& X_out, double& Y_out)
+void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
 {
 	double x = X_in;
 	double y = Y_in;
 	if (pj_is_latlong(pj_src)) {
-		x*=Cst::to_rad;
-		y*=Cst::to_rad;
+		x *= Cst::to_rad;
+		y *= Cst::to_rad;
 	}
 	const int p = pj_transform(pj_src, pj_dest, 1, 1, &x, &y, NULL );
 	if (p!=0) throw ConversionFailedException("PROJ conversion failed: "+p, AT);
 	X_out = x;
 	Y_out = y;
 	if (pj_is_latlong(pj_dest)) {
-		X_out*=Cst::to_deg;
-		Y_out*=Cst::to_deg;
+		X_out *= Cst::to_deg;
+		Y_out *= Cst::to_deg;
 	}
 }
 
@@ -171,14 +171,14 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 
 	ovec = ivec;
 	for (size_t ii=0; ii<ivec.size(); ii++){
-		double u=IOUtils::nodata;
-		double v=IOUtils::nodata;
-		double uc=IOUtils::nodata;
-		double vc=IOUtils::nodata;
+		double u = IOUtils::nodata;
+		double v = IOUtils::nodata;
+		double uc = IOUtils::nodata;
+		double vc = IOUtils::nodata;
 
 		// Get coordinates
-		const double lon=ivec[ii].meta.getPosition().getLon();
-		const double lat=ivec[ii].meta.getPosition().getLat();
+		const double lon = ivec[ii].meta.getPosition().getLon();
+		const double lat = ivec[ii].meta.getPosition().getLat();
 
 		// Check for wind speed components
 		const std::string U_param( findUComponent(ivec[ii]) );
