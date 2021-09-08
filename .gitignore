@@ -16,3 +16,5 @@ lib/*.so*
 /meteoio/IOHandler.cc
 /Makefile
 /doc/html/*
+
+*.swp
