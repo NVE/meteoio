@@ -91,8 +91,8 @@ namespace mio {
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
  * - <b>Metadata</b>
- *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
- *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ *    - CSV\#_NAME: a descriptive station name to use (if provided, has priority over the special headers);
+ *    - CSV\#_ID: the (short) station id to use (if provided, has priority over the special headers);
  *    - CSV\#_SLOPE: the slope angle in degrees at the station (if providing a slope, also provide an azimuth);
  *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station ;
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
