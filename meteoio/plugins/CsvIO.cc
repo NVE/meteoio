@@ -44,7 +44,8 @@ namespace mio {
  * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * **The final units MUST be SI**. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
+ * **The final units MUST be <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf">coherent derived SI units</a>** 
+ * (section 2.3.4 in the SI-Brochure). If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
  * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
