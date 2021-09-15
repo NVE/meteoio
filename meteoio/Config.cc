@@ -468,8 +468,12 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 				it++;
 		}
 		const size_t new_deferred_count = deferred_vars.size();
-		if (new_deferred_count==deferred_count)
-			throw InvalidArgumentException("Can not resolve some variables in file "+filename+" (circular dependency? invalid variable name?)", AT);
+		if (new_deferred_count==deferred_count) {
+			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? invalid variable name? syntax error?):");
+			for (std::set<std::string>::iterator it = deferred_vars.begin(); it!=deferred_vars.end(); ++it)
+				msg.append( " "+*it );
+			throw InvalidArgumentException(msg, AT);
+		}
 		deferred_count = new_deferred_count;
 	}
 	
