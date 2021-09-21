@@ -480,6 +480,7 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 					if (enable_grid_resampling) { //user requests to temporally interpolate inbetween grids
 						Date sdate( date - gridprocessor.getWindowSize() );
 						Date edate( date + gridprocessor.getWindowSize() );
+						const bool status_all = setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
 						const std::map<Date, Grid2DObject> all_grids( getAllGridsForParameter(parameter) );
 						gridprocessor.resample(date, parameter, all_grids, grid2D);
 						buffer.push(grid2D, parameter, date);
