@@ -15,8 +15,9 @@ class GridResamplingAlgorithm {
 	public:
 		GridResamplingAlgorithm(const std::string& i_algorithm, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/);
 		virtual void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid) = 0;
+		virtual std::string toString() const = 0;
 
- 	protected:
+	protected:
 		const std::string algo, parname;
 		double grid_window_size;
 };

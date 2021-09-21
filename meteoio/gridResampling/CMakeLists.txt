@@ -4,4 +4,5 @@ INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 SET(gridResampling_sources
 	gridResampling/GridResamplingAlgorithms.cc
 	gridResampling/GridLinearResampling.cc
+	gridResampling/GridTimeseriesResampling.cc
 )

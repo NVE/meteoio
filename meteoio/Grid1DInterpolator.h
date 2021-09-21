@@ -20,7 +20,7 @@ class Grid1DInterpolator {
 		bool resampleData(const Date& date, const MeteoGrids::Parameters& parameter, const std::map<Date, Grid2DObject>& available_grids, Grid2DObject& resampled_grid);
 		double getWindowSize() const { return grid_window_size; };
 
- 	private:
+	private:
 		std::string getGridAlgorithmForParameter(const std::string& parname) const;
 
 		static const std::string section_name;

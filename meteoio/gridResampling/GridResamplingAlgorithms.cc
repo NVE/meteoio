@@ -1,5 +1,6 @@
 #include <meteoio/gridResampling/GridResamplingAlgorithms.h>
 #include <meteoio/gridResampling/GridLinearResampling.h>
+#include <meteoio/gridResampling/GridTimeseriesResampling.h>
 
 namespace mio {
 
@@ -16,6 +17,8 @@ GridResamplingAlgorithm* GridResamplingAlgorithmsFactory::getAlgorithm(const std
 	const std::string algorithm( IOUtils::strToUpper(i_algorithm) );
 	if (algorithm == "LINEAR")
 		return new GridLinearResampling(algorithm, parname, grid_window_size, vecArgs);
+	else if (algorithm == "TIMESERIES")
+		return new GridTimeseriesResampling(algorithm, parname, grid_window_size, vecArgs);
 	else
 		throw IOException("The grid resampling algorithm '" + algorithm + "' is not implemented", AT);
 

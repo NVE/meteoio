@@ -33,24 +33,18 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 	const double ts = it_before->first.getJulian();
 	const double te = it_after->first.getJulian();
 	const double tt = date.getJulian();
-	std::cout << "GLR: ts = " << it_before->first.toString(Date::ISO) << std::endl;
-	std::cout << "GLR: te = " << it_after->first.toString(Date::ISO) << std::endl;
-	std::cout << "GLR: tt = " << date.toString(Date::ISO) << std::endl;
 	if (ts == te)
 		throw IOException("Equal start and end date for grid linear interpolation", AT);
 
-	for (int xx = 1; xx <= grid_before.getNx(); ++xx) {
-		for (int yy = 1; yy <= grid_before.getNy(); ++yy) {
-			if (grid_before(xx, yy) == IOUtils::nodata || grid_after(xx, yy) == IOUtils::nodata) {
-				resampled_grid(xx, yy) = IOUtils::nodata;
-			} else {
+	for (int xx = 0; xx < grid_before.getNx(); ++xx) {
+		for (int yy = 0; yy < grid_before.getNy(); ++yy) {
+			if (!grid_before(xx, yy) == IOUtils::nodata && !grid_after(xx, yy) == IOUtils::nodata) {
 				const double aa = (grid_after(xx, yy) - grid_before(xx, yy) / (te - ts));
 				const double bb = grid_after(xx, yy) - aa * te;
 				resampled_grid(xx, yy) = aa * tt + bb;
 			}
 		} //endfor yy
 	} //endfor xx
-	return;
 }
 
 } //namespace

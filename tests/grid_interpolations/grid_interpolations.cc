@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 
 	mio::Config cfg("./io.ini");
 	mio::IOManager io(cfg);
-	
+
 	const double TZ = cfg.get("TIME_ZONE", "Input"); //get dates according to time zone
 	mio::Date sdate, edate;
 	mio::IOUtils::convertString(sdate, argv[1], TZ); //start date
@@ -41,8 +41,8 @@ int main(int argc, char** argv) {
 			}
 			dt = dt + 1.;
 		}
-		return 0;	
-	}	
+		return 0;
+	} //endif gen_grids
 
 
 //	/* VSTATIONS */
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
 
 //	/* RAW GRID READING  */
 //	std::string info;
-//	io.getMeteoData(sdate, dem, mio::MeteoData::TA, grid_ta, info);
-//	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, sdate); //assume 1st cmd line date exists as grid
+//	io.getMeteoData(sdate, dem, mio::MeteoData::TA, grid_ta, info); //assume 1st cmd line date exists as grid
+//	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, sdate);
 
 	/* TEMPORAL GRID RESAMPLING */
 	mio::Date inbetween(sdate);

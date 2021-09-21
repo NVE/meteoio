@@ -457,7 +457,6 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
                   Grid2DObject& result, std::string& info_string)
 {
 	if (ts_mode==IOUtils::GRID_RESAMPLE) { //fill tsm1's buffer
-		std::cout << "getMeteoData: GRID_RESAMPLE" << std::endl;
 		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
 		const Date bufferEnd( tsm1.getBufferEnd( TimeSeriesManager::RAW ) );
 		
