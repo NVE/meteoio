@@ -483,8 +483,8 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 						const bool status_all = setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
 						const std::map<Date, Grid2DObject> all_grids( getAllGridsForParameter(parameter) );
 						gridprocessor.resample(date, parameter, all_grids, grid2D);
+						std::cout << "Push grid for MeteoGrids::Parameters #" << parameter << " ('" << MeteoGrids::getParameterName(parameter) << "') at " << date.toString(Date::ISO) << " into buffer" << std::endl;
 						buffer.push(grid2D, parameter, date);
-						std::cout << "Push grid at " << date.toString(Date::ISO) << " into buffer" << std::endl;
 					} else {
 						const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
 						std::string msg2("There are no grids.");

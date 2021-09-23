@@ -37,11 +37,9 @@ Grid1DInterpolator::~Grid1DInterpolator()
 bool Grid1DInterpolator::resampleData(const Date& date, const MeteoGrids::Parameters& parameter,
 	const std::map<Date, Grid2DObject>& available_grids, Grid2DObject& resampled_grid)
 {
-	const std::string parname( MeteoGrids::getParameterName(parameter) );
-	const size_t idx = MeteoData().getParameterIndex(parname);
-	const MeteoData::Parameters mpar( static_cast<MeteoData::Parameters>(idx) );
+	const MeteoData::Parameters mpar( MeteoData::findMeteoParam(parameter) );
 	const std::string mparname( MeteoData::getParameterName(mpar) );
-	if (algorithm_map.find(parname) == algorithm_map.end())
+	if (algorithm_map.find(mparname) == algorithm_map.end())
 		return false;
 	algorithm_map[mparname]->resample(date, available_grids, resampled_grid);
 	return true; //successfull resampling

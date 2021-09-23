@@ -29,28 +29,32 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 	resampled_grid.set(all_grids.begin()->second, IOUtils::nodata);
 	ResamplingAlgorithms* ts_interpolator = ResamplingAlgorithmsFactory::getAlgorithm(base_algorithm_, parname, 86400., vecArgs_);
 
-	StationData mockup_meta;
-	mockup_meta.setStationData(Coords(), "GRID_RES_STAT", "GRID_RES_STAT");
+	StationData point_meta; //fill what's available of grid point metadata
 
 	for (int xx = 0; xx < resampled_grid.getNx(); ++xx) {
 		for (int yy = 0; yy < resampled_grid.getNy(); ++yy) {
+			Coords point_coords;
+			point_coords.setGridIndex(xx, yy, IOUtils::inodata);
+			resampled_grid.gridify(point_coords);
+			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_");
 			std::vector<MeteoData> vecM;
 			size_t index = 0;
 			size_t counter = 0;
 			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) { //
 				counter++;
-				MeteoData md(it->first, mockup_meta);
+				MeteoData md(it->first, point_meta);
 				md(parname) = it->second(xx, yy);
-				if (it->first > date) {
+				if (it->first > date) { //put a nodata point at the date to be resampled
 					MeteoData nodata_point( md );
-					md.reset();
+					nodata_point.setDate(date);
+					nodata_point.reset();
 					vecM.push_back(nodata_point);
-					index = counter;
+					index = counter; //remember index of nodata point
 				}
 				vecM.push_back(md);
 			}
-			MeteoData resampled;
-			ts_interpolator->resample(mockup_meta.getHash(), index, ResamplingAlgorithms::exact_match,
+			MeteoData resampled; //resample this at the index of previously inserted nodata point
+			ts_interpolator->resample(point_meta.getHash(), index, ResamplingAlgorithms::exact_match,
 				MeteoData().getParameterIndex(parname),	vecM, resampled);
 			resampled_grid(xx, yy) = resampled(parname);
 		} //endfor yy

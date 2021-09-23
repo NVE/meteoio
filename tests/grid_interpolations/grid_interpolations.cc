@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 	inbetween = inbetween + 1.7; //pick some date that is not there as raw grid
 	std::cout << "Calling MeteoIO for date " << inbetween.toString(mio::Date::ISO) << std::endl;
 	io.getMeteoData(inbetween, dem, mio::MeteoData::TA, grid_ta);
-//	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, inbetween);
+	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, inbetween);
 
 	return 0;
 }

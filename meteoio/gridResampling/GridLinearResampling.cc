@@ -38,11 +38,11 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 
 	for (int xx = 0; xx < grid_before.getNx(); ++xx) {
 		for (int yy = 0; yy < grid_before.getNy(); ++yy) {
-			if (!grid_before(xx, yy) == IOUtils::nodata && !grid_after(xx, yy) == IOUtils::nodata) {
-				const double aa = (grid_after(xx, yy) - grid_before(xx, yy) / (te - ts));
-				const double bb = grid_after(xx, yy) - aa * te;
-				resampled_grid(xx, yy) = aa * tt + bb;
-			}
+			if ((grid_before(xx, yy) == IOUtils::nodata) || (grid_after(xx, yy) == IOUtils::nodata))
+				continue;
+			const double aa = (grid_after(xx, yy) - grid_before(xx, yy) / (te - ts));
+			const double bb = grid_after(xx, yy) - aa * te;
+			resampled_grid(xx, yy) = aa * tt + bb;
 		} //endfor yy
 	} //endfor xx
 }

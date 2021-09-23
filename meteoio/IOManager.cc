@@ -472,16 +472,14 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 		bool write_grids = false;
 		cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_grids);
 
-		const std::string parname( MeteoData::getParameterName(meteoparam) );
-		const size_t idx = MeteoGrids::getParameterIndex(parname);
-		const MeteoGrids::Parameters gpar( static_cast<MeteoGrids::Parameters>(idx) );
-		Grid2DObject out_grid;
-		gdm1.read2DGrid(out_grid, gpar, date, true); //this puts the resampled grid into the buffer
+		const MeteoGrids::Parameters gpar( MeteoData::findGridParam(meteoparam) );
+		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
 		if (write_grids)
-			gdm1.write2DGrid(out_grid, gpar, date);
+			gdm1.write2DGrid(result, gpar, date);
+		return (!result.empty());
 	}
 
-	std::cout << "getMeteoData calling interpolator" << std::endl;
+	std::cout << "getMeteoData calling interpolator for MeteoData::Parameter #" << meteoparam << " ('" << MeteoData().getNameForParameter(meteoparam) << "') at date " << date.toString(Date::ISO) << std::endl;
 	info_string = interpolator.interpolate(date, dem, meteoparam, result);
 	return (!result.empty());
 }
@@ -505,6 +503,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 		throw IOException("Not implemented yet", AT);
 	}
 
+	std::cout << "getMeteoData calling interpolator for parameter '" << param_name << "' at date " << date.toString(Date::ISO) << std::endl;
 	info_string = interpolator.interpolate(date, dem, param_name, result);
 	return (!result.empty());
 }
