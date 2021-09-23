@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 			int year, month, day, hour, min, sec;
 			dt.getDate(year, month, day, hour, min, sec);
 			mio::Date dt_hours(dt);
-			static const size_t hours[3] = {0, 12, 18};
+			static const size_t hours[3] = {8, 12, 16};
 			for (int ii = 0; ii < 3; ++ii) { //a couple of grids per day
 				dt_hours.setDate(year, month, day, hours[ii], 0, 0);
 				mock_grid = ii; //set all coordinates to some dummy value

@@ -26,25 +26,29 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 {
 	auto it_before( GridProcessor::seek_before(date, all_grids) );
 	auto it_after( GridProcessor::seek_after(date, all_grids) );
+	if (it_before == all_grids.end() || it_after == all_grids.end())
+		throw IOException("Grids not loaded to cover linear interpolation date", AT);
 	Grid2DObject grid_before = it_before->second;
 	Grid2DObject grid_after = it_after->second;
 	resampled_grid.set(grid_before, IOUtils::nodata);
 
-	const double ts = it_before->first.getJulian();
-	const double te = it_after->first.getJulian();
-	const double tt = date.getJulian();
-	if (ts == te)
+	//solve:
+	//(y - y1)/(x - x1) = (y2 - y1)/(x2 - x1)
+	//==> y = y1 + (y2 - y1)/(x2 - x1) * (x - x1)
+	const double x1 = it_before->first.getJulian();
+	const double x2 = it_after->first.getJulian();
+	const double xx = date.getJulian();
+	if (x1 == x2)
 		throw IOException("Equal start and end date for grid linear interpolation", AT);
 
-	for (int xx = 0; xx < grid_before.getNx(); ++xx) {
-		for (int yy = 0; yy < grid_before.getNy(); ++yy) {
-			if ((grid_before(xx, yy) == IOUtils::nodata) || (grid_after(xx, yy) == IOUtils::nodata))
-				continue;
-			const double aa = (grid_after(xx, yy) - grid_before(xx, yy) / (te - ts));
-			const double bb = grid_after(xx, yy) - aa * te;
-			resampled_grid(xx, yy) = aa * tt + bb;
-		} //endfor yy
-	} //endfor xx
+	for (size_t jj = 0; jj < grid_before.size(); ++jj) {
+		const double y1 = grid_before(jj);
+		const double y2 = grid_after(jj);
+		if ((y1 == IOUtils::nodata) || (y2 == IOUtils::nodata))
+			continue; //already at nodata
+		const double aa = (y2 - y1) / (x2 - x1);
+		resampled_grid(jj) = y1 + aa * (xx - x1);
+	} //endfor jj
 }
 
 } //namespace
