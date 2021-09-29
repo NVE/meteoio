@@ -26,8 +26,8 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 {
 	auto it_before( GridProcessor::seek_before(date, all_grids) );
 	auto it_after( GridProcessor::seek_after(date, all_grids) );
-	if (it_before == all_grids.end() || it_after == all_grids.end())
-		throw IOException("Grids not loaded to cover linear interpolation date", AT);
+	if (it_before == all_grids.end() || it_after == all_grids.end() || all_grids.size() == 1)
+		throw IOException("Grids not loaded to cover linear interpolation date (is your buffer size big enough?)", AT);
 	Grid2DObject grid_before = it_before->second;
 	Grid2DObject grid_after = it_after->second;
 	resampled_grid.set(grid_before, IOUtils::nodata);

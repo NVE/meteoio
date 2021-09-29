@@ -18,6 +18,8 @@ bool GridProcessor::resample(const Date& date, const MeteoGrids::Parameters& par
 
 std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek(const Date& date, const std::map<Date, Grid2DObject>& grids, const bool& exact_match)
 {
+	if (grids.empty())
+		return grids.end();
 	std::map<Date, Grid2DObject>::const_iterator it = grids.find(date);
 	if (exact_match)
 		return it;
@@ -30,6 +32,8 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek(const Date& dat
 
 std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek_before(const Date& date, const std::map<Date, Grid2DObject>& grids)
 {
+	if (grids.empty())
+		return grids.end();
 	if (date < grids.begin()->first) //there is no element before date
 		return grids.end();
 	for (auto it = ++grids.begin(); it != grids.end(); ++it) {
@@ -41,6 +45,8 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek_before(const Da
 
 std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek_after(const Date& date, const std::map<Date, Grid2DObject>& grids)
 {
+	if (grids.empty())
+		return grids.end();
 	for (auto it = grids.begin(); it != grids.end(); ++it) {
 		if (it->first > date)
 			return it;
