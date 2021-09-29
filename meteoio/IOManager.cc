@@ -438,8 +438,10 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 {
 	std::string info_string;
 	const bool status = getMeteoData(date, dem, meteoparam, result, info_string);
-	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cerr << " (" << info_string << ") " << endl;
+	if (!info_string.empty()) { //not read as raw grid
+		cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+		cerr << " (" << info_string << ") " << endl;
+	}
 	return status;
 }
 
@@ -448,8 +450,10 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 {
 	std::string info_string;
 	const bool status = getMeteoData(date, dem, param_name, result, info_string);
-	cerr << "[i] Interpolating " << param_name;
-	cerr << " (" << info_string << ") " << endl;
+	if (!info_string.empty()) { //not read as raw grid
+		cerr << "[i] Interpolating " << param_name;
+		cerr << " (" << info_string << ") " << endl;
+	}
 	return status;
 }
 
@@ -479,7 +483,6 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 		return (!result.empty());
 	}
 
-	std::cout << "getMeteoData calling interpolator for MeteoData::Parameter #" << meteoparam << " ('" << MeteoData().getNameForParameter(meteoparam) << "') at date " << date.toString(Date::ISO) << std::endl;
 	info_string = interpolator.interpolate(date, dem, meteoparam, result);
 	return (!result.empty());
 }
@@ -503,7 +506,6 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 		throw IOException("Not implemented yet", AT);
 	}
 
-	std::cout << "getMeteoData calling interpolator for parameter '" << param_name << "' at date " << date.toString(Date::ISO) << std::endl;
 	info_string = interpolator.interpolate(date, dem, param_name, result);
 	return (!result.empty());
 }

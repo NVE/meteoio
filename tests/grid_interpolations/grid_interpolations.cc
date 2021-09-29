@@ -53,9 +53,9 @@ int main(int argc, char** argv) {
 	mio::Grid2DObject grid_ta;
 
 //	/* RAW GRID READING  */
-//	std::string info;
-//	io.getMeteoData(sdate, dem, mio::MeteoData::TA, grid_ta, info); //assume 1st cmd line date exists as grid
-//	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, sdate);
+	std::string info;
+	io.getMeteoData(sdate, dem, mio::MeteoData::TA, grid_ta, info); //assume 1st cmd line date exists as grid
+	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, sdate);
 
 	/* TEMPORAL GRID RESAMPLING */
 	mio::Date inbetween(sdate);
