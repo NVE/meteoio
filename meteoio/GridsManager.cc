@@ -492,9 +492,9 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 						throw NoDataException(msg1 + msg2, AT);
 					} //endif enable_grid_resampling
 				}
-			}
-		}
-	}
+			} //status
+		} //buffer
+	} //processing level
 
 	 //reproject grid if it is lat/lon
 	if (enforce_cartesian && grid2D.isLatlon())
@@ -510,8 +510,14 @@ std::map<Date, Grid2DObject> GridsManager::getAllGridsForParameter(const MeteoGr
 		if (isAvailable(it->second, parameter, it->first)) {
 			const auto pair( std::make_pair(it->first, getRawGrid(parameter, it->first)) );
 			all_grids.insert(pair);
+		} else {
+			Grid2DObject generated;
+			if (generateGrid(generated, it->second, parameter, it->first)) {
+				const auto pair( std::make_pair(it->first, generated) );
+				all_grids.insert(pair);
+			}
 		}
-	}
+	} //endfor
 	return all_grids;
 }
 
