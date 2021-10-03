@@ -29,34 +29,35 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 	resampled_grid.set(all_grids.begin()->second, IOUtils::nodata);
 	ResamplingAlgorithms* ts_interpolator = ResamplingAlgorithmsFactory::getAlgorithm(base_algorithm_, parname, 86400., vecArgs_);
 
-	StationData point_meta; //fill what's available of grid point metadata
+	StationData point_meta; //fill this object with what's available of grid point metadata
 
 	for (int xx = 0; xx < resampled_grid.getNx(); ++xx) {
 		for (int yy = 0; yy < resampled_grid.getNy(); ++yy) {
 			Coords point_coords;
-			point_coords.setGridIndex(xx, yy, IOUtils::inodata);
+			point_coords.setGridIndex(xx, yy, IOUtils::inodata); //TODO: get altitude (e. g. for solar resampling)
 			resampled_grid.gridify(point_coords);
-			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_");
+			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_"); //some unique dummy ID
 			std::vector<MeteoData> vecM;
-			size_t index = 0;
+			size_t index = -1;
 			size_t counter = 0;
+
+			MeteoData resampled_pt; //point at which to resample
 			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) { //
-				counter++;
-				MeteoData md(it->first, point_meta);
+				MeteoData md( it->first, point_meta );
 				md(parname) = it->second(xx, yy);
-				if (it->first > date) { //put a nodata point at the date to be resampled
-					MeteoData nodata_point( md );
-					nodata_point.setDate(date);
-					nodata_point.reset();
-					vecM.push_back(nodata_point);
+				if (it->first > date && index == -1) { //put a nodata point at the date to be resampled
+					resampled_pt = md;
+					resampled_pt.setDate(date);
+					resampled_pt.reset();
+					vecM.push_back(resampled_pt);
 					index = counter; //remember index of nodata point
 				}
 				vecM.push_back(md);
+				counter++;
 			}
-			MeteoData resampled; //resample this at the index of previously inserted nodata point
 			ts_interpolator->resample(point_meta.getHash(), index, ResamplingAlgorithms::exact_match,
-				MeteoData().getParameterIndex(parname),	vecM, resampled);
-			resampled_grid(xx, yy) = resampled(parname);
+				MeteoData().getParameterIndex(parname),	vecM, resampled_pt);
+			resampled_grid(xx, yy) = resampled_pt(parname);
 		} //endfor yy
 	} //endfor xx
 
