@@ -38,7 +38,9 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 			resampled_grid.gridify(point_coords);
 			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_"); //some unique dummy ID
 			std::vector<MeteoData> vecM;
-			size_t index = -1;
+
+			ResamplingAlgorithms::ResamplingPosition pos = ResamplingAlgorithms::exact_match;
+			int index = -1;
 			size_t counter = 0;
 
 			MeteoData resampled_pt; //point at which to resample
@@ -46,17 +48,28 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 				MeteoData md( it->first, point_meta );
 				md(parname) = it->second(xx, yy);
 				if (it->first > date && index == -1) { //put a nodata point at the date to be resampled
-					resampled_pt = md;
-					resampled_pt.setDate(date);
+					resampled_pt = md; //copy meta data
 					resampled_pt.reset();
+					resampled_pt.setDate(date);
 					vecM.push_back(resampled_pt);
 					index = counter; //remember index of nodata point
 				}
 				vecM.push_back(md);
 				counter++;
 			}
-			ts_interpolator->resample(point_meta.getHash(), index, ResamplingAlgorithms::exact_match,
-				MeteoData().getParameterIndex(parname),	vecM, resampled_pt);
+
+			if (index == -1) { //requested date is after available time span
+				resampled_pt.setDate(date);
+				resampled_pt.meta = point_meta;
+				vecM.push_back(resampled_pt);
+				index = vecM.size() - 1;
+				pos = ResamplingAlgorithms::end;
+			} else if (index == 0) { //requested date was inserted before available time span
+				pos = ResamplingAlgorithms::begin;
+			}
+
+			ts_interpolator->resample(point_meta.getHash(), static_cast<size_t>(index), pos,
+				resampled_pt.getParameterIndex(parname), vecM, resampled_pt);
 			resampled_grid(xx, yy) = resampled_pt(parname);
 		} //endfor yy
 	} //endfor xx
