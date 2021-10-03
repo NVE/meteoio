@@ -1,3 +1,22 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2021 MobyGIS Srl, Trento, Italy                                      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <meteoio/gridResampling/GridTimeseriesResampling.h>
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/GridProcessor.h>
@@ -7,9 +26,19 @@
 
 namespace mio {
 
+/**
+ * @brief Constructor for a grid resampling algorithm.
+ * @details On initialization, a resampling object stores its user settings.
+ * @param[in] algoname The current algorithm's semantic name.
+ * @param[in] parname The current meteo parameter's identifier.
+ * @param[in] dflt_window_size The default grid resampling window size.
+ * @param[in] vecArgs Vector of arguments (user settings) for this algorithm. Note that settings must
+ * be given for this algorithm's name (e. g. TA::TIMESERIES::EXTRAPOLATE = T for TA::TIMESERIES::ALGORITHM = LINEAR).
+ */
 GridTimeseriesResampling::GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname,
 	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs), vecArgs_(vecArgs), base_algorithm_("LINEAR")
+	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs), vecArgs_(vecArgs),
+	base_algorithm_("LINEAR")
 {
 	for (size_t ii = 0; ii < vecArgs.size(); ++ii) {
 		if (vecArgs[ii].first == "ALGORITHM")
@@ -17,6 +46,10 @@ GridTimeseriesResampling::GridTimeseriesResampling(const std::string& i_algoname
 	}
 }
 
+/**
+ * @brief Print this algorithm's properties to a stream.
+ * @return Semantic description of the algorithm's setup.
+ */
 std::string GridTimeseriesResampling::toString() const
 {
 	std::ostringstream ss;
@@ -24,27 +57,37 @@ std::string GridTimeseriesResampling::toString() const
 	return ss.str();
 }
 
+/**
+ * @brief Perform temporal grid resampling.
+ * @details This function performs the interpolation routine and returns a grid resampled to
+ * the desired date.
+ * @param[in] date Date to resample the data to.
+ * @param[in] all_grids List of all grids available to this resampling algorithm, as well as
+ * their corresponding dates.
+ * @param[out] The temporally resampled grid.
+ */
 void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid)
 {
+	//retrieve an algorithm from the time series resampling algorithm factory:
 	resampled_grid.set(all_grids.begin()->second, IOUtils::nodata);
 	ResamplingAlgorithms* ts_interpolator = ResamplingAlgorithmsFactory::getAlgorithm(base_algorithm_, parname, 86400., vecArgs_);
 
 	StationData point_meta; //fill this object with what's available of grid point metadata
 
 	for (int xx = 0; xx < resampled_grid.getNx(); ++xx) {
-		for (int yy = 0; yy < resampled_grid.getNy(); ++yy) {
+		for (int yy = 0; yy < resampled_grid.getNy(); ++yy) { //iterate over all grid points separately
 			Coords point_coords;
 			point_coords.setGridIndex(xx, yy, IOUtils::inodata); //TODO: get altitude (e. g. for solar resampling)
-			resampled_grid.gridify(point_coords);
+			resampled_grid.gridify(point_coords); //calculate coordinates for grid point
 			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_"); //some unique dummy ID
-			std::vector<MeteoData> vecM;
+			std::vector<MeteoData> vecM; //extract time series to this vector
 
 			ResamplingAlgorithms::ResamplingPosition pos = ResamplingAlgorithms::exact_match;
 			int index = -1;
 			size_t counter = 0;
 
 			MeteoData resampled_pt; //point at which to resample
-			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) { //
+			for (const auto& it = all_grids.begin(); it != all_grids.end(); ++it) { //
 				MeteoData md( it->first, point_meta );
 				md(parname) = it->second(xx, yy);
 				if (it->first > date && index == -1) { //put a nodata point at the date to be resampled

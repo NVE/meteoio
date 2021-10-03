@@ -1,3 +1,22 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2021 MobyGIS Srl, Trento, Italy                                      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef GRIDTIMESERIESRESAMPLING_H
 #define GRIDTIMESERIESRESAMPLING_H
 
@@ -9,6 +28,13 @@
 
 namespace mio {
 
+/**
+ * @class GridTimeseriesResampling
+ * @brief This grid resampling class builds time series at all grid positions and sends them
+ * to meteo 1d resampling algorithms to perform the interpolations.
+ * @author Michael Reisecker
+ * @date 2021-09
+ */
 class GridTimeseriesResampling : public GridResamplingAlgorithm {
 	public:
 		GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -18,7 +44,7 @@ class GridTimeseriesResampling : public GridResamplingAlgorithm {
 
 	private:
 		std::vector< std::pair<std::string, std::string> > vecArgs_;
-		std::string base_algorithm_;
+		std::string base_algorithm_; ///< Name of timeseries resampling algorithm to use
 };
 
 } //end namespace mio

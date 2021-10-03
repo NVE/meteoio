@@ -503,6 +503,14 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 	return grid2D;
 }
 
+/**
+ * @brief Build a list of grids that are available as input for a specific parameter.
+ * @details This function queries the input plugin for grids that are available for a specific
+ * parameter. If gridded data is available from which the parameter can losslessly be generated
+ * this is treated as equal and also returned.
+ * @param[in] parameter The meteo parameter to go look for.
+ * @return A list of available grids and their dates.
+ */
 std::map<Date, Grid2DObject> GridsManager::getAllGridsForParameter(const MeteoGrids::Parameters& parameter)
 {
 	std::map<Date, Grid2DObject> all_grids;
