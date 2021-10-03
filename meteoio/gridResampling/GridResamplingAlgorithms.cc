@@ -11,6 +11,15 @@ GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& i_algorithm,
 	//do nothing
 }
 
+
+void GridResamplingAlgorithm::setWindowSize(const double& window_size)
+{
+	if (window_size <= 0.)
+		throw InvalidArgumentException("Invalid WINDOW_SIZE for grid resampling algorithm", AT);
+	grid_window_size = window_size / 86400.; //end user enters seconds, Julian internally
+}
+
+
 GridResamplingAlgorithm* GridResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algorithm, const std::string& parname,
 	const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {

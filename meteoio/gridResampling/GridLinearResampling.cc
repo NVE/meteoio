@@ -10,15 +10,14 @@ GridLinearResampling::GridLinearResampling(const std::string& i_algoname, const 
 	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs)
 {
-	const std::string where( "GridInterpolations1D::"+i_parname+"::"+i_algoname );
-	if (!vecArgs.empty()) //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for \""+where+"\"", AT);
+	//do nothing
 }
 
 std::string GridLinearResampling::toString() const
 {
 	std::ostringstream ss;
-	ss << std::right << std::setw(10) << parname << "::"  << std::left << std::setw(15) << algo << "[ ]";
+	ss << std::right << std::setw(10) << parname << "::"  << std::left << std::setw(15) <<
+		algo << "[ window_size=" << grid_window_size << " ]";
 	return ss.str();
 }
 
