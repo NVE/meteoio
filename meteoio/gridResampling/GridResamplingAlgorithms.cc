@@ -26,9 +26,9 @@ namespace mio {
 /**
  * @brief Facade constructor for a generic grid resampling algorithm.
  */
-GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& algorithm, const std::string& parname,
+GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname,
 	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
-	: algo(algorithm), parname(parname), grid_window_size(dflt_window_size)
+	: algo(algorithm), parname(i_parname), grid_window_size(dflt_window_size)
 {
 	//do nothing
 }

@@ -29,13 +29,13 @@ namespace mio {
  * @brief Constructor for a grid resampling algorithm.
  * @details On initialization, a resampling object stores its user settings.
  * @param[in] algoname The current algorithm's semantic name.
- * @param[in] parname The current meteo parameter's identifier.
+ * @param[in] i_parname The current meteo parameter's identifier.
  * @param[in] dflt_window_size The default grid resampling window size.
  * @param[in] vecArgs Vector of arguments (user settings) for this algorithm.
  */
-GridLinearResampling::GridLinearResampling(const std::string& algoname, const std::string& parname,
+GridLinearResampling::GridLinearResampling(const std::string& algoname, const std::string& i_parname,
 	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-	: GridResamplingAlgorithm(algoname, parname, dflt_window_size, vecArgs)
+	: GridResamplingAlgorithm(algoname, i_parname, dflt_window_size, vecArgs)
 {
 	//do nothing
 }

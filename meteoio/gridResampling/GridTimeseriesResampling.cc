@@ -30,7 +30,7 @@ namespace mio {
  * @brief Constructor for a grid resampling algorithm.
  * @details On initialization, a resampling object stores its user settings.
  * @param[in] algoname The current algorithm's semantic name.
- * @param[in] parname The current meteo parameter's identifier.
+ * @param[in] i_parname The current meteo parameter's identifier.
  * @param[in] dflt_window_size The default grid resampling window size.
  * @param[in] vecArgs Vector of arguments (user settings) for this algorithm. Note that settings must
  * be given for this algorithm's name (e. g. TA::TIMESERIES::EXTRAPOLATE = T for TA::TIMESERIES::ALGORITHM = LINEAR).
@@ -74,23 +74,23 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 
 	StationData point_meta; //fill this object with what's available of grid point metadata
 
-	for (int xx = 0; xx < resampled_grid.getNx(); ++xx) {
-		for (int yy = 0; yy < resampled_grid.getNy(); ++yy) { //iterate over all grid points separately
+	for (size_t xx = 0; xx < resampled_grid.getNx(); ++xx) {
+		for (size_t yy = 0; yy < resampled_grid.getNy(); ++yy) { //iterate over all grid points separately
 			Coords point_coords;
-			point_coords.setGridIndex(xx, yy, IOUtils::inodata); //TODO: get altitude (e. g. for solar resampling)
+			point_coords.setGridIndex((int)xx, (int)yy, IOUtils::inodata); //TODO: get altitude (e. g. for solar resampling)
 			resampled_grid.gridify(point_coords); //calculate coordinates for grid point
 			point_meta.setStationData(point_coords, "_GRS_ID_", "_GRID_RES_STAT_"); //some unique dummy ID
 			std::vector<MeteoData> vecM; //extract time series to this vector
 
 			ResamplingAlgorithms::ResamplingPosition pos = ResamplingAlgorithms::exact_match;
-			int index = -1;
+			size_t index = IOUtils::npos;
 			size_t counter = 0;
 
 			MeteoData resampled_pt; //point at which to resample
-			for (const auto& it = all_grids.begin(); it != all_grids.end(); ++it) { //
+			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) { //
 				MeteoData md( it->first, point_meta );
-				md(parname) = it->second(xx, yy);
-				if (it->first > date && index == -1) { //put a nodata point at the date to be resampled
+				md(parname) = it->second((int)xx, (int)yy);
+				if (it->first > date && index == IOUtils::npos) { //put a nodata point at the date to be resampled
 					resampled_pt = md; //copy meta data
 					resampled_pt.reset();
 					resampled_pt.setDate(date);
@@ -101,7 +101,7 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 				counter++;
 			}
 
-			if (index == -1) { //requested date is after available time span
+			if (index == IOUtils::npos) { //requested date is after available time span
 				resampled_pt.setDate(date);
 				resampled_pt.meta = point_meta;
 				vecM.push_back(resampled_pt);
@@ -111,7 +111,7 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 				pos = ResamplingAlgorithms::begin;
 			}
 
-			ts_interpolator->resample(point_meta.getHash(), static_cast<size_t>(index), pos,
+			ts_interpolator->resample(point_meta.getHash(), index, pos,
 				resampled_pt.getParameterIndex(parname), vecM, resampled_pt);
 			resampled_grid(xx, yy) = resampled_pt(parname);
 		} //endfor yy
