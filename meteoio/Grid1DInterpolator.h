@@ -41,6 +41,7 @@ namespace mio {
 class Grid1DInterpolator {
 	public:
 		Grid1DInterpolator(const Config& in_cfg);
+		Grid1DInterpolator(const Grid1DInterpolator& org) = default;
 		~Grid1DInterpolator();
 		Grid1DInterpolator& operator=(const Grid1DInterpolator&);
 		bool resampleData(const Date& date, const MeteoGrids::Parameters& parameter, const std::map<Date, Grid2DObject>& available_grids, Grid2DObject& resampled_grid);
