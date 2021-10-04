@@ -31,7 +31,7 @@ GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
                grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated), dem_altimeter(false)
 {
 	size_t max_grids = 10;
-	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
+	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);  //HACK document it!
 	buffer.setMaxGrids(max_grids);
 	cfg.getValue("BUFFER_SIZE", "General", grid2d_list_buffer_size, IOUtils::nothrow);
 	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow); //HACK document it! if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
@@ -480,7 +480,7 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 					if (enable_grid_resampling) { //user requests to temporally interpolate inbetween grids
 						Date sdate( date - gridprocessor.getWindowSize() );
 						Date edate( date + gridprocessor.getWindowSize() );
-						const bool status_all = setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
+						setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
 						const std::map<Date, Grid2DObject> all_grids( getAllGridsForParameter(parameter) );
 						gridprocessor.resample(date, parameter, all_grids, grid2D);
 						buffer.push(grid2D, parameter, date);
