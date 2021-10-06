@@ -5,23 +5,21 @@
 
 #include <meteoio/MeteoIO.h>
 
-const double grid_epsilon = 1e-3; //1e-4 is still too tight because of truncated results when writing data out for the ref.
-
-int main(int argc, char** argv) {
-
-	if (argc < 3)
-		throw std::invalid_argument("Unexpected number of input arguments: A start and end date are required.");
-
+int main(int /*argc*/, char** /*argv*/)
+{
 	mio::Config cfg("./io.ini");
 	mio::IOManager io(cfg);
 
-	const double TZ = cfg.get("TIME_ZONE", "Input"); //get dates according to time zone
-	mio::Date sdate, edate;
-	mio::IOUtils::convertString(sdate, argv[1], TZ); //start date
-	mio::IOUtils::convertString(edate, argv[2], TZ); //end date
-
 	mio::DEMObject dem;
 	io.readDEM(dem);
+
+	//dates for dummy grids (must be covered by ../input/meteo):
+	const std::string begin_date( "2008-12-01T00:00" );
+	const std::string end_date( "2008-12-05T00:00" );
+	const double TZ = cfg.get("TIME_ZONE", "Input"); //get dates according to time zone
+	mio::Date sdate, edate;
+	mio::IOUtils::convertString(sdate, begin_date, TZ); //start date
+	mio::IOUtils::convertString(edate, end_date, TZ); //end date
 
 	//generate a couple of mockup grids to test grid resampling with:
 	const bool gen_grids = false;
@@ -45,24 +43,23 @@ int main(int argc, char** argv) {
 	} //endif gen_grids
 
 
-//	/* VSTATIONS */
-//	std::vector< std::vector<mio::MeteoData> > mvec;
-//	io.getMeteoData(sdate, edate, mvec); //get meteo data from a VStation according to INI
-//	io.writeMeteoData(mvec);
-
-	mio::Grid2DObject grid_ta;
-
-//	/* RAW GRID READING  */
-	std::string info;
-	io.getMeteoData(sdate, dem, mio::MeteoData::TA, grid_ta, info); //assume 1st cmd line date exists as grid
-	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, sdate);
+	/* VSTATIONS */
+	std::vector< std::vector<mio::MeteoData> > mvec;
+	io.getMeteoData(sdate, edate, mvec); //get meteo data from a VStation according to INI
+	io.writeMeteoData(mvec);
 
 	/* TEMPORAL GRID RESAMPLING */
-	mio::Date inbetween(sdate);
-	inbetween = inbetween + 1.7; //pick some date that is not there as raw grid
-	std::cout << "Calling MeteoIO for date " << inbetween.toString(mio::Date::ISO) << std::endl;
-	io.getMeteoData(inbetween, dem, mio::MeteoData::TA, grid_ta);
-	io.write2DGrid(grid_ta, mio::MeteoGrids::TA, inbetween);
+	mio::Grid2DObject grid_ta;
 
-	return 0;
+	//currently we must manually switch from resampling to regridding:
+	cfg.deleteKey("RESAMPLING_STRATEGY", "InputEditing");
+	cfg.addKey("REGRIDDING_STRATEGY", "InputEditing", "GRID_1DINTERPOLATE");
+	mio::IOManager io2(cfg); //reload strategies
+
+	mio::Date inbetween(sdate);
+	inbetween.setDate(2008, 12, 1, 10, 0, 0); //pick some date that is not there as raw grid
+	io2.getMeteoData(inbetween, dem, mio::MeteoData::TA, grid_ta);
+	io2.write2DGrid(grid_ta, mio::MeteoGrids::TA, inbetween);
+
+	return EXIT_SUCCESS;
 }
