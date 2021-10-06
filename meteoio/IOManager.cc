@@ -263,6 +263,8 @@ void IOManager::initIOManager()
 	}
 	
 	if (ts_mode!=IOUtils::STD) initVirtualStations();
+
+	cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_resampled_grids);
 }
 
 void IOManager::initVirtualStations()
@@ -473,12 +475,9 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
-		bool write_grids = false;
-		cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_grids);
-
 		const MeteoGrids::Parameters gpar( MeteoData::findGridParam(meteoparam) );
 		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
-		if (write_grids)
+		if (write_resampled_grids)
 			gdm1.write2DGrid(result, gpar, date);
 		return (!result.empty());
 	}

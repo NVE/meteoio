@@ -97,7 +97,7 @@ bool Grid1DInterpolator::resampleData(const Date& date, const MeteoGrids::Parame
 	if (algorithm_map.find(mparname) == algorithm_map.end())
 		return false; //no algorithm configured for this parameter
 	algorithm_map[mparname]->resample(date, available_grids, resampled_grid);
-	return true; //successfull resampling
+	return true; //was able to call interpolation routine
 }
 
 /**

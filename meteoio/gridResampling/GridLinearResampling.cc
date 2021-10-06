@@ -67,8 +67,8 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 	auto it_after( GridProcessor::seek_after(date, all_grids) );
 	if (it_before == all_grids.end() || it_after == all_grids.end() || all_grids.size() == 1)
 		throw IOException("Grids not loaded to cover linear interpolation date (is your buffer size big enough?)", AT);
-	Grid2DObject grid_before = it_before->second;
-	Grid2DObject grid_after = it_after->second;
+	const Grid2DObject& grid_before = it_before->second;
+	const Grid2DObject& grid_after = it_after->second;
 	resampled_grid.set(grid_before, IOUtils::nodata);
 
 	//solve:
@@ -81,8 +81,8 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 		throw IOException("Equal start and end date for grid linear interpolation", AT);
 
 	for (size_t jj = 0; jj < grid_before.size(); ++jj) {
-		const double y1 = grid_before(jj);
-		const double y2 = grid_after(jj);
+		const double& y1 = grid_before(jj);
+		const double& y2 = grid_after(jj);
 		if ((y1 == IOUtils::nodata) || (y2 == IOUtils::nodata))
 			continue; //already at nodata
 		const double aa = (y2 - y1) / (x2 - x1);

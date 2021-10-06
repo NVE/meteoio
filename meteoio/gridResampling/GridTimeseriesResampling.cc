@@ -87,7 +87,7 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 			size_t counter = 0;
 
 			MeteoData resampled_pt; //point at which to resample
-			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) { //
+			for (auto it = all_grids.begin(); it != all_grids.end(); ++it) {
 				MeteoData md( it->first, point_meta );
 				md(parname) = it->second((int)xx, (int)yy);
 				if (it->first > date && index == IOUtils::npos) { //put a nodata point at the date to be resampled

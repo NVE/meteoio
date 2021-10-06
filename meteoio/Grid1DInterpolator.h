@@ -34,7 +34,6 @@ namespace mio {
 /**
  * @class Grid1DInterpolator
  * @brief A class to temporally resample grid objects.
- * @ingroup stats
  * @author Michael Reisecker
  * @date 2021-09
  */

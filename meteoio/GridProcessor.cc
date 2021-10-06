@@ -63,6 +63,8 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek(const Date& dat
 {
 	if (grids.empty())
 		return grids.end();
+	if (grids.size() == 1)
+		return grids.begin(); //if there is only 1 grid, it is closest to any date...
 	std::map<Date, Grid2DObject>::const_iterator it = grids.find(date);
 	if (it != grids.end() || exact_match)
 		return it;
@@ -70,7 +72,7 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek(const Date& dat
 		if (it->first > date)
 			return --it;
 	}
-	return grids.end();
+	return --grids.end(); //if the date is after all grids, the last one is closest
 }
 
 /**

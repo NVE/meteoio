@@ -32,7 +32,8 @@ namespace mio {
  */
 class GridLinearResampling : public GridResamplingAlgorithm {
 	public:
-		GridLinearResampling(const std::string& algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		GridLinearResampling(const std::string& algoname, const std::string& i_parname, const double& dflt_window_size,
+			const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid);
 		std::string toString() const;
