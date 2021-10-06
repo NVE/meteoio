@@ -264,7 +264,7 @@ void IOManager::initIOManager()
 	
 	if (ts_mode!=IOUtils::STD) initVirtualStations();
 
-	cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_resampled_grids);
+	cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_resampled_grids, IOUtils::nothrow);
 }
 
 void IOManager::initVirtualStations()

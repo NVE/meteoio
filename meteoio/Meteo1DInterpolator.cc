@@ -46,7 +46,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg, const char& rank,
 
 		if (algo_name=="ACCUMULATE" && mode==IOUtils::VSTATIONS && rank==1) {
 			//when doing VSTATIONS, the first pass must re-accumulate over the refresh rate while the second will do over the original user choice
-			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "Input");
+			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
 			const std::vector< std::pair<std::string, std::string> > vecArgs( 1, std::make_pair("PERIOD", vstations_refresh_rate));
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 		} else {
