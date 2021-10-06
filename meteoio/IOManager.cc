@@ -434,7 +434,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 }
 
 
-///////// Spatially interpolating into a 2D grid
+///////// Interpolating into a 2D grid
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
 {
@@ -502,7 +502,11 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
-		throw IOException("Not implemented yet", AT);
+		const MeteoGrids::Parameters gpar( static_cast<MeteoGrids::Parameters>(MeteoGrids::getParameterIndex(param_name)) );
+		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
+		if (write_resampled_grids)
+			gdm1.write2DGrid(result, gpar, date);
+		return (!result.empty());
 	}
 
 	info_string = interpolator.interpolate(date, dem, param_name, result);
