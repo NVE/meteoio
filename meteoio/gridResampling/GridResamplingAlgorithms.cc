@@ -22,9 +22,40 @@
 #include <meteoio/gridResampling/GridTimeseriesResampling.h>
 
 namespace mio {
+/**
+ * @page grid_resampling Grid resampling overview
+ * In addition to spatial interpolations (from stations or grids with different resolutions) it is also possible to temporally resample grids.
+ * Hence, if a set of grids is available at certain dates (from weather models for example), a number of resampling algorithms can be
+ * configured to provide data at dates/times in between.
+ *
+ * @section grid_resampling_section Grid resampling section
+ * First, grid resampling must be enabled by setting the REGRIDDING_STRATEGY to GRID_1DINTERPOLATE in the [InputEditing] section.
+ * Then, grid resampling is configured in the [GridInterpolations1D] section for each meteo parameter separately.
+ *
+ * For example:
+ * @code
+ * [InputEditing]
+ * REGRIDDING_STRATEGY = GRID_1DINTERPOLATE
+ *
+ * [GridInterpolations1D]
+ * TA::RESAMPLE = LINEAR
+ * @endcode
+ *
+ * @section grid_algorithms_available Available Grid resampling algorithms
+ * The following grid resampling algorithms are implemented:
+ * - LINEAR: linear data resampling, see GridLinearResampling
+ * - TIMESERIES: extract time series at all grid points and use Interpolations1D algorithm, see GridTimeseriesResampling
+ *
+ * @note By default, linear resampling will be used. It is possible to enable/disable all resampling with the ENABLE_GRID_RESAMPLING key
+ * (in the [GridInterpolations1D] section)..
+ */
 
 /**
  * @brief Facade constructor for a generic grid resampling algorithm.
+ * @param[in] algorithm The current algorithm's semantic name.
+ * @param[in] i_parname The current meteo parameter's identifier.
+ * @param[in] dflt_window_size The default grid resampling window size.
+ * @param[in] Vector of arguments (user settings) for this algorithm.
  */
 GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname,
 	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)

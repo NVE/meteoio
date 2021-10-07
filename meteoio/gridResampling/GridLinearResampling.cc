@@ -59,7 +59,7 @@ std::string GridLinearResampling::toString() const
  * @param[in] date Date to resample the data to.
  * @param[in] all_grids List of all grids available to this resampling algorithm, as well as
  * their corresponding dates.
- * @param[out] The temporally resampled grid.
+ * @param[out] resampled_grid The temporally resampled grid.
  */
 void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid)
 {

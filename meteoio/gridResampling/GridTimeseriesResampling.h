@@ -32,6 +32,14 @@ namespace mio {
  * @class GridTimeseriesResampling
  * @brief This grid resampling class builds time series at all grid positions and sends them
  * to meteo 1d resampling algorithms to perform the interpolations.
+ * @details You can use the algorithms available at \ref resampling like follows:
+ * @code
+ * [GridInterpolations1D]
+ * TA::RESAMPLE = TIMESERIES
+ * TA::TIMESERIES::ALGORITHM = LINEAR
+ * TA::TIMESERIES::EXTRAPOLATE = TRUE
+ * @endcode
+ * @note Currently the algorithm has no knowledge of the used DEM (for solar resampling).
  * @author Michael Reisecker
  * @date 2021-09
  */

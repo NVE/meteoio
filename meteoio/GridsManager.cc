@@ -86,6 +86,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& option)
 * @param[out] grid2D a grid filled with the requested parameter
 * @param parameter the parameter to get
 * @param[in] date the timestamp that we would like to have
+* @param[in] enable_grid_resampling Completely enable or disable temporal grid resampling.
 */
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date, const bool& enable_grid_resampling)
 {

@@ -152,12 +152,11 @@ namespace mio {
  * 
  * @section grids_resample Resampling of gridded data
  * A new keyword has been introduce and will be expanded: *REGRIDDING_STRATEGY*. It describes how to generate gridded data out of other gridded data. 
- * It currently only accepts the "GRID_RESAMPLE" argument (all grid points are extracted and used with an additional DEM to resample the grids to 
- * a different resolution (by calling spatial interpolations)). Ultimately, it should offer various methods... Please note that it is currently NOT 
- * possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY
+ * It currently accepts the "GRID_RESAMPLE" and "GRID_1DINTERPOLATE" arguments. Using the former, all grid points are extracted and used with an additional DEM to resample the grids to
+ * a different resolution (by calling spatial interpolations). Using the latter, grids can be regridded to different dates/times by means of temporal interpolations.
+ * Ultimately, it should offer various methods... Please note that it is currently NOT possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY.
  * 
- * 
- * The process is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted 
+ * The process for "GRID_RESAMPLE" is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted
  * as described out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
  * Meteo2DInterpolator to be spatially interpolated over the provided DEM. This therefore performs grid resampling and accounts for elevation gradients, etc
  * as configured in the [2DInterpolations] section. The following keys control this downscaling process (in the [InputEditing] section):
@@ -181,6 +180,7 @@ namespace mio {
  * @endcode
  * @note The resampled grids won't be provided by the read2DGrid() call but by the getMeteoData() call since they are considered as spatial interpolations.
  * 
+ * For regridding data to different dates please have a look at \ref grid_resampling.
  */
 
 IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)

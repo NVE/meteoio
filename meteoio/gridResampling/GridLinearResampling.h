@@ -27,6 +27,12 @@ namespace mio {
 /**
  * @class GridLinearResampling
  * @brief Point-wise linear interpolation between grids.
+ * @details This algorithm performs linear interpolation between available grids.
+ * The syntax is the same as for timeseries interpolations; for example:
+ * @code
+ * [GridInterpolations1D]
+ * TA::RESAMPLE = LINEAR
+ * @endcode
  * @author Michael Reisecker
  * @date 2021-09
  */
