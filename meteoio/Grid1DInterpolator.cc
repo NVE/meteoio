@@ -36,9 +36,9 @@ const std::string Grid1DInterpolator::section_name("GridInterpolations1D");
  */
 Grid1DInterpolator::Grid1DInterpolator(const Config& in_cfg) : algorithm_map(), cfg(in_cfg)
 {
-	cfg.getValue("GRID_WINDOW_SIZE", section_name, grid_window_size, IOUtils::nothrow);
+	cfg.getValue("WINDOW_SIZE", section_name, grid_window_size, IOUtils::nothrow);
 	if (grid_window_size <= 1.)
-		throw IOException("GRID_WINDOW_SIZE not valid, it should be a duration in seconds at least greater than 1", AT);
+		throw IOException("WINDOW_SIZE for grids not valid, it should be a duration in seconds at least greater than 1", AT);
 	grid_window_size /= 86400.; //user inputs seconds, internally we use Julian
 	cfg.getValue("ENABLE_GRID_RESAMPLING", section_name, enable_grid_resampling, IOUtils::nothrow);
 
