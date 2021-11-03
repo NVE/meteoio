@@ -134,13 +134,13 @@ std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< s
 				const size_t delim_pos = vecString[jj].find(" - ");
 				if (delim_pos==std::string::npos) {
 					if (!IOUtils::convertString(d1, vecString[jj], TZ))
-						throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj]+" for "+where, AT);
 					dates_specs.push_back( DateRange(d1, d1) );
 				} else {
 					if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
-						throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
 					if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
-						throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
 					dates_specs.push_back( DateRange(d1, d2) );
 				}
 			}
