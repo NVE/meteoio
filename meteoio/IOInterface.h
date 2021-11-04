@@ -321,9 +321,10 @@ class IOInterface {
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
 		
 		/**
-		 * @brief built the set of line ranges to read or skip
-		 * @param[in] vecArgs All plugin arguments
-		 * @param[in] keyword Argument keyword (ex. WHEN)
+		 * @brief built the set of line ranges to read or skip.
+		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
+		 * Obviously this can not be implemented by every plugin!
+		 * @param[in] args the textual representation of the line ranges or lines to parse
 		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
 		 * @return set of line ranges
 		 */

@@ -64,6 +64,7 @@ namespace mio {
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NODATA: a value that should be interpreted as \em nodata (default: NAN);
+ * - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to exclude from parsing (ie the lines will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>.
  * - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
  * - CSV\#_DEQUOTE: if set to true, all single and double quotes will be purged from each line \em before parsing (default: false);
  * - <b>Headers handling</b>
