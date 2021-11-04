@@ -60,7 +60,7 @@ class CsvDateTime {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
 		
 		void setPurgeQuotes(const bool& i_purgeQuotes) {purgeQuotes=i_purgeQuotes;}
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
@@ -68,6 +68,7 @@ class CsvParameters {
 		void setHeaderDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setUnits(const std::string& csv_units,  const char& delim);
+		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;};
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
 		void setDecimalDateType(std::string decimaldate_type);
@@ -78,6 +79,7 @@ class CsvParameters {
 		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
+		bool excludeLine(const size_t& linenr, bool& hasExclusions) const;
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
@@ -107,6 +109,7 @@ class CsvParameters {
 		Coords location;
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate: Year Month Day Hour Minutes Seconds
 		std::vector<size_t> time_idx;		///< order of the time fields for use in parseDate for split date / time
+		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
 		std::string file_and_path, datetime_format, time_format, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component

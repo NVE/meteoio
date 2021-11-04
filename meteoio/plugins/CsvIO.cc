@@ -740,6 +740,23 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 	}
 }
 
+bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions) const
+{
+	if (linesExclusions.empty() || linenr>linesExclusions.back().end) {
+		hasExclusions = false;
+		return false; //no more exclusions to handle
+	}
+	
+	for (size_t exclusion_idx=0; exclusion_idx<linesExclusions.size(); exclusion_idx++) {
+		if (linesExclusions[ exclusion_idx ].in( linenr )) {
+			return true;
+		}
+		if (linenr<linesExclusions[ exclusion_idx ].start) break;
+	}
+	
+	return false;
+}
+
 //read and parse the file's headers in order to extract all possible information (including how to interpret the date/time information)
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx)
 {
@@ -761,7 +778,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	const bool user_auto_wrap = date_cols.auto_wrap; //we might trigger it, so we must reset it after the pre-reading
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
-	size_t linenr=0;
+	size_t linenr=0, repeat_markers=0;
 	std::string line;
 	std::vector<std::string> headerFields; //this contains the column headers from the file itself
 	std::vector<std::string> tmp_vec; //to read a few lines of data
@@ -771,30 +788,38 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
 	bool fields_ready = false;
+	bool has_exclusions = true; //this will be properly set at the first call to excludeLine
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<(header_lines+1000); ii++) {
 			getline(fin, line, eoln); //read complete line
+			linenr++;
+			
+			if (has_exclusions) {
+				if (excludeLine( linenr, has_exclusions )) continue;
+			}
+			
 			IOUtils::trim(line);
 			if (fin.eof()) {
-				if (header_repeat_at_start) linenr++; //since it was not incremented when matching the repeat header marker
-				if (linenr>header_lines) break; //eof while reading the data section
+				if ((linenr-repeat_markers)>header_lines) break; //eof while reading the data section
 				std::ostringstream ss;
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
+			
 			if (hasHeaderRepeatMk && !header_repeat_at_start && line.find(header_repeat_mk)!=std::string::npos) {
 				header_repeat_at_start = true; //so we won't match another header_repeat_mk marker
-				continue; //the line count it not incremented so the special headers still keep logical indices
+				repeat_markers++;
+				continue;
 			}
-			linenr++;
+			
 			if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 			if (line.empty()) continue;
 			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
-			if (meta_spec.count(linenr)>0) 
-				parseSpecialHeaders(line, linenr, meta_spec, lat, lon, easting, northing);
-			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
+			if (meta_spec.count(linenr-repeat_markers)>0) 
+				parseSpecialHeaders(line, linenr-repeat_markers, meta_spec, lat, lon, easting, northing); //do not count repeat_markers if any
+			if ((linenr-repeat_markers)==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
 					IOUtils::cleanFieldName(line, false); //we'll handle whitespaces when parsing
 					IOUtils::readLineToVec(line, headerFields, csv_delim);
@@ -803,10 +828,10 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 					IOUtils::readLineToVec(line, headerFields);
 				}
 			}
-			if (read_units && linenr==units_headers)
+			if (read_units && (linenr-repeat_markers)==units_headers)
 				setUnits(line, csv_delim);
 
-			if (linenr<=header_lines) continue; //we are still parsing the header
+			if ((linenr-repeat_markers)<=header_lines) continue; //we are still parsing the header
 			if (!fields_ready) { //we should now have all the information from the headers, so build what we need for data parsing
 				parseFields(headerFields, csv_fields);
 				fields_ready=true;
@@ -1377,6 +1402,14 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"FILENAME_SPEC", "Input")) cfg.getValue(pre+"FILENAME_SPEC", "Input", filename_spec);
 		else cfg.getValue(dflt+"FILENAME_SPEC", "Input", filename_spec, IOUtils::nothrow);
 		
+		std::string linesRestrictionsSpecs;
+		if (cfg.keyExists(pre+"EXCLUDE_LINES", "INPUT")) cfg.getValue(pre+"EXCLUDE_LINES", "INPUT", linesRestrictionsSpecs);
+		else cfg.getValue(dflt+"EXCLUDE_LINES", "INPUT", linesRestrictionsSpecs, IOUtils::nothrow);
+		if (!linesRestrictionsSpecs.empty()) {
+			const std::vector< LinesRange > lrRange( initLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV#_EXCLUDE_LINES") );
+			tmp_csv.setLinesExclusions( lrRange );
+		}
+		
 		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, filename_spec, idx);
 		csvparam.push_back( tmp_csv );
 	}
@@ -1459,14 +1492,20 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	const std::string nodata( params.nodata );
 	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
-	const bool delimIsNoWS = (params.csv_delim!=' ');
-	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
 	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
 	const char comments_mk = params.comments_mk;
+	const bool delimIsNoWS = (params.csv_delim!=' ');
+	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
+	bool has_exclusions = true; //this wil be set at the first call to params.excludeLine
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
+		
+		if (has_exclusions) {
+			if (params.excludeLine( linenr, has_exclusions )) continue;
+		}
+		
 		if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 		if (params.purgeQuotes) IOUtils::removeQuotes(line);
 		IOUtils::trim( line );
