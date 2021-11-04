@@ -60,7 +60,7 @@ class CsvDateTime {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
 		
 		void setPurgeQuotes(const bool& i_purgeQuotes) {purgeQuotes=i_purgeQuotes;}
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
@@ -79,7 +79,7 @@ class CsvParameters {
 		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
-		bool excludeLine(const size_t& linenr, bool& hasExclusions) const;
+		bool excludeLine(const size_t& linenr, bool& hasExclusions);
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
@@ -115,6 +115,7 @@ class CsvParameters {
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component
 		double slope, azi;
 		double csv_tz;		///< timezone to apply to parsed dates
+		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 		bool dt_as_components; 	///< is date/time provided as components each in its own column (ie an hour column, a day column, etc)?
 		bool dt_as_year_and_jdn;	///< is date provided as year + julian day?
