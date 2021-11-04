@@ -202,10 +202,6 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 	
 	if (lines_specs.empty()) return lines_specs;
 	
-	std::cout << "Lines specs before cleanup:\n";
-	for (size_t ii=0; ii<lines_specs.size(); ii++) std::cout << "\t" << lines_specs[ii].toString();
-	std::cout << "\n";
-	
 	//now sort the vector and merge overlapping ranges
 	std::sort(lines_specs.begin(), lines_specs.end()); //in case of identical start dates, the oldest end date comes first
 	for (size_t ii=0; ii<(lines_specs.size()-1); ii++) {
@@ -220,10 +216,6 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 			ii--; //we must redo the current element
 		}
 	}
-	
-	std::cout << "Lines specs after cleanup:\n";
-	for (size_t ii=0; ii<lines_specs.size(); ii++) std::cout << "\t" << lines_specs[ii].toString();
-	std::cout << "\n";
 	
 	return lines_specs;
 }
