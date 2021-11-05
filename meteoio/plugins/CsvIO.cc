@@ -63,7 +63,7 @@ namespace mio {
  * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a 
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
- * - CSV\#_NODATA: a value that should be interpreted as \em nodata (default: NAN);
+ * - CSV\#_NODATA: a space delimited list of strings (of course, this also contains numbers such as -6999) that should be interpreted as \em nodata (default: NAN NULL);
  * - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to exclude from parsing (ie the lines will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>.
  * - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
  * - CSV\#_DEQUOTE: if set to true, all single and double quotes will be purged from each line \em before parsing (default: false);
@@ -392,6 +392,12 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), nodata(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) 
+{
+	//prepare default values for the nodata markers
+	setNodata( "NAN NULL" );
+}
+
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
 //(since there can be multiple keys on the same line)
 std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)
@@ -473,7 +479,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 	} else if (field_type=="NAME") {
 		if (name.empty()) name = field_val;
 	} else if (field_type=="NODATA") {
-			nodata = field_val;
+		setNodata( field_val );
 	} else if (field_type=="SKIP") {
 		return;
 	} else if (field_type=="PARAM") {
@@ -741,6 +747,21 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 	}
 }
 
+void CsvParameters::setNodata(const std::string& nodata_markers)
+{
+	//by NOT calling clear(), we append the provided markers to potential previous ones
+	//(such as default values)
+	
+	std::vector<std::string> vecNodata;
+	const size_t nrElems = IOUtils::readLineToVec(nodata_markers, vecNodata);
+	
+	for (size_t ii=0; ii<nrElems; ii++) {
+		nodata.insert( vecNodata[ii] );
+		nodata.insert( "\""+vecNodata[ii]+"\"" );
+		nodata.insert( "'"+vecNodata[ii]+"'" );
+	}
+}
+
 bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 {
 	//As an optimimzation, we reuse the exclusion periods index over calls.
@@ -759,6 +780,14 @@ bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 		}
 		if (linenr<linesExclusions[ exclusion_idx ].start) break;
 	}
+	
+	return false;
+}
+
+bool CsvParameters::isNodata(const std::string& value) const
+{
+	if (value.empty()) return true;
+	if (nodata.find( value ) != nodata.end()) return true;
 	
 	return false;
 }
@@ -1294,8 +1323,10 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"AZIMUTH", "INPUT", azimuth, IOUtils::nothrow);
 		tmp_csv.setSlope(slope, azimuth);
 		
-		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
-		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
+		std::string csv_nodata;
+		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", csv_nodata);
+		else cfg.getValue(dflt+"NODATA", "Input", csv_nodata, IOUtils::nothrow);
+		tmp_csv.setNodata( csv_nodata );
 		
 		std::string delim_spec(","); //default delimiter
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", delim_spec);
@@ -1496,9 +1527,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
-	const std::string nodata( params.nodata );
-	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
-	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
 	const char comments_mk = params.comments_mk;
 	const bool delimIsNoWS = (params.csv_delim!=' ');
@@ -1569,13 +1597,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped or this is a special field
-			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
-				continue;
-			
-			if (tmp_vec[ii]=="NAN" || tmp_vec[ii]=="NULL") {
-				md( params.csv_fields[ii] ) = IOUtils::nodata;
-				continue;
-			}
+			if (params.isNodata( tmp_vec[ii] )) continue; //recognize nodata
 			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
