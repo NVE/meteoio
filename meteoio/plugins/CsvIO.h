@@ -61,7 +61,6 @@ class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in);
 		
-		void setPurgeQuotes(const bool& i_purgeQuotes) {purgeQuotes=i_purgeQuotes;}
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
@@ -73,6 +72,7 @@ class CsvParameters {
 		void setDecimalDateType(std::string decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& auto_wrap);
 		void setNodata(const std::string& nodata_markers);
+		void setPurgeChars(const std::string& chars_to_purge);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		void setSlope(const double& i_slope, const double& i_azimuth) {slope=i_slope; azi=i_azimuth;}
@@ -80,6 +80,8 @@ class CsvParameters {
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
 		bool excludeLine(const size_t& linenr, bool& hasExclusions);
+		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
+		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
 		bool isNodata(const std::string& value) const;
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
@@ -91,7 +93,7 @@ class CsvParameters {
 		size_t header_lines, columns_headers, units_headers;
 		char csv_delim, header_delim;
 		char eoln, comments_mk;
-		bool header_repeat_at_start, asc_order, purgeQuotes;
+		bool header_repeat_at_start, asc_order;
 	private:
 		static std::string identifyField(const std::string& fieldname);
 		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing);
@@ -109,6 +111,7 @@ class CsvParameters {
 		
 		Coords location;
 		std::set<std::string> nodata;		///< representations of nodata with their variants (with quotes, with double quotes, etc)
+		std::set<char> purgeCharsSet;			///< characters to purge from each line (such as quotes, double quotes, etc)
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate: Year Month Day Hour Minutes Seconds
 		std::vector<size_t> time_idx;		///< order of the time fields for use in parseDate for split date / time
 		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
