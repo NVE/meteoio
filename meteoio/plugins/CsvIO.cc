@@ -64,9 +64,6 @@ namespace mio {
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NODATA: a space delimited list of strings (of course, this also contains numbers such as -6999) that should be interpreted as \em nodata (default: NAN NULL);
- * - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to exclude from parsing (ie the lines will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>.
- * - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
- * - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 " ;
  * - <b>Headers handling</b>
  *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  *    - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
@@ -74,6 +71,11 @@ namespace mio {
  *    - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ * - <b>Data parsing restrictions</b>
+ *    - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
+ *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 " ;
+ *    - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to exclude from parsing (ie the lines within these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
+ *    - CSV\#_ONLY_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to restrict the parsing to (ie the lines outside of these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
