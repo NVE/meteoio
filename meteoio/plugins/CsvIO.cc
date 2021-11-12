@@ -1452,17 +1452,30 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
 		
+		//handling of lines restrictions (either as ONLY or EXCLUDE statements)
+		std::string linesExclusionsSpecs;
+		if (cfg.keyExists(pre+"EXCLUDE_LINES", "INPUT")) cfg.getValue(pre+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs);
+		else cfg.getValue(dflt+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs, IOUtils::nothrow);
+		
+		std::string linesRestrictionsSpecs;
+		if (cfg.keyExists(pre+"ONLY_LINES", "INPUT")) cfg.getValue(pre+"ONLY_LINES", "INPUT", linesRestrictionsSpecs);
+		else cfg.getValue(dflt+"ONLY_LINES", "INPUT", linesRestrictionsSpecs, IOUtils::nothrow);
+		
+		if (!linesExclusionsSpecs.empty() || !linesRestrictionsSpecs.empty()) {
+			if (!linesExclusionsSpecs.empty() && !linesRestrictionsSpecs.empty()) 
+				throw InvalidArgumentException("It is not possible to provide both CSV_EXCLUDE_LINES and CSV_ONLY_LINES", AT);
+			if (!linesExclusionsSpecs.empty()) {
+				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesExclusionsSpecs, "INPUT::CSV_EXCLUDE_LINES", false) );
+				tmp_csv.setLinesExclusions( lrRange );
+			} else {
+				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV_ONLY_LINES", true) );
+				tmp_csv.setLinesExclusions( lrRange );
+			}
+		}
+		
 		std::string filename_spec;
 		if (cfg.keyExists(pre+"FILENAME_SPEC", "Input")) cfg.getValue(pre+"FILENAME_SPEC", "Input", filename_spec);
 		else cfg.getValue(dflt+"FILENAME_SPEC", "Input", filename_spec, IOUtils::nothrow);
-		
-		std::string linesRestrictionsSpecs;
-		if (cfg.keyExists(pre+"EXCLUDE_LINES", "INPUT")) cfg.getValue(pre+"EXCLUDE_LINES", "INPUT", linesRestrictionsSpecs);
-		else cfg.getValue(dflt+"EXCLUDE_LINES", "INPUT", linesRestrictionsSpecs, IOUtils::nothrow);
-		if (!linesRestrictionsSpecs.empty()) {
-			const std::vector< LinesRange > lrRange( initLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV#_EXCLUDE_LINES") );
-			tmp_csv.setLinesExclusions( lrRange );
-		}
 		
 		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, filename_spec, idx);
 		csvparam.push_back( tmp_csv );
@@ -1554,9 +1567,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		getline(fin, line, params.eoln);
 		linenr++;
 		
-		if (has_exclusions) {
-			if (params.excludeLine( linenr, has_exclusions )) continue;
-		}
+		if (has_exclusions && params.excludeLine( linenr, has_exclusions )) continue;
 		
 		if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 		if (purgeChars) params.purgeChars(line);
