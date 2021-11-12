@@ -788,8 +788,6 @@ bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 {
 	//As an optimimzation, we reuse the exclusion periods index over calls.
 	//Since line numbers should always be increasing, this should not be a problem
-	//The only exception is when pre-reading the headers, closing the file and starting over again.
-	//This is handled by reseting exclusion_idx to 0 after the headers pre-reading
 	
 	if (linesExclusions.empty() || linenr>linesExclusions.back().end) {
 		hasExclusions = false;
@@ -845,16 +843,11 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
 	bool fields_ready = false;
-	bool has_exclusions = true; //this will be properly set at the first call to excludeLine
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<(header_lines+1000); ii++) {
 			getline(fin, line, eoln); //read complete line
 			linenr++;
-			
-			if (has_exclusions) {
-				if (excludeLine( linenr, has_exclusions )) continue;
-			}
 			
 			IOUtils::trim(line);
 			if (fin.eof()) {
@@ -912,7 +905,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		throw;
 	}
 	fin.close();
-	exclusion_idx=0; //reset the exclusion periods index
 	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
 	if (!date_cols.isSet()) 
 		throw NoDataException("Date and time parsing not properly initialized, please contact the MeteoIO developers!", AT);
