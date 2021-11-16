@@ -33,7 +33,7 @@ namespace mio {
  * networks IMIS/ANETZ stations as preprocessed by the
  * <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A>
  * of the <A HREF="www.wsl.ch">WSL/SLF</A>. The data is written as Matlab
- * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per meteorological parameter and per timestep, 
+ * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per timestep for all stations and meteorological parameters, 
  * available on an access-controlled server after each new <A HREF="www.cosmo-model.org/">COSMO</A> run. It therefore requires a third party 
  * library to read this file format: the Open Source <A HREF="https://sourceforge.net/projects/matio/">MatIO</A> library. This can be installed directly from
  * the default repositories under Linux or installed by downloading the proper package for Windows or OsX.
@@ -45,23 +45,23 @@ namespace mio {
  * 
  * @section oshd_data_structure Data structure
  * The files are named with the following schema: <i>COSMODATA_{timestep}_{cosmo model version}{mode}_{runtime}.{meteo_ext}</i> with the following possible values:
- *     + *parameter* is one of prcs, wnss, wnds, wnsc, lwrc, sdri, sdrd, sdfd, tais, taic, rhus, pais, pail;
  *     + *timestep* is written as purely numeric ISO with minute resolution;
  *     + *cosmo model version* is currently C1E;
  *     + *mode* is a one letter code (FC for Forecast);
- *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
+ *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset;
+ *     + *meteo_ext* is currently .mat.
  * 
- * The station data files have the following internal data structure (represented as "name {data type}"):
+ * The station data files have the following internal data structure (represented as "name {data type}" and with meteo parameter as one of prcs, wnss, wnds, wnsc, lwrc, sdri, sdrd, sdfd, tais, taic, rhus, pais, pail):
  * @verbatim
-        ├── acro {1x688 array of arrays of char}
-        ├── NODATA_value {1x1 double}
-        ├── meteo parameter
-        │   ├── data {1x688 array of doubles}
-        │   ├── name {array of char}
-        │   ├── unit {array of char}
-        │   └── source {array of char}
+        ├── acro {1x688 array of arrays of char variable}
+        ├── NODATA_value {1x1 double variable}
+        ├── meteo parameter {struct}
+        │   ├── data {1x688 array of doubles variable}
+        │   ├── name {array of char variable}
+        │   ├── unit {array of char variable}
+        │   └── source {array of char variable}
         ├── … more meteo parameters
-        └── time {1x2 array of doubles}
+        └── time {1x2 array of doubles variable}
   @endverbatim
  * 
  * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file, given as *METAFILE* key (see below). 
@@ -69,11 +69,11 @@ namespace mio {
  * This file must have the following structure (the *x* and *y* coordinates being the CH1903 easting and northing, respectively): 
  * @verbatim
       statlist {1x1 struct}
-        ├── acro {1x688 array of arrays of char}
-        ├── name {1x688 array of arrays of char}
-        ├── x {1x688 array of doubles}
-        ├── y {1x688 array of doubles}
-        ├── z {1x688 array of doubles}
+        ├── acro {1x688 array of arrays of char variable}
+        ├── name {1x688 array of arrays of char variable}
+        ├── x {1x688 array of doubles variable}
+        ├── y {1x688 array of doubles variable}
+        ├── z {1x688 array of doubles variable}
         └── … various other arrays
   @endverbatim
  *
@@ -97,7 +97,7 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
  * - METEOPATH_RECURSIVE: should *meteopath* be searched recursively for files? (default: false); [Input] section
- * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
+ * - STATION#: input stations' IDs (in METEOPATH). As many stations' IDs as needed may be specified
  * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
  provided or within the provided path)
  * - DEMFILE: for reading the data as a DEMObject
