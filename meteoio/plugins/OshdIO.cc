@@ -178,7 +178,7 @@ bool OshdIO::initStaticData()
 	params_map[ "pail" ] = MeteoGrids::P;
 	params_map[ "prcs" ] = MeteoGrids::PSUM;
 	params_map[ "rhus" ] = MeteoGrids::RH;
-	params_map[ "taic" ] = MeteoGrids::TA;
+	params_map[ "tais" ] = MeteoGrids::TA;
 	params_map[ "wnsc" ] = MeteoGrids::VW;
 	params_map[ "wnds" ] = MeteoGrids::DW;
 	params_map[ "sdrd" ] = MeteoGrids::ISWR_DIR;
@@ -238,7 +238,7 @@ std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string
 		//we don't have an entry or it is too old -> create new entry / replace existing one
 		const std::string path( FileUtils::getPath(file_and_path) );
 		Date date;
-		IOUtils::convertString(date, date_str, in_dflt_TZ);	//HACK
+		IOUtils::convertString(date, date_str, in_dflt_TZ);
 		const file_index elem(date, path, filename, run_date);
 		if (idx==IOUtils::npos) {
 			data_files.push_back( elem );
@@ -355,12 +355,12 @@ void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_times
 		
 		if (varName=="time") {
 			const std::vector<double> vecTime( matWrap::readDoubleVector(file_and_path, "time", matfp, matvar) );
+			//vecTime is a vector of two elements: begin date and end date of timestep
 			if (vecTime.size()!=2) {
 				throw InvalidFormatException("Two time step must be present in the 'time' vector: runtime and simulation time", AT);
 			}
 			Date timestep;
-			timestep.setMatlabDate( vecTime[1], in_dflt_TZ+1 ); //HACK
-std::cout << "in_timestep=" << in_timestep.toString(Date::ISO) << " timestep=" << timestep.toString(Date::ISO) << "\n";
+			timestep.setMatlabDate( vecTime[0], in_dflt_TZ ); //take the begin date
 			if (in_timestep!=timestep) throw InvalidArgumentException("the in-file timestep and the filename time step don't match for for '"+file_and_path+"'", AT);
 			continue;
 		}
@@ -455,11 +455,11 @@ void OshdIO::fillStationMeta()
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
 	
-	/*if (debug) {
+	if (debug) {
 		for (size_t ii=0; ii<nrMetadata; ii++) 
 			std::cout << std::setw(8) << vecAcro[ii] << std::setw(40) << vecNames[ii] << std::setw(8) << easting[ii] << std::setw(8) << northing[ii] << std::setw(8) << altitude[ii] << "\n";
 		std::cout << endl;
-	}*/
+	}
 	
 	buildVecIdx(vecAcro);
 	for (size_t ii=0; ii<vecIdx.size(); ii++) {
