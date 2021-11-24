@@ -39,6 +39,7 @@
 #cmakedefine PLUGIN_GRASSIO
 #cmakedefine PLUGIN_GRIBIO
 #cmakedefine PLUGIN_IMISIO
+#cmakedefine PLUGIN_METEOBLUE
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_PGMIO
@@ -78,6 +79,10 @@
 
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
+#endif
+
+#ifdef PLUGIN_METEOBLUE
+#include <meteoio/plugins/MeteoBlue.h>
 #endif
 
 #ifdef PLUGIN_NETCDFIO
@@ -243,6 +248,9 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #endif
 #ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(i_cfg);
+#endif
+#ifdef PLUGIN_METEOBLUE
+	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
 #endif
 #ifdef PLUGIN_NETCDFIO
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
