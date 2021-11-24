@@ -25,65 +25,67 @@
 #include <algorithm>
 #include <fstream>
 
+//in alphabetical order
 #cmakedefine PLUGIN_ALPUG
 #cmakedefine PLUGIN_ARCIO
 #cmakedefine PLUGIN_ARGOSIO
-#cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_ARPSIO
-#cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_DBO
-#cmakedefine PLUGIN_GRASSIO
-#cmakedefine PLUGIN_GEOTOPIO
-#cmakedefine PLUGIN_SMETIO
-#cmakedefine PLUGIN_SNIO
-#cmakedefine PLUGIN_PGMIO
-#cmakedefine PLUGIN_PMODIO
-#cmakedefine PLUGIN_IMISIO
-#cmakedefine PLUGIN_OSHDIO
-#cmakedefine PLUGIN_GRIBIO
-#cmakedefine PLUGIN_GOESIO
-#cmakedefine PLUGIN_PNGIO
 #cmakedefine PLUGIN_COSMOXMLIO
+#cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_GEOTOPIO
+#cmakedefine PLUGIN_GOESIO
+#cmakedefine PLUGIN_GRASSIO
+#cmakedefine PLUGIN_GRIBIO
+#cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_NETCDFIO
+#cmakedefine PLUGIN_OSHDIO
+#cmakedefine PLUGIN_PGMIO
+#cmakedefine PLUGIN_PNGIO
+#cmakedefine PLUGIN_PMODIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
+#cmakedefine PLUGIN_SMETIO
+#cmakedefine PLUGIN_SNIO
 #cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/Argos.h>
-#include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/ARPSIO.h>
+#include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/CsvIO.h>
+#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/Goes.h>
 #include <meteoio/plugins/GrassIO.h>
-#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/SNIO.h>
 
-#ifdef PLUGIN_COSMOXMLIO
-#include <meteoio/plugins/CosmoXMLIO.h>
-#endif
-
+//now for the plugins that bring special includes
 #ifdef PLUGIN_DBO
 #include <meteoio/plugins/DBO.h>
 #endif
 
-#ifdef PLUGIN_IMISIO
-#include <meteoio/plugins/ImisIO.h>
-#endif
-
-#ifdef PLUGIN_OSHDIO
-#include <meteoio/plugins/OshdIO.h>
+#ifdef PLUGIN_COSMOXMLIO
+#include <meteoio/plugins/CosmoXMLIO.h>
 #endif
 
 #ifdef PLUGIN_GRIBIO
 #include <meteoio/plugins/GRIBIO.h>
 #endif
 
+#ifdef PLUGIN_IMISIO
+#include <meteoio/plugins/ImisIO.h>
+#endif
+
 #ifdef PLUGIN_NETCDFIO
 #include <meteoio/plugins/NetCDFIO.h>
+#endif
+
+#ifdef PLUGIN_OSHDIO
+#include <meteoio/plugins/OshdIO.h>
 #endif
 
 #ifdef PLUGIN_PMODIO
