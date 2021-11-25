@@ -232,11 +232,11 @@ picojson::value MeteoBlue::goToJSONPath(const std::string& path, const picojson:
 
 void MeteoBlue::readTime(const picojson::value &v, const StationData& sd, std::vector<MeteoData> &vecMeteo) const
 {
-	picojson::value time( goToJSONPath("$.time", v) );
+	const picojson::value time( goToJSONPath("$.time", v) );
 	if (!time.is<picojson::array>()) {
-		throw InvalidFormatException("Could not parse the data section '"+time.to_str()+"'", AT);
+		throw InvalidFormatException("Could not find a time array in the data section '"+time.to_str()+"'", AT);
 	}
-	const picojson::array vecRaw = time.get<picojson::array>();
+	const picojson::array vecRaw( time.get<picojson::array>() );
 	
 	vecMeteo.reserve( vecRaw.size() );
 	for (size_t ii=0; ii<vecRaw.size(); ii++) {
@@ -293,9 +293,15 @@ void MeteoBlue::readData(const StationData& sd, std::vector<MeteoData> &vecMeteo
 	std::stringstream ss;
 	if (curl_read(url.str(), ss)) { //retrieve the page from the formed URL
 		if (ss.str().empty()) throw UnknownValueException("No data returned for query '"+url.str()+"'", AT);
+		
+		//JSON error checking
 		picojson::value v;
 		const std::string err( picojson::parse(v, ss.str()) );
 		if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
+		if (v.contains("error")) {
+			const std::string error_msg( v.get<picojson::object>()["error_message"].to_str() );
+			throw InvalidArgumentException(error_msg, AT);
+		}
 		
 		//loop over the datasets
 		const picojson::value::object& datasets = v.get<picojson::object>();
