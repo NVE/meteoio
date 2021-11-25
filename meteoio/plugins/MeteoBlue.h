@@ -49,11 +49,32 @@ class MeteoBlue : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
+		typedef struct METEOPARAM {
+			METEOPARAM() : param(), units_multiplier(1.), units_offset(0.) {}
+			METEOPARAM(const MeteoGrids::Parameters& i_param)
+			                : param(i_param), units_multiplier(1.), units_offset(0.) {}
+			METEOPARAM(const MeteoGrids::Parameters& i_param, const double& multiplier, const double& offset)
+			                : param(i_param), units_multiplier(multiplier), units_offset(offset) {}
+
+			std::string getParameterName() const {return MeteoGrids::getParameterName( param );}
+			double convertValue(const double& val) const {return (units_multiplier*val + units_offset);}
+			
+			std::string toString() const {
+				std::ostringstream os;
+				os << "[ " << MeteoGrids::getParameterName( param ) << " *" << units_multiplier << " +" << units_offset << "]";
+				return os.str();
+			}
+
+			MeteoGrids::Parameters param;
+			double units_multiplier, units_offset; ///< first we apply the multiplier, THEN the offset
+		} meteoParam;
+		
 	private:
 		void init();
-		void readData(const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData> &vecMeteo);
+		void readData(const StationData& sd, std::vector<MeteoData> &vecMeteo);
 		void readTime(const picojson::value &v, const StationData& sd, std::vector<MeteoData> &vecMeteo) const;
 		void readParameter(const picojson::value &v, const std::string& paramname, std::vector<MeteoData> &vecMeteo) const;
+		static picojson::value goToJSONPath(const std::string& path, const picojson::value& v);
 		static size_t data_write(void* buf, const size_t size, const size_t nmemb, void* userp);
 		bool curl_read(const std::string& url, std::ostream& os) const;
 
@@ -64,7 +85,7 @@ class MeteoBlue : public IOInterface {
 		int http_timeout; //time out for http connections
 		bool debug;
 
-		static std::map< std::string, MeteoGrids::Parameters > params_map; ///< parameters to extract from the files
+		static std::map< std::string, meteoParam > params_map; ///< parameters to extract from the files
 		static const std::string dflt_endpoint;
 		static const int http_timeout_dflt;
 		static const bool __init;    ///<helper variable to enable the init of static collection data

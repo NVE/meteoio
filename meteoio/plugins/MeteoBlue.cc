@@ -33,178 +33,94 @@
 using namespace std;
 
 namespace mio {
-	
-//we keep these below as a simple functions in order to avoid exposing picojson stuff in the header
-void printJSON(const picojson::value& v, const unsigned int& depth)
-{
-	if (v.is<picojson::null>()) {
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << "NULL\n";
-		return;
-	}
+/**
+ * @page meteoblue MeteoBlue
+ * @section meteoblue_format Format
+ * This plugin reads meteorological data from <a href="https://www.meteoblue.com">Meteoblue</a>'s 
+ * <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/introduction">packages API</a> as a RESTful web service. 
+ * To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
+ *
+ * @section meteoblue_keywords Keywords
+ * This plugin uses the following keywords:
+ * - METEOBLUE_URL: the API endpoint to connect to (default: http://my.meteoblue.com/);
+ * - METEOBLUE_APIKEY: the key purchased from Meteoblue that gives access to its API (mandatory);
+ * - METEOBLUE_PACKAGES: a space delimited list of <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/forecast-data">packages</a> to read data from. Please note that you must have purchased an API key that gives access to all the packages that you list here! (mandatory);
+ * - METEOBLUE_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s);
+ * - METEOBLUE_DEBUG: print more information in order to better understand when something does not work as expected (default: false);
+ * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax) (mandatory);
+ *    - STATION\#_ID: provide an ID for the declared station (default: "STAT\#");
+ *    - STATION\#_NAME: provide a name for the declared station (default: "STATION\#");
+ * 
+ * @note You can only get (at most) data from NOW-3days up to NOW+8days with the non-historical packages and the packages API as used here.
+ * Depending on the forecast length, various sources of data are used in the numerical models (see this 
+ * <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/introduction#forecast-length">introduction</a>). In this plugin,
+ * the past 3 days are always retrieved (as they include satellite observations and ground measurements) up to the next 7-8 days. 
+ * This means that the plugin will ignore any time period specifications when called but MeteoIO will later truncate the extracted
+ * dataset to the requested period. 
+ * 
+ * @code
+ * METEO	= METEOBLUE
+ * METEOBLUE_APIKEY = xxxxxxxxxxx
+ * METEOBLUE_PACKAGES = basic-1h clouds-1h solar-1h
+ * STATION1 = latlon (47.56, 7.57, 262)
+ * STATION1_ID = BSL1
+ * STATION1_NAME = Basel
+ * @endcode
+ *
+ * @section meteoblue_dependencies Picojson
+ * This plugin relies on <A HREF="https://github.com/kazuho/picojson/">picojson</A> for reading and parsing
+ * <A HREF="https://en.wikipedia.org/wiki/JSON">JSON</A> data. Picojson is released under a
+ * <A HREF="https://opensource.org/licenses/BSD-2-Clause">2-Clause BSD License</A>. Please find here below
+ * the full license agreement for picojson:
+ *
+ * @code
+ * Copyright 2009-2010 Cybozu Labs, Inc.
+ * Copyright 2011-2014 Kazuho Oku
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * @endcode
+ */
 
-	if (v.is<picojson::object>()) {
-		const picojson::value::object& obj = v.get<picojson::object>();
-		for (picojson::value::object::const_iterator ii = obj.begin(); ii != obj.end(); ++ii) {
-			for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-			std::cout << ii->first << "\n";
-			printJSON(ii->second, depth+1);
-		}
-	} else if (v.is<std::string>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << v.get<std::string>() << "\n";
-	} else if (v.is<double>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << v.get<double>() << "\n";
-	} else if (v.is<bool>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << std::boolalpha << v.get<bool>() << "\n";
-	} else if (v.is<picojson::array>()){ //ie vector<picojson::value>
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		const picojson::array& array = v.get<picojson::array>();
-		std::cout << "array " << array.size() << "\n";
-		for (size_t jj=0; jj<array.size(); jj++)
-			printJSON(array[jj], depth+1);
-	}
-}
-
-picojson::value goToJSONPath(const std::string& path, const picojson::value& v)
-{
-	size_t start_pos = 0;
-	if (path[0]=='$') start_pos++;
-	if (path[1]=='.') start_pos++;
-
-	const size_t end_pos = path.find(".", start_pos);
-	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
-	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
-
-	if (v.is<picojson::object>()) {
-		const picojson::value::object& obj = v.get<picojson::object>();
-		for (std::map<std::string,picojson::value>::const_iterator it = obj.begin(); it != obj.end(); ++it) {
-			if (it->first==local_path) {
-				if (!remaining_path.empty())
-					goToJSONPath(remaining_path, it->second);
-				else
-					return it->second;
-			}
-		}
-	}
-
-	return picojson::value();
-}
-
-void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson::value>& results)
-{
-	if (v.is<picojson::null>()) return;
-
-	size_t start_pos = 0;
-	if (path[0]=='$') start_pos++;
-	if (path[1]=='.') start_pos++;
-
-	const size_t end_pos = path.find(".", start_pos);
-	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
-	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
-
-	if (v.is<picojson::object>()) {
-		picojson::value::object& obj = v.get<picojson::object>();
-		for (std::map<std::string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
-			if (it->first==local_path) {
-				if (!remaining_path.empty()) {
-					 if (it->second.is<picojson::array>()){ //ie vector<picojson::value>
-						picojson::array& array = it->second.get<picojson::array>();
-						for (size_t jj=0; jj<array.size(); jj++)
-							JSONQuery(remaining_path, array[jj], results);
-					} else
-						JSONQuery(remaining_path, it->second, results);
-				} else {
-					results.push_back( it->second );
-				}
-			}
-		}
-	}
-}
-
-std::string getString(const std::string& path, picojson::value& v)
-{
-	std::vector<picojson::value> results;
-	JSONQuery(path, v, results);
-	if (!results.empty()) {
-		if (! results.front().is<picojson::null>() &&  results.front().is<std::string>()) return  results.front().get<std::string>();
-	}
-
-	return std::string();
-}
-
-std::vector<std::string> getStrings(const std::string& path, picojson::value& v)
-{
-	std::vector<picojson::value> results;
-	JSONQuery(path, v, results);
-
-	std::vector<std::string> vecString;
-	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
-			const picojson::array& array = results[ii].get<picojson::array>();
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>() &&  array[jj].is<std::string>()) vecString.push_back( array[jj].get<std::string>() );
-			}
-		} else
-			if (! results[ii].is<picojson::null>() &&  results[ii].is<std::string>()) vecString.push_back( results[ii].get<std::string>() );
-	}
-
-	return vecString;
-}
-
-double getDouble(const std::string& path, picojson::value& v)
-{
-	std::vector<picojson::value> results;
-	JSONQuery(path, v, results);
-	if (!results.empty()) {
-		if (! results.front().is<picojson::null>() &&  results.front().is<double>()) return  results.front().get<double>();
-	}
-
-	return IOUtils::nodata;
-}
-
-std::vector<double> getDoubles(const std::string& path, picojson::value& v)
-{
-	std::vector<picojson::value> results;
-	JSONQuery(path, v, results);
-
-	std::vector<double> vecDouble;
-	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
-			const picojson::array& array = results[ii].get<picojson::array>();
-			//results.reserve( results.size()+array.size() ); //most of the time, we will come here with an empty vector
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>() &&  array[jj].is<double>()) vecDouble.push_back( array[jj].get<double>() );
-			}
-		} else
-			if (! results[ii].is<picojson::null>() &&  results[ii].is<double>()) vecDouble.push_back( results[ii].get<double>() );
-	}
-
-	return vecDouble;
-}
-
-/*************************************************************************************************/
 const int MeteoBlue::http_timeout_dflt = 60; // seconds until connect time out for libcurl
 const std::string MeteoBlue::dflt_endpoint = "http://my.meteoblue.com/";
-std::map< std::string, MeteoGrids::Parameters > MeteoBlue::params_map;
+std::map< std::string, MeteoBlue::meteoParam > MeteoBlue::params_map;
 const bool MeteoBlue::__init = MeteoBlue::initStaticData();
 
 bool MeteoBlue::initStaticData()
 {
-	params_map[ "precipitation" ] = MeteoGrids::PSUM;
-	params_map[ "snowfraction" ] = MeteoGrids::PSUM_PH;	//WARNING the opposite of us!!
-	params_map[ "temperature" ] = MeteoGrids::TA;
-	params_map[ "relativehumidity" ] = MeteoGrids::RH;
-	params_map[ "windspeed" ] = MeteoGrids::VW;
-	params_map[ "winddirection" ] = MeteoGrids::DW;
-	params_map[ "sealevelpressure" ] = MeteoGrids::P_SEA;
-	params_map[ "skintemperature" ] = MeteoGrids::TSS;
-	params_map[ "ghi_total" ] = MeteoGrids::ISWR;
-	params_map[ "dif_total" ] = MeteoGrids::ISWR_DIFF;
-	params_map[ "surfaceairpressure" ] = MeteoGrids::P;
-	params_map[ "gust" ] = MeteoGrids::VW_MAX;
+	params_map[ "precipitation" ]       = meteoParam(MeteoGrids::PSUM);
+	params_map[ "snowfraction" ]        = meteoParam(MeteoGrids::PSUM_PH, -1., 1.); //the opposite of MeteoGrids
+	params_map[ "temperature" ]         = meteoParam(MeteoGrids::TA, 1., 273.15);
+	params_map[ "relativehumidity" ]    = meteoParam(MeteoGrids::RH, 0.01, 0.);
+	params_map[ "windspeed" ]           = meteoParam(MeteoGrids::VW);
+	params_map[ "winddirection" ]       = meteoParam(MeteoGrids::DW);
+	params_map[ "sealevelpressure" ]    = meteoParam(MeteoGrids::P_SEA, 100., 0.);
+	params_map[ "skintemperature" ]     = meteoParam(MeteoGrids::TSS, 1., 273.15);
+	params_map[ "ghi_total" ]           = meteoParam(MeteoGrids::ISWR);
+	params_map[ "dif_total" ]           = meteoParam(MeteoGrids::ISWR_DIFF);
+	params_map[ "surfaceairpressure" ]  = meteoParam(MeteoGrids::P, 100., 0.);
+	params_map[ "gust" ]                = meteoParam(MeteoGrids::VW_MAX);
 	
 	return true;
 }
@@ -272,14 +188,41 @@ void MeteoBlue::readStationData(const Date& /*date*/, std::vector<StationData>& 
 	vecStation = vecMeta;
 }
 
-void MeteoBlue::readMeteoData(const Date& dateStart, const Date& dateEnd,
+//with the packages API that we use, we can not choose the start and end dates
+void MeteoBlue::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
                           std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
 	
 	vecMeteo.resize(vecMeta.size());
-	for(size_t ii=0; ii<vecMeta.size(); ii++)
-		readData(dateStart, dateEnd, vecMeta[ii], vecMeteo[ii]);
+	for(size_t ii=0; ii<vecMeta.size(); ii++) {
+		readData(vecMeta[ii], vecMeteo[ii]);
+	}
+}
+
+picojson::value MeteoBlue::goToJSONPath(const std::string& path, const picojson::value& v)
+{
+	size_t start_pos = 0;
+	if (path[0]=='$') start_pos++;
+	if (path[1]=='.') start_pos++;
+
+	const size_t end_pos = path.find(".", start_pos);
+	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
+	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
+
+	if (v.is<picojson::object>()) {
+		const picojson::value::object& obj = v.get<picojson::object>();
+		for (std::map<std::string,picojson::value>::const_iterator it = obj.begin(); it != obj.end(); ++it) {
+			if (it->first==local_path) {
+				if (!remaining_path.empty())
+					goToJSONPath(remaining_path, it->second);
+				else
+					return it->second;
+			}
+		}
+	}
+
+	return picojson::value();
 }
 
 void MeteoBlue::readTime(const picojson::value &v, const StationData& sd, std::vector<MeteoData> &vecMeteo) const
@@ -304,39 +247,43 @@ void MeteoBlue::readTime(const picojson::value &v, const StationData& sd, std::v
 
 void MeteoBlue::readParameter(const picojson::value &v, const std::string& paramname, std::vector<MeteoData> &vecMeteo) const
 {
-	const std::map< std::string, MeteoGrids::Parameters >::const_iterator it = params_map.find( paramname );
-	if (it==params_map.end()) return;
-	const std::string mio_parname( MeteoGrids::getParameterName( it->second ) );
+	const std::map< std::string, meteoParam >::const_iterator it = params_map.find( paramname );
+	if (it==params_map.end()) {
+		if (debug) std::cout << "in MeteoBlue, skipping unknown parameter '" << paramname << "'\n";
+		return;
+	}
 	
-	picojson::value param( goToJSONPath("$."+paramname, v) );
+	//retrieve the raw data from the JSON
+	const std::string mio_parname( it->second.getParameterName() );
+	const picojson::value param( goToJSONPath("$."+paramname, v) );
 	if (!param.is<picojson::array>()) {
 		throw InvalidFormatException("Could not parse the data section '"+param.to_str()+"'", AT);
 	}
-	const picojson::array vecRaw = param.get<picojson::array>();
+	const picojson::array vecRaw( param.get<picojson::array>() );
 	if (vecMeteo.size()!=vecRaw.size()) 
 		throw InvalidFormatException("Trying to insert "+IOUtils::toString(vecRaw.size())+" values into vecMeteo of size "+IOUtils::toString(vecMeteo.size()), AT);
 	
+	//convert and insert the raw data into vecMeteo
 	for (size_t ii=0; ii<vecRaw.size(); ii++) {
-		if (vecRaw[ii].is<picojson::null>()) continue;
+		if (vecRaw[ii].is<picojson::null>()) continue; //keep nodata
 		if (!vecRaw[ii].is<double>())
 			throw InvalidFormatException("Could not parse '"+vecRaw[ii].to_str()+"' as double", AT);
 		
-		const size_t parindex = vecMeteo[ii].addParameter( mio_parname );
-		vecMeteo[ii]( parindex ) = vecRaw[ii].get<double>();
+		const size_t parindex = vecMeteo[ii].addParameter( mio_parname ); //already existing params just return their index
+		vecMeteo[ii]( parindex ) = it->second.convertValue( vecRaw[ii].get<double>() );
 	}
 }
 
-void MeteoBlue::readData(const Date& dateStart, const Date& dateEnd, const StationData& sd, std::vector<MeteoData> &vecMeteo)
+void MeteoBlue::readData(const StationData& sd, std::vector<MeteoData> &vecMeteo)
 {
 	//build the query URL
 	std::ostringstream url;
-	/*url << endpoint << "packages/" << packages << "?lat=" << sd.position.getLat() << "&lon=" << sd.position.getLon();
+	url << endpoint << "packages/" << packages << "?lat=" << sd.position.getLat() << "&lon=" << sd.position.getLon();
 	const double altitude( sd.position.getAltitude() );
 	if (altitude!=IOUtils::nodata) url << "&asl=" << altitude;
-	url << "&timeformat=iso8601" << "&history_days=3" << "&apikey=" << apikey;*/
-	url << "http://my.meteoblue.com/packages/basic-1h_agro-1h?lat=47.56&lon=7.57&apikey=DEMOKEY&sig=e85c990f1d5d476b29eddd989ca56859";
+	url << "&timeformat=iso8601" << "&history_days=3" << "&apikey=" << apikey;
 	
-std::cout << "Using the following URL: " << url.str() << "\n";
+	if (debug) std::cout << "MeteoBlue, using the following URL: " << url.str() << "\n";
 	
 	std::stringstream ss;
 	if (curl_read(url.str(), ss)) { //retrieve the page from the formed URL
@@ -345,23 +292,24 @@ std::cout << "Using the following URL: " << url.str() << "\n";
 		const std::string err( picojson::parse(v, ss.str()) );
 		if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
 		
-		//go to dataset, loop over the parameters
-		picojson::value data1h( goToJSONPath("$.data_1h", v) );
-		readTime(data1h, sd, vecMeteo);
-		
-		const picojson::value::object& obj = data1h.get<picojson::object>();
-		for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
-			std::cout << it->first << ": " << it->second.to_str() << std::endl;
-			const std::string paramname( it->first );
+		//loop over the datasets
+		const picojson::value::object& datasets = v.get<picojson::object>();
+		for (picojson::value::object::const_iterator it1 = datasets.begin(); it1 != datasets.end(); ++it1) {
+			const std::string datasetname( it1->first );
+			if (datasetname=="metadata" || datasetname=="units") continue;
 			
-			if (paramname!="time") readParameter(data1h, paramname, vecMeteo);
+			const picojson::value dataset( goToJSONPath("$."+datasetname, v) );
+			//if multiple datasets create duplicated timestamps, a dataEditing will have to be setup
+			readTime(dataset, sd, vecMeteo);
+			
+			//loop over the parameters (the time has been handled separately)
+			const picojson::value::object& params = dataset.get<picojson::object>();
+			for (picojson::value::object::const_iterator it2 = params.begin(); it2 != params.end(); ++it2) {
+				const std::string paramname( it2->first );
+				if (paramname!="time") readParameter(dataset, paramname, vecMeteo);
+			}
 		}
 	}
-	
-	std::cout << "Read:\n";
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) std::cout << vecMeteo[ii].toString();
-	std::cout << "\n";
-	
 }
 
 size_t MeteoBlue::data_write(void* buf, const size_t size, const size_t nmemb, void* userp)
