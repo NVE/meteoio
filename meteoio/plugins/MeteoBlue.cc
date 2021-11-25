@@ -39,6 +39,8 @@ namespace mio {
  * This plugin reads meteorological data from <a href="https://www.meteoblue.com">Meteoblue</a>'s 
  * <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/introduction">packages API</a> as a RESTful web service. 
  * To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
+ * 
+ * The meteorological parameters are defined by Meteoblue in <a href="https://content.meteoblue.com/fr/specifications/variables-meteo/meteoblue_weather_variables-documentation_EN_v06.pdf">this document</a>.
  *
  * @section meteoblue_keywords Keywords
  * This plugin uses the following keywords:
@@ -47,7 +49,7 @@ namespace mio {
  * - METEOBLUE_PACKAGES: a space delimited list of <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/forecast-data">packages</a> to read data from. Please note that you must have purchased an API key that gives access to all the packages that you list here! (mandatory);
  * - METEOBLUE_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s);
  * - METEOBLUE_DEBUG: print more information in order to better understand when something does not work as expected (default: false);
- * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax) (mandatory);
+ * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). If your don't have the elevation of your station of interest, you can use <a href="https://latlongdata.com/elevation/">latlongdata.com</a> (mandatory);
  *    - STATION\#_ID: provide an ID for the declared station (default: "STAT\#");
  *    - STATION\#_NAME: provide a name for the declared station (default: "STATION\#");
  * 
@@ -118,9 +120,12 @@ bool MeteoBlue::initStaticData()
 	params_map[ "sealevelpressure" ]    = meteoParam(MeteoGrids::P_SEA, 100., 0.);
 	params_map[ "skintemperature" ]     = meteoParam(MeteoGrids::TSS, 1., 273.15);
 	params_map[ "ghi_total" ]           = meteoParam(MeteoGrids::ISWR);
+	params_map[ "ghi_backwards" ]       = meteoParam(MeteoGrids::ISWR);
 	params_map[ "dif_total" ]           = meteoParam(MeteoGrids::ISWR_DIFF);
+	params_map[ "dif_backwards" ]       = meteoParam(MeteoGrids::ISWR_DIFF);
 	params_map[ "surfaceairpressure" ]  = meteoParam(MeteoGrids::P, 100., 0.);
 	params_map[ "gust" ]                = meteoParam(MeteoGrids::VW_MAX);
+	params_map[ "totalcloudcover" ]     = meteoParam(MeteoGrids::TAU_CLD, -1., 1.); //TODO we have to convert this to a transmissivity!
 	
 	return true;
 }
