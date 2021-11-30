@@ -270,11 +270,13 @@ void MeteoBlue::readParameter(const picojson::value &v, const std::string& param
 	
 	//convert and insert the raw data into vecMeteo
 	for (size_t ii=0; ii<vecRaw.size(); ii++) {
+		//create new parameters in any case, even if nodata so all MeteoData objects have the same parameters
+		const size_t parindex = vecMeteo[ii].addParameter( mio_parname ); //already existing params just return their index
+		
 		if (vecRaw[ii].is<picojson::null>()) continue; //keep nodata
 		if (!vecRaw[ii].is<double>())
 			throw InvalidFormatException("Could not parse '"+vecRaw[ii].to_str()+"' as double", AT);
 		
-		const size_t parindex = vecMeteo[ii].addParameter( mio_parname ); //already existing params just return their index
 		vecMeteo[ii]( parindex ) = it->second.convertValue( vecRaw[ii].get<double>() );
 	}
 }
