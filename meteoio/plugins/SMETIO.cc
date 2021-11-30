@@ -107,7 +107,8 @@ SMETIO::SMETIO(const std::string& configfile)
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
-          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false),
+          appendCreationDate(false)
 {
 	parseInputOutputSection();
 }
@@ -117,7 +118,8 @@ SMETIO::SMETIO(const Config& cfgreader)
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
-          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false),
+          appendCreationDate(false)
 {
 	parseInputOutputSection();
 }
@@ -197,6 +199,7 @@ void SMETIO::parseInputOutputSection()
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
+		cfg.getValue("SMET_APPEND_CREATION_DATE", "Output", appendCreationDate, IOUtils::nothrow);
 		cfg.getValue("SMET_DEFAULT_PREC", "Output", default_prec, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_DEFAULT_WIDTH", "Output", default_width, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
@@ -503,16 +506,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
-
-		if (sd.stationID.empty()) {
-			ostringstream ss;
-			ss << "Station" << ii+1;
-			sd.stationID = ss.str();
-		}
-
-		const std::string filename( outpath + "/" + sd.stationID + dflt_extension );
-		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
-			throw InvalidNameException(filename, AT);
+		if (sd.stationID.empty()) sd.stationID = "Station"+IOUtils::toString( ii+1 );
 
 		//2. check which meteo parameter fields are actually in use
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
@@ -521,6 +515,11 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		double smet_timezone = IOUtils::nodata; //time zone of the data
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, smet_timezone, vecParamInUse, vecColumnName);
 		if (out_dflt_TZ != IOUtils::nodata) smet_timezone = out_dflt_TZ; //if the user set an output time zone, all will be converted to it
+		
+		const std::string optionalCreationDate = (appendCreationDate)? "_"+Date(smet_timezone).toString(Date::NUM) : "";
+		const std::string filename( outpath + "/" + sd.stationID + optionalCreationDate + dflt_extension );
+		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
+			throw InvalidNameException(filename, AT);
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
@@ -551,7 +550,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
 				mywriter->set_commented_headers( outputCommentedHeaders );
 				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
-                               nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
+                                   nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
 
 			std::vector<std::string> vec_timestamp;
