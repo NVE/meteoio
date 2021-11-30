@@ -56,6 +56,7 @@ namespace mio {
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
+ * - SMET_APPEND_CREATION_DATE: append the current date to the filename in order to create multiple versions of a given dataset (default: false); [Output] section
  * - SMET_DEFAULT_PREC: default number of decimals for parameters that don't already define it (default: 3); [Output] section
  * - SMET_DEFAULT_WIDTH: default number of characters for parameters that don't already define it (default: 8); [Output] section
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
