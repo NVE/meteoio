@@ -69,6 +69,12 @@ namespace mio {
  * STATION1_NAME = Basel
  * @endcode
  *
+ * @section meteoblue_installing Installation
+ * On Linux, simply install libcurl for your distribution and cmake should be able to find it automatically. On Windows, please install libcurl 
+ * (you can find <a href="https://wiki.openssl.org/index.php/Binaries">pre-compiled binaries</a>). Then you will most probably have to 
+ * manually provide the file and path to libcurl.dll.a as well as to the "include" directory of libcurl in cmake in order to be able 
+ * to compile the meteoblue plugin.
+ * 
  * @section meteoblue_dependencies Picojson
  * This plugin relies on <A HREF="https://github.com/kazuho/picojson/">picojson</A> for reading and parsing
  * <A HREF="https://en.wikipedia.org/wiki/JSON">JSON</A> data. Picojson is released under a
