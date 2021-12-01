@@ -142,6 +142,7 @@ std::map<std::string, SMETIO::plot_attr> SMETIO::initPlotParams()
 	results[ MeteoGrids::getParameterName(MeteoGrids::ISWR) ] 	= plot_attr(MeteoGrids::ISWR, "0xF9CA25", 0., 1400.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::ILWR) ] 	= plot_attr(MeteoGrids::ILWR, "0xD99521", 150., 400.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::TAU_CLD) ] = plot_attr(MeteoGrids::TAU_CLD, "0xD9A48F", 0., 1.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::CLOUD_COVER) ] = plot_attr(MeteoGrids::CLOUD_COVER, "0xD9A48F", 0., 1.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM) ] 	= plot_attr(MeteoGrids::PSUM, "0x2431A4", 0., 20.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM_PH) ]	= plot_attr(MeteoGrids::PSUM_PH, "0x7E8EDF", 0., 1.);
 	

@@ -52,6 +52,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ILWR");				description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
 	paramname.push_back("OLWR");			description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
 	paramname.push_back("TAU_CLD");		description.push_back("Atmospheric Transmissivity");					units.push_back("-");
+	paramname.push_back("CLOUD_COVER");		description.push_back("Total cloud cover");					units.push_back("%");
 	paramname.push_back("HS");					description.push_back("Snow Height");							units.push_back("m");
 	paramname.push_back("PSUM");			description.push_back("Precipitation Sum");					units.push_back("kg/m2");
 	paramname.push_back("PSUM_PH");		description.push_back("Precipitation Phase");					units.push_back("-");
