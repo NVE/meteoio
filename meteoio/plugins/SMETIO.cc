@@ -56,7 +56,7 @@ namespace mio {
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
- * - SMET_APPEND_CREATION_DATE: append the current date to the filename in order to create multiple versions of a given dataset (default: false); [Output] section
+ * - SMET_VERSIONING: append the current date to the filename in order to create multiple versions of a given dataset (default: false); [Output] section
  * - SMET_DEFAULT_PREC: default number of decimals for parameters that don't already define it (default: 3); [Output] section
  * - SMET_DEFAULT_WIDTH: default number of characters for parameters that don't already define it (default: 8); [Output] section
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
@@ -109,7 +109,7 @@ SMETIO::SMETIO(const std::string& configfile)
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false),
-          appendCreationDate(false)
+          outputVersioning(false)
 {
 	parseInputOutputSection();
 }
@@ -120,7 +120,7 @@ SMETIO::SMETIO(const Config& cfgreader)
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false),
-          appendCreationDate(false)
+          outputVersioning(false)
 {
 	parseInputOutputSection();
 }
@@ -200,7 +200,7 @@ void SMETIO::parseInputOutputSection()
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
-		cfg.getValue("SMET_APPEND_CREATION_DATE", "Output", appendCreationDate, IOUtils::nothrow);
+		cfg.getValue("SMET_VERSIONING", "Output", outputVersioning, IOUtils::nothrow);
 		cfg.getValue("SMET_DEFAULT_PREC", "Output", default_prec, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_DEFAULT_WIDTH", "Output", default_width, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
@@ -517,8 +517,8 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, smet_timezone, vecParamInUse, vecColumnName);
 		if (out_dflt_TZ != IOUtils::nodata) smet_timezone = out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 		
-		const std::string optionalCreationDate = (appendCreationDate)? "_"+Date(smet_timezone).toString(Date::NUM) : "";
-		const std::string filename( outpath + "/" + sd.stationID + optionalCreationDate + dflt_extension );
+		const std::string version_str = (outputVersioning)? "_"+Date(smet_timezone).toString(Date::NUM) : "";
+		const std::string filename( outpath + "/" + sd.stationID + version_str + dflt_extension );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 
