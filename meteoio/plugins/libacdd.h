@@ -36,6 +36,9 @@ namespace mio {
  * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
  * following keys:
  *  - ACDD_CREATOR: the name of the creator of the data set (default: login name);
+ *  - ACDD_CREATOR_INSTITUTION: The institution of the creator; should uniquely identify the creator's institution;
+ *  - ACDD_CREATOR_URL: The URL of the creator principally responsible for creating this data;
+ *  - ACDD_CREATOR_TYPE: either person, group, institution, or position (default: person);
  *  - ACDD_EMAIL: the email of the creator;
  *  - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
  *  - ACDD_TITLE: a short title for the data set;

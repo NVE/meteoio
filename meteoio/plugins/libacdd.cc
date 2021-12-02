@@ -80,6 +80,9 @@ void ACDD::defaultInit()
 	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
 	addAttribute("creator_name", mio::IOUtils::getLogName(), "ACDD_CREATOR");
 	addAttribute("creator_email", "", "ACDD_EMAIL");
+	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
+	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
+	addAttribute("creator_type", "person", "ACDD_CREATOR_TYPE");
 	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true));
 	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
 	addAttribute("keywords_vocabulary", "AGU Index Terms");
@@ -302,12 +305,11 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 		else
 			addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
 	}
-	if (!singlePoint) {
-		addAttribute("geospatial_lat_min", lat_min);
-		addAttribute("geospatial_lat_max", lat_max);
-		addAttribute("geospatial_lon_min", lon_min);
-		addAttribute("geospatial_lon_max", lon_max);
-	}
+	
+	addAttribute("geospatial_lat_min", lat_min);
+	addAttribute("geospatial_lat_max", lat_max);
+	addAttribute("geospatial_lon_min", lon_min);
+	addAttribute("geospatial_lon_max", lon_max);
 }
 
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
