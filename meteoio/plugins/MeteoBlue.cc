@@ -131,7 +131,7 @@ bool MeteoBlue::initStaticData()
 	params_map[ "dif_backwards" ]       = meteoParam(MeteoGrids::ISWR_DIFF);
 	params_map[ "surfaceairpressure" ]  = meteoParam(MeteoGrids::P, 100., 0.);
 	params_map[ "gust" ]                = meteoParam(MeteoGrids::VW_MAX);
-	params_map[ "totalcloudcover" ]     = meteoParam(MeteoGrids::CLOUD_COVER); //TODO we have to convert this to a transmissivity!
+	params_map[ "totalcloudcover" ]     = meteoParam(MeteoGrids::CLD, 8./100., 0); //TODO we have to convert this to a transmissivity!
 	
 	return true;
 }

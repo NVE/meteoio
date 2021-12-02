@@ -58,7 +58,7 @@ class MeteoGrids {
 				ILWR, ///< Incoming long wave radiation
 				OLWR, ///< Outgoing long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
-				CLOUD_COVER, ///< Total cloud cover in %
+				CLD, ///< Total cloud cover in oktas (see https://en.wikipedia.org/wiki/Okta)
 				HS, ///< Height of snow
 				PSUM, ///< Water equivalent of precipitations, either solid or liquid
 				PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
