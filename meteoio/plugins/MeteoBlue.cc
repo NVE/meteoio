@@ -111,7 +111,7 @@ namespace mio {
  */
 
 const int MeteoBlue::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string MeteoBlue::dflt_endpoint = "http://my.meteoblue.com/";
+const std::string MeteoBlue::dflt_endpoint = "https://my.meteoblue.com/";
 std::map< std::string, MeteoBlue::meteoParam > MeteoBlue::params_map;
 const bool MeteoBlue::__init = MeteoBlue::initStaticData();
 
@@ -126,9 +126,9 @@ bool MeteoBlue::initStaticData()
 	params_map[ "sealevelpressure" ]    = meteoParam(MeteoGrids::P_SEA, 100., 0.);
 	params_map[ "skintemperature" ]     = meteoParam(MeteoGrids::TSS, 1., 273.15);
 	params_map[ "ghi_total" ]           = meteoParam(MeteoGrids::ISWR);
-	params_map[ "ghi_backwards" ]       = meteoParam(MeteoGrids::ISWR);
+	params_map[ "ghi_instant" ]         = meteoParam(MeteoGrids::ISWR);
 	params_map[ "dif_total" ]           = meteoParam(MeteoGrids::ISWR_DIFF);
-	params_map[ "dif_backwards" ]       = meteoParam(MeteoGrids::ISWR_DIFF);
+	params_map[ "dif_instant" ]         = meteoParam(MeteoGrids::ISWR_DIFF);
 	params_map[ "surfaceairpressure" ]  = meteoParam(MeteoGrids::P, 100., 0.);
 	params_map[ "gust" ]                = meteoParam(MeteoGrids::VW_MAX);
 	params_map[ "totalcloudcover" ]     = meteoParam(MeteoGrids::CLD, 8./100., 0); //TODO we have to convert this to a transmissivity!
@@ -142,7 +142,6 @@ MeteoBlue::MeteoBlue(const std::string& configfile)
         endpoint(dflt_endpoint), apikey(), packages(),
         http_timeout(http_timeout_dflt), debug(false)
 {
-	
 	init();
 }
 
@@ -238,7 +237,7 @@ picojson::value MeteoBlue::goToJSONPath(const std::string& path, const picojson:
 
 void MeteoBlue::readTime(const picojson::value &v, const StationData& sd, std::vector<MeteoData> &vecMeteo) const
 {
-	const picojson::value time( goToJSONPath("$.time", v) );
+	const picojson::value& time( goToJSONPath("$.time", v) );
 	if (!time.is<picojson::array>()) {
 		throw InvalidFormatException("Could not find a time array in the data section '"+time.to_str()+"'", AT);
 	}
@@ -266,7 +265,7 @@ void MeteoBlue::readParameter(const picojson::value &v, const std::string& param
 	
 	//retrieve the raw data from the JSON
 	const std::string mio_parname( it->second.getParameterName() );
-	const picojson::value param( goToJSONPath("$."+paramname, v) );
+	const picojson::value& param( goToJSONPath("$."+paramname, v) );
 	if (!param.is<picojson::array>()) {
 		throw InvalidFormatException("Could not parse the data section '"+param.to_str()+"'", AT);
 	}
@@ -334,7 +333,7 @@ void MeteoBlue::readData(const StationData& sd, std::vector<MeteoData> &vecMeteo
 size_t MeteoBlue::data_write(void* buf, const size_t size, const size_t nmemb, void* userp)
 {
 	if (userp) {
-		ostream& os = *static_cast<ostream*>(userp);
+		ostream& os( *static_cast<ostream*>(userp) );
 		const std::streamsize len = size * nmemb;
 
 		if (os.write(static_cast<char*>(buf), len)) return len;
@@ -352,6 +351,7 @@ bool MeteoBlue::curl_read(const std::string& url, std::ostream& os) const
 		if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, ""))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_TIMEOUT, http_timeout))
 		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_URL, url.c_str())))
