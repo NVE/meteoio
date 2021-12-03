@@ -54,7 +54,9 @@ namespace mio {
  *  - ACDD_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
  *  - ACDD_METADATA_LINK: A URL/DOI that gives more complete metadata;
  *  - ACDD_LICENSE: describes the license applicable to the dataset;
- *  - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0).
+ *  - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0);
+ *  - ACDD_ACTIVITY_TYPE: Activity types are used to identify the origin of the dataset. Pick one from this <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type">controlled vocabulary</a>;
+ *  - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>.
 */
 class ACDD {
 	public:
