@@ -36,13 +36,18 @@ namespace mio {
  * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
  * following keys:
  *  - ACDD_CREATOR: the name of the creator of the data set (default: login name);
- *  - ACDD_CREATOR_INSTITUTION: The institution of the creator; should uniquely identify the creator's institution;
- *  - ACDD_CREATOR_URL: The URL of the creator principally responsible for creating this data;
+ *  - ACDD_CREATOR_EMAIL: the email of the creator;
+ *  - ACDD_CREATOR_INSTITUTION: the institution of the creator; should uniquely identify the creator's institution;
+ *  - ACDD_CREATOR_URL: the URL of the creator principally responsible for creating this data;
  *  - ACDD_CREATOR_TYPE: either person, group, institution, or position (default: person);
- *  - ACDD_EMAIL: the email of the creator;
- *  - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
- *  - ACDD_TITLE: a short title for the data set;
  *  - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
+ *  - ACDD_PUBLISHER: the name of the person / entity responsible for publishing the data file or product to users, with its current metadata and format;
+ *  - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
+ *  - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
+ *  - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
+ *  - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
+ *  - ACDD_KEYWORDS_VOCABULARY: the unique name or identifier of the vocabulary from which keywords are taken (default: AGU);
+ *  - ACDD_TITLE: a short title for the data set;
  *  - ACDD_PROJECT: the scientific project that created the data;
  *  - ACDD_PROGRAM: The overarching program(s) of which the dataset is a part;
  *  - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
