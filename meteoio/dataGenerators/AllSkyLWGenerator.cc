@@ -42,6 +42,9 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 			else if (user_algo=="CRAWFORD") {
 				model = CRAWFORD;
 				clf_model = TauCLDGenerator::CLF_CRAWFORD;
+			} else if (user_algo=="LHOMME") {
+				model = LHOMME;
+				clf_model = TauCLDGenerator::CLF_LHOMME;
 			} else
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
@@ -103,7 +106,9 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
 
 		//run the ILWR parametrization
-		if (model==CARMONA)
+		if (model==LHOMME)
+			value = Atmosphere::Lhomme_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
+		else if (model==CARMONA)
 			value = Atmosphere::Carmona_ilwr(RH, TA, cloudiness);
 		else if (model==OMSTEDT)
 			value = Atmosphere::Omstedt_ilwr(RH, TA, cloudiness);

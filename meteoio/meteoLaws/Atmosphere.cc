@@ -670,13 +670,128 @@ double Atmosphere::Kasten_cloudiness(const double& solarIndex)
 }
 
 /**
+ * @brief Evaluate the solar clearness index for a given cloudiness.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param cloudiness in okta, between 0 and 1
+ * @return solar clearness index
+*/
+double Atmosphere::Lhomme_clearness(const double& cloudiness)
+{
+	if (cloudiness<0. || cloudiness>1.) {
+		std::ostringstream ss;
+		ss << "Invalid cloudiness value: " << cloudiness << " (it should be between 0 and 1)";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	const double clearness = 1. - cloudiness;
+	return clearness;
+}
+
+/**
+ * @brief Evaluate the cloudiness from a given solar index.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param solarIndex solar index
+ * @return cloudiness (in okta, between 0 and 1)
+*/
+double Atmosphere::Lhomme_cloudiness(const double& solarIndex)
+{
+	if (solarIndex>1.) return 0.;
+	const double cloudiness = 1. - solarIndex;
+	return std::min(cloudiness, 1.);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007. If no cloud cover fraction is provided, a parametrization
+ * using iswr_meas and iswr_clear_sky will be used. 
+ * These parameters can therefore safely be set to IOUtils::nodata if cloudiness is provided.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
+ * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+*/
+double Atmosphere::Lhomme_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness)
+{
+	static const double a=1.07, b=0.34;
+	double clf;
+	if (cloudiness==IOUtils::nodata) {
+		if (iswr_meas<=0. || iswr_clear_sky<=0.)
+			return IOUtils::nodata;
+		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
+		if (clf<0.) clf=0.;
+	} else {
+		if (cloudiness<0. || cloudiness>1.)
+			return IOUtils::nodata;
+		clf = cloudiness;
+	}
+
+	const double epsilon_cs = Dilley_emissivity(RH, TA);
+	const double epsilon = epsilon_cs * (a + b*clf);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007. If no cloud cover fraction is provided, a parametrization
+ * using the current location (lat, lon, altitude) and ISWR will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
+ * @param lat latitude of the point of observation
+ * @param lon longitude of the point of observation
+ * @param altitude altitude of the point of observation
+ * @param julian julian date at the point of observation
+ * @param TZ time zone at the point of observation
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+ * Please note that this call might NOT be efficient for processing large amounts of points,
+ * since it internally builds complex objects at every call. You might want to copy/paste
+ * its code in order to process data in bulk.
+*/
+double Atmosphere::Lhomme_ilwr(const double& lat, const double& lon, const double& altitude,
+                                 const double& julian, const double& TZ,
+                                 const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
+{
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		return IOUtils::nodata;
+	}
+
+	if (cloudiness==IOUtils::nodata) {
+		if (ISWR==IOUtils::nodata) return IOUtils::nodata;
+
+		SunObject Sun(lat, lon, altitude, julian, TZ);
+		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+		double toa, direct, diffuse;
+		Sun.getHorizontalRadiation(toa, direct, diffuse);
+		return Atmosphere::Lhomme_ilwr(RH, TA, ISWR, direct+diffuse, IOUtils::nodata);
+	} else {
+		return Atmosphere::Lhomme_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
+	}
+}
+
+
+/**
  * @brief Evaluate the long wave radiation for clear or cloudy sky.
  * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
  * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
  * <b>38</b>, 1999, pp 474-480. If no cloud cover fraction is provided, a parametrization
- * using iswr_meas and iswr_clear_sky will be used. These parameters can therefore safely
- * be set to IOUtils::nodata if cloudiness is provided.
+ * using iswr_meas and iswr_clear_sky will be used (same as in Lhomme et al., 2007). 
+ * These parameters can therefore safely be set to IOUtils::nodata if cloudiness is provided.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
