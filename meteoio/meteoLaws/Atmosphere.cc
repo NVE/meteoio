@@ -284,7 +284,8 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)
 */
-double Atmosphere::vaporSaturationPressure(const double& T) {
+double Atmosphere::vaporSaturationPressure(const double& T) 
+{
 	double c2, c3; // varying constants
 
 	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
@@ -307,12 +308,9 @@ double Atmosphere::vaporSaturationPressure(const double& T) {
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure, assuming water surface (Pa)
 */
-double Atmosphere::vaporSaturationPressureWater(const double& T) {
-	double c2, c3; // varying constants
-
-	c2 = 17.27;
-	c3 = 35.86;
-
+double Atmosphere::vaporSaturationPressureWater(const double& T) 
+{
+	static const double c2=17.27, c3=35.86; // varying constants
 	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
@@ -326,7 +324,8 @@ double Atmosphere::vaporSaturationPressureWater(const double& T) {
 * @param p air pressure (Pa)
 * @return virtual temperature multiplying coefficient
 */
-double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
+double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) 
+{
 	static const double epsilon = 0.622;
 	return 1. / (1.-(1.-epsilon)*e/p);
 }
@@ -341,7 +340,8 @@ double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
  * @param TA Air temperature (K)
  * @return clear sky emissivity
  */
-double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	const double e0_mBar = 0.01 * e0;
 	static const double exponent = 1./7.;
@@ -359,7 +359,8 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
  * @param TA Air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) 
+{
 	const double ea = Brutsaert_emissivity(RH, TA);
 	return blkBody_Radiation(ea, TA);
 }
@@ -374,7 +375,8 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) 
+{
 	const double ilwr_dilley = Dilley_ilwr(RH, TA);
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
 	const double ea = ilwr_dilley/ilwr_blkbody;
@@ -390,7 +392,8 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 
@@ -407,7 +410,8 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Prata_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
@@ -422,7 +426,8 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Prata_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Prata_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -435,7 +440,8 @@ double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Clark_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Clark_emissivity(const double& RH, const double& TA) 
+{
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.787 + 0.0028 * (Tdp-Cst::t_water_triple_pt);
 	return ea;
@@ -449,7 +455,8 @@ double Atmosphere::Clark_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Clark_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Clark_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -462,7 +469,8 @@ double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Tang_emissivity(const double& RH, const double& TA) 
+{
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.754 + 0.0044 * (Tdp-Cst::t_water_triple_pt);
 	return std::min(ea, 1.);
@@ -476,7 +484,8 @@ double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Tang_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Tang_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -489,7 +498,8 @@ double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Idso_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
 	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
 	return std::min(ea, 1.);
@@ -503,7 +513,8 @@ double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Idso_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Idso_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -517,7 +528,8 @@ double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	static const double eps_w = 0.97;
 	static const double a1 = 0.68;
@@ -537,7 +549,8 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Omstedt_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -551,7 +564,8 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = RH * vaporSaturationPressure(TA); //screen-level water vapor pressure
 	static const double exponent = 1./8.;
 
@@ -573,7 +587,8 @@ double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, con
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Konzelmann_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -588,7 +603,8 @@ double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const dou
 * @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	static const double beta_0 = -0.34;
 	static const double beta_1 = 3.36e-3;
 	static const double beta_2 = 1.94e-3;
@@ -608,7 +624,8 @@ double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const 
 * @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Carmona_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -622,7 +639,8 @@ double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double
  * @param cloudiness in okta, between 0 and 1
  * @return solar clearness index
 */
-double Atmosphere::Kasten_clearness(const double& cloudiness) {
+double Atmosphere::Kasten_clearness(const double& cloudiness) 
+{
 	static const double b1 = 0.75, b2 = 3.4;
 	if (cloudiness<0. || cloudiness>1.) {
 		std::ostringstream ss;
@@ -642,7 +660,8 @@ double Atmosphere::Kasten_clearness(const double& cloudiness) {
  * @param solarIndex solar index
  * @return cloudiness (in okta, between 0 and 1)
 */
-double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
+double Atmosphere::Kasten_cloudiness(const double& solarIndex) 
+{
 	static const double b1 = 0.75, b2 = 3.4;
 
 	if (solarIndex>1.) return 0.;
