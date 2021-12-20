@@ -41,7 +41,7 @@ namespace mio {
  * to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980).
  *
  * It takes the following (optional) argument:
- *    - TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN);
+ *    - TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers);
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
