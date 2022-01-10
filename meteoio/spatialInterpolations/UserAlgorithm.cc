@@ -54,7 +54,7 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		filename = subdir + param + file_ext;
 	} else {
 		date = i_date;
-		std::string timenum = date.toString(Date::NUM);
+		const std::string timenum = date.toString(Date::NUM);
 		std::string timestr = naming;
 		bool invalidnaming = false;
 		size_t pos = 0;
