@@ -90,7 +90,40 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 	is_night = false;
 
 	double albedo = .5;
-	if (RSWR!=IOUtils::nodata && ISWR!=IOUtils::nodata) {
+	//here the old version of the code starts
+	if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=Atmosphere::day_iswr_thresh || ISWR<=Atmosphere::day_iswr_thresh) {
+		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+
+		if (ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+			ISWR = RSWR / albedo;
+		}
+	} else {
+		albedo = RSWR / ISWR;
+		if (albedo>=1.) albedo=0.99;
+		if (albedo<=0.) albedo=0.01;
+	}
+
+	if (ISWR<Atmosphere::day_iswr_thresh) {
+		is_night = true;
+		return IOUtils::nodata;
+	}
+
+	if (ISWR==IOUtils::nodata) return IOUtils::nodata; //no way to get ISWR
+
+	sun.calculateRadiation(TA, RH, albedo);
+	double toa, direct, diffuse;
+	sun.getHorizontalRadiation(toa, direct, diffuse);
+	const double iswr_clear_sky = direct+diffuse;
+
+	//at sunrise or sunset, we might get clf<0 or clf>1 -> return nodata in order to use interpolation instead
+	if (iswr_clear_sky<Atmosphere::day_iswr_thresh || iswr_clear_sky<ISWR) {
+		is_night = true;
+		return IOUtils::nodata;
+	}
+	
+	
+	/*if (RSWR!=IOUtils::nodata && ISWR!=IOUtils::nodata) {
 		if (ISWR<Atmosphere::day_iswr_thresh) {
 			is_night = true;
 			return IOUtils::nodata;
@@ -126,7 +159,7 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 	if (iswr_clear_sky<Atmosphere::day_iswr_thresh) {
 		is_night = true;
 		return IOUtils::nodata;
-	}
+	}*/
 
 	if (clf_model==CLF_LHOMME) {
 		const double clf = Atmosphere::Lhomme_cloudiness(std::min(ISWR/iswr_clear_sky, 1.));
