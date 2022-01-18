@@ -83,5 +83,18 @@ class UsageTimer {
 };
 #endif
 
+/**
+ * @class WatchDog
+ * @author Mathias Bavay
+ * @brief A software watchdog so a task to setup a timer to emit a SIGALRM signal in the future as
+ * well as a signal handler in order to kill itself in the specified number of seconds.
+ */
+class WatchDog {
+	public:
+		WatchDog(const unsigned int& seconds);
+	private:
+		static void signals_catching(const int& SIG);
+};
+
 } //end namespace mio
 #endif
