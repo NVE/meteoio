@@ -213,7 +213,7 @@ WatchDog::WatchDog(const unsigned int& seconds)
 	const bool success = CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
 }
 #else
-/* function called when a SIGALRM signal is catched */
+/* function called when a SIGALRM signal is caught */
 void signal_handler( int signal_num )
 {
 	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
