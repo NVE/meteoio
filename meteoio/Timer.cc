@@ -23,6 +23,7 @@
 	#include <windows.h>
 	#undef max
 	#undef min
+	#include <cstdlib.h>
 #else
 	#include <sys/time.h>
 	#include <unistd.h>
@@ -198,44 +199,42 @@ void UsageTimer::getElapsedTimes()
 #endif
 
 
-/* function called when a SIGALRM signal is catched */
 #ifdef _WIN32
-void CALLBACK signal_handler(HWND hwnd, UINT uMsg, UINT timerId, DWORD dwTime)
+/* function called when the timer expires */
+void CALLBACK TimerProc(void* parameters, BOOLEAN timerCalled)
 {
-	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
-}
-#else
-void signal_handler( int signal_num ) 
-{
-	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
-}
-#endif
-
-void WatchDog::signals_catching(const int& SIG)
-{
-#ifdef _WIN32
-	typedef void(*SignalHandlerPointer)(int);
-	SignalHandlerPointer previousHandler;
-	previousHandler = signal(SIG, signal_handler);
-#else
-	struct sigaction catch_signal;
-	catch_signal.sa_handler = signal_handler;
-	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
-	catch_signal.sa_flags = 0;
-	
-	sigaction(SIG, &catch_signal, nullptr);
-#endif
+	std::cerr << "Timeout: aborting after receiving signal SIGALRM" << std::endl;
+	exit( EXIT_FAILURE );
 }
 
 WatchDog::WatchDog(const unsigned int& seconds)
 {
-#ifdef _WIN32
-	SetTimer(NULL, NULL, seconds*1000, (TIMERPROC) signal_handler);
+	HANDLE m_hTimer = NULL;
+	const bool success = CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
+}
 #else
+/* function called when a SIGALRM signal is catched */
+void signal_handler( int signal_num )
+{
+	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
+}
+
+void signals_catching(const int& SIG)
+{
+	struct sigaction catch_signal;
+	catch_signal.sa_handler = signal_handler;
+	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
+	catch_signal.sa_flags = 0;
+
+	sigaction(SIG, &catch_signal, nullptr);
+}
+
+WatchDog::WatchDog(const unsigned int& seconds)
+{
 	alarm(seconds);
-#endif
 	signals_catching( SIGALRM );
 }
+#endif
 
 } //namespace
 

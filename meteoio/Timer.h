@@ -31,11 +31,11 @@ namespace mio {
 
 /**
  * @class Timer
- * @author Tuan Anh Nguyen (original implementation in popc), Mathias Bavay (port and rewrite for Alpine3D and MeteoIO)
  * @brief Time code execution with at least 1 us resolution.
  * The time resolution can be stored up to .1 ns resolution, but is measured to the following accuracy:
  *    - 1 us on Posix systems (Linux, osX, BSD);
  *    - 1 ns on Windows.
+ * @author Tuan Anh Nguyen (original implementation in popc), Mathias Bavay (port and rewrite for Alpine3D and MeteoIO)
  */
 class Timer {
 public:
@@ -56,9 +56,9 @@ protected:
 #if !defined _WIN32 && !defined __MINGW32__
 /**
  * @class UsageTimer
- * @author Thomas Egger
  * @brief Process usage timer for Posix
  * This is based on \em getrusage and thus returns detailed timing information about how the time was spend (userland, system time).
+ * @author Thomas Egger
  */
 class UsageTimer {
  public:
@@ -85,15 +85,29 @@ class UsageTimer {
 
 /**
  * @class WatchDog
+ * @brief A software watchdog, killing the current process after the given number of seconds
+ * @details On Posix systems (Linux, MacOS), this is implemented with
+ * a call to <a href="https://www.man7.org/linux/man-pages/man2/alarm.2.html">alarm()</a>
+ * that will emit the SIGALRM signal after the provided number of seconds. 
+ * A signal handler is declared that throws an exeption when
+ * the SIGALRM signal is caught, so a stack trace can be printed before
+ * exiting.
+ * 
+ * On Microsoft Windows, this is implemented as a 
+ * <a href="https://docs.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-createtimerqueuetimer">QueueTimer</a> 
+ * with a processing function called when the timer expires. This function prints an 
+ * error message and exits with EXIT_FAILURE.
+ * 
+ * Please note that in the current implementation, it is not possible to reset the watchdog.
  * @author Mathias Bavay
- * @brief A software watchdog so a task to setup a timer to emit a SIGALRM signal in the future as
- * well as a signal handler in order to kill itself in the specified number of seconds.
  */
 class WatchDog {
 	public:
+		/**
+		* @brief CReate the watchdog
+		* @param seconds number of seconds before killing the process
+		*/
 		WatchDog(const unsigned int& seconds);
-	private:
-		static void signals_catching(const int& SIG);
 };
 
 } //end namespace mio
