@@ -216,7 +216,7 @@ WatchDog::WatchDog(const unsigned int& seconds)
 /* function called when a SIGALRM signal is caught */
 void signal_handler( int signal_num )
 {
-	throw IOException("Aborting after receiving signal "+IOUtils::toString(signal_num), AT);
+	throw TimeOutException("Timeout: aborting after receiving signal "+IOUtils::toString(signal_num), AT);
 }
 
 void signals_catching(const int& SIG)

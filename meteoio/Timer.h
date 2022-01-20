@@ -104,7 +104,7 @@ class UsageTimer {
 class WatchDog {
 	public:
 		/**
-		* @brief CReate the watchdog
+		* @brief Create the watchdog
 		* @param seconds number of seconds before killing the process
 		*/
 		WatchDog(const unsigned int& seconds);
