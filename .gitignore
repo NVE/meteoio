@@ -1,22 +1,22 @@
+#Cmake temporary files
 *CMakeFiles/*
 **/CMakeFiles/*
-**/cmake_install.cmake
-meteoio/**/Makefile
-lib/*.so*
-**/*~
-
+_CPack_Packages/*
 /CMakeCache.txt
 /CMakeDoxyfile.in
 /CMakeDoxygenDefaults.cmake
-/CPackConfig.cmake
-/CPackSourceConfig.cmake
-/cmake_uninstall.cmake
-/bin/meteoio_timeseries
-/applications/Makefile
-/meteoio/IOHandler.cc
-/Makefile
-/doc/html/*
 install_manifest.txt
+**/cmake_install.cmake
+**/cmake_uninstall.cmake
+**/Makefile
+
+#generated files
+/doc/html/*
+/meteoio/IOHandler.cc
+lib/*.so*
+/bin/*
+*.aux
+*.log
 
 #example files and binaries:
 /doc/examples/CMakeCache.txt
@@ -36,3 +36,17 @@ install_manifest.txt
 #editor files:
 *.swp
 tags
+**/*~
+
+#profiling:
+callgrind.out.*
+massif.out.*
+
+#CPack generated files
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.deb
+*.rpm
+*.tar.gz
+*.exe
+*.dmg
