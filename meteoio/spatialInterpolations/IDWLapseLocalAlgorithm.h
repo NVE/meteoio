@@ -40,8 +40,8 @@ namespace mio {
  * @note Beware, this method sometimes produces very sharp transitions
  * as it spatially moves from one station's area of influence to another one!
  * @code
- * TA::algorithms           = LIDW_LAPSE
- * TA::idw_lapse::neighbors = 6
+ * TA::algorithms            = LIDW_LAPSE
+ * TA::lidw_lapse::neighbors = 6
  * @endcode
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
