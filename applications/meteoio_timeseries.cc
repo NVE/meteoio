@@ -82,10 +82,14 @@ inline void Usage(const std::string& programname)
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
 
-	std::cout << "Example: " << programname << " -c io.ini -b 1996-06-17T00:00 -e NOW\n\n";
+	std::cout << "If the key DATA_QA_LOGS in the [General] section is set to true, you can provide a list of\n";
+	std::cout << "meteo parameters to check for valid values in the CHECK_MISSING key of the [Input] section.\n";
+	std::cout << "You can define the output sampling rate in the SAMPLING_RATE_MIN key of the [Output] section\n";
+	std::cout << "but the command line parameter has priority.\n";
+	std::cout << "Example use:\n\t" << programname << " -c io.ini -b 1996-06-17T00:00 -e NOW\n\n";
 }
 
-static Date getDate(const std::string& date_str, const double& TZ)
+inline Date getDate(const std::string& date_str, const double& TZ)
 {
 	Date parsedDate;
 	if (date_str == "NOW") { //interpret user provided start date
@@ -105,8 +109,13 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 	double duration = IOUtils::nodata;
 	int longindex=0, opt=-1;
 	bool setStart = false, setEnd = false, setDuration = false;
+	
+	if (argc==1) { //no arguments provided
+		Usage(std::string(argv[0]));
+		exit(1);
+	}
 
-	struct option long_options[] =
+	const struct option long_options[] =
 	{
 		{"begindate", required_argument, nullptr, 'b'},
 		{"enddate", required_argument, nullptr, 'e'},
@@ -120,11 +129,6 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 		{"help", no_argument, nullptr, 'h'},
 		{nullptr, 0, nullptr, 0}
 	};
-
-	if (argc==1) { //no arguments provided
-		Usage(std::string(argv[0]));
-		exit(1);
-	}
 
 	while ((opt=getopt_long( argc, argv, ":b:e:d:c:s:o:t:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
@@ -200,7 +204,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 	if (begin_date.isUndef())
 		begin_date = end_date - duration;
 	
-	//we don't overwrite command line options is set
+	//we don't overwrite command line options if set
 	if (samplingRate==IOUtils::nodata)
 		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
 	samplingRate /= 24.*60; //convert to sampling rate in days
@@ -228,15 +232,29 @@ static void signals_catching(void)
 #endif
 }
 
+static void validMeteoData(const std::vector<std::string>& enforce_variables, const mio::MeteoData& md)
+{
+	const std::string msg_head( "[DATA_QA] Missing "+md.meta.getStationID()+"::" );
+
+	for (size_t ii=0; ii<enforce_variables.size(); ii++) {
+		if (md(enforce_variables[ii]) == mio::IOUtils::nodata)
+			std::cout <<msg_head << enforce_variables[ii] << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
+	}
+}
+
 static void real_main(int argc, char* argv[])
 {
 	bool showProgress = false;
+	std::vector<std::string> enforce_variables;
 	Config cfg;
 	Date dateBegin, dateEnd;
 	parseCmdLine(argc, argv, cfg, dateBegin, dateEnd, showProgress);
 	if (timeout_secs!=0) WatchDog watchdog(timeout_secs); //set to kill itself after that many seconds
 	
 	IOManager io(cfg);
+	const bool data_qa = cfg.get("DATA_QA_LOGS", "General", false);
+	if (data_qa) cfg.getValue("Check_Missing", "Input", enforce_variables);
+	
 	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
 	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
 
@@ -250,11 +268,14 @@ static void real_main(int argc, char* argv[])
 	size_t insert_position = 0;
 	size_t count = 0;
 	for (Date d=dateBegin; d<=dateEnd; d+=samplingRate) { //time loop
-		if(showProgress) std::cout << d.toString(Date::ISO) << "\n";
+		if (showProgress) std::cout << d.toString(Date::ISO) << "\n";
 		count++;
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
-		for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
+		
+		for (size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
+			if (data_qa) validMeteoData( enforce_variables, Meteo[ii] ); //check that we have everything we need
 			if (Meteo[ii].isNodata()) continue;
+			
 			const std::string stationID( Meteo[ii].meta.stationID );
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = insert_position++;
@@ -265,6 +286,7 @@ static void real_main(int argc, char* argv[])
 			}
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
+		
 		if (outputBufferSize > 0 && count%outputBufferSize == 0) {	// Check for buffered output
 			std::cout << "Writing output data and clearing buffer" << std::endl;
 			io.writeMeteoData(vecMeteo);
@@ -275,11 +297,17 @@ static void real_main(int argc, char* argv[])
 		}
 	}
 
-	//In both case, we write the data out
+	if (data_qa) {
+		std::map<std::string, size_t>::const_iterator it_stats;
+		for (it_stats=mapIDs.begin(); it_stats != mapIDs.end(); ++it_stats) std::cout << "[DATA_QA] Processing " << it_stats->first << "\n";
+	}
+	
+	//In any case, we write the data out
 	std::cout << "Writing output data" << std::endl;
 	io.writeMeteoData(vecMeteo);
 
 	timer.stop();
+	std::cout << "Number of timesteps: " << count << "\n";
 	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
 }
 
