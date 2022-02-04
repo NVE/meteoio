@@ -52,7 +52,6 @@ using namespace mio; //The MeteoIO namespace is called mio
 
 //Global variables in this file:
 static std::string cfgfile( "io.ini" );
-static mio::Date dateBegin, dateEnd;
 static double samplingRate = IOUtils::nodata;
 static size_t outputBufferSize = 0;
 static unsigned int timeout_secs = 0;
@@ -74,6 +73,7 @@ inline void Usage(const std::string& programname)
 	std::cout << "Usage: " << programname << std::endl
 		<< "\t[-b, --begindate=YYYY-MM-DDTHH:MM] (e.g.:2007-08-11T09:00)\n"
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
+		<< "\t[-d, --duration=<in days>] (e.g.: 30)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
 		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
 		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
@@ -85,18 +85,35 @@ inline void Usage(const std::string& programname)
 	std::cout << "Example: " << programname << " -c io.ini -b 1996-06-17T00:00 -e NOW\n\n";
 }
 
-inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std::string& end_date_str, bool& showProgress)
+static Date getDate(const std::string& date_str, const double& TZ)
 {
+	Date parsedDate;
+	if (date_str == "NOW") { //interpret user provided start date
+		parsedDate.setFromSys();
+		parsedDate.setTimeZone(TZ);
+		parsedDate.rnd(10, mio::Date::DOWN); //rounding 10' down
+	} else {
+		mio::IOUtils::convertString(parsedDate, date_str, TZ);
+	}
+	
+	return parsedDate;
+}
+
+inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, Date& end_date, bool& showProgress)
+{
+	std::string begin_date_str, end_date_str;
+	double duration = IOUtils::nodata;
 	int longindex=0, opt=-1;
-	bool setEnd = false;
+	bool setStart = false, setEnd = false, setDuration = false;
 
 	struct option long_options[] =
 	{
 		{"begindate", required_argument, nullptr, 'b'},
 		{"enddate", required_argument, nullptr, 'e'},
+		{"duration", required_argument, nullptr, 'd'},
 		{"config", required_argument, nullptr, 'c'},
 		{"sampling-rate", required_argument, nullptr, 's'},
-		{"output-buffer", required_argument, nullptr, 's'},
+		{"output-buffer", required_argument, nullptr, 'o'},
 		{"progress", no_argument, nullptr, 'p'},
 		{"timeout", no_argument, nullptr, 't'},
 		{"version", no_argument, nullptr, 'v'},
@@ -109,17 +126,23 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		exit(1);
 	}
 
-	while ((opt=getopt_long( argc, argv, ":b:e:c:s:o:t:pvh", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, ":b:e:d:c:s:o:t:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
 		case 'b': {
 			begin_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
+			setStart = true;
 			break;
 		}
 		case 'e': {
 			end_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
 			setEnd = true;
+			break;
+		}
+		case 'd': {
+			mio::IOUtils::convertString(duration, std::string(optarg));
+			setDuration = true;
 			break;
 		}
 		case 'c':
@@ -158,11 +181,29 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		}
 	}
 
-	if (!setEnd) {
-		std::cerr << std::endl << "[E] You must specify an enddate!\n";
+	const bool validDateRange = (setStart && setEnd && !setDuration) || (setStart && !setEnd && setDuration) || (!setStart && setEnd && setDuration);
+	if (!validDateRange) {
+		std::cerr << std::endl << "[E] You must specify either {startdate and enddate}, or {startdate and duration} or {enddate and duration}!\n\n";
 		Usage(std::string(argv[0]));
 		exit(1);
 	}
+	
+	cfg.addFile(cfgfile);
+	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
+	
+	//the date range specification has been validated above
+	if (!begin_date_str.empty()) begin_date = getDate( begin_date_str, TZ );
+	if (!end_date_str.empty()) 
+		end_date = getDate( end_date_str, TZ );
+	else
+		end_date = begin_date + duration;
+	if (begin_date.isUndef())
+		begin_date = end_date - duration;
+	
+	//we don't overwrite command line options is set
+	if (samplingRate==IOUtils::nodata)
+		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
+	samplingRate /= 24.*60; //convert to sampling rate in days
 }
 
 static void signal_handler( int signal_num ) 
@@ -187,31 +228,13 @@ static void signals_catching(void)
 #endif
 }
 
-
 static void real_main(int argc, char* argv[])
 {
 	bool showProgress = false;
-	std::string begin_date_str, end_date_str;
-	parseCmdLine(argc, argv, begin_date_str, end_date_str, showProgress);
+	Config cfg;
+	Date dateBegin, dateEnd;
+	parseCmdLine(argc, argv, cfg, dateBegin, dateEnd, showProgress);
 	if (timeout_secs!=0) WatchDog watchdog(timeout_secs); //set to kill itself after that many seconds
-	
-	Config cfg(cfgfile);
-	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
-	if (!begin_date_str.empty()) {
-		mio::IOUtils::convertString(dateBegin, begin_date_str, TZ);
-	}
-	if (end_date_str == "NOW") { //interpret user provided end date
-		dateEnd.setFromSys();
-		dateEnd.setTimeZone(TZ);
-		dateEnd.rnd(10, mio::Date::DOWN); //rounding 10' down
-	} else {
-		mio::IOUtils::convertString(dateEnd, end_date_str, TZ);
-	}
-
-	//we don't overwrite command line options is set
-	if (samplingRate==IOUtils::nodata)
-		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
-	samplingRate /= 24.*60; //convert to sampling rate in days
 	
 	IOManager io(cfg);
 	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
