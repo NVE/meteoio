@@ -50,6 +50,103 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
+/**
+ * @page mio_standalone Standalone usage
+ * @section mio_pc Data processing on a personal computer
+ * It is possible to use MeteoIO as a standalone tool instead of as a library embedded within
+ * a numerical model. For this purpose, a program is provided (compiled by default) that
+ * processes data and generates timeseries, either on the command line or graphically
+ * when used through the Inishell GUI.
+ * 
+ * @subsection meteoio_timeseries The meteoio_timeseries program
+ * In the "bin" sub-directory of MeteoIO, you can find the meteoio_timeseries program. It reads
+ * what to do on the data from a provided ini file and produces timeseries as output. It can take
+ * several arguments to control the data processing:
+ *    * the begin date, ISO formatted with the "-b" option;
+ *    * the end date, ISO formatted with the "-e" option;
+ *    * alternatively, a duration in days with the "-d" option;
+ *    * the configuration file to use, with the "-c" option;
+ *    * the output sampling rate in minutes with the "-s" option;
+ *    * a progressive writing out of the data by specifying how many timesteps to buffer before writing
+ * with the "-o" option;
+ *    * some progress indicator with the "-p" option.
+ * 
+ * For example, in order to output data from the 1st of September 2004 at noon until the 3rd of April 2008 with 
+ * half-hourly values, using the ini file "io_myStation.ini" in the "cfgfiles" sub-directory:
+ * @code
+ * meteoio_timeseries -c cfgfiles/io_myStation.ini -b 2004-09-01T12:00 -e 2008-04-03 -s 30
+ * @endcode
+ * 
+ * @subsection Inishell The Inishell Graphical User Interface
+ * The <a href="https://code.wsl.ch/snow-models/inishell">Inishell</a> software is a tool that automatically and semantically 
+ * generates GUIs for scientific models, including for MeteoIO. It makes writing and editing ini files much easier, 
+ * helps reduce syntax errors (through input validation) and gives a good overview of the available options. It also 
+ * often directly links a given configuration key to its online documentation. When reading an existing ini file,
+ * all keys that are not recognized (as well as comments) are preserved. And it can directly run meteoio_timeseries while offering
+ * a GUI to configure its options. It is therefore the recommended way of configuring MeteoIO.
+ * 
+ * Finally, as Inishell generates ini files, it is possible to use it to configure MeteoIO and then run the processing from the
+ * command line on another computer (such as a server).
+ * 
+ * \image html Inishell.png "The Inishell GUI"
+ * \image latex Inishell.eps "The Inishell GUI" width=0.9\textwidth
+ * 
+ * For more information, see (Bavay, M., Reisecker, M., Egger, T., and Korhammer, D.: 
+ * <i>Inishell 2.0: semantically driven automatic GUI generation for scientific models</i>, Geosci. Model Dev., 15, 
+ * 365–378, doi: <a href="https://doi.org/10.5194/gmd-15-365-2022">10.5194/gmd-15-365-2022</a>, 2022.)
+ *
+ * @section mio_server Data processing services on a server
+ * Some features have been added to the meteoio_timeseries program in order to make it easier to manage when providing
+ * data processing services on a server. So it is generally a good idea to first get familiar with meteoio_timeseries
+ * on a personal computer, get familiar with Inishell to configure MeteoIO and then add the few tricks that help when running
+ * MeteoIO on a server.
+ * 
+ * @subsection server_workflow Recommended workflow
+ * It is highly recommended to create and fine tune the ini files for MeteoIO on a workstation first, relying on Inishell
+ * and manually running meteoio_timeseries through Inishell. This should help correct errors and optimize the processing
+ * with little efforts. It is also often a good idea to output the results in the smet format so the outputs can easily 
+ * be visualized (for example with <a href="https://run.niviz.org">niViz</a>) and examined with a text editor if necessary
+ * before moving to binary formats (for example, smet and netcdf both use the same ACDD metadata so even the metadata can be
+ * fine tuned this way).
+ * 
+ * Once the processing works satisfactorily, move the ini file(s) in place to the server.
+ * 
+ * @subsection keeping_things_simple Keeping things simple
+ * In order to leave less room for failures, it is better to keep the general workflow around MeteoIO quite simple. Several constructs
+ * in MeteoIO support this effort by reducing the complexity of scripts:
+ *    * any key can be dynamically generated from an environment variable, so there less need to generate ini files from scripts;
+ *    * if some ini files must still be programatically generated, please consider using the IMPORT_BEFORE / IMPORT_AFTER features: this allows
+ * to keep a standard ini file and dynamically overwrite or extend it with programatically generated small ini files fragments. You can either
+ * always generate an ini file that first import the base file and then adds a few keys or do it the other way around. Please note that you
+ * have an unlimited number and levels of imports at your disposal!
+ *    * several keys (such as the line number exclusions in the CSV plugin) are redundant in the sense that they convey the same information but
+ * let you provide the said information in the easiest and most logical way for your case. For example, you can provide the lines to keep or
+ * on the opposite the lines to reject.
+ * 
+ * @subsection dealing_with_the_unexpected Dealing with the unexpected
+ * Unfortunately, bugs can always happen. Some might be MeteoIO's fault, some might be another component (such as the file system, 
+ * a runaway process, etc). In order to get something as robust as possible, a few tricks are at your disposal:
+ *    * the meteoio_timeseries program has a "timeout" option that kills the program after the expiration of the timeout if
+ * it is still running. This could prevent processes from getting stuck waiting for I/O (for example from a network
+ * drive that is not responding anymore) or to prevent a client from doing a Denial Of Service by requesting a very
+ * long processing (although MeteoIO is usually very fast, the right combination of data time coverage and sampling rate
+ * could achieve this).
+ *    * the meteoio_timeseries program has another option to control the duration of its execution: it catches the SIGTERM 
+ * signal in order to print a stack trace before exiting (on supported platforms). The goal is that before starting a 
+ * new meteoio_timeseries run, you can search for meteoio_timeseries processes and kill them with SIGTERM while collecting 
+ * stack traces that would help explain why they were still running (it could be that you've sent a new job too early, 
+ * it could be that a running process was waiting for some I/O for example).
+ *    * it is possible to compile MeteoIO with the "DEBUG_ARITHM" option (on supported platforms). In this mode, 
+ * the processor is configured to throw an exception in case of arithmetic exception. If you configure the execution
+ * environment to allow core dumps, this would let you open the core dump in a debugger and come directly where some
+ * very wrong arithmetic was attempted so you can fix it. This is very useful if you develop your own filters or 
+ * data generators as it is better to stop the processing and fix the problem than compute junk.
+ *    * it is also possible to compile MeteoIO with the "LEAKS_CHECK" option. This runs slower than a normal binary must
+ * still much faster than in an environment such as <a href="https://valgrind.org/">valgrind</a>, so you can let it run
+ * through real, daily operational service and be informed of any memory leaks. This is very useful if you develop your own
+ * enhancements to MeteoIO (or to check what the MeteoIO developers did!).
+ */
+
 //Global variables in this file:
 static std::string cfgfile( "io.ini" );
 static double samplingRate = IOUtils::nodata;
