@@ -114,11 +114,18 @@ using namespace mio; //The MeteoIO namespace is called mio
  * @subsection keeping_things_simple Keeping things simple
  * In order to leave less room for failures, it is better to keep the general workflow around MeteoIO quite simple. Several constructs
  * in MeteoIO support this effort by reducing the complexity of scripts:
- *    * any key can be dynamically generated from an environment variable, so there less need to generate ini files from scripts;
- *    * if some ini files must still be programatically generated, please consider using the IMPORT_BEFORE / IMPORT_AFTER features: this allows
- * to keep a standard ini file and dynamically overwrite or extend it with programatically generated small ini files fragments. You can either
+ *    * any key can be \ref config_special_syntax "dynamically generated from an environment variable", so there less need to generate ini files from scripts;
+ *    * keys can be defined by \ref config_special_syntax "arithmetic expressions or as references to another key";
+ *    * if some ini files must still be programatically generated, please consider using the \ref config_import "IMPORT_BEFORE / IMPORT_AFTER features": 
+ * this allows to keep a standard ini file and dynamically overwrite or extend it with programatically generated small ini files fragments. You can either
  * always generate an ini file that first import the base file and then adds a few keys or do it the other way around. Please note that you
  * have an unlimited number and levels of imports at your disposal!
+ *    * Using the \ref config_import "IMPORT_BEFORE / IMPORT_AFTER features" can be used to define different data processing levels: for example a base
+ * ini file contains everything to read the raw data and standardize it (including renaming meteorological parameters when necessary). This base
+ * ini file is imported by another ini file that excludes some time periods when it is known that some sensors where malfunctioning and it is
+ * itself imported by another ini file that applies some filters to the data. A last ini file imports it and defines resampling, data generators, etc
+ * in order to deliver an output suitable for running numerical models. Thus generating a dataset of any given processing level is achieved by running
+ * meteoio_timeseries on one of these ini files and no configuration work is duplicated.
  *    * several keys (such as the line number exclusions in the CSV plugin) are redundant in the sense that they convey the same information but
  * let you provide the said information in the easiest and most logical way for your case. For example, you can provide the lines to keep or
  * on the opposite the lines to reject.
