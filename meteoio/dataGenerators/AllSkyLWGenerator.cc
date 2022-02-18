@@ -26,6 +26,12 @@
 
 namespace mio {
 
+AllSkyLWGenerator::AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+                   : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, false), sun(), model(OMSTEDT)
+{ 
+	parse_args(vecArgs); 
+}
+
 void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
@@ -50,16 +56,16 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
 			has_type = true;
-		} else if (vecArgs[ii].first=="CLOUDINESS_TYPE") {
+		} else if (vecArgs[ii].first=="CLOUDINESS_TYPE") { 
 			user_cloudiness = IOUtils::strToUpper(vecArgs[ii].second);
-		} else if (vecArgs[ii].first=="USE_RSWR") {
+		} else if (vecArgs[ii].first=="USE_RSWR") { //inherited from TauCLDGenerator
 			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
-		} else if (vecArgs[ii].first=="USE_RAD_THRESHOLD") {
+		} else if (vecArgs[ii].first=="USE_RAD_THRESHOLD") { //inherited from TauCLDGenerator
 			IOUtils::parseArg(vecArgs[ii], where, use_rad_threshold);
 		}
 	}
 
-	if (!user_cloudiness.empty()) {
+	if (!user_cloudiness.empty()) { //inherited from TauCLDGenerator
 		if (user_cloudiness=="LHOMME") cloudiness_model = TauCLDGenerator::CLF_LHOMME;
 		else if (user_cloudiness=="KASTEN") cloudiness_model = TauCLDGenerator::KASTEN;
 		else if (user_cloudiness=="CRAWFORD") cloudiness_model = TauCLDGenerator::CLF_CRAWFORD;

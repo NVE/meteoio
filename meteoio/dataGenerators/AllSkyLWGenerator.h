@@ -84,11 +84,9 @@ namespace mio {
  * \image latex all_sky_ilwr_cmp.eps "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period" width=0.9\textwidth
  *
  */
-class AllSkyLWGenerator : public GeneratorAlgorithm {
+class AllSkyLWGenerator : public TauCLDGenerator {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
-		                 last_cloudiness(), model(OMSTEDT), cloudiness_model(TauCLDGenerator::KASTEN), use_rswr(false), use_rad_threshold(false) { parse_args(vecArgs); }
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ);
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -104,10 +102,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		} parametrization;
 
 		SunObject sun;
-		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		parametrization model;
-		TauCLDGenerator::clf_parametrization cloudiness_model;
-		bool use_rswr, use_rad_threshold;
 };
 
 } //end namespace mio

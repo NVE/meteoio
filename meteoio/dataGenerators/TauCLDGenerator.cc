@@ -23,9 +23,11 @@
 
 namespace mio {
 
-TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const bool& parse_args)
                               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), cloudiness_model(KASTEN), use_rswr(false), use_rad_threshold(false)
 {
+	if (!parse_args) return;
+	
 	const std::string where( section+"::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
