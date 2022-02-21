@@ -68,9 +68,10 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const bool& parse_args=true);
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
-		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, const bool& i_use_rad_threshold, SunObject& sun, bool &is_night);
-		static double getClearness(const clf_parametrization& clf_model, const double& cloudiness);
 	protected:
+		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night) const;
+		double getClearness(const double& cloudiness) const;
+		
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;

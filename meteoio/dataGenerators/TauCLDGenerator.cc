@@ -57,17 +57,16 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
  * the same way as more traditional measurements (ie only ISWR provided) where it will be re-converted
  * to a cloudiness (thus falling abck to the same cloudiness as originally provided).
 
- * @param[in] clf_model cloudiness parametrization
  * @param[in] cloudiness cloudiness (between 0 and 1)
  * @return clearness index (between 0 and 1)
  */
-double TauCLDGenerator::getClearness(const clf_parametrization& clf_model, const double& cloudiness)
+double TauCLDGenerator::getClearness(const double& cloudiness) const
 {
-	if (clf_model==CLF_LHOMME) {
+	if (cloudiness_model==CLF_LHOMME) {
 		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
-	} else if (clf_model==KASTEN) {
+	} else if (cloudiness_model==KASTEN) {
 		return Atmosphere::Kasten_cloudiness( cloudiness/8. );
-	} else if (clf_model==CLF_CRAWFORD) {
+	} else if (cloudiness_model==CLF_CRAWFORD) {
 		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
 	} else
 		return IOUtils::nodata; //this should never happen
@@ -87,7 +86,7 @@ double TauCLDGenerator::getClearness(const clf_parametrization& clf_model, const
  * @param[out] is_night set to TRUE if it is night time
  * @return cloudiness (between 0 and 1)
  */
-double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, const bool& i_use_rad_threshold, SunObject& sun, bool &is_night)
+double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night) const
 {
 	//we know that TA and RH are available, otherwise we would not get called
 	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
@@ -106,7 +105,7 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
 		if (ISWR==IOUtils::nodata) { //ISWR is missing, trying to compute it
-			if (!i_use_rswr) return IOUtils::nodata;
+			if (!use_rswr) return IOUtils::nodata;
 			if (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)
 				ISWR = RSWR / albedo;
 			else
@@ -119,7 +118,7 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 	sun.getHorizontalRadiation(toa, direct, diffuse);
 	const double iswr_clear_sky = direct+diffuse;
 	
-	if (i_use_rad_threshold) {
+	if (use_rad_threshold) {
 		if (ISWR<Atmosphere::day_iswr_thresh || iswr_clear_sky<Atmosphere::day_iswr_thresh || iswr_clear_sky<ISWR) {
 			is_night = true;
 			return IOUtils::nodata;
@@ -127,15 +126,15 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 	}
 
 	const double clearness_index = std::min(ISWR/iswr_clear_sky, 1.);
-	if (clf_model==CLF_LHOMME) {
+	if (cloudiness_model==CLF_LHOMME) {
 		const double clf = Atmosphere::Lhomme_cloudiness( clearness_index );
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
-	} else if (clf_model==KASTEN) {
+	} else if (cloudiness_model==KASTEN) {
 		const double clf = Atmosphere::Kasten_cloudiness( clearness_index );
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
-	} else if (clf_model==CLF_CRAWFORD) {
+	} else if (cloudiness_model==CLF_CRAWFORD) {
 		const double clf = Atmosphere::Lhomme_cloudiness( clearness_index );
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
@@ -151,7 +150,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		if (cld!=IOUtils::nodata) {
 			if (cld==9) cld=8.; //Synop sky obstructed from view -> fully cloudy
 			if (cld>8. || cld<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
-			value = getClearness( cloudiness_model, cld );
+			value = getClearness( cld );
 			return true;
 		}
 
@@ -171,7 +170,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		sun.setDate(julian_gmt, 0.);
 
 		bool is_night;
-		double cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, use_rad_threshold, sun, is_night);
+		double cloudiness = TauCLDGenerator::getCloudiness(md, sun, is_night);
 		if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 		if (is_night) { //interpolate the cloudiness over the night

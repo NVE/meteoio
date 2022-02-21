@@ -104,7 +104,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			sun.setDate(julian_gmt, 0.);
 
 			bool is_night;
-			cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, use_rad_threshold, sun, is_night);
+			cloudiness = TauCLDGenerator::getCloudiness(md, sun, is_night);
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night
