@@ -16,27 +16,17 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <fstream>
-#include <sstream>
-#include <cerrno>
-#include <cstring>
-#include <algorithm>
 
 #include <meteoio/meteoFilters/ProcShade.h>
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/IOHandler.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/DEMAlgorithms.h>
 
 using namespace std;
 
 namespace mio {
-//custom function for sorting cache_meteo_files
-struct sort_pred {
-	bool operator()(const std::pair<double,double> &left, const std::pair<double,double> &right) {
-		if (left.first < right.first) return true; else return false;
-	}
-};
 
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 
@@ -80,7 +70,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		double sun_azi, sun_elev;
 		Sun.position.getHorizontalCoordinates(sun_azi, sun_elev);
 		
-		const double mask_elev = getMaskElevation(mask->second, sun_azi);
+		const double mask_elev = DEMAlgorithms::getMaskElevation(mask->second, sun_azi);
 		if (mask_elev>0 && mask_elev>sun_elev) { //the point is in the shade
 			const double TA=ovec[ii](MeteoData::TA), RH=ovec[ii](MeteoData::RH), HS=ovec[ii](MeteoData::HS), RSWR=ovec[ii](MeteoData::RSWR);
 			double ISWR=ovec[ii](MeteoData::ISWR);
@@ -114,95 +104,10 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	}
 }
 
-//linear interpolation between the available points
-double ProcShade::getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const
-{
-	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(mask.begin(), mask.end(), make_pair(azimuth, 0.), sort_pred()); //first element that is > azimuth
-	
-	double x1, y1, x2, y2;
-	if (next!=mask.begin() && next!=mask.end()) { //normal case
-		const size_t ii = next - mask.begin();
-		x1 = mask[ii-1].first;
-		y1 = mask[ii-1].second;
-		x2 = mask[ii].first;
-		y2 = mask[ii].second;
-	} else {
-		x1 = mask.back().first - 360.;
-		y1 = mask.back().second;
-		x2 = mask.front().first;
-		y2 = mask.front().second;
-	}
-	
-	const double a = (y2 - y1) / (x2 - x1);
-	const double b = y2 - a * x2;
-	
-	return a*azimuth + b;
-}
-
-std::vector< std::pair<double,double> > ProcShade::readMask(const std::string& filter, const std::string& filename)
-{
-	std::vector< std::pair<double,double> > o_mask;
-	std::ifstream fin(filename.c_str());
-	if (fin.fail()) {
-		std::ostringstream ss;
-		ss << "Filter " << filter << ": " << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
-		throw AccessException(ss.str(), AT);
-	}
-
-	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-
-	try {
-		size_t lcount=0;
-		double azimuth, value;
-		std::string line;
-		do {
-			lcount++;
-			getline(fin, line, eoln); //read complete line
-			IOUtils::stripComments(line);
-			IOUtils::trim(line);
-			if (line.empty()) continue;
-
-			std::istringstream iss(line);
-			iss.setf(std::ios::fixed);
-			iss.precision(std::numeric_limits<double>::digits10);
-			iss >> std::skipws >> azimuth;
-			if ( !iss || azimuth<0. || azimuth>360.) {
-				std::ostringstream ss;
-				ss << "Invalid azimuth in file " << filename << " at line " << lcount;
-				throw InvalidArgumentException(ss.str(), AT);
-			}
-			iss >> std::skipws >> value;
-			if ( !iss ){
-				std::ostringstream ss;
-				ss << "Invalid value in file " << filename << " at line " << lcount;
-				throw InvalidArgumentException(ss.str(), AT);
-			}
-
-			o_mask.push_back( make_pair(azimuth, value) );
-		} while (!fin.eof());
-		fin.close();
-	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
-		throw;
-	}
-	
-	if (o_mask.empty()) throw InvalidArgumentException("In filter 'SHADE', no valid mask found in file '"+filename+"'", AT);
-	std::sort(o_mask.begin(), o_mask.end(), sort_pred());
-	return o_mask;
-}
-
 std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, const bool& dump_mask)
 {
-	std::vector< std::pair<double,double> > o_mask;
-	Coords position( sd.position );
-	if (!i_dem.gridify(position)) {
-		const string msg = "In filter 'SHADE', station '"+sd.stationID+"' "+position.toString(Coords::LATLON)+" is not included in the DEM "+i_dem.llcorner.toString(Coords::LATLON);
-		throw NoDataException(msg, AT);
-	}
-	
-	DEMAlgorithms::getHorizon(i_dem, position, 10., o_mask); //by 10deg increments
+	//compute horizon by 10deg increments
+	std::vector< std::pair<double,double> > o_mask( DEMAlgorithms::getHorizonScan(i_dem, sd.position, 10.) );
 	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
 
 	if (dump_mask) {
@@ -228,7 +133,7 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
-			masks["*"] = readMask(getName(), filename); //this mask is valid for ALL stations
+			masks["*"] = DEMAlgorithms::readHorizonScan(getName(), filename); //this mask is valid for ALL stations
 			from_dem = false;
 		} else if (vecArgs[ii].first=="DUMP_MASK") {
 			IOUtils::parseArg(vecArgs[ii], where, write_mask_out);
