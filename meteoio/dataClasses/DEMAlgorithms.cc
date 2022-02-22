@@ -161,7 +161,7 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, Coords point, const doubl
 * @param[in] dem DEM to work with
 * @param[in] point the origin point
 * @param[in] increment to the bearing between two angles
-* @return horizon vector of heights above a given angle
+* @return horizon vector of heights as a function of azimuth
 */
 std::vector< std::pair<double,double> > DEMAlgorithms::getHorizonScan(const DEMObject& dem, Coords point, const double& increment)
 {
@@ -188,6 +188,12 @@ struct sort_horizons {
 	}
 };
 
+/**
+* @brief Read the horizon from a given point looking 360 degrees around provided in a file
+* @param[in] where Description of the caller to be used in error messages, such as 'Filter::shade'
+* @param[in] filename the file and path containting the horizon
+* @return horizon vector of heights as a function of azimuth
+*/
 std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std::string& where, const std::string& filename)
 {
 	std::vector< std::pair<double,double> > horizon;
@@ -242,9 +248,17 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 	return horizon;
 }
 
-//linear interpolation between the available points
+/**
+* @brief Linearly interpolate the horizon height for any given azimuth given a set of (azimuth, elevation) points
+* @param[in] horizon a set of (azimuth, elevation) coordinates defining the horizon
+* @param[in] azimuth the azimuth where to perform the interpolation
+* @return the interpolated elevation for the provided azimuth
+*/
 double DEMAlgorithms::getHorizon(const std::vector< std::pair<double,double> > &horizon, const double& azimuth)
 {
+	if (horizon.empty())
+		throw InvalidArgumentException("attempting to interpolate a horizon elevation from an empty set of horizon points", AT);
+	
 	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(horizon.begin(), horizon.end(), make_pair(azimuth, 0.), sort_horizons()); //first element that is > azimuth
 	
 	double x1, y1, x2, y2;
