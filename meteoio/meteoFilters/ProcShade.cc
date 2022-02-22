@@ -70,7 +70,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		double sun_azi, sun_elev;
 		Sun.position.getHorizontalCoordinates(sun_azi, sun_elev);
 		
-		const double mask_elev = DEMAlgorithms::getMaskElevation(mask->second, sun_azi);
+		const double mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
 		if (mask_elev>0 && mask_elev>sun_elev) { //the point is in the shade
 			const double TA=ovec[ii](MeteoData::TA), RH=ovec[ii](MeteoData::RH), HS=ovec[ii](MeteoData::HS), RSWR=ovec[ii](MeteoData::RSWR);
 			double ISWR=ovec[ii](MeteoData::ISWR);

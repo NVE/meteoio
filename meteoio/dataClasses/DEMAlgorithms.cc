@@ -243,22 +243,22 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 }
 
 //linear interpolation between the available points
-double DEMAlgorithms::getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth)
+double DEMAlgorithms::getHorizon(const std::vector< std::pair<double,double> > &horizon, const double& azimuth)
 {
-	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(mask.begin(), mask.end(), make_pair(azimuth, 0.), sort_horizons()); //first element that is > azimuth
+	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(horizon.begin(), horizon.end(), make_pair(azimuth, 0.), sort_horizons()); //first element that is > azimuth
 	
 	double x1, y1, x2, y2;
-	if (next!=mask.begin() && next!=mask.end()) { //normal case
-		const size_t ii = next - mask.begin();
-		x1 = mask[ii-1].first;
-		y1 = mask[ii-1].second;
-		x2 = mask[ii].first;
-		y2 = mask[ii].second;
+	if (next!=horizon.begin() && next!=horizon.end()) { //normal case
+		const size_t ii = next - horizon.begin();
+		x1 = horizon[ii-1].first;
+		y1 = horizon[ii-1].second;
+		x2 = horizon[ii].first;
+		y2 = horizon[ii].second;
 	} else {
-		x1 = mask.back().first - 360.;
-		y1 = mask.back().second;
-		x2 = mask.front().first;
-		y2 = mask.front().second;
+		x1 = horizon.back().first - 360.;
+		y1 = horizon.back().second;
+		x2 = horizon.front().first;
+		y2 = horizon.front().second;
 	}
 	
 	const double a = (y2 - y1) / (x2 - x1);
