@@ -189,14 +189,24 @@ struct sort_horizons {
 };
 
 /**
-* @brief Read the horizon from a given point looking 360 degrees around provided in a file
+* @brief Read the horizons from a given set of points looking 360 degrees around provided in a file
+* @details The file containing the horizons is made of any number of lines with the following structure: 
+* `{stationID} {azimuth} {elevation}` where the azimuth is given in degrees North (as read from a compass) and the
+* elevation as degrees above the horizontal. For example:
+* @code
+* STB2 0 2
+* STB2 210 18
+* WFJ 180 5
+* WFJ 130 10
+* STB2 180 25
+* @endcode
+* 
 * @param[in] where Description of the caller to be used in error messages, such as 'Filter::shade'
-* @param[in] filename the file and path containting the horizon
-* @return horizon vector of heights as a function of azimuth
+* @param[in] filename the file and path containing the horizon
+* @return a map containing for each stationID the horizon vector of heights as a function of azimuth 
 */
-std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std::string& where, const std::string& filename)
+std::map< std::string, std::vector< std::pair<double,double> > > DEMAlgorithms::readHorizonScan(const std::string& where, const std::string& filename)
 {
-	std::vector< std::pair<double,double> > horizon;
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -205,11 +215,12 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 	}
 
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	std::map< std::string, std::vector< std::pair<double,double> > > horizon;
 
 	try {
 		size_t lcount = 0;
 		double azimuth, value;
-		std::string line;
+		std::string stationID, line;
 		do {
 			lcount++;
 			getline(fin, line, eoln); //read complete line
@@ -220,6 +231,7 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 			std::istringstream iss(line);
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> stationID;
 			iss >> std::skipws >> azimuth;
 			if ( !iss || azimuth<0. || azimuth>360.) {
 				std::ostringstream ss;
@@ -233,7 +245,7 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 
-			horizon.push_back( make_pair(azimuth, value) );
+			horizon[stationID].push_back( make_pair(azimuth, value) );
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
@@ -243,9 +255,49 @@ std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std
 		throw;
 	}
 	
-	if (horizon.empty()) throw InvalidArgumentException(where+", no valid mask found in file '"+filename+"'", AT);
-	std::sort(horizon.begin(), horizon.end(), sort_horizons());
+	if (horizon.empty()) throw InvalidArgumentException(where+", no valid horizon found in file '"+filename+"'", AT);
+	for (auto& it : horizon) {
+		if (it.second.empty()) throw InvalidArgumentException(where+", no valid horizon for station '"+it.first+"' in file '"+filename+"'", AT);
+		std::sort(it.second.begin(), it.second.end(), sort_horizons());
+	}
+
 	return horizon;
+}
+
+/**
+* @brief Write to a file the horizons from a given set of points looking 360 degrees around
+* @details The file containing the horizons is made of any number of lines with the following structure: 
+* `{stationID} {azimuth} {elevation}` where the azimuth is given in degrees North (as read from a compass) and the
+* elevation as degrees above the horizontal. For example:
+* @code
+* STB2 0 2
+* STB2 210 18
+* WFJ 180 5
+* WFJ 130 10
+* STB2 180 25
+* @endcode
+* 
+* @param[in] horizon a map of vectors of (azimuth, elevation) coordinates defining the horizon, per stationID
+* @param[in] filename the file and path where to write the horizon
+*/
+void DEMAlgorithms::writeHorizons(const std::map< std::string, std::vector< std::pair<double,double> > >& horizon, const std::string& filename)
+{
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
+	std::ofstream fout(filename.c_str(), ios::out);
+	if (fout.fail()) {
+		std::ostringstream ss;
+		ss << "error opening file \"" << filename << "\" for writing, possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+	
+	for (const auto& it : horizon) {
+		const std::string stationID( it.first );
+		for (size_t ii=0; ii<it.second.size(); ii++) 
+			fout << stationID << " " << it.second[ii].first << " " << it.second[ii].second << "\n";
+	}
+	
+	if (fout.is_open()) //close fout if open
+		fout.close();
 }
 
 /**

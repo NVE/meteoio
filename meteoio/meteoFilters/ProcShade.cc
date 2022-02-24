@@ -31,7 +31,7 @@ namespace mio {
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 
 ProcShade::ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& i_cfg)
-        : ProcessingBlock(vecArgs, name, i_cfg), cfg(i_cfg), dem(), masks(), write_mask_out(false)
+        : ProcessingBlock(vecArgs, name, i_cfg), cfg(i_cfg), dem(), masks(), horizons_outfile(), write_mask_out(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -46,13 +46,13 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	const std::string stationHash( ovec[0].meta.getHash() );
 	SunObject Sun;
 	
-	//check if the station already has an associated mask, first as wildcard then by station hash
-	std::map< std::string , std::vector< std::pair<double,double> > >::iterator mask = masks.find( "*" );
+	//check if the station already has an associated mask, first by station hash then as wildcard
+	std::map< std::string , std::vector< std::pair<double,double> > >::iterator mask = masks.find( stationHash );
 	if (mask==masks.end()) {
-		//now look for our specific station hash
-		mask = masks.find( stationHash );
+		//now look for a wildcard fallback
+		mask = masks.find( "*" );
 		if (mask==masks.end()) {
-			masks[ stationHash ] = computeMask(dem, ovec[0].meta, write_mask_out);
+			masks[ stationHash ] = computeMask(dem, ovec[0].meta);
 			mask = masks.find( stationHash);
 		}
 	}
@@ -102,20 +102,17 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 			}
 		}
 	}
+	
+	if (write_mask_out) {
+		DEMAlgorithms::writeHorizons(masks, horizons_outfile);
+	}
 }
 
-std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, const bool& dump_mask)
+std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd)
 {
 	//compute horizon by 10deg increments
 	std::vector< std::pair<double,double> > o_mask( DEMAlgorithms::getHorizonScan(i_dem, sd.position, 10.) );
 	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
-
-	if (dump_mask) {
-		std::cout << "Horizon mask for station '" << sd.stationID << "'\n";
-		for (size_t ii=0; ii<o_mask.size(); ii++)
-			std::cout << o_mask[ii].first << " " << o_mask[ii].second << "\n";
-		std::cout << "\n";
-	}
 
 	return o_mask;
 }
@@ -126,17 +123,18 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 	bool from_dem=true;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="FILE") {
+		if (vecArgs[ii].first=="INFILE") {
 			const std::string root_path( cfg.getConfigRootDir() );
 			//if this is a relative path, prefix the path with the current path
 			const std::string in_filename( vecArgs[ii].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
-			masks["*"] = DEMAlgorithms::readHorizonScan(getName(), filename); //this mask is valid for ALL stations
+			masks = DEMAlgorithms::readHorizonScan(getName(), filename); //this mask is valid for ALL stations
 			from_dem = false;
-		} else if (vecArgs[ii].first=="DUMP_MASK") {
-			IOUtils::parseArg(vecArgs[ii], where, write_mask_out);
+		} else if (vecArgs[ii].first=="OUTFILE") {
+			IOUtils::parseArg(vecArgs[ii], where, horizons_outfile);
+			write_mask_out = true;
 		}
 	}
 
