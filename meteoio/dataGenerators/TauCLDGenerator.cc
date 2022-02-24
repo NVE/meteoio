@@ -19,18 +19,21 @@
 
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/IOHandler.h>
+#include <meteoio/FileUtils.h>
+#include <meteoio/dataClasses/DEMAlgorithms.h>
 #include <algorithm>
 
 namespace mio {
 
-TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const bool& parse_args)
-                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), cloudiness_model(KASTEN), use_rswr(false), use_rad_threshold(false)
+TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg)
+                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), masks(), horizons_outfile(), cfg(i_cfg), dem(), cloudiness_model(DEFAULT), use_rswr(false), use_rad_threshold(false), write_mask_out(), has_dem(false)
 {
-	if (!parse_args) return;
-	
 	const std::string where( section+"::"+algo );
+	bool from_dem=true;
+	
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="TYPE") {
+		if (vecArgs[ii].first=="CLD_TYPE") {
 			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
 			
 			if (user_algo=="LHOMME") cloudiness_model = CLF_LHOMME;
@@ -45,7 +48,33 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
 		if (vecArgs[ii].first=="USE_RAD_THRESHOLD") {
 			IOUtils::parseArg(vecArgs[ii], where, use_rad_threshold);
 		}
+		if (vecArgs[ii].first=="INFILE") {
+			const std::string root_path( cfg.getConfigRootDir() );
+			//if this is a relative path, prefix the path with the current path
+			const std::string in_filename( vecArgs[ii].second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+			masks = DEMAlgorithms::readHorizonScan(where, filename); //this mask is valid for ALL stations
+			from_dem = false;
+		} else if (vecArgs[ii].first=="OUTFILE") {
+			IOUtils::parseArg(vecArgs[ii], where, horizons_outfile);
+			write_mask_out = true;
+		}
 	}
+	
+	if (from_dem) {
+		IOHandler io(cfg);
+		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
+		io.readDEM(dem);
+		has_dem = true;
+	}
+}
+
+TauCLDGenerator::~TauCLDGenerator()
+{
+	if (has_dem && !masks.empty() && !horizons_outfile.empty())
+		DEMAlgorithms::writeHorizons(masks, horizons_outfile);
 }
 
 /**
@@ -64,13 +93,23 @@ double TauCLDGenerator::getClearness(const double& cloudiness) const
 {
 	if (cloudiness_model==CLF_LHOMME) {
 		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
-	} else if (cloudiness_model==KASTEN) {
+	} else if (cloudiness_model==KASTEN || cloudiness_model==DEFAULT) {
 		return Atmosphere::Kasten_cloudiness( cloudiness/8. );
 	} else if (cloudiness_model==CLF_CRAWFORD) {
 		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
 	} else
 		return IOUtils::nodata; //this should never happen
 }
+
+std::vector< std::pair<double,double> > TauCLDGenerator::computeMask(const DEMObject& i_dem, const StationData& sd)
+{
+	//compute horizon by 10deg increments
+	std::vector< std::pair<double,double> > o_mask( DEMAlgorithms::getHorizonScan(i_dem, sd.position, 10.) );
+	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
+
+	return o_mask;
+}
+
 
 /**
  * @brief Compute the atmospheric cloudiness from the available measurements
@@ -86,15 +125,36 @@ double TauCLDGenerator::getClearness(const double& cloudiness) const
  * @param[out] is_night set to TRUE if it is night time
  * @return cloudiness (between 0 and 1)
  */
-double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night) const
+double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night)
 {
 	//we know that TA and RH are available, otherwise we would not get called
 	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
 	double ISWR=md(MeteoData::ISWR);
-
+	
+	double sun_azi, sun_elev;
+	sun.position.getHorizontalCoordinates(sun_azi, sun_elev);
+	
+	//check if the station already has an associated mask, first by stationID then as wildcard
+	double mask_elev = 5.;
+	const std::string stationID( md.getStationID() );
+	std::map< std::string , std::vector< std::pair<double,double> > >::const_iterator mask = masks.find( stationID );
+	if (mask!=masks.end()) {
+		mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
+	} else {
+		//now look for a wildcard fallback
+		mask = masks.find( "*" );
+		if (mask!=masks.end()) {
+			mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
+		} else if (has_dem) {
+			masks[ stationID ] = computeMask(dem, md.meta);
+			mask = masks.find( stationID );
+			mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
+		}
+	}
+	
 	//at sunrise or sunset, we might get very wrong results -> return nodata in order to use interpolation instead
 	//obviously, when it is really night neither can we compute anything here...
-	is_night = (sun.position.getSolarElevation() <= 5.);
+	is_night = (sun_elev <= mask_elev);
 	if (is_night) return IOUtils::nodata;
 	
 	double albedo = .5;
@@ -130,7 +190,7 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 		const double clf = Atmosphere::Lhomme_cloudiness( clearness_index );
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
-	} else if (cloudiness_model==KASTEN) {
+	} else if (cloudiness_model==KASTEN || cloudiness_model==DEFAULT) {
 		const double clf = Atmosphere::Kasten_cloudiness( clearness_index );
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;

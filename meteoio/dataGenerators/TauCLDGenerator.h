@@ -21,6 +21,7 @@
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/meteoLaws/Sun.h>
+#include <meteoio/dataClasses/DEMObject.h>
 
 #include <map>
 
@@ -41,7 +42,7 @@ namespace mio {
  * to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980).
  *
  * It takes the following (optional) argument:
- *    - TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
+ *    - CLD_TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
  * Please also note that CRAWFORD and LHOMME are exactly identical as the both simply consider that the cloudiness is <em>1-clearness_index</em>);
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
@@ -60,21 +61,30 @@ namespace mio {
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:
 		typedef enum CLF_PARAMETRIZATION {
+			DEFAULT,	//will be mapped to KASTEN
 			CLF_LHOMME,
 			KASTEN,
 			CLF_CRAWFORD
 		} clf_parametrization;
 
-		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const bool& parse_args=true);
+		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
+		~TauCLDGenerator();
+		
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	protected:
-		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night) const;
+		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
 		double getClearness(const double& cloudiness) const;
+		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
 		
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		std::map< std::string , std::vector< std::pair<double,double> > > masks;
+		std::string horizons_outfile;
+		const Config &cfg;
+		DEMObject dem;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
+		bool write_mask_out, has_dem;
 };
 
 } //end namespace mio

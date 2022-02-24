@@ -69,6 +69,7 @@ namespace mio {
 class ProcShade : public ProcessingBlock {
 	public:
 		ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg);
+		~ProcShade();
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -81,7 +82,7 @@ class ProcShade : public ProcessingBlock {
 		DEMObject dem;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		std::string horizons_outfile;
-		bool write_mask_out;
+		bool has_dem, write_mask_out;
 
 		static const double diffuse_thresh;
 };

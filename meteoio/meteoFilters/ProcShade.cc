@@ -31,10 +31,16 @@ namespace mio {
 const double ProcShade::diffuse_thresh = 15.; //below this threshold, not correction is performed since it will only be diffuse
 
 ProcShade::ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& i_cfg)
-        : ProcessingBlock(vecArgs, name, i_cfg), cfg(i_cfg), dem(), masks(), horizons_outfile(), write_mask_out(false)
+        : ProcessingBlock(vecArgs, name, i_cfg), cfg(i_cfg), dem(), masks(), horizons_outfile(), has_dem(false), write_mask_out(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
+}
+
+ProcShade::~ProcShade()
+{
+	if (has_dem && !masks.empty() && !horizons_outfile.empty())
+		DEMAlgorithms::writeHorizons(masks, horizons_outfile);
 }
 
 void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -43,17 +49,17 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	const std::string stationHash( ovec[0].meta.getHash() );
 	SunObject Sun;
 	
-	//check if the station already has an associated mask, first by station hash then as wildcard
-	std::map< std::string , std::vector< std::pair<double,double> > >::iterator mask = masks.find( stationHash );
+	//check if the station already has an associated mask, first by stationID then as wildcard
+	const std::string stationID( ovec[0].getStationID() );
+	std::map< std::string , std::vector< std::pair<double,double> > >::const_iterator mask = masks.find( stationID );
 	if (mask==masks.end()) {
 		//now look for a wildcard fallback
 		mask = masks.find( "*" );
 		if (mask==masks.end()) {
-			masks[ stationHash ] = computeMask(dem, ovec[0].meta);
-			mask = masks.find( stationHash);
+			masks[ stationID ] = computeMask(dem, ovec[0].meta);
+			mask = masks.find( stationID);
 		}
 	}
 	
@@ -102,10 +108,6 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 			}
 		}
 	}
-	
-	if (write_mask_out) {
-		DEMAlgorithms::writeHorizons(masks, horizons_outfile);
-	}
 }
 
 std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd)
@@ -134,7 +136,6 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 			from_dem = false;
 		} else if (vecArgs[ii].first=="OUTFILE") {
 			IOUtils::parseArg(vecArgs[ii], where, horizons_outfile);
-			write_mask_out = true;
 		}
 	}
 
@@ -142,6 +143,7 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 		IOHandler io(cfg);
 		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
 		io.readDEM(dem);
+		has_dem=true;
 	}
 }
 

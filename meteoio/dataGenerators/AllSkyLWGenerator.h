@@ -86,7 +86,7 @@ namespace mio {
  */
 class AllSkyLWGenerator : public TauCLDGenerator {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ);
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
