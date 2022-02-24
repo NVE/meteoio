@@ -19,11 +19,16 @@
 #include <cmath>
 #include <limits.h>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+//#include <cerrno>
+#include <cstring>
 
 #include <meteoio/dataClasses/DEMAlgorithms.h>
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
 /**
@@ -90,7 +95,7 @@ double DEMAlgorithms::getSearchDistance(const DEMObject& dem)
 * @param[in] ix1 x index of the origin point
 * @param[in] iy1 y index of the origin point
 * @param[in] bearing direction given by a compass bearing
-* @return tangente of angle above the horizontal (in deg)
+* @return tangente of angle above the horizontal (in deg) or IOUtils::nodata if the point (ix1, iy1) does not fit within the provided DEM
 */
 double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing)
 {
@@ -100,6 +105,7 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 	
 	const int dimx = (signed)dem.grid2D.getNx();
 	const int dimy = (signed)dem.grid2D.getNy();
+	if ((signed)ix1>dimx || (signed)iy1>dimy) return IOUtils::nodata; //in case the point does not fith within the provided DEM
 	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
 	
 	const double cell_alt = dem.grid2D(ix1, iy1);
@@ -135,29 +141,144 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 * @param[in] dem DEM to work with
 * @param[in] point the origin point
 * @param[in] bearing direction given by a compass bearing
-* @return tangente of angle above the horizontal (in deg)
+* @return tangente of angle above the horizontal (in deg) or IOUtils::nodata if the provided point does not fir within the 
+* provided DEM
 */
-double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing)
+double DEMAlgorithms::getHorizon(const DEMObject& dem, Coords point, const double& bearing)
 {
-	const int ix1 = (int)point.getGridI();
-	const int iy1 = (int)point.getGridJ();
+	if (!point.indexIsValid()) {
+		if (!dem.gridify(point)) return IOUtils::nodata;
+	}
+	
+	const size_t ix1 = static_cast<size_t>( point.getGridI() );
+	const size_t iy1 = static_cast<size_t>( point.getGridJ() );
 	return getHorizon(dem, ix1, iy1, bearing);
 }
 
 /**
-* @brief Returns the horizon from a given point looking 360 degrees around by increments
+* @brief Returns the horizon from a given point looking 360 degrees around by increments. If the provided point does not
+* fit within the provided DEM, an empty result set is returned.
 * @param[in] dem DEM to work with
 * @param[in] point the origin point
 * @param[in] increment to the bearing between two angles
-* @param[out] horizon vector of heights above a given angle
-*
+* @return horizon vector of heights as a function of azimuth
 */
-void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon)
+std::vector< std::pair<double,double> > DEMAlgorithms::getHorizonScan(const DEMObject& dem, Coords point, const double& increment)
 {
-	for (double bearing=0.0; bearing <360.; bearing += increment) {
-		const double tan_alpha = getHorizon(dem, point, bearing);
-		horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
+	std::vector< std::pair<double,double> > horizon;
+	if (!point.indexIsValid()) {
+		if (!dem.gridify(point)) return horizon;
 	}
+	
+	const size_t ix1 = static_cast<size_t>( point.getGridI() );
+	const size_t iy1 = static_cast<size_t>( point.getGridJ() );
+	for (double bearing=0.0; bearing <360.; bearing += increment) {
+		const double tan_alpha = getHorizon(dem, ix1, iy1, bearing);
+		if (tan_alpha!=IOUtils::nodata)
+			horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
+	}
+	
+	return horizon;
+}
+
+//custom function for sorting the horizons
+struct sort_horizons {
+	bool operator()(const std::pair<double,double> &left, const std::pair<double,double> &right) {
+		if (left.first < right.first) return true; else return false;
+	}
+};
+
+/**
+* @brief Read the horizon from a given point looking 360 degrees around provided in a file
+* @param[in] where Description of the caller to be used in error messages, such as 'Filter::shade'
+* @param[in] filename the file and path containting the horizon
+* @return horizon vector of heights as a function of azimuth
+*/
+std::vector< std::pair<double,double> > DEMAlgorithms::readHorizonScan(const std::string& where, const std::string& filename)
+{
+	std::vector< std::pair<double,double> > horizon;
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << where << ": " << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+
+	try {
+		size_t lcount = 0;
+		double azimuth, value;
+		std::string line;
+		do {
+			lcount++;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss(line);
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> azimuth;
+			if ( !iss || azimuth<0. || azimuth>360.) {
+				std::ostringstream ss;
+				ss << "Invalid azimuth in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			iss >> std::skipws >> value;
+			if ( !iss ){
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			horizon.push_back( make_pair(azimuth, value) );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+	
+	if (horizon.empty()) throw InvalidArgumentException(where+", no valid mask found in file '"+filename+"'", AT);
+	std::sort(horizon.begin(), horizon.end(), sort_horizons());
+	return horizon;
+}
+
+/**
+* @brief Linearly interpolate the horizon height for any given azimuth given a set of (azimuth, elevation) points
+* @param[in] horizon a set of (azimuth, elevation) coordinates defining the horizon
+* @param[in] azimuth the azimuth where to perform the interpolation
+* @return the interpolated elevation for the provided azimuth
+*/
+double DEMAlgorithms::getHorizon(const std::vector< std::pair<double,double> > &horizon, const double& azimuth)
+{
+	if (horizon.empty())
+		throw InvalidArgumentException("attempting to interpolate a horizon elevation from an empty set of horizon points", AT);
+	
+	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(horizon.begin(), horizon.end(), make_pair(azimuth, 0.), sort_horizons()); //first element that is > azimuth
+	
+	double x1, y1, x2, y2;
+	if (next!=horizon.begin() && next!=horizon.end()) { //normal case
+		const size_t ii = next - horizon.begin();
+		x1 = horizon[ii-1].first;
+		y1 = horizon[ii-1].second;
+		x2 = horizon[ii].first;
+		y2 = horizon[ii].second;
+	} else {
+		x1 = horizon.back().first - 360.;
+		y1 = horizon.back().second;
+		x2 = horizon.front().first;
+		y2 = horizon.front().second;
+	}
+	
+	const double a = (y2 - y1) / (x2 - x1);
+	const double b = y2 - a * x2;
+	
+	return a*azimuth + b;
 }
 
 /**
