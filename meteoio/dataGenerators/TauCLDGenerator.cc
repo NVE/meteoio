@@ -30,7 +30,7 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
                               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), masks(), horizons_outfile(), cfg(i_cfg), dem(), cloudiness_model(DEFAULT), use_rswr(false), use_rad_threshold(false), write_mask_out(), has_dem(false)
 {
 	const std::string where( section+"::"+algo );
-	bool from_dem=true;
+	bool from_dem=false, has_infile=false;
 	
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="CLD_TYPE") {
@@ -48,6 +48,9 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
 		if (vecArgs[ii].first=="USE_RAD_THRESHOLD") {
 			IOUtils::parseArg(vecArgs[ii], where, use_rad_threshold);
 		}
+		if (vecArgs[ii].first=="SHADE_FROM_DEM") {
+			IOUtils::parseArg(vecArgs[ii], where, from_dem);
+		}
 		if (vecArgs[ii].first=="INFILE") {
 			const std::string root_path( cfg.getConfigRootDir() );
 			//if this is a relative path, prefix the path with the current path
@@ -56,12 +59,16 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 			masks = DEMAlgorithms::readHorizonScan(where, filename); //this mask is valid for ALL stations
-			from_dem = false;
+			has_infile = true;
 		} else if (vecArgs[ii].first=="OUTFILE") {
 			IOUtils::parseArg(vecArgs[ii], where, horizons_outfile);
 			write_mask_out = true;
 		}
 	}
+	
+	const bool use_default_horizon = !from_dem && !has_infile;
+	if (write_mask_out && use_default_horizon)
+		throw InvalidArgumentException("In "+where+", please provide an INFILE and/or a DEM to compute the shading and write it out!", AT);
 	
 	if (from_dem) {
 		IOHandler io(cfg);
@@ -154,7 +161,8 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 	
 	//at sunrise or sunset, we might get very wrong results -> return nodata in order to use interpolation instead
 	//obviously, when it is really night neither can we compute anything here...
-	is_night = (sun_elev <= mask_elev);
+	//we use 5 degrees to represent very low elevation rays of light that would not work well in the horizontal sensors
+	is_night = (sun_elev <= mask_elev || sun_elev<5.);
 	if (is_night) return IOUtils::nodata;
 	
 	double albedo = .5;

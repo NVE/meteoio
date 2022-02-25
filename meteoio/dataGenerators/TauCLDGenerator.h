@@ -44,6 +44,9 @@ namespace mio {
  * It takes the following (optional) argument:
  *    - CLD_TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
  * Please also note that CRAWFORD and LHOMME are exactly identical as the both simply consider that the cloudiness is <em>1-clearness_index</em>);
+ *    - SHADE_FROM_DEM: if set to true, the DEM defined in the [Input] section will be used to compute the shading at all stations;
+ *    - INFILE: a file containing the horizon for some or all stations;
+ *    - OUTFILE: a file to write the computed horizons to. If some horizons have been read from INFILE, they will also be written out in OUTFILE;
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
