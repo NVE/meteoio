@@ -311,6 +311,10 @@ double DEMAlgorithms::getHorizon(const std::vector< std::pair<double,double> > &
 	if (horizon.empty())
 		throw InvalidArgumentException("attempting to interpolate a horizon elevation from an empty set of horizon points", AT);
 	
+	//special (sick) case: only one value given for the horizon -> we consider this is a constant for all azimuths
+	if (horizon.size()==1)
+		return horizon.front().second;
+	
 	const std::vector< std::pair<double, double> >::const_iterator next = std::upper_bound(horizon.begin(), horizon.end(), make_pair(azimuth, 0.), sort_horizons()); //first element that is > azimuth
 	
 	double x1, y1, x2, y2;
