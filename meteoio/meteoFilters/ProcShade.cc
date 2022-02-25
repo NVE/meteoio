@@ -112,8 +112,10 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 
 std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd)
 {
-	//compute horizon by 10deg increments
-	std::vector< std::pair<double,double> > o_mask( DEMAlgorithms::getHorizonScan(i_dem, sd.position, 10.) );
+	//compute horizon by "angularResolution" increments
+	const double cellsize = i_dem.cellsize;
+	const double angularResolution = (cellsize<=20.)? 5. : (cellsize<=100.)? 10. : 20.;
+	std::vector< std::pair<double,double> > o_mask( DEMAlgorithms::getHorizonScan(i_dem, sd.position, angularResolution) );
 	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
 
 	return o_mask;
