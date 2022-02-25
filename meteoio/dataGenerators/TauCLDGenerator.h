@@ -44,8 +44,8 @@ namespace mio {
  * It takes the following (optional) argument:
  *    - CLD_TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
  * Please also note that CRAWFORD and LHOMME are exactly identical as the both simply consider that the cloudiness is <em>1-clearness_index</em>);
- *    - SHADE_FROM_DEM: if set to true, the DEM defined in the [Input] section will be used to compute the shading at all stations;
- *    - INFILE: a file containing the horizon for some or all stations;
+ *    - SHADE_FROM_DEM: if set to true, the DEM defined in the [Input] section will be used to compute the shading;
+ *    - INFILE: a file containing the horizon for some or all stations (see the ProcShade filter for the format);
  *    - OUTFILE: a file to write the computed horizons to. If some horizons have been read from INFILE, they will also be written out in OUTFILE;
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
@@ -54,6 +54,9 @@ namespace mio {
  * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
  * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
  * in this specific scenario.
+ * 
+ * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
+ * INFILE will be computed from DEM. If none is available, a fixed 5 degrees threshold is used.
  *
  * @code
  * [Generators]

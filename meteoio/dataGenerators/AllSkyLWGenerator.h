@@ -48,26 +48,14 @@ namespace mio {
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
  *      - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
- *  - CLOUDINESS_TYPE: normally, the cloudiness parametrization that might be needed to convert a clearness index (comparing the
- * measured ISWR to the potential ISWR, see TauCLDGenerator for more as well as the supported parametrizations) is given for 
- * each long wave parametrization but it is possible here to force it to a specific parametrization (default: the 
- * cloudiness parametrization that belongs to the long wave parametrization);
- *  - USE_RSWR: if set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
- * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
- *  - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
- * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
- * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
- * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
- * in this specific scenario.
+ *  - it also takes all the arguments of TauCLDGenerator, including the option to provide an Horizon file (see the ProcShade filter for the format).
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
- * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
- * except for Crawford and Lhomme that provide their own parametrizations.
- * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available if such ratio
- * is not too old (ie. no more than 1 day old).
- * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
- * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
- * in order to compute ISWR from RSWR (please be aware that this very significantly degrades the performance of the parametrization).
+ * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980) by default 
+ * except for Crawford and Lhomme that provide their own parametrizations (it can be forced through the TauCLDGenerator options).
+ * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available (as it is night, or the station stands in 
+ * the shade or the ISWR measurement is missing) and the last valid value is not too old (ie. no more than 1 day old).
+ * 
  * Finally, it is recommended to also use a clear sky generator (declared after this one)
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code

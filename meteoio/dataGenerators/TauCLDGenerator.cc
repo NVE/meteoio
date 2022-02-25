@@ -125,11 +125,8 @@ std::vector< std::pair<double,double> > TauCLDGenerator::computeMask(const DEMOb
  * @details
  * The clearness index (ie the ratio of the incoming short wave radiation over the ground potential radiation, projected on the horizontal) 
  * is computed and used to evaluate the cloudiness, based on the chosen parametrization.
- * @param[in] clf_model cloudiness parametrization
  * @param[in] md MeteoData
- * @param[in] i_use_rswr if set to true, in case of no iswr measurements, a ground albedo is assumed and used to compute iswr. Based on HS, this albedo can either
  * be a soil ro a snow albedo
- * @param[in] i_use_rad_threshold use a radiation threshold to force resampling of cloudiness over prediods of low ISWR?
  * @param sun For better efficiency, the SunObject for this location (so it can be cached)
  * @param[out] is_night set to TRUE if it is night time
  * @return cloudiness (between 0 and 1)

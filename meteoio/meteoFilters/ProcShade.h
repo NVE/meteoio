@@ -28,7 +28,7 @@
 namespace mio {
 
 /**
- * @class  ProcShade
+ * @class ProcShade
  * @ingroup processing
  * @brief Apply a shading mask to the Incoming or Reflected Short Wave Radiation
  * @details
