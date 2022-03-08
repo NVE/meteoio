@@ -1,6 +1,5 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
-SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
@@ -44,7 +43,7 @@ IF(UNIX)
 	#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN'")
 	IF(APPLE)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12")
+		SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
 	ELSE(APPLE)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
 	ENDIF(APPLE)
