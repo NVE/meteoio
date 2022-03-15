@@ -1498,9 +1498,10 @@ std::vector< std::pair<Date,size_t> > ncFiles::createCommonTimeBase(const std::v
 		}
 
 		std::vector< std::pair<Date,size_t> > result( tmp.size() );
+		//attribute an index to each unique Date value from the set
 		size_t ii=0;
 		for (std::set<Date>::const_iterator it=tmp.begin(); it!=tmp.end(); ++it) {
-			std::make_pair(vecMeteo[station_idx][ii].date, ii);
+			result[ii] = std::make_pair(*it, ii);
 			ii++;
 		}
 		return result;
