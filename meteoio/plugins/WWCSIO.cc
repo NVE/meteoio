@@ -123,23 +123,22 @@ void WWCSIO::readStationMetaData()
 void WWCSIO::getStationMetaData(const std::string& stationID,
                                  const std::string& sqlQuery, std::vector<std::string>& vecMetaData)
 {
-	std::cout << "Entering getStationMetaData\n";
 	vecMetaData.clear();
 
 	MYSQL *mysql = mysql_init(nullptr);
 	//mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
-	std::cout << "before mysql_real_connect\n";
 	if (!mysql_real_connect(mysql, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0))
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost+": "+std::string(mysql_error(mysql)), AT);
-	std::cout << "before stmt_init\n";
+
 	MYSQL_STMT *stmt = mysql_stmt_init(mysql);
 	if (!stmt) throw IOException("Could not allocate memory for mysql statement", AT);
 
 	if (mysql_stmt_prepare(stmt, MySQLQueryStationMetaData.c_str(), MySQLQueryStationMetaData.size())) {
 		throw IOException("Error preparing mysql statement", AT);
 	} else {
-		//const int param_count= mysql_stmt_param_count(stmt); //validate number of params
-		std::cout << "Preparing to bind params\n";
+		const long unsigned int param_count = mysql_stmt_param_count(stmt);
+		if (param_count!=1) throw IOException("Wrong number of parameters in mysql statement", AT);
+		
 		MYSQL_BIND stmtParams[1];
 		unsigned long argLength = stationID.size();
 		memset(&stmtParams, 0, sizeof(stmtParams));
@@ -154,9 +153,8 @@ void WWCSIO::getStationMetaData(const std::string& stationID,
 		} else if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else {
-			std::cout << "Preparing to retrieve results\n";
 			MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(stmt);
-			if (!prepare_meta_result) throw IOException("Error executing statement", AT);
+			if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
 			const int column_count= mysql_num_fields(prepare_meta_result);
 			if (column_count!=6) throw IOException("Wrong number of columns returned", AT);
 			
@@ -216,7 +214,7 @@ void WWCSIO::getStationMetaData(const std::string& stationID,
 			if (mysql_stmt_store_result(stmt)) throw IOException("mysql_stmt_store_result failed", AT);
 			
 			while (!mysql_stmt_fetch(stmt)) {
-				std::cout << "Result returned: " << statName << " (" << lat << " , " << lon << ") slope=" << slope << " azi=" << azi << "\n";
+				std::cout << "Result returned: " << statName << " (" << lat << " , " << lon << " , " << alt << ") slope=" << slope << " azi=" << azi << "\n";
 			}
 			
 			mysql_free_result(prepare_meta_result);
@@ -225,6 +223,8 @@ void WWCSIO::getStationMetaData(const std::string& stationID,
 	if (mysql_stmt_close(stmt)) {
 		throw IOException("Failed closing Mysql connection: "+std::string(mysql_error(mysql)), AT);
 	}
+	
+	mysql_close(mysql);
 }
 
 void WWCSIO::readStationData(const Date&, std::vector<StationData>& vecStation)
