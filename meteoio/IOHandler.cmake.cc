@@ -49,6 +49,7 @@
 #cmakedefine PLUGIN_SASEIO
 #cmakedefine PLUGIN_SMETIO
 #cmakedefine PLUGIN_SNIO
+#cmakedefine PLUGIN_WWCSIO
 #cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
@@ -107,6 +108,10 @@
 
 #ifdef PLUGIN_SASEIO
 #include <meteoio/plugins/SASEIO.h>
+#endif
+
+#ifdef PLUGIN_WWCSIO
+#include <meteoio/plugins/WWCSIO.h>
 #endif
 
 #ifdef PLUGIN_ZRXPIO
@@ -261,6 +266,9 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(i_cfg);
+#endif
+#ifdef PLUGIN_WWCSIO
+	if (plugin_name == "WWCS") return new WWCSIO(i_cfg);
 #endif
 #ifdef PLUGIN_ZRXPIO
 	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);
