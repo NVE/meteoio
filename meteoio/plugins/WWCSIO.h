@@ -46,8 +46,6 @@ class WWCSIO : public IOInterface {
 	private:
 		void readConfig();
 		void readStationIDs(std::vector<std::string>& vecStationID) const;
-		void getStationMetaData(const std::string& stationID,const std::string& sqlQuery,
-		                        std::vector<std::string>& vecMetaData);
 		void readStationMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const size_t& stationindex, const std::vector<StationData>& vecMeta) const;

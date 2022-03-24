@@ -99,45 +99,116 @@ void WWCSIO::readStationIDs(std::vector<std::string>& vecStationID) const
 	}
 }
 
+StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
+{
+	MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(*stmt);
+	if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
+	const int column_count= mysql_num_fields(prepare_meta_result);
+	if (column_count!=6) throw IOException("Wrong number of columns returned", AT);
+	
+	static const int STRING_SIZE = 50;
+	char statName[STRING_SIZE];
+	double lat, lon, alt, slope, azi;
+	MYSQL_BIND result[6];
+	memset(result, 0, sizeof(result));
+	unsigned long length[6];
+#if LIBMYSQL_VERSION_ID > 80001 
+	bool is_null[6];
+	bool error[6];
+#else
+	my_bool is_null[6];
+	my_bool error[6];
+#endif
+	
+	//stationname
+	result[0].buffer_type = MYSQL_TYPE_STRING;
+	result[0].buffer = (char *)statName;
+	result[0].buffer_length = STRING_SIZE;
+	result[0].is_null = &is_null[0];
+	result[0].length = &length[0];
+	result[0].error = &error[0];
+	
+	//latitude
+	result[1].buffer_type= MYSQL_TYPE_DOUBLE;
+	result[1].buffer= (char *)&lat;
+	result[1].is_null= &is_null[1];
+	result[1].length= &length[1];
+	result[1].error= &error[1];
+	
+	//longitude
+	result[2].buffer_type= MYSQL_TYPE_DOUBLE;
+	result[2].buffer= (char *)&lon;
+	result[2].is_null= &is_null[2];
+	result[2].length= &length[2];
+	result[2].error= &error[2];
+	
+	//altitude
+	result[3].buffer_type= MYSQL_TYPE_DOUBLE;
+	result[3].buffer= (char *)&alt;
+	result[3].is_null= &is_null[3];
+	result[3].length= &length[3];
+	result[3].error= &error[3];
+	
+	//slope
+	result[4].buffer_type= MYSQL_TYPE_DOUBLE;
+	result[4].buffer= (char *)&slope;
+	result[4].is_null= &is_null[4];
+	result[4].length= &length[4];
+	result[4].error= &error[4];
+	
+	//azi
+	result[5].buffer_type= MYSQL_TYPE_DOUBLE;
+	result[5].buffer= (char *)&azi;
+	result[5].is_null= &is_null[5];
+	result[5].length= &length[5];
+	result[5].error= &error[5];
+
+	if (mysql_stmt_bind_result(*stmt, result)) throw IOException("Error binding results", AT);
+	if (mysql_stmt_store_result(*stmt)) throw IOException("mysql_stmt_store_result failed", AT);
+	if (mysql_stmt_num_rows(*stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
+	
+	mysql_stmt_fetch(*stmt); //we only have one result, see check above
+	const std::string station_name( statName );
+	Coords location(coordin,coordinparam);
+	location.setLatLon(lat, lon, alt);
+	StationData sd(location, stationID, station_name);
+	sd.setSlope(slope, azi);
+
+	mysql_free_result(prepare_meta_result);
+	return sd;
+}
+
+MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& mysqlhost, const std::string& mysqluser, const std::string& mysqlpass, const std::string& mysqldb, const std::string& query, const long unsigned int& ref_param_count)
+{
+	*mysql = mysql_init(nullptr);
+	//mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
+	if (!mysql_real_connect(*mysql, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0))
+		throw IOException("Could not initiate connection to Mysql server "+mysqlhost+": "+std::string(mysql_error(*mysql)), AT);
+
+	MYSQL_STMT* stmt = mysql_stmt_init(*mysql);
+	if (!stmt) throw IOException("Could not allocate memory for mysql statement", AT);
+
+	if (mysql_stmt_prepare(stmt, query.c_str(), query.size())) {
+		throw IOException("Error preparing mysql statement", AT);
+	} else {
+		const long unsigned int param_count = mysql_stmt_param_count(stmt);
+		if (param_count!=ref_param_count) throw IOException("Wrong number of parameters in mysql statement", AT);
+	}
+	
+	return stmt;
+}
+
 void WWCSIO::readStationMetaData()
 {
 	vecStationMetaData.clear();
 	std::vector<std::string> vecStationID;
 	readStationIDs( vecStationID );
-
+	
+	MYSQL *mysql = nullptr;
+	MYSQL_STMT *stmt = initStmt(&mysql, mysqlhost, mysqluser, mysqlpass, mysqldb, MySQLQueryStationMetaData, 1);
+	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
-		// Retrieve the station meta data - this only needs to be done once per instance
-		std::vector<std::string> stationMetaData;
-		getStationMetaData(vecStationID[ii], MySQLQueryStationMetaData, stationMetaData);
-
-		/*Coords location(coordin,coordinparam);
-		location.setLatLon(lat, longi, alt);
-		const std::string station_name = (!stao_name.empty())? vecStationID[ii] + ":" + stao_name : vecStationID[ii];
-		StationData sd(location, vecStationID[ii], station_name);
-		sd.setSlope(slope, azi);
-		vecStationMetaData.push_back( sd );*/
-	}
-
-}
-
-void WWCSIO::getStationMetaData(const std::string& stationID,
-                                 const std::string& sqlQuery, std::vector<std::string>& vecMetaData)
-{
-	vecMetaData.clear();
-
-	MYSQL *mysql = mysql_init(nullptr);
-	//mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
-	if (!mysql_real_connect(mysql, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0))
-		throw IOException("Could not initiate connection to Mysql server "+mysqlhost+": "+std::string(mysql_error(mysql)), AT);
-
-	MYSQL_STMT *stmt = mysql_stmt_init(mysql);
-	if (!stmt) throw IOException("Could not allocate memory for mysql statement", AT);
-
-	if (mysql_stmt_prepare(stmt, MySQLQueryStationMetaData.c_str(), MySQLQueryStationMetaData.size())) {
-		throw IOException("Error preparing mysql statement", AT);
-	} else {
-		const long unsigned int param_count = mysql_stmt_param_count(stmt);
-		if (param_count!=1) throw IOException("Wrong number of parameters in mysql statement", AT);
+		const std::string stationID( vecStationID[ii] );
 		
 		MYSQL_BIND stmtParams[1];
 		unsigned long argLength = stationID.size();
@@ -153,73 +224,13 @@ void WWCSIO::getStationMetaData(const std::string& stationID,
 		} else if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else {
-			MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(stmt);
-			if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
-			const int column_count= mysql_num_fields(prepare_meta_result);
-			if (column_count!=6) throw IOException("Wrong number of columns returned", AT);
-			
-			static const int STRING_SIZE = 50;
-			char statName[STRING_SIZE];
-			double lat, lon, alt, slope, azi;
-			MYSQL_BIND result[6];
-			memset(result, 0, sizeof(result));
-			unsigned long length[6];
-			bool is_null[6];
-			bool error[6];
-			
-			//stationname
-			result[0].buffer_type= MYSQL_TYPE_STRING;
-			result[0].buffer= (char *)statName;
-			result[0].buffer_length= STRING_SIZE;
-			result[0].is_null= &is_null[0];
-			result[0].length= &length[0];
-			result[0].error= &error[0];
-			
-			//latitude
-			result[1].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[1].buffer= (char *)&lat;
-			result[1].is_null= &is_null[1];
-			result[1].length= &length[1];
-			result[1].error= &error[1];
-			
-			//longitude
-			result[2].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[2].buffer= (char *)&lon;
-			result[2].is_null= &is_null[2];
-			result[2].length= &length[2];
-			result[2].error= &error[2];
-			
-			//altitude
-			result[3].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[3].buffer= (char *)&alt;
-			result[3].is_null= &is_null[3];
-			result[3].length= &length[3];
-			result[3].error= &error[3];
-			
-			//slope
-			result[4].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[4].buffer= (char *)&slope;
-			result[4].is_null= &is_null[4];
-			result[4].length= &length[4];
-			result[4].error= &error[4];
-			
-			//azi
-			result[5].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[5].buffer= (char *)&azi;
-			result[5].is_null= &is_null[5];
-			result[5].length= &length[5];
-			result[5].error= &error[5];
-
-			if (mysql_stmt_bind_result(stmt, result)) throw IOException("Error binding results", AT);
-			if (mysql_stmt_store_result(stmt)) throw IOException("mysql_stmt_store_result failed", AT);
-			
-			while (!mysql_stmt_fetch(stmt)) {
-				std::cout << "Result returned: " << statName << " (" << lat << " , " << lon << " , " << alt << ") slope=" << slope << " azi=" << azi << "\n";
-			}
-			
-			mysql_free_result(prepare_meta_result);
+			//retrieve results
+			const StationData sd(retrieveMetadataResults(&stmt, stationID, coordin, coordinparam));
+			vecStationMetaData.push_back( sd );
+			std::cout << sd.toString() << "\n";
 		}
 	}
+	
 	if (mysql_stmt_close(stmt)) {
 		throw IOException("Failed closing Mysql connection: "+std::string(mysql_error(mysql)), AT);
 	}
