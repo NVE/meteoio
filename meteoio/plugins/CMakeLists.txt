@@ -131,6 +131,7 @@ IF(PLUGIN_WWCSIO)
 	FIND_PACKAGE(MySQL REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM ${MYSQL_INCLUDE_DIR})
 	SET(plugin_libs ${plugin_libs} ${MYSQL_LIBRARY})
+	SET(plugins_sources ${plugins_sources} plugins/libMysqlWrapper.cc)
 	SET(plugins_sources ${plugins_sources} plugins/WWCSIO.cc)
 ENDIF(PLUGIN_WWCSIO)
 

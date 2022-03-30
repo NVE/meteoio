@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/WWCSIO.h>
+#include <meteoio/plugins/libMysqlWrapper.h>
 
 #ifdef _WIN32
 	#include <winsock.h>
@@ -24,7 +25,7 @@
 
 #include <mysql.h>
 #include <stdio.h>
-#include <cstring>
+//#include <cstring>
 #include <algorithm>
 
 using namespace std;
@@ -99,65 +100,10 @@ void WWCSIO::readStationIDs(std::vector<std::string>& vecStationID) const
 	}
 }
 
-
-typedef struct MYSQL_FIELD {
-	static const int STRING_SIZE = 50;
-	MYSQL_FIELD() : str(""), dt(), val(IOUtils::nodata), MysqlType(MYSQL_TYPE_NULL) {}
-	MYSQL_FIELD(const enum_field_types &type) : str(""), dt(), val(IOUtils::nodata), MysqlType(type) {}
-	
-	void reset() {str[0]='\0'; dt.setUndef(); val=IOUtils::nodata; MysqlType=MYSQL_TYPE_NULL;}
-	void setString() {reset(); MysqlType=MYSQL_TYPE_STRING;}
-	void setDate() {reset(); MysqlType=MYSQL_TYPE_DATETIME;}
-	void setDouble() {reset(); MysqlType=MYSQL_TYPE_DOUBLE;}
-	
-	char str[STRING_SIZE];
-	Date dt;
-	double val;
-	enum_field_types MysqlType; //see mysql/field_types.h
-} fType;
-
-void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
-{
-	MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(*stmt);
-	if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
-	const size_t column_count = static_cast<size_t>( mysql_num_fields(prepare_meta_result) );
-	if (column_count!=result_fields.size()) throw IOException("Wrong number of columns returned", AT);
-	mysql_free_result(prepare_meta_result);
-	
-	MYSQL_BIND result[column_count];
-	memset(result, 0, sizeof(result));
-	unsigned long length[column_count];
-#if LIBMYSQL_VERSION_ID > 80001 
-	bool is_null[column_count];
-	bool error[column_count];
-#else
-	my_bool is_null[column_count];
-	my_bool error[column_count];
-#endif
-	
-	for(size_t ii=0; ii<column_count; ++ii) {
-		result[ii].buffer_type = result_fields[ii].MysqlType;
-		if (result_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
-			result[ii].buffer = (char *)result_fields[ii].str;
-			result[ii].buffer_length = result_fields[ii].STRING_SIZE;
-		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
-			result[ii].buffer_type= MYSQL_TYPE_DOUBLE;
-			result[ii].buffer= (char *)&result_fields[ii].val;
-		}
-		
-		result[ii].is_null = &is_null[ii];
-		result[ii].length = &length[ii];
-		result[ii].error = &error[ii];
-	}
-	
-	if (mysql_stmt_bind_result(*stmt, result)) throw IOException("Error binding results", AT);
-	if (mysql_stmt_store_result(*stmt)) throw IOException("mysql_stmt_store_result failed", AT);
-}
-
 StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
 {
-	std::vector<fType> result_fields{ fType(MYSQL_TYPE_STRING), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE) };
-	bindResults(stmt, result_fields);
+	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
+	mysql_wrp::bindResults(stmt, result_fields);
 	
 	if (mysql_stmt_num_rows(*stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
 	mysql_stmt_fetch(*stmt); //we only have one result, see check above
@@ -171,50 +117,22 @@ StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& statio
 	return sd;
 }
 
-MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& mysqlhost, const std::string& mysqluser, const std::string& mysqlpass, const std::string& mysqldb, const std::string& query, const long unsigned int& ref_param_count)
-{
-	*mysql = mysql_init(nullptr);
-	//mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
-	if (!mysql_real_connect(*mysql, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0))
-		throw IOException("Could not initiate connection to Mysql server "+mysqlhost+": "+std::string(mysql_error(*mysql)), AT);
-
-	MYSQL_STMT* stmt = mysql_stmt_init(*mysql);
-	if (!stmt) throw IOException("Could not allocate memory for mysql statement", AT);
-
-	if (mysql_stmt_prepare(stmt, query.c_str(), query.size())) {
-		throw IOException("Error preparing mysql statement", AT);
-	} else {
-		const long unsigned int param_count = mysql_stmt_param_count(stmt);
-		if (param_count!=ref_param_count) throw IOException("Wrong number of parameters in mysql statement", AT);
-	}
-	
-	return stmt;
-}
-
 void WWCSIO::readStationMetaData()
 {
 	vecStationMetaData.clear();
 	std::vector<std::string> vecStationID;
 	readStationIDs( vecStationID );
 	
-	MYSQL *mysql = nullptr;
-	MYSQL_STMT *stmt = initStmt(&mysql, mysqlhost, mysqluser, mysqlpass, mysqldb, MySQLQueryStationMetaData, 1);
+	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb);
+	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
 	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		const std::string stationID( vecStationID[ii] );
 		
-		MYSQL_BIND stmtParams[1];
-		unsigned long argLength = stationID.size();
-		memset(&stmtParams, 0, sizeof(stmtParams));
-		stmtParams[0].buffer_type = MYSQL_TYPE_STRING;
-		stmtParams[0].buffer_length = argLength;
-		stmtParams[0].buffer = (char*)stationID.c_str();
-		stmtParams[0].length = &argLength;
-		stmtParams[0].is_null = 0;
-
-		if (mysql_stmt_bind_param(stmt, stmtParams)) {
-			throw IOException("Error binding parameters", AT);
-		} else if (mysql_stmt_execute(stmt)) {
+		std::vector<mysql_wrp::fType> params_fields{ mysql_wrp::fType(stationID)};
+		mysql_wrp::bindParams(&stmt, params_fields);
+		
+		if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else {
 			//retrieve results
