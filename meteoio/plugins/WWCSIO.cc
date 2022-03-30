@@ -100,7 +100,7 @@ void WWCSIO::readStationIDs(std::vector<std::string>& vecStationID) const
 	}
 }
 
-StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
+StationData getStationMetadata(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
 {
 	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	mysql_wrp::bindResults(stmt, result_fields);
@@ -136,7 +136,7 @@ void WWCSIO::readStationMetaData()
 			throw IOException("Error executing statement", AT);
 		} else {
 			//retrieve results
-			const StationData sd(retrieveMetadataResults(&stmt, stationID, coordin, coordinparam));
+			const StationData sd( getStationMetadata(&stmt, stationID, coordin, coordinparam) );
 			vecStationMetaData.push_back( sd );
 			std::cout << sd.toString() << "\n";
 		}
