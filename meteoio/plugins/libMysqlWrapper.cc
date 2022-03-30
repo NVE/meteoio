@@ -66,6 +66,9 @@ void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
 		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
 			stmtParams[ii].buffer_type= MYSQL_TYPE_DOUBLE;
 			stmtParams[ii].buffer= (char *)&params_fields[ii].val;
+		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {
+			stmtParams[ii].buffer_type= MYSQL_TYPE_DATETIME;
+			stmtParams[ii].buffer= (char *)&params_fields[ii].dt;
 		}
 		
 		stmtParams[ii].is_null = 0;
@@ -103,6 +106,9 @@ void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
 		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
 			result[ii].buffer_type= MYSQL_TYPE_DOUBLE;
 			result[ii].buffer= (char *)&result_fields[ii].val;
+		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {
+			result[ii].buffer_type= MYSQL_TYPE_DATETIME;
+			result[ii].buffer= (char *)&result_fields[ii].dt;
 		}
 		
 		result[ii].is_null = &is_null[ii];

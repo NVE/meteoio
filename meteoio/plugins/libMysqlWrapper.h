@@ -35,14 +35,27 @@ namespace mysql_wrp {
 		MYSQL_FIELD() : str(""), dt(), str_len(0), val(mio::IOUtils::nodata), MysqlType(MYSQL_TYPE_NULL) {}
 		MYSQL_FIELD(const enum_field_types &type) : str(""), dt(), str_len(0), val(mio::IOUtils::nodata), MysqlType(type) {}
 		MYSQL_FIELD(const std::string& i_str) : str(""), dt(), str_len(0), val(mio::IOUtils::nodata), MysqlType(MYSQL_TYPE_STRING) {setString(i_str);}
+		MYSQL_FIELD(const mio::Date& i_dt) : str(""), dt(), str_len(0), val(mio::IOUtils::nodata), MysqlType(MYSQL_TYPE_DATETIME) {setFromDate(i_dt, dt);}
 		
-		void reset() {str[0]='\0'; dt.setUndef(); str_len=0; val=mio::IOUtils::nodata; MysqlType=MYSQL_TYPE_NULL;}
+		void resetDate() {dt.year=0; dt.month=0; dt.day=0; dt.hour=0; dt.minute=0; dt.second=0; dt.second_part=0;}
+		void reset() {str[0]='\0'; resetDate(); str_len=0; val=mio::IOUtils::nodata; MysqlType=MYSQL_TYPE_NULL;}
+		void setFromDate(const mio::Date& i_dt, MYSQL_TIME &ts) { int year, month, day, hour, minute; double second;
+			i_dt.getDate(year, month, day, hour, minute, second);
+			ts.year = static_cast<unsigned int>( year );
+			ts.month = static_cast<unsigned int>( month );
+			ts.day = static_cast<unsigned int>( day );
+			ts.hour = static_cast<unsigned int>( hour );
+			ts.minute = static_cast<unsigned int>( minute );
+			ts.second = static_cast<unsigned int>( floor(second) );
+			ts.second_part = static_cast<unsigned long>( floor((second - floor(second))*1e6) );
+		}
 		void setString(const std::string& i_str) {reset(); strncpy(str, i_str.c_str(), std::min(static_cast<int>(i_str.size()), STRING_SIZE)); str_len=strlen(str); MysqlType=MYSQL_TYPE_STRING;}
-		void setDate(const mio::Date& i_dt) {reset(); dt=i_dt; MysqlType=MYSQL_TYPE_DATETIME;}
+		void setDate(const mio::Date& i_dt) {reset(); setFromDate(i_dt, dt); MysqlType=MYSQL_TYPE_DATETIME;}
 		void setDouble(const double& i_val) {reset(); val=i_val; MysqlType=MYSQL_TYPE_DOUBLE;}
+		mio::Date getDate() const {mio::Date o_dt(static_cast<int>(dt.year), static_cast<int>(dt.month), static_cast<int>(dt.day), static_cast<int>(dt.hour), static_cast<int>(dt.minute), static_cast<double>(dt.second)+static_cast<double>(dt.second_part)*1e-6, 0.); return o_dt;}
 		
 		char str[STRING_SIZE];
-		mio::Date dt;
+		MYSQL_TIME dt;
 		long unsigned int str_len;
 		double val;
 		enum_field_types MysqlType; //see mysql/field_types.h
