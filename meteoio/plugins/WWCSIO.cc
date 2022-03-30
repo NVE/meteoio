@@ -99,82 +99,75 @@ void WWCSIO::readStationIDs(std::vector<std::string>& vecStationID) const
 	}
 }
 
-StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
+
+typedef struct MYSQL_FIELD {
+	static const int STRING_SIZE = 50;
+	MYSQL_FIELD() : str(""), dt(), val(IOUtils::nodata), MysqlType(MYSQL_TYPE_NULL) {}
+	MYSQL_FIELD(const enum_field_types &type) : str(""), dt(), val(IOUtils::nodata), MysqlType(type) {}
+	
+	void reset() {str[0]='\0'; dt.setUndef(); val=IOUtils::nodata; MysqlType=MYSQL_TYPE_NULL;}
+	void setString() {reset(); MysqlType=MYSQL_TYPE_STRING;}
+	void setDate() {reset(); MysqlType=MYSQL_TYPE_DATETIME;}
+	void setDouble() {reset(); MysqlType=MYSQL_TYPE_DOUBLE;}
+	
+	char str[STRING_SIZE];
+	Date dt;
+	double val;
+	enum_field_types MysqlType; //see mysql/field_types.h
+} fType;
+
+void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
 {
 	MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(*stmt);
 	if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
-	const int column_count= mysql_num_fields(prepare_meta_result);
-	if (column_count!=6) throw IOException("Wrong number of columns returned", AT);
+	const size_t column_count = static_cast<size_t>( mysql_num_fields(prepare_meta_result) );
+	if (column_count!=result_fields.size()) throw IOException("Wrong number of columns returned", AT);
+	mysql_free_result(prepare_meta_result);
 	
-	static const int STRING_SIZE = 50;
-	char statName[STRING_SIZE];
-	double lat, lon, alt, slope, azi;
-	MYSQL_BIND result[6];
+	MYSQL_BIND result[column_count];
 	memset(result, 0, sizeof(result));
-	unsigned long length[6];
+	unsigned long length[column_count];
 #if LIBMYSQL_VERSION_ID > 80001 
-	bool is_null[6];
-	bool error[6];
+	bool is_null[column_count];
+	bool error[column_count];
 #else
-	my_bool is_null[6];
-	my_bool error[6];
+	my_bool is_null[column_count];
+	my_bool error[column_count];
 #endif
 	
-	//stationname
-	result[0].buffer_type = MYSQL_TYPE_STRING;
-	result[0].buffer = (char *)statName;
-	result[0].buffer_length = STRING_SIZE;
-	result[0].is_null = &is_null[0];
-	result[0].length = &length[0];
-	result[0].error = &error[0];
+	for(size_t ii=0; ii<column_count; ++ii) {
+		result[ii].buffer_type = result_fields[ii].MysqlType;
+		if (result_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
+			result[ii].buffer = (char *)result_fields[ii].str;
+			result[ii].buffer_length = result_fields[ii].STRING_SIZE;
+		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
+			result[ii].buffer_type= MYSQL_TYPE_DOUBLE;
+			result[ii].buffer= (char *)&result_fields[ii].val;
+		}
+		
+		result[ii].is_null = &is_null[ii];
+		result[ii].length = &length[ii];
+		result[ii].error = &error[ii];
+	}
 	
-	//latitude
-	result[1].buffer_type= MYSQL_TYPE_DOUBLE;
-	result[1].buffer= (char *)&lat;
-	result[1].is_null= &is_null[1];
-	result[1].length= &length[1];
-	result[1].error= &error[1];
-	
-	//longitude
-	result[2].buffer_type= MYSQL_TYPE_DOUBLE;
-	result[2].buffer= (char *)&lon;
-	result[2].is_null= &is_null[2];
-	result[2].length= &length[2];
-	result[2].error= &error[2];
-	
-	//altitude
-	result[3].buffer_type= MYSQL_TYPE_DOUBLE;
-	result[3].buffer= (char *)&alt;
-	result[3].is_null= &is_null[3];
-	result[3].length= &length[3];
-	result[3].error= &error[3];
-	
-	//slope
-	result[4].buffer_type= MYSQL_TYPE_DOUBLE;
-	result[4].buffer= (char *)&slope;
-	result[4].is_null= &is_null[4];
-	result[4].length= &length[4];
-	result[4].error= &error[4];
-	
-	//azi
-	result[5].buffer_type= MYSQL_TYPE_DOUBLE;
-	result[5].buffer= (char *)&azi;
-	result[5].is_null= &is_null[5];
-	result[5].length= &length[5];
-	result[5].error= &error[5];
-
 	if (mysql_stmt_bind_result(*stmt, result)) throw IOException("Error binding results", AT);
 	if (mysql_stmt_store_result(*stmt)) throw IOException("mysql_stmt_store_result failed", AT);
-	if (mysql_stmt_num_rows(*stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
-	
-	mysql_stmt_fetch(*stmt); //we only have one result, see check above
-	const std::string station_name( statName );
-	Coords location(coordin,coordinparam);
-	location.setLatLon(lat, lon, alt);
-	StationData sd(location, stationID, station_name);
-	sd.setSlope(slope, azi);
+}
 
-	mysql_free_result(prepare_meta_result);
+StationData retrieveMetadataResults(MYSQL_STMT **stmt, const std::string& stationID, const std::string& coordin, const std::string& coordinparam)
+{
+	std::vector<fType> result_fields{ fType(MYSQL_TYPE_STRING), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE), fType(MYSQL_TYPE_DOUBLE) };
+	bindResults(stmt, result_fields);
+	
+	if (mysql_stmt_num_rows(*stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
+	mysql_stmt_fetch(*stmt); //we only have one result, see check above
+	
+	const std::string station_name( result_fields[0].str );
+	Coords location(coordin,coordinparam);
+	location.setLatLon(result_fields[1].val, result_fields[2].val, result_fields[3].val);
+	StationData sd(location, stationID, station_name);
+	sd.setSlope(result_fields[4].val, result_fields[5].val);
+
 	return sd;
 }
 
@@ -250,12 +243,12 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 {
 	if (vecStationMetaData.empty()) readStationMetaData();
 
-	vecMeteo.clear();
+	/*vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
 	for (size_t ii=0; ii<vecStationMetaData.size(); ii++) { //loop through relevant stations
 		readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData);
-	}
+	}*/
 }
 
 //read meteo data for one station
@@ -264,7 +257,7 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 {
 	vecMeteo.at(stationindex).clear();
 
-	Date dateS(dateStart), dateE(dateEnd);
+	/*Date dateS(dateStart), dateE(dateEnd);
 	dateS.setTimeZone(in_dflt_TZ);
 	dateE.setTimeZone(in_dflt_TZ);
 
@@ -281,7 +274,7 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
 		vecMeteo.at(stationindex).push_back( tmpmd ); //Now insert tmpmd
-	}
+	}*/
 }
 
 void WWCSIO::convertUnits(MeteoData& meteo)
@@ -342,7 +335,7 @@ bool WWCSIO::getStationData(const std::string& stat_abk, const std::string& stao
                              std::vector< std::vector<std::string> >& vecMeteoData) const
 {
 	vecMeteoData.clear();
-	bool fullStation = true;
+	/*bool fullStation = true;
 
 	// Creating MySQL TimeStamps
 	std::string sDate( dateS.toString(Date::ISO) );
@@ -394,7 +387,7 @@ bool WWCSIO::getStationData(const std::string& stat_abk, const std::string& stao
 
 	mysql_free_result(res2);
 	mysql_close(conn2);
-	return fullStation;
+	return fullStation;*/
 }
 
 } //namespace
