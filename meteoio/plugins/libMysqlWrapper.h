@@ -52,7 +52,7 @@ namespace mysql_wrp {
 		void setString(const std::string& i_str) {reset(); strncpy(str, i_str.c_str(), std::min(static_cast<int>(i_str.size()), STRING_SIZE)); str_len=strlen(str); MysqlType=MYSQL_TYPE_STRING;}
 		void setDate(const mio::Date& i_dt) {reset(); setFromDate(i_dt, dt); MysqlType=MYSQL_TYPE_DATETIME;}
 		void setDouble(const double& i_val) {reset(); val=i_val; MysqlType=MYSQL_TYPE_DOUBLE;}
-		mio::Date getDate() const {mio::Date o_dt(static_cast<int>(dt.year), static_cast<int>(dt.month), static_cast<int>(dt.day), static_cast<int>(dt.hour), static_cast<int>(dt.minute), static_cast<double>(dt.second)+static_cast<double>(dt.second_part)*1e-6, 0.); return o_dt;}
+		mio::Date getDate(const double& TZ) const {mio::Date o_dt(static_cast<int>(dt.year), static_cast<int>(dt.month), static_cast<int>(dt.day), static_cast<int>(dt.hour), static_cast<int>(dt.minute), static_cast<double>(dt.second)+static_cast<double>(dt.second_part)*1e-6, TZ); return o_dt;}
 		
 		char str[STRING_SIZE];
 		MYSQL_TIME dt;

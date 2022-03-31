@@ -58,14 +58,13 @@ namespace mio {
 
 const double WWCSIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
-//const string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM meteoseries WHERE stationID='STATION_NUMBER' AND TimeStamp>='START_DATE' AND TimeStamp<='END_DATE' ORDER BY timestamp ASC";
 const string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p FROM meteoseries WHERE loggerID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
 
 WWCSIO::WWCSIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          in_dflt_TZ(5.), out_dflt_TZ(5.)
+          in_dflt_TZ(1.), out_dflt_TZ(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	readConfig();
@@ -75,7 +74,7 @@ WWCSIO::WWCSIO(const Config& cfgreader)
         : cfg(cfgreader), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          in_dflt_TZ(5.), out_dflt_TZ(5.)
+          in_dflt_TZ(1.), out_dflt_TZ(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	readConfig();
@@ -130,7 +129,6 @@ void WWCSIO::readStationMetaData()
 			StationData sd(location, stationID, station_name);
 			sd.setSlope(result_fields[4].val, result_fields[5].val);
 			vecStationMetaData.push_back( sd );
-			std::cout << sd.toString() << "\n";
 		}
 	}
 	
@@ -157,13 +155,13 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 	vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
 	for (size_t ii=0; ii<vecStationMetaData.size(); ii++) { //loop through relevant stations
-		readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData);
+		readData(dateStart, dateEnd, vecMeteo, ii);
 	}
 }
 
 //read meteo data for one station
 void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                       const size_t& stationindex, const std::vector<StationData>& vecMeta) const
+                       const size_t& stationindex) const
 {
 	std::cout << "Entering readData\n";
 	vecMeteo.at(stationindex).clear();
@@ -177,8 +175,8 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	
 	const StationData sd( vecStationMetaData[stationindex] );
-	//const std::string stationID( sd.getStationID() );
-	const std::string stationID( "152:244:171:56:6:172" );
+	const std::string stationID( sd.getStationID() );
+	//const std::string stationID( "98:f4:ab:39:96:90" ); //HACK for debuging since we don't have the view yet
 	std::vector<mysql_wrp::fType> params_fields{ mysql_wrp::fType(stationID), mysql_wrp::fType(dateStart), mysql_wrp::fType(dateEnd)};
 	mysql_wrp::bindParams(&stmt, params_fields);
 	
@@ -187,20 +185,19 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	} else { //retrieve results
 		mysql_wrp::bindResults(&stmt, result_fields);
 		
-		int status = 0;
 		do {
 			const int status = mysql_stmt_fetch(stmt);
 			if (status==1 || status==MYSQL_NO_DATA)
 				break;
 			
-			MeteoData md( result_fields[0].getDate(), sd);
+			MeteoData md( result_fields[0].getDate(in_dflt_TZ), sd); //get from Mysql without TZ, set it to input TZ
+			md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
 			md("TA") = result_fields[1].val;
 			md("RH") = result_fields[2].val;
 			md("P") = result_fields[3].val;
 			
-			std::cout << md.toString() << "\n";
+			vecMeteo[stationindex].push_back( md );
 		} while (true);
-		
 	}
 	
 	if (mysql_stmt_close(stmt)) {
@@ -261,67 +258,6 @@ void WWCSIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 		throw ConversionFailedException("Invalid PSUM for station "+statID+": "+i_meteo.at(9), AT);
 	if (!IOUtils::convertString(md(MeteoData::P), i_meteo.at(10)))
 		throw ConversionFailedException("Invalid P for station "+statID+": "+i_meteo.at(10), AT);
-}
-
-bool WWCSIO::getStationData(const std::string& stat_abk, const std::string& stao_nr,
-                             const Date& dateS, const Date& dateE,
-                             const std::vector<std::string>& vecHTS1,
-                             std::vector< std::vector<std::string> >& vecMeteoData) const
-{
-	vecMeteoData.clear();
-	/*bool fullStation = true;
-
-	// Creating MySQL TimeStamps
-	std::string sDate( dateS.toString(Date::ISO) );
-	std::replace( sDate.begin(), sDate.end(), 'T', ' ');
-	std::string eDate( dateE.toString(Date::ISO) );
-	std::replace( eDate.begin(), eDate.end(), 'T', ' ');
-
-	//SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM meteoseries WHERE stationID='STATION_NUMBER' AND TimeStamp>='START_DATE' AND TimeStamp<='END_DATE' ORDER BY timestamp ASC
-	std::string Query2( MySQLQueryMeteoData );
-	const std::string str1( "STATION_NAME" );
-	const std::string str2( "STATION_NUMBER" );
-	const std::string str3( "START_DATE" );
-	const std::string str4( "END_DATE" );
-	Query2.replace( Query2.find(str1), str1.length(), stat_abk ); // set 1st variable's value
-	Query2.replace( Query2.find(str2), str2.length(), stao_nr ); // set 2nd variable's value
-	Query2.replace( Query2.find(str3), str3.length(), sDate ); // set 3rd variable's value
-	Query2.replace( Query2.find(str4), str4.length(), eDate ); // set 4th variable's value
-
-	MYSQL *conn2 = mysql_init(nullptr);
-	if (!mysql_real_connect(conn2, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, nullptr, 0)) {
-		throw IOException("Could not initiate connection to Mysql server "+mysqlhost, AT);
-	}
-
-	if (mysql_query(conn2, Query2.c_str())) {
-		throw IOException("Query2 \""+Query2+"\" failed to execute", AT);
-	}
-
-	MYSQL_RES *res2 = mysql_use_result(conn2);
-	const unsigned int column_no2 = mysql_num_fields(res2);
-	MYSQL_ROW row2;
-	while ( ( row2= mysql_fetch_row(res2) ) != nullptr ) {
-		std::vector<std::string> vecData;
-		for (unsigned int ii=0; ii<column_no2; ii++) {
-			std::string row_02;
-				if (!row2[ii]){
-					IOUtils::convertString(row_02,"-999.0");// HARD CODED :(
-				}else{
-					IOUtils::convertString(row_02, row2[ii]);
-				 }
-			vecData.push_back(row_02);
-		}
-		if (fullStation) {
-			for (unsigned int ii=0; ii<static_cast<unsigned int>(vecHTS1.size()); ii++) {
-				vecData.push_back(vecHTS1.at(ii));
-			}
-		}
-		vecMeteoData.push_back(vecData);
-	}
-
-	mysql_free_result(res2);
-	mysql_close(conn2);
-	return fullStation;*/
 }
 
 } //namespace

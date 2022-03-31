@@ -48,12 +48,9 @@ class WWCSIO : public IOInterface {
 		std::vector<std::string> readStationIDs() const;
 		void readStationMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-		              const size_t& stationindex, const std::vector<StationData>& vecMeta) const;
+		              const size_t& stationindex) const;
 		static void convertUnits(MeteoData& meteo);
 		void parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md) const;
-		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,const Date& dateS,
-		                    const Date& dateE,const std::vector<std::string>& vecHTS1,
-		                    std::vector< std::vector<std::string> >& vecMeteoData) const;
 
 		const Config cfg;
 		std::vector<std::string> vecStationIDs;
