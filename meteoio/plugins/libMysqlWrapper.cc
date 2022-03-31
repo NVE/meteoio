@@ -33,7 +33,7 @@ MYSQL* initMysql(const std::string& mysqlhost, const std::string& mysqluser, con
 	if (!mysql_real_connect(mysql, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0))
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost+": "+std::string(mysql_error(mysql)), AT);
 
-	return mysql;
+	return mysql; //TODO memory leak from mysql_init
 }
 
 MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& query, const long unsigned int& ref_param_count)
@@ -54,8 +54,7 @@ MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& query, const long unsigne
 void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
 {
 	const size_t params_count = params_fields.size();
-	MYSQL_BIND stmtParams[params_count];
-	memset(stmtParams, 0, sizeof(stmtParams));
+	MYSQL_BIND *stmtParams = (MYSQL_BIND*)calloc(params_count, sizeof(MYSQL_BIND));
 	
 	for(size_t ii=0; ii<params_count; ++ii) {
 		stmtParams[ii].buffer_type = params_fields[ii].MysqlType;
@@ -71,12 +70,14 @@ void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
 			stmtParams[ii].buffer= (char *)&params_fields[ii].dt;
 		}
 		
-		stmtParams[ii].is_null = 0;
+		stmtParams[ii].is_null = NULL;
 	}
 	
 	if (mysql_stmt_bind_param(*stmt, stmtParams)) {
+		free( stmtParams );
 		throw IOException("Error binding parameters", AT);
 	}
+	free( stmtParams );
 }
 
 void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
