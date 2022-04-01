@@ -171,9 +171,10 @@ namespace mio {
  * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td></td>		<td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td></td><td>grid2d</td>		<td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
  * <tr><td>\subpage psqlio "PSQL"</td><td>meteo</td><td>meteo</td>		<td>connects to PostgreSQL database</td><td><A HREF="http://www.postgresql.org/">PostgreSQL</A>'s libpq</td></tr>
- * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
+ * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>meteo</td>		<td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>meteo</td>		<td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage wwcs "WWCS"</td><td>meteo</td><td></td>		<td>connects to the Water, Weather and Climate Services (WWCS) MySql database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage zrxpio "ZRXP"</td><td></td><td>meteo</td>		<td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
