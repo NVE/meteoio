@@ -49,8 +49,6 @@ class WWCSIO : public IOInterface {
 		void readStationMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const size_t& stationindex) const;
-		static void convertUnits(MeteoData& meteo);
-		void parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md) const;
 
 		const Config cfg;
 		std::vector<std::string> vecStationIDs;
@@ -58,8 +56,8 @@ class WWCSIO : public IOInterface {
 		std::string mysqlhost, mysqldb, mysqluser, mysqlpass;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
+		unsigned int mysql_options;
 
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string MySQLQueryStationMetaData;
 		static const std::string MySQLQueryMeteoData;
 };

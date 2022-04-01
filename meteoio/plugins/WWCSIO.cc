@@ -56,7 +56,6 @@ namespace mio {
 * - STATION#: station code for the given number #; [Input] section
 */
 
-const double WWCSIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
 const string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p FROM meteoseries WHERE loggerID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
 
@@ -64,7 +63,7 @@ WWCSIO::WWCSIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          in_dflt_TZ(1.), out_dflt_TZ(1.)
+          in_dflt_TZ(1.), out_dflt_TZ(1.), mysql_options(mysql_wrp::COMPRESSION | mysql_wrp::ENCRYPTION)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	readConfig();
@@ -74,7 +73,7 @@ WWCSIO::WWCSIO(const Config& cfgreader)
         : cfg(cfgreader), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          in_dflt_TZ(1.), out_dflt_TZ(1.)
+          in_dflt_TZ(1.), out_dflt_TZ(1.), mysql_options(mysql_wrp::COMPRESSION | mysql_wrp::ENCRYPTION)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	readConfig();
@@ -82,12 +81,13 @@ WWCSIO::WWCSIO(const Config& cfgreader)
 
 void WWCSIO::readConfig()
 {
+	cfg.getValue("TIME_ZONE","Input", in_dflt_TZ, IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE","Output", out_dflt_TZ, IOUtils::nothrow);
+	
 	cfg.getValue("WWCS_HOST", "Input", mysqlhost);
 	cfg.getValue("WWCS_DB", "Input", mysqldb);
 	cfg.getValue("WWCS_USER", "Input", mysqluser);
 	cfg.getValue("WWCS_PASS", "Input", mysqlpass);
-	cfg.getValue("TIME_ZONE","Input", in_dflt_TZ, IOUtils::nothrow);
-	cfg.getValue("TIME_ZONE","Output", out_dflt_TZ, IOUtils::nothrow);
 }
 
 std::vector<std::string> WWCSIO::readStationIDs() const
@@ -107,7 +107,7 @@ void WWCSIO::readStationMetaData()
 	vecStationMetaData.clear();
 	const std::vector<std::string> vecStationID( readStationIDs() );
 	
-	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb);
+	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
 	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	
@@ -163,14 +163,13 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                        const size_t& stationindex) const
 {
-	std::cout << "Entering readData\n";
 	vecMeteo.at(stationindex).clear();
 
 	Date dateS(dateStart), dateE(dateEnd);
 	dateS.setTimeZone(in_dflt_TZ);
 	dateE.setTimeZone(in_dflt_TZ);
 	
-	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb);
+	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryMeteoData, 3);
 	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	
@@ -190,11 +189,14 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 			if (status==1 || status==MYSQL_NO_DATA)
 				break;
 			
+			if (result_fields[0].is_null==1) continue; //this should not happen, but better safe than sorry!
+			
 			MeteoData md( result_fields[0].getDate(in_dflt_TZ), sd); //get from Mysql without TZ, set it to input TZ
 			md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
-			md("TA") = result_fields[1].val;
-			md("RH") = result_fields[2].val;
-			md("P") = result_fields[3].val;
+			
+			md("TA") = retrieveData(result_fields[1], mysql_wrp::C_TO_K);
+			md("RH") = retrieveData(result_fields[2], mysql_wrp::NORMALIZE_PC);
+			md("P") = retrieveData(result_fields[3]);
 			
 			vecMeteo[stationindex].push_back( md );
 		} while (true);
@@ -205,59 +207,6 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	}
 	
 	mysql_close(mysql);
-}
-
-void WWCSIO::convertUnits(MeteoData& meteo)
-{
-	meteo.standardizeNodata(plugin_nodata);
-	/*
-	//converts C to Kelvin, converts RH to [0,1]
-	double& ta = meteo(MeteoData::TA);
-	ta = IOUtils::C_TO_K(ta);
-
-	double& tss = meteo(MeteoData::TSS);
-	tss = IOUtils::C_TO_K(tss);
-
-	double& rh = meteo(MeteoData::RH);
-	if (rh != IOUtils::nodata)
-	rh /= 100.;
-
-	double& hs = meteo(MeteoData::HS);
-	if (hs != IOUtils::nodata)
-	hs /= 100.0;
-
-	double& rswr = meteo(MeteoData::RSWR);
-	if (rswr != IOUtils::nodata)
-	rswr /= 100.0;
-	*/
-}
-
-void WWCSIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md) const
-{
-	const std::string statID( md.meta.getStationID() );
-
-	if (!IOUtils::convertString(md.date, i_meteo.at(0), in_dflt_TZ))
-		throw ConversionFailedException("Invalid timestamp for station "+statID+": "+i_meteo.at(0), AT);
-	if (!IOUtils::convertString(md(MeteoData::TA), i_meteo.at(1)))
-		throw ConversionFailedException("Invalid TA for station "+statID+": "+i_meteo.at(1), AT);
-	if (!IOUtils::convertString(md(MeteoData::RH), i_meteo.at(2)))
-		throw ConversionFailedException("Invalid RH for station "+statID+": "+i_meteo.at(2), AT);
-	if (!IOUtils::convertString(md(MeteoData::VW), i_meteo.at(3)))
-		throw ConversionFailedException("Invalid VW for station "+statID+": "+i_meteo.at(3), AT);
-	if (!IOUtils::convertString(md(MeteoData::HS), i_meteo.at(4)))
-		throw ConversionFailedException("Invalid HS for station "+statID+": "+i_meteo.at(4), AT);
-	if (!IOUtils::convertString(md(MeteoData::TSS), i_meteo.at(5)))
-		throw ConversionFailedException("Invalid TSS for station "+statID+": "+i_meteo.at(5), AT);
-	if (!IOUtils::convertString(md(MeteoData::RSWR), i_meteo.at(6)))
-		throw ConversionFailedException("Invalid RSWR for station "+statID+": "+i_meteo.at(6), AT);
-	if (!IOUtils::convertString(md(MeteoData::ISWR), i_meteo.at(7)))
-		throw ConversionFailedException("Invalid ISWR for station "+statID+": "+i_meteo.at(7), AT);
-	if (!IOUtils::convertString(md(MeteoData::ILWR), i_meteo.at(8)))
-		throw ConversionFailedException("Invalid ILWR for station "+statID+": "+i_meteo.at(8), AT);
-	if (!IOUtils::convertString(md(MeteoData::PSUM), i_meteo.at(9)))
-		throw ConversionFailedException("Invalid PSUM for station "+statID+": "+i_meteo.at(9), AT);
-	if (!IOUtils::convertString(md(MeteoData::P), i_meteo.at(10)))
-		throw ConversionFailedException("Invalid P for station "+statID+": "+i_meteo.at(10), AT);
 }
 
 } //namespace
