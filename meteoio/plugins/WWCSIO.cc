@@ -35,7 +35,31 @@ namespace mio {
 * @page wwcs WWCSIO
 * @section WWCS_format Format
 * This is the plugin required to get meteorological data from the WWCS MySQL database.
-*
+* 
+* @section WWCS_dependencies Plugin dependencies and compilation
+* This plugin requires the Mysql C API. This must be installed before attempting to compile the plugin. This can be installed
+* from source and recompiled (for example getting it from 
+* <a href="https://mariadb.org/download/?t=connector&p=connector-c&r=3.1.13&os=source">MariaDB</a>) or from precompiled binaries
+* for your plateform.
+* 
+* @subsection WWCS_linux_install Linux
+* On Linux, you need to install the *libmysqlclient-dev* (Debian, Ubuntu) or *mysql-devel* (RedHat, Centos, Fedora, Suse) 
+* package. Then CMake will find it and you'll be able to compile the plugin.
+* 
+* @subsection WWCS_mac_install Mac
+* If you have *brew* on your system, you can simply install the *mysql-connector-c* package from brew and then CMake fill
+* find it and you'll be able to compile the plugin.
+* 
+* @subsection WWCS_windows_install Windows
+* First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version, 
+* this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure 
+* the server, skip this step. Currently, the installation directory should not contain any spaces in its path in order to be able 
+* to compile properly... 
+* 
+* In CMake, select the *include* sub-directory of the Mysql install directory and select the *libmysql.dll*
+* library within the *lib* sub-directory. You can then compile the plugin. Please do not forget to copy libmysql.dll as well as 
+* *libcrypto-1_1-x64.dll* and *libssl-1_1-x64.dll* into the bin sub-directory of MeteoIO before running meteoio_timeseries.
+* 
 * @section WWCS_units Units
 * The units are assumed to be the following:
 * - __temperatures__ in celsius
