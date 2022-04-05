@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2014 Snow and Avalanche Study Establishment    SASE-CHANDIGARH       */
+/*  Copyright 2022 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -34,7 +34,8 @@ namespace mio {
 /**
 * @page wwcs WWCSIO
 * @section WWCS_format Format
-* This is the plugin required to get meteorological data from the WWCS MySQL database.
+* This is the plugin required to get meteorological data from the WWCS MySQL database. The connection 
+* to the database is encrypted (with SSL) and compressed (with zlib) if supported by the server.
 * 
 * @section WWCS_dependencies Plugin dependencies and compilation
 * This plugin requires the Mysql C API. This must be installed before attempting to compile the plugin. This can be installed
@@ -64,20 +65,38 @@ namespace mio {
 * The units are assumed to be the following:
 * - __temperatures__ in celsius
 * - __relative humidity__ in %
-* - __wind speed__ in m/s
-* - __precipitations__ in mm/h
-* - __radiation__ in W/m²
+* - __pressures__ in Pa
 *
 * @section WWCS_keywords Keywords
 * This plugin uses the following keywords:
 * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
 * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+* - TIME_ZONE: For [Input] and [Output] sections (Input::TIME_ZONE should describe the timezone 
+* of the data in the database while the resulting data will be converted to Output::TIME_ZONE )
 * - WWCS_HOST: MySQL Host Name (e.g. localhost or 191.168.145.20); [Input] section
-* - WWCS_DB: MySQL Database (e.g. snowpack); [Input] section
-* - WWCS_USER: MySQL User Name (e.g. root); [Input] section
+* - WWCS_DB: MySQL Database (e.g. wwcs); [Input] section
+* - WWCS_USER: MySQL User Name (e.g. wwcs); [Input] section
 * - WWCS_PASS: MySQL password; [Input] section
-* - TIME_ZONE: For [Input] and [Output] sections
 * - STATION#: station code for the given number #; [Input] section
+* 
+* Example configuration:
+* @code
+* [Input]
+* COORDSYS  = CH1903
+* TIME_ZONE = 1
+* 
+* METEO     = WWCS
+* WWCS_HOST = nesthorn.slf.ch
+* WWCS_DB   = wwcs
+* WWCS_USER = wwcs
+* WWCS_PASS = XXX
+* 
+* STATION1  = SLF01
+* STATION2  = WWCS_BAL01
+* STATION3  = WWCS_LUC
+* @endcode
+* 
+* 
 */
 
 const string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
@@ -114,6 +133,10 @@ void WWCSIO::readConfig()
 	cfg.getValue("WWCS_PASS", "Input", mysqlpass);
 }
 
+/**
+* @brief Build the list of user provided station IDs to read
+* @return list of station IDs
+*/
 std::vector<std::string> WWCSIO::readStationIDs() const
 {
 	std::vector<std::string> vecStationID;
@@ -125,7 +148,12 @@ std::vector<std::string> WWCSIO::readStationIDs() const
 	return vecStationID;
 }
 
-//this method is required so getMeteoData can also get the stations' coordinates that it needs
+/**
+* @brief Retrieve the stations' metadata from the database.
+* This metadata can then be used either to return only the metadata as a vector of StationData or
+* later when reading the meteo data, in order to provide the necessary metadata.
+* The results are stored in the vecStationMetaData member.
+*/
 void WWCSIO::readStationMetaData()
 {
 	vecStationMetaData.clear();
@@ -163,6 +191,7 @@ void WWCSIO::readStationMetaData()
 	mysql_close(mysql);
 }
 
+//standard call to get the metadata as defined in IOInterface.h
 void WWCSIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
@@ -170,6 +199,7 @@ void WWCSIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation = vecStationMetaData; //vecStationMetaData is a global vector holding all meta data
 }
 
+//standard call to get the meteo data as defined in IOInterface.h
 void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
                             std::vector<std::vector<MeteoData> >& vecMeteo)
 {
@@ -183,7 +213,13 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 	}
 }
 
-//read meteo data for one station
+/**
+* @brief Retrieve the meteo data for one given station from the database
+* @param[in] dateStart start date of the data to retrieve
+* @param[in] dateEnd end date of the data to retrieve
+* @param[out] vecMeteo vector to store the data for all stations
+* @param[in] stationindex index of the current station of interest in both vecStationMetaData and vecMeteo
+*/
 void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                        const size_t& stationindex) const
 {
