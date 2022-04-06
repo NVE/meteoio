@@ -54,8 +54,7 @@ namespace mio {
 * @subsection WWCS_windows_install Windows
 * First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version, 
 * this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure 
-* the server, skip this step. Currently, the installation directory should not contain any spaces in its path in order to be able 
-* to compile properly... 
+* the server, skip this step.
 * 
 * In CMake, select the *include* sub-directory of the Mysql install directory and select the *libmysql.dll*
 * library within the *lib* sub-directory. You can then compile the plugin. Please do not forget to copy libmysql.dll as well as 
