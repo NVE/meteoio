@@ -27,10 +27,10 @@ ELSE(WIN32)
 		HINTS
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
-			"~/usr/lib"
-			"/usr/local/lib"
-			"/usr/lib"
-			"/opt/lib"
+			"~/usr/lib/mysql"
+			"/usr/local/mysql/lib"
+			"/usr/lib/mysql"
+			"/opt/lib/mysql"
 		DOC "Location of the libmysql dynamic library"
 		)
 	ELSE(APPLE)
