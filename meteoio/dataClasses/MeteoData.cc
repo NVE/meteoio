@@ -243,6 +243,11 @@ MeteoData::MeteoData(const Date& date_in)
            resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
+MeteoData::MeteoData(const StationData& meta_in)
+         : date(0.0, 0.), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
+{ }
+
 MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
          : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
            resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
