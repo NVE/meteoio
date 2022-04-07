@@ -178,7 +178,7 @@ void WWCSIO::readStationMetaData()
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
-	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
+	std::vector<mysql_wrp::fType> meta_result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		const std::string stationID( vecStationID[ii] );
@@ -188,15 +188,15 @@ void WWCSIO::readStationMetaData()
 		if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else { //retrieve results
-			mysql_wrp::bindResults(&stmt, result_fields);
+			mysql_wrp::bindResults(&stmt, meta_result_fields);
 			if (mysql_stmt_num_rows(stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
 			mysql_stmt_fetch(stmt); //we only have one result, see check above
 			
-			const std::string station_name( result_fields[0].str );
+			const std::string station_name( meta_result_fields[0].str );
 			Coords location(coordin,coordinparam);
-			location.setLatLon(result_fields[1].val, result_fields[2].val, result_fields[3].val);
+			location.setLatLon(meta_result_fields[1].val, meta_result_fields[2].val, meta_result_fields[3].val);
 			StationData sd(location, stationID, station_name);
-			sd.setSlope(result_fields[4].val, result_fields[5].val);
+			sd.setSlope(meta_result_fields[4].val, meta_result_fields[5].val);
 			vecStationMetaData.push_back( sd );
 		}
 	}
