@@ -44,6 +44,16 @@ class WWCSIO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
+		typedef struct DB_FIELD {
+			DB_FIELD(const std::string& i_param) 
+			        : param( i_param ), processing( 0 ), isDate(param=="DATETIME") {}
+			DB_FIELD(const std::string& i_param, const unsigned int &i_processing) 
+			        : param( i_param ), processing( i_processing ), isDate(false) {}
+			const std::string param;
+			const unsigned int processing;
+			const bool isDate;
+		} db_field;
+		
 		void readConfig();
 		std::vector<std::string> readStationIDs() const;
 		void readStationMetaData();
@@ -56,10 +66,12 @@ class WWCSIO : public IOInterface {
 		std::string mysqlhost, mysqldb, mysqluser, mysqlpass;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
+		static const size_t nrMeteoFields;
 		unsigned int mysql_options;
 
 		static const std::string MySQLQueryStationMetaData;
 		static const std::string MySQLQueryMeteoData;
+		static const std::vector< db_field > meteoFields;
 };
 
 } //namespace

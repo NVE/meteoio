@@ -43,7 +43,7 @@ namespace mysql_wrp {
 	};
 	
 	enum unitsConversions {
-		NONE,
+		NONE=0,
 		C_TO_K,
 		CM_TO_M,
 		NORMALIZE_PC

@@ -25,7 +25,6 @@
 
 #include <mysql.h>
 #include <stdio.h>
-//#include <cstring>
 #include <algorithm>
 
 using namespace std;
@@ -104,8 +103,16 @@ namespace mio {
 * 
 */
 
-const string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
-const string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p FROM meteoseries WHERE loggerID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
+const std::string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
+const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM meteoseries WHERE loggerID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
+
+//the Mysql types matching the MySQLQueryMeteoData above
+std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
+//the MeteoIO meteo fields matching the MySQLQueryMeteoData and the result_fields above
+const std::vector< WWCSIO::db_field > WWCSIO::meteoFields{ WWCSIO::db_field("DATETIME"), WWCSIO::db_field("TA", mysql_wrp::C_TO_K), WWCSIO::db_field("RH", mysql_wrp::NORMALIZE_PC), WWCSIO::db_field("P"), WWCSIO::db_field("LOGGER_TA", mysql_wrp::C_TO_K), WWCSIO::db_field("LOGGER_RH", mysql_wrp::NORMALIZE_PC) };
+
+const size_t WWCSIO::nrMeteoFields( WWCSIO::meteoFields.size() );
+
 
 WWCSIO::WWCSIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
@@ -129,6 +136,11 @@ WWCSIO::WWCSIO(const Config& cfgreader)
 
 void WWCSIO::readConfig()
 {
+	//Check that the MeteoData query is correctly described: the number of parameters
+	//from the MySQL side must match with the one from the MeteoData side
+	if (result_fields.size() != nrMeteoFields) 
+		throw IndexOutOfBoundsException("The number of parameters expected from MySQL does not match with the number of parameters expected by MeteoIO", AT);
+	
 	cfg.getValue("TIME_ZONE","Input", in_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE","Output", out_dflt_TZ, IOUtils::nothrow);
 	
@@ -236,7 +248,6 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryMeteoData, 3);
-	std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
 	
 	const StationData sd( vecStationMetaData[stationindex] );
 	const std::string stationID( sd.getStationID() );
@@ -249,19 +260,31 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	} else { //retrieve results
 		mysql_wrp::bindResults(&stmt, result_fields);
 		
+		//create the MeteoData template
+		MeteoData md(sd);
+		for (size_t ii=0; ii<nrMeteoFields; ++ii) {
+			if (meteoFields[ii].isDate) continue;
+			if (!md.param_exists(meteoFields[ii].param)) md.addParameter(meteoFields[ii].param);
+		}
+		
 		do {
+			//reset the MeteoData object
+			md.reset();
+			md.date.setUndef(true);
+			
 			const int status = mysql_stmt_fetch(stmt);
-			if (status==1 || status==MYSQL_NO_DATA)
-				break;
+			if (status==1 || status==MYSQL_NO_DATA) break;
 			
-			if (result_fields[0].is_null==1) continue; //this should not happen, but better safe than sorry!
-			
-			MeteoData md( result_fields[0].getDate(in_dflt_TZ), sd); //get from Mysql without TZ, set it to input TZ
-			md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
-			
-			md("TA") = retrieveData(result_fields[1], mysql_wrp::C_TO_K);
-			md("RH") = retrieveData(result_fields[2], mysql_wrp::NORMALIZE_PC);
-			md("P") = retrieveData(result_fields[3]);
+			//loop over all fields that we should find
+			for (size_t ii=0; ii<nrMeteoFields; ++ii) {
+				if (meteoFields[ii].isDate) {
+					md.setDate( result_fields[ii].getDate(in_dflt_TZ) ); //get from Mysql without TZ, set it to input TZ
+					md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
+					continue;
+				} else {
+					md( meteoFields[ii].param ) = mysql_wrp::retrieveData(result_fields[ii], meteoFields[ii].processing);
+				}
+			}
 			
 			vecMeteo[stationindex].push_back( md );
 		} while (true);
