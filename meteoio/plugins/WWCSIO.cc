@@ -51,6 +51,12 @@ namespace mio {
 * If you have *brew* on your system, you can simply install the *mysql-connector-c* package from brew and then CMake fill
 * find it and you'll be able to compile the plugin.
 * 
+* Otherwise, you can download <a href="https://dev.mysql.com/downloads/mysql/">the MySQL server package</a> (in the 
+* <a href="https://downloads.mysql.com/archives/community/">archives</a> you can find packages for earlier versions of Macos, 
+* for example Mysql 8.0.23 that is the latest version compatible with macOS 10.15 Catalina). Then install and cancel 
+* the installation when the installer tries to configure a MySQL server (as this is not needed and it keeps everything that it has
+* installed so far in place). CMake will then be able to find the libmysqlclient that MeteoIO needs to compile the plugin.
+* 
 * @subsection WWCS_windows_install Windows
 * First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version, 
 * this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure 
