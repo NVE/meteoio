@@ -104,7 +104,8 @@ namespace mio {
 */
 
 const std::string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
-const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM meteoseries WHERE loggerID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
+const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
+
 
 //the Mysql types matching the MySQLQueryMeteoData above
 std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
@@ -251,7 +252,6 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	
 	const StationData sd( vecStationMetaData[stationindex] );
 	const std::string stationID( sd.getStationID() );
-	//const std::string stationID( "98:f4:ab:39:96:90" ); //HACK for debuging since we don't have the view yet
 	std::vector<mysql_wrp::fType> params_fields{ mysql_wrp::fType(stationID), mysql_wrp::fType(dateStart), mysql_wrp::fType(dateEnd)};
 	mysql_wrp::bindParams(&stmt, params_fields);
 	

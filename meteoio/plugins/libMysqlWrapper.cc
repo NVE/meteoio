@@ -52,7 +52,7 @@ MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& query, const long unsigne
 	if (!stmt) throw IOException("Could not allocate memory for mysql statement", AT);
 
 	if (mysql_stmt_prepare(stmt, query.c_str(), query.size())) {
-		throw IOException("Error preparing mysql statement", AT);
+		throw IOException("Error preparing mysql statement, please check for syntax and typos in field names", AT);
 	} else {
 		const long unsigned int param_count = mysql_stmt_param_count(stmt);
 		if (param_count!=ref_param_count) throw InvalidArgumentException("Wrong number of parameters in mysql statement", AT);
