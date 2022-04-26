@@ -24,6 +24,85 @@
 using namespace std;
 using namespace mio;
 
+
+SQL_FIELD::SQL_FIELD() : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_NULL) 
+{}
+
+SQL_FIELD::SQL_FIELD(const enum_field_types &type) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(type) 
+{}
+
+SQL_FIELD::SQL_FIELD(const std::string& i_str) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_STRING) 
+{
+	setString(i_str);
+}
+
+SQL_FIELD::SQL_FIELD(const mio::Date& i_dt) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_DATETIME) 
+{
+	setFromDate(i_dt, dt);
+}
+
+void SQL_FIELD::resetDate() 
+{
+	dt.year=0; 
+	dt.month=0; 
+	dt.day=0; 
+	dt.hour=0; 
+	dt.minute=0; 
+	dt.second=0; 
+	dt.second_part=0;
+}
+
+void SQL_FIELD::reset() 
+{
+	str[0]='\0'; 
+	resetDate(); 
+	str_len=0; 
+	val=mio::IOUtils::nodata; 
+	MysqlType=MYSQL_TYPE_NULL;
+}
+
+void SQL_FIELD::setFromDate(const mio::Date& i_dt, MYSQL_TIME &ts) 
+{ 
+	int year, month, day, hour, minute; 
+	double second;
+	i_dt.getDate(year, month, day, hour, minute, second);
+	
+	ts.year = static_cast<unsigned int>( year );
+	ts.month = static_cast<unsigned int>( month );
+	ts.day = static_cast<unsigned int>( day );
+	ts.hour = static_cast<unsigned int>( hour );
+	ts.minute = static_cast<unsigned int>( minute );
+	ts.second = static_cast<unsigned int>( floor(second) );
+	ts.second_part = static_cast<unsigned long int>( floor((second - floor(second))*1e6) );
+}
+
+void SQL_FIELD::setString(const std::string& i_str) 
+{
+	reset(); 
+	strncpy(str, i_str.c_str(), std::min(static_cast<int>(i_str.size()), STRING_SIZE)); 
+	str_len=strlen(str); 
+	MysqlType=MYSQL_TYPE_STRING;
+}
+
+void SQL_FIELD::setDate(const mio::Date& i_dt) 
+{
+	reset(); 
+	setFromDate(i_dt, dt); 
+	MysqlType=MYSQL_TYPE_DATETIME;
+}
+
+void SQL_FIELD::setDouble(const double& i_val) 
+{
+	reset(); 
+	val=i_val; 
+	MysqlType=MYSQL_TYPE_DOUBLE;
+}
+
+mio::Date SQL_FIELD::getDate(const double& TZ) const 
+{
+	mio::Date o_dt(static_cast<int>(dt.year), static_cast<int>(dt.month), static_cast<int>(dt.day), static_cast<int>(dt.hour), static_cast<int>(dt.minute), static_cast<double>(dt.second)+static_cast<double>(dt.second_part)*1e-6, TZ); return o_dt;
+}
+
 namespace mysql_wrp {
 
 MYSQL* initMysql(const std::string& mysqlhost, const std::string& mysqluser, const std::string& mysqlpass, const std::string& mysqldb, const unsigned int& options)
@@ -61,7 +140,7 @@ MYSQL_STMT* initStmt(MYSQL **mysql, const std::string& query, const long unsigne
 	return stmt;
 }
 
-void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
+void bindParams(MYSQL_STMT **stmt, std::vector<SQL_FIELD> &params_fields)
 {
 	const size_t params_count = params_fields.size();
 	MYSQL_BIND *stmtParams = (MYSQL_BIND*)calloc(params_count, sizeof(MYSQL_BIND));
@@ -73,7 +152,7 @@ void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
 		
 		if (params_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
 			stmtParams[ii].buffer = (char *)params_fields[ii].str;
-			stmtParams[ii].buffer_length = STRING_SIZE;
+			stmtParams[ii].buffer_length = SQL_FIELD::STRING_SIZE;
 			stmtParams[ii].length = &params_fields[ii].str_len;
 		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
 			stmtParams[ii].buffer = (char *)&params_fields[ii].val;
@@ -89,7 +168,7 @@ void bindParams(MYSQL_STMT **stmt, std::vector<fType> &params_fields)
 	free( stmtParams );
 }
 
-void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
+void bindResults(MYSQL_STMT **stmt, std::vector<SQL_FIELD> &result_fields)
 {
 	MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(*stmt);
 	if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
@@ -104,7 +183,7 @@ void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
 		result[ii].buffer_type = result_fields[ii].MysqlType;
 		if (result_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
 			result[ii].buffer = (char *)result_fields[ii].str;
-			result[ii].buffer_length = STRING_SIZE;
+			result[ii].buffer_length = SQL_FIELD::STRING_SIZE;
 		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
 			result[ii].buffer_type = MYSQL_TYPE_DOUBLE;
 			result[ii].buffer = (char *)&result_fields[ii].val;
@@ -123,13 +202,13 @@ void bindResults(MYSQL_STMT **stmt, std::vector<fType> &result_fields)
 	free( result );
 }
 
-double retrieveData(const fType &field, const unsigned int& conversion)
+double retrieveData(const SQL_FIELD &field, const unsigned int& conversion)
 {
 	const double val = field.val;
 	if (field.is_null==1) return IOUtils::nodata;
 	
-	if (conversion==C_TO_K) return IOUtils::C_TO_K( val );
-	if (conversion==NORMALIZE_PC || conversion==CM_TO_M) return val / 100.;
+	if (conversion==SQL_FIELD::C_TO_K) return IOUtils::C_TO_K( val );
+	if (conversion==SQL_FIELD::NORMALIZE_PC || conversion==SQL_FIELD::CM_TO_M) return val / 100.;
 	
 	return val;
 }

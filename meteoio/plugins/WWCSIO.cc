@@ -17,13 +17,12 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/WWCSIO.h>
-#include <meteoio/plugins/libMysqlWrapper.h>
+#include <meteoio/plugins/libMysqlWrapper.h> //this includes mysql.h
 
 #ifdef _WIN32
 	#include <winsock.h>
 #endif // _WIN32
 
-#include <mysql.h>
 #include <stdio.h>
 #include <algorithm>
 
@@ -108,9 +107,9 @@ const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, lo
 
 
 //the Mysql types matching the MySQLQueryMeteoData above
-std::vector<mysql_wrp::fType> result_fields{ mysql_wrp::fType(MYSQL_TYPE_DATETIME), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
+std::vector<SQL_FIELD> result_fields{ SQL_FIELD(MYSQL_TYPE_DATETIME), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE) };
 //the MeteoIO meteo fields matching the MySQLQueryMeteoData and the result_fields above
-const std::vector< WWCSIO::db_field > WWCSIO::meteoFields{ WWCSIO::db_field("DATETIME"), WWCSIO::db_field("TA", mysql_wrp::C_TO_K), WWCSIO::db_field("RH", mysql_wrp::NORMALIZE_PC), WWCSIO::db_field("P"), WWCSIO::db_field("LOGGER_TA", mysql_wrp::C_TO_K), WWCSIO::db_field("LOGGER_RH", mysql_wrp::NORMALIZE_PC) };
+const std::vector< WWCSIO::db_field > WWCSIO::meteoFields{ WWCSIO::db_field("DATETIME"), WWCSIO::db_field("TA", SQL_FIELD::C_TO_K), WWCSIO::db_field("RH", SQL_FIELD::NORMALIZE_PC), WWCSIO::db_field("P"), WWCSIO::db_field("LOGGER_TA", SQL_FIELD::C_TO_K), WWCSIO::db_field("LOGGER_RH", SQL_FIELD::NORMALIZE_PC) };
 
 const size_t WWCSIO::nrMeteoFields( WWCSIO::meteoFields.size() );
 
@@ -179,11 +178,11 @@ void WWCSIO::readStationMetaData()
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
-	std::vector<mysql_wrp::fType> meta_result_fields{ mysql_wrp::fType(MYSQL_TYPE_STRING), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE), mysql_wrp::fType(MYSQL_TYPE_DOUBLE) };
+	std::vector<SQL_FIELD> meta_result_fields{ SQL_FIELD(MYSQL_TYPE_STRING), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE) };
 	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		const std::string stationID( vecStationID[ii] );
-		std::vector<mysql_wrp::fType> params_fields{ mysql_wrp::fType(stationID)};
+		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID)};
 		mysql_wrp::bindParams(&stmt, params_fields);
 		
 		if (mysql_stmt_execute(stmt)) {
@@ -252,7 +251,7 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	
 	const StationData sd( vecStationMetaData[stationindex] );
 	const std::string stationID( sd.getStationID() );
-	std::vector<mysql_wrp::fType> params_fields{ mysql_wrp::fType(stationID), mysql_wrp::fType(dateStart), mysql_wrp::fType(dateEnd)};
+	std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID), SQL_FIELD(dateStart), SQL_FIELD(dateEnd)};
 	mysql_wrp::bindParams(&stmt, params_fields);
 	
 	if (mysql_stmt_execute(stmt)) {
