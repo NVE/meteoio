@@ -102,10 +102,15 @@ namespace mio {
 * 
 */
 
+//the order of the parameters is given, the only flexibility is that (slope, azi) is optional
 const std::string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?";
+std::vector<SQL_FIELD> meta_result_fields{ SQL_FIELD(MYSQL_TYPE_STRING), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE) };
+const std::vector< WWCSIO::db_field > WWCSIO::metadata_results{ WWCSIO::db_field("STATNAME"), WWCSIO::db_field("LAT"), WWCSIO::db_field("LON"), WWCSIO::db_field("ALT"), WWCSIO::db_field("SLOPE"), WWCSIO::db_field("AZI") };
+
+const size_t WWCSIO::nrMetadataFields( WWCSIO::metadata_results.size() );
+
+
 const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
-
-
 //the Mysql types matching the MySQLQueryMeteoData above
 std::vector<SQL_FIELD> result_fields{ SQL_FIELD(MYSQL_TYPE_DATETIME), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE) };
 //the MeteoIO meteo fields matching the MySQLQueryMeteoData and the result_fields above
@@ -178,11 +183,10 @@ void WWCSIO::readStationMetaData()
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
-	std::vector<SQL_FIELD> meta_result_fields{ SQL_FIELD(MYSQL_TYPE_STRING), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE), SQL_FIELD(MYSQL_TYPE_DOUBLE) };
 	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		const std::string stationID( vecStationID[ii] );
-		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID)};
+		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID) };
 		mysql_wrp::bindParams(&stmt, params_fields);
 		
 		if (mysql_stmt_execute(stmt)) {
@@ -196,7 +200,7 @@ void WWCSIO::readStationMetaData()
 			Coords location(coordin,coordinparam);
 			location.setLatLon(meta_result_fields[1].val, meta_result_fields[2].val, meta_result_fields[3].val);
 			StationData sd(location, stationID, station_name);
-			sd.setSlope(meta_result_fields[4].val, meta_result_fields[5].val);
+			if (nrMetadataFields==6) sd.setSlope(meta_result_fields[4].val, meta_result_fields[5].val);
 			vecStationMetaData.push_back( sd );
 		}
 	}

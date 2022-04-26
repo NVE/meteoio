@@ -66,12 +66,12 @@ class WWCSIO : public IOInterface {
 		std::string mysqlhost, mysqldb, mysqluser, mysqlpass;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
-		static const size_t nrMeteoFields;
+		static const size_t nrMetadataFields, nrMeteoFields;
 		unsigned int mysql_options;
 
 		static const std::string MySQLQueryStationMetaData;
 		static const std::string MySQLQueryMeteoData;
-		static const std::vector< db_field > meteoFields;
+		static const std::vector< db_field > metadata_results, meteoFields;
 };
 
 } //namespace

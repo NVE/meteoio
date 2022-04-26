@@ -25,8 +25,7 @@ using namespace std;
 using namespace mio;
 
 
-SQL_FIELD::SQL_FIELD() : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_NULL) 
-{}
+//SQL_FIELD::SQL_FIELD() : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_NULL) {}
 
 SQL_FIELD::SQL_FIELD(const enum_field_types &type) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(type) 
 {}
