@@ -24,18 +24,15 @@ build:
   artifacts:
     paths:
       - build
-      # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-      # cache:
-      #   paths:
-      #     - "*.o"
+      - tests
 
 # run tests using the binary built before
 test:
   stage: test
   before_script:
-    - export PATH="$PWD/build:$PATH"
+    - apt -y install numdiff
+    - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
   script:
-    - MIO_ROOT=`pwd`
-    - echo "Starting MeteoIO testing"
-    - make distclean
-    - /usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptCoverage.cmake -V
+    - cd tests/sun
+    - ./sun.sh
+
