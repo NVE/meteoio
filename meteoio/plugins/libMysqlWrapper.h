@@ -45,10 +45,9 @@ class SQL_FIELD {
 			NORMALIZE_PC
 		};
 	
-		SQL_FIELD();
-		SQL_FIELD(const enum_field_types &type);
-		SQL_FIELD(const std::string& i_str);
-		SQL_FIELD(const mio::Date& i_dt);
+		SQL_FIELD(const std::string& i_param, const enum_field_types &type, const unsigned int &i_processing=0);
+		SQL_FIELD(const std::string& i_str, const std::string& i_param="", const unsigned int &i_processing=0);
+		SQL_FIELD(const mio::Date& i_dt, const std::string& i_param="", const unsigned int &i_processing=0);
 		
 		void resetDate();
 		void reset();
@@ -58,15 +57,15 @@ class SQL_FIELD {
 		void setDouble(const double& i_val);
 		mio::Date getDate(const double& TZ) const;
 		
-		//const std::string param;
+		const std::string param;
 		char str[STRING_SIZE];
 		MYSQL_TIME dt;
 		unsigned long int str_len;
 		unsigned long int buffer_len; //reserved for mysql
 		double val;
-		//const unsigned int processing;
+		const unsigned int processing;
 		BOOL_TYPE is_null, error;
-		//const bool isDate;
+		const bool isDate;
 		enum_field_types MysqlType; //see mysql/field_types.h
 };
 

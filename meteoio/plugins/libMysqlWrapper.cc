@@ -24,18 +24,15 @@
 using namespace std;
 using namespace mio;
 
-
-//SQL_FIELD::SQL_FIELD() : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_NULL) {}
-
-SQL_FIELD::SQL_FIELD(const enum_field_types &type) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(type) 
+SQL_FIELD::SQL_FIELD(const std::string& i_param, const enum_field_types &type, const unsigned int &i_processing) : param(i_param), str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), processing( i_processing ), is_null(false), error(false), isDate(param=="DATETIME"), MysqlType(type) 
 {}
 
-SQL_FIELD::SQL_FIELD(const std::string& i_str) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_STRING) 
+SQL_FIELD::SQL_FIELD(const std::string& i_str, const std::string& i_param, const unsigned int &i_processing) : param(i_param), str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), processing( i_processing ), is_null(false), error(false), isDate(param=="DATETIME"), MysqlType(MYSQL_TYPE_STRING) 
 {
 	setString(i_str);
 }
 
-SQL_FIELD::SQL_FIELD(const mio::Date& i_dt) : str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), is_null(false), error(false), MysqlType(MYSQL_TYPE_DATETIME) 
+SQL_FIELD::SQL_FIELD(const mio::Date& i_dt, const std::string& i_param, const unsigned int &i_processing) : param(i_param), str(""), dt(), str_len(0), buffer_len(0), val(mio::IOUtils::nodata), processing( i_processing ), is_null(false), error(false), isDate(param=="DATETIME"), MysqlType(MYSQL_TYPE_DATETIME) 
 {
 	setFromDate(i_dt, dt);
 }
