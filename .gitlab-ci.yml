@@ -52,7 +52,7 @@ dem_reading:
   stage: test
   script:
     - cd tests/2D_interpolations
-    - ./2D_interpolations
+    - ./2D_interpolations 2009-01-19T12:00
 
 arrays:
   stage: test
