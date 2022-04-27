@@ -7,7 +7,7 @@ stages:
   - test_coverage
 
 before_script:
-  - apt update && apt -y install cmake numdiff
+  - apt-get update && apt-get -y install cmake numdiff
   - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
 
 build:
