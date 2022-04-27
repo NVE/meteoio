@@ -10,12 +10,11 @@
 
 image: gcc
 
+before_script:
+  - apt update && apt -y install cmake numdiff
+
 build:
   stage: build
-  # instead of calling g++ directly you can also use some build toolkit like make
-  # install the necessary build tools when needed
-  before_script:
-    - apt update && apt -y install cmake
   script:
     - mkdir build
     - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON
@@ -29,10 +28,7 @@ build:
 # run tests using the binary built before
 test:
   stage: test
-  before_script:
-    - apt -y install numdiff
-    - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
   script:
+    - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
     - cd tests/sun
     - ./sun.sh
-
