@@ -57,16 +57,17 @@ class SQL_FIELD {
 		void setDouble(const double& i_val);
 		mio::Date getDate(const double& TZ) const;
 		
-		const std::string param;
-		char str[STRING_SIZE];
-		MYSQL_TIME dt;
-		unsigned long int str_len;
-		unsigned long int buffer_len; //reserved for mysql
-		double val;
-		const unsigned int processing;
-		BOOL_TYPE is_null, error;
-		const bool isDate;
-		enum_field_types MysqlType; //see mysql/field_types.h
+		//several members could be const, but we need a working '=' operator in the plugin for easier code...
+		std::string param;	///< the parameter name for MeteoIO
+		char str[STRING_SIZE];		///< for MySQL to store string data
+		MYSQL_TIME dt;				///< for MySQL to store datetime data
+		unsigned long int str_len;	///< for MySQL, length of a string
+		unsigned long int buffer_len; ///< for MySQL, allocated data buffer length
+		double val;					///< for MySQL to store double data
+		unsigned int processing; ///< what kind of corrections to apply to the raw data (such as C to K conversion, etc
+		BOOL_TYPE is_null, error;	///< for MySQL ro report a NULL value or errors
+		bool isDate;			///< for MeteoIO to quickly identify datetime fields
+		enum_field_types MysqlType; ///< for MySQL, data type of the field (see mysql/field_types.h)
 };
 
 namespace mysql_wrp {

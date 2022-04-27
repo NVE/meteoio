@@ -57,9 +57,6 @@ class WWCSIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
 		unsigned int mysql_options;
-
-		static const std::string MySQLQueryStationMetaData;
-		static const std::string MySQLQueryMeteoData;
 };
 
 } //namespace

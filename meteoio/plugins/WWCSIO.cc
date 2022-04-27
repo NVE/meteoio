@@ -80,6 +80,7 @@ namespace mio {
 * - WWCS_DB: MySQL Database (e.g. wwcs); [Input] section
 * - WWCS_USER: MySQL User Name (e.g. wwcs); [Input] section
 * - WWCS_PASS: MySQL password; [Input] section
+* - WWCS_PROFILE: which database profile to use. Currently supported: WWCS. [Input] section
 * - STATION#: station code for the given number #; [Input] section
 * 
 * Example configuration:
@@ -93,6 +94,7 @@ namespace mio {
 * WWCS_DB   = wwcs
 * WWCS_USER = wwcs
 * WWCS_PASS = XXX
+* WWCS_PROFILE = WWCS
 * 
 * STATION1  = SLF01
 * STATION2  = WWCS_BAL01
@@ -104,19 +106,27 @@ namespace mio {
 
 /* the metadata query and the meteodata queries must be defined as follow: 
  *    - the query itself is a string with the marker <i>?</i> used as placeholder for parameters that will be bound when preparing the query;
- *    - the parsing of the query result is defined by the vector that follows the query. It must provide the MySQL data type as well as a string that describes 
- * what MeteoIO should do with the resulting field.
+ *    - the parsing of the query result is defined by the parsing specification vector that follows the query. It must provide 
+ * the MySQL data type as well as a string that describes what MeteoIO should do with the resulting field.
  * 
  * The following field are specialy handled: STATNAME, LAT, LON, ALT, SLOPE, AZI, DATETIME. All other fields will be directly used as filed names in the 
- * populated MeteData object (fields not already existing will be created as needed).
+ * populated MeteData object (fields not already existing will be created as needed). 
+ * 
+ * In order to support multiple kind of queries, there is the concept of profile. A profile is a set of metadata and meteodata queries together 
+ * with the parsing specifications vectors. In order to add a new profile, simply provide the queries and parsing specifications vectors, define a 
+ * profile name (add it to the documentation) and attribute the profile to the template queries and parsing specifications in WWCSIO::readConfig().
+ * 
+ * The architecture is a little suprising (relying on file-scope variables) in order to avoid exposing <mysql.h> content to the rest of MeteoIO
+ * as this file does not wrap its content in a namespace and therefore would pollute everything else with its definitions.
 */
-const std::string WWCSIO::MySQLQueryStationMetaData = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?"; //this query is supposed to only take the stationID as parameter (for now)
-std::vector<SQL_FIELD> metadata_results{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE), SQL_FIELD("SLOPE", MYSQL_TYPE_DOUBLE), SQL_FIELD("AZI", MYSQL_TYPE_DOUBLE) };
+const std::string WWCS_metaDataQuery = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?"; //this query is supposed to only take the stationID as parameter (for now)
+const std::vector<SQL_FIELD> WWCS_metaDataFields{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE), SQL_FIELD("SLOPE", MYSQL_TYPE_DOUBLE), SQL_FIELD("AZI", MYSQL_TYPE_DOUBLE) };
+const std::string WWCS_meteoDataQuery = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
+const std::vector<SQL_FIELD> WWCS_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("P", MYSQL_TYPE_DOUBLE), SQL_FIELD("LOGGER_TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("LOGGER_RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC) };
 
-const std::string WWCSIO::MySQLQueryMeteoData = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
-std::vector<SQL_FIELD> meteoFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("P", MYSQL_TYPE_DOUBLE), SQL_FIELD("LOGGER_TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("LOGGER_RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC) };
-
-
+//template queries and parsing specification vectors
+std::string metaDataQuery, meteoDataQuery;
+std::vector<SQL_FIELD> metaDataFields, meteoDataFields;
 
 WWCSIO::WWCSIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
@@ -147,6 +157,17 @@ void WWCSIO::readConfig()
 	cfg.getValue("WWCS_DB", "Input", mysqldb);
 	cfg.getValue("WWCS_USER", "Input", mysqluser);
 	cfg.getValue("WWCS_PASS", "Input", mysqlpass);
+	
+	std::string profile = cfg.get("WWCS_PROFILE", "Input");
+	IOUtils::toUpper( profile );
+	if (profile=="WWCS") {
+		metaDataQuery = WWCS_metaDataQuery;
+		meteoDataQuery = WWCS_meteoDataQuery;
+		metaDataFields = WWCS_metaDataFields;
+		meteoDataFields = WWCS_meteoDataFields;
+	} else {
+		throw InvalidArgumentException("Unknown profile '"+profile+"' selected for the MySQL plugin", AT);
+	}
 }
 
 /**
@@ -172,12 +193,12 @@ std::vector<std::string> WWCSIO::readStationIDs() const
 */
 void WWCSIO::readStationMetaData()
 {
-	const size_t nrMetadataFields( metadata_results.size() ); //this is given by the metadata parsing vector metadata_results
+	const size_t nrMetadataFields( metaDataFields.size() ); //this is given by the metadata parsing vector metaDataFields
 	vecStationMetaData.clear();
 	const std::vector<std::string> vecStationID( readStationIDs() );
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
-	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryStationMetaData, 1);
+	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, metaDataQuery, 1);
 	
 	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		const std::string stationID( vecStationID[ii] );
@@ -187,7 +208,7 @@ void WWCSIO::readStationMetaData()
 		if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else { //retrieve results
-			mysql_wrp::bindResults(&stmt, metadata_results);
+			mysql_wrp::bindResults(&stmt, metaDataFields);
 			if (mysql_stmt_num_rows(stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
 			mysql_stmt_fetch(stmt); //we only have one result, see check above
 			
@@ -195,12 +216,12 @@ void WWCSIO::readStationMetaData()
 			std::string station_name;
 			double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope=IOUtils::nodata, azi=IOUtils::nodata;
 			for (size_t ii=0; ii<nrMetadataFields; ++ii) {
-				if (metadata_results[ii].param=="STATNAME") station_name = metadata_results[ii].str;
-				else if (metadata_results[ii].param=="LAT") lat = metadata_results[ii].val;
-				else if (metadata_results[ii].param=="LON") lon = metadata_results[ii].val;
-				else if (metadata_results[ii].param=="ALT") alt = metadata_results[ii].val;
-				else if (metadata_results[ii].param=="SLOPE") slope = metadata_results[ii].val;
-				else if (metadata_results[ii].param=="AZI") azi = metadata_results[ii].val;
+				if (metaDataFields[ii].param=="STATNAME") station_name = metaDataFields[ii].str;
+				else if (metaDataFields[ii].param=="LAT") lat = metaDataFields[ii].val;
+				else if (metaDataFields[ii].param=="LON") lon = metaDataFields[ii].val;
+				else if (metaDataFields[ii].param=="ALT") alt = metaDataFields[ii].val;
+				else if (metaDataFields[ii].param=="SLOPE") slope = metaDataFields[ii].val;
+				else if (metaDataFields[ii].param=="AZI") azi = metaDataFields[ii].val;
 			}
 			
 			Coords location(coordin,coordinparam);
@@ -250,7 +271,7 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                        const size_t& stationindex) const
 {
-	const size_t nrMeteoFields( meteoFields.size() ); //this is given by the meteodata parsing vector meteoFields
+	const size_t nrMeteoFields( meteoDataFields.size() ); //this is given by the meteodata parsing vector meteoDataFields
 	vecMeteo.at(stationindex).clear();
 
 	Date dateS(dateStart), dateE(dateEnd);
@@ -258,7 +279,7 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	dateE.setTimeZone(in_dflt_TZ);
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
-	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, MySQLQueryMeteoData, 3);
+	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, meteoDataQuery, 3);
 	
 	const StationData sd( vecStationMetaData[stationindex] );
 	const std::string stationID( sd.getStationID() );
@@ -268,13 +289,13 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	if (mysql_stmt_execute(stmt)) {
 		throw IOException("Error executing statement", AT);
 	} else { //retrieve results
-		mysql_wrp::bindResults(&stmt, meteoFields);
+		mysql_wrp::bindResults(&stmt, meteoDataFields);
 		
 		//create the MeteoData template
 		MeteoData md(sd);
 		for (size_t ii=0; ii<nrMeteoFields; ++ii) {
-			if (meteoFields[ii].isDate) continue;
-			if (!md.param_exists(meteoFields[ii].param)) md.addParameter(meteoFields[ii].param);
+			if (meteoDataFields[ii].isDate) continue;
+			if (!md.param_exists(meteoDataFields[ii].param)) md.addParameter(meteoDataFields[ii].param);
 		}
 		
 		do {
@@ -287,12 +308,12 @@ void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 			
 			//loop over all fields that we should find
 			for (size_t ii=0; ii<nrMeteoFields; ++ii) {
-				if (meteoFields[ii].isDate) {
-					md.setDate( meteoFields[ii].getDate(in_dflt_TZ) ); //get from Mysql without TZ, set it to input TZ
+				if (meteoDataFields[ii].isDate) {
+					md.setDate( meteoDataFields[ii].getDate(in_dflt_TZ) ); //get from Mysql without TZ, set it to input TZ
 					md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
 					continue;
 				} else {
-					md( meteoFields[ii].param ) = mysql_wrp::retrieveData(meteoFields[ii], meteoFields[ii].processing);
+					md( meteoDataFields[ii].param ) = mysql_wrp::retrieveData(meteoDataFields[ii], meteoDataFields[ii].processing);
 				}
 			}
 			
