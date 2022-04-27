@@ -18,7 +18,7 @@ ELSE(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 # go back to the source dir to have all .h files as would be installed
-INCLUDE_DIRECTORIES(../build)
+INCLUDE_DIRECTORIES(../)
 
 ###################
 ## Add Tests     ##

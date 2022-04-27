@@ -17,7 +17,7 @@ build:
   stage: build
   script:
     - mkdir build
-    - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON
+    - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
     - make
     - make install
   artifacts:
@@ -31,4 +31,5 @@ test:
   script:
     - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
     - cd tests/sun
-    - ./sun.sh
+    - ./sun
+    - numdiff -r 1e-4 ref_output.txt curr_output.txt
