@@ -1,6 +1,11 @@
 # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
 image: gcc
 
+stages:
+  - build
+  - test
+  - test_coverage
+
 before_script:
   - apt update && apt -y install cmake numdiff
   - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
@@ -9,7 +14,7 @@ build:
   stage: build
   script:
     - mkdir build
-    - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
+    - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON
     - make
     - make install
   artifacts:
@@ -71,3 +76,8 @@ stats:
   script:
     - cd tests/stats
     - ./stats
+
+test_coverage:
+  stage: test_coverage
+  script:
+    - ctest && ctest -D NightlyCoverage
