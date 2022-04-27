@@ -23,7 +23,7 @@ INCLUDE_DIRECTORIES(../)
 ###################
 ## Add Tests     ##
 ###################
-#ADD_SUBDIRECTORY(meteo_reading_interpol)
+ADD_SUBDIRECTORY(meteo_reading_interpol)
 #ADD_SUBDIRECTORY(meteo_reading_no_interpol)
 #ADD_SUBDIRECTORY(dataEditing)
 ADD_SUBDIRECTORY(sun)

@@ -1,17 +1,9 @@
-# This file is a template, and might need editing before it works on your project.
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
-
-# use the official gcc image, based on debian
-# can use versions as well, like gcc:5.2
-# see https://hub.docker.com/_/gcc/
-
+# official gcc image, based on debian, see https://hub.docker.com/_/gcc/
 image: gcc
 
 before_script:
   - apt update && apt -y install cmake numdiff
+  - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
 
 build:
   stage: build
@@ -25,11 +17,15 @@ build:
       - build
       - tests
 
-# run tests using the binary built before
-test:
+meteo_reading_interpol:
   stage: test
   script:
-    - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
+    - cd tests/meteo_reading_interpol
+    - ./meteo_reading_int
+
+sun:
+  stage: test
+  script:
     - cd tests/sun
     - ./sun
     - numdiff -r 1e-4 ref_output.txt curr_output.txt
