@@ -40,6 +40,7 @@
 #cmakedefine PLUGIN_GRIBIO
 #cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_METEOBLUE
+#cmakedefine PLUGIN_MYSQLIO
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_PGMIO
@@ -49,7 +50,6 @@
 #cmakedefine PLUGIN_SASEIO
 #cmakedefine PLUGIN_SMETIO
 #cmakedefine PLUGIN_SNIO
-#cmakedefine PLUGIN_WWCSIO
 #cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
@@ -86,6 +86,10 @@
 #include <meteoio/plugins/MeteoBlue.h>
 #endif
 
+#ifdef PLUGIN_MYSQLIO
+#include <meteoio/plugins/MySQLIO.h>
+#endif
+
 #ifdef PLUGIN_NETCDFIO
 #include <meteoio/plugins/NetCDFIO.h>
 #endif
@@ -108,10 +112,6 @@
 
 #ifdef PLUGIN_SASEIO
 #include <meteoio/plugins/SASEIO.h>
-#endif
-
-#ifdef PLUGIN_WWCSIO
-#include <meteoio/plugins/WWCSIO.h>
 #endif
 
 #ifdef PLUGIN_ZRXPIO
@@ -165,6 +165,7 @@ namespace mio {
  * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
+* <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
@@ -174,7 +175,6 @@ namespace mio {
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>meteo</td>		<td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>meteo</td>		<td>original SNOWPACK meteo files</td><td></td></tr>
- * <tr><td>\subpage wwcs "WWCS"</td><td>meteo</td><td></td>		<td>connects to the Water, Weather and Climate Services (WWCS) MySql database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage zrxpio "ZRXP"</td><td></td><td>meteo</td>		<td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
@@ -208,14 +208,23 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_ARGOSIO
 	if (plugin_name == "ARGOS") return new ArgosIO(i_cfg);
 #endif
+	#ifdef PLUGIN_ARPSIO
+	if (plugin_name == "ARPS") return new ARPSIO(i_cfg);
+#endif
 #ifdef PLUGIN_A3DIO
 	if (plugin_name == "A3D") return new A3DIO(i_cfg);
 #endif
-#ifdef PLUGIN_ARPSIO
-	if (plugin_name == "ARPS") return new ARPSIO(i_cfg);
+#ifdef PLUGIN_COSMOXMLIO
+	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
 #endif
 #ifdef PLUGIN_CSVIO
 	if (plugin_name == "CSV") return new CsvIO(i_cfg);
+#endif
+	#ifdef PLUGIN_DBO
+	if (plugin_name == "DBO") return new DBO(i_cfg);
+#endif
+#ifdef PLUGIN_GEOTOPIO
+	if (plugin_name == "GEOTOP") return new GeotopIO(i_cfg);
 #endif
 #ifdef PLUGIN_GOESIO
 	if (plugin_name == "GOES") return new GoesIO(i_cfg);
@@ -223,26 +232,26 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_GRASSIO
 	if (plugin_name == "GRASS") return new GrassIO(i_cfg);
 #endif
-#ifdef PLUGIN_GEOTOPIO
-	if (plugin_name == "GEOTOP") return new GeotopIO(i_cfg);
-#endif
-#ifdef PLUGIN_SMETIO
-	if (plugin_name == "SMET") return new SMETIO(i_cfg);
-#endif
-#ifdef PLUGIN_SNIO
-	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
-#endif
-#ifdef PLUGIN_PGMIO
-	if (plugin_name == "PGM") return new PGMIO(i_cfg);
+#ifdef PLUGIN_GRIBIO
+	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
 #endif
 #ifdef PLUGIN_IMISIO
 	if (plugin_name == "IMIS") return new ImisIO(i_cfg);
 #endif
+#ifdef PLUGIN_METEOBLUE
+	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
+#endif
+#ifdef PLUGIN_MYSQLIO
+	if (plugin_name == "MYSQL") return new MYSQLIO(i_cfg);
+#endif
+#ifdef PLUGIN_NETCDFIO
+	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
+#endif
 #ifdef PLUGIN_OSHDIO
 	if (plugin_name == "OSHD") return new OshdIO(i_cfg);
 #endif
-#ifdef PLUGIN_GRIBIO
-	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
+#ifdef PLUGIN_PGMIO
+	if (plugin_name == "PGM") return new PGMIO(i_cfg);
 #endif
 #ifdef PLUGIN_PMODIO
 	if (plugin_name == "PMOD") return new PmodIO(cfg);
@@ -250,26 +259,17 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_PNGIO
 	if (plugin_name == "PNG") return new PNGIO(i_cfg);
 #endif
-#ifdef PLUGIN_COSMOXMLIO
-	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
-#endif
-#ifdef PLUGIN_DBO
-	if (plugin_name == "DBO") return new DBO(i_cfg);
-#endif
-#ifdef PLUGIN_METEOBLUE
-	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
-#endif
-#ifdef PLUGIN_NETCDFIO
-	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
-#endif
 #ifdef PLUGIN_PSQLIO
 	if (plugin_name == "PSQL") return new PSQLIO(i_cfg);
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(i_cfg);
 #endif
-#ifdef PLUGIN_WWCSIO
-	if (plugin_name == "WWCS") return new WWCSIO(i_cfg);
+#ifdef PLUGIN_SMETIO
+	if (plugin_name == "SMET") return new SMETIO(i_cfg);
+#endif
+#ifdef PLUGIN_SNIO
+	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
 #endif
 #ifdef PLUGIN_ZRXPIO
 	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);

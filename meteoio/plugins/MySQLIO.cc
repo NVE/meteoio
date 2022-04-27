@@ -16,7 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/plugins/WWCSIO.h>
+#include <meteoio/plugins/MySQLIO.h>
 #include <meteoio/plugins/libMysqlWrapper.h> //this includes mysql.h
 
 #ifdef _WIN32
@@ -30,22 +30,24 @@ using namespace std;
 
 namespace mio {
 /**
-* @page wwcs WWCSIO
-* @section WWCS_format Format
-* This is the plugin required to get meteorological data from the WWCS MySQL database. The connection 
+* @page mysql MYSQLIO
+* @section mysql_format Format
+* This is the plugin required to get meteorological data from MySQL databases. The connection 
 * to the database is encrypted (with SSL) and compressed (with zlib) if supported by the server.
+* It supports multiple data schemas on the MySQL database engine, allowing to use the same plugin for
+* several data providers.
 * 
-* @section WWCS_dependencies Plugin dependencies and compilation
+* @section mysql_dependencies Plugin dependencies and compilation
 * This plugin requires the Mysql C API. This must be installed before attempting to compile the plugin. This can be installed
 * from source and recompiled (for example getting it from 
 * <a href="https://mariadb.org/download/?t=connector&p=connector-c&r=3.1.13&os=source">MariaDB</a>) or from precompiled binaries
 * for your plateform.
 * 
-* @subsection WWCS_linux_install Linux
+* @subsection mysql_linux_install Linux
 * On Linux, you need to install the *libmysqlclient-dev* (Debian, Ubuntu) or *mysql-devel* (RedHat, Centos, Fedora, Suse) 
 * package. Then CMake will find it and you'll be able to compile the plugin.
 * 
-* @subsection WWCS_mac_install Mac
+* @subsection mysql_mac_install Mac
 * If you have *brew* on your system, you can simply install the *mysql-connector-c* package from brew and then CMake fill
 * find it and you'll be able to compile the plugin.
 * 
@@ -55,7 +57,7 @@ namespace mio {
 * the installation when the installer tries to configure a MySQL server (as this is not needed and it keeps everything that it has
 * installed so far in place). CMake will then be able to find the libmysqlclient that MeteoIO needs to compile the plugin.
 * 
-* @subsection WWCS_windows_install Windows
+* @subsection mysql_windows_install Windows
 * First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version, 
 * this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure 
 * the server, skip this step.
@@ -64,23 +66,23 @@ namespace mio {
 * library within the *lib* sub-directory. You can then compile the plugin. Please do not forget to copy libmysql.dll as well as 
 * *libcrypto-1_1-x64.dll* and *libssl-1_1-x64.dll* into the bin sub-directory of MeteoIO before running meteoio_timeseries.
 * 
-* @section WWCS_units Units
+* @section mysql_units Units
 * The units are assumed to be the following:
 * - __temperatures__ in celsius
 * - __relative humidity__ in %
 * - __pressures__ in Pa
 *
-* @section WWCS_keywords Keywords
+* @section mysql_keywords Keywords
 * This plugin uses the following keywords:
 * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
 * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
 * - TIME_ZONE: For [Input] and [Output] sections (Input::TIME_ZONE should describe the timezone 
 * of the data in the database while the resulting data will be converted to Output::TIME_ZONE )
-* - WWCS_HOST: MySQL Host Name (e.g. localhost or 191.168.145.20); [Input] section
-* - WWCS_DB: MySQL Database (e.g. wwcs); [Input] section
-* - WWCS_USER: MySQL User Name (e.g. wwcs); [Input] section
-* - WWCS_PASS: MySQL password; [Input] section
-* - WWCS_PROFILE: which database profile to use. Currently supported: WWCS. [Input] section
+* - MYSQL_HOST: MySQL Host Name (e.g. localhost or 191.168.145.20); [Input] section
+* - MYSQL_DB: MySQL Database (e.g. wwcs); [Input] section
+* - MYSQL_USER: MySQL User Name (e.g. wwcs); [Input] section
+* - MYSQL_PASS: MySQL password; [Input] section
+* - MYSQL_SCHEMA: which database schema to use. Currently supported: WWCS. [Input] section
 * - STATION#: station code for the given number #; [Input] section
 * 
 * Example configuration:
@@ -90,34 +92,34 @@ namespace mio {
 * TIME_ZONE = 1
 * 
 * METEO     = WWCS
-* WWCS_HOST = nesthorn.slf.ch
-* WWCS_DB   = wwcs
-* WWCS_USER = wwcs
-* WWCS_PASS = XXX
-* WWCS_PROFILE = WWCS
+* MYSQL_HOST = nesthorn.slf.ch
+* MYSQL_DB   = wwcs
+* MYSQL_USER = wwcs
+* MYSQL_PASS = XXX
+* MYSQL_PROFILE = WWCS
 * 
 * STATION1  = SLF01
 * STATION2  = WWCS_BAL01
 * STATION3  = WWCS_LUC
 * @endcode
 * 
+* @section mysql_new_schemas Developers: adding a new schema
+* A new schema is defined by two queries: one to retrieve the metadata (station's coordinates) and one to retrive the data for 
+* a given station and date range. A profile is thus a set of metadata and meteodata queries together 
+* with the result parsing specifications (defined as a std::vector<SQL_FIELD> ). In order to add a new profile, simply provide the 
+* queries and parsing specifications vectors, define a profile name (add it to the documentation) and attribute the profile 
+* to the generic queries and parsing specifications in MYSQLIO::readConfig().
 * 
-*/
-
-/* the metadata query and the meteodata queries must be defined as follow: 
- *    - the query itself is a string with the marker <i>?</i> used as placeholder for parameters that will be bound when preparing the query;
- *    - the parsing of the query result is defined by the parsing specification vector that follows the query. It must provide 
- * the MySQL data type as well as a string that describes what MeteoIO should do with the resulting field.
- * 
- * The following field are specialy handled: STATNAME, LAT, LON, ALT, SLOPE, AZI, DATETIME. All other fields will be directly used as filed names in the 
- * populated MeteData object (fields not already existing will be created as needed). 
- * 
- * In order to support multiple kind of queries, there is the concept of profile. A profile is a set of metadata and meteodata queries together 
- * with the parsing specifications vectors. In order to add a new profile, simply provide the queries and parsing specifications vectors, define a 
- * profile name (add it to the documentation) and attribute the profile to the template queries and parsing specifications in WWCSIO::readConfig().
- * 
- * The architecture is a little suprising (relying on file-scope variables) in order to avoid exposing <mysql.h> content to the rest of MeteoIO
- * as this file does not wrap its content in a namespace and therefore would pollute everything else with its definitions.
+* The metadata query and the meteodata queries must be defined as follow: 
+*    - the query itself is a string with the marker <i>?</i> used as placeholder for parameters that will be bound when preparing the query;
+*    - the parsing of the query result is defined by the parsing specification vector that follows the query. It must provide 
+* the MySQL data type as well as a string that describes what MeteoIO should do with the resulting field.
+* 
+* In the parsing specifications, the following field are specialy handled: STATNAME, LAT, LON, ALT, SLOPE, AZI, DATETIME. All other 
+* fields will be directly used as filed names in the populated MeteData object (fields not already existing will be created as needed). 
+* 
+* The architecture is a little suprising (relying on file-scope variables) in order to avoid exposing <mysql.h> content to the rest of MeteoIO
+* as this file does not wrap its content in a namespace and therefore would pollute everything else with its definitions.
 */
 const std::string WWCS_metaDataQuery = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?"; //this query is supposed to only take the stationID as parameter (for now)
 const std::vector<SQL_FIELD> WWCS_metaDataFields{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE), SQL_FIELD("SLOPE", MYSQL_TYPE_DOUBLE), SQL_FIELD("AZI", MYSQL_TYPE_DOUBLE) };
@@ -128,7 +130,7 @@ const std::vector<SQL_FIELD> WWCS_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_T
 std::string metaDataQuery, meteoDataQuery;
 std::vector<SQL_FIELD> metaDataFields, meteoDataFields;
 
-WWCSIO::WWCSIO(const std::string& configfile)
+MYSQLIO::MYSQLIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
@@ -138,7 +140,7 @@ WWCSIO::WWCSIO(const std::string& configfile)
 	readConfig();
 }
 
-WWCSIO::WWCSIO(const Config& cfgreader)
+MYSQLIO::MYSQLIO(const Config& cfgreader)
         : cfg(cfgreader), vecStationIDs(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
@@ -148,25 +150,25 @@ WWCSIO::WWCSIO(const Config& cfgreader)
 	readConfig();
 }
 
-void WWCSIO::readConfig()
+void MYSQLIO::readConfig()
 {
 	cfg.getValue("TIME_ZONE","Input", in_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE","Output", out_dflt_TZ, IOUtils::nothrow);
 	
-	cfg.getValue("WWCS_HOST", "Input", mysqlhost);
-	cfg.getValue("WWCS_DB", "Input", mysqldb);
-	cfg.getValue("WWCS_USER", "Input", mysqluser);
-	cfg.getValue("WWCS_PASS", "Input", mysqlpass);
+	cfg.getValue("MYSQL_HOST", "Input", mysqlhost);
+	cfg.getValue("MYSQL_DB", "Input", mysqldb);
+	cfg.getValue("MYSQL_USER", "Input", mysqluser);
+	cfg.getValue("MYSQL_PASS", "Input", mysqlpass);
 	
-	std::string profile = cfg.get("WWCS_PROFILE", "Input");
-	IOUtils::toUpper( profile );
-	if (profile=="WWCS") {
+	std::string schema = cfg.get("MYSQL_SCHEMA", "Input");
+	IOUtils::toUpper( schema );
+	if (schema=="WWCS") {
 		metaDataQuery = WWCS_metaDataQuery;
 		meteoDataQuery = WWCS_meteoDataQuery;
 		metaDataFields = WWCS_metaDataFields;
 		meteoDataFields = WWCS_meteoDataFields;
 	} else {
-		throw InvalidArgumentException("Unknown profile '"+profile+"' selected for the MySQL plugin", AT);
+		throw InvalidArgumentException("Unknown schema '"+schema+"' selected for the MySQL plugin", AT);
 	}
 }
 
@@ -174,13 +176,13 @@ void WWCSIO::readConfig()
 * @brief Build the list of user provided station IDs to read
 * @return list of station IDs
 */
-std::vector<std::string> WWCSIO::readStationIDs() const
+std::vector<std::string> MYSQLIO::readStationIDs() const
 {
 	std::vector<std::string> vecStationID;
 	cfg.getValues("STATION", "INPUT", vecStationID);
 
 	if (vecStationID.empty())
-		cerr << "\tNo stations specified for WWCSIO... is this what you want?\n";
+		cerr << "\tNo stations specified for MYSQLIO... is this what you want?\n";
 	
 	return vecStationID;
 }
@@ -191,7 +193,7 @@ std::vector<std::string> WWCSIO::readStationIDs() const
 * later when reading the meteo data, in order to provide the necessary metadata.
 * The results are stored in the vecStationMetaData member.
 */
-void WWCSIO::readStationMetaData()
+void MYSQLIO::readStationMetaData()
 {
 	const size_t nrMetadataFields( metaDataFields.size() ); //this is given by the metadata parsing vector metaDataFields
 	vecStationMetaData.clear();
@@ -240,7 +242,7 @@ void WWCSIO::readStationMetaData()
 }
 
 //standard call to get the metadata as defined in IOInterface.h
-void WWCSIO::readStationData(const Date&, std::vector<StationData>& vecStation)
+void MYSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 	readStationMetaData(); //reads all the station meta data into the vecStationMetaData (member vector)
@@ -248,7 +250,7 @@ void WWCSIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 }
 
 //standard call to get the meteo data as defined in IOInterface.h
-void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
+void MYSQLIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
                             std::vector<std::vector<MeteoData> >& vecMeteo)
 {
 	if (vecStationMetaData.empty()) readStationMetaData();
@@ -268,7 +270,7 @@ void WWCSIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 * @param[out] vecMeteo vector to store the data for all stations
 * @param[in] stationindex index of the current station of interest in both vecStationMetaData and vecMeteo
 */
-void WWCSIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
+void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                        const size_t& stationindex) const
 {
 	const size_t nrMeteoFields( meteoDataFields.size() ); //this is given by the meteodata parsing vector meteoDataFields

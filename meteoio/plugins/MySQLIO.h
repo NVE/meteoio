@@ -16,8 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef WWCSIO_H
-#define WWCSIO_H
+#ifndef MYSQLIO_H
+#define MYSQLIO_H
 
 #include <meteoio/IOInterface.h>
 
@@ -26,18 +26,17 @@
 namespace mio {
 
 /**
- * @class WWCSIO_H
- * @brief This is the plugin required to get meteorological data from the WWCS database.
+ * @class MYSQLIO_H
+ * @brief This is the plugin required to get meteorological data from all sorts of MySQL databases.
  *
  * @ingroup plugins
  * @author Mathias Bavay
  * @date   2022-02-24
  */
-class WWCSIO : public IOInterface {
+class MYSQLIO : public IOInterface {
 	public:
-		WWCSIO(const std::string& configfile);
-		WWCSIO(const WWCSIO&);
-		WWCSIO(const Config& cfgreader);
+		MYSQLIO(const std::string& configfile);
+		MYSQLIO(const Config& cfgreader);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
