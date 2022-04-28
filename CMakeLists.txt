@@ -365,7 +365,7 @@ ELSE(UNIX)
 		
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
-		SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+		SET(MENU_LINKS_METEOIO "https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home" "MeteoIO Home page")
 		IF(INSTALL_DOC)
 			LIST(APPEND MENU_LINKS_METEOIO
 			"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
@@ -388,7 +388,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://models.slf.ch/p/meteoio")
+		SET(CPACK_NSIS_HELP_LINK "https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)
