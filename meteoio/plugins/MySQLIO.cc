@@ -124,7 +124,7 @@ namespace mio {
 const std::string WWCS_metaDataQuery = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?"; //this query is supposed to only take the stationID as parameter (for now)
 const std::vector<SQL_FIELD> WWCS_metaDataFields{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE), SQL_FIELD("SLOPE", MYSQL_TYPE_DOUBLE), SQL_FIELD("AZI", MYSQL_TYPE_DOUBLE) };
 const std::string WWCS_meteoDataQuery = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
-const std::vector<SQL_FIELD> WWCS_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("P", MYSQL_TYPE_DOUBLE), SQL_FIELD("LOGGER_TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("LOGGER_RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC) };
+const std::vector<SQL_FIELD> WWCS_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("P", MYSQL_TYPE_DOUBLE, SQL_FIELD::HPA_TO_PA), SQL_FIELD("LOGGER_TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("LOGGER_RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC) };
 
 //template queries and parsing specification vectors
 std::string metaDataQuery, meteoDataQuery;

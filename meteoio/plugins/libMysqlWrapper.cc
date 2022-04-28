@@ -208,6 +208,7 @@ double retrieveData(const SQL_FIELD &field, const unsigned int& conversion)
 	
 	if (conversion==SQL_FIELD::C_TO_K) return IOUtils::C_TO_K( val );
 	if (conversion==SQL_FIELD::NORMALIZE_PC || conversion==SQL_FIELD::CM_TO_M) return val / 100.;
+	if (conversion==SQL_FIELD::HPA_TO_PA ) return val * 100.;
 	
 	return val;
 }

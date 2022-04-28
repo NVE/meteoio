@@ -42,7 +42,8 @@ class SQL_FIELD {
 			NONE=0,
 			C_TO_K,
 			CM_TO_M,
-			NORMALIZE_PC
+			NORMALIZE_PC,
+			HPA_TO_PA
 		};
 	
 		SQL_FIELD(const std::string& i_param, const enum_field_types &type, const unsigned int &i_processing=0);
