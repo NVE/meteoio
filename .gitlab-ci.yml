@@ -5,79 +5,105 @@ stages:
   - build
   - test
   - test_coverage
+  - release
 
 before_script:
   - apt-get update && apt-get -y install cmake numdiff
-  - export LD_LIBRARY_PATH="$PWD/build/lib:$LD_LIBRARY_PATH"
+  - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
 
 build:
   stage: build
   script:
-    - mkdir build
-    - cmake -S . -D CMAKE_INSTALL_PREFIX:PATH=./build -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON
-    - make
-    - make install
+    - mkdir build && cd build
+    - cmake -S .. -B . -D CMAKE_INSTALL_PREFIX:PATH=./install -D DEST:STRING=optimized -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF
+    - make -j 2
+    # cleanup and compress to avoid limits in GitLab
+    - find . -name "*.o" -type f -delete
+    - cd .. && tar -czvf build.tar.gz build
   artifacts:
+    expire_in: 1h
     paths:
-      - build
-      - tests
+      - build.tar.gz
+      - bin
+      - lib
 
 meteo_reading_interpol:
   stage: test
   script:
-    - cd tests/meteo_reading_interpol
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/meteo_reading_interpol
     - ./meteo_reading_int
 
 meteo_reading_no_interpol:
   stage: test
   script:
-    - cd tests/meteo_reading_no_interpol
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/meteo_reading_no_interpol
     - ./meteo_reading_no_int
 
 dataEditing:
   stage: test
   script:
-    - cd tests/dataEditing
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/dataEditing
     - ./data_editing
 
 sun:
   stage: test
   script:
-    - cd tests/sun
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/sun
     - ./sun
     - numdiff -r 1e-4 ref_output.txt curr_output.txt
 
 dem_reading:
   stage: test
   script:
-    - cd tests/dem_reading
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/dem_reading
     - ./dem_reading
 
 2D_interpolations:
   stage: test
   script:
-    - cd tests/2D_interpolations
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/2D_interpolations
     - ./2D_interpolations 2009-01-19T12:00
 
 arrays:
   stage: test
   script:
-    - cd tests/arrays
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/arrays
     - ./arrays
 
 coords:
   stage: test
   script:
-    - cd tests/coords
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/coords
     - ./coordinates
 
 stats:
   stage: test
   script:
-    - cd tests/stats
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build/tests/stats
     - ./stats
 
-test_coverage:
+running times and coverage:
   stage: test_coverage
   script:
+    - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
+    - cp -r tests build # copy the required test files into the tests folder
+    - cd build
     - ctest && ctest -D NightlyCoverage
