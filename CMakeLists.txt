@@ -4,9 +4,9 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
 # Version of library
-SET(VERSION_MAJOR 3 CACHE STRING "Major version")
-SET(VERSION_MINOR 0 CACHE STRING "Minor version")
-SET(VERSION_PATCH 0 CACHE STRING "Patch version")
+SET(VERSION_MAJOR $ENV{VERSION_MAJOR} CACHE INTERNAL "Major version")
+SET(VERSION_MINOR $ENV{VERSION_MINOR} CACHE INTERNAL "Minor version")
+SET(VERSION_PATCH $ENV{VERSION_PATCH} CACHE INTERNAL "Patch version")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
