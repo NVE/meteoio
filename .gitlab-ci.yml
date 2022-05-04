@@ -32,73 +32,72 @@ meteo_reading_interpol:
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/meteo_reading_interpol
-    - ./meteo_reading_int
+    - cd build
+    - ctest -R meteo_reading_interpol.smoke
 
 meteo_reading_no_interpol:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/meteo_reading_no_interpol
-    - ./meteo_reading_no_int
+    - cd build
+    - ctest -R meteo_reading_no_interpol.smoke
 
 dataEditing:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/dataEditing
-    - ./data_editing
+    - cd build
+    - ctest -R data_editing.smoke
 
 sun:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/sun
-    - ./sun
-    - numdiff -r 1e-4 ref_output.txt curr_output.txt
+    - cd build
+    - ctest -R sun.smoke
 
 dem_reading:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/dem_reading
-    - ./dem_reading
+    - cd build
+    - ctest -R dem_reading.smoke
 
 2D_interpolations:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/2D_interpolations
-    - ./2D_interpolations 2009-01-19T12:00
+    - cd build
+    - ctest -R 2D_interpolations.smoke
 
 arrays:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/arrays
-    - ./arrays
+    - cd build
+    - ctest -R arrays.smoke
 
 coords:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/coords
-    - ./coordinates
+    - cd build
+    - ctest -R coordinates.smoke
 
 stats:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
-    - cd build/tests/stats
-    - ./stats
+    - cd build
+    - ctest -R stats.smoke
 
 running times and coverage:
   stage: test_coverage
