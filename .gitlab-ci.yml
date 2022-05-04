@@ -1,0 +1,177 @@
+default:
+  image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
+  before_script:
+  - apt-get update && apt-get -y install cmake numdiff
+  - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
+
+stages:
+  - build
+  - test
+  - test_coverage
+  - release_build
+  - release
+
+build:
+  stage: build
+  script:
+    - mkdir build && cd build
+    - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
+      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=OFF
+      -D CPACK_BUNDLE_ALL:BOOL=ON
+    - make -j 2
+    # cleanup and compress to avoid limits in GitLab
+    - find . -name "*.o" -type f -delete
+    - cd .. && tar -czvf build.tar.gz build lib
+  artifacts:
+    expire_in: 1h
+    paths:
+      - build.tar.gz
+
+meteo_reading_interpol:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R meteo_reading_interpol.smoke
+
+meteo_reading_no_interpol:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R meteo_reading_no_interpol.smoke
+
+dataEditing:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R data_editing.smoke
+
+sun:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R sun.smoke
+
+dem_reading:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R dem_reading.smoke
+
+2D_interpolations:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R 2D_interpolations.smoke
+
+arrays:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R arrays.smoke
+
+coords:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R coordinates.smoke
+
+stats:
+  stage: test
+  script:
+    - tar -xzvf build.tar.gz
+    - cp -r tests build
+    - cd build
+    - ctest -R stats.smoke
+
+running times and coverage:
+  stage: test_coverage
+  script:
+    - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
+    - cp -r tests build # copy the required test files into the tests folder
+    - cd build
+    - ctest && ctest -D NightlyCoverage
+
+release build:
+  stage: release_build
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  script:
+    - apt-get -y install doxygen graphviz rpm # both doxygen and graphviz are required for cmake "FindDoxygen"
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF
+      -D USE_LTO_OPTIMIZATIONS:BOOL=ON -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON
+    - make -j 2
+    - make doc
+    - cpack
+    # Documentation only package
+    - mv doc MeteoIO-${METEOIO_VERSION}-doc
+    - tar -czvf MeteoIO-${METEOIO_VERSION}-doc.tar.gz MeteoIO-${METEOIO_VERSION}-doc
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb
+      - MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - release build
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.rpm
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.rpm"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.deb
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.deb"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-doc.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-doc.tar.gz"'
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Created using GitLab CI/CD'
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Linux binary tarball'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz'
+          link_type: 'other'
+        - name: 'Linux RPM binary package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm'
+          link_type: 'other'
+        - name: 'Linux DEB binary package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb'
+          link_type: 'other'
+        - name: 'Documentation only package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz'
+          link_type: 'other'
