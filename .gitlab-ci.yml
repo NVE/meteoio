@@ -107,20 +107,20 @@ running times and coverage:
     - cd build
     - ctest && ctest -D NightlyCoverage
 
-release build:
+Debian release build:
   stage: release_build
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies: []
   script:
-    - apt-get -y install doxygen graphviz rpm # both doxygen and graphviz are required for cmake "FindDoxygen"
+    - apt-get -y install doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
     - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
     - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
     - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
     - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF
-      -D USE_LTO_OPTIMIZATIONS:BOOL=ON -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON
+      -D USE_LTO_OPTIMIZATIONS:BOOL=ON -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="DEB;TGZ"
     - make -j 2
     - make doc
     - cpack
@@ -131,9 +131,32 @@ release build:
     expire_in: 1h
     paths:
       - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz
-      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm
       - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb
       - MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz
+
+Fedora release build:
+  stage: release_build
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  before_script:
+    - yum -y install make gcc g++ cmake doxygen graphviz rpm-build
+    - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF -D USE_LTO_OPTIMIZATIONS:BOOL=ON 
+      -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="RPM" -D USE_RPATH:BOOL=OFF
+    - make -j 2
+    - make doc
+    - cpack
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm
 
 release:
   stage: release
@@ -143,7 +166,8 @@ release:
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies:
-    - release build
+    - Debian release build
+    - Fedora release build
   script:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} packages to
@@ -163,13 +187,13 @@ release:
     ref: '$CI_COMMIT_TAG'
     assets:
       links:
-        - name: 'Linux binary tarball'
+        - name: 'Linux Debian binary tarball'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz'
           link_type: 'other'
-        - name: 'Linux RPM binary package'
+        - name: 'Linux Fedora RPM binary package'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm'
           link_type: 'other'
-        - name: 'Linux DEB binary package'
+        - name: 'Linux Debian DEB binary package'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb'
           link_type: 'other'
         - name: 'Documentation only package'
