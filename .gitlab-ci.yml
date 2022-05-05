@@ -144,6 +144,7 @@ Fedora release build:
     - yum -y install make gcc g++ cmake doxygen graphviz rpm-build
     - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
   script:
+    - echo "%__os_install_post %{nil}" > ~/.rpmmacros # Turn off binary stripping for rpm
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
     - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
