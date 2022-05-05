@@ -1,8 +1,7 @@
 default:
   image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
   before_script:
-  - apt-get update && apt-get -y install cmake numdiff
-  - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
+  - apt-get update && apt-get -y install cmake
 
 stages:
   - build
@@ -54,6 +53,7 @@ dataEditing:
 sun:
   stage: test
   script:
+    - apt-get -y install numdiff
     - tar -xzvf build.tar.gz
     - cp -r tests build
     - cd build
@@ -142,7 +142,6 @@ Fedora release build:
   dependencies: []
   before_script:
     - yum -y install make gcc g++ cmake doxygen graphviz rpm-build
-    - export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
   script:
     - echo "%__os_install_post %{nil}" > ~/.rpmmacros # Turn off binary stripping for rpm
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
