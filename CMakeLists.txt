@@ -43,26 +43,32 @@ IF(UNIX)
 		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
 	ENDIF()
 	
-	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-	# add the directory of the binary to the rpath
-	#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN'")
-	IF(APPLE)
-		SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
-		SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
-	ELSE(APPLE)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
-	ENDIF(APPLE)
-	
-	# add the automatically determined parts of the RPATH
-	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	#SET(CMAKE_INSTALL_RPATH $ORIGIN)
-	# the RPATH to be used when installing, but only if it's not a system directory
-	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
- 	IF("${isSystemDir}" STREQUAL "-1")
- 		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
- 	ENDIF("${isSystemDir}" STREQUAL "-1")
+	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+	MARK_AS_ADVANCED(FORCE USE_RPATH)
+	if(USE_RPATH)
+		#set a full rpath for both build & install tree
+		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+		# add the directory of the binary to the rpath
+		#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN'")
+		IF(APPLE)
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+		ELSE(APPLE)
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+		ENDIF(APPLE)
+
+		# add the automatically determined parts of the RPATH
+		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+		#SET(CMAKE_INSTALL_RPATH $ORIGIN)
+		# the RPATH to be used when installing, but only if it's not a system directory
+		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+		IF("${isSystemDir}" STREQUAL "-1")
+			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+		ENDIF("${isSystemDir}" STREQUAL "-1")
+	ELSE(USE_RPATH)
+		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+	ENDIF(USE_RPATH)
 
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")
@@ -265,7 +271,7 @@ IF(CPACK_BUNDLE_ALL)
 			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
 			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
 			IF("${stdlibs}" STREQUAL "")
- 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+				MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
 			ENDIF("${stdlibs}" STREQUAL "")
 			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 		ENDIF(CPACK_BUNDLE_STDLIBS)
