@@ -26,78 +26,60 @@ build:
     paths:
       - build.tar.gz
 
-meteo_reading_interpol:
+.test_base:
   stage: test
   script:
     - tar -xzvf build.tar.gz
     - cp -r tests build
     - cd build
-    - ctest -R meteo_reading_interpol.smoke
+    - ctest -R ${TEST_NAME}
+
+meteo_reading_interpol:
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_interpol.smoke
 
 meteo_reading_no_interpol:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R meteo_reading_no_interpol.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_no_interpol.smoke
 
 dataEditing:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R data_editing.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: data_editing.smoke
 
 sun:
-  stage: test
-  script:
-    - apt-get -y install numdiff
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R sun.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: sun.smoke
+  before_script:
+  - apt-get update && apt-get -y install cmake numdiff
 
 dem_reading:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R dem_reading.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: dem_reading.smoke
 
 2D_interpolations:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R 2D_interpolations.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: 2D_interpolations.smoke
 
 arrays:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R arrays.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: arrays.smoke
 
 coords:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R coordinates.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: coordinates.smoke
 
 stats:
-  stage: test
-  script:
-    - tar -xzvf build.tar.gz
-    - cp -r tests build
-    - cd build
-    - ctest -R stats.smoke
+  extends: .test_base
+  variables:
+    TEST_NAME: stats.smoke
 
 running times and coverage:
   stage: test_coverage
