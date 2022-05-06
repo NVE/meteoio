@@ -32,7 +32,7 @@ build:
     - tar -xzvf build.tar.gz
     - cp -r tests build
     - cd build
-    - ctest -R ${TEST_NAME}
+    - ctest -R "^${TEST_NAME}$"
 
 meteo_reading_interpol:
   extends: .test_base
