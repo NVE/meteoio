@@ -32,7 +32,7 @@ build:
     - tar -xzvf build.tar.gz
     - cp -r tests build
     - cd build
-    - ctest -R "^${TEST_NAME}$"
+    - ctest --verbose -R "^${TEST_NAME}$"
 
 meteo_reading_interpol:
   extends: .test_base
@@ -84,7 +84,7 @@ stats:
 running times and coverage:
   stage: test coverage
   script:
-    - apt-get -y numdiff
+    - apt-get -y install numdiff
     - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
     - cp -r tests build # copy the required test files into the tests folder
     - cd build
