@@ -6,8 +6,8 @@ default:
 stages:
   - build
   - test
-  - test_coverage
-  - release_build
+  - test coverage
+  - release build
   - release
 
 build:
@@ -82,7 +82,7 @@ stats:
     TEST_NAME: stats.smoke
 
 running times and coverage:
-  stage: test_coverage
+  stage: test coverage
   script:
     - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
     - cp -r tests build # copy the required test files into the tests folder
@@ -90,7 +90,7 @@ running times and coverage:
     - ctest && ctest -D NightlyCoverage
 
 Debian release build:
-  stage: release_build
+  stage: release build
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies: []
@@ -117,7 +117,7 @@ Debian release build:
       - MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz
 
 Fedora release build:
-  stage: release_build
+  stage: release build
   image: fedora
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
