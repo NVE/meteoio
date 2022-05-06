@@ -84,6 +84,7 @@ stats:
 running times and coverage:
   stage: test coverage
   script:
+    - apt-get -y numdiff
     - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
     - cp -r tests build # copy the required test files into the tests folder
     - cd build
