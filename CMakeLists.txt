@@ -43,7 +43,9 @@ IF(UNIX)
 		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
 	ENDIF()
 	
-	IF("${isSystemDir}" STREQUAL "-1")
+	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+	MARK_AS_ADVANCED(FORCE USE_RPATH)
+	if(USE_RPATH)
 		#set a full rpath for both build & install tree
 		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -61,11 +63,12 @@ IF(UNIX)
 		#SET(CMAKE_INSTALL_RPATH $ORIGIN)
 		# the RPATH to be used when installing, but only if it's not a system directory
 		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-	ELSE("${isSystemDir}" STREQUAL "-1")
+		IF("${isSystemDir}" STREQUAL "-1")
+			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+		ENDIF("${isSystemDir}" STREQUAL "-1")
+	ELSE(USE_RPATH)
 		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
-	ENDIF("${isSystemDir}" STREQUAL "-1")
+	ENDIF(USE_RPATH)
 
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")
