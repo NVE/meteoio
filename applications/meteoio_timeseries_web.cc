@@ -21,6 +21,8 @@
 // #include "timeseries.h"
 #include "oatpp/web/server/HttpConnectionHandler.hpp"
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"
+#include "oatpp/network/monitor/ConnectionMonitor.hpp"
+#include "oatpp/network/monitor/ConnectionMaxAgeChecker.hpp"
 #include "oatpp/network/Server.hpp"
 #include "RequestHandler.h"
 
@@ -71,22 +73,30 @@ inline void Usage(const std::string& programname)
 	std::cout << "Example use:\n\t" << programname << " -d /tmp/jobs -t 60\n\n";
 }
 
-inline void runServer(unsigned int default_timeout_secs, string job_directory)
+inline void runServer(unsigned int timeout_secs, string job_directory)
 {
     // Create a router for HTTP requests
     auto router = oatpp::web::server::HttpRouter::createShared();
 
     // Route post - "/wps" request to handler
-    router->route("POST", "/wps", std::make_shared<RequestHandler>(default_timeout_secs, job_directory));
+    router->route("POST", "/wps", std::make_shared<RequestHandler>(job_directory));
 
     // Create HTTP connection handler
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
 
     // Create TCP connection provider
     auto connectionProvider = oatpp::network::tcp::server::ConnectionProvider::createShared({"localhost", 8080, oatpp::network::Address::IP_4});
+	auto monitor = std::make_shared<oatpp::network::monitor::ConnectionMonitor>(connectionProvider);
+
+	// close all connections that stay opened for more than timeout_secs
+	monitor->addMetricsChecker(
+		std::make_shared<oatpp::network::monitor::ConnectionMaxAgeChecker>(
+			std::chrono::seconds(timeout_secs)
+		)
+	);
 
     // Create a server that accepts the provided TCP connection and passes it to the HTTP connection handler
-    oatpp::network::Server server(connectionProvider, connectionHandler);
+    oatpp::network::Server server(monitor, connectionHandler);
 
     // Print server port
     OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
@@ -95,7 +105,7 @@ inline void runServer(unsigned int default_timeout_secs, string job_directory)
     server.run();
 }
 
-inline void parseCmdLine(int argc, char **argv, unsigned int &default_timeout_secs, string &job_directory)
+inline void parseCmdLine(int argc, char **argv, unsigned int &timeout_secs, string &job_directory)
 {
 	int longindex=0, opt=-1;
 
@@ -129,7 +139,7 @@ inline void parseCmdLine(int argc, char **argv, unsigned int &default_timeout_se
 			break;
 		}
 		case 't':
-			mio::IOUtils::convertString(default_timeout_secs, std::string(optarg));
+			mio::IOUtils::convertString(timeout_secs, std::string(optarg));
 			break;
 		case 'v':
 			Version();
@@ -180,16 +190,16 @@ int main(int argc, char** argv)
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW ); //for halting the process at arithmetic exceptions, see also ReSolver1d
 #endif
 	signals_catching(); //trigger call stack print in case of SIGTERM
-    unsigned int default_timeout_secs; 
+    unsigned int timeout_secs; 
     string job_directory;
-    parseCmdLine(argc, argv, default_timeout_secs, job_directory);
+    parseCmdLine(argc, argv, timeout_secs, job_directory);
 
 	try {
 		// Initialize the oatpp environment
 		oatpp::base::Environment::init();        
                 
 		// Run application
-		runServer(default_timeout_secs, job_directory);
+		runServer(timeout_secs, job_directory);
 	} catch(const std::exception &e) {
 		std::cerr << e.what();
 		exit(1);

@@ -51,3 +51,6 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
+
+#build directory
+build/

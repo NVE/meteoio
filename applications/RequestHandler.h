@@ -20,8 +20,7 @@ class RequestHandler : public oatpp::web::server::HttpRequestHandler
 {
 public:
 
-    RequestHandler(unsigned int default_timeout_secs, string job_directory)
-        : default_timeout_secs(default_timeout_secs), job_directory(job_directory) 
+    RequestHandler(string job_directory) : job_directory(job_directory) 
     {}
 
     // Process incoming requests and return responses
@@ -90,7 +89,6 @@ private:
     const char *EXECUTION_INPUT_DATA_ENCODING = "encoding";
     const char *EXECUTION_INPUT_DATA_MIME_TYPE = "mimeType";
 
-    unsigned int default_timeout_secs = 60;
     string job_directory = "/tmp/jobs";
 
     struct ExecutionInput
@@ -184,7 +182,6 @@ private:
         Date dateBegin, dateEnd;
         double samplingRate = IOUtils::nodata;
 	    size_t outputBufferSize = 0;
-	    unsigned int timeoutSecs = default_timeout_secs;
         string workingDir = createWorkingDir(executeRequest.jobId);
 
         std::string cfgfile = "";
@@ -217,16 +214,13 @@ private:
             else if(input.id == "output_buffer_size") {
                 mio::IOUtils::convertString(outputBufferSize, input.rawData);
             }
-            else if(input.id == "timeout_secs") {
-                mio::IOUtils::convertString(timeoutSecs, input.rawData);
-            }
             else {
                 createInputFile(workingDir, input);
             }            
         }
 
         if(cfgfile == "") {
-            throw BadRequestException("You must provide a 'cfg' ini file!");
+            throw BadRequestException("You must provide a 'cfg.ini' file!");
         }
 
         const bool validDateRange = (setStart && setEnd && !setDuration) || (setStart && !setEnd && setDuration) || (!setStart && setEnd && setDuration);
@@ -246,14 +240,13 @@ private:
         if (dateBegin.isUndef())
             dateBegin = dateEnd - duration;
         
-        //we don't overwrite command line options if set
+        //we don't overwrite request options if set
         if (samplingRate==IOUtils::nodata)
             samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
         samplingRate /= 24.*60; //convert to sampling rate in days
 
         Timeseries timeseries(cfg, dateBegin, dateEnd);
         timeseries.setSamplingRate(samplingRate);
-        timeseries.setTimeoutSecs(timeoutSecs);
         timeseries.setOutputBufferSize(outputBufferSize);
         return timeseries;
     }
