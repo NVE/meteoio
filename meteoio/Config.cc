@@ -465,8 +465,9 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 }
 
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
-
-ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(), imported(), sections(), deferred_vars(), sourcename(filename)
+//the local values must have priority -> we initialize from the given i_properties, overwrite from the local values 
+//and swap the two before returning i_properties
+ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), deferred_vars(), sourcename(filename)
 {
 	parseFile(filename);
 	
@@ -494,8 +495,7 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 		deferred_count = new_deferred_count;
 	}
 	
-	//make sure that local values have priority -> insert and swap
-	properties.insert(i_properties.begin(), i_properties.end()); //keep local values if they exist
+	//swap the caller and local properties before returning, so the caller gets the new version
 	std::swap(properties, i_properties);
 
 	i_sections.insert(sections.begin(), sections.end());
