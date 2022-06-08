@@ -507,7 +507,8 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 */
 void ConfigParser::parseFile(const std::string& filename)
 {
-	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException("Invalid configuration file name '"+filename+"'",AT);
+	//we allow pulling inifiles from directories above the current level (this is actually convenient for some operational systems)
+	if (!FileUtils::validFileAndPath(filename, false)) throw InvalidNameException("Invalid configuration file name '"+filename+"'",AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException("Configuration file '"+filename+"' not found", AT);
 
 	//Open file

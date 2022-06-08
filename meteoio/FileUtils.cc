@@ -21,6 +21,7 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>
+#include <regex>
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
@@ -141,7 +142,7 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
-bool validFileAndPath(const std::string& filename)
+bool validFileAndPath(const std::string& filename, const bool& sandboxing)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
@@ -150,8 +151,8 @@ bool validFileAndPath(const std::string& filename)
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	const size_t invalid_char = filename.find_first_of("\000"); //find possible invalid characters
 #endif
-	
-	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..")) {
+	const bool break_sandbox = sandboxing && std::regex_match(filename, std::regex(".*(\\.\\.).*"));
+	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..") || break_sandbox) {
 		return false;
 	}
 	return true;
