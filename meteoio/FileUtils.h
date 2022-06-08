@@ -53,12 +53,7 @@ namespace FileUtils {
 
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
 
-	/**
-	* @brief Check that the file and path are valid
-	* @param[in] filename file and path to validate
-	* @param[in] sandboxing if set to true, a path containing "/../" will be considered invalid in order to prevent escaping a directory (default=true)
-	*/
-	bool validFileAndPath(const std::string& filename, const bool& sandboxing=true);
+	bool validFileAndPath(const std::string& filename);
 
 	bool fileExists(const std::string& filename);
 
