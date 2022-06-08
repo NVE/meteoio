@@ -356,6 +356,14 @@ class MeteoData {
 		 * @return parameters that have at least one valid value
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
+		
+		/**
+		 * @brief Ensure all elements in a METEO_SET have the same parameters.
+		 * @details This should be called before writing out the METEO_SET with a plugin such as smet
+		 * in order to guarantee that all parameters are always present.
+		 * @param vecMeteo METEO_SET to process
+		 */
+		static void unifyMeteoData(METEO_SET &vecMeteo);
 
 		/**
 		 * @brief Print the content of the current object

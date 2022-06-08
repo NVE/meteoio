@@ -24,6 +24,7 @@
 #include <limits>
 #include <iomanip>
 #include <sstream>
+#include <algorithm> //for set_difference
 
 using namespace std;
 namespace mio {
@@ -798,5 +799,46 @@ std::set<std::string> MeteoData::listAvailableParameters(const std::vector<Meteo
 
 	return results;
 }
+
+void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)
+{
+	const size_t nElems = vecMeteo.size();
+	if (nElems<2) return;
+	
+	std::vector<std::string> extra_params_ref( vecMeteo.front().extra_param_name );
+	
+	for (size_t ii=0; ii<nElems; ii++) {
+		//easy case: exactly the same vectors
+		if (vecMeteo[ii].extra_param_name == extra_params_ref) continue;
+		
+		//maybe the same parameters are present, but in a different order?
+		std::set<std::string> ref_params(extra_params_ref.begin(), extra_params_ref.end());
+		std::set<std::string> new_params(vecMeteo[ii].extra_param_name.begin(), vecMeteo[ii].extra_param_name.end());
+		if (ref_params == new_params) { //yes, it is only in a different order
+			//most probably the new order will remain from now on
+			extra_params_ref = vecMeteo[ii].extra_param_name;
+			continue;
+		}
+		
+		//now comes the hard work: we need set the whole vector to the same extra_param_name
+		//first, we add all new elements to the begining of the vector until now
+		std::vector<std::string> new_elems;
+		std::set_difference(new_params.begin(), new_params.end(), ref_params.begin(), ref_params.end(), std::inserter(new_elems, new_elems.end()));
+		for (size_t jj=0; jj<ii; jj++) {
+			for(auto new_param : new_elems) vecMeteo[jj].addParameter( new_param );
+		}
+		
+		//then, we add all past elements to the rest of the vector starting now and until the end
+		std::vector<std::string> past_elems;
+		std::set_difference(ref_params.begin(), ref_params.end(), new_params.begin(), new_params.end(), std::inserter(past_elems, past_elems.end()));
+		for (size_t jj=ii; jj<nElems; jj++) {
+			for(auto new_param : past_elems) vecMeteo[jj].addParameter( new_param );
+		}
+		
+		//reset the reference parameters list to contain all potentially new elements
+		extra_params_ref = vecMeteo[ii].extra_param_name;
+	}
+}
+
 
 } //namespace
