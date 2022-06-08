@@ -168,6 +168,7 @@ private:
 
     inline string createWorkingDir(string &jobId) {
         string workingDir = job_directory + "/" + jobId;
+        cout << "Creating working dir: " << workingDir << endl;
         const int dir_err = mkdir(workingDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err)
         {
@@ -228,7 +229,11 @@ private:
             throw BadRequestException("You must specify either {'begin_date' and 'end_date'}, or {'begin_date' and 'duration'} or {'end_date' and 'duration'}!");
         }
         
+        //add working dir so users can use it as a reference -> ${INPUT::CWD}
+        cfg.addKey("CWD", "INPUT", workingDir);
+
         cfg.addFile(cfgfile);
+
         const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
         
         //the date range specification has been validated above

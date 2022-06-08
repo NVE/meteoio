@@ -128,7 +128,7 @@ inline void parseCmdLine(int argc, char **argv, unsigned int &timeout_secs, stri
 		case 0:
 			break;
 		case 'd': {
-			string job_directory = std::string(optarg);
+			job_directory = std::string(optarg);
             // Prepare working directory
             const int dir_err = system(("mkdir -p " + job_directory).c_str()); // TODO: Do this in a nicer way, e.g. with boost filesystem
             if (-1 == dir_err)

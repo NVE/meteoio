@@ -38,11 +38,11 @@ public:
 		samplingRate = rate;
 	}
 
-	void setOutputBufferSize(double bufferSize) {
+	void setOutputBufferSize(size_t bufferSize) {
 		outputBufferSize = bufferSize;
 	}
 
-	void setTimeoutSecs(double timeout) {
+	void setTimeoutSecs(unsigned int timeout) {
 		timeoutSecs = timeout;
 	}
 
@@ -53,7 +53,7 @@ public:
 	void run()
 	{
 		std::vector<std::string> enforce_variables;
-		if (timeoutSecs!=0) WatchDog watchdog(timeoutSecs); //set to kill itself after that many seconds
+		if (timeoutSecs > 0) WatchDog watchdog(timeoutSecs); //set to kill itself after that many seconds
 		
 		IOManager io(cfg);
 		const bool data_qa = cfg.get("DATA_QA_LOGS", "General", false);
