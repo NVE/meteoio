@@ -24,6 +24,7 @@
 #include "oatpp/web/server/HttpRequestHandler.hpp"
 #include "oatpp/core/data/stream/FileStream.hpp"
 #include "oatpp/web/protocol/http/outgoing/StreamingBody.hpp"
+#include "oatpp/core/base/Environment.hpp"
 
 using namespace std;
 
@@ -50,8 +51,8 @@ public:
         }
         catch (exception &e)
         {
-            cout << "Requested file '" << filepath << "' could not be served." << endl;
-            cout << e.what() << endl;
+            OATPP_LOGW("ResultsRequestHandler", "Requested file '%s' could not be served.", filepath.c_str());
+            OATPP_LOGW("ResultsRequestHandler", e.what());
             return ResponseFactory::createResponse(Status::CODE_404, "Not found");
         }
     }

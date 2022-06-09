@@ -22,6 +22,7 @@
 
 #include <fstream>
 #include <sys/stat.h>
+#include "oatpp/core/base/Environment.hpp"
 #include "WpsOperationHandler.h"
 #include "util/UUID.h"
 #include "Timeseries.h"
@@ -84,14 +85,14 @@ private:
                "<wps:Result"
                "	xmlns:wps=\"http://www.opengis.net/wps/2.0\""
                "	xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
-               "	<wps:JobID>" +
-               executeRequest.jobId + "</wps:JobID>" +
-               (executeRequest.expirationDate.empty() ? "" : "	<wps:ExpirationDate>" + executeRequest.expirationDate + "</wps:ExpirationDate>") +
+               "	<wps:JobID>" + executeRequest.jobId + "</wps:JobID>" +
+               (executeRequest.expirationDate.empty() ? "" : 
+               "	<wps:ExpirationDate>" + executeRequest.expirationDate + "</wps:ExpirationDate>"
+               ) +
                "	<wps:Output id=\"RESULT\">"
-               "       <wps:Reference xlink:href=\"/results/" +
-               executeRequest.jobId + "/result.zip\"/>"
-                                      "	</wps:Output>"
-                                      "</wps:Result>";
+               "       <wps:Reference xlink:href=\"/results/" + executeRequest.jobId + "/result.zip\"/>"
+               "	</wps:Output>"
+               "</wps:Result>";
     }
 
     inline void checkEncoding(ExecutionInput &input)
@@ -153,7 +154,7 @@ private:
 
     inline void createDir(string &dir)
     {
-        cout << "Creating dir: " << dir << endl;
+        OATPP_LOGI("ExecutionOperationHandler", "Creating dir: %s", dir.c_str());
         const int dir_err = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err)
         {

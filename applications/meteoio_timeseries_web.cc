@@ -103,7 +103,7 @@ inline void runServer(unsigned int timeout_secs, string job_directory)
 	oatpp::network::Server server(monitor, connectionHandler);
 
 	// Print server port
-	OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
+	OATPP_LOGI("meteoio_timeseries_web", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
 	// Run server
 	server.run();

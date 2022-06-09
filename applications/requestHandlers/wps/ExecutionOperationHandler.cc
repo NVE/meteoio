@@ -27,6 +27,8 @@ ExecutionOperationHandler::ExecutionOperationHandler(string job_directory) : _jo
 shared_ptr<oatpp::web::protocol::http::outgoing::Response> ExecutionOperationHandler::handleOperation(rapidxml_ns::xml_node<> *root_node)
 {
     ExecuteRequest executeRequest = readExecuteRequest(root_node);
+    OATPP_LOGI("ExecutionOperationHandler", "Processing execution operation for jobId='%s'", executeRequest.jobId.c_str());
+
     string workingDir = getWorkingDirectory(executeRequest);
     string resultDir = getResultDirectory(executeRequest);
     createDir(workingDir);

@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <iostream>
+#include "oatpp/core/base/Environment.hpp"
 #include "exceptions/InternalServerError.h"
 
 using namespace std;
@@ -44,7 +45,7 @@ public:
         // Zip the result directory
         DIR *dir;
         int zipError = 0;
-        cout << "Creating zip at " << resultDir << ".zip" << endl;
+        OATPP_LOGI("Zip", "Creating zip at %s.zip", resultDir.c_str());
         zip_t *zipFile = zip_open((resultDir + ".zip").c_str(), ZIP_CREATE | ZIP_EXCL, &zipError);
         if (zipFile == nullptr)
         {
@@ -63,7 +64,7 @@ public:
                 string fullname = resultDir + "/" + entry->d_name;
                 if (is_dir(fullname))
                     continue;
-                cout << "Adding file " << fullname << " to zip" << endl;
+                OATPP_LOGI("Zip", "Adding file %s to zip", fullname.c_str());
                 zip_source_t *source = zip_source_file(zipFile, fullname.c_str(), 0, 0);
                 if (source == nullptr)
                 {

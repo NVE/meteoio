@@ -40,38 +40,38 @@ public:
     // Process incoming requests and return responses
     shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest> &request) override
     {
-        string body = request->readBodyToString();
-        rapidxml_ns::xml_document<> doc;
-
-        vector<char> body_copy(body.begin(), body.end());
-        body_copy.push_back('\0');
-
-        doc.parse<0>(&body_copy[0]);
-
-        rapidxml_ns::xml_node<> *root_node = doc.first_node();
-        string operationName = root_node->local_name();
-        string operationNameNs = root_node->namespace_uri();
-
         try
         {
+            string body = request->readBodyToString();
+            rapidxml_ns::xml_document<> doc;
+
+            vector<char> body_copy(body.begin(), body.end());
+            body_copy.push_back('\0');
+
+            doc.parse<0>(&body_copy[0]);
+
+            rapidxml_ns::xml_node<> *root_node = doc.first_node();
+            string operationName = root_node->local_name();
+            string operationNameNs = root_node->namespace_uri();
+
             if (operationName == OPERATION_EXECUTION && operationNameNs == NS_WPS)
             {
                 ExecutionOperationHandler executionOperationHandler(_job_directory);
                 return executionOperationHandler.handleOperation(root_node);
             }
+            OATPP_LOGW("WpsRequestHandler", "Operation '%s' is not supported", operationName.c_str());
+            return ResponseFactory::createResponse(Status::CODE_400, "Operation '" + operationName + "' is not supported");
         }
         catch (BadRequestException &e)
         {
-            cout << e.what() << endl;
+            OATPP_LOGW("WpsRequestHandler", e.what());
             return ResponseFactory::createResponse(Status::CODE_400, e.what());
         }
         catch (exception &e)
         {
-            cerr << e.what() << endl;
+            OATPP_LOGE("WpsRequestHandler", e.what());
             return ResponseFactory::createResponse(Status::CODE_500, e.what());
         }
-
-        return ResponseFactory::createResponse(Status::CODE_400, "Operation " + operationName + " is not supported");
     }
 
 private:
