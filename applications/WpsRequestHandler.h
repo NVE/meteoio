@@ -1,5 +1,5 @@
-#ifndef REQUESTHANDLER_H
-#define REQUESTHANDLER_H
+#ifndef WPS_REQUESTHANDLER_H
+#define WPS_REQUESTHANDLER_H
 
 #include "oatpp/web/server/HttpRequestHandler.hpp"
 #include "rapidxml_ns-1.13.2/rapidxml_ns.hpp"
@@ -17,11 +17,10 @@
 using namespace std;
 
 // Custom request handler
-class RequestHandler : public oatpp::web::server::HttpRequestHandler
+class WpsRequestHandler : public oatpp::web::server::HttpRequestHandler
 {
 public:
-
-    RequestHandler(string job_directory) : _job_directory(job_directory) 
+    WpsRequestHandler(string job_directory) : _job_directory(job_directory) 
     {}
 
     // Process incoming requests and return responses
@@ -279,4 +278,4 @@ private:
 
 };
 
-#endif // REQUESTHANDLER_H
+#endif // WPS_REQUESTHANDLER_H

@@ -24,7 +24,8 @@
 #include "oatpp/network/monitor/ConnectionMonitor.hpp"
 #include "oatpp/network/monitor/ConnectionMaxAgeChecker.hpp"
 #include "oatpp/network/Server.hpp"
-#include "RequestHandler.h"
+#include "WpsRequestHandler.h"
+#include "ResultsRequestHandler.h"
 
 #ifdef _MSC_VER
 	/*
@@ -79,7 +80,10 @@ inline void runServer(unsigned int timeout_secs, string job_directory)
     auto router = oatpp::web::server::HttpRouter::createShared();
 
     // Route post - "/wps" request to handler
-    router->route("POST", "/wps", std::make_shared<RequestHandler>(job_directory));
+    router->route("POST", "/wps", std::make_shared<WpsRequestHandler>(job_directory));
+
+	// Route get - "/results" request to handler
+    router->route("GET", "/results/{jobId}/result.zip", std::make_shared<ResultsRequestHandler>(job_directory));
 
     // Create HTTP connection handler
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
