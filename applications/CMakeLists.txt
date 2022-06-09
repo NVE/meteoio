@@ -68,8 +68,9 @@ ENDIF(LEAKS_CHECK)
 
 #Prepare server executable
 FIND_PACKAGE(oatpp REQUIRED) #Find oatpp dependencies
+FIND_PACKAGE(libzip REQUIRED) #Find zip dependencies
 ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc RequestHandler.h)
-TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp ${EXTRA_LINKS})
+TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
 
 IF(BUILD_STATIC_LIBS)
 	TARGET_LINK_OPTIONS(${SERVER} PRIVATE -static-libgcc -static-libstdc++ -static)

@@ -12,6 +12,7 @@
 #include <ctime>
 #include "Timeseries.h"
 #include <sys/stat.h>
+#include "Zip.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ class RequestHandler : public oatpp::web::server::HttpRequestHandler
 {
 public:
 
-    RequestHandler(string job_directory) : job_directory(job_directory) 
+    RequestHandler(string job_directory) : _job_directory(job_directory) 
     {}
 
     // Process incoming requests and return responses
@@ -42,13 +43,17 @@ public:
         {
             try
             {
-                ExecuteRequest executeRequest = readExecuteRequest(root_node);                
-                Timeseries timeseries = timeseriesFromExecuteRequest(executeRequest);
+                ExecuteRequest executeRequest = readExecuteRequest(root_node);
+                string workingDir = getWorkingDirectory(executeRequest);
+                string resultDir = getResultDirectory(executeRequest);
+                createDir(workingDir);
+                createDir(resultDir);
+                Timeseries timeseries = timeseriesFromExecuteRequest(executeRequest, workingDir, resultDir);
                 timeseries.run();
 
-                // TODO
-                // Return output
+                Zip::zipDirectory(resultDir);
 
+                // Return output
                 string responseBody =
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                     "<wps:Result"
@@ -56,9 +61,9 @@ public:
                     "	xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
                     "	"
                     "	<wps:JobID>" + executeRequest.jobId + "</wps:JobID>"
-                    // "	<wps:ExpirationDate>executeRequest.expirationDate</wps:ExpirationDate>"
+                    + (executeRequest.expirationDate.empty() ? "" : "	<wps:ExpirationDate>" + executeRequest.expirationDate + "</wps:ExpirationDate>") +
                     "	<wps:Output id=\"RESULT\">"
-                    "       <wps:Data>10.0</wps:Data>"
+                    "       <wps:Reference xlink:href=\"/results/" + executeRequest.jobId + "/result.zip\"/>"
                     "	</wps:Output>"
                     "	"
                     "</wps:Result>";
@@ -68,10 +73,12 @@ public:
             }
             catch (BadRequestException &e)
             {
+                cout << e.what() << endl;
                 return ResponseFactory::createResponse(Status::CODE_400, e.what());
             }
             catch (exception &e)
             {
+                cerr << e.what() << endl;
                 return ResponseFactory::createResponse(Status::CODE_500, e.what());
             }
         }
@@ -89,12 +96,12 @@ private:
     const char *EXECUTION_INPUT_DATA_ENCODING = "encoding";
     const char *EXECUTION_INPUT_DATA_MIME_TYPE = "mimeType";
 
-    string job_directory = "/tmp/jobs";
+    string _job_directory = "/tmp/jobs";
 
     struct ExecutionInput
     {
-        string id;
-        string rawData;
+        string id = "";
+        string rawData = "";
         string encoding = "UTF-8";
         string mimeType = "text/plain";
     };
@@ -102,10 +109,10 @@ private:
     struct ExecuteRequest
     {
         string jobId = UUID::generate();
-        // string expirationDate = put_time(&std::localtime(&time(nullptr)), "%d-%m-%Y %H-%M-%S");
-        string mode;
-        vector<ExecutionInput> inputs;
-        string output;
+        string expirationDate = ""; //put_time(&std::localtime(&time(nullptr)), "%d-%m-%Y %H-%M-%S");
+        string mode = "";
+        vector<ExecutionInput> inputs = {};
+        string output = "";
     };
 
     inline ExecuteRequest readExecuteRequest(rapidxml_ns::xml_node<> *root_node)
@@ -166,29 +173,33 @@ private:
         return parsedDate;
     }
 
-    inline string createWorkingDir(string &jobId) {
-        string workingDir = job_directory + "/" + jobId;
-        cout << "Creating working dir: " << workingDir << endl;
-        const int dir_err = mkdir(workingDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    inline void createDir(string &dir) {
+        cout << "Creating dir: " << dir << endl;
+        const int dir_err = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err)
         {
             throw InternalServerError("Error creating directory!");
         }
-        return workingDir;
     }
 
-    Timeseries timeseriesFromExecuteRequest(ExecuteRequest &executeRequest)
+    inline string getWorkingDirectory(ExecuteRequest &executeRequest) {
+        return _job_directory + "/" + executeRequest.jobId;
+    }
+
+    inline string getResultDirectory(ExecuteRequest &executeRequest) {
+        return _job_directory + "/" + executeRequest.jobId + "/result";
+    }
+
+    Timeseries timeseriesFromExecuteRequest(ExecuteRequest &executeRequest, string &workingDir, string &resultDir)
     {
         Config cfg;
         Date dateBegin, dateEnd;
         double samplingRate = IOUtils::nodata;
 	    size_t outputBufferSize = 0;
-        string workingDir = createWorkingDir(executeRequest.jobId);
 
         std::string cfgfile = "";
         std::string begin_date_str, end_date_str;
         double duration = IOUtils::nodata;
-        int longindex=0, opt=-1;
         bool setStart = false, setEnd = false, setDuration = false;
         
         for (ExecutionInput &input: executeRequest.inputs) {
@@ -233,6 +244,16 @@ private:
         cfg.addKey("CWD", "INPUT", workingDir);
 
         cfg.addFile(cfgfile);
+
+        if(cfg.keyExists("METEOPATH", "INPUT"))
+            cfg.addKey("METEOPATH", "INPUT", workingDir);
+        if(cfg.keyExists("GRID2DPATH", "INPUT"))
+            cfg.addKey("GRID2DPATH", "INPUT", workingDir);
+
+        if(cfg.keyExists("METEOPATH", "OUTPUT"))
+            cfg.addKey("METEOPATH", "OUTPUT", resultDir);
+        if(cfg.keyExists("GRID2DPATH", "OUTPUT"))
+            cfg.addKey("GRID2DPATH", "OUTPUT", resultDir);
 
         const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
         

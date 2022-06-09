@@ -105,6 +105,16 @@ inline void runServer(unsigned int timeout_secs, string job_directory)
     server.run();
 }
 
+inline void preprareWorkingDirectory(string &job_directory) {
+	// TODO: Do this in a nicer way, e.g. with boost filesystem
+	const int dir_err = system(("mkdir -p " + job_directory).c_str());
+	if (-1 == dir_err)
+	{
+		printf("Error creating working directory!");
+		exit(1);
+	}
+}
+
 inline void parseCmdLine(int argc, char **argv, unsigned int &timeout_secs, string &job_directory)
 {
 	int longindex=0, opt=-1;
@@ -129,13 +139,7 @@ inline void parseCmdLine(int argc, char **argv, unsigned int &timeout_secs, stri
 			break;
 		case 'd': {
 			job_directory = std::string(optarg);
-            // Prepare working directory
-            const int dir_err = system(("mkdir -p " + job_directory).c_str()); // TODO: Do this in a nicer way, e.g. with boost filesystem
-            if (-1 == dir_err)
-            {
-                printf("Error creating working directory!");
-                exit(1);
-            }
+            preprareWorkingDirectory(job_directory);
 			break;
 		}
 		case 't':
