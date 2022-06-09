@@ -28,7 +28,7 @@ SET(SERVER "meteoio_timeseries_web")
 
 #Handle the missing getopt on Windows
 IF(MSVC)
-	SET(getopt_src getopt.c)
+	SET(getopt_src msc_getopt.c)
 ENDIF(MSVC)
 
 #get the proper MeteoIO library
@@ -55,28 +55,31 @@ IF (LEAKS_CHECK)
 ENDIF(LEAKS_CHECK)
 
 #Prepare executable
-# ADD_EXECUTABLE(${BINARY} meteoio_timeseries.cc ${getopt_src})
-# TARGET_LINK_LIBRARIES(${BINARY} ${METEOIO_LIBRARIES} ${EXTRA_LINKS})
-# IF(BUILD_STATIC_LIBS)
-# 	TARGET_LINK_OPTIONS(${BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
-# ENDIF(BUILD_STATIC_LIBS)
-# SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
-# 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
-# 	CLEAN_DIRECT_OUTPUT 1
-# 	OUTPUT_NAME "${BINARY}")
-# INSTALL(TARGETS ${BINARY} RUNTIME DESTINATION bin COMPONENT exe)
-
-#Prepare server executable
-FIND_PACKAGE(oatpp REQUIRED) #Find oatpp dependencies
-FIND_PACKAGE(libzip REQUIRED) #Find zip dependencies
-ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc WpsRequestHandler.h ResultsRequestHandler.h)
-TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
-
+ADD_EXECUTABLE(${BINARY} meteoio_timeseries.cc Timeseries.cc ${getopt_src})
+TARGET_LINK_LIBRARIES(${BINARY} ${METEOIO_LIBRARIES} ${EXTRA_LINKS})
 IF(BUILD_STATIC_LIBS)
-	TARGET_LINK_OPTIONS(${SERVER} PRIVATE -static-libgcc -static-libstdc++ -static)
+	TARGET_LINK_OPTIONS(${BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
 ENDIF(BUILD_STATIC_LIBS)
-SET_TARGET_PROPERTIES(${SERVER} PROPERTIES
+SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 	CLEAN_DIRECT_OUTPUT 1
-	OUTPUT_NAME "${SERVER}")
-INSTALL(TARGETS ${SERVER} RUNTIME DESTINATION bin COMPONENT exe)
+	OUTPUT_NAME "${BINARY}")
+INSTALL(TARGETS ${BINARY} RUNTIME DESTINATION bin COMPONENT exe)
+
+#Prepare server executable
+FIND_PACKAGE(oatpp) #Find oatpp dependencies -> https://oatpp.io/
+FIND_PACKAGE(libzip) #Find zip dependencies -> https://libzip.org/
+if (oatpp_FOUND AND libzip_FOUND) #Only build web server if required libraries are found
+	ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc Timeseries.cc requestHandlers/wps/ExecutionOperationHandler.cc)
+	TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
+	TARGET_INCLUDE_DIRECTORIES(${SERVER} PRIVATE "${PROJECT_SOURCE_DIR}/applications")
+
+	IF(BUILD_STATIC_LIBS)
+		TARGET_LINK_OPTIONS(${SERVER} PRIVATE -static-libgcc -static-libstdc++ -static)
+	ENDIF(BUILD_STATIC_LIBS)
+	SET_TARGET_PROPERTIES(${SERVER} PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
+		CLEAN_DIRECT_OUTPUT 1
+		OUTPUT_NAME "${SERVER}")
+	INSTALL(TARGETS ${SERVER} RUNTIME DESTINATION bin COMPONENT exe)
+ENDIF (OATPP_FOUND AND LIBZIP_FOUND)

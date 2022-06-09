@@ -30,6 +30,7 @@ public:
         }
         return uuid;
     }
+
 private:
     UUID() {}
 };
