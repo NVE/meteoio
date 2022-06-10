@@ -72,7 +72,7 @@ if (METEOIO_TIMESERIES_WEB)
 	FIND_PACKAGE(oatpp) #Find oatpp dependencies -> https://oatpp.io/
 	FIND_PACKAGE(libzip) #Find zip dependencies -> https://libzip.org/
 	if (oatpp_FOUND AND libzip_FOUND) #Only build web server if required libraries are found
-		ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc Timeseries.cc requestHandlers/wps/ExecutionOperationHandler.cc)
+		ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc Timeseries.cc wps/ExecutionOperationHandler.cc)
 		TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
 		TARGET_INCLUDE_DIRECTORIES(${SERVER} PRIVATE "${PROJECT_SOURCE_DIR}/applications")
 

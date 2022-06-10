@@ -17,32 +17,35 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef RESULTS_REQUESTHANDLER_H
-#define RESULTS_REQUESTHANDLER_H
+#ifndef RESULTS_CONTROLLER_H
+#define RESULTS_CONTROLLER_H
 
 #include <exception>
-#include "oatpp/web/server/HttpRequestHandler.hpp"
+#include "oatpp/web/server/api/ApiController.hpp"
+#include "oatpp/core/macro/codegen.hpp"
+#include "oatpp/core/macro/component.hpp"
 #include "oatpp/core/data/stream/FileStream.hpp"
 #include "oatpp/web/protocol/http/outgoing/StreamingBody.hpp"
-#include "oatpp/core/base/Environment.hpp"
+
+#include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
 
 using namespace std;
 
 // Custom request handler
-class ResultsRequestHandler : public oatpp::web::server::HttpRequestHandler
+class ResultsController : public oatpp::web::server::api::ApiController
 {
 public:
-    ResultsRequestHandler(string job_directory) : _job_directory(job_directory)
+    ResultsController(string job_directory, OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
+        : oatpp::web::server::api::ApiController(objectMapper), _job_directory(job_directory)
     {
     }
 
-    // Process incoming requests and return responses
-    shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest> &request) override
+public:
+    ENDPOINT("GET", "/results/{jobId}/result.zip", results, PATH(String, jobId))
     {
         string filepath = "";
         try
         {
-            string jobId = request->getPathVariable("jobId");
             filepath = _job_directory + "/" + jobId + "/result.zip";
             auto body = std::make_shared<oatpp::web::protocol::http::outgoing::StreamingBody>(
                 std::make_shared<oatpp::data::stream::FileInputStream>(filepath.c_str()));
@@ -62,4 +65,6 @@ private:
     string _job_directory;
 };
 
-#endif // RESULTS_REQUESTHANDLER_H
+#include OATPP_CODEGEN_END(ApiController) //<-- End Codegen
+
+#endif // RESULTS_CONTROLLER_H

@@ -19,15 +19,13 @@
 	along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "oatpp/web/server/HttpConnectionHandler.hpp"
-#include "oatpp/network/tcp/server/ConnectionProvider.hpp"
-#include "oatpp/network/monitor/ConnectionMonitor.hpp"
-#include "oatpp/network/monitor/ConnectionMaxAgeChecker.hpp"
-#include "oatpp/network/Server.hpp"
-#include "requestHandlers/WpsRequestHandler.h"
-#include "requestHandlers/ResultsRequestHandler.h"
 #include <csignal>
 #include <cstdio>
+#include <iostream>
+#include "oatpp/network/Server.hpp"
+#include "WebappComponent.h"
+#include "controllers/WpsController.h"
+#include "controllers/ResultsController.h"
 
 #ifdef _MSC_VER
 /*
@@ -78,31 +76,37 @@ inline void Usage(const std::string &programname)
 
 inline void runServer(unsigned int timeout_secs, string job_directory)
 {
-	// Create a router for HTTP requests
-	auto router = oatpp::web::server::HttpRouter::createShared();
+	// Register Components in scope of run() method
+	WebappComponent components;
 
-	// Route post - "/wps" request to handler
-	router->route("POST", "/wps", std::make_shared<WpsRequestHandler>(job_directory));
+	// Get router component
+	OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
-	// Route get - "/results" request to handler
-	router->route("GET", "/results/{jobId}/result.zip", std::make_shared<ResultsRequestHandler>(job_directory));
+	// Add Controllers and add all of their endpoints to router
+	router->addController(std::make_shared<WpsController>(job_directory));
+	router->addController(std::make_shared<ResultsController>(job_directory));
 
-	// Create HTTP connection handler
-	auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
+	// Get connection handler component
+	OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
 
-	// Create TCP connection provider
-	auto connectionProvider = oatpp::network::tcp::server::ConnectionProvider::createShared({"localhost", 8080, oatpp::network::Address::IP_4});
-	auto monitor = std::make_shared<oatpp::network::monitor::ConnectionMonitor>(connectionProvider);
+	// Get connection provider component
+	OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
 
-	// close all connections that stay opened for more than timeout_secs
-	monitor->addMetricsChecker(
-		std::make_shared<oatpp::network::monitor::ConnectionMaxAgeChecker>(
-			std::chrono::seconds(timeout_secs)));
+	/* FIXME: When using ConnectionMonitor, sending wrong data or calling an endpoint that doesn't exist
+	 * leads to the whole server terminanting with a "Segmentation fault" 
+	 * --> Currently timeouts are not supported
+	 */
 
-	// Create a server that accepts the provided TCP connection and passes it to the HTTP connection handler
-	oatpp::network::Server server(monitor, connectionHandler);
+	// Close all connections that stay open for more than timeout_secs
+	// auto monitor = std::make_shared<oatpp::network::monitor::ConnectionMonitor>(connectionProvider);
+	// monitor->addMetricsChecker(
+	// 	std::make_shared<oatpp::network::monitor::ConnectionMaxAgeChecker>(
+	// 		std::chrono::seconds(timeout_secs)));
 
-	// Print server port
+	// Create server which takes provided TCP connections and passes them to HTTP connection handler
+	oatpp::network::Server server(connectionProvider, connectionHandler);
+
+	// Print info about server port
 	OATPP_LOGI("meteoio_timeseries_web", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
 	// Run server

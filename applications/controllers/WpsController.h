@@ -17,35 +17,39 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef WPS_REQUESTHANDLER_H
-#define WPS_REQUESTHANDLER_H
+#ifndef WPS_CONTROLLER_H
+#define WPS_CONTROLLER_H
 
 #include <iostream>
 #include <fstream>
-#include "oatpp/web/server/HttpRequestHandler.hpp"
+#include "oatpp/web/server/api/ApiController.hpp"
+#include "oatpp/core/macro/codegen.hpp"
+#include "oatpp/core/macro/component.hpp"
 #include "rapidxml_ns-1.13.2/rapidxml_ns.hpp"
 #include "exceptions/BadRequestException.h"
 #include "wps/ExecutionOperationHandler.h"
 
+#include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
+
 using namespace std;
 
 // Custom request handler
-class WpsRequestHandler : public oatpp::web::server::HttpRequestHandler
+class WpsController : public oatpp::web::server::api::ApiController
 {
 public:
-    WpsRequestHandler(string job_directory) : _job_directory(job_directory)
+    WpsController(string job_directory, OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
+        : oatpp::web::server::api::ApiController(objectMapper), _job_directory(job_directory)
     {
     }
 
-    // Process incoming requests and return responses
-    shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest> &request) override
+public:
+    ENDPOINT("POST", "/wps", wps, BODY_STRING(String, body))
     {
         try
         {
-            string body = request->readBodyToString();
             rapidxml_ns::xml_document<> doc;
 
-            vector<char> body_copy(body.begin(), body.end());
+            vector<char> body_copy(body->begin(), body->end());
             body_copy.push_back('\0');
 
             doc.parse<0>(&body_copy[0]);
@@ -81,4 +85,6 @@ private:
     string _job_directory;
 };
 
-#endif // WPS_REQUESTHANDLER_H
+#include OATPP_CODEGEN_END(ApiController) //<-- End Codegen
+
+#endif // WPS_CONTROLLER_H
