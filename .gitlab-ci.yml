@@ -22,7 +22,7 @@ build oatpp:
     - cmake .. -D CMAKE_BUILD_TYPE=Release -D OATPP_BUILD_TESTS:BOOL=OFF
     - make -j 2
     - cpack -G DEB
-    - DEBFILE=$(find . -maxdepth 1 -type f -name "oatpp_*.deb")
+    - DEBFILE=$(find . -maxdepth 1 -type f -name "oatpp-dev*.deb")
     - mv $DEBFILE ../oatpp.deb
   artifacts:
     expire_in: 1h
