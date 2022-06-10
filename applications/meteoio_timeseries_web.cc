@@ -19,10 +19,10 @@
 	along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <csignal>
-#include <cstdio>
 #include <iostream>
 #include "oatpp/network/Server.hpp"
+#include "oatpp/network/monitor/ConnectionMonitor.hpp"
+#include "oatpp/network/monitor/ConnectionMaxAgeChecker.hpp"
 #include "WebappComponent.h"
 #include "controllers/WpsController.h"
 #include "controllers/ResultsController.h"
@@ -92,19 +92,14 @@ inline void runServer(unsigned int timeout_secs, string job_directory)
 	// Get connection provider component
 	OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
 
-	/* FIXME: When using ConnectionMonitor, sending wrong data or calling an endpoint that doesn't exist
-	 * leads to the whole server terminanting with a "Segmentation fault" 
-	 * --> Currently timeouts are not supported
-	 */
-
 	// Close all connections that stay open for more than timeout_secs
-	// auto monitor = std::make_shared<oatpp::network::monitor::ConnectionMonitor>(connectionProvider);
-	// monitor->addMetricsChecker(
-	// 	std::make_shared<oatpp::network::monitor::ConnectionMaxAgeChecker>(
-	// 		std::chrono::seconds(timeout_secs)));
+	auto monitor = std::make_shared<oatpp::network::monitor::ConnectionMonitor>(connectionProvider);
+	monitor->addMetricsChecker(
+		std::make_shared<oatpp::network::monitor::ConnectionMaxAgeChecker>(
+			std::chrono::seconds(timeout_secs)));
 
 	// Create server which takes provided TCP connections and passes them to HTTP connection handler
-	oatpp::network::Server server(connectionProvider, connectionHandler);
+	oatpp::network::Server server(monitor, connectionHandler);
 
 	// Print info about server port
 	OATPP_LOGI("meteoio_timeseries_web", "Server running on port %s", connectionProvider->getProperty("port").getData());
@@ -177,28 +172,6 @@ inline void parseCmdLine(int argc, char **argv, unsigned int &timeout_secs, stri
 	}
 }
 
-static void signal_handler(int signal_num)
-{
-	throw IOException("Aborting after receiving signal " + IOUtils::toString(signal_num), AT);
-}
-
-static void signals_catching(void)
-{
-#ifdef _WIN32
-	typedef void (*SignalHandlerPointer)(int);
-	SignalHandlerPointer previousHandler;
-	previousHandler = signal(SIGTERM, signal_handler);
-#else
-	struct sigaction catch_signal;
-	catch_signal.sa_handler = signal_handler;
-	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
-	catch_signal.sa_flags = 0;
-
-	sigaction(SIGTERM, &catch_signal, nullptr);
-	// sigaction(SIGHUP, &catch_signal, nullptr);
-#endif
-}
-
 int main(int argc, char **argv)
 {
 	setbuf(stdout, nullptr); // always flush stdout
@@ -206,7 +179,6 @@ int main(int argc, char **argv)
 #ifdef DEBUG_ARITHM
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW); // for halting the process at arithmetic exceptions, see also ReSolver1d
 #endif
-	signals_catching(); // trigger call stack print in case of SIGTERM
 	unsigned int timeout_secs;
 	string job_directory;
 	parseCmdLine(argc, argv, timeout_secs, job_directory);

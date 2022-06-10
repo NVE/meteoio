@@ -31,7 +31,6 @@
 
 using namespace std;
 
-// Custom request handler
 class ResultsController : public oatpp::web::server::api::ApiController
 {
 public:

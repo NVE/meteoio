@@ -33,7 +33,6 @@
 
 using namespace std;
 
-// Custom request handler
 class WpsController : public oatpp::web::server::api::ApiController
 {
 public:
