@@ -39,10 +39,11 @@ public:
     // Process incoming requests and return responses
     shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest> &request) override
     {
-        string jobId = request->getPathVariable("jobId");
-        string filepath = _job_directory + "/" + jobId + "/result.zip";
+        string filepath = "";
         try
         {
+            string jobId = request->getPathVariable("jobId");
+            filepath = _job_directory + "/" + jobId + "/result.zip";
             auto body = std::make_shared<oatpp::web::protocol::http::outgoing::StreamingBody>(
                 std::make_shared<oatpp::data::stream::FileInputStream>(filepath.c_str()));
             shared_ptr<OutgoingResponse> response = OutgoingResponse::createShared(Status::CODE_200, body);

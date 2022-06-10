@@ -35,11 +35,13 @@ build:
     paths:
       - build
       - lib
+      - bin
 
 .test_base:
   stage: test
   script:
     - cp -r tests build
+    - mv bin build
     - cd build
     - ctest --verbose -R "^${TEST_NAME}$"
 
@@ -89,6 +91,11 @@ stats:
   extends: .test_base
   variables:
     TEST_NAME: stats.smoke
+
+web:
+  extends: .test_base
+  variables:
+    TEST_NAME: web.smoke
 
 running times and coverage:
   stage: test coverage
