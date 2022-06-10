@@ -15,9 +15,10 @@ stages:
 build:
   stage: build
   script:
+    # build meteoio including binaries (test if build works for all artifacts)
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
-      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=OFF
+      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
       -D CPACK_BUNDLE_ALL:BOOL=ON
     - make -j 2
     # cleanup to avoid limits in GitLab
