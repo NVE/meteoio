@@ -102,6 +102,7 @@ running times and coverage:
   script:
     - apt-get -y install numdiff
     - cp -r tests build # copy the required test files into the tests folder
+    - mv bin build # move bin into build folder to test the web application
     - cd build
     - ctest && ctest -D NightlyCoverage
 
