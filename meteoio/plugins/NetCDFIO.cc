@@ -289,7 +289,7 @@ namespace mio {
  *
  * The time period and spatial extent of the request should be defined properly in the 'year' and 'area' instances, respectively. This API request downloads from the CDS 
  * all the aforementioned variables at hourly resolution for each day of the desired year(s). The request limit for CDS is 120'000 items per single request, which is why sometimes
- * heavy requests crash after being queued and processed. For this reason, the above script should be launched in the following way:
+ * heavy requests can crash after being queued and processed. For this reason, the above script should be launched from terminal in the following way:
  *
  * @code
  * parallel ./era5_download.py ::: {01..12} -j 4
@@ -297,7 +297,7 @@ namespace mio {
  *
  * In this way, each month of the selected year(s) will be downloaded separately within a parallel process that runs, for example, maximum 4 jobs at one time. 
  * This should ease each request and reduce the risk of crashing. Some post-processing will be required later to merge all the files together into a single .nc file. 
- * This can be easily done for example with the <A href="https://docs.xarray.dev/en/stable/">xarray</A> library for Python. 
+ * This can either be left to be done transparently by MeteoIO or manually for example with the <A href="https://docs.xarray.dev/en/stable/">xarray</A> library for Python.
  *
  * @section netcdf_tricks External tools and tricks to work with NetCDF
  * @subsection netcdf_editing Editing the metadata of a NetCDF file
