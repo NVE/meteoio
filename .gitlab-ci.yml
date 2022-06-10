@@ -28,18 +28,17 @@ build:
       -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
       -D METEOIO_TIMESERIES_WEB:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON
     - make -j 2
-    # cleanup and compress to avoid limits in GitLab
+    # cleanup to avoid limits in GitLab
     - find . -name "*.o" -type f -delete
-    - cd .. && tar -czvf build.tar.gz build lib
   artifacts:
     expire_in: 1h
     paths:
-      - build.tar.gz
+      - build
+      - lib
 
 .test_base:
   stage: test
   script:
-    - tar -xzvf build.tar.gz
     - cp -r tests build
     - cd build
     - ctest --verbose -R "^${TEST_NAME}$"
@@ -95,7 +94,6 @@ running times and coverage:
   stage: test coverage
   script:
     - apt-get -y install numdiff
-    - tar -xzvf build.tar.gz # unpack the built test files and the necessary files for ctest
     - cp -r tests build # copy the required test files into the tests folder
     - cd build
     - ctest && ctest -D NightlyCoverage
@@ -199,6 +197,8 @@ update pages:
   before_script: [] # overrides global before_script
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - release
   script:
     - curl --request POST
      --form token=${CI_JOB_TOKEN}

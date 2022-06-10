@@ -825,14 +825,14 @@ void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)
 		std::vector<std::string> new_elems;
 		std::set_difference(new_params.begin(), new_params.end(), ref_params.begin(), ref_params.end(), std::inserter(new_elems, new_elems.end()));
 		for (size_t jj=0; jj<ii; jj++) {
-			for(auto new_param : new_elems) vecMeteo[jj].addParameter( new_param );
+			for(const auto &new_param : new_elems) vecMeteo[jj].addParameter( new_param );
 		}
 		
 		//then, we add all past elements to the rest of the vector starting now and until the end
 		std::vector<std::string> past_elems;
 		std::set_difference(ref_params.begin(), ref_params.end(), new_params.begin(), new_params.end(), std::inserter(past_elems, past_elems.end()));
 		for (size_t jj=ii; jj<nElems; jj++) {
-			for(auto new_param : past_elems) vecMeteo[jj].addParameter( new_param );
+			for(const auto &new_param : past_elems) vecMeteo[jj].addParameter( new_param );
 		}
 		
 		//reset the reference parameters list to contain all potentially new elements
