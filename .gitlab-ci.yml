@@ -2,9 +2,10 @@ default:
   image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
   tags: ['docker']
   before_script:
-  - apt-get update && apt-get -y install cmake libzip-dev zipcmp zipmerge ziptool
+  - apt-get update && apt-get -y install cmake
 
 stages:
+  - dependency build
   - build
   - test
   - test coverage
@@ -12,16 +13,28 @@ stages:
   - release
   - pages
 
-build:
-  stage: build
+build oatpp:
+  stage: dependency build
   script:
-    # build oat++ dependency
     - git clone https://github.com/oatpp/oatpp.git
     - cd oatpp
     - mkdir build && cd build
     - cmake .. -D CMAKE_BUILD_TYPE=Release -D OATPP_BUILD_TESTS:BOOL=OFF
-    - make install -j 2
-    - cd ../..
+    - make -j 2
+    - cpack -G DEB
+    - DEBFILE=$(find . -maxdepth 1 -type f -name "oatpp_*.deb")
+    - mv $DEBFILE ../oatpp.deb
+  artifacts:
+    expire_in: 1h
+    paths:
+      - oatpp/oatpp.deb
+
+build:
+  stage: build
+  script:
+    # install dependencies
+    - dpkg -i oatpp/oatpp.deb
+    - apt-get -y install libzip-dev zipcmp zipmerge ziptool
     # build meteoio including binaries (test if build works for all artifacts)
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
@@ -112,7 +125,11 @@ Debian release build:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies: []
   script:
+    # install dependencies
+    - dpkg -i oatpp/oatpp.deb # dependecies for web service
+    - apt-get -y install libzip-dev zipcmp zipmerge ziptool # dependecies for web service
     - apt-get -y install doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
+    # build MeteoIO
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
     - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
