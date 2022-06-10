@@ -4,6 +4,7 @@ INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersionGIT()
 SET(BINARY "meteoio_timeseries")
 SET(SERVER "meteoio_timeseries_web")
+SET(METEOIO_TIMESERIES_WEB ON CACHE BOOL "Compilation METEOIO_TIMESERIES_WEB standalone ON or OFF")
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)
 # 	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
@@ -66,20 +67,22 @@ SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
 	OUTPUT_NAME "${BINARY}")
 INSTALL(TARGETS ${BINARY} RUNTIME DESTINATION bin COMPONENT exe)
 
-#Prepare server executable
-FIND_PACKAGE(oatpp) #Find oatpp dependencies -> https://oatpp.io/
-FIND_PACKAGE(libzip) #Find zip dependencies -> https://libzip.org/
-if (oatpp_FOUND AND libzip_FOUND) #Only build web server if required libraries are found
-	ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc Timeseries.cc requestHandlers/wps/ExecutionOperationHandler.cc)
-	TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
-	TARGET_INCLUDE_DIRECTORIES(${SERVER} PRIVATE "${PROJECT_SOURCE_DIR}/applications")
+if (METEOIO_TIMESERIES_WEB)
+	#Prepare server executable
+	FIND_PACKAGE(oatpp) #Find oatpp dependencies -> https://oatpp.io/
+	FIND_PACKAGE(libzip) #Find zip dependencies -> https://libzip.org/
+	if (oatpp_FOUND AND libzip_FOUND) #Only build web server if required libraries are found
+		ADD_EXECUTABLE(${SERVER} meteoio_timeseries_web.cc Timeseries.cc requestHandlers/wps/ExecutionOperationHandler.cc)
+		TARGET_LINK_LIBRARIES(${SERVER} ${METEOIO_LIBRARIES} oatpp::oatpp libzip::zip ${EXTRA_LINKS})
+		TARGET_INCLUDE_DIRECTORIES(${SERVER} PRIVATE "${PROJECT_SOURCE_DIR}/applications")
 
-	IF(BUILD_STATIC_LIBS)
-		TARGET_LINK_OPTIONS(${SERVER} PRIVATE -static-libgcc -static-libstdc++ -static)
-	ENDIF(BUILD_STATIC_LIBS)
-	SET_TARGET_PROPERTIES(${SERVER} PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
-		CLEAN_DIRECT_OUTPUT 1
-		OUTPUT_NAME "${SERVER}")
-	INSTALL(TARGETS ${SERVER} RUNTIME DESTINATION bin COMPONENT exe)
-ENDIF (OATPP_FOUND AND LIBZIP_FOUND)
+		IF(BUILD_STATIC_LIBS)
+			TARGET_LINK_OPTIONS(${SERVER} PRIVATE -static-libgcc -static-libstdc++ -static)
+		ENDIF(BUILD_STATIC_LIBS)
+		SET_TARGET_PROPERTIES(${SERVER} PROPERTIES
+			RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
+			CLEAN_DIRECT_OUTPUT 1
+			OUTPUT_NAME "${SERVER}")
+		INSTALL(TARGETS ${SERVER} RUNTIME DESTINATION bin COMPONENT exe)
+	ENDIF (oatpp_FOUND AND libzip_FOUND)
+ENDIF (METEOIO_TIMESERIES_WEB)

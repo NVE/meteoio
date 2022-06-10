@@ -2,7 +2,7 @@ default:
   image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
   tags: ['docker']
   before_script:
-  - apt-get update && apt-get -y install cmake
+  - apt-get update && apt-get -y install cmake libzip-dev zipcmp zipmerge ziptool
 
 stages:
   - build
@@ -15,10 +15,18 @@ stages:
 build:
   stage: build
   script:
+    # build oat++ dependency
+    - git clone https://github.com/oatpp/oatpp.git
+    - cd oatpp
+    - mkdir build && cd build
+    - cmake .. -D CMAKE_BUILD_TYPE=Release -D OATPP_BUILD_TESTS:BOOL=OFF
+    - make install -j 2
+    - cd ../..
+    # build meteoio including binaries (test if build works for all artifacts)
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
-      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=OFF
-      -D CPACK_BUNDLE_ALL:BOOL=ON
+      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
+      -D METEOIO_TIMESERIES_WEB:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON
     - make -j 2
     # cleanup and compress to avoid limits in GitLab
     - find . -name "*.o" -type f -delete
