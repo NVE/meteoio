@@ -20,8 +20,6 @@
 #ifndef WPS_OPERATION_HANDLER_H
 #define WPS_OPERATION_HANDLER_H
 
-#include "oatpp/web/protocol/http/outgoing/ResponseFactory.hpp"
-#include "oatpp/web/protocol/http/outgoing/Response.hpp"
 #include "rapidxml_ns-1.13.2/rapidxml_ns.hpp"
 
 using namespace std;
@@ -29,10 +27,10 @@ using namespace std;
 class WpsOperationHandler
 {
 public:
-    virtual ~WpsOperationHandler(){}
+    virtual ~WpsOperationHandler() {}
 
     // Process incoming requests and return responses
-    virtual shared_ptr<oatpp::web::protocol::http::outgoing::Response> handleOperation(rapidxml_ns::xml_node<> *root_node) = 0;
+    virtual string handleOperation(rapidxml_ns::xml_node<> *root_node) = 0;
 };
 
 #endif // WPS_OPERATION_HANDLER_H

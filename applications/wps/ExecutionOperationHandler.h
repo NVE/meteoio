@@ -36,7 +36,7 @@ class ExecutionOperationHandler : public WpsOperationHandler
 public:
     ExecutionOperationHandler(string job_directory);
 
-    shared_ptr<oatpp::web::protocol::http::outgoing::Response> handleOperation(rapidxml_ns::xml_node<> *root_node) override;
+    string handleOperation(rapidxml_ns::xml_node<> *root_node) override;
 
 private:
     const char *NS_WPS = "http://www.opengis.net/wps/2.0";

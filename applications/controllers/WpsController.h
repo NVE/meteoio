@@ -61,20 +61,23 @@ public:
             if (operationName == OPERATION_EXECUTION && operationNameNs == NS_WPS)
             {
                 ExecutionOperationHandler executionOperationHandler(_job_directory);
-                return executionOperationHandler.handleOperation(root_node);
+                string responseBody = executionOperationHandler.handleOperation(root_node);
+                auto response = createResponse(Status::CODE_200, responseBody);
+                response->putHeader("Content-Type", "text/xml");
+                return response;
             }
             OATPP_LOGW("WpsRequestHandler", "Operation '%s' is not supported", operationName.c_str());
-            return ResponseFactory::createResponse(Status::CODE_400, "Operation '" + operationName + "' is not supported");
+            return createResponse(Status::CODE_400, "Operation '" + operationName + "' is not supported");
         }
         catch (BadRequestException &e)
         {
             OATPP_LOGW("WpsRequestHandler", e.what());
-            return ResponseFactory::createResponse(Status::CODE_400, e.what());
+            return createResponse(Status::CODE_400, e.what());
         }
         catch (exception &e)
         {
             OATPP_LOGE("WpsRequestHandler", e.what());
-            return ResponseFactory::createResponse(Status::CODE_500, e.what());
+            return createResponse(Status::CODE_500, e.what());
         }
     }
 

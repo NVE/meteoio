@@ -57,7 +57,7 @@ public:
         {
             OATPP_LOGW("ResultsRequestHandler", "Requested file '%s' could not be served.", filepath.c_str());
             OATPP_LOGW("ResultsRequestHandler", e.what());
-            return ResponseFactory::createResponse(Status::CODE_404, "Not found");
+            return createResponse(Status::CODE_404, "Not found");
         }
     }
 

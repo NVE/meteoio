@@ -24,7 +24,7 @@ ExecutionOperationHandler::ExecutionOperationHandler(string job_directory) : _jo
 {
 }
 
-shared_ptr<oatpp::web::protocol::http::outgoing::Response> ExecutionOperationHandler::handleOperation(rapidxml_ns::xml_node<> *root_node)
+string ExecutionOperationHandler::handleOperation(rapidxml_ns::xml_node<> *root_node)
 {
     ExecuteRequest executeRequest = readExecuteRequest(root_node);
     OATPP_LOGI("ExecutionOperationHandler", "Processing execution operation for jobId='%s'", executeRequest.jobId.c_str());
@@ -39,11 +39,7 @@ shared_ptr<oatpp::web::protocol::http::outgoing::Response> ExecutionOperationHan
     Zip::zipDirectory(resultDir);
 
     // Return output
-    string responseBody = getResponseBody(executeRequest);
-    shared_ptr<oatpp::web::protocol::http::outgoing::Response> response = oatpp::web::protocol::http::outgoing::ResponseFactory::
-        createResponse(oatpp::web::protocol::http::Status::CODE_200, responseBody);
-    response->putHeader("Content-Type", "text/xml");
-    return response;
+    return getResponseBody(executeRequest);
 }
 
 ExecutionOperationHandler::ExecuteRequest ExecutionOperationHandler::readExecuteRequest(rapidxml_ns::xml_node<> *root_node)
