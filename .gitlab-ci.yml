@@ -107,13 +107,15 @@ stats:
 
 web:
   extends: .test_base
+  before_script:
+    - apt-get update && apt-get -y install cmake libzip-dev zipcmp zipmerge ziptool
   variables:
     TEST_NAME: web.smoke
 
 running times and coverage:
   stage: test coverage
   script:
-    - apt-get -y install numdiff
+    - apt-get -y install numdiff libzip-dev zipcmp zipmerge ziptool
     - cp -r tests build # copy the required test files into the tests folder
     - mv bin build # move bin into build folder to test the web application
     - cd build
