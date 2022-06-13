@@ -13,7 +13,7 @@
 ###
 
 # TODO: Use a more minimal image to build MeteoIO (e.g. alpine) and use that same image here
-FROM debian:latest
+FROM gcc:latest
 
 RUN apt-get update && apt-get -y install libzip-dev zipcmp zipmerge ziptool
 
