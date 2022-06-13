@@ -3479,8 +3479,8 @@ units_multiplier = 1 1 1 1 1 1 0.01 1 1 1
         </wps:Data>
     </wps:Input>
 
-	<!-- Query the default output format for the the result "BUFFERED_GEOMETRY" -->
-	<!-- The result "BUFFERED_GEOMETRY" shall be delivered by reference in its default format -->
-	<wps:Output id="BUFFERED_GEOMETRY" transmission="reference"/>
+	<!-- Query the default output format for the the result "result.zip" -->
+	<!-- The result "result.zip" shall be delivered by reference in its default format -->
+	<wps:Output id="result.zip" transmission="reference"/>
 	
 </wps:Execute>

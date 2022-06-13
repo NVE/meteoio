@@ -21,7 +21,7 @@
 #define EXECUTION_OPERATION_HANDLER_H
 
 #include <fstream>
-#include <sys/stat.h>
+#include <stdlib.h>
 #include "oatpp/core/base/Environment.hpp"
 #include "WpsOperationHandler.h"
 #include "util/UUID.h"
@@ -155,7 +155,7 @@ private:
     inline void createDir(string &dir)
     {
         OATPP_LOGI("ExecutionOperationHandler", "Creating dir: %s", dir.c_str());
-        const int dir_err = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        const int dir_err = system(("mkdir -p " + dir).c_str());
         if (-1 == dir_err)
         {
             throw InternalServerError("Error creating directory!");
