@@ -563,11 +563,10 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		if (sd.stationID.empty()) sd.stationID = "Station"+IOUtils::toString( ii+1 );
 
 		//2. check which meteo parameter fields are actually in use
-		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
-		double smet_timezone = IOUtils::nodata; //time zone of the data
-		const std::set<std::string> paramInUse( checkForUsedParameters(vecMeteo[ii], smet_timezone) );
-		if (out_dflt_TZ != IOUtils::nodata) smet_timezone = out_dflt_TZ; //if the user set an output time zone, all will be converted to it
-		
+		//if the user set an output time zone, all will be converted to it. 
+		//Otherwise, we know that the current station is not empty, we take TZ from the first timestamnp
+		const double smet_timezone = (out_dflt_TZ != IOUtils::nodata)? out_dflt_TZ : vecMeteo[ii][0].date.getTimeZone();
+		const std::set<std::string> paramInUse( MeteoData::listAvailableParameters(vecMeteo[ii]) );
 		const std::string version_str = buildVersionString( vecMeteo, smet_timezone );
 		const std::string filename( outpath + "/" + sd.stationID + version_str + dflt_extension );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
@@ -602,8 +601,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				mywriter = new smet::SMETWriter(filename, type);
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
 				mywriter->set_commented_headers( outputCommentedHeaders );
-				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
-                                   paramInUse, *mywriter);
+				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone, paramInUse, *mywriter);
 			}
 
 			std::vector<std::string> vec_timestamp;
@@ -859,16 +857,6 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 	}
 	
 	return actual_nr_of_parameters;
-}
-
-std::set<std::string> SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& smet_timezone)
-{
-	const std::set<std::string> paramInUse( MeteoData::listAvailableParameters(vecMeteo) );
-
-	if (!vecMeteo.empty())
-		smet_timezone = vecMeteo[0].date.getTimeZone();
-	
-	return paramInUse;
 }
 
 bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
