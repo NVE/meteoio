@@ -787,16 +787,15 @@ bool MeteoData::hasConflicts(const MeteoData& meteo2) const
 std::set<std::string> MeteoData::listAvailableParameters(const std::vector<MeteoData>& vecMeteo)
 {
 	std::set<std::string> results;
-	std::set<size_t> tmp; //for efficiency, we assume that through the vector, the indices remain identical for any given parameter
-
+	
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		for (size_t jj=0; jj<vecMeteo[ii].getNrOfParameters(); jj++)
-			if (vecMeteo[ii](jj) != IOUtils::nodata && tmp.count(jj)==0) { //for efficiency, we compare on the index
-				tmp.insert( jj );
-				results.insert( vecMeteo[ii].getNameForParameter(jj) );
-			}
+		for (const std::string& parname : MeteoData::s_default_paramname)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
+		
+		for (const std::string& parname : vecMeteo[ii].extra_param_name)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
 	}
-
+	
 	return results;
 }
 
@@ -834,7 +833,7 @@ void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)
 		for (size_t jj=ii; jj<nElems; jj++) {
 			for(const auto &new_param : past_elems) vecMeteo[jj].addParameter( new_param );
 		}
-		
+
 		//reset the reference parameters list to contain all potentially new elements
 		extra_params_ref = vecMeteo[ii].extra_param_name;
 	}
