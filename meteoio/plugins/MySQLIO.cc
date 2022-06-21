@@ -195,15 +195,13 @@ std::vector<std::string> MYSQLIO::readStationIDs() const
 */
 void MYSQLIO::readStationMetaData()
 {
-	const size_t nrMetadataFields( metaDataFields.size() ); //this is given by the metadata parsing vector metaDataFields
 	vecStationMetaData.clear();
 	const std::vector<std::string> vecStationID( readStationIDs() );
 	
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, metaDataQuery, 1);
 	
-	for (size_t ii=0; ii<vecStationID.size(); ii++) {
-		const std::string stationID( vecStationID[ii] );
+	for (const std::string stationID : vecStationID) {
 		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID) };
 		mysql_wrp::bindParams(&stmt, params_fields);
 		
@@ -217,13 +215,13 @@ void MYSQLIO::readStationMetaData()
 			//loop over all fields that we should find
 			std::string station_name;
 			double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope=IOUtils::nodata, azi=IOUtils::nodata;
-			for (size_t ii=0; ii<nrMetadataFields; ++ii) {
-				if (metaDataFields[ii].param=="STATNAME") station_name = metaDataFields[ii].str;
-				else if (metaDataFields[ii].param=="LAT") lat = metaDataFields[ii].val;
-				else if (metaDataFields[ii].param=="LON") lon = metaDataFields[ii].val;
-				else if (metaDataFields[ii].param=="ALT") alt = metaDataFields[ii].val;
-				else if (metaDataFields[ii].param=="SLOPE") slope = metaDataFields[ii].val;
-				else if (metaDataFields[ii].param=="AZI") azi = metaDataFields[ii].val;
+			for (const auto meta : metaDataFields) { //this is given by the metadata parsing vector metaDataFields
+				if (meta.param=="STATNAME") station_name = meta.str;
+				else if (meta.param=="LAT") lat = meta.val;
+				else if (meta.param=="LON") lon = meta.val;
+				else if (meta.param=="ALT") alt = meta.val;
+				else if (meta.param=="SLOPE") slope = meta.val;
+				else if (meta.param=="AZI") azi = meta.val;
 			}
 			
 			Coords location(coordin,coordinparam);
@@ -273,7 +271,6 @@ void MYSQLIO::readMeteoData(const Date& dateStart , const Date& dateEnd,
 void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                        const size_t& stationindex) const
 {
-	const size_t nrMeteoFields( meteoDataFields.size() ); //this is given by the meteodata parsing vector meteoDataFields
 	vecMeteo.at(stationindex).clear();
 
 	Date dateS(dateStart), dateE(dateEnd);
@@ -295,9 +292,9 @@ void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< 
 		
 		//create the MeteoData template
 		MeteoData md(sd);
-		for (size_t ii=0; ii<nrMeteoFields; ++ii) {
-			if (meteoDataFields[ii].isDate) continue;
-			if (!md.param_exists(meteoDataFields[ii].param)) md.addParameter(meteoDataFields[ii].param);
+		for (SQL_FIELD& dataField : meteoDataFields) {
+			if (dataField.isDate) continue;
+			if (!md.param_exists(dataField.param)) md.addParameter(dataField.param);
 		}
 		
 		do {
@@ -309,13 +306,12 @@ void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< 
 			if (status==1 || status==MYSQL_NO_DATA) break;
 			
 			//loop over all fields that we should find
-			for (size_t ii=0; ii<nrMeteoFields; ++ii) {
-				if (meteoDataFields[ii].isDate) {
-					md.setDate( meteoDataFields[ii].getDate(in_dflt_TZ) ); //get from Mysql without TZ, set it to input TZ
+			for (SQL_FIELD& dataField : meteoDataFields) {
+				if (dataField.isDate) {
+					md.setDate( dataField.getDate(in_dflt_TZ) ); //get from Mysql without TZ, set it to input TZ
 					md.date.setTimeZone(out_dflt_TZ); //set to requested TZ
-					continue;
 				} else {
-					md( meteoDataFields[ii].param ) = mysql_wrp::retrieveData(meteoDataFields[ii], meteoDataFields[ii].processing);
+					md( dataField.param ) = mysql_wrp::retrieveData(dataField, dataField.processing);
 				}
 			}
 			
