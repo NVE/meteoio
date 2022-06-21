@@ -28,10 +28,10 @@
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOUtils.h>
 
+static const int MYSQL_STRING_SIZE = 50;
+
 class SQL_FIELD {
 	public:
-		static const int STRING_SIZE = 50;
-		
 		#if LIBMYSQL_VERSION_ID > 80001
 			typedef bool BOOL_TYPE;
 		#else
@@ -60,7 +60,7 @@ class SQL_FIELD {
 		
 		//several members could be const, but we need a working '=' operator in the plugin for easier code...
 		std::string param;	///< the parameter name for MeteoIO
-		char str[STRING_SIZE];		///< for MySQL to store string data
+		char str[MYSQL_STRING_SIZE];		///< for MySQL to store string data
 		MYSQL_TIME dt;				///< for MySQL to store datetime data
 		unsigned long int str_len;	///< for MySQL, length of a string
 		unsigned long int buffer_len; ///< for MySQL, allocated data buffer length

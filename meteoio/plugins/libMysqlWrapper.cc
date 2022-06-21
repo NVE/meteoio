@@ -42,21 +42,21 @@ SQL_FIELD::SQL_FIELD(const mio::Date& i_dt, const std::string& i_param, const un
 
 void SQL_FIELD::resetDate() 
 {
-	dt.year=0; 
-	dt.month=0; 
-	dt.day=0; 
-	dt.hour=0; 
-	dt.minute=0; 
-	dt.second=0; 
-	dt.second_part=0;
+	dt.year = 0; 
+	dt.month = 0; 
+	dt.day = 0; 
+	dt.hour = 0; 
+	dt.minute = 0; 
+	dt.second = 0; 
+	dt.second_part = 0;
 }
 
 void SQL_FIELD::reset() 
 {
-	str[0]='\0'; 
+	str[0] = '\0'; 
 	resetDate(); 
-	str_len=0; 
-	val=mio::IOUtils::nodata; 
+	str_len = 0; 
+	val = mio::IOUtils::nodata; 
 	MysqlType=MYSQL_TYPE_NULL;
 }
 
@@ -78,28 +78,36 @@ void SQL_FIELD::setFromDate(const mio::Date& i_dt, MYSQL_TIME &ts)
 void SQL_FIELD::setString(const std::string& i_str) 
 {
 	reset(); 
-	strncpy(str, i_str.c_str(), std::min(static_cast<int>(i_str.size()), STRING_SIZE)); 
-	str_len=strlen(str); 
-	MysqlType=MYSQL_TYPE_STRING;
+	strncpy(str, i_str.c_str(), std::min(static_cast<int>(i_str.size()), MYSQL_STRING_SIZE)); 
+	str_len = strlen(str); 
+	MysqlType = MYSQL_TYPE_STRING;
 }
 
 void SQL_FIELD::setDate(const mio::Date& i_dt) 
 {
 	reset(); 
 	setFromDate(i_dt, dt); 
-	MysqlType=MYSQL_TYPE_DATETIME;
+	MysqlType = MYSQL_TYPE_DATETIME;
 }
 
 void SQL_FIELD::setDouble(const double& i_val) 
 {
 	reset(); 
-	val=i_val; 
-	MysqlType=MYSQL_TYPE_DOUBLE;
+	val = i_val; 
+	MysqlType = MYSQL_TYPE_DOUBLE;
 }
 
 mio::Date SQL_FIELD::getDate(const double& TZ) const 
 {
-	mio::Date o_dt(static_cast<int>(dt.year), static_cast<int>(dt.month), static_cast<int>(dt.day), static_cast<int>(dt.hour), static_cast<int>(dt.minute), static_cast<double>(dt.second)+static_cast<double>(dt.second_part)*1e-6, TZ); return o_dt;
+	const int year = static_cast<int>(dt.year);
+	const int month = static_cast<int>(dt.month);
+	const int day = static_cast<int>(dt.day);
+	const int hour = static_cast<int>(dt.hour);
+	const int minute = static_cast<int>(dt.minute);
+	const double seconds = static_cast<double>(dt.second) + static_cast<double>(dt.second_part)*1e-6;
+	
+	mio::Date o_dt(year, month, day, hour, minute, seconds, TZ); 
+	return o_dt;
 }
 
 namespace mysql_wrp {
@@ -109,12 +117,12 @@ MYSQL* initMysql(const std::string& mysqlhost, const std::string& mysqluser, con
 	MYSQL *mysql = mysql_init(nullptr);
 	
 	//set some options
-	unsigned int timeout = 2; // in seconds
+	const unsigned int timeout = 2; // in seconds
 	mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 	if ((COMPRESSION & options) == COMPRESSION)
 		mysql_options(mysql, MYSQL_OPT_COMPRESS, 0);
 	if ((ENCRYPTION & options) == ENCRYPTION) {
-		unsigned int enforce_ssl = SSL_MODE_REQUIRED;
+		const unsigned int enforce_ssl = SSL_MODE_REQUIRED;
 		mysql_options(mysql, MYSQL_OPT_SSL_MODE, &enforce_ssl);
 	}
 	
@@ -145,17 +153,17 @@ void bindParams(MYSQL_STMT **stmt, std::vector<SQL_FIELD> &params_fields)
 	MYSQL_BIND *stmtParams = (MYSQL_BIND*)calloc(params_count, sizeof(MYSQL_BIND));
 	if (stmtParams==nullptr) throw IOException("Could not allocate memory for parameter binding to Mysql query", AT);
 	
-	for(size_t ii=0; ii<params_count; ++ii) {
+	for (size_t ii=0; ii<params_count; ++ii) {
 		stmtParams[ii].buffer_type = params_fields[ii].MysqlType;
 		stmtParams[ii].is_null = nullptr;
 		
-		if (params_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
+		if (params_fields[ii].MysqlType==MYSQL_TYPE_STRING) {	//strings
 			stmtParams[ii].buffer = (char *)params_fields[ii].str;
-			stmtParams[ii].buffer_length = SQL_FIELD::STRING_SIZE;
+			stmtParams[ii].buffer_length = MYSQL_STRING_SIZE;
 			stmtParams[ii].length = &params_fields[ii].str_len;
-		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
+		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {	//doubles
 			stmtParams[ii].buffer = (char *)&params_fields[ii].val;
-		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {
+		} else if(params_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {	//dates
 			stmtParams[ii].buffer = (char *)&params_fields[ii].dt;
 		}
 	}
@@ -178,15 +186,15 @@ void bindResults(MYSQL_STMT **stmt, std::vector<SQL_FIELD> &result_fields)
 	MYSQL_BIND *result = (MYSQL_BIND*)calloc(column_count, sizeof(MYSQL_BIND));
 	if (result==nullptr) throw IOException("Could not allocate memory for results binding to Mysql query", AT);
 	
-	for(size_t ii=0; ii<column_count; ++ii) {
+	for (size_t ii=0; ii<column_count; ++ii) {
 		result[ii].buffer_type = result_fields[ii].MysqlType;
-		if (result_fields[ii].MysqlType==MYSQL_TYPE_STRING) {
+		if (result_fields[ii].MysqlType==MYSQL_TYPE_STRING) {	//strings
 			result[ii].buffer = (char *)result_fields[ii].str;
-			result[ii].buffer_length = SQL_FIELD::STRING_SIZE;
-		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {
+			result[ii].buffer_length = MYSQL_STRING_SIZE;
+		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DOUBLE) {	//doubles
 			result[ii].buffer_type = MYSQL_TYPE_DOUBLE;
 			result[ii].buffer = (char *)&result_fields[ii].val;
-		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {
+		} else if(result_fields[ii].MysqlType==MYSQL_TYPE_DATETIME) {	//dates
 			result[ii].buffer_type = MYSQL_TYPE_DATETIME;
 			result[ii].buffer = (char *)&result_fields[ii].dt;
 		}
