@@ -346,8 +346,8 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key( section + "::" + vecKeys[ii] );
+			for (const std::string key : vecKeys) {
+				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -365,8 +365,8 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+			for (const std::string key : vecKeys) {
+				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);

@@ -219,25 +219,25 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t section_start = (it->first).find(section, 0);
+		for (const auto& prop : properties) {
+			const size_t section_start = (prop.first).find(section, 0);
 			if (section_start==0) { //found the section!
 				const size_t section_len = section.length();
-				const size_t found_pos = (it->first).find(keymatch, section_len);
+				const size_t found_pos = (prop.first).find(keymatch, section_len);
 				if (found_pos!=string::npos) { //found it!
-					const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-					vecResult.push_back( make_pair(key, it->second));
+					const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+					vecResult.push_back( make_pair(key, prop.second));
 				}
 			}
 		}
 	} else {
 		keymatch = section + "::" + keymatch;
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_pos = (it->first).find(keymatch, 0);
+		for (const auto& prop : properties) {
+			const size_t found_pos = (prop.first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
 				const size_t section_len = section.length();
-				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-				vecResult.push_back( make_pair(key, it->second));
+				const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+				vecResult.push_back( make_pair(key, prop.second));
 			}
 		}
 	}
@@ -255,26 +255,24 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t section_start = (it->first).find(section, 0);
+		for (const auto& prop : properties) {
+			const size_t section_start = (prop.first).find(section, 0);
 			if (section_start==0) { //found the section!
 				const size_t section_len = section.length();
-				const size_t found_pos = (it->first).find(keymatch, section_len);
+				const size_t found_pos = (prop.first).find(keymatch, section_len);
 				if (found_pos!=string::npos) { //found it!
-					const std::string key( (it->first).substr(section_len) ); //from pos to the end
+					const std::string key( (prop.first).substr(section_len) ); //from pos to the end
 					vecResult.push_back( key );
 				}
 			}
 		}
 	} else {
 		keymatch = section + keymatch;
-
-		//for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-		for (const auto& it : properties) {
-			const size_t found_pos = (it.first).find(keymatch, 0);
+		for (const auto& prop : properties) {
+			const size_t found_pos = (prop.first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
 				const size_t section_len = section.length();
-				const std::string key( (it.first).substr(section_len) ); //from pos to the end
+				const std::string key( (prop.first).substr(section_len) ); //from pos to the end
 				vecResult.push_back( key );
 			}
 		}
@@ -292,8 +290,8 @@ void Config::write(const std::string& filename) const
 	try {
 		std::string current_section;
 		unsigned int sectioncount = 0;
-		for (const auto& it : properties) {
-			const std::string key_full( it.first );
+		for (const auto& prop : properties) {
+			const std::string key_full( prop.first );
 			const std::string section( ConfigParser::extract_section(key_full) );
 
 			if (current_section != section) {
@@ -305,7 +303,7 @@ void Config::write(const std::string& filename) const
 			}
 
 			const size_t key_start = key_full.find_first_of(":");
-			const std::string value( it.second );
+			const std::string value( prop.second );
 			if (value.empty()) continue;
 
 			if (key_start!=string::npos) //start after the "::" marking the section prefix
@@ -438,11 +436,11 @@ std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::
 	std::ostringstream arg_str;
 	arg_str << cmd_id << arg_pattern << cmd_nr;
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
-	for (size_t jj=0; jj<vecArgs.size(); jj++) {
-		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+	for (auto& arg : vecArgs) {
+		const size_t beg_arg_name = arg.first.find_first_not_of(":", arg_str.str().length());
 		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+			throw InvalidFormatException("Wrong argument format for '"+arg.first+"'", AT);
+		arg.first = arg.first.substr(beg_arg_name);
 	}
 	
 	return vecArgs;
@@ -454,11 +452,11 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(key_prefix, section) );
 
 	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+	for (auto& arg : vecArgs) {
+		const size_t beg_arg_name = arg.first.find_first_not_of(":", key_prefix.length());
 		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
-		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+			throw InvalidFormatException("Wrong argument format for '"+arg.first+"'", AT);
+		arg.first = arg.first.substr(beg_arg_name);
 	}
 
 	return vecArgs;
