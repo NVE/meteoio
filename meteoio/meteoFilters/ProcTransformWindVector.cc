@@ -162,7 +162,7 @@ void ProcTransformWindVector::initPROJ()
 		dest_param = t_coordparam;
 	}
 
-	// Note that we strictly use <lon>, <lat>, whereas the definition of EPSG:4326 requires <lat>, <lon>. We convert to "+proj=longlat +datum=WGS84 +no_defs", which requires <lon>, <lat>
+	// Note that we strictly use <lon>, <lat>, whereas the definition of EPSG:4326 expects <lat>, <lon>. We convert to "+proj=longlat +datum=WGS84 +no_defs", which does expect <lon>, <lat>
 	if (src_param == "EPSG:4326") src_param="+proj=longlat +datum=WGS84 +no_defs";
 	if (dest_param == "EPSG:4326") dest_param="+proj=longlat +datum=WGS84 +no_defs";
 
