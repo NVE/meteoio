@@ -285,6 +285,19 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 	}
 
 	return vecResult;
+	
+	/*IOUtils::toUpper(section);
+	const std::vector< std::string > vecKeys( getKeys(keymatch, section, anywhere) );
+	std::vector< std::pair<std::string, std::string> > vecResult;
+	
+	for (const auto& key : vecKeys) {
+		const std::map<std::string, std::string>::const_iterator it( properties.find(section+"::"+key) );
+		if (it == properties.end())
+			std::cout << "Looking for key \"" << section << "::" << key << "\", but not found\n";
+		vecResult.push_back( make_pair(key, it->second) );
+	}
+	
+	return vecResult;*/
 }
 
 std::vector<std::string> Config::getKeys(std::string keymatch,
@@ -299,6 +312,78 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 	}
 	
 	return vecResult;
+	
+	/*static const std::regex index_regex("(?:[^0-9]+)([0-9]+)");
+	std::smatch index_matches;
+	IOUtils::toUpper(section);
+	IOUtils::toUpper(keymatch);
+	
+	std::vector< std::string > vecResult;
+	std::map<int, std::string > keyMap;
+	bool indexed_keys = true;
+
+	//Loop through keys, look for match - push it into vecResult
+	if (anywhere) {
+		for (const auto& prop : properties) {
+			const size_t section_start = (prop.first).find(section, 0);
+			if (section_start==0) { //found the section!
+				const size_t section_len = section.length();
+				const size_t found_pos = (prop.first).find(keymatch, section_len);
+				if (found_pos!=string::npos) { //found it!
+					const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+					
+					//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
+					if (indexed_keys) {
+						if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
+							const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group
+							keyMap[ index ] = key;
+						} else {
+							indexed_keys = false;
+							//the keys are not indexed, moved the processed keys into the results vector
+							for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+							keyMap.clear();
+							vecResult.push_back( key ); //push the current, unprocessed key
+						}
+					} else { //keys are nto indexed, store them directly in the results vector
+						vecResult.push_back( key );
+					}
+				}
+			}
+		}
+	} else {
+		keymatch = section + "::" + keymatch;
+		for (const auto& prop : properties) {
+			const size_t found_pos = (prop.first).find(keymatch, 0);
+			if (found_pos==0) { //found it starting at the begining
+				const size_t section_len = section.length();
+				const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+				
+				//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
+				if (indexed_keys) {
+					if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
+						const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group
+						keyMap[ index ] = key;
+					} else {
+						indexed_keys = false;
+						//the keys are not indexed, moved the processed keys into the results vector
+						for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+						keyMap.clear();
+						vecResult.push_back( key ); //push the current, unprocessed key
+					}
+				} else { //keys are nto indexed, store them directly in the results vector
+					vecResult.push_back( key );
+				}
+			}
+		}
+	}
+	
+	if (indexed_keys && !keyMap.empty()) {
+		for (const auto& key_record : keyMap) {
+			vecResult.push_back( key_record.second );
+		}
+	}
+
+	return vecResult;*/
 }
 
 void Config::write(const std::string& filename) const
