@@ -22,10 +22,9 @@
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/FileUtils.h>
 #ifdef PROJ4
+	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
-#endif
-#ifdef PROJ
-	#undef ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
+#elif PROJ
 	#include <proj.h>
 #endif
 #include <stdio.h>

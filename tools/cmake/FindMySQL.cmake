@@ -69,22 +69,23 @@ IF(MySQL_LIBRARY)
 	)
 ENDIF(MySQL_LIBRARY)
 
-if( MySQL_INCLUDE_DIR AND EXISTS "${MySQL_INCLUDE_DIR}/mysql_version.h" )
+IF( MySQL_INCLUDE_DIR AND EXISTS "${MySQL_INCLUDE_DIR}/mysql_version.h" )
 	file( STRINGS "${MySQL_INCLUDE_DIR}/mysql_version.h"
 		MYSQL_VERSION_H REGEX "^#define[ \t]+MYSQL_SERVER_VERSION[ \t]+\"[^\"]+\".*$" )
 	string( REGEX REPLACE
 		"^.*MYSQL_SERVER_VERSION[ \t]+\"([^\"]+)\".*$" "\\1" MYSQL_VERSION_STRING
 		"${MYSQL_VERSION_H}" )
-endif()
+ENDIF()
 
 # handle the QUIETLY and REQUIRED arguments and set MYSQL_FOUND to TRUE if
 # all listed variables are TRUE
-include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args(MySQL DEFAULT_MSG
+INCLUDE( FindPackageHandleStandardArgs )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(MySQL DEFAULT_MSG
                                   MySQL_LIBRARY MySQL_INCLUDE_DIR)
 
-set( MYSQL_INCLUDE_DIR ${MySQL_INCLUDE_DIR} )
-set( MYSQL_LIBRARY ${MySQL_LIBRARY} )
+# There is quite a mess with MySQL regarding capitalization, therefore exporting both variants
+SET( MYSQL_INCLUDE_DIR ${MySQL_INCLUDE_DIR} )
+SET( MYSQL_LIBRARY ${MySQL_LIBRARY} )
 
-mark_as_advanced( MySQL_INCLUDE_DIR MySQL_LIBRARY )
-mark_as_advanced( MYSQL_INCLUDE_DIR MYSQL_LIBRARY )
+MARK_AS_ADVANCED( MySQL_INCLUDE_DIR MySQL_LIBRARY )
+MARK_AS_ADVANCED( MYSQL_INCLUDE_DIR MYSQL_LIBRARY )
