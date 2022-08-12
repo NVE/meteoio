@@ -357,7 +357,7 @@ static void real_main(int argc, char* argv[])
 	
 	IOManager io(cfg);
 	const bool data_qa = cfg.get("DATA_QA_LOGS", "General", false);
-	if (data_qa) cfg.getValue("Check_Missing", "Input", enforce_variables);
+	if (data_qa) cfg.getValue("QA_CHECK_MISSING", "General", enforce_variables);
 	
 	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
 	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
