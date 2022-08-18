@@ -163,7 +163,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - AZI (for the slope azimuth, in degree as read from a compass);
  * - NODATA (string to interpret as nodata);
  * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
- * - SKIP (skip this field).
+ * - SKIP or - (skip this field).
  * 
  * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
  *
@@ -643,7 +643,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
 			date_cols.time_str = ii;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("SKIP")==0) {
+		} else if (tmp.compare("SKIP")==0 || tmp.compare("-")==0) {
 			skip_fields[ ii ] = true;
 		} else if (tmp.compare("YEAR")==0) {
 			date_cols.year = ii;
