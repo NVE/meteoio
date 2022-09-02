@@ -327,13 +327,6 @@ namespace mio {
  * @endcode
  */
 
-//helper function to sort the cache of grid files
-inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncFiles> &left, const std::pair<std::pair<Date,Date>,ncFiles> &right) {
-	if (left.first.first < right.first.first) return true;
-	if (left.first.first > right.first.first) return false;
-	return left.first.second < right.first.second; //date_start equallity case
-}
-
 NetCDFIO::NetCDFIO(const std::string& configfile)
          : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
@@ -440,7 +433,13 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
 	}
-	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);
+	std::sort(nc_files.begin(), nc_files.end(), 
+		[](const std::pair<std::pair<Date,Date>,ncFiles> &left, const std::pair<std::pair<Date,Date>,ncFiles> &right) {
+			if (left.first.first < right.first.first) return true;
+			if (left.first.first > right.first.first) return false;
+			return left.first.second < right.first.second; //date_start equallity case
+		}
+	);
 }
 
 bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list)
