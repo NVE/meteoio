@@ -127,21 +127,14 @@ void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 	
-	/*std::cout << "dt_start.isUndef()=" << dt_start.isUndef() << "\n";
-	std::cout << "dt_start=" << dt_start.toString(Date::ISO);
-	std::cout << " dateStart=" << dateStart.toString(Date::ISO) << "\n";
-	std::cout << "Starting from " << true_start.toString(Date::ISO) << " with dt_step_days=" << dt_step_days << "\n";*/
-	
 	for (auto &station : vecStations) {
 		std::vector<MeteoData> vecM;
 		for (Date dt=true_start; dt<=true_end; dt+=dt_step_days) {
-			MeteoData md( dt, station );
-			md(MeteoData::TA) = 280.0;
+			const MeteoData md( dt, station );
 			vecM.push_back( md );
 		}
 		vecMeteo.push_back( vecM );
 	}
-	//std::cout << "vecMeteo[0].size()=" << vecMeteo[0].size() << "\n";
 }
 
 } //namespace
