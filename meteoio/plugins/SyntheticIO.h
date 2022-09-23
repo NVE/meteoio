@@ -24,6 +24,19 @@
 #include <string>
 
 namespace mio {
+/**
+ * @class SynthGenerator
+ * @brief Generator to produce synthetic data
+ * @author Mathias Bavay
+ * @date   2022-09-19
+ */
+class SynthGenerator {
+	public:
+		/*SynthGenerator(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) {(void)vecArgs;}*/
+		virtual ~SynthGenerator() {}
+		
+		virtual double generate(const Date& dt) const {(void)dt; return IOUtils::nodata;}
+};
 
 /**
  * @class SynthIO
@@ -38,17 +51,54 @@ class SynthIO : public IOInterface {
 		SynthIO(const std::string& configfile);
 		SynthIO(const SynthIO&);
 		SynthIO(const Config& cfgreader);
+		
+		//HACK: missing a proper destructor for mapSynthGenerators
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void init();
+		std::map< std::string, SynthGenerator* > getSynthGenerators(const std::string& stationRoot) const;
 		
 		const Config cfg;
+		std::map< std::string, std::map< std::string, SynthGenerator* > > mapSynthGenerators; //map[station][parmname] to contain the SynthGenerator
 		std::vector<StationData> vecStations;
 		Date dt_start, dt_end;
-		double dt_step;
+		double dt_step, TZ;
+};
+
+///////////////////////////////////////////////////////
+//below derived classes of SynthGenerator to implement specific algorithms (or generators)
+class CST_Synth : public SynthGenerator {
+	public:
+		CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		virtual double generate(const Date& dt) const;
+	private:
+		double value;
+};
+
+class STEP_Synth : public SynthGenerator {
+	public:
+		STEP_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+		virtual double generate(const Date& dt) const;
+	private:
+		Date dt_step;
+		double value_before, value_after;
+};
+
+/*class RECT_Synth : public SynthGenerator {
+	public:
+		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		virtual double generate(const Date& dt) const;
+	private:
+		Date dt_step_start, dt_step_stop;
+		double value, value_step;
+};*/
+
+class SynthFactory {
+	public:
+		static SynthGenerator* getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 };
 
 } //namespace

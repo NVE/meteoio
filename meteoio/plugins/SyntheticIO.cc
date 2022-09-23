@@ -18,6 +18,8 @@
 */
 #include <meteoio/plugins/SyntheticIO.h>
 
+#include <regex>
+
 using namespace std;
 
 namespace mio {
@@ -54,12 +56,12 @@ namespace mio {
  * @endcode
  */
 
-SynthIO::SynthIO(const std::string& configfile) : cfg(configfile), vecStations(), dt_start(), dt_end(), dt_step(0.)
+SynthIO::SynthIO(const std::string& configfile) : cfg(configfile), mapSynthGenerators(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
 {
 	init();
 }
 
-SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), vecStations(), dt_start(), dt_end(), dt_step(0.)
+SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), mapSynthGenerators(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
 {
 	init();
 }
@@ -67,7 +69,7 @@ SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), vecStations(), dt_st
 void SynthIO::init()
 {
 	//read start / end time as well as sampling rate
-	const double TZ = cfg.get("TIME_ZONE", "INPUT");
+	cfg.get("TIME_ZONE", "INPUT", TZ);
 	cfg.getValue("SYNTH_SAMPLING", "INPUT", dt_step);
 	const std::string dt_start_spec = cfg.get("SYNTH_START", "INPUT", "");
 	if (!dt_start_spec.empty() && !IOUtils::convertString(dt_start, dt_start_spec, TZ))
@@ -79,8 +81,10 @@ void SynthIO::init()
 	//read the stations' basic metadata
 	std::string coordin, coordinparam; //projection parameters
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
-	std::vector<std::string> coords_specs, vecIDs, vecNames;
-	cfg.getValues("STATION", "INPUT", coords_specs);
+	std::vector<std::string> vecIDs, vecNames;
+	
+	const std::vector< std::pair<std::string, std::string> > coords_specs( cfg.getValuesRegex("STATION[0-9]+", "INPUT") );
+	//cfg.getValues("STATION", "INPUT", coords_specs);
 	cfg.getValues("ID", "INPUT", vecIDs);
 	cfg.getValues("NAME", "INPUT", vecNames);
 	const bool has_ids = !vecIDs.empty();
@@ -93,13 +97,48 @@ void SynthIO::init()
 	
 	//build the stations' metadata
 	for (size_t ii=0; ii<coords_specs.size(); ii++) {
-		const Coords loc(coordin, coordinparam, coords_specs[ii]);
+		const Coords loc(coordin, coordinparam, coords_specs[ii].second);
 		const std::string id = (has_ids)? vecIDs[ii] : "ID_"+IOUtils::toString( ii+1 );
 		const std::string name = (has_names)? vecNames[ii] : "STATION_"+IOUtils::toString( ii+1 );
 		const StationData sd(loc, id, name);
 		
 		vecStations.push_back( sd );
+		mapSynthGenerators[ id ] = getSynthGenerators( coords_specs[ii].first );
 	}
+}
+
+//get all necessary generators for the current station ID identified by its STATION# user-provided key, for all declared MeteoParameters
+std::map< std::string, SynthGenerator* > SynthIO::getSynthGenerators(const std::string& stationRoot) const
+{
+	const std::regex parname_regex(stationRoot+"::([^:]+)::([^:]+)"); //extract the meteo parameter name and its subkey
+	const std::vector<std::string> vec_keys( cfg.getKeys(stationRoot, "Input") );
+	//std::cout << "stationRoot=" << stationRoot << " vec_keys.size()=" << vec_keys.size() << "\n";
+	
+	std::map< std::string, std::vector< std::pair<std::string, std::string> > > mapArgs;
+	std::map< std::string, std::string > mapTypes;
+	
+	for (auto& key : vec_keys) {
+		std::smatch index_matches;
+		if (std::regex_match(key, index_matches, parname_regex)) { //retrieve the parname index
+			const std::string parname( index_matches.str(1) );
+			const std::string subkey( index_matches.str(2) );
+			const std::string value( cfg.get(key, "INPUT", "") );
+			
+			if (subkey=="TYPE") {
+				mapTypes[parname] = value;
+			} else {
+				mapArgs[parname].push_back( std::make_pair(subkey, value) );
+			}
+		}
+	}
+	
+	std::map< std::string, SynthGenerator* > resultsMap;
+	for (const auto& item : mapArgs) {
+		const std::string parname( item.first );
+		resultsMap[parname] = SynthFactory::getSynth( mapTypes[parname], stationRoot, parname, item.second, TZ);
+	}
+	
+	return resultsMap;
 }
 
 void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -128,12 +167,95 @@ void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 	
 	for (auto &station : vecStations) {
+		std::map< std::string, SynthGenerator* > *station_synth = &mapSynthGenerators[ station.getStationID() ];
+		
 		std::vector<MeteoData> vecM;
 		for (Date dt=true_start; dt<=true_end; dt+=dt_step_days) {
-			const MeteoData md( dt, station );
+			MeteoData md( dt, station );
+			
+			for (const auto& item : (*station_synth) ) {
+				md( item.first ) = item.second->generate( dt );
+			}
+			
 			vecM.push_back( md );
 		}
 		vecMeteo.push_back( vecM );
+	}
+}
+
+
+///////////////////////////////////////////////////////
+//below the constructors (and argument parsing) and generate()  methods for all SynthGenerator
+
+CST_Synth::CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) 
+          : value(IOUtils::nodata)
+{
+	const std::string where( "SYNTH::CST, " + station + "::" + parname );
+	bool has_value = false;
+	
+	//parse the arguments
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="VALUE") {
+			IOUtils::parseArg(vecArgs[ii], where, value);
+			has_value=true;
+		}
+	}
+	
+	if (!has_value) throw InvalidArgumentException("Please provide the VALUE argument for the "+where, AT);
+}
+
+double CST_Synth::generate(const Date& /*dt*/) const
+{
+	return value;
+}
+
+STEP_Synth::STEP_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ) 
+          : dt_step(), value_before(IOUtils::nodata), value_after(IOUtils::nodata)
+{
+	const std::string where( "SYNTH STEP, " + station + "::" + parname );
+	bool has_step_date = false;
+	bool has_value_before = false, has_value_after = false;
+	
+	//parse the arguments
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="STEP_DATE") {
+			if (!IOUtils::convertString(dt_step, vecArgs[ii].second, TZ))
+				throw InvalidArgumentException("Can not parse argument '"+vecArgs[ii].first+"' for " + where, AT);
+			has_step_date=true;
+		} else if (vecArgs[ii].first=="VALUE_BEFORE") {
+			IOUtils::parseArg(vecArgs[ii], where, value_before);
+			has_value_before=true;
+		} else if (vecArgs[ii].first=="VALUE_AFTER") {
+			IOUtils::parseArg(vecArgs[ii], where, value_after);
+			has_value_after=true;
+		}
+	}
+	
+	if (!has_value_before) throw InvalidArgumentException("Please provide the VALUE_BEFORE argument for the "+where, AT);
+	if (!has_value_after) throw InvalidArgumentException("Please provide the VALUE_AFTER argument for the "+where, AT);
+	if (!has_step_date) throw InvalidArgumentException("Please provide the STEP_DATE argument for the "+where, AT);
+}
+
+double STEP_Synth::generate(const Date& dt) const
+{
+	if (dt<dt_step)
+		return value_before;
+	else
+		return value_after;
+}
+
+SynthGenerator* SynthFactory::getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ)
+{
+	IOUtils::toUpper( type );
+	
+	if (type == "CST"){
+		return new CST_Synth(station, parname, vecArgs);
+	} else if (type == "STEP"){
+		return new STEP_Synth(station, parname, vecArgs, TZ);
+	} /*else if (type == "RECTANGLE"){
+		return new RECT_Synth(station, parname, vecArgs);
+	}*/ else {
+		throw IOException("The Synthetizer '"+type+"' does not exist!" , AT);
 	}
 }
 
