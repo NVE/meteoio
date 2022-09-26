@@ -25,34 +25,49 @@ using namespace std;
 namespace mio {
 /**
  * @page synthio SynthIO
- * This plugin is quite special since it does not read any data but generates synthetic data. It is designed for
- * numerical experiments where controlled conditions are applied to the numerical setup.
+ * This plugin is quite special since it does not read any data but generates <a href="https://en.wikipedia.org/wiki/Synthetic_data">synthetic data</a>. 
+ * It is designed for numerical experiments where controlled conditions are applied to the numerical setup. It can either generate timestamps
+ * with no associated meteorological parameters or also generate values for any number of meteorological parameters (per station) with 
+ * some basic functions. Finer control can be achieved by combining this plugin with \ref data_editing "input data editing" (specially
+ * with the \ref EditingCreate "data creators" restricted to date intervals).
  * 
  * @section synthio_keywords Keywords
  * This plugin uses the following keywords, all in the [Input] section:
- * - controlling the timestamps generation:
- *     - TIME_ZONE: the time zone of any dates that are provided; 
- *     - SYNTH_START: when to start generating timestamps (optional, by default it generates timestamps for any requested date);
- *     - SYNTH_END: when to stop generating timestamps (optional, by default it generates timestamps for any requested date);
- *     - SYNTH_SAMPLING: sampling rate in seconds, starting with SYNTH_START or the requested date if no SYNTH_START is provided (mandatory);
  * - providing the stations' metadata:
  *     - COORDSYS: coordinate system (see Coords);
  *     - COORDPARAM: extra coordinates parameters (see Coords);
  *     - STATION#: coordinates of the station (mandatory, see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  *     - ID#: the (short) station id to use (optional but recommended, default is "ID_#")
  *     - NAME#: a descriptive station name to use (optional, default is "STATION_#");
- * 
- * @section synthio_examples
- * Example of use:
+ * - controlling the timestamps generation:
+ *     - TIME_ZONE: the time zone of any dates that are provided; 
+ *     - SYNTH_START: when to start generating timestamps (optional, by default it generates timestamps for any requested date);
+ *     - SYNTH_END: when to stop generating timestamps (optional, by default it generates timestamps for any requested date);
+ *     - SYNTH_SAMPLING: sampling rate in seconds, starting with SYNTH_START or the requested date if no SYNTH_START is provided (mandatory);
+ * - controlling the meteorological parameters generation (optional. If not set up, then only the timestamps will be generated with no meteorological
+ * parameters associated, thus relying on a data creator or data generator to define some values):
+ *     - STATION#::{parameter}::%TYPE where {parameter} is either coming from \ref meteoparam "MeteoData::meteoparam" or some free text. The TYPE arguments gives the synthetizing function to use:
+ *           - CST: <a href="https://en.wikipedia.org/wiki/Constant_function">constant function</a> with the additional key: VALUE;
+ *           - STEP: <a href="https://en.wikipedia.org/wiki/Step_function">step function</a> with the additional keys: STEP_DATE (as ISO formatted date), VALUE_BEFORE, VALUE_AFTER;
+ *           - RECTANGLE: <a href="https://en.wikipedia.org/wiki/Rectangular_function">rectangle function</a> with the additional keys: VALUE, STEP_START (as ISO formatted date), STEP_STOP (as ISO formatted date), VALUE_STEP;
+ *
+ * @section synthio_examples Example
+ * Example of use: create a station TST1 with half hourly sampling rate and a parameter TA that is constant at 270 K until 2022-09-26T12:00:00 
+ * when it gets constant at 300 K.
  * @code
  * [INPUT]
  * COORDSYS = CH1903
  * TIME_ZONE = 1.00
  * 
  * METEO = SYNTH
- * SYNTH_SAMPLING = 1800
- * SYNTH_START = 2022-09-02T12:40
- * STATION = latlon (46.8, 9.81, 1500)
+ * SYNTH_SAMPLING = 1800.00
+ * STATION1 = latlon (46.75, 9.80, 2200)
+ * NAME1 = Davos::test
+ * ID1 = TST1
+ * STATION1::TA::TYPE = STEP
+ * STATION1::TA::VALUE_BEFORE = 270.000000
+ * STATION1::TA::STEP_DATE = 2022-09-26T12:00:00
+ * STATION1::TA::VALUE_AFTER = 300.000000
  * @endcode
  */
 
@@ -66,10 +81,19 @@ SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), mapSynthGenerators()
 	init();
 }
 
+SynthIO::~SynthIO()
+{
+	for (auto& station_map : mapSynthGenerators) {
+		for (auto& item : station_map.second) {
+			delete item.second;
+		}
+	}
+}
+
 void SynthIO::init()
 {
 	//read start / end time as well as sampling rate
-	cfg.get("TIME_ZONE", "INPUT", TZ);
+	cfg.getValue("TIME_ZONE", "INPUT", TZ);
 	cfg.getValue("SYNTH_SAMPLING", "INPUT", dt_step);
 	const std::string dt_start_spec = cfg.get("SYNTH_START", "INPUT", "");
 	if (!dt_start_spec.empty() && !IOUtils::convertString(dt_start, dt_start_spec, TZ))
@@ -110,11 +134,15 @@ void SynthIO::init()
 //get all necessary generators for the current station ID identified by its STATION# user-provided key, for all declared MeteoParameters
 std::map< std::string, SynthGenerator* > SynthIO::getSynthGenerators(const std::string& stationRoot) const
 {
-	const std::regex parname_regex(stationRoot+"::([^:]+)::([^:]+)"); //extract the meteo parameter name and its subkey
+	//extract the meteo parameter name and its subkey
+	//we are matching something like "STATION1::TA::VALUE_BEFORE = 270" and want to extract "TA", "VALUE_BEFORE" and "270"
+	//to populate mapArgs and construct a map of (parname, SynthGenerator*)
+	const std::regex parname_regex(stationRoot+"::([^:]+)::([^:]+)");
 	const std::vector<std::string> vec_keys( cfg.getKeys(stationRoot, "Input") );
-	//std::cout << "stationRoot=" << stationRoot << " vec_keys.size()=" << vec_keys.size() << "\n";
 	
+	//map of (parname, vector of ( pair(argument, value) )) such as mapArgs["TA"] = <("VALUE_BEFORE","270"), ("VALUE_AFTER","300")>
 	std::map< std::string, std::vector< std::pair<std::string, std::string> > > mapArgs;
+	//map of (parname, synthetic function name), such as mapTypes["TA"] = "CST"
 	std::map< std::string, std::string > mapTypes;
 	
 	for (auto& key : vec_keys) {
@@ -244,6 +272,48 @@ double STEP_Synth::generate(const Date& dt) const
 		return value_after;
 }
 
+RECT_Synth::RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ) 
+          : step_start(), step_stop(), value(IOUtils::nodata), value_step(IOUtils::nodata)
+{
+	const std::string where( "SYNTH RECTANGLE, " + station + "::" + parname );
+	bool has_step_start = false, has_step_stop = false;
+	bool has_value = false, has_value_step = false;
+	
+	//parse the arguments
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="STEP_START") {
+			if (!IOUtils::convertString(step_start, vecArgs[ii].second, TZ))
+				throw InvalidArgumentException("Can not parse argument '"+vecArgs[ii].first+"' for " + where, AT);
+			has_step_start=true;
+		} else if (vecArgs[ii].first=="STEP_STOP") {
+			if (!IOUtils::convertString(step_stop, vecArgs[ii].second, TZ))
+				throw InvalidArgumentException("Can not parse argument '"+vecArgs[ii].first+"' for " + where, AT);
+			has_step_stop=true;
+		} if (vecArgs[ii].first=="VALUE") {
+			IOUtils::parseArg(vecArgs[ii], where, value);
+			has_value=true;
+		} else if (vecArgs[ii].first=="VALUE_STEP") {
+			IOUtils::parseArg(vecArgs[ii], where, value_step);
+			has_value_step=true;
+		}
+	}
+	
+	if (!has_value) throw InvalidArgumentException("Please provide the VALUE argument for the "+where, AT);
+	if (!has_value_step) throw InvalidArgumentException("Please provide the VALUE_STEP argument for the "+where, AT);
+	if (!has_step_start) throw InvalidArgumentException("Please provide the STEP_START argument for the "+where, AT);
+	if (!has_step_stop) throw InvalidArgumentException("Please provide the STEP_STOP argument for the "+where, AT);
+}
+
+double RECT_Synth::generate(const Date& dt) const
+{
+	if (dt<step_start || dt>step_stop)
+		return value;
+	else
+		return value_step;
+}
+
+///////////////////////////////////////////////////////
+// Object factory
 SynthGenerator* SynthFactory::getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ)
 {
 	IOUtils::toUpper( type );
@@ -252,9 +322,9 @@ SynthGenerator* SynthFactory::getSynth(std::string type, const std::string& stat
 		return new CST_Synth(station, parname, vecArgs);
 	} else if (type == "STEP"){
 		return new STEP_Synth(station, parname, vecArgs, TZ);
-	} /*else if (type == "RECTANGLE"){
-		return new RECT_Synth(station, parname, vecArgs);
-	}*/ else {
+	} else if (type == "RECTANGLE"){
+		return new RECT_Synth(station, parname, vecArgs, TZ);
+	} else {
 		throw IOException("The Synthetizer '"+type+"' does not exist!" , AT);
 	}
 }

@@ -26,7 +26,7 @@
 namespace mio {
 /**
  * @class SynthGenerator
- * @brief Generator to produce synthetic data
+ * @brief Generator to produce synthetic data for the SynthIO plugin
  * @author Mathias Bavay
  * @date   2022-09-19
  */
@@ -37,6 +37,13 @@ class SynthGenerator {
 		
 		virtual double generate(const Date& dt) const {(void)dt; return IOUtils::nodata;}
 };
+
+//object factory for the SynthGenerator class
+class SynthFactory {
+	public:
+		static SynthGenerator* getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+};
+
 
 /**
  * @class SynthIO
@@ -53,6 +60,7 @@ class SynthIO : public IOInterface {
 		SynthIO(const Config& cfgreader);
 		
 		//HACK: missing a proper destructor for mapSynthGenerators
+		~SynthIO();
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
@@ -87,18 +95,13 @@ class STEP_Synth : public SynthGenerator {
 		double value_before, value_after;
 };
 
-/*class RECT_Synth : public SynthGenerator {
+class RECT_Synth : public SynthGenerator {
 	public:
-		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 		virtual double generate(const Date& dt) const;
 	private:
-		Date dt_step_start, dt_step_stop;
+		Date step_start, step_stop;
 		double value, value_step;
-};*/
-
-class SynthFactory {
-	public:
-		static SynthGenerator* getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 };
 
 } //namespace
