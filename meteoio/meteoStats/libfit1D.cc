@@ -278,7 +278,7 @@ double LinVario::f(const double& x) const {
 		//c0>=0, b1>=0
 		const double c0 = Lambda.at(0);
 		const double bl = Lambda.at(1);
-		const double y = c0 + bl * abs(x);
+		const double y = c0 + bl * std::abs(x);
 		return y;
 	}
 }
