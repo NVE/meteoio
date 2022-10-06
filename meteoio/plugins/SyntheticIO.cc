@@ -169,6 +169,14 @@ std::map< std::string, SynthGenerator* > SynthIO::getSynthGenerators(const std::
 	return resultsMap;
 }
 
+void SynthIO::readStationData(const Date& date, std::vector<StationData>& vecStation)
+{
+	if (!dt_start.isUndef() && dt_start>date) return;	//requested date is before the user-defined range
+	if (!dt_end.isUndef() && dt_end<date) return;	//requested date is after the user-defined range
+	
+	vecStation = vecStations;
+}
+
 void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {

@@ -62,6 +62,7 @@ class SynthIO : public IOInterface {
 		//HACK: missing a proper destructor for mapSynthGenerators
 		~SynthIO();
 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
