@@ -839,7 +839,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	east_out = x;
 	north_out = y;
@@ -907,7 +907,7 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	long_out = x*RAD_TO_DEG;
 	lat_out = y*RAD_TO_DEG;
