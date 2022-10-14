@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/SyntheticIO.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <regex>
 
@@ -46,10 +47,11 @@ namespace mio {
  *     - SYNTH_SAMPLING: sampling rate in seconds, starting with SYNTH_START or the requested date if no SYNTH_START is provided (mandatory);
  * - controlling the meteorological parameters generation (optional. If not set up, then only the timestamps will be generated with no meteorological
  * parameters associated, thus relying on a data creator or data generator to define some values):
- *     - STATION#::{parameter}::%TYPE where {parameter} is either coming from \ref meteoparam "MeteoData::meteoparam" or some free text. The TYPE arguments gives the synthetizing function to use:
+ *     - STATION#::{parameter}::%TYPE where {parameter} is either coming from \ref meteoparam "MeteoData::meteoparam" or some free text. The TYPE arguments gives the synthesizing function to use:
  *           - CST: <a href="https://en.wikipedia.org/wiki/Constant_function">constant function</a> with the additional key: VALUE;
  *           - STEP: <a href="https://en.wikipedia.org/wiki/Step_function">step function</a> with the additional keys: STEP_DATE (as ISO formatted date), VALUE_BEFORE, VALUE_AFTER;
  *           - RECTANGLE: <a href="https://en.wikipedia.org/wiki/Rectangular_function">rectangle function</a> with the additional keys: VALUE, STEP_START (as ISO formatted date), STEP_STOP (as ISO formatted date), VALUE_STEP;
+ *           - STDPRESS: constant, standard atmospheric pressure as a function of the station's altitude (no arguments).
  *
  * @section synthio_examples Example
  * Example of use: create a station TST1 with half hourly sampling rate and a parameter TA that is constant at 270 K until 2022-09-26T12:00:00 
@@ -71,20 +73,21 @@ namespace mio {
  * @endcode
  */
 
-SynthIO::SynthIO(const std::string& configfile) : cfg(configfile), mapSynthGenerators(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
+SynthIO::SynthIO(const std::string& configfile) : cfg(configfile), mapSynthesizers(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
 {
 	init();
 }
 
-SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), mapSynthGenerators(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
+SynthIO::SynthIO(const Config& cfgreader) : cfg(cfgreader), mapSynthesizers(), vecStations(), dt_start(), dt_end(), dt_step(0.), TZ(0.)
 {
 	init();
 }
 
 SynthIO::~SynthIO()
 {
-	for (auto& station_map : mapSynthGenerators) {
-		for (auto& item : station_map.second) {
+	//deallocate the Synthesizer* pointer in the mapSynthesizers map
+	for (auto& station_map : mapSynthesizers) { // loop over the stations
+		for (auto& item : station_map.second) { //loop over the parameters
 			delete item.second;
 		}
 	}
@@ -127,16 +130,16 @@ void SynthIO::init()
 		const StationData sd(loc, id, name);
 		
 		vecStations.push_back( sd );
-		mapSynthGenerators[ id ] = getSynthGenerators( coords_specs[ii].first );
+		mapSynthesizers[ id ] = getSynthesizer( coords_specs[ii].first, sd );
 	}
 }
 
 //get all necessary generators for the current station ID identified by its STATION# user-provided key, for all declared MeteoParameters
-std::map< std::string, SynthGenerator* > SynthIO::getSynthGenerators(const std::string& stationRoot) const
+std::map< std::string, Synthesizer* > SynthIO::getSynthesizer(const std::string& stationRoot, const StationData &sd) const
 {
 	//extract the meteo parameter name and its subkey
 	//we are matching something like "STATION1::TA::VALUE_BEFORE = 270" and want to extract "TA", "VALUE_BEFORE" and "270"
-	//to populate mapArgs and construct a map of (parname, SynthGenerator*)
+	//to populate mapArgs and construct a map of (parname, Synthesizer*)
 	const std::regex parname_regex(stationRoot+"::([^:]+)::([^:]+)");
 	const std::vector<std::string> vec_keys( cfg.getKeys(stationRoot, "Input") );
 	
@@ -160,11 +163,12 @@ std::map< std::string, SynthGenerator* > SynthIO::getSynthGenerators(const std::
 		}
 	}
 	
-	std::map< std::string, SynthGenerator* > resultsMap;
-	for (const auto& item : mapArgs) {
+	std::map< std::string, Synthesizer* > resultsMap;
+	for (const auto& item : mapTypes) { //looping over types since not all Synthesizer have arguments
 		const std::string parname( item.first );
-		resultsMap[parname] = SynthFactory::getSynth( mapTypes[parname], stationRoot, parname, item.second, TZ);
+		resultsMap[parname] = SynthFactory::getSynth( item.second, stationRoot, sd, parname, mapArgs[parname], TZ);
 	}
+	
 	
 	return resultsMap;
 }
@@ -203,7 +207,7 @@ void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 	
 	for (auto &station : vecStations) {
-		std::map< std::string, SynthGenerator* > *station_synth = &mapSynthGenerators[ station.getStationID() ];
+		std::map< std::string, Synthesizer* > *station_synth = &mapSynthesizers[ station.getStationID() ];
 		
 		std::vector<MeteoData> vecM;
 		for (Date dt=true_start; dt<=true_end; dt+=dt_step_days) {
@@ -221,7 +225,7 @@ void SynthIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 
 ///////////////////////////////////////////////////////
-//below the constructors (and argument parsing) and generate()  methods for all SynthGenerator
+//below the constructors (and argument parsing) and generate()  methods for all Synthesizers
 
 CST_Synth::CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) 
           : value(IOUtils::nodata)
@@ -320,9 +324,18 @@ double RECT_Synth::generate(const Date& dt) const
 		return value_step;
 }
 
+STDPRESS_Synth::STDPRESS_Synth(const StationData& sd) 
+          : altitude( sd.getAltitude() ) {}
+
+double STDPRESS_Synth::generate(const Date& /*dt*/) const
+{
+	if (altitude==IOUtils::nodata) return IOUtils::nodata;
+	return Atmosphere::stdAirPressure(altitude);
+}
+
 ///////////////////////////////////////////////////////
 // Object factory
-SynthGenerator* SynthFactory::getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ)
+Synthesizer* SynthFactory::getSynth(std::string type, const std::string& station, const StationData& sd, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ)
 {
 	IOUtils::toUpper( type );
 	
@@ -332,8 +345,10 @@ SynthGenerator* SynthFactory::getSynth(std::string type, const std::string& stat
 		return new STEP_Synth(station, parname, vecArgs, TZ);
 	} else if (type == "RECTANGLE"){
 		return new RECT_Synth(station, parname, vecArgs, TZ);
+	} else if (type == "STDPRESS"){
+		return new STDPRESS_Synth(sd);
 	} else {
-		throw IOException("The Synthetizer '"+type+"' does not exist!" , AT);
+		throw IOException("The Synthesizer '"+type+"' does not exist!" , AT);
 	}
 }
 

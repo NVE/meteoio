@@ -25,23 +25,23 @@
 
 namespace mio {
 /**
- * @class SynthGenerator
+ * @class Synthesizer
  * @brief Generator to produce synthetic data for the SynthIO plugin
  * @author Mathias Bavay
  * @date   2022-09-19
  */
-class SynthGenerator {
+class Synthesizer {
 	public:
-		/*SynthGenerator(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) {(void)vecArgs;}*/
-		virtual ~SynthGenerator() {}
+		/*Synthesizer(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) {(void)vecArgs;}*/
+		virtual ~Synthesizer() {}
 		
 		virtual double generate(const Date& dt) const {(void)dt; return IOUtils::nodata;}
 };
 
-//object factory for the SynthGenerator class
+//object factory for the Synthesizer class
 class SynthFactory {
 	public:
-		static SynthGenerator* getSynth(std::string type, const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+		static Synthesizer* getSynth(std::string type, const std::string& station, const StationData& sd, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 };
 
 
@@ -59,7 +59,6 @@ class SynthIO : public IOInterface {
 		SynthIO(const SynthIO&);
 		SynthIO(const Config& cfgreader);
 		
-		//HACK: missing a proper destructor for mapSynthGenerators
 		~SynthIO();
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
@@ -68,18 +67,18 @@ class SynthIO : public IOInterface {
 
 	private:
 		void init();
-		std::map< std::string, SynthGenerator* > getSynthGenerators(const std::string& stationRoot) const;
+		std::map< std::string, Synthesizer* > getSynthesizer(const std::string& stationRoot, const StationData &sd) const;
 		
 		const Config cfg;
-		std::map< std::string, std::map< std::string, SynthGenerator* > > mapSynthGenerators; //map[station][parmname] to contain the SynthGenerator
+		std::map< std::string, std::map< std::string, Synthesizer* > > mapSynthesizers; //map[station][parmname] to contain the Synthesizer
 		std::vector<StationData> vecStations;
 		Date dt_start, dt_end;
 		double dt_step, TZ;
 };
 
 ///////////////////////////////////////////////////////
-//below derived classes of SynthGenerator to implement specific algorithms (or generators)
-class CST_Synth : public SynthGenerator {
+//below derived classes of Synthesizer to implement specific algorithms (or generators)
+class CST_Synth : public Synthesizer {
 	public:
 		CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		virtual double generate(const Date& dt) const;
@@ -87,7 +86,7 @@ class CST_Synth : public SynthGenerator {
 		double value;
 };
 
-class STEP_Synth : public SynthGenerator {
+class STEP_Synth : public Synthesizer {
 	public:
 		STEP_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 		virtual double generate(const Date& dt) const;
@@ -96,13 +95,21 @@ class STEP_Synth : public SynthGenerator {
 		double value_before, value_after;
 };
 
-class RECT_Synth : public SynthGenerator {
+class RECT_Synth : public Synthesizer {
 	public:
 		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
 		virtual double generate(const Date& dt) const;
 	private:
 		Date step_start, step_stop;
 		double value, value_step;
+};
+
+class STDPRESS_Synth : public Synthesizer {
+	public:
+		STDPRESS_Synth(const StationData& sd);
+		virtual double generate(const Date& dt) const;
+	private:
+		double altitude;
 };
 
 } //namespace
