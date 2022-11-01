@@ -119,19 +119,19 @@ namespace mio {
  *
  */
 
-const char* OshdIO::meteo_ext = ".mat";
+const char* OshdIO::meteo_ext = "mat";
 const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
 std::map< std::string, MeteoGrids::Parameters > OshdIO::params_map;
 std::map< MeteoGrids::Parameters, std::string > OshdIO::grids_map;
 const bool OshdIO::__init = OshdIO::initStaticData();
 
-OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), statIDs(),
                coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
 }
 
-OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), statIDs(),
                coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
@@ -145,7 +145,10 @@ void OshdIO::parseInputOutputSection()
 	
 	const std::string meteo_in = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (meteo_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
+		std::vector< std::string > vecIDs;
 		cfg.getValues("STATION", "INPUT", vecIDs);
+		for (auto& ID : vecIDs) statIDs.push_back( station_index( ID ) );
+		
 		cfg.getValue("METEOPATH", "Input", in_meteopath);
 		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);
 		cache_meteo_files = scanMeteoPath(in_meteopath, is_recursive);
@@ -203,30 +206,22 @@ bool OshdIO::initStaticData()
 //multiple files provide the same timesteps. The file names are read as: COSMODATA_{timestep}_C1EFC_{runtime}.{meteo_ext}
 std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive)
 {
+	//matching file names such as COSMODATA_202211022300_C1EFC_202211010300.mat
+	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\.([a-zA-Z0-9]+)");
+	std::smatch filename_matches;
+	
 	std::vector< struct OshdIO::file_index > data_files;
 	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "COSMODATA", is_recursive) ); //we consider that if we have found one parameter, the others are also there
 
 	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
-	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
-		const std::string file_and_path( *it );
+	for (const auto& file_and_path : dirlist) {
 		const std::string filename( FileUtils::getFilename(file_and_path) );
-
-		//we need to split the file name into its components: parameter, date, run_date
-		const std::string::size_type rundate_end = filename.rfind('.');
-		if (rundate_end==string::npos) continue;
-		const std::string ext( filename.substr(rundate_end) );
+		
+		if (!std::regex_match(filename, filename_matches, filename_regex)) continue;
+		const std::string ext( filename_matches.str(3) );
 		if (ext!=meteo_ext) continue;
-		const std::string::size_type pos_param = filename.find('_');
-		if (pos_param==string::npos) continue;
-		const std::string::size_type date_start = filename.find_first_of("0123456789");
-		if (date_start==string::npos) continue;
-		const std::string::size_type date_end = filename.find('_', date_start);
-		if (date_end==string::npos) continue;
-		const std::string::size_type rundate_start = filename.rfind('_');
-		if (rundate_start==string::npos) continue;
-
-		const std::string date_str( filename.substr(date_start, date_end-date_start) );
-		const std::string run_date( filename.substr(rundate_start+1, rundate_end-rundate_start-1) );
+		const std::string date_str( filename_matches.str(1) );
+		const std::string run_date( filename_matches.str(2) );
 
 		//do we already have an entry for this date?
 		size_t idx = IOUtils::npos;
@@ -264,9 +259,8 @@ bool OshdIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std:
 		if (date>end) break;
 		
 		//we consider that all parameters are present at all timesteps
-		std::map< MeteoGrids::Parameters, std::string >::const_iterator it;
-		for (it=grids_map.begin(); it!=grids_map.end(); ++it) {
-			results[date].insert( it->first );
+		for (auto const& grid : grids_map) {
+			results[date].insert( grid.first );
 		}
 	}
 	
@@ -306,7 +300,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (station_date>dateEnd || cache_meteo_files.back().date<dateStart) return; //the requested period is NOT in the available files
 
 	const size_t nr_files = cache_meteo_files.size();
-	const size_t nrIDs = vecIDs.size();
+	const size_t nrIDs = statIDs.size();
 	
 	if (vecMeta.empty()) fillStationMeta(); //this also fills vecIdx
 	vecMeteo.resize( nrIDs );
@@ -341,7 +335,7 @@ void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_times
 
 	//open the file 
 	matvar_t *matvar = nullptr;
-	const size_t nrIDs = vecIDs.size();
+	const size_t nrIDs = statIDs.size();
 	double nodata = -999.;
 	std::vector<std::string> vecAcro;
 	
@@ -375,9 +369,8 @@ void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_times
 				throw IndexOutOfBoundsException(ss.str(), AT);
 			}
 			for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
-				if (vecIDs[ii] != vecAcro[ vecIdx[ii] ]) {
-					std::cerr << "vecIDs=" << vecIDs[ii] << " vecAcro=" << vecAcro[ vecIdx[ii] ] << "\n";
-					throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+file_and_path+"'", AT);
+				if (statIDs[ii].oshd_acro != vecAcro[ statIDs[ii].idx ]) {
+					throw InvalidFormatException("station '"+statIDs[ii].id+"' is not listed in the same position as previously in file '"+file_and_path+"'", AT);
 				}
 			}
 			continue;
@@ -394,7 +387,7 @@ void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_times
 		if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+file_and_path+"'", AT);
 		
 		for (size_t ii=0; ii<nrIDs; ii++) {
-			const double raw_value = vecRaw[ vecIdx[ii] ];
+			const double raw_value = vecRaw[ statIDs[ii].idx ];
 			if (raw_value!=nodata) { //otherwise it keeps its initial value of IOUtils::nodata
 				vecMeteo[ii].back()( parindex ) = convertUnits( raw_value, units, parindex, file_and_path);
 			}
@@ -448,7 +441,7 @@ void OshdIO::fillStationMeta()
 	std::smatch name_matches;
 
 	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
-	vecMeta.resize( vecIDs.size(), StationData() );
+	vecMeta.resize( statIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
 	if ( nullptr == matfp ) throw AccessException(in_metafile, AT);
 
@@ -471,18 +464,18 @@ void OshdIO::fillStationMeta()
 	}
 	
 	buildVecIdx(vecAcro);
-	for (size_t ii=0; ii<vecIdx.size(); ii++) {
-		const size_t idx = vecIdx[ii];
+	for (size_t ii=0; ii<statIDs.size(); ii++) {
+		const size_t idx = statIDs[ii].idx;
 		Coords location(coordin, coordinparam);
 		location.setXY(easting[idx], northing[idx], altitude[idx]);
-		std::string name( vecNames[idx] );
-
+		
 		//if the network name has been appended, remove it. We also remove spaces, just in case
+		std::string name( vecNames[idx] );
 		if (std::regex_match(name, name_matches, name_regex)) {
 			name = name_matches.str(1);
 		}
 
-		const StationData sd(location, vecAcro[idx], name);
+		const StationData sd(location, statIDs[ii].id, name);
 		vecMeta[ii] = sd;
 	}
 }
@@ -492,43 +485,45 @@ void OshdIO::fillStationMeta()
 //acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
 void OshdIO::buildVecIdx(std::vector<std::string> vecAcro)
 {
+	const size_t nrIDs = statIDs.size();
+	if (nrIDs==0) throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
+	
 	const size_t nrAcro = vecAcro.size();
-	//regex for correcting the stations' Acro into the correct ones
+	//regex for correcting the stations' Acro into the correct ones: matching things like 'SLF.WFJ2'
 	static const std::regex acro_regex("([a-zA-Z]+)\\.([a-zA-Z]+)([0-9]*)");
 	std::smatch acro_matches;
 	
-	//cleaning up all stations IDs
+	//cleaning up all stations IDs and looking for the user requested station IDs
 	for (size_t jj=0; jj<nrAcro; jj++) {
+		std::string cleanAcro = vecAcro[jj];
+		
 		if (std::regex_match(vecAcro[jj], acro_matches, acro_regex)) {
 			//rules applied by oshd: stations like '*WFJ' have been renamed as 'MCH.WFJ2'
 			//stations  like '#DOL' have been renamed as 'MCH.DOL1', stations in AUT, DE, FR, IT have been added
 			const std::string provider( acro_matches.str(1) );
 			if (provider=="MCH") {
 				const std::string st_nr( acro_matches.str(3) );
-				if (st_nr=="2") vecAcro[jj] = "*" + acro_matches.str(2);
-				if (st_nr=="1") vecAcro[jj] = "#" + acro_matches.str(2);
+				if (st_nr=="2") cleanAcro = "*" + acro_matches.str(2);
+				if (st_nr=="1") cleanAcro = "#" + acro_matches.str(2);
 			} else {
-				vecAcro[jj] = acro_matches.str(2) + acro_matches.str(3);
+				cleanAcro = acro_matches.str(2) + acro_matches.str(3);
+			}
+		}
+		
+		//does the cleaned station ID match a user-requested station ID?
+		for (size_t ii=0; ii<nrIDs; ii++) {
+			if (statIDs[ii].id==cleanAcro) {
+				statIDs[ii].idx = jj;
+				statIDs[ii].oshd_acro = vecAcro[jj];
+				break;
 			}
 		}
 	}
 	
-	const size_t nrIDs = vecIDs.size();
-	if (nrIDs==0) throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
-	vecIdx.resize( nrIDs, 0 );
-	
+	//making sure all user requested station IDs have been found
 	for (size_t ii=0; ii<nrIDs; ii++) {
-		std::cout << "Processing station ID '" << vecIDs[ii] << "'\n";
-		bool found = false;
-		for (size_t jj=0; jj<nrAcro; jj++) {
-			if (vecIDs[ii]==vecAcro[jj]) {
-				vecIdx[ii] = jj;
-				found = true;
-				break;
-			}
-		}
-		if (!found) 
-			throw NotFoundException("station ID '"+vecIDs[ii]+"' could not be found in the provided metadata", AT);
+		if (statIDs[ii].idx==IOUtils::npos)
+			throw NotFoundException("station ID '"+statIDs[ii].id+"' could not be found in the provided metadata", AT);
 	}
 }
 
