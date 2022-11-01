@@ -207,19 +207,18 @@ bool OshdIO::initStaticData()
 std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive)
 {
 	//matching file names such as COSMODATA_202211022300_C1EFC_202211010300.mat
-	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\.([a-zA-Z0-9]+)");
+	//dirty trick: make sure that {meteo_ext} does not contain unescaped regex special chars!!
+	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\." + std::string(meteo_ext));
 	std::smatch filename_matches;
 	
 	std::vector< struct OshdIO::file_index > data_files;
-	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "COSMODATA", is_recursive) ); //we consider that if we have found one parameter, the others are also there
+	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "COSMODATA", is_recursive) );
 
 	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
 	for (const auto& file_and_path : dirlist) {
 		const std::string filename( FileUtils::getFilename(file_and_path) );
 		
 		if (!std::regex_match(filename, filename_matches, filename_regex)) continue;
-		const std::string ext( filename_matches.str(3) );
-		if (ext!=meteo_ext) continue;
 		const std::string date_str( filename_matches.str(1) );
 		const std::string run_date( filename_matches.str(2) );
 

@@ -90,8 +90,6 @@ class OshdIO : public IOInterface {
 		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::vector< struct file_index > cache_grid_files; //cache of meteo files in METEOPATH
 		std::vector<StationData> vecMeta;
-		/*std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
-		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors*/
 		std::vector< struct station_index > statIDs;
 		std::string coordin, coordinparam; //projection parameters
 		std::string grid2dpath_in, in_meteopath, in_metafile;
