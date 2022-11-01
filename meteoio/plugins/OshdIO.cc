@@ -23,6 +23,7 @@
 
 #include <matio.h>
 #include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -374,8 +375,10 @@ void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_times
 				throw IndexOutOfBoundsException(ss.str(), AT);
 			}
 			for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
-				if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
+				if (vecIDs[ii] != vecAcro[ vecIdx[ii] ]) {
+					std::cerr << "vecIDs=" << vecIDs[ii] << " vecAcro=" << vecAcro[ vecIdx[ii] ] << "\n";
 					throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+file_and_path+"'", AT);
+				}
 			}
 			continue;
 		}
@@ -438,6 +441,12 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const s
 
 void OshdIO::fillStationMeta()
 {
+	//the STATION_LIST.mat file contains entries formated such as:
+	//acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
+	//regex for removing appended networks names
+	static const std::regex name_regex("([^\\(\\)]+) (\\([a-zA-Z]+\\))(.*)");
+	std::smatch name_matches;
+
 	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
 	vecMeta.resize( vecIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
@@ -469,9 +478,9 @@ void OshdIO::fillStationMeta()
 		std::string name( vecNames[idx] );
 
 		//if the network name has been appended, remove it. We also remove spaces, just in case
-		const size_t netz_pos = name.find(" (");
-		if (netz_pos!=std::string::npos) name.erase(netz_pos);
-		std::replace( name.begin(), name.end(), ' ', '_');
+		if (std::regex_match(name, name_matches, name_regex)) {
+			name = name_matches.str(1);
+		}
 
 		const StationData sd(location, vecAcro[idx], name);
 		vecMeta[ii] = sd;
@@ -479,15 +488,39 @@ void OshdIO::fillStationMeta()
 }
 
 //Fill vecIdx so it contains for all IDs in the order of their appearance in the ini file, their index in the .mat files
-void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
+//the STATION_LIST.mat file contains entries formated such as:
+//acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
+void OshdIO::buildVecIdx(std::vector<std::string> vecAcro)
 {
+	const size_t nrAcro = vecAcro.size();
+	//regex for correcting the stations' Acro into the correct ones
+	static const std::regex acro_regex("([a-zA-Z]+)\\.([a-zA-Z]+)([0-9]*)");
+	std::smatch acro_matches;
+	
+	//cleaning up all stations IDs
+	for (size_t jj=0; jj<nrAcro; jj++) {
+		if (std::regex_match(vecAcro[jj], acro_matches, acro_regex)) {
+			//rules applied by oshd: stations like '*WFJ' have been renamed as 'MCH.WFJ2'
+			//stations  like '#DOL' have been renamed as 'MCH.DOL1', stations in AUT, DE, FR, IT have been added
+			const std::string provider( acro_matches.str(1) );
+			if (provider=="MCH") {
+				const std::string st_nr( acro_matches.str(3) );
+				if (st_nr=="2") vecAcro[jj] = "*" + acro_matches.str(2);
+				if (st_nr=="1") vecAcro[jj] = "#" + acro_matches.str(2);
+			} else {
+				vecAcro[jj] = acro_matches.str(2) + acro_matches.str(3);
+			}
+		}
+	}
+	
 	const size_t nrIDs = vecIDs.size();
 	if (nrIDs==0) throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
 	vecIdx.resize( nrIDs, 0 );
 	
 	for (size_t ii=0; ii<nrIDs; ii++) {
+		std::cout << "Processing station ID '" << vecIDs[ii] << "'\n";
 		bool found = false;
-		for (size_t jj=0; jj<vecAcro.size(); jj++) {
+		for (size_t jj=0; jj<nrAcro; jj++) {
 			if (vecIDs[ii]==vecAcro[jj]) {
 				vecIdx[ii] = jj;
 				found = true;
