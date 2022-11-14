@@ -21,10 +21,10 @@
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/FileUtils.h>
-#ifdef PROJ4
+#if defined(PROJ4)
 	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
-#elif PROJ
+#elif defined(PROJ)
 	#include <proj.h>
 #endif
 #include <stdio.h>
@@ -55,9 +55,9 @@ inline bool isEPSG(const std::string &c) {
 
 ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg),
-#ifdef PROJ4
+#if defined(PROJ4)
             pj_src(nullptr), pj_dest(nullptr),
-#elif PROJ
+#elif defined(PROJ)
             pj_context(nullptr), pj_trans(nullptr),
 #endif
             vecArgs_i(vecArgs), name_i(name), cfg_i(cfg), s_coordparam(), t_coordparam()
@@ -72,10 +72,10 @@ ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<st
 }
 
 ProcTransformWindVector::~ProcTransformWindVector() {
-#ifdef PROJ4
+#if defined(PROJ4)
 	if (pj_src!=nullptr) pj_free(pj_src);
 	if (pj_dest!=nullptr) pj_free(pj_dest);
-#elif PROJ
+#elif defined(PROJ)
 	if (pj_context!=nullptr) proj_context_destroy(pj_context);
 	if (pj_trans!=nullptr) proj_destroy(pj_trans);
 #endif
@@ -83,9 +83,9 @@ ProcTransformWindVector::~ProcTransformWindVector() {
 
 ProcTransformWindVector::ProcTransformWindVector(const ProcTransformWindVector& c) :
 	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i),
-#ifdef PROJ4
+#if defined(PROJ4)
 	                pj_src(nullptr), pj_dest(nullptr),
-#elif PROJ
+#elif defined(PROJ)
 			pj_context(nullptr), pj_trans(nullptr),
 #endif
 	                vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), s_coordparam(c.s_coordparam), t_coordparam(c.t_coordparam)
@@ -95,10 +95,10 @@ ProcTransformWindVector::ProcTransformWindVector(const ProcTransformWindVector& 
 
 ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformWindVector& source) {
 	if (this != &source) {
-#ifdef PROJ4
+#if defined(PROJ4)
 		pj_src = nullptr;
 		pj_dest = nullptr;
-#elif PROJ
+#elif defined(PROJ)
 		pj_context = nullptr;
 		pj_trans = nullptr;
 #endif
@@ -113,7 +113,7 @@ ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformW
 
 void ProcTransformWindVector::initPROJ()
 {
-#ifdef PROJ4
+#if defined(PROJ4)
 	std::string src_param;
 	if (s_coordparam == "") {
 		src_param = std::string("+proj=latlong +datum=WGS84 +ellps=WGS84");
@@ -140,7 +140,7 @@ void ProcTransformWindVector::initPROJ()
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
-#elif PROJ
+#elif defined(PROJ)
 	std::string src_param;
 	if (s_coordparam == "") {
 		src_param = std::string("EPSG:4326");
@@ -175,7 +175,7 @@ void ProcTransformWindVector::initPROJ()
 #endif
 }
 
-#ifdef PROJ4
+#if defined(PROJ4)
 void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
 {
 	double x = X_in;
@@ -193,7 +193,7 @@ void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y
 		Y_out *= Cst::to_deg;
 	}
 }
-#elif PROJ
+#elif defined(PROJ)
 void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
 {
 	double x = X_in;
