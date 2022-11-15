@@ -22,7 +22,7 @@ else				#for release
 endif
 
 #PATHS
-METEOIO_ROOT	= ../..
+METEOIO_ROOT	= ../../..
 LIBDIR		= $(METEOIO_ROOT)/lib
 SRCDIR		= $(METEOIO_ROOT)
 JAVAHOME	= ${JAVA_HOME}
