@@ -1392,7 +1392,7 @@ std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
 			}
 		}
 
-		if (has_time && (station_dim==IOUtils::inodata || (station_dim!=IOUtils::inodata && has_station))) {
+		if (has_time && (station_dim==IOUtils::inodata || has_station)) {
 			results.push_back( std::make_pair(it->first, ncpp::getParameterName( it->first )) );
 		}
 	}
@@ -1408,7 +1408,7 @@ std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
 			}
 		}
 
-		if (has_time && (station_dim==IOUtils::inodata || (station_dim!=IOUtils::inodata && has_station))) {
+		if (has_time && (station_dim==IOUtils::inodata || has_station)) {
 			results.push_back( std::make_pair(IOUtils::npos, it->second.attributes.name) );
 		}
 	}

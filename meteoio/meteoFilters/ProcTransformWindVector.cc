@@ -361,7 +361,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 	}
 }
 
-inline std::string readProjectionfromFile(const std::string in_filename, std::string root_path) {
+inline std::string readProjectionfromFile(const std::string& in_filename, const std::string& root_path) {
 	//if this is a relative path, prefix the path with the current path
 	const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 	const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
@@ -381,8 +381,8 @@ inline std::string readProjectionfromFile(const std::string in_filename, std::st
 		getline(fin, line, eoln); //read complete line
 		IOUtils::stripComments(line);
 		IOUtils::trim(line);
-		return line;
 		fin.close();
+		return line;
 	} catch (const std::exception&){
 		if (fin.is_open()) fin.close();
 		throw;

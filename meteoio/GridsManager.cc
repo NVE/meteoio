@@ -604,13 +604,13 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 		const bool hasQI = isAvailable(available_params, MeteoGrids::QI, date);
 		const bool hasTD = isAvailable(available_params, MeteoGrids::TD, date);
 
-		if (hasTA && hasTD) {
+		if (hasTD) {
 			grid2D = getRawGrid(MeteoGrids::TD, date);
 
 			for (size_t ii=0; ii<grid2D.size(); ii++)
 				grid2D(ii) = Atmosphere::DewPointtoRh(grid2D(ii), TA(ii), false);
 			return true;
-		} else if (hasQI && hasDEM && hasTA) {
+		} else if (hasQI && hasDEM) {
 			const Grid2DObject dem( getRawGrid(MeteoGrids::DEM, date) ); //HACK use readDEM instead?
 			grid2D = getRawGrid(MeteoGrids::QI, date);
 			for (size_t ii=0; ii<grid2D.size(); ii++)
@@ -845,14 +845,14 @@ bool GridsManager::getPtsfromgenerateGrid(std::vector<double>& Vec, const std::s
 		const bool hasQI = isAvailable(available_params, MeteoGrids::QI, date);
 		const bool hasTD = isAvailable(available_params, MeteoGrids::TD, date);
 
-		if (hasTA && hasTD) {
+		if (hasTD) {
 			std::vector<double> TD;
 			iohandler.readPointsIn2DGrid(TD, MeteoGrids::TD, date, Pts);
 
 			for (size_t ii=0; ii<TD.size(); ii++)
 				Vec.push_back(Atmosphere::DewPointtoRh(TD[ii], TA[ii], false));
 			return true;
-		} else if (hasQI && hasDEM && hasTA) {
+		} else if (hasQI && hasDEM) {
 			std::vector<double> dem_pts;
 			const Grid2DObject dem( getRawGrid(MeteoGrids::DEM, date) ); //HACK use readDEM instead?
 			dem_pts = dem.extractPoints(Pts);

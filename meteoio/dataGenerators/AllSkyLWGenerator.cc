@@ -36,7 +36,6 @@ AllSkyLWGenerator::AllSkyLWGenerator(const std::vector< std::pair<std::string, s
 void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
-	std::string user_cloudiness;
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {

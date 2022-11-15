@@ -77,7 +77,7 @@ std::string CoordsAlgorithms::printLatLon(const double& latitude, const double& 
 * @return coordinate in decimal
 */
 double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
-	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata, decimal=IOUtils::nodata;
+	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata;
 
 	if 	((sscanf(dms.c_str(), "%lf°%lf'%lf\"", &d, &m ,&s) < 3) &&
 		(sscanf(dms.c_str(), "%lf° %lf' %lf\"", &d, &m ,&s) < 3) &&
@@ -95,7 +95,7 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
 
-	decimal = std::abs(d);
+	double decimal = std::abs(d);
 	if (m!=IOUtils::nodata) decimal += m/60.;
 	if (s!=IOUtils::nodata) decimal += s/3600.;
 
