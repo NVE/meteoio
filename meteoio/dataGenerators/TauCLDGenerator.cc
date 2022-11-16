@@ -224,7 +224,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
-		const std::string station_hash = md.meta.stationID + ":" + md.meta.stationName;
+		const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
 		const double julian_gmt = md.date.getJulian(true);
 		bool cloudiness_from_cache = false;
 
@@ -241,12 +241,12 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 		if (is_night) { //interpolate the cloudiness over the night
-			const std::map< std::string, std::pair<double, double> >::const_iterator it = last_cloudiness.find(station_hash);
-			if (it==last_cloudiness.end()) return false;
+			const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a pair<julian_date, cloudiness>
+			if (cloudiness_point==last_cloudiness.end()) return false;
 
 			cloudiness_from_cache = true;
-			const double last_cloudiness_julian = it->second.first;
-			const double last_cloudiness_value = it->second.second;
+			const double last_cloudiness_julian = cloudiness_point->second.first;
+			const double last_cloudiness_value = cloudiness_point->second.second;
 			if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
 			else return false;
 		}

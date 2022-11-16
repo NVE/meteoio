@@ -30,6 +30,7 @@ AllSkyLWGenerator::AllSkyLWGenerator(const std::vector< std::pair<std::string, s
                    : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, i_cfg), sun(), model(OMSTEDT)
 { 
 	//TauCLDGenerator will do its own arguments parsing, then AllSkyLWGenerator
+	//so make sure that we don't use here the same name as an argument to TauCLDGenerator!
 	parse_args(vecArgs); 
 }
 
@@ -96,12 +97,12 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night
-				const std::map< std::string, std::pair<double, double> >::const_iterator it = last_cloudiness.find(station_hash);
-				if (it==last_cloudiness.end()) return false;
+				const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a pair<julian_date, cloudiness>
+				if (cloudiness_point==last_cloudiness.end()) return false;
 
 				cloudiness_from_cache = true;
-				const double last_cloudiness_julian = it->second.first;
-				const double last_cloudiness_value = it->second.second;
+				const double last_cloudiness_julian = cloudiness_point->second.first;
+				const double last_cloudiness_value = cloudiness_point->second.second;
 				if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
 				else return false;
 			}
