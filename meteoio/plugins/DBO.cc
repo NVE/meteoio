@@ -26,6 +26,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <regex>
 
 #include <curl/curl.h>
 #include <meteoio/thirdParty/picojson.h>
@@ -41,14 +42,14 @@ namespace mio {
  *
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
- * - DBO_URL: The URL of the RESTful web service e.g. http://developwis.wsl.ch:8730
+ * - DBO_URL: The URL of the RESTful web service e.g. https://pgdata.int.slf.ch
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
  *
  * @code
  * METEO	= DBO
- * DBO_URL	= http://developwis.wsl.ch:8730
+ * DBO_URL	= https://pgdata.int.slf.ch
  * STATION1	= WFJ2
  * STATION2	= DAV3
  * @endcode
@@ -133,13 +134,13 @@ picojson::value goToJSONPath(const std::string& path, picojson::value& v)
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
 	if (v.is<picojson::object>()) {
-		picojson::value::object& obj = v.get<picojson::object>();
-		for (std::map<std::string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
-			if (it->first==local_path) {
+		picojson::value::object& obj = v.get<picojson::object>(); //std::map<std::string,picojson::value>
+		for (auto& it : obj) {
+			if (it.first==local_path) {
 				if (!remaining_path.empty())
-					goToJSONPath(remaining_path, it->second);
+					goToJSONPath(remaining_path, it.second);
 				else
-					return it->second;
+					return it.second;
 			}
 		}
 	}
@@ -160,18 +161,18 @@ void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
 	if (v.is<picojson::object>()) {
-		picojson::value::object& obj = v.get<picojson::object>();
-		for (std::map<std::string,picojson::value>::iterator it = obj.begin(); it != obj.end(); ++it) {
-			if (it->first==local_path) {
+		picojson::value::object& obj = v.get<picojson::object>();  //std::map<std::string,picojson::value>
+		for (auto& it : obj) {
+			if (it.first==local_path) {
 				if (!remaining_path.empty()) {
-					 if (it->second.is<picojson::array>()){ //ie vector<picojson::value>
-						picojson::array& array = it->second.get<picojson::array>();
+					 if (it.second.is<picojson::array>()){ //ie vector<picojson::value>
+						picojson::array& array = it.second.get<picojson::array>();
 						for (size_t jj=0; jj<array.size(); jj++)
 							JSONQuery(remaining_path, array[jj], results);
 					} else
-						JSONQuery(remaining_path, it->second, results);
+						JSONQuery(remaining_path, it.second, results);
 				} else {
-					results.push_back( it->second );
+					results.push_back( it.second );
 				}
 			}
 		}
@@ -290,60 +291,46 @@ const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& 
 	return vecData;
 }
 
-unsigned int parseInterval(const std::string& interval_str)
-{
-	unsigned int hour, minute, second, val;
-	 if (sscanf(interval_str.c_str(), "%u:%u:%u", &hour, &minute, &second) == 3) {
-		return (hour*3600 + minute*60 + second);
-	}
-
-	static const unsigned int len = 16;
-	char rest[len] = "";
-	if (sscanf(interval_str.c_str(), "%u%15s", &val, rest) == 2) {
-		if (strncmp(rest, "MIN", len)==0) return (val*60);
-		if (strncmp(rest, "HOUR", len)==0) return (val*3600);
-		if (strncmp(rest, "DAY", len)==0) return (val*24*3600);
-		if (strncmp(rest, "D_BEOB", len)==0) return (val*24*3600);
-
-		throw ConversionFailedException("Could not read measure interval unit '" + std::string(rest) + "'", AT);
-	} else
-		throw ConversionFailedException("Could not read measure interval '" + interval_str + "'", AT);
-}
-
 std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 {
 	std::vector<DBO::tsMeta> tsVec;
 	std::vector<picojson::value> results;
-	JSONQuery("$.properties.timeseries", v, results);
+	JSONQuery("$.timeseries", v, results);
 
 	for (size_t ii=0; ii<results.size(); ii++) {
 		 if (results[ii].is<picojson::array>()){
 			const picojson::array& array = results[ii].get<picojson::array>();
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (!array[jj].is<picojson::null>()) {
-					std::string code, device_code, agg_type;
-					double id = -1.;
-					unsigned int interval = 0;
-					Date since, until;
 
-					const picojson::value::object& obj = array[jj].get<picojson::object>();
-					for (picojson::value::object::const_iterator it = obj.begin(); it != obj.end(); ++it) {
-						if (it->first=="measurandCode" && it->second.is<std::string>()) code = it->second.get<std::string>();
-						if (it->first=="deviceCode" && it->second.is<std::string>()) device_code = it->second.get<std::string>();
-						if (it->first=="id" && it->second.is<double>()) id = it->second.get<double>();
-						if (it->first=="since" && it->second.is<std::string>()) IOUtils::convertString(since, it->second.get<std::string>(), 0.);
-						if (it->first=="until" && it->second.is<std::string>()) IOUtils::convertString(until, it->second.get<std::string>(), 0.);
-						if (it->first=="aggregationType" && it->second.is<std::string>()) agg_type = it->second.get<std::string>();
-						if (it->first=="measureInterval" && it->second.is<std::string>()) interval = parseInterval(it->second.get<std::string>());
-					}
+			for (const auto& ts_obj : array) { //loop over all provided timeseries
+				if (ts_obj.is<picojson::null>()) continue;
 
-					if (device_code=="BATTERY" || device_code=="LOGGER") break;
-					if (agg_type=="SD") break; //we don't care about standard deviation anyway
-					if (id==-1.) break; //no id was provided
+				std::string code, device_code, agg_type;
+				double id = -1., seqNr = 1;
+				double interval=0, offset=0;
+				Date since, until;
+				const picojson::value::object& ts_json_obj = ts_obj.get<picojson::object>();
 
-					const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
-					tsVec.push_back( DBO::tsMeta(param_str, since, until, agg_type, static_cast<size_t>(id), interval) );
+				for (const auto& keyValue : ts_json_obj) { //loop over all key/values of a given timeseries
+					const std::string key( keyValue.first );
+
+					if (key=="sequenceNumber" && keyValue.second.is<double>()) seqNr = keyValue.second.get<double>();
+					if (key=="id" && keyValue.second.is<double>()) id = keyValue.second.get<double>();
+					if (key=="measurandCode" && keyValue.second.is<std::string>()) code = keyValue.second.get<std::string>();
+					if (key=="deviceCode" && keyValue.second.is<std::string>()) device_code = keyValue.second.get<std::string>();
+					if (key=="since" && keyValue.second.is<std::string>()) IOUtils::convertString(since, keyValue.second.get<std::string>(), 0.);
+					if (key=="until" && keyValue.second.is<std::string>()) IOUtils::convertString(until, keyValue.second.get<std::string>(), 0.);
+					if (key=="aggregationType" && keyValue.second.is<std::string>()) agg_type = keyValue.second.get<std::string>();
+					if (key=="measureIntervalInMinutes" && keyValue.second.is<double>()) interval = keyValue.second.get<double>(); //TODO check that it can be cast
+					if (key=="measureIntervalOffsetInMinutes" && keyValue.second.is<double>()) offset = keyValue.second.get<double>();
 				}
+
+				if (device_code=="BATTERY" || device_code=="LOGGER") continue;
+				if (device_code=="MODEL_SNOWPACK") continue; //TODO add an option to use Snowpack computed parameters
+				if (agg_type=="SD") break; //we don't care about standard deviation anyway
+				if (id==-1.) break; //no id was provided
+
+				const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
+				tsVec.push_back( DBO::tsMeta(param_str, since, until, agg_type, static_cast<size_t>(id), static_cast<unsigned int>(interval*60.), static_cast<unsigned int>(offset*60.), static_cast<unsigned int>(seqNr)) );
 			}
 		}
 	}
@@ -352,9 +339,10 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 }
 
 /*************************************************************************************************/
+//example metadata query: https://pgdata.int.slf.ch/data/stations/IMIS/WFJ2
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string DBO::metadata_endpoint = "/data-api/data/stations/";
-const std::string DBO::data_endpoint = "/data-api/data/timeseries/";
+const std::string DBO::metadata_endpoint = "/data/stations/";
+const std::string DBO::data_endpoint = "/data/timeseries/";
 const std::string DBO::null_string = "null";
 
 DBO::DBO(const std::string& configfile)
@@ -414,15 +402,22 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 */
 void DBO::fillStationMeta()
 {
+	static const std::regex stat_id_regex("([^:]+)::([^:]+)");
+	std::smatch stat_id_matches;
+
 	vecMeta.clear();
 	vecMeta.resize( vecStationName.size() );
 	vecTsMeta.resize( vecStationName.size() );
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
-		const std::string user_string( IOUtils::strToUpper(vecStationName[ii]) );
-		const size_t pos_marker = user_string.find("::");
-		const std::string station_id = (pos_marker==std::string::npos)? user_string : user_string.substr(pos_marker+2);
-		const std::string network =  (pos_marker==std::string::npos)? "IMIS" : user_string.substr(0, pos_marker);
+		std::string station_id( IOUtils::strToUpper(vecStationName[ii]) );
+		std::string network = "IMIS";
+
+		if (std::regex_match(station_id, stat_id_matches, stat_id_regex)) {
+			network = stat_id_matches.str(1);
+			station_id = stat_id_matches.str(2);
+		}
+
 		const std::string request( metadata_endpoint + network + "/" + station_id );
 
 		std::stringstream ss;
@@ -432,19 +427,10 @@ void DBO::fillStationMeta()
 			picojson::value v;
 			const std::string err( picojson::parse(v, ss.str()) );
 			if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
-			const std::string type( getString("$.type", v) );
-			if (type!="Feature") {
-				const std::string error( getString("$.error", v) );
-				throw UnknownValueException("Station '"+station_id+"' returned with error: "+error, AT);
-			}
-
-			//processing metadata
-			const std::vector<double> coordinates( getDoubles("$.geometry.coordinates", v) );
-			if (coordinates.size()!=3) throw InvalidFormatException("Wrong coordinates specification!", AT);
 
 			Coords position(coordin, coordinparam);
-			position.setLatLon(coordinates[1], coordinates[0], coordinates[2]);
-			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
+			position.setLatLon(getDouble("$.location.lat", v), getDouble("$.location.lon", v), getDouble("$.location.elevation", v));
+			const StationData sd(position, getString("$.code", v), getString("$.label", v));
 			vecMeta[ii] = sd;
 
 			//parse and store the time series belonging to this station
@@ -486,9 +472,12 @@ bool DBO::getParameter(const std::string& param_str, const std::string& agg_type
 
 bool DBO::getExtraParameter(const std::string& param_str, std::string& param_extra)
 {
-	if (param_str=="TS25") param_extra = "TS1";
+	if (param_str=="TS25")       param_extra = "TS1";
 	else if (param_str=="TS50")  param_extra = "TS2";
-	else if (param_str=="TS100")  param_extra = "TS3";
+	else if (param_str=="TS100") param_extra = "TS3";
+	else if (param_str=="TG10")  param_extra = "TSOIL10";
+	else if (param_str=="TG30")  param_extra = "TSOIL30";
+	else if (param_str=="TG50")  param_extra = "TSOIL50";
 	else return false;
 
 	return true;
@@ -526,6 +515,7 @@ void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &
 		}
 	} else {
 		if (ts.param_extra=="TS1" || ts.param_extra=="TS2" || ts.param_extra=="TS3") offset = Cst::t_water_freezing_pt;
+		if (ts.param_extra=="TSOIL10" || ts.param_extra=="TSOIL30" || ts.param_extra=="TSOIL50") offset = Cst::t_water_freezing_pt;
 	}
 }
 
@@ -548,17 +538,22 @@ void DBO::selectTimeSeries(const std::string& stat_id, std::vector<DBO::tsMeta>&
 
 	//for the current station, loop over the timeseries that cover [Start, End]
 	for (size_t ii=0; ii<tsVec.size(); ii++) {
+		if (tsVec[ii].sequence!=1) continue; //HACK per WIS, only consider seq number 1
+
 		MeteoData::Parameters param;
 		if (getParameter(tsVec[ii].param_str, tsVec[ii].agg_type, param)==false) { //unrecognized parameter
 			if (getExtraParameter(tsVec[ii].param_str, tsVec[ii].param_extra)==false) continue;
 			tsVec[ii].selected = true;
 			continue;
 		}
-		tsVec[ii].param = param; //we identified the parameter
+		tsVec[ii].param = param; //we identified the standard parameter
 
 		const Date tsStart(tsVec[ii].since), tsEnd(tsVec[ii].until);
-		if (!tsStart.isUndef() && tsStart>dateEnd) continue; //this TS does not contain our period of interest
-		if (!tsEnd.isUndef() && tsEnd<dateStart) continue; //this TS does not contain our period of interest
+		if ((!tsStart.isUndef() && tsStart>dateEnd) || (!tsEnd.isUndef() && tsEnd<dateStart)) { //this TS does not contain our period of interest
+			std::cout << "Unselecting" << tsVec[ii].toString() << "\n";
+			tsVec[ii].selected = false;
+			continue;
+		}
 
 		if (mapParams.count(param)==0) {
 			mapParams[param].push_back( ii );
@@ -587,16 +582,15 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 {
 	const std::string Start( dateStart.toString(Date::ISO_Z) );
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
+	const StationData &sd = vecMeta[stationindex];
 
 	//tag each timeseries with a valid MeteoData::Parameter if it should be used
 	selectTimeSeries(vecMeta[stationindex].getStationID(), vecTsMeta[stationindex], dateStart, dateEnd);
 
 	//now get the data
-	for (size_t ii=0; ii<vecTsMeta[stationindex].size(); ii++) {
-		const DBO::tsMeta &ts = vecTsMeta[stationindex][ii];
+	for (const DBO::tsMeta &ts : vecTsMeta[stationindex]) {
 		if ( !ts.selected ) continue; //this timeseries was not selected
 
-		const StationData &sd = vecMeta[stationindex];
 		std::ostringstream ss_ID; ss_ID << ts.id;
 		const std::string request( data_endpoint + ss_ID.str() + "?from=" + Start + "&until=" + End );
 

@@ -49,23 +49,24 @@ class DBO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		typedef struct ts_Meta {
-			ts_Meta() : since(), until(), param_str(), param_extra(), agg_type(), id(0), param(IOUtils::unodata), interval(IOUtils::unodata), selected(false) {} //required by std::map
-			ts_Meta(const std::string& i_param_str, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const size_t i_id, const unsigned int& i_interval)
-			                : since(i_since), until(i_until), param_str(i_param_str), param_extra(), agg_type(i_agg_type), id(i_id), param(IOUtils::unodata), interval(i_interval), selected(false) {}
+			ts_Meta() : since(), until(), param_str(), param_extra(), agg_type(), id(0), param(IOUtils::unodata), interval(IOUtils::unodata), offset(IOUtils::unodata), sequence(IOUtils::unodata), selected(false) {} //required by std::map
+			ts_Meta(const std::string& i_param_str, const Date& i_since, const Date& i_until, const std::string& i_agg_type, const size_t i_id, const unsigned int& i_interval, const unsigned int& i_offset, const unsigned int& i_sequence)
+			                : since(i_since), until(i_until), param_str(i_param_str), param_extra(), agg_type(i_agg_type), id(i_id), param(IOUtils::unodata), interval(i_interval), offset(i_offset), sequence(i_sequence), selected(false) {}
 
 			std::string toString() const {
 				std::ostringstream os;
 				os << (selected? " * " : "   ") << id << " " << param_str << " [";
 				os << ((since.isUndef())? "-∞" : since.toString(Date::ISO)) << " - ";
 				os << ((until.isUndef())? "∞" : until.toString(Date::ISO)) << "] ";
-				os << agg_type << " - " << interval << " s";
+				os << agg_type << " - " << interval << " s ";
+				os << "#" << sequence;
 				return os.str();
 			}
 
 			Date since, until;
 			std::string param_str, param_extra, agg_type; ///< param_extra is the string representation of an extra parameter
 			size_t id, param;
-			unsigned int interval;
+			unsigned int interval, offset, sequence;
 			bool selected;
 		} tsMeta;
 
