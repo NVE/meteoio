@@ -22,10 +22,7 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <algorithm>
 #include <sstream>
-#include <iostream>
-#include <cstring>
 #include <regex>
 
 #include <curl/curl.h>
@@ -42,16 +39,15 @@ namespace mio {
  *
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
- * - DBO_URL: The URL of the RESTful web service e.g. https://pgdata.int.slf.ch
- * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
+ * - DBO_URL: The URL of the RESTful web service (default: https://pgdata.int.slf.ch)
+ * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2, by default the network is assumed to be IMIS)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
  *
  * @code
  * METEO	= DBO
- * DBO_URL	= https://pgdata.int.slf.ch
  * STATION1	= WFJ2
- * STATION2	= DAV3
+ * STATION2	= SMN::*WFJ1
  * @endcode
  *
  * @section dbo_dependencies Picojson
@@ -89,37 +85,42 @@ namespace mio {
  * @endcode
  */
 
+static const double dbo_tz = 0.; //assuming GMT
+
+std::string indent(const unsigned int& depth) 
+{
+	std::ostringstream ss;
+	for (unsigned int jj=0; jj<depth; jj++) 
+		ss << "\t";
+	return ss.str();
+}
+
 //we keep these below as a simple functions in order to avoid exposing picojson stuff in the header
 void printJSON(const picojson::value& v, const unsigned int& depth)
 {
 	if (v.is<picojson::null>()) {
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << "NULL\n";
+		std::cout << indent(depth) << "NULL\n";
 		return;
 	}
 
 	if (v.is<picojson::object>()) {
-		const picojson::value::object& obj = v.get<picojson::object>();
-		for (picojson::value::object::const_iterator ii = obj.begin(); ii != obj.end(); ++ii) {
-			for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-			std::cout << ii->first << "\n";
-			printJSON(ii->second, depth+1);
+		//NOTE: v.get() will only be called once, see
+		//https://stackoverflow.com/questions/15766020/does-a-c11-range-based-for-loop-condition-get-evaluated-every-cycle
+		for (const auto& it : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
+			std::cout << indent(depth) << it.first << "\n";
+			printJSON(it.second, depth+1);
 		}
 	} else if (v.is<std::string>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << v.get<std::string>() << "\n";
+		std::cout << indent(depth) << v.get<std::string>() << "\n";
 	} else if (v.is<double>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << v.get<double>() << "\n";
+		std::cout << indent(depth) << v.get<double>() << "\n";
 	} else if (v.is<bool>()){
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		std::cout << std::boolalpha << v.get<bool>() << "\n";
+		std::cout << indent(depth) << std::boolalpha << v.get<bool>() << "\n";
 	} else if (v.is<picojson::array>()){ //ie vector<picojson::value>
-		for (unsigned int jj=0; jj<depth; jj++) std::cout << "\t";
-		const picojson::array& array = v.get<picojson::array>();
-		std::cout << "array " << array.size() << "\n";
-		for (size_t jj=0; jj<array.size(); jj++)
-			printJSON(array[jj], depth+1);
+		const auto& array = v.get<picojson::array>();
+		std::cout << indent(depth) << "array " << array.size() << "\n";
+		for (const auto& vec_elem : array)
+			printJSON(vec_elem, depth+1);
 	}
 }
 
@@ -134,13 +135,12 @@ picojson::value goToJSONPath(const std::string& path, picojson::value& v)
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
 	if (v.is<picojson::object>()) {
-		picojson::value::object& obj = v.get<picojson::object>(); //std::map<std::string,picojson::value>
-		for (auto& it : obj) {
-			if (it.first==local_path) {
+		for (auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
+			if (keyvalue.first==local_path) {
 				if (!remaining_path.empty())
-					goToJSONPath(remaining_path, it.second);
+					goToJSONPath(remaining_path, keyvalue.second);
 				else
-					return it.second;
+					return keyvalue.second;
 			}
 		}
 	}
@@ -148,7 +148,7 @@ picojson::value goToJSONPath(const std::string& path, picojson::value& v)
 	return picojson::value();
 }
 
-void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson::value>& results)
+void JSONQuery(const std::string& path, const picojson::value& v, std::vector<picojson::value>& results)
 {
 	if (v.is<picojson::null>()) return;
 
@@ -161,18 +161,16 @@ void JSONQuery(const std::string& path, picojson::value& v, std::vector<picojson
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
 	if (v.is<picojson::object>()) {
-		picojson::value::object& obj = v.get<picojson::object>();  //std::map<std::string,picojson::value>
-		for (auto& it : obj) {
-			if (it.first==local_path) {
+		for (const auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
+			if (keyvalue.first==local_path) {
 				if (!remaining_path.empty()) {
-					 if (it.second.is<picojson::array>()){ //ie vector<picojson::value>
-						picojson::array& array = it.second.get<picojson::array>();
-						for (size_t jj=0; jj<array.size(); jj++)
-							JSONQuery(remaining_path, array[jj], results);
+					 if (keyvalue.second.is<picojson::array>()){ //ie vector<picojson::value>
+						for (const auto& vec_elem : keyvalue.second.get<picojson::array>())
+							JSONQuery(remaining_path, vec_elem, results);
 					} else
-						JSONQuery(remaining_path, it.second, results);
+						JSONQuery(remaining_path, keyvalue.second, results);
 				} else {
-					results.push_back( it.second );
+					results.push_back( keyvalue.second );
 				}
 			}
 		}
@@ -184,7 +182,7 @@ std::string getString(const std::string& path, picojson::value& v)
 	std::vector<picojson::value> results;
 	JSONQuery(path, v, results);
 	if (!results.empty()) {
-		if (! results.front().is<picojson::null>() &&  results.front().is<std::string>()) return  results.front().get<std::string>();
+		if (! results.front().is<picojson::null>() && results.front().is<std::string>()) return  results.front().get<std::string>();
 	}
 
 	return std::string();
@@ -196,14 +194,13 @@ std::vector<std::string> getStrings(const std::string& path, picojson::value& v)
 	JSONQuery(path, v, results);
 
 	std::vector<std::string> vecString;
-	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
-			const picojson::array& array = results[ii].get<picojson::array>();
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>() &&  array[jj].is<std::string>()) vecString.push_back( array[jj].get<std::string>() );
+	for (const auto& result : results) {
+		 if (result.is<picojson::array>()){
+			for (const auto& vec_elem : result.get<picojson::array>()) { //loop over vector<picojson::value>
+				if (! vec_elem.is<picojson::null>() && vec_elem.is<std::string>()) vecString.push_back( vec_elem.get<std::string>() );
 			}
 		} else
-			if (! results[ii].is<picojson::null>() &&  results[ii].is<std::string>()) vecString.push_back( results[ii].get<std::string>() );
+			if (! result.is<picojson::null>() && result.is<std::string>()) vecString.push_back( result.get<std::string>() );
 	}
 
 	return vecString;
@@ -214,7 +211,7 @@ double getDouble(const std::string& path, picojson::value& v)
 	std::vector<picojson::value> results;
 	JSONQuery(path, v, results);
 	if (!results.empty()) {
-		if (! results.front().is<picojson::null>() &&  results.front().is<double>()) return  results.front().get<double>();
+		if (! results.front().is<picojson::null>() && results.front().is<double>()) return  results.front().get<double>();
 	}
 
 	return IOUtils::nodata;
@@ -226,15 +223,13 @@ std::vector<double> getDoubles(const std::string& path, picojson::value& v)
 	JSONQuery(path, v, results);
 
 	std::vector<double> vecDouble;
-	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){ //ie vector<picojson::value>
-			const picojson::array& array = results[ii].get<picojson::array>();
-			//results.reserve( results.size()+array.size() ); //most of the time, we will come here with an empty vector
-			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>() &&  array[jj].is<double>()) vecDouble.push_back( array[jj].get<double>() );
+	for (const auto& result : results) {
+		 if (result.is<picojson::array>()) {
+			for (const auto& vec_elem : result.get<picojson::array>()) {//loop over vector<picojson::value>
+				if (! vec_elem.is<picojson::null>() && vec_elem.is<double>()) vecDouble.push_back( vec_elem.get<double>() );
 			}
 		} else
-			if (! results[ii].is<picojson::null>() &&  results[ii].is<double>()) vecDouble.push_back( results[ii].get<double>() );
+			if (! result.is<picojson::null>() && result.is<double>()) vecDouble.push_back( result.get<double>() );
 	}
 
 	return vecDouble;
@@ -248,7 +243,7 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 	if (array.size()!=2) return false;
 
 	if (array[0].is<std::string>())
-		IOUtils::convertString(datum, array[0].get<std::string>(), 0.); //hard-coding GMT
+		IOUtils::convertString(datum, array[0].get<std::string>(), dbo_tz);
 	else
 		return false;
 
@@ -265,13 +260,11 @@ bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 
 const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& factor, const double& offset, picojson::value& v)
 {
-	picojson::value ts( goToJSONPath("$.measurements", v) );
-	if (!ts.is<picojson::array>()) {
-		std::ostringstream ss; ss << "Could not parse timeseries " << tsID;
-		throw InvalidFormatException(ss.str(), AT);
-	}
-	const picojson::array& vecRaw = ts.get<picojson::array>();
+	const picojson::value ts( goToJSONPath("$.measurements", v) );
+	if (!ts.is<picojson::array>())
+		throw InvalidFormatException("Could not parse timeseries "+IOUtils::toString(tsID), AT);
 
+	const picojson::array& vecRaw = ts.get<picojson::array>();
 	if (vecRaw.empty()) return std::vector<DBO::tsData>();
 
 	std::vector<DBO::tsData> vecData( vecRaw.size() );
@@ -280,8 +273,7 @@ const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& 
 		Date datum;
 		if (!parseTsPoint(vecRaw[ii], datum, value))  {
 			printJSON(vecRaw[ii], 0);
-			std::ostringstream ss; ss << "Error parsing element " << ii << " of timeseries " << tsID;
-			throw InvalidFormatException(ss.str(), AT);
+			throw InvalidFormatException("Error parsing element "+IOUtils::toString(ii)+" of timeseries "+IOUtils::toString(tsID), AT);
 		}
 
 		if (value!=IOUtils::nodata) value = value * factor + offset;
@@ -291,6 +283,7 @@ const std::vector<DBO::tsData> parseTimeSerie(const size_t& tsID, const double& 
 	return vecData;
 }
 
+//get the properties of all timeseries belonging to the current station
 std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 {
 	std::vector<DBO::tsMeta> tsVec;
@@ -298,40 +291,45 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 	JSONQuery("$.timeseries", v, results);
 
 	for (size_t ii=0; ii<results.size(); ii++) {
-		 if (results[ii].is<picojson::array>()){
-			const picojson::array& array = results[ii].get<picojson::array>();
+		if (!results[ii].is<picojson::array>()) continue;
 
-			for (const auto& ts_obj : array) { //loop over all provided timeseries
-				if (ts_obj.is<picojson::null>()) continue;
+		for (const auto& ts_obj : results[ii].get<picojson::array>()) { //loop over all provided timeseries
+			if (ts_obj.is<picojson::null>()) continue;
+			
+			std::string code, device_code, agg_type;
+			double id = -1., seqNr = 1;
+			double interval=0, ts_offset=0;
+			Date since, until;
 
-				std::string code, device_code, agg_type;
-				double id = -1., seqNr = 1;
-				double interval=0, offset=0;
-				Date since, until;
-				const picojson::value::object& ts_json_obj = ts_obj.get<picojson::object>();
+			for (const auto& keyValue : ts_obj.get<picojson::object>()) { //loop over all key/values of a given timeseries
+				const std::string key( keyValue.first );
 
-				for (const auto& keyValue : ts_json_obj) { //loop over all key/values of a given timeseries
-					const std::string key( keyValue.first );
-
-					if (key=="sequenceNumber" && keyValue.second.is<double>()) seqNr = keyValue.second.get<double>();
-					if (key=="id" && keyValue.second.is<double>()) id = keyValue.second.get<double>();
-					if (key=="measurandCode" && keyValue.second.is<std::string>()) code = keyValue.second.get<std::string>();
-					if (key=="deviceCode" && keyValue.second.is<std::string>()) device_code = keyValue.second.get<std::string>();
-					if (key=="since" && keyValue.second.is<std::string>()) IOUtils::convertString(since, keyValue.second.get<std::string>(), 0.);
-					if (key=="until" && keyValue.second.is<std::string>()) IOUtils::convertString(until, keyValue.second.get<std::string>(), 0.);
-					if (key=="aggregationType" && keyValue.second.is<std::string>()) agg_type = keyValue.second.get<std::string>();
-					if (key=="measureIntervalInMinutes" && keyValue.second.is<double>()) interval = keyValue.second.get<double>(); //TODO check that it can be cast
-					if (key=="measureIntervalOffsetInMinutes" && keyValue.second.is<double>()) offset = keyValue.second.get<double>();
-				}
-
-				if (device_code=="BATTERY" || device_code=="LOGGER") continue;
-				if (device_code=="MODEL_SNOWPACK") continue; //TODO add an option to use Snowpack computed parameters
-				if (agg_type=="SD") break; //we don't care about standard deviation anyway
-				if (id==-1.) break; //no id was provided
-
-				const std::string param_str( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
-				tsVec.push_back( DBO::tsMeta(param_str, since, until, agg_type, static_cast<size_t>(id), static_cast<unsigned int>(interval*60.), static_cast<unsigned int>(offset*60.), static_cast<unsigned int>(seqNr)) );
+				if (key=="sequenceNumber" && keyValue.second.is<double>()) seqNr = keyValue.second.get<double>();
+				if (key=="id" && keyValue.second.is<double>()) id = keyValue.second.get<double>();
+				if (key=="measurandCode" && keyValue.second.is<std::string>()) code = keyValue.second.get<std::string>();
+				if (key=="deviceCode" && keyValue.second.is<std::string>()) device_code = keyValue.second.get<std::string>();
+				if (key=="since" && keyValue.second.is<std::string>()) IOUtils::convertString(since, keyValue.second.get<std::string>(), 0.);
+				if (key=="until" && keyValue.second.is<std::string>()) IOUtils::convertString(until, keyValue.second.get<std::string>(), 0.);
+				if (key=="aggregationType" && keyValue.second.is<std::string>()) agg_type = keyValue.second.get<std::string>();
+				if (key=="measureIntervalInMinutes" && keyValue.second.is<double>()) interval = keyValue.second.get<double>(); //TODO check that it can be cast
+				if (key=="measureIntervalOffsetInMinutes" && keyValue.second.is<double>()) ts_offset = keyValue.second.get<double>();
 			}
+
+			//reject some timeseries
+			if (seqNr!=1) continue; //HACK per WIS, only consider seq number 1
+			if (device_code=="BATTERY" || device_code=="LOGGER") continue;
+			if (device_code=="MODEL_SNOWPACK") continue; //TODO add an option to use Snowpack computed parameters
+			if (agg_type=="SD") continue; //we don't care about standard deviation anyway
+			if (id==-1.) continue; //no id was provided
+
+			const std::string param_dbo( IOUtils::strToUpper( code.substr(0, code.find('_')) ) );
+			const std::string parname( DBO::getParameter(param_dbo, agg_type) );
+			if (parname.empty()) continue;
+			
+			DBO::tsMeta tmp(param_dbo, since, until, agg_type, static_cast<size_t>(id), static_cast<unsigned int>(interval*60.), static_cast<unsigned int>(ts_offset*60.), static_cast<unsigned int>(seqNr));
+			tmp.parname = parname;
+			DBO::setUnitsConversion(tmp);
+			tsVec.push_back( tmp );
 		}
 	}
 
@@ -341,38 +339,39 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 /*************************************************************************************************/
 //example metadata query: https://pgdata.int.slf.ch/data/stations/IMIS/WFJ2
 const int DBO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
-const std::string DBO::metadata_endpoint = "/data/stations/";
-const std::string DBO::data_endpoint = "/data/timeseries/";
-const std::string DBO::null_string = "null";
+const std::string DBO::endpoint_default = "https://pgdata.int.slf.ch";
+const std::string DBO::metadata_api = "/data/stations/";
+const std::string DBO::data_api = "/data/timeseries/";
 
 DBO::DBO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), vecMeta(), vecTsMeta(),
-        coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(),
+      : vecStationName(), vecMeta(), vecTsMeta(),
+        coordin(), coordinparam(),
+        endpoint(endpoint_default),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
-	initDBOConnection();
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	const Config cfg( configfile );
+	initDBOConnection(cfg);
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
 DBO::DBO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), vecMeta(), vecTsMeta(),
-        coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(),
+      : vecStationName(), vecMeta(), vecTsMeta(),
+        coordin(), coordinparam(),
+        endpoint(endpoint_default),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
-	initDBOConnection();
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
+	initDBOConnection(cfgreader);
+	IOUtils::getProjectionParameters(cfgreader, coordin, coordinparam);
+	cfgreader.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
-void DBO::initDBOConnection()
+void DBO::initDBOConnection(const Config& cfg)
 {
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
-	cfg.getValue("DBO_URL", "Input", endpoint);
+	cfg.getValue("DBO_URL", "Input", endpoint, IOUtils::nothrow);
 	if (*endpoint.rbegin() != '/') endpoint += "/";
 	cerr << "[i] Using DBO URL: " << endpoint << endl;
 
@@ -418,15 +417,17 @@ void DBO::fillStationMeta()
 			station_id = stat_id_matches.str(2);
 		}
 
-		const std::string request( metadata_endpoint + network + "/" + station_id );
+		const std::string request( metadata_api + network + "/" + station_id );
 
 		std::stringstream ss;
 		if (curl_read(request, ss)) {
-			//handling possible errors
-			if (ss.str().empty()) throw UnknownValueException("Station not found: '"+station_id+"'", AT);
 			picojson::value v;
+			
+			//handling possible errors
 			const std::string err( picojson::parse(v, ss.str()) );
 			if (!err.empty()) throw IOException("Error while parsing JSON: "+err, AT);
+			std::string error_msg = getString("$.error", v);
+			if (!error_msg.empty()) throw UnknownValueException("Error with station '"+network+"::"+station_id+"': "+error_msg, AT);
 
 			Coords position(coordin, coordinparam);
 			position.setLatLon(getDouble("$.location.lat", v), getDouble("$.location.lon", v), getDouble("$.location.elevation", v));
@@ -440,6 +441,12 @@ void DBO::fillStationMeta()
 				std::cout << "****\nRequest: " << request << "\n****\n";
 			throw IOException("Could not retrieve data for station " + station_id, AT);
 		}
+		
+		if (dbo_debug) {
+			std::cout << "<Station " << station_id << ">\n";
+			for (const auto& ts : vecTsMeta[ii]) std::cout << ts.toString() << "\n";
+			std::cout << "</Station " << station_id << ">\n";
+		}
 	}
 }
 
@@ -447,134 +454,53 @@ void DBO::fillStationMeta()
 * @brief Identify the relevant MeteoData::Parameters from DBO provided information
 * @param[in] param_str DBO string representation of the meteo parameter
 * @param[in] agg_type DBO aggregation type
-* @param[out] param MeteoData::Parameters standardized parameter
-* @return true if the parameter was properly identified, false otherwise
+* @return standardized parameter name or empty string
 */
-bool DBO::getParameter(const std::string& param_str, const std::string& agg_type, MeteoData::Parameters &param)
+std::string DBO::getParameter(const std::string& param_str, const std::string& agg_type)
 {
-	if (param_str=="P") param = MeteoData::P;
-	else if (param_str=="TA") param = MeteoData::TA;
-	else if (param_str=="RH") param = MeteoData::RH;
-	else if (param_str=="TS0") param = MeteoData::TSG;
-	else if (param_str=="TSS") param = MeteoData::TSS;
-	else if (param_str=="HS") param = MeteoData::HS;
-	else if (param_str=="VW" && agg_type=="MAX") param = MeteoData::VW_MAX;
-	else if (param_str=="VW") param = MeteoData::VW;
-	else if (param_str=="DW") param = MeteoData::DW;
-	else if (param_str=="RSWR") param = MeteoData::RSWR;
-	else if (param_str=="ISWR") param = MeteoData::ISWR;
-	else if (param_str=="ILWR") param = MeteoData::ILWR;
-	else if (param_str=="RRI") param = MeteoData::PSUM;
-	else return false;
-
-	return true;
-}
-
-bool DBO::getExtraParameter(const std::string& param_str, std::string& param_extra)
-{
-	if (param_str=="TS25")       param_extra = "TS1";
-	else if (param_str=="TS50")  param_extra = "TS2";
-	else if (param_str=="TS100") param_extra = "TS3";
-	else if (param_str=="TG10")  param_extra = "TSOIL10";
-	else if (param_str=="TG30")  param_extra = "TSOIL30";
-	else if (param_str=="TG50")  param_extra = "TSOIL50";
-	else return false;
-
-	return true;
+	if (param_str=="P") return "P";
+	else if (param_str=="TA") return "TA";
+	else if (param_str=="RH") return "RH";
+	else if (param_str=="TS0") return "TSG";
+	else if (param_str=="TSS") return "TSS";
+	else if (param_str=="HS") return "HS";
+	else if (param_str=="VW" && agg_type=="MAX") return "VW_MAX";
+	else if (param_str=="VW") return "VW";
+	else if (param_str=="DW") return "DW";
+	else if (param_str=="RSWR") return "RSWR";
+	else if (param_str=="ISWR") return "ISWR";
+	else if (param_str=="ILWR") return "ILWR";
+	else if (param_str=="RRI") return "PSUM";
+	else if (param_str=="TS25") return "TS1";
+	else if (param_str=="TS50") return "TS2";
+	else if (param_str=="TS100") return "TS3";
+	else if (param_str=="TG10") return "TSOIL10";
+	else if (param_str=="TG30") return "TSOIL30";
+	else if (param_str=="TG50") return "TSOIL50";
+	else return "";
 }
 
 /**
 * @brief Provide the way to convert the DBO units into standardized units (SI).
 * It is assume that we can first multiply by a factor, then add an offset.
 * @param[in] ts DBO timeseries properties
-* @param[in] is_std is it a standard parameter or an extra parameter?
-* @param[out] factor factor to apply
-* @param[out] offset offset to apply
 */
-void DBO::getUnitsConversion(const DBO::tsMeta& ts, const bool& is_std, double &factor, double &offset)
+void DBO::setUnitsConversion(DBO::tsMeta& ts)
 {
-	if (is_std) {
-		const MeteoData::Parameters param = static_cast<MeteoData::Parameters>( ts.param );
-
-		//compute the conversion parameters (C to K, cm to m, % to [0-1], PINT to PSUM
-		switch (param) {
-			case MeteoData::TA: case MeteoData::TSG: case MeteoData::TSS:
-				factor = 1.;
-				offset = Cst::t_water_freezing_pt;
-				return;
-			case MeteoData::RH: case MeteoData::HS:
-				factor = 1./100.;
-				offset = 0.;
-				return;
-			case MeteoData::PSUM:
-				factor = 3600. / ts.interval;
-				offset = 0.;
-				return;
-			default:
-				return;
-		}
-	} else {
-		if (ts.param_extra=="TS1" || ts.param_extra=="TS2" || ts.param_extra=="TS3") offset = Cst::t_water_freezing_pt;
-		if (ts.param_extra=="TSOIL10" || ts.param_extra=="TSOIL30" || ts.param_extra=="TSOIL50") offset = Cst::t_water_freezing_pt;
+	//compute the conversion parameters (C to K, cm to m, % to [0-1], PINT to PSUM
+	if (ts.parname=="TA" || ts.parname=="TSG" || ts.parname=="TSS") {
+		ts.units_offset = Cst::t_water_freezing_pt;
+	} else if(ts.parname=="RH" || ts.parname=="HS") {
+		ts.units_factor = 0.01;
+	} else if(ts.parname=="PSUM") {
+		ts.units_factor = 3600. / ts.interval;
+	} else if(ts.parname=="TS1" || ts.parname=="TS2" || ts.parname=="TS3") {
+		ts.units_offset = Cst::t_water_freezing_pt;
+	} else if(ts.parname=="TSOIL10" || ts.parname=="TSOIL30" || ts.parname=="TSOIL50") {
+		ts.units_offset = Cst::t_water_freezing_pt;
 	}
-}
-
-//to evaluate the best combination of TS to select: try all possible combinations (there are not so many), rate them and pick the best!
-//example: if a given combination covers the whole period, +10. If it is consistent in terms of rate, +5. If precips have the highest rate, +20...
-
-/**
-* @brief Select the timeseries that have to be retrive to build the output dataset.
-* Since a parameter might be provided by multiple timeseries (with different start/end, sampling rates, etc),
-* we have to select which ones are relevant for the output dataset.
-* @param[in] stat_id Station ID (only needed for debug output)
-* @param[in] tsVec DBO timeseries properties
-* @param[in] dateStart start date of the output dataset
-* @param[out] dateEnd end date of the output dataset
-*/
-void DBO::selectTimeSeries(const std::string& stat_id, std::vector<DBO::tsMeta>& tsVec, const Date& dateStart, const Date& dateEnd) const
-{
-	//for each parameter, a vector of suitable indices within tsVec (for internal use only)
-	std::map<MeteoData::Parameters, std::vector<size_t> > mapParams;
-
-	//for the current station, loop over the timeseries that cover [Start, End]
-	for (size_t ii=0; ii<tsVec.size(); ii++) {
-		if (tsVec[ii].sequence!=1) continue; //HACK per WIS, only consider seq number 1
-
-		MeteoData::Parameters param;
-		if (getParameter(tsVec[ii].param_str, tsVec[ii].agg_type, param)==false) { //unrecognized parameter
-			if (getExtraParameter(tsVec[ii].param_str, tsVec[ii].param_extra)==false) continue;
-			tsVec[ii].selected = true;
-			continue;
-		}
-		tsVec[ii].param = param; //we identified the standard parameter
-
-		const Date tsStart(tsVec[ii].since), tsEnd(tsVec[ii].until);
-		if ((!tsStart.isUndef() && tsStart>dateEnd) || (!tsEnd.isUndef() && tsEnd<dateStart)) { //this TS does not contain our period of interest
-			std::cout << "Unselecting" << tsVec[ii].toString() << "\n";
-			tsVec[ii].selected = false;
-			continue;
-		}
-
-		if (mapParams.count(param)==0) {
-			mapParams[param].push_back( ii );
-			tsVec[ii].selected = true;
-		} else {
-			const bool hasStart = !tsStart.isUndef() && tsStart<=dateStart;
-			const bool hasEnd = !tsEnd.isUndef() && tsEnd>=dateEnd;
-			const unsigned int meas_interval = tsVec[ii].interval;
-			if (hasStart && hasEnd && (meas_interval==1800 || meas_interval==3600)) { //it has everything we want from IMIS, so we take it
-				tsVec[ mapParams[param][0] ].selected = false;
-				mapParams[param][0] = ii;
-				tsVec[ii].selected = true;
-			}
-		}
-	}
-
-	if (dbo_debug) {
-		std::cout << "<Station " << stat_id << ">\n";
-		for (size_t ii=0; ii<tsVec.size(); ii++) std::cout << tsVec[ii].toString() << "\n";
-		std::cout << "</Station " << stat_id << ">\n";
-	}
+	
+	return;
 }
 
 //read all data for the given station
@@ -584,15 +510,15 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 	const std::string End( dateEnd.toString(Date::ISO_Z) );
 	const StationData &sd = vecMeta[stationindex];
 
-	//tag each timeseries with a valid MeteoData::Parameter if it should be used
-	selectTimeSeries(vecMeta[stationindex].getStationID(), vecTsMeta[stationindex], dateStart, dateEnd);
-
 	//now get the data
 	for (const DBO::tsMeta &ts : vecTsMeta[stationindex]) {
-		if ( !ts.selected ) continue; //this timeseries was not selected
+		
+		//check if the current ts contains our period of interest
+		const Date tsStart(ts.since), tsEnd(ts.until);
+		if ((!tsStart.isUndef() && tsStart>dateEnd) || (!tsEnd.isUndef() && tsEnd<dateStart)) continue;
 
 		std::ostringstream ss_ID; ss_ID << ts.id;
-		const std::string request( data_endpoint + ss_ID.str() + "?from=" + Start + "&until=" + End );
+		const std::string request( data_api + ss_ID.str() + "?from=" + Start + "&until=" + End );
 
 		std::stringstream ss;
 		if (curl_read(request, ss)) { //retrieve the page from the formed URL
@@ -601,21 +527,21 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 			const std::string err( picojson::parse(v, ss.str()) );
 			if (!err.empty()) throw IOException("Error while parsing JSON: "+ss.str(), AT);
 
-			const bool is_std = (ts.param!=IOUtils::unodata);
-			double factor = 1., offset = 0.;
-			getUnitsConversion(ts, is_std, factor, offset);
-
-			const std::vector<DBO::tsData> vecData( parseTimeSerie(ts.id, factor, offset, v) );
-			if (vecData.empty()) return;
+			const std::vector<DBO::tsData> vecData( parseTimeSerie(ts.id, ts.units_factor, ts.units_offset, v) );
+			if (vecData.empty()) {
+				if (dbo_debug) 
+					std::cout << vecMeta[stationindex].getStationID() << " has no data for " << ts.parname << " in the requested period\n";
+				continue;
+			}
 
 			MeteoData md_pattern = (vecMeteo.empty())? MeteoData(Date(), sd) : vecMeteo.front(); //This assumes that the station is not moving!
-			if (is_std) { //this is a standard parameter
-				mergeTimeSeries(md_pattern, ts.param, vecData, vecMeteo);
-			} else { //this is an extra parameter
-				const size_t param = md_pattern.addParameter( ts.param_extra );
-				for (size_t jj=0; jj<vecMeteo.size(); jj++) vecMeteo[jj].addParameter( ts.param_extra );
-				mergeTimeSeries(md_pattern, param, vecData, vecMeteo);
+			if (!md_pattern.param_exists(ts.parname)) {
+				md_pattern.addParameter( ts.parname );
+				for (size_t jj=0; jj<vecMeteo.size(); jj++) vecMeteo[jj].addParameter( ts.parname ); //TODO rewrite addParameter to create and attribute a value
 			}
+			
+			const size_t parindex = md_pattern.getParameterIndex( ts.parname );
+			mergeTimeSeries(md_pattern, parindex, vecData, vecMeteo);
 		} else {
 			if (dbo_debug)
 				std::cout << "****\nRequest: " << request << "\n****\n";
