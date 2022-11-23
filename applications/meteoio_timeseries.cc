@@ -179,7 +179,7 @@ inline void Usage(const std::string& programname)
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
 		<< "\t[-d, --duration=<in days>] (e.g.: 30)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
-		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
+		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (default: 60)\n"
 		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
 		<< "\t[-p, --progress] Show progress\n"
 		<< "\t[-t, --timeout] Kill the process after that many seconds if still running\n"
@@ -238,6 +238,11 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 		switch (opt) {
 		case 0:
 			break;
+		case ':': {//operand missing, but it seems that this check does not work properly
+			std::cerr << std::endl << "[E] Command line option '-" << char(opt) << "' requires an operand\n";
+			Usage(std::string(argv[0]));
+			exit(1);
+		}
 		case 'b': {
 			begin_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
 			setStart = true;
@@ -249,39 +254,47 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 			break;
 		}
 		case 'd': {
-			mio::IOUtils::convertString(duration, std::string(optarg));
+			if (!mio::IOUtils::convertString(duration, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the duration argument '"+std::string(optarg)+"'", AT);
 			setDuration = true;
 			break;
 		}
-		case 'c':
+		case 'c': {
 			cfgfile = std::string(optarg);
 			break;
-		case 's':
-			mio::IOUtils::convertString(samplingRate, std::string(optarg));
+		}
+		case 's': {
+			if (!mio::IOUtils::convertString(samplingRate, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the sampling rate argument '"+std::string(optarg)+"'", AT);
 			break;
-		case 'o':
-			mio::IOUtils::convertString(outputBufferSize, std::string(optarg));
+		}
+		case 'o': {
+			if (!mio::IOUtils::convertString(outputBufferSize, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the output-buffer argument '"+std::string(optarg)+"'", AT);
 			break;
-		case ':': //operand missing
-			std::cerr << std::endl << "[E] Command line option '-" << char(opt) << "' requires an operand\n";
-			Usage(std::string(argv[0]));
-			exit(1);
-		case 'p':
+		}
+		case 'p': {
 			showProgress = true;
 			break;
-		case 't':
-			mio::IOUtils::convertString(timeout_secs, std::string(optarg));
+		}
+		case 't': {
+			if (!mio::IOUtils::convertString(timeout_secs, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the timeout argument '"+std::string(optarg)+"'", AT);
 			break;
-		case 'v':
+		}
+		case 'v': {
 			Version();
 			exit(0);
-		case 'h':
+		}
+		case 'h': {
 			Usage(std::string(argv[0]));
 			exit(0);
-		case '?':
+		}
+		case '?': {
 			std::cerr << std::endl << "[E] Unknown argument detected\n";
 			Usage(std::string(argv[0]));
 			exit(1);
+		}
 		default:
 			std::cerr << std::endl << "[E] getopt returned character code " <<  opt << "\n";
 			Usage(std::string(argv[0]));
@@ -312,6 +325,8 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 	if (samplingRate==IOUtils::nodata)
 		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
 	samplingRate /= 24.*60; //convert to sampling rate in days
+	if (samplingRate<=0)
+		throw InvalidArgumentException("The sampling rate argument must be > 0! (check both on the command line and as configuration key)", AT);
 }
 
 static void signal_handler( int signal_num ) 
