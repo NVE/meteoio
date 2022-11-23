@@ -201,7 +201,7 @@ void UsageTimer::getElapsedTimes()
 
 #ifdef _WIN32
 /* function called when the timer expires */
-void CALLBACK TimerProc(void* parameters, BOOLEAN timerCalled)
+void CALLBACK TimerProc(void* /*parameters*/, BOOLEAN /*timerCalled*/)
 {
 	std::cerr << "Timeout: aborting after receiving signal SIGALRM" << std::endl;
 	exit( EXIT_FAILURE );
