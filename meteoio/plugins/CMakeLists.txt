@@ -36,10 +36,10 @@ IF(PLUGIN_CSVIO)
 ENDIF(PLUGIN_CSVIO)
 
 IF(PLUGIN_DBO)
-	FIND_PACKAGE(CURL REQUIRED)
+	FIND_PACKAGE(CURL COMPONENTS HTTPS HTTP REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM "${CURL_INCLUDE_DIRS}")
 	SET(plugin_libs ${plugin_libs} "${CURL_LIBRARIES}")
-	SET(plugins_sources ${plugins_sources} plugins/DBO.cc)
+	SET(plugins_sources ${plugins_sources} plugins/JsonWrapper.cc plugins/DBO.cc)
 ENDIF(PLUGIN_DBO)
 
 IF(PLUGIN_GOESIO)
