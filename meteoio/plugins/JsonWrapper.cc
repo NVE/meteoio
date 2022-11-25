@@ -107,6 +107,9 @@ picojson::value JsonWrapper::goToJSONPath(const std::string& path) const
 
 picojson::value JsonWrapper::goToJSONPath(const std::string& path, const picojson::value& v)
 {
+	if (v.is<picojson::null>()) return picojson::value();
+	if (!v.is<picojson::object>()) return picojson::value();
+
 	size_t start_pos = 0;
 	if (path[0]=='$') start_pos++;
 	if (path[1]=='.') start_pos++;
@@ -115,14 +118,12 @@ picojson::value JsonWrapper::goToJSONPath(const std::string& path, const picojso
 	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
-	if (v.is<picojson::object>()) {
-		for (auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
-			if (keyvalue.first==local_path) {
-				if (!remaining_path.empty())
-					goToJSONPath(remaining_path, keyvalue.second);
-				else
-					return keyvalue.second;
-			}
+	for (auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
+		if (keyvalue.first==local_path) {
+			if (!remaining_path.empty())
+				goToJSONPath(remaining_path, keyvalue.second);
+			else
+				return keyvalue.second;
 		}
 	}
 
@@ -139,6 +140,7 @@ std::vector<picojson::value> JsonWrapper::JSONQuery(const std::string& path) con
 void JsonWrapper::JSONQuery(const std::string& path, const picojson::value& v, std::vector<picojson::value>& results)
 {
 	if (v.is<picojson::null>()) return;
+	if (!v.is<picojson::object>()) return;
 
 	size_t start_pos = 0;
 	if (path[0]=='$') start_pos++;
@@ -148,18 +150,16 @@ void JsonWrapper::JSONQuery(const std::string& path, const picojson::value& v, s
 	const std::string local_path = (end_pos!=std::string::npos)? path.substr(start_pos, end_pos-start_pos) : path.substr(start_pos);
 	const std::string remaining_path = (end_pos!=std::string::npos)? path.substr(end_pos+1) : "";
 
-	if (v.is<picojson::object>()) {
-		for (const auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
-			if (keyvalue.first==local_path) {
-				if (!remaining_path.empty()) {
-					 if (keyvalue.second.is<picojson::array>()){ //ie vector<picojson::value>
-						for (const auto& vec_elem : keyvalue.second.get<picojson::array>())
-							JSONQuery(remaining_path, vec_elem, results);
-					} else
-						JSONQuery(remaining_path, keyvalue.second, results);
-				} else {
-					results.push_back( keyvalue.second );
-				}
+	for (const auto& keyvalue : v.get<picojson::object>()) { //std::map<std::string,picojson::value>
+		if (keyvalue.first==local_path) {
+			if (!remaining_path.empty()) {
+				if (keyvalue.second.is<picojson::array>()) { //ie vector<picojson::value>
+					for (const auto& vec_elem : keyvalue.second.get<picojson::array>())
+						JSONQuery(remaining_path, vec_elem, results);
+				} else
+					JSONQuery(remaining_path, keyvalue.second, results);
+			} else {
+				results.push_back( keyvalue.second );
 			}
 		}
 	}
@@ -183,13 +183,13 @@ std::vector<std::string> JsonWrapper::getStrings(const std::string& path) const
 
 	std::vector<std::string> vecString;
 	for (const auto& result : results) {
-		 if (result.is<picojson::array>()){
+		 if (result.is<picojson::array>()) {
 			for (const auto& vec_elem : result.get<picojson::array>()) { //loop over vector<picojson::value>
-				if (! vec_elem.is<picojson::null>() && vec_elem.is<std::string>()) 
+				if (!vec_elem.is<picojson::null>() && vec_elem.is<std::string>())
 					vecString.push_back( vec_elem.get<std::string>() );
 			}
 		} else
-			if (! result.is<picojson::null>() && result.is<std::string>()) 
+			if (!result.is<picojson::null>() && result.is<std::string>())
 				vecString.push_back( result.get<std::string>() );
 	}
 
@@ -201,7 +201,7 @@ double JsonWrapper::getDouble(const std::string& path) const
 	const std::vector<picojson::value> results( JSONQuery(path) );
 	
 	if (!results.empty()) {
-		if (! results.front().is<picojson::null>() && results.front().is<double>()) 
+		if (!results.front().is<picojson::null>() && results.front().is<double>())
 			return results.front().get<double>();
 	}
 
@@ -216,11 +216,11 @@ std::vector<double> JsonWrapper::getDoubles(const std::string& path) const
 	for (const auto& result : results) {
 		 if (result.is<picojson::array>()) {
 			for (const auto& vec_elem : result.get<picojson::array>()) {//loop over vector<picojson::value>
-				if (! vec_elem.is<picojson::null>() && vec_elem.is<double>()) 
+				if (!vec_elem.is<picojson::null>() && vec_elem.is<double>())
 					vecDouble.push_back( vec_elem.get<double>() );
 			}
 		} else
-			if (! result.is<picojson::null>() && result.is<double>()) 
+			if (!result.is<picojson::null>() && result.is<double>())
 				vecDouble.push_back( result.get<double>() );
 	}
 
@@ -230,9 +230,9 @@ std::vector<double> JsonWrapper::getDoubles(const std::string& path) const
 void JsonWrapper::readAndParse(const std::string& request, const std::string& where)
 {
 	std::stringstream ss;
-	if (!curl_read(request, ss)) {
-		if (debug)
-			std::cout << "****\nRequest: " << request << "\n****\n";
+	const bool read_status = curl_read(request, ss);
+	if (!read_status) {
+		if (debug) std::cout << "****\nRequest: " << request << "\n****\n";
 		throw IOException(where+", could not request data from server", AT);
 	}
 	

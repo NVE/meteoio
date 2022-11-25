@@ -88,7 +88,7 @@ namespace mio {
 static const double dbo_tz = 0.; //assuming GMT
 
 //the pair <date, value> is contained in an array of size 2
-bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
+inline bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 {
 	if (!v.is<picojson::array>()) return false;
 

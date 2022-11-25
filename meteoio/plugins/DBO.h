@@ -24,17 +24,13 @@
 #include <string>
 #include <vector>
 
-//#include <curl/curl.h>
-//see https://herbsutter.com/gotw/_100/
-//https://stackoverflow.com/questions/206272/hiding-private-data-members-c
-
 #ifdef _MSC_VER
 	#pragma warning(disable:4512) //we don't need any = operator!
 #endif
 
 namespace mio {
 
-class JsonWrapper; //forward declaration ,it is defined in an include called in the .cc file
+class JsonWrapper; //forward declaration, it is defined in an include called in the .cc file
 
 /**
  * @class DBO
@@ -103,6 +99,7 @@ class DBO : public IOInterface {
 		std::string coordin, coordinparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
 		JsonWrapper *json;
+
 		bool dbo_debug;
 
 		static const int http_timeout_dflt;
