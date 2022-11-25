@@ -338,8 +338,7 @@ static void signals_catching(void)
 {
 #ifdef _WIN32
 	typedef void(*SignalHandlerPointer)(int);
-	SignalHandlerPointer previousHandler;
-	previousHandler = signal(SIGTERM, signal_handler);
+	SignalHandlerPointer previousHandler = signal(SIGTERM, signal_handler);
 #else
 	struct sigaction catch_signal;
 	catch_signal.sa_handler = signal_handler;
