@@ -82,6 +82,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
 		double getClearness(const double& cloudiness) const;
 		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
+		double getHorizon(const MeteoData& md, const double& sun_azi);
 		
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
@@ -90,7 +91,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		DEMObject dem;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
-		bool write_mask_out, has_dem;
+		bool write_mask_out, use_horizons, from_dem;
 };
 
 } //end namespace mio
