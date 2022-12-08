@@ -123,6 +123,9 @@ double TauCLDGenerator::getHorizon(const MeteoData& md, const double& sun_azi)
 	mask = masks.find( "*" );
 	if (mask!=masks.end()) return DEMAlgorithms::getHorizon(mask->second, sun_azi);
 	
+	if (!from_dem)
+		throw InvalidArgumentException("No horizon could be found for station "+stationID+", please either provide it in the horizon file or provide a DEM to compute the horizon", AT);
+
 	//get the horizon from the DEM, save the computed mask
 	if (dem.empty()) {
 		IOHandler io(cfg);
