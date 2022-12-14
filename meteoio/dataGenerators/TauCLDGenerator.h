@@ -56,12 +56,25 @@ namespace mio {
  * in this specific scenario.
  * 
  * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
- * INFILE will be computed from DEM. If none is available, a fixed 5 degrees threshold is used.
+ * INFILE will be computed from DEM. It is also possible to define wildcard station ID in the horizon file. If SHADE_FROM_DEM has been set
+ * to false and no INFILE has been provided, a fixed 5 degrees threshold is used.
  *
  * @code
  * [Generators]
  * TAU_CLD::generator1     = TAU_CLD
  * TAU_CLD::arg1::use_rswr = false
+ * @endcode
+ *
+ * The horizon file contains on each line a station ID followed by an azimuth (in degrees, starting from North) and an elevation above the
+ * horizontal (also in degrees). It is possible to define a wildcard station ID '*' to be used as fallback. The elevation for any given azimuth
+ * will be linearly interpolated between the provided horizons before and after. If only one azimuth is given for a station ID, its horizon
+ * elevation is assumed to be constant. See below an example horizon file, defining two station IDs (SLF2 and FLU2):
+ * @code
+ * SLF2 0 5
+ * SLF2 45 25
+ * SLF2 180 30
+ * SLF2 245 10
+ * FLU2 0 7
  * @endcode
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
