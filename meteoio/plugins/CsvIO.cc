@@ -717,7 +717,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::set<std::string> noConvUnits = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
+	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
 
 	std::vector<std::string> units;
 	IOUtils::readLineToVec(csv_units, units, delim);
