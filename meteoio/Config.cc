@@ -517,7 +517,7 @@ std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::
 {
 	//read the arguments and clean them up (ie get all key/values matching {cmd_id}::{arg_pattern}#:: and remove this prefix)
 	std::ostringstream arg_str;
-	arg_str << cmd_id << arg_pattern << cmd_nr;
+	arg_str << cmd_id << arg_pattern << cmd_nr << "::";
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
 	for (auto& arg : vecArgs) {
 		const size_t beg_arg_name = arg.first.find_first_not_of(":", arg_str.str().length());
