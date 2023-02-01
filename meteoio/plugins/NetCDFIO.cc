@@ -2141,7 +2141,7 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const size_t& param) con
 
 	std::vector<std::string> results(length);
 	for (size_t ii=0; ii<length; ii++)
-		results[ii] = std::string( &data[ii*strMaxLen] ); //this way the string ends at the first \0 char
+		results[ii] = std::string( &data[ii*strMaxLen], strMaxLen );
 	
 	free( data );
 	return results;
