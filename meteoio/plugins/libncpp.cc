@@ -49,6 +49,7 @@ inline std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("DATESTRLEN");
 	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
@@ -779,6 +780,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "west_east") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::DATESTRLEN, "DateStrLen") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
