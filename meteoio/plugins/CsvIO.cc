@@ -362,12 +362,6 @@ bool CsvDateTime::isSet() const
 	const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
 	const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
 	
-	//date string and components time
-	//if (date_str!=IOUtils::npos && components_time) return true;
-	
-	//components date and time string
-	//if (components_date && time_str!=IOUtils::npos) return true;
-	
 	if (components_date && components_time) return true;
 	return false;
 }
@@ -717,10 +711,13 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
+	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
 
 	std::vector<std::string> units;
-	IOUtils::readLineToVec(csv_units, units, delim);
+	if (delim!=' ') 
+		IOUtils::readLineToVec(csv_units, units, delim);
+	else 
+		IOUtils::readLineToVec(csv_units, units);
 	units_offset.resize(units.size(), 0.);
 	units_multiplier.resize(units.size(), 1.);
 	
@@ -1416,7 +1413,7 @@ void CsvIO::parseInputOutputSection()
 		std::string csv_units;
 		if (cfg.keyExists(pre+"UNITS", "Input")) cfg.getValue(pre+"UNITS", "Input", csv_units);
 		else cfg.getValue(dflt+"UNITS", "Input", csv_units, IOUtils::nothrow);
-		if (!csv_units.empty()) tmp_csv.setUnits( csv_units, ' ' );
+		if (!csv_units.empty()) tmp_csv.setUnits( csv_units );
 		
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
 		std::string datetime_spec, date_spec, time_spec, decimaldate_type;

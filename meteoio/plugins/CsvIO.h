@@ -65,7 +65,7 @@ class CsvParameters {
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
-		void setUnits(const std::string& csv_units,  const char& delim);
+		void setUnits(const std::string& csv_units,  const char& delim=' ');
 		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;}
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
