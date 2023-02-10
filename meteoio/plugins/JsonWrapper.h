@@ -79,7 +79,7 @@ class JsonWrapper {
 		~JsonWrapper();
 		JsonWrapper& operator=(const mio::JsonWrapper&);
 
-		void setConnectionParams(const int& i_http_timeout, const bool& i_debug=false);
+		void setConnectionParams(const std::string& i_proxy_url, const int& i_http_timeout, const bool& i_debug=false);
 		void readAndParse(const std::string& request, const std::string& where);
 		
 		static void printJSON(const picojson::value& v, const unsigned int& depth);
@@ -100,8 +100,9 @@ class JsonWrapper {
 		
 		picojson::value json_tree;
 		CURL *curl;
+		std::string proxy_url;
 		int http_timeout; //time out for http connections
-		bool debug;
+		bool debug, proxy;
 		static const int http_timeout_dflt;
 };
 

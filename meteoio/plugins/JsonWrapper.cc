@@ -32,21 +32,23 @@ const int JsonWrapper::http_timeout_dflt = 60; // seconds until connect time out
 
 ////////////////////////////////////// Wrapper calls around libcurl
 JsonWrapper::JsonWrapper()
-            : json_tree(), curl(nullptr), http_timeout(http_timeout_dflt), debug(false) 
+            : json_tree(), curl(nullptr), proxy_url(), http_timeout(http_timeout_dflt), debug(false), proxy(false)
 {
 	curl_global_init(CURL_GLOBAL_ALL); //NOT thread-safe
 }
 
 JsonWrapper::JsonWrapper( const JsonWrapper& c)
-            : json_tree(c.json_tree), curl(nullptr), http_timeout( c.http_timeout ), debug( c.debug ) {}
+            : json_tree(c.json_tree), curl(nullptr), proxy_url( c.proxy_url ), http_timeout( c.http_timeout ), debug( c.debug ), proxy( c.proxy ) {}
 
 JsonWrapper& JsonWrapper::operator=(const mio::JsonWrapper& c)
 {
 	if (this != &c) {
 		json_tree = c.json_tree;
 		curl = nullptr;
+		proxy_url = c.proxy_url;
 		http_timeout = c.http_timeout;
 		debug = c.debug;
+		proxy = c.proxy;
 	}
 	
 	return *this;
@@ -57,10 +59,18 @@ JsonWrapper::~JsonWrapper()
 	if (curl != nullptr) curl_easy_cleanup(curl);
 }
 
-void JsonWrapper::setConnectionParams(const int& i_http_timeout, const bool& i_debug)
+/**
+* @brief Set the connection parameters for CURL
+* @param[in] i_proxy_url optional SOCKS5 proxy URL
+* @param[in] i_http_timeout timeout in seconds for the connections
+* @param[in] i_debug enable debug outputs?
+*/
+void JsonWrapper::setConnectionParams(const std::string& i_proxy_url, const int& i_http_timeout, const bool& i_debug)
 {
+	proxy_url = i_proxy_url;		//an optional SOCKS5 proxy for the connection
 	http_timeout = i_http_timeout;
 	debug = i_debug;
+	proxy = !proxy_url.empty();
 }
 
 ////////////////////////////////////// Wrapper calls around picoJson
@@ -259,17 +269,29 @@ bool JsonWrapper::curl_read(const std::string& url_query, std::ostream& os)
 {
 	CURLcode code(CURLE_FAILED_INIT);
 	if (curl == nullptr) curl = curl_easy_init(); //calls curl_global_init() if not already done, so it is NOT thread-safe
+	if (!curl) {
+		if (debug)
+			std::cout << "****\nRequest: " << url_query << "\n****\n";
+		std::cout << "[E] " << curl_easy_strerror(code) << "\t";
+	}
 	
-	if (curl) {
-		if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
-		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
-		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
-		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
-		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_TIMEOUT, http_timeout))
-		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_URL, url_query.c_str())))
-		{
-			code = curl_easy_perform(curl);
-		}
+	if (proxy && !(
+		CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_url.c_str()))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME)) ))
+	{
+		if (debug)
+			std::cout << "****\nRequest: " << url_query << "\n****\n";
+		std::cout << "[E] " << curl_easy_strerror(code) << "\t";
+	}
+
+	if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_TIMEOUT, http_timeout))
+		&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_URL, url_query.c_str())) )
+	{
+		code = curl_easy_perform(curl);
 	}
 
 	if (code!=CURLE_OK) {

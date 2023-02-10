@@ -40,6 +40,7 @@ namespace mio {
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
  * - DBO_URL: The URL of the RESTful web service (default: https://pgdata.int.slf.ch)
+ * - DBO_PROXY: The URL of a <A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/">SOCKS5 proy</A> for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*)
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2, by default the network is assumed to be IMIS)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
@@ -179,7 +180,8 @@ void DBO::initDBOConnection(const Config& cfg)
 	int http_timeout = http_timeout_dflt;
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
 	cfg.getValue("DBO_DEBUG", "INPUT", dbo_debug, IOUtils::nothrow);
-	json->setConnectionParams(http_timeout, dbo_debug);
+	const std::string proxy = cfg.get("DBO_PROXY", "INPUT", "");
+	json->setConnectionParams(proxy, http_timeout, dbo_debug);
 }
 
 void DBO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
