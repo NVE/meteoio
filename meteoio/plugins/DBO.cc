@@ -40,7 +40,7 @@ namespace mio {
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
  * - DBO_URL: The URL of the RESTful web service (default: https://pgdata.int.slf.ch)
- * - DBO_PROXY: The URL of a <A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/">SOCKS5 proy</A> for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*)
+ * - DBO_PROXY: The URL of a <A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/">SOCKS5 proxy</A> for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*, see <A HREF="https://stackoverflow.com/questions/51579063/curl-https-via-an-ssh-proxy">this</A> for more)
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2, by default the network is assumed to be IMIS)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
