@@ -686,7 +686,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components)", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Check that all date/time data is available!", AT);
 
 	//if necessary, set the format to the appropriate defaults
 	if (!dt_as_decimal) {
