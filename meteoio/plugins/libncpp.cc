@@ -944,7 +944,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	//METEOCH schema
