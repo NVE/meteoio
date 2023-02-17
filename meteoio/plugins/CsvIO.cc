@@ -729,6 +729,7 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
 		if (tmp=="%" || tmp=="pc" || tmp=="CM") units_multiplier[ii] = 0.01;
+		else if (tmp=="‰") units_multiplier[ii] = 0.001;
 		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C" || tmp=="°C") units_offset[ii] = Cst::t_water_freezing_pt;
 		else if (tmp=="HPA") units_multiplier[ii] = 1e2;
 		else if (tmp=="MM" || tmp=="MV" || tmp=="MA") units_multiplier[ii] = 1e-3;
