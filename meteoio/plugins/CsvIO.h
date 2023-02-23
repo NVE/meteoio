@@ -102,12 +102,15 @@ class CsvParameters {
 		void parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames);
 		static std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec);
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon, double &easting, double &northing);
-		Date createDate(const float args[6], const double i_tz) const;
+		Date createDate(const float args[6], const double& i_tz) const;
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value);
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value);
 		Date parseJdnDate(const std::vector<std::string>& vecFields);
 		Date parseDate(const std::string& date_str, const std::string& time_str) const;
 		Date parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const;
+		bool parseTime(const std::string& time_str, float args[3], double& tz) const;
+		double parseTime(const std::string& time_str, double& tz) const;
+		
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		Coords location;

@@ -1052,11 +1052,11 @@ void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
 }
 
 //check that all arguments are integers except the seconds, then build a Date
-Date CsvParameters::createDate(const float args[6], const double i_tz) const
+Date CsvParameters::createDate(const float args[6], const double& i_tz) const
 {
 	static const int cutoff_year = 40;
-	int i_args[5] = {0, 0, 0, 0, 0};
-	for (unsigned int ii=0; ii<5; ii++) {
+	int i_args[6] = {0, 0, 0, 0, 0, 0};
+	for (unsigned int ii=0; ii<6; ii++) {
 		i_args[ii] = (int)args[ii];
 		if ((float)i_args[ii]!=args[ii]) return Date();
 	}
@@ -1066,6 +1066,40 @@ Date CsvParameters::createDate(const float args[6], const double i_tz) const
 		const int year = (i_args[0]>cutoff_year)? 1900+i_args[0] : 2000+i_args[0];
 		return Date(year, i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 	}
+}
+
+bool CsvParameters::parseTime(const std::string& time_str, float args[3], double& tz) const
+{
+	//parse the time information and return the fractional day
+	char rest[32] = "";
+	bool status = false;
+	switch( time_idx.size() ) {
+		case 3:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], &args[ time_idx[2] ], rest)>=3);
+			break;
+		case 2:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], rest)>=2);
+			break;
+		case 1:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], rest)>=1);
+			break;
+		default: // do nothing;
+			break;
+	}
+	if (!status) return false;
+	
+	tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
+	return true;
+}
+
+double CsvParameters::parseTime(const std::string& time_str, double& tz) const
+{
+	//parse the time information and return the fractional day
+	float args_tm[3] = {0., 0., 0.};
+	if (!parseTime(time_str, args_tm, tz)) return IOUtils::nodata;
+	
+	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) / (24.*3600.);
+	return fractional_day;
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
@@ -1091,25 +1125,16 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	}
 	if (!status) return Date(); //we MUST have read successfuly at least the date part
 
+	double tz = csv_tz;
 	if (!time_idx.empty()) {
+		float args_tm[3] = {0., 0., 0.};
+		if (!parseTime(time_str, args_tm, tz)) return Date();
 		//there is a +3 offset because the first 3 positions are used by the date part
-		switch( time_idx.size() ) {
-			case 3:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], &args[ time_idx[2]+3 ], rest)>=3);
-				break;
-			case 2:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], &args[ time_idx[1]+3 ], rest)>=2);
-				break;
-			case 1:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0]+3 ], rest)>=1);
-				break;
-			default: // do nothing;
-				break;
-		}
+		args[3] = args_tm[0];
+		args[4] = args_tm[1];
+		args[5] = args_tm[2];
 	}
 
-	if (!status) return Date();
-	const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
 	return createDate(args, tz);
 }
 
@@ -1125,26 +1150,11 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		
 		//parse the timer information and compute the decimal jdn
 		const std::string time_str( vecFields[ date_cols.time_str ] );
-		float args[3] = {0., 0., 0.};
-		char rest[32] = "";
-		bool status = false;
-		switch( time_idx.size() ) {
-			case 3:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], &args[ time_idx[2] ], rest)>=3);
-				break;
-			case 2:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], rest)>=2);
-				break;
-			case 1:
-				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], rest)>=1);
-				break;
-			default: // do nothing;
-				break;
-		}
-		if (!status) return Date();
+		double tz;
+		const double fractional_day = parseTime(time_str, tz);
+		if (fractional_day==IOUtils::nodata) return Date();
 		
-		jdn += (static_cast<double>(args[0])*3600. + static_cast<double>(args[1])*60. + static_cast<double>(args[2])) / (24.*3600.);
-		const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
+		jdn += fractional_day;
 		return Date(year, jdn, tz);
 	}
 	
