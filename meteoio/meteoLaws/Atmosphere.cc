@@ -290,12 +290,17 @@ double Atmosphere::vaporSaturationPressure(const double& T)
 {
 	double c2, c3; // varying constants
 
+	const double sat_vapor_pressure_ice_a = 21.88;
+	const double sat_vapor_pressure_ice_b = 7.66;
+	const double sat_vapor_pressure_water_a = 17.27;
+	const double sat_vapor_pressure_water_b = 35.86;
+
 	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
-		c2 = 21.88;
-		c3 = 7.66;
+		c2 = sat_vapor_pressure_ice_a;
+		c3 = sat_vapor_pressure_ice_b;
 	} else { // for a flat water surface
-		c2 = 17.27;
-		c3 = 35.86;
+		c2 = sat_vapor_pressure_water_a;
+		c3 = sat_vapor_pressure_water_b;
 	}
 	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
 
@@ -312,8 +317,10 @@ double Atmosphere::vaporSaturationPressure(const double& T)
 */
 double Atmosphere::vaporSaturationPressureWater(const double& T) 
 {
-	static const double c2=17.27, c3=35.86; // varying constants
-	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
+	const double sat_vapor_pressure_water_a = 17.27;
+	const double sat_vapor_pressure_water_b = 35.86;
+
+	const double exp_p_sat = sat_vapor_pressure_water_a * (T - Cst::t_water_triple_pt) / (T - sat_vapor_pressure_water_b); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
 }
