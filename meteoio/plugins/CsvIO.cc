@@ -358,11 +358,16 @@ bool CsvDateTime::isSet() const
 	//date and time strings
 	if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
 	if (decimal_date!=IOUtils::npos) return true;
-	
+
 	const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
 	const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
 	
+	//date and time as components
 	if (components_date && components_time) return true;
+
+	//componennts date but string time
+	if (components_date && (!components_time && time_str!=IOUtils::npos)) return true;
+
 	return false;
 }
 
@@ -905,7 +910,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	}
 	fin.close();
 	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
-	if (!date_cols.isSet()) 
+	if (!date_cols.isSet())
 		throw NoDataException("Date and time parsing not properly initialized, please contact the MeteoIO developers!", AT);
 
 	if (count_dsc>count_asc) asc_order=false;
@@ -1261,11 +1266,24 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
 		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
 		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
 		
-		return Date(year, month, day, hour, minute, seconds, csv_tz);
+		if (date_cols.time_str == IOUtils::npos) {
+			if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
+			if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
+			if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
+			
+			return Date(year, month, day, hour, minute, seconds, csv_tz);
+		} else {
+			//parse the timer information and compute the decimal jdn
+			const std::string time_str( vecFields[ date_cols.time_str ] );
+			double tz;
+			const double fractional_day = parseTime(time_str, tz);
+			if (fractional_day==IOUtils::nodata) return Date();
+			
+			Date tmp(year, month, day, 0, 0, tz);
+			tmp += fractional_day;
+			return tmp;
+		}
 	} else if (dt_as_decimal) {
 		return parseDate(vecFields[ date_cols.decimal_date ], date_cols.decimal_date_type);
 	} else {
@@ -1523,15 +1541,22 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 
 Date CsvIO::getDate(CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr)
 {
-	const Date dt( params.parseDate(vecFields) );
-	if (dt.isUndef()) {
-		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
-		if (silent_errors)
+	try {
+		const Date dt( params.parseDate(vecFields) );
+		if (dt.isUndef()) {
+			const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
 			std::cerr << err_msg << "\n";
-		else 
-			throw InvalidFormatException(err_msg, AT);
+			if (!silent_errors)
+				throw InvalidFormatException(err_msg, AT);
+		}
+		return dt;
+	} catch (...) {
+		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
+		std::cerr << err_msg << "\n";
+		if (!silent_errors)
+			throw;
 	}
-	return dt;
+	return Date();
 }
 
 std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd)
