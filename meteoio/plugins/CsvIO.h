@@ -52,7 +52,7 @@ class CsvDateTime {
 		//time is a field that contains numerical time, for example 0920
 		size_t decimal_date, date_str, time_str, year, jdn, month, day, time, hours, minutes, seconds;
 		size_t max_dt_col;
-		int year_cst;
+		int year_cst; ///< When the year is not provided as such but set from the folder name as "fallback year"
 		decimal_date_formats decimal_date_type; ///< in case of decimal date, which representation is associated with it
 		bool auto_wrap; ///< if true, dates >= October will be assumed to belong to (year_cst-1) until a date < October is encountered
 	};
@@ -124,6 +124,7 @@ class CsvParameters {
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component
 		double slope, azi;
 		double csv_tz;		///< timezone to apply to parsed dates
+		static const int cutoff_year = 40;
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 		bool dt_as_components; 	///< is date/time provided as components each in its own column (ie an hour column, a day column, etc)?

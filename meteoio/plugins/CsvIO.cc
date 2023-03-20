@@ -90,7 +90,7 @@ namespace mio {
  *    - Date/Time decimal representation:
  *       - CSV\#_DECIMALDATE_TYPE: the numerical representation that is used, one of EXCEL, JULIAN, MJULIAN, MATLAB, RFC868 or UNIX (see \ref decimal_date_representation "decimal date representations");
  *    - Date/Time as separate components: 
- *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
+ *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, YEAR_2DIGITS (only the last 2 digits of the year, numbers before 40 will be converted to years after 2000), JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
  *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key;
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
@@ -649,6 +649,11 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.year = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
+		} else if (tmp.compare("YEAR_2DIGITS")==0) {
+			date_cols.year = ii;
+			dt_2digits_year = true;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0 || tmp.compare("DAY_OF_YEAR")==0 || tmp.compare("DOY")==0) {
 			date_cols.jdn = ii;
 			skip_fields[ ii ] = true;
@@ -1059,7 +1064,6 @@ void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
 //check that all arguments are integers except the seconds, then build a Date
 Date CsvParameters::createDate(const float args[6], const double& i_tz) const
 {
-	static const int cutoff_year = 40;
 	int i_args[6] = {0, 0, 0, 0, 0, 0};
 	for (unsigned int ii=0; ii<6; ii++) {
 		i_args[ii] = (int)args[ii];
@@ -1258,13 +1262,17 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 		//As year + jdn + time as string or components
 		if (dt_as_year_and_jdn) return parseJdnDate(vecFields);
 		
-		//As pure components: year, month, day, 
+		//As pure components: year, month, day,
 		int year=0, month=0, day=0, hour=0, minute=0;
 		double seconds = 0.;
-		
+
 		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
 		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
 		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
+		if (dt_2digits_year) {
+			if (year < cutoff_year) year += 2000;
+			else year += 1900;
+		}
 		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
 		
 		if (date_cols.time_str == IOUtils::npos) {
@@ -1545,10 +1553,9 @@ Date CsvIO::getDate(CsvParameters& params, const std::vector<std::string>& vecFi
 		const Date dt( params.parseDate(vecFields) );
 		if (dt.isUndef()) {
 			const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
-			std::cerr << err_msg << "\n";
-			if (!silent_errors)
-				throw InvalidFormatException(err_msg, AT);
+			throw InvalidFormatException(err_msg, AT);
 		}
+
 		return dt;
 	} catch (...) {
 		const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
