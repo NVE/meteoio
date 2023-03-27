@@ -1266,14 +1266,29 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 		int year=0, month=0, day=0, hour=0, minute=0;
 		double seconds = 0.;
 
-		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
-		if (dt_2digits_year) {
-			if (year < cutoff_year) year += 2000;
-			else year += 1900;
+		if (date_cols.date_str == IOUtils::npos) {
+			if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
+			if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+			if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
+			if (dt_2digits_year) {
+				if (year < cutoff_year) year += 2000;
+				else year += 1900;
+			}
+			if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
+		} else {
+			if (datetime_idx.size()!=3) 
+				throw InvalidFormatException("String date representation can only contain year, month and day when reading date/time as component", AT);
+			float args[3] = {0., 0., 0.};
+			char rest[32] = "";
+			const std::string date_str( vecFields[ date_cols.date_str ] );
+			const bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
+			if (!status) 
+				throw InvalidFormatException("Could not parse date", AT);
+			
+			year = (int)args[0];
+			month = (int)args[1];
+			day = (int)args[2];
 		}
-		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
 		
 		if (date_cols.time_str == IOUtils::npos) {
 			if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
@@ -1282,7 +1297,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 			
 			return Date(year, month, day, hour, minute, seconds, csv_tz);
 		} else {
-			//parse the timer information and compute the decimal jdn
+			//parse the time information and compute the decimal jdn
 			const std::string time_str( vecFields[ date_cols.time_str ] );
 			double tz;
 			const double fractional_day = parseTime(time_str, tz);
