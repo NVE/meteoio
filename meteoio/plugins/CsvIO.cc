@@ -478,24 +478,7 @@ void CsvIO::parseInputOutputSection()
 			cfg.getValue(dflt+"DATE_SPEC", "Input", date_spec, IOUtils::nothrow);
 			cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
 		}
-
-		if (!decimaldate_type.empty() && (!datetime_spec.empty() || !date_spec.empty() || !time_spec.empty() ))
-			throw InvalidArgumentException("It is not possible to define both decimaldate_type and other date / time specifications", AT);
-		if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
-			throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
-		if ((!date_spec.empty() && time_spec.empty()) || (date_spec.empty() && !time_spec.empty()))
-			throw InvalidArgumentException("Please define both date_spec and time_spec, ", AT);
-		
-		if (!decimaldate_type.empty()) {
-			tmp_csv.setDecimalDateType(decimaldate_type);
-		} else if (!datetime_spec.empty()) {
-			tmp_csv.setDateTimeSpec(datetime_spec);
-		} else {
-			if (!date_spec.empty())
-				tmp_csv.setDateTimeSpec(date_spec);
-			if (!time_spec.empty()) 
-				tmp_csv.setTimeSpec(time_spec);
-		}
+		tmp_csv.setDateTimeSpecs(datetime_spec, date_spec, time_spec, decimaldate_type);
 		
 		int fixed_year=IOUtils::inodata;
 		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
@@ -542,8 +525,8 @@ void CsvIO::parseInputOutputSection()
 void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
-	for (size_t ii=0; ii<csvparam.size(); ii++)
-		vecStation.push_back( csvparam[ii].getStation() );
+	for (const CsvParameters &params : csvparam)
+		vecStation.push_back( params.getStation() );
 }
 
 //build MeteoData template, based on parameters available in the csv file
@@ -564,7 +547,7 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 Date CsvIO::getDate(CsvParameters& params, const std::vector<std::string>& vecFields, const bool& silent_errors, const std::string& filename, const size_t& linenr)
 {
 	try {
-		const Date dt( params.parseDate(vecFields) );
+		const Date dt( params.getDate(vecFields) );
 		if (dt.isUndef()) {
 			const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
 			throw InvalidFormatException(err_msg, AT);

@@ -31,19 +31,26 @@ namespace mio {
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
+CsvDateTime::CsvDateTime(const double& tz_in) 
+           : max_dt_col(0), auto_wrap(false), datetime_idx(), date_idx(), time_idx(), datetime_format(), date_format(), time_format(),
+           decimal_date_type(JULIAN), csv_tz(tz_in), 
+           idx_decimal_date(IOUtils::npos), idx_date_str(IOUtils::npos), idx_time_str(IOUtils::npos), idx_year(IOUtils::npos), idx_jdn(IOUtils::npos), idx_month(IOUtils::npos), idx_day(IOUtils::npos), idx_time(IOUtils::npos), idx_hours(IOUtils::npos), idx_minutes(IOUtils::npos), idx_seconds(IOUtils::npos), year_cst(IOUtils::inodata), 
+           has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false), dt_2digits_year(false)
+{}
+
 void CsvDateTime::updateMaxCol() 
 {
-	if (decimal_date!=IOUtils::npos && decimal_date>max_dt_col) max_dt_col=decimal_date;
-	if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
-	if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
-	if (year!=IOUtils::npos && year>max_dt_col) max_dt_col=year;
-	if (jdn!=IOUtils::npos && jdn>max_dt_col) max_dt_col=jdn;
-	if (month!=IOUtils::npos && month>max_dt_col) max_dt_col=month;
-	if (day!=IOUtils::npos && day>max_dt_col) max_dt_col=day;
-	if (time!=IOUtils::npos && time>max_dt_col) max_dt_col=time;
-	if (hours!=IOUtils::npos && hours>max_dt_col) max_dt_col=hours;
-	if (minutes!=IOUtils::npos && minutes>max_dt_col) max_dt_col=minutes;
-	if (seconds!=IOUtils::npos && seconds>max_dt_col) max_dt_col=seconds;
+	if (idx_decimal_date!=IOUtils::npos && idx_decimal_date>max_dt_col) max_dt_col=idx_decimal_date;
+	if (idx_date_str!=IOUtils::npos && idx_date_str>max_dt_col) max_dt_col=idx_date_str;
+	if (idx_time_str!=IOUtils::npos && idx_time_str>max_dt_col) max_dt_col=idx_time_str;
+	if (idx_year!=IOUtils::npos && idx_year>max_dt_col) max_dt_col=idx_year;
+	if (idx_jdn!=IOUtils::npos && idx_jdn>max_dt_col) max_dt_col=idx_jdn;
+	if (idx_month!=IOUtils::npos && idx_month>max_dt_col) max_dt_col=idx_month;
+	if (idx_day!=IOUtils::npos && idx_day>max_dt_col) max_dt_col=idx_day;
+	if (idx_time!=IOUtils::npos && idx_time>max_dt_col) max_dt_col=idx_time;
+	if (idx_hours!=IOUtils::npos && idx_hours>max_dt_col) max_dt_col=idx_hours;
+	if (idx_minutes!=IOUtils::npos && idx_minutes>max_dt_col) max_dt_col=idx_minutes;
+	if (idx_seconds!=IOUtils::npos && idx_seconds>max_dt_col) max_dt_col=idx_seconds;
 }
 
 int CsvDateTime::getFixedYear(const double& i_jdn)
@@ -63,22 +70,507 @@ int CsvDateTime::getFixedYear(const int& i_month)
 bool CsvDateTime::isSet() const 
 {
 	//date and time strings
-	if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
-	if (decimal_date!=IOUtils::npos) return true;
+	if (idx_date_str!=IOUtils::npos && idx_time_str!=IOUtils::npos) return true;
+	if (idx_decimal_date!=IOUtils::npos) return true;
 
-	const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
-	const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
+	const bool components_time = (idx_time!=IOUtils::npos || idx_hours!=IOUtils::npos);
+	const bool components_date = ((idx_year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (idx_jdn!=IOUtils::npos || (idx_month!=IOUtils::npos && idx_day!=IOUtils::npos)));
 	
 	//date and time as components
 	if (components_date && components_time) return true;
 
 	//componennts date but string time
-	if (components_date && (!components_time && time_str!=IOUtils::npos)) return true;
+	if (components_date && (!components_time && idx_time_str!=IOUtils::npos)) return true;
 
 	return false;
 }
 
-std::string CsvDateTime::toString() const 
+//check that the format is usable (and prevent parameters injection / buffer overflows)
+void CsvDateTime::checkSpecString(const std::string& spec_string, const size_t& nr_params)
+{
+	const size_t nr_percent = (unsigned)std::count(spec_string.begin(), spec_string.end(), '%');
+	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%f");
+	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2f");
+	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4f");
+	const size_t nr_placeholders5 = IOUtils::count(spec_string, "%32s");
+	size_t nr_placeholders = (nr_placeholders0!=std::string::npos)? nr_placeholders0 : 0;
+	nr_placeholders += (nr_placeholders2!=std::string::npos)? nr_placeholders2 : 0;
+	nr_placeholders += (nr_placeholders4!=std::string::npos)? nr_placeholders4 : 0;
+	nr_placeholders += (nr_placeholders5!=std::string::npos)? nr_placeholders5 : 0;
+	const size_t pos_pc_pc = spec_string.find("%%");
+	if (nr_percent!=nr_params || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
+		throw InvalidFormatException("Badly formatted date/time specification '"+spec_string+"': argument appearing twice or using '%%'", AT);
+}
+
+//from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
+//the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 while tz is handled separately
+void CsvDateTime::setDateTimeSpec(const std::string& datetime_spec)
+{
+	//support for 2 digits year is a little hacky: it requires special processing in order to avoid machting both
+	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
+	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
+	dt_2digits_year = (datetime_spec.find("YYYY")==std::string::npos && datetime_spec.find("YY")!=std::string::npos);
+	
+	std::vector< std::pair<size_t, size_t> > sorting_vector;
+	for (size_t ii=0; ii<keys.size(); ii++) {
+		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
+		const size_t key_pos = datetime_spec.find( keys[ii].first );
+		if (key_pos!=std::string::npos)
+			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+	}
+	
+	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
+	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
+	for (size_t ii=0; ii<sorting_vector.size(); ii++)
+		datetime_idx.push_back( sorting_vector[ii].second );
+	
+	datetime_format = datetime_spec;
+	const size_t tz_pos = datetime_format.find("TZ");
+	if (tz_pos!=std::string::npos) {
+		if (tz_pos!=(datetime_format.length()-2))
+			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
+		has_tz = true;
+		datetime_format.replace(tz_pos, 2, "%32s");
+	}
+	//the order of the replacements is important in order to match YYYY first and then YY
+	IOUtils::replace_all(datetime_format, "DD",   "%2f");
+	IOUtils::replace_all(datetime_format, "MM",   "%2f");
+	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
+	IOUtils::replace_all(datetime_format, "YY",   "%2f");
+	IOUtils::replace_all(datetime_format, "HH24", "%2f");
+	IOUtils::replace_all(datetime_format, "MI",   "%2f");
+	IOUtils::replace_all(datetime_format, "SS",   "%f");
+	
+	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
+	checkSpecString(datetime_format, nr_params_check);
+}
+
+//from a SPEC string such as "DD.MM.YYYY", build the format string for scanf as well as the parameters indices
+//the indices are based on ISO timestamp, so year=0, month=1, day=2
+void CsvDateTime::setDateSpec(const std::string& date_spec)
+{
+	//support for 2 digits year is a little hacky: it requires special processing in order to avoid machting both
+	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
+	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
+	dt_2digits_year = (date_spec.find("YYYY")==std::string::npos && date_spec.find("YY")!=std::string::npos);
+	
+	std::vector< std::pair<size_t, size_t> > sorting_vector;
+	for (size_t ii=0; ii<keys.size(); ii++) {
+		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
+		const size_t key_pos = date_spec.find( keys[ii].first );
+		if (key_pos!=std::string::npos)
+			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+	}
+	
+	//fill date_idx as a vector of [0-2] indices (for ISO fields) in the order they appear in the user-provided format string
+	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
+	for (size_t ii=0; ii<sorting_vector.size(); ii++)
+		date_idx.push_back( sorting_vector[ii].second );
+	
+	date_format = date_spec;	
+	//the order of the replacements is important in order to match YYYY first and then YY
+	IOUtils::replace_all(date_format, "DD",   "%2f");
+	IOUtils::replace_all(date_format, "MM",   "%2f");
+	IOUtils::replace_all(date_format, "YYYY", "%4f");
+	IOUtils::replace_all(date_format, "YY",   "%2f");
+	
+	const size_t nr_params_check = date_idx.size();
+	checkSpecString(date_format, nr_params_check);
+}
+
+void CsvDateTime::setTimeSpec(const std::string& time_spec)
+{
+	if (time_spec.empty()) return;
+	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"HH24", 0}, {"MI", 1}, {"SS", 2}} );
+	std::vector< std::pair<size_t, size_t> > sorting_vector;
+	for (size_t ii=0; ii<keys.size(); ii++) {
+		const size_t key_pos = time_spec.find( keys[ii].first );
+		if (key_pos!=std::string::npos)
+			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+	}
+
+	//fill time_idx as a vector of [0-3] indices (for ISO fields) in the order they appear in the user-provided format string
+	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
+	for (size_t ii=0; ii<sorting_vector.size(); ii++)
+		time_idx.push_back( sorting_vector[ii].second );
+
+	time_format = time_spec;
+	const size_t tz_pos = time_format.find("TZ");
+	if (tz_pos!=std::string::npos) {
+		if (tz_pos!=(time_format.length()-2))
+			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
+		has_tz = true;
+		time_format.replace(tz_pos, 2, "%32s");
+	}
+	IOUtils::replace_all(time_format, "HH24", "%2f");
+	IOUtils::replace_all(time_format, "MI", "%2f");
+	IOUtils::replace_all(time_format, "SS", "%f");
+
+	const size_t nr_params_check = (has_tz)? time_idx.size()+1 : time_idx.size();
+	checkSpecString(time_format, nr_params_check);
+}
+
+void CsvDateTime::setDecimalDateType(std::string i_decimaldate_type)
+{
+	IOUtils::toUpper( i_decimaldate_type );
+	if (i_decimaldate_type=="EXCEL") {
+		decimal_date_type = CsvDateTime::EXCEL;
+	} else if (i_decimaldate_type=="JULIAN") {
+		decimal_date_type = CsvDateTime::JULIAN;
+	} else if (i_decimaldate_type=="MJULIAN") {
+		decimal_date_type = CsvDateTime::MJULIAN;
+	} else if (i_decimaldate_type=="MATLAB") {
+		decimal_date_type = CsvDateTime::MATLAB;
+	} else if (i_decimaldate_type=="RFC868") {
+		decimal_date_type = CsvDateTime::RFC868;
+	} else if (i_decimaldate_type=="UNIX") {
+		decimal_date_type = CsvDateTime::UNIX;
+	} else
+		throw InvalidArgumentException("Unknown decimal date type '"+i_decimaldate_type+"'", AT);
+	
+	dt_as_decimal = true;
+}
+
+void CsvDateTime::setFixedYear(const int& i_year, const bool& i_auto_wrap)
+{
+	year_cst = i_year;
+	auto_wrap = i_auto_wrap;
+}
+
+// return true if the field must be skiped (all special fields are marked as SKIP since they are read in a special way)
+bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
+{
+	if (fieldname.compare("TIMESTAMP")==0 || fieldname.compare("TS")==0 || fieldname.compare("DATETIME")==0) {
+		if (dt_as_decimal) 
+			idx_decimal_date = ii;
+		else 
+			idx_date_str = idx_time_str = ii;
+		return true;
+	} else if (fieldname.compare("DATE")==0 || fieldname.compare("GIORNO")==0 || fieldname.compare("FECHA")==0) {
+		idx_date_str = ii;
+		return true;
+	} else if (fieldname.compare("TIME")==0 || fieldname.compare("ORA")==0 || fieldname.compare("HORA")==0) {
+		idx_time_str = ii;
+		return true;
+	} else if (fieldname.compare("YEAR")==0) {
+		idx_year = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("YEAR_2DIGITS")==0) {
+		idx_year = ii;
+		dt_2digits_year = true;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("JDAY")==0 || fieldname.compare("JDN")==0 || fieldname.compare("YDAY")==0 || fieldname.compare("DAY_OF_YEAR")==0 || fieldname.compare("DOY")==0) {
+		idx_jdn = ii;
+		dt_as_year_and_jdn = true;
+		return true;
+	} else if (fieldname.compare("MONTH")==0) {
+		idx_month = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("DAY")==0) {
+		idx_day = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("NTIME")==0) {
+		idx_time = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("HOUR")==0 || fieldname.compare("HOURS")==0) {
+		idx_hours = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("MINUTE")==0 || fieldname.compare("MINUTES")==0) {
+		idx_minutes = ii;
+		dt_as_components = true;
+		return true;
+	} else if (fieldname.compare("SECOND")==0 || fieldname.compare("SECONDS")==0) {
+		idx_seconds = ii;
+		dt_as_components = true;
+		return true;
+	}
+	
+	//HACK move this to the CsvDateTime class!
+	//if necessary, set the format to the appropriate defaults
+	/*if (!date_cols.dt_as_decimal) {
+		if (date_cols.idx_date_str==date_cols.idx_time_str) {
+			if (date_cols.datetime_idx.empty())
+				date_cols.setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
+		} else {
+			if (date_cols.date_str!=IOUtils::npos && date_cols.datetime_idx.empty())
+				date_cols.setDateTimeSpec("YYYY-MM-DD");
+			if (date_cols.time_str!=IOUtils::npos && date_cols.time_idx.empty())
+				date_cols.setTimeSpec("HH24:MI:SS");
+		}
+	}*/
+	
+	return false;
+}
+
+//check that all arguments are integers except the seconds, then build a Date
+Date CsvDateTime::createDate(const float args[6], const double& i_tz) const
+{
+	int i_args[6] = {0, 0, 0, 0, 0, 0};
+	for (unsigned int ii=0; ii<6; ii++) {
+		i_args[ii] = (int)args[ii];
+		if ((float)i_args[ii]!=args[ii]) return Date();
+	}
+	if (!dt_2digits_year)
+		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
+	else {
+		const int year = (i_args[0]>cutoff_year)? 1900+i_args[0] : 2000+i_args[0];
+		return Date(year, i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
+	}
+}
+
+bool CsvDateTime::parseDate(const std::string& date_str, float args[3]) const
+{
+	//parse the date information and return the ymd components (the date must be exactly read, if there is "rest" it is wrong!)
+	char rest[32] = "";
+	bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
+	if (!status || rest[0]) return false;
+	return true;
+}
+
+bool CsvDateTime::parseTime(const std::string& time_str, float args[3], double& tz) const
+{
+	//parse the time information and return the hms components
+	char rest[32] = "";
+	bool status = false;
+	switch( time_idx.size() ) {
+		case 3:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], &args[ time_idx[2] ], rest)>=3);
+			break;
+		case 2:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], rest)>=2);
+			break;
+		case 1:
+			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], rest)>=1);
+			break;
+		default: // do nothing;
+			break;
+	}
+	if (!status) return false;
+	
+	tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
+	return true;
+}
+
+double CsvDateTime::parseTime(const std::string& time_str, double& tz) const
+{
+	//parse the time information and return the fractional day
+	float args_tm[3] = {0., 0., 0.};
+	if (!parseTime(time_str, args_tm, tz)) return IOUtils::nodata;
+	
+	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) / (24.*3600.);
+	return fractional_day;
+}
+
+Date CsvDateTime::parseDate(const std::string& date_str, const std::string& time_str) const
+{
+	float args[6] = {0., 0., 0., 0., 0., 0.};
+	char rest[32] = "";
+	bool status = false;
+	switch( datetime_idx.size() ) {
+		case 6:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ], rest)>=6);
+			break;
+		case 5:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], rest)>=5);
+			break;
+		case 4:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], rest)>=4);
+			break;
+		case 3:
+			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
+			break;
+		default: // do nothing;
+			break;
+	}
+	if (!status) return Date(); //we MUST have read successfuly at least the date part
+
+	double tz = csv_tz;
+	if (!time_idx.empty()) {
+		float args_tm[3] = {0., 0., 0.};
+		if (!parseTime(time_str, args_tm, tz)) return Date();
+		//there is a +3 offset because the first 3 positions are used by the date part
+		args[3] = args_tm[0];
+		args[4] = args_tm[1];
+		args[5] = args_tm[2];
+	}
+
+	return createDate(args, tz);
+}
+
+Date CsvDateTime::parseJdnDate(const std::vector<std::string>& vecFields)
+{
+	//year + integer jdn + time string
+	if (!time_idx.empty()) {
+		int year=0;
+		double jdn=0.;
+		if (!parseDateComponent(vecFields, idx_jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, idx_year, year)) return Date();
+		if (year==0 && year_cst!=IOUtils::inodata) year = getFixedYear( jdn ); //here jdn must be double
+		
+		//parse the timer information and compute the decimal jdn
+		const std::string time_str( vecFields[ idx_time_str ] );
+		double tz;
+		const double fractional_day = parseTime(time_str, tz);
+		if (fractional_day==IOUtils::nodata) return Date();
+		
+		jdn += fractional_day;
+		return Date(year, jdn, tz);
+	}
+	
+	//year + integer jdn + time numerical time, for example "952" for 09:52
+	if (idx_time!=IOUtils::npos) {
+		int year=0, jdn=0, time=0;
+		if (!parseDateComponent(vecFields, idx_jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, idx_year, year)) return Date();
+		if (year==0 && year_cst!=IOUtils::inodata) year = getFixedYear( static_cast<double>(jdn) );
+		if (!parseDateComponent(vecFields, idx_time, time)) return Date();
+		const int hours = time / 100;
+		const int minutes = time - hours*100;
+		
+		return Date(year, static_cast<double>(jdn)+(hours*60.+minutes)/(24.*60.), csv_tz);
+	}
+	
+	//year + integer jdn + hours + minutes, etc
+	if (idx_hours!=IOUtils::npos) {
+		int year=0, jdn=0, hours=0, minutes=0;
+		double seconds=0;
+		if (!parseDateComponent(vecFields, idx_jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, idx_year, year)) return Date();
+		if (year==0 && year_cst!=IOUtils::inodata) year = getFixedYear( static_cast<double>(jdn) );
+		if (!parseDateComponent(vecFields, idx_hours, hours)) return Date();
+		if (!parseDateComponent(vecFields, idx_minutes, minutes)) return Date();
+		if (!parseDateComponent(vecFields, idx_seconds, seconds)) return Date();
+		
+		return Date(year, static_cast<double>(jdn)+(hours*3600. + minutes*60. + seconds) / (24.*3600.), csv_tz);
+	}
+	
+	//year + decimal jdn
+	{ //ensure own scope to avoid variable names conflicts
+		int year=0;
+		double jdn = 0.;
+		if (!parseDateComponent(vecFields, idx_jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, idx_year, year)) return Date();
+		if (year==0 && year_cst!=IOUtils::inodata) year = getFixedYear( jdn );
+		
+		return Date(year, jdn, csv_tz);
+	}
+}
+
+Date CsvDateTime::parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const
+{
+	Date dt;
+	
+	if (format==CsvDateTime::UNIX) {
+		time_t value;
+		if (!IOUtils::convertString(value, value_str)) return dt;
+		dt.setUnixDate(value);
+		return dt;
+	} else {
+		double value=0.;
+		if (!IOUtils::convertString(value, value_str)) return dt;
+		
+		if (format==CsvDateTime::EXCEL) {
+			dt.setExcelDate(value, csv_tz);
+		} else if (format==CsvDateTime::JULIAN) {
+			dt.setDate(value, csv_tz);
+		} else if (format==CsvDateTime::MJULIAN) {
+			dt.setModifiedJulianDate(value, csv_tz);
+		} else if (format==CsvDateTime::MATLAB) {
+			dt.setMatlabDate(value, csv_tz);
+		} else if (format==CsvDateTime::RFC868) {
+			dt.setRFC868Date(value, csv_tz);
+		} 
+	}
+	
+	return dt;
+}
+
+bool CsvDateTime::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value)
+{
+	if (idx==IOUtils::npos) {
+		value=0;
+		return true;
+	}
+	
+	return IOUtils::convertString(value, vecFields[ idx ]);
+}
+
+bool CsvDateTime::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value)
+{
+	if (idx==IOUtils::npos) {
+		value=0.;
+		return true;
+	}
+	
+	return IOUtils::convertString(value, vecFields[ idx ]);
+}
+
+Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
+{
+	//TODO: one of the strings + components
+	if (dt_as_components) { //date and time components split as columns.
+		//As year + jdn + time as string or components
+		if (dt_as_year_and_jdn) return parseJdnDate(vecFields);
+		
+		//As pure components: year, month, day,
+		int year=0, month=0, day=0, hour=0, minute=0;
+		double seconds = 0.;
+
+		if (idx_date_str == IOUtils::npos) {
+			if (!parseDateComponent(vecFields, idx_month, month)) return Date();
+			if (!parseDateComponent(vecFields, idx_year, year)) return Date();
+			if (year==0 && year_cst!=IOUtils::inodata) year = getFixedYear( month );
+			if (dt_2digits_year) {
+				if (year < cutoff_year) year += 2000;
+				else year += 1900;
+			}
+			if (!parseDateComponent(vecFields, idx_day, day)) return Date();
+		} else {
+			if (datetime_idx.size()!=3) 
+				throw InvalidFormatException("String date representation can only contain year, month and day when reading date/time as component", AT);
+			float args[3] = {0., 0., 0.};
+			char rest[32] = "";
+			const std::string date_str( vecFields[ idx_date_str ] );
+			const bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
+			if (!status) 
+				throw InvalidFormatException("Could not parse date", AT);
+			
+			year = (int)args[0];
+			month = (int)args[1];
+			day = (int)args[2];
+		}
+		
+		if (idx_time_str == IOUtils::npos) {
+			if (!parseDateComponent(vecFields, idx_hours, hour)) return Date();
+			if (!parseDateComponent(vecFields, idx_minutes, minute)) return Date();
+			if (!parseDateComponent(vecFields, idx_seconds, seconds)) return Date();
+			
+			return Date(year, month, day, hour, minute, seconds, csv_tz);
+		} else {
+			//parse the time information and compute the decimal jdn
+			const std::string time_str( vecFields[ idx_time_str ] );
+			double tz;
+			const double fractional_day = parseTime(time_str, tz);
+			if (fractional_day==IOUtils::nodata) return Date();
+			
+			Date tmp(year, month, day, 0, 0, tz);
+			tmp += fractional_day;
+			return tmp;
+		}
+	} else if (dt_as_decimal) {
+		return parseDate(vecFields[ idx_decimal_date ], decimal_date_type);
+	} else {
+		return parseDate(vecFields[ idx_date_str ], vecFields[ idx_time_str ]);
+	}
+}
+
+/*std::string CsvDateTime::toString() const 
 {
 	std::ostringstream os;
 	os << "[";
@@ -97,11 +589,11 @@ std::string CsvDateTime::toString() const
 	if (auto_wrap) os << "auto_wrap";
 	os << "]";
 	return os.str();
-}
+}*/
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true),  location(), nodata(), purgeCharsSet(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false), dt_2digits_year(false)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), date_cols(tz_in), location(), nodata(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -311,119 +803,6 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 
 }
 
-//user provided field names are in fieldNames, header field names are in headerFields
-//and user provided fields have priority.
-void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
-{
-	const bool user_provided_field_names = (!fieldNames.empty());
-	if (headerFields.empty() && !user_provided_field_names) {
-		if (single_field.empty())
-			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
-	}
-	
-	std::map<std::string, size_t> data_fields;
-	bool single_field_found = false;
-	
-	if (!user_provided_field_names) fieldNames = headerFields;
-	for (size_t ii=0; ii<fieldNames.size(); ii++) {
-		std::string &tmp = fieldNames[ii];
-		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
-		IOUtils::toUpper( tmp );
-		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '_'
-		IOUtils::replaceWhitespaces(tmp, '_');
-		if (tmp.empty()) continue;
-		
-		if (tmp.compare("PARAM")==0) {
-			tmp = single_field;
-			if (single_field_found)
-				throw InvalidArgumentException("It is not possible to have more than one PARAM field!", AT);
-			single_field_found = true;
-		} else if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
-			if (dt_as_decimal) 
-				date_cols.decimal_date = ii;
-			else 
-				date_cols.date_str = date_cols.time_str = ii;
-			skip_fields[ ii ] = true; //all special fields are marked as SKIP since they are read in a special way
-		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
-			date_cols.date_str = ii;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
-			date_cols.time_str = ii;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("SKIP")==0 || tmp.compare("-")==0) {
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("YEAR")==0) {
-			date_cols.year = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("YEAR_2DIGITS")==0) {
-			date_cols.year = ii;
-			dt_2digits_year = true;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0 || tmp.compare("DAY_OF_YEAR")==0 || tmp.compare("DOY")==0) {
-			date_cols.jdn = ii;
-			skip_fields[ ii ] = true;
-			dt_as_year_and_jdn = true;
-		} else if (tmp.compare("MONTH")==0) {
-			date_cols.month = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("DAY")==0) {
-			date_cols.day = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("NTIME")==0) {
-			date_cols.time = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("HOUR")==0 || tmp.compare("HOURS")==0) {
-			date_cols.hours = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("MINUTE")==0 || tmp.compare("MINUTES")==0) {
-			date_cols.minutes = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("SECOND")==0 || tmp.compare("SECONDS")==0) {
-			date_cols.seconds = ii;
-			dt_as_components = true;
-			skip_fields[ ii ] = true;
-		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
-			ID_col = ii;
-			skip_fields[ ii ] = true;
-		} else {
-			if (data_fields.count( tmp ) > 0)
-				throw InvalidArgumentException("Multiple definitions of the same field name either in column headers or user-provided CSV_FIELDS", AT);
-			data_fields[ tmp ] = ii;
-		}
-		
-		//tmp = identifyField( tmp ); //try to identify known fields
-	}
-	date_cols.updateMaxCol();
-	
-	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Check that all date/time data is available!", AT);
-
-	//if necessary, set the format to the appropriate defaults
-	if (!dt_as_decimal) {
-		if (date_cols.date_str==date_cols.time_str) {
-			if (datetime_idx.empty())
-				setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
-		} else {
-			if (date_cols.date_str!=IOUtils::npos && datetime_idx.empty())
-				setDateTimeSpec("YYYY-MM-DD");
-			if (date_cols.time_str!=IOUtils::npos && time_idx.empty())
-				setTimeSpec("HH24:MI:SS");
-		}
-	}
-
-	//the user wants to keep only one column, find the one he wants...
-	//if there is a parameter name from the filename or header it has priority:
-	if (!single_field.empty() && data_fields.size()==1 && !single_field_found)
-		fieldNames[ data_fields.begin()->second ] = data_fields.begin()->first;
-}
-
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
@@ -528,6 +907,75 @@ bool CsvParameters::isNodata(const std::string& value) const
 	return false;
 }
 
+void CsvParameters::setDateTimeSpecs(const std::string &datetime_spec, const std::string &date_spec, const std::string &time_spec, const std::string &decimaldate_type)
+{
+	if (!decimaldate_type.empty() && (!datetime_spec.empty() || !date_spec.empty() || !time_spec.empty() ))
+		throw InvalidArgumentException("It is not possible to define both decimaldate_type and other date / time specifications", AT);
+	if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
+		throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
+	/*if ((!date_spec.empty() && time_spec.empty()) || (date_spec.empty() && !time_spec.empty()))
+		throw InvalidArgumentException("Please define both date_spec and time_spec, ", AT);*/
+	
+	if (!datetime_spec.empty()) date_cols.setDateTimeSpec( datetime_spec );
+	if (!date_spec.empty()) date_cols.setDateSpec( date_spec );
+	if (!time_spec.empty()) date_cols.setTimeSpec( time_spec );
+	if (!decimaldate_type.empty()) date_cols.setDecimalDateType( decimaldate_type );
+}
+
+//user provided field names are in fieldNames, header field names are in headerFields
+//and user provided fields have priority.
+void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
+{
+	const bool user_provided_field_names = (!fieldNames.empty());
+	if (headerFields.empty() && !user_provided_field_names) {
+		if (single_field.empty())
+			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
+	}
+	
+	std::map<std::string, size_t> data_fields;
+	bool single_field_found = false;
+	
+//HACK write a CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
+	if (!user_provided_field_names) fieldNames = headerFields;
+	for (size_t ii=0; ii<fieldNames.size(); ii++) {
+		std::string &tmp = fieldNames[ii];
+		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
+		IOUtils::toUpper( tmp );
+		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '_'
+		IOUtils::replaceWhitespaces(tmp, '_');
+		if (tmp.empty()) continue;
+		
+		if (tmp.compare("PARAM")==0) {
+			tmp = single_field;
+			if (single_field_found)
+				throw InvalidArgumentException("It is not possible to have more than one PARAM field!", AT);
+			single_field_found = true;
+		} else if (date_cols.parseField(tmp, ii)) {
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("SKIP")==0 || tmp.compare("-")==0) {
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
+			ID_col = ii;
+			skip_fields[ ii ] = true;
+		} else {
+			if (data_fields.count( tmp ) > 0)
+				throw InvalidArgumentException("Multiple definitions of the same field name either in column headers or user-provided CSV_FIELDS", AT);
+			data_fields[ tmp ] = ii;
+		}
+		
+		//tmp = identifyField( tmp ); //try to identify known fields
+	}
+	date_cols.updateMaxCol();
+	
+	//check for time handling consistency
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Check that all date/time data is available!", AT);
+
+	//the user wants to keep only one column, find the one he wants...
+	//if there is a parameter name from the filename or header it has priority:
+	if (!single_field.empty() && data_fields.size()==1 && !single_field_found)
+		fieldNames[ data_fields.begin()->second ] = data_fields.begin()->first;
+}
+
 //read and parse the file's headers in order to extract all possible information (including how to interpret the date/time information)
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx)
 {
@@ -606,7 +1054,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			
 			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 			if (nr_curr_data_fields>date_cols.max_dt_col) {
-				const Date dt( parseDate(tmp_vec) );
+				const Date dt( date_cols.parseDate(tmp_vec) );
 				if (dt.isUndef()) continue;
 				if (!prev_dt.isUndef()) {
 					if (dt>prev_dt) count_asc++;
@@ -646,387 +1094,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 			id = name; //really nothing, copy "name"
 		else
 			id = "ID"+station_idx; //automatic numbering of default IDs
-	}
-}
-
-//check that the format is usable (and prevent parameters injection / buffer overflows)
-void CsvParameters::checkSpecString(const std::string& spec_string, const size_t& nr_params)
-{
-	const size_t nr_percent = (unsigned)std::count(spec_string.begin(), spec_string.end(), '%');
-	const size_t nr_placeholders0 = IOUtils::count(spec_string, "%f");
-	const size_t nr_placeholders2 = IOUtils::count(spec_string, "%2f");
-	const size_t nr_placeholders4 = IOUtils::count(spec_string, "%4f");
-	const size_t nr_placeholders5 = IOUtils::count(spec_string, "%32s");
-	size_t nr_placeholders = (nr_placeholders0!=std::string::npos)? nr_placeholders0 : 0;
-	nr_placeholders += (nr_placeholders2!=std::string::npos)? nr_placeholders2 : 0;
-	nr_placeholders += (nr_placeholders4!=std::string::npos)? nr_placeholders4 : 0;
-	nr_placeholders += (nr_placeholders5!=std::string::npos)? nr_placeholders5 : 0;
-	const size_t pos_pc_pc = spec_string.find("%%");
-	if (nr_percent!=nr_params || nr_percent!=nr_placeholders || pos_pc_pc!=std::string::npos)
-		throw InvalidFormatException("Badly formatted date/time specification '"+spec_string+"': argument appearing twice or using '%%'", AT);
-}
-
-//from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
-//the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 while tz is handled separately
-void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
-{
-	//support for 2 digits year is a little hacky: it requires special processing in order to avoid machting both
-	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
-	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
-	dt_2digits_year = (datetime_spec.find("YYYY")==std::string::npos && datetime_spec.find("YY")!=std::string::npos);
-	
-	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<keys.size(); ii++) {
-		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
-		const size_t key_pos = datetime_spec.find( keys[ii].first );
-		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
-	}
-	
-	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
-	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
-	for (size_t ii=0; ii<sorting_vector.size(); ii++)
-		datetime_idx.push_back( sorting_vector[ii].second );
-	
-	datetime_format = datetime_spec;
-	const size_t tz_pos = datetime_format.find("TZ");
-	if (tz_pos!=std::string::npos) {
-		if (tz_pos!=(datetime_format.length()-2))
-			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
-		has_tz = true;
-		datetime_format.replace(tz_pos, 2, "%32s");
-	}
-	//the order of the replacements is important in order to match YYYY first and then YY
-	IOUtils::replace_all(datetime_format, "DD",   "%2f");
-	IOUtils::replace_all(datetime_format, "MM",   "%2f");
-	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
-	IOUtils::replace_all(datetime_format, "YY",   "%2f");
-	IOUtils::replace_all(datetime_format, "HH24", "%2f");
-	IOUtils::replace_all(datetime_format, "MI",   "%2f");
-	IOUtils::replace_all(datetime_format, "SS",   "%f");
-	
-	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
-	checkSpecString(datetime_format, nr_params_check);
-}
-
-void CsvParameters::setTimeSpec(const std::string& time_spec)
-{
-	if (time_spec.empty()) return;
-	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"HH24", 0}, {"MI", 1}, {"SS", 2}} );
-	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<keys.size(); ii++) {
-		const size_t key_pos = time_spec.find( keys[ii].first );
-		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
-	}
-
-	//fill time_idx as a vector of [0-3] indices (for ISO fields) in the order they appear in the user-provided format string
-	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
-	for (size_t ii=0; ii<sorting_vector.size(); ii++)
-		time_idx.push_back( sorting_vector[ii].second );
-
-	time_format = time_spec;
-	const size_t tz_pos = time_format.find("TZ");
-	if (tz_pos!=std::string::npos) {
-		if (tz_pos!=(time_format.length()-2))
-			throw InvalidFormatException("When providing TZ in a date/time format, it must be at the very end of the string", AT);
-		has_tz = true;
-		time_format.replace(tz_pos, 2, "%32s");
-	}
-	IOUtils::replace_all(time_format, "HH24", "%2f");
-	IOUtils::replace_all(time_format, "MI", "%2f");
-	IOUtils::replace_all(time_format, "SS", "%f");
-
-	const size_t nr_params_check = (has_tz)? time_idx.size()+1 : time_idx.size();
-	checkSpecString(time_format, nr_params_check);
-}
-
-void CsvParameters::setDecimalDateType(std::string decimaldate_type)
-{
-	IOUtils::toUpper( decimaldate_type );
-	if (decimaldate_type=="EXCEL") {
-		date_cols.decimal_date_type = CsvDateTime::EXCEL;
-	} else if (decimaldate_type=="JULIAN") {
-		date_cols.decimal_date_type = CsvDateTime::JULIAN;
-	} else if (decimaldate_type=="MJULIAN") {
-		date_cols.decimal_date_type = CsvDateTime::MJULIAN;
-	} else if (decimaldate_type=="MATLAB") {
-		date_cols.decimal_date_type = CsvDateTime::MATLAB;
-	} else if (decimaldate_type=="RFC868") {
-		date_cols.decimal_date_type = CsvDateTime::RFC868;
-	} else if (decimaldate_type=="UNIX") {
-		date_cols.decimal_date_type = CsvDateTime::UNIX;
-	} else
-		throw InvalidArgumentException("Unknown decimal date type '"+decimaldate_type+"'", AT);
-	
-	dt_as_decimal = true;
-}
-
-void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
-{
-	date_cols.year_cst = i_year;
-	date_cols.auto_wrap = auto_wrap;
-}
-
-//check that all arguments are integers except the seconds, then build a Date
-Date CsvParameters::createDate(const float args[6], const double& i_tz) const
-{
-	int i_args[6] = {0, 0, 0, 0, 0, 0};
-	for (unsigned int ii=0; ii<6; ii++) {
-		i_args[ii] = (int)args[ii];
-		if ((float)i_args[ii]!=args[ii]) return Date();
-	}
-	if (!dt_2digits_year)
-		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
-	else {
-		const int year = (i_args[0]>cutoff_year)? 1900+i_args[0] : 2000+i_args[0];
-		return Date(year, i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
-	}
-}
-
-bool CsvParameters::parseDate(const std::string& date_str, float args[3]) const
-{
-	//parse the date information and return the ymd components (the date must be exactly read, if there is "rest" it is wrong!)
-	char rest[32] = "";
-	bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
-	if (!status || rest[0]) return false;
-	return true;
-}
-
-bool CsvParameters::parseTime(const std::string& time_str, float args[3], double& tz) const
-{
-	//parse the time information and return the hms components
-	char rest[32] = "";
-	bool status = false;
-	switch( time_idx.size() ) {
-		case 3:
-			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], &args[ time_idx[2] ], rest)>=3);
-			break;
-		case 2:
-			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], rest)>=2);
-			break;
-		case 1:
-			status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], rest)>=1);
-			break;
-		default: // do nothing;
-			break;
-	}
-	if (!status) return false;
-	
-	tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
-	return true;
-}
-
-double CsvParameters::parseTime(const std::string& time_str, double& tz) const
-{
-	//parse the time information and return the fractional day
-	float args_tm[3] = {0., 0., 0.};
-	if (!parseTime(time_str, args_tm, tz)) return IOUtils::nodata;
-	
-	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) / (24.*3600.);
-	return fractional_day;
-}
-
-Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
-{
-	float args[6] = {0., 0., 0., 0., 0., 0.};
-	char rest[32] = "";
-	bool status = false;
-	switch( datetime_idx.size() ) {
-		case 6:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], &args[ datetime_idx[5] ], rest)>=6);
-			break;
-		case 5:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], &args[ datetime_idx[4] ], rest)>=5);
-			break;
-		case 4:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], &args[ datetime_idx[3] ], rest)>=4);
-			break;
-		case 3:
-			status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
-			break;
-		default: // do nothing;
-			break;
-	}
-	if (!status) return Date(); //we MUST have read successfuly at least the date part
-
-	double tz = csv_tz;
-	if (!time_idx.empty()) {
-		float args_tm[3] = {0., 0., 0.};
-		if (!parseTime(time_str, args_tm, tz)) return Date();
-		//there is a +3 offset because the first 3 positions are used by the date part
-		args[3] = args_tm[0];
-		args[4] = args_tm[1];
-		args[5] = args_tm[2];
-	}
-
-	return createDate(args, tz);
-}
-
-Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
-{
-	//year + integer jdn + time string
-	if (!time_idx.empty()) {
-		int year=0;
-		double jdn=0.;
-		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( jdn ); //here jdn must be double
-		
-		//parse the timer information and compute the decimal jdn
-		const std::string time_str( vecFields[ date_cols.time_str ] );
-		double tz;
-		const double fractional_day = parseTime(time_str, tz);
-		if (fractional_day==IOUtils::nodata) return Date();
-		
-		jdn += fractional_day;
-		return Date(year, jdn, tz);
-	}
-	
-	//year + integer jdn + time numerical time, for example "952" for 09:52
-	if (date_cols.time!=IOUtils::npos) {
-		int year=0, jdn=0, time=0;
-		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
-		if (!parseDateComponent(vecFields, date_cols.time, time)) return Date();
-		const int hours = time / 100;
-		const int minutes = time - hours*100;
-		
-		return Date(year, static_cast<double>(jdn)+(hours*60.+minutes)/(24.*60.), csv_tz);
-	}
-	
-	//year + integer jdn + hours + minutes, etc
-	if (date_cols.hours!=IOUtils::npos) {
-		int year=0, jdn=0, hours=0, minutes=0;
-		double seconds=0;
-		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( static_cast<double>(jdn) );
-		if (!parseDateComponent(vecFields, date_cols.hours, hours)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.minutes, minutes)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
-		
-		return Date(year, static_cast<double>(jdn)+(hours*3600. + minutes*60. + seconds) / (24.*3600.), csv_tz);
-	}
-	
-	//year + decimal jdn
-	{ //ensure own scope to avoid variable names conflicts
-		int year=0;
-		double jdn = 0.;
-		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
-		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-		if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( jdn );
-		
-		return Date(year, jdn, csv_tz);
-	}
-}
-
-Date CsvParameters::parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const
-{
-	Date dt;
-	
-	if (format==CsvDateTime::UNIX) {
-		time_t value;
-		if (!IOUtils::convertString(value, value_str)) return dt;
-		dt.setUnixDate(value);
-		return dt;
-	} else {
-		double value=0.;
-		if (!IOUtils::convertString(value, value_str)) return dt;
-		
-		if (format==CsvDateTime::EXCEL) {
-			dt.setExcelDate(value, csv_tz);
-		} else if (format==CsvDateTime::JULIAN) {
-			dt.setDate(value, csv_tz);
-		} else if (format==CsvDateTime::MJULIAN) {
-			dt.setModifiedJulianDate(value, csv_tz);
-		} else if (format==CsvDateTime::MATLAB) {
-			dt.setMatlabDate(value, csv_tz);
-		} else if (format==CsvDateTime::RFC868) {
-			dt.setRFC868Date(value, csv_tz);
-		} 
-	}
-	
-	return dt;
-}
-
-bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value)
-{
-	if (idx==IOUtils::npos) {
-		value=0;
-		return true;
-	}
-	
-	return IOUtils::convertString(value, vecFields[ idx ]);
-}
-
-bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value)
-{
-	if (idx==IOUtils::npos) {
-		value=0.;
-		return true;
-	}
-	
-	return IOUtils::convertString(value, vecFields[ idx ]);
-}
-
-Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
-{
-	//TODO: one of the strings + components
-	if (dt_as_components) { //date and time components split as columns.
-		//As year + jdn + time as string or components
-		if (dt_as_year_and_jdn) return parseJdnDate(vecFields);
-		
-		//As pure components: year, month, day,
-		int year=0, month=0, day=0, hour=0, minute=0;
-		double seconds = 0.;
-
-		if (date_cols.date_str == IOUtils::npos) {
-			if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
-			if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
-			if (year==0 && date_cols.year_cst!=IOUtils::inodata) year = date_cols.getFixedYear( month );
-			if (dt_2digits_year) {
-				if (year < cutoff_year) year += 2000;
-				else year += 1900;
-			}
-			if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
-		} else {
-			if (datetime_idx.size()!=3) 
-				throw InvalidFormatException("String date representation can only contain year, month and day when reading date/time as component", AT);
-			float args[3] = {0., 0., 0.};
-			char rest[32] = "";
-			const std::string date_str( vecFields[ date_cols.date_str ] );
-			const bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
-			if (!status) 
-				throw InvalidFormatException("Could not parse date", AT);
-			
-			year = (int)args[0];
-			month = (int)args[1];
-			day = (int)args[2];
-		}
-		
-		if (date_cols.time_str == IOUtils::npos) {
-			if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
-			if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
-			if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
-			
-			return Date(year, month, day, hour, minute, seconds, csv_tz);
-		} else {
-			//parse the time information and compute the decimal jdn
-			const std::string time_str( vecFields[ date_cols.time_str ] );
-			double tz;
-			const double fractional_day = parseTime(time_str, tz);
-			if (fractional_day==IOUtils::nodata) return Date();
-			
-			Date tmp(year, month, day, 0, 0, tz);
-			tmp += fractional_day;
-			return tmp;
-		}
-	} else if (dt_as_decimal) {
-		return parseDate(vecFields[ date_cols.decimal_date ], date_cols.decimal_date_type);
-	} else {
-		return parseDate(vecFields[ date_cols.date_str ], vecFields[ date_cols.time_str ]);
 	}
 }
 
