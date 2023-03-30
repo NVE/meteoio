@@ -62,14 +62,13 @@ class CsvDateTime {
 	private:
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value);
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value);
-		Date parseJdnDate(const std::vector<std::string>& vecFields);
-		Date parseDate(const std::string& date_str, const std::string& time_str) const;
+		Date parseDate(const std::string& date_time_str) const;
 		Date parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const;
 		bool parseDate(const std::string& date_str, float args[3]) const;
 		bool parseTime(const std::string& time_str, float args[3], double& tz) const;
 		double parseTime(const std::string& time_str, double& tz) const;
-		Date createDate(const float args[6], const double& i_tz) const;
 		
+		static int castToInt(const double &val);
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate: Year Month Day Hour Minutes Seconds
@@ -79,12 +78,10 @@ class CsvDateTime {
 		decimal_date_formats decimal_date_type; ///< in case of decimal date, which representation is associated with it
 		double csv_tz;		///< timezone to apply to parsed dates
 		//time is a field that contains numerical time, for example 0920
-		size_t idx_decimal_date, idx_date_str, idx_time_str, idx_year, idx_jdn, idx_month, idx_day, idx_time, idx_hours, idx_minutes, idx_seconds;
+		size_t idx_decimal_date, idx_date_time_str, idx_date_str, idx_time_str, idx_year, idx_jdn, idx_month, idx_day, idx_ntime, idx_hours, idx_minutes, idx_seconds;
 		static const int cutoff_year = 40;
 		int year_cst; ///< When the year is not provided as such but set from the folder name as "fallback year"
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
-		bool dt_as_components; 	///< is date/time provided as components each in its own column (ie an hour column, a day column, etc)?
-		bool dt_as_year_and_jdn;	///< is date provided as year + julian day?
 		bool dt_as_decimal;	///< is date provided as a single decimal number?
 		bool dt_2digits_year;	///< is the year only provided with 2 digits?
 	};
