@@ -283,10 +283,10 @@ bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
 		return true;
 	}
 	
-	//HACK
-	//if necessary, set the format to the appropriate defaults
-	//ie when for example idx_date_time_str!=IOUtils::npos && datetime_idx.empty()
-	//setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS"), setDateSpec("YYYY-MM-DD"), setTimeSpec("HH24:MI:SS")
+	//check that the string parsing specs have been set if necessary
+	if (idx_date_time_str!=IOUtils::npos && datetime_idx.empty()) throw InvalidArgumentException("Please define how to parse DATETIME strings with key DATETIME_SPEC", AT);
+	if (idx_date_str!=IOUtils::npos && date_idx.empty()) throw InvalidArgumentException("Please define how to parse DATE strings with key DATE_SPEC", AT);
+	if (idx_time_str!=IOUtils::npos && time_idx.empty()) throw InvalidArgumentException("Please define how to parse TIME strings with key TIME_SPEC", AT);
 	
 	return false;
 }
@@ -302,7 +302,7 @@ bool CsvDateTime::parseDate(const std::string& date_str, float args[3]) const
 {
 	//parse the date information and return the ymd components (the date must be exactly read, if there is "rest" it is wrong!)
 	char rest[32] = "";
-	bool status = (sscanf(date_str.c_str(), datetime_format.c_str(), &args[ datetime_idx[0] ], &args[ datetime_idx[1] ], &args[ datetime_idx[2] ], rest)>=3);
+	bool status = (sscanf(date_str.c_str(), date_format.c_str(), &args[ date_idx[0] ], &args[ date_idx[1] ], &args[ date_idx[2] ], rest)>=3);
 	if (!status || rest[0]) return false;
 	return true;
 }
@@ -947,6 +947,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
 	bool fields_ready = false;
+
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<(header_lines+1000); ii++) {

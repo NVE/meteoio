@@ -126,7 +126,7 @@ std::map< std::string, std::set<std::string> > DataEditing::getDependencies() co
 			if (!tmp_set.empty()) {
 				dependencies[ stat_id ].insert(tmp_set.begin(), tmp_set.end());
 			} else {
-				if (dependencies.count(stat_id)==0) 
+				if (dependencies.count(stat_id)==0)
 					dependencies[stat_id] = std::set<std::string>();
 			}
 		}
