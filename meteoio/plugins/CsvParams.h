@@ -93,7 +93,7 @@ class CsvParameters {
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
-		void setSkipFields(const std::vector<size_t>& vecSkipFields);
+		void setSkipFields(const std::string& skipFieldSpecs);
 		void setUnits(const std::string& csv_units,  const char& delim=' ');
 		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;}
 		void setNodata(const std::string& nodata_markers);

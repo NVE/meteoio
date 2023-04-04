@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <regex>
 
 using namespace std;
 
@@ -569,13 +570,18 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 }
 
 //Given a list of fields to skip, fill the skip_fields map
-void CsvParameters::setSkipFields(const std::vector<size_t>& vecSkipFields)
+void CsvParameters::setSkipFields(const std::string& skipFieldSpecs)
 {
-	for (const auto& skipField : vecSkipFields) {
-		if (skipField==0)
-			throw InvalidArgumentException("Wrong format specification for fields to skip: first field is numbered field 1", AT);
-		
-		skip_fields[ skipField-1 ] = true;
+	//HACK temportarily look for old, space delimited syntax
+	static const std::regex old_syntax_regex("[^;|#]*[0-9]+(\\s+)[0-9]+.*"); //space delimited list of ints
+	if (std::regex_match(skipFieldSpecs, old_syntax_regex))
+		throw InvalidArgumentException("Using old, space delimited list for CSV#_SKIP_FIELDS. It should now be a comma delimited list (ranges are also supported)", AT);
+
+	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, "INPUT::CSV#_SKIP_FIELDS", false) );
+	for (const auto& skipField : fieldRange) {
+		//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
+		for (size_t ii=skipField.start; ii<=skipField.end; ii++)
+			skip_fields[ ii-1 ] = true;
 	}
 }
 
