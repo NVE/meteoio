@@ -920,7 +920,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please fully define how to parse the date and time information. Check that all date/time data is available!", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please fully define how to parse the date and time information. Check that all date/time data is available (including CSV_FALLBACK_YEAR if not year information is provided in the file)!", AT);
 
 	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
