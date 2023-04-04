@@ -54,7 +54,7 @@ class CsvDateTime {
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap);
 		bool parseField(const std::string& fieldname, const size_t &ii);
 		Date parseDate(const std::vector<std::string>& vecFields);
-		//std::string toString() const;
+		std::string toString() const;
 		
 		size_t max_dt_col; ///< Maximum index of a date/time field (for optimized parsing)
 		bool auto_wrap; ///< if true, dates >= October will be assumed to belong to (year_cst-1) until a date < October is encountered

@@ -113,17 +113,17 @@ void CsvDateTime::setDateTimeSpec(const std::string& datetime_spec)
 	dt_2digits_year = (datetime_spec.find("YYYY")==std::string::npos && datetime_spec.find("YY")!=std::string::npos);
 	
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<keys.size(); ii++) {
-		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
-		const size_t key_pos = datetime_spec.find( keys[ii].first );
+	for (const auto& spec_key : keys) {
+		if (!dt_2digits_year && spec_key.first=="YY") continue;	//skip looking for 2 digit years if not applicable
+		const size_t key_pos = datetime_spec.find( spec_key.first );
 		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+			sorting_vector.push_back( make_pair( key_pos, spec_key.second) );
 	}
 	
 	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
-	for (size_t ii=0; ii<sorting_vector.size(); ii++)
-		datetime_idx.push_back( sorting_vector[ii].second );
+	for (const auto& spec_key : sorting_vector)
+		datetime_idx.push_back( spec_key.second ); //push the matching position in the static const "keys"
 	
 	datetime_format = datetime_spec;
 	const size_t tz_pos = datetime_format.find("TZ");
@@ -156,17 +156,17 @@ void CsvDateTime::setDateSpec(const std::string& date_spec)
 	dt_2digits_year = (date_spec.find("YYYY")==std::string::npos && date_spec.find("YY")!=std::string::npos);
 	
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<keys.size(); ii++) {
-		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
-		const size_t key_pos = date_spec.find( keys[ii].first );
+	for (const auto& spec_key : keys) {
+		if (!dt_2digits_year && spec_key.first=="YY") continue;	//skip looking for 2 digit years if not applicable
+		const size_t key_pos = date_spec.find( spec_key.first );
 		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+			sorting_vector.push_back( make_pair( key_pos, spec_key.second) );
 	}
 	
 	//fill date_idx as a vector of [0-2] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
-	for (size_t ii=0; ii<sorting_vector.size(); ii++)
-		date_idx.push_back( sorting_vector[ii].second );
+	for (const auto& spec_key : sorting_vector)
+		date_idx.push_back( spec_key.second ); //push the matching position in the static const "keys"
 	
 	date_format = date_spec;	
 	//the order of the replacements is important in order to match YYYY first and then YY
@@ -184,16 +184,16 @@ void CsvDateTime::setTimeSpec(const std::string& time_spec)
 	if (time_spec.empty()) return;
 	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"HH24", 0}, {"MI", 1}, {"SS", 2}} );
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<keys.size(); ii++) {
-		const size_t key_pos = time_spec.find( keys[ii].first );
+	for (const auto& spec_key : keys) {
+		const size_t key_pos = time_spec.find( spec_key.first );
 		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
+			sorting_vector.push_back( make_pair( key_pos, spec_key.second) );
 	}
 
 	//fill time_idx as a vector of [0-3] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
-	for (size_t ii=0; ii<sorting_vector.size(); ii++)
-		time_idx.push_back( sorting_vector[ii].second );
+	for (const auto& spec_key : sorting_vector)
+		time_idx.push_back( spec_key.second ); //push the matching position in the static const "keys"
 
 	time_format = time_spec;
 	const size_t tz_pos = time_format.find("TZ");
@@ -333,11 +333,12 @@ bool CsvDateTime::parseTime(const std::string& time_str, float args[3], double& 
 
 double CsvDateTime::parseTime(const std::string& time_str, double& tz) const
 {
+	static const double seconds_to_days = 1. / (24.*3600.);
 	//parse the time information and return the fractional day
 	float args_tm[3] = {0., 0., 0.};
 	if (!parseTime(time_str, args_tm, tz)) return IOUtils::nodata;
 	
-	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) / (24.*3600.);
+	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) * seconds_to_days;
 	return fractional_day;
 }
 
@@ -488,8 +489,10 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 	//now build a Date object
 	if (jdn!=IOUtils::nodata) {
 		//jdn only represents the date, other components represent the time
-		if (hour!=IOUtils::inodata)
-			return Date(year, static_cast<double>(jdn)+(hour*3600.+minute*60.+seconds)/(24.*3600.), tz);
+		if (hour!=IOUtils::inodata) {
+			static const double seconds_to_days = 1. / (24.*3600.);
+			return Date(year, static_cast<double>(jdn)+(hour*3600.+minute*60.+seconds)*seconds_to_days, tz);
+		}
 		//jdn only represents the date, otherwise we have a fractional day
 		if (fractional_day!=IOUtils::nodata) {
 			Date tmp(year, month, day, 0, 0, tz);
@@ -511,26 +514,31 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 	return Date(year, month, day, hour, minute, seconds, tz);
 }
 
-/*std::string CsvDateTime::toString() const 
+std::string CsvDateTime::toString() const 
 {
 	std::ostringstream os;
 	os << "[";
-	if (decimal_date!=IOUtils::npos) os << "decimal_date→" << decimal_date << " ";
-	if (date_str!=IOUtils::npos) os << "date_str→" << date_str << " ";
-	if (time_str!=IOUtils::npos) os << "time_str→" << time_str << " ";
-	if (year!=IOUtils::npos) os << "year→" << year << " ";
-	if (year_cst!=IOUtils::nodata) os << "year_cst→" << year << " ";
-	if (jdn!=IOUtils::npos) os << "jdn→" << jdn << " ";
-	if (month!=IOUtils::npos) os << "month→" << month << " ";
-	if (day!=IOUtils::npos) os << "day→" << day << " ";
-	if (time!=IOUtils::npos) os << "time_num→" << time << " ";
-	if (hours!=IOUtils::npos) os << "hours→" << hours << " ";
-	if (minutes!=IOUtils::npos) os << "minutes→" << minutes << " ";
-	if (seconds!=IOUtils::npos) os << "seconds→" << seconds << " ";
+	if (idx_decimal_date!=IOUtils::npos) os << "idx_decimal_date→" << idx_decimal_date << " ";
+	if (idx_date_time_str!=IOUtils::npos) os << "idx_date_time_str→" << idx_date_time_str << " ";
+	if (idx_date_str!=IOUtils::npos) os << "idx_date_str→" << idx_date_str << " ";
+	if (idx_time_str!=IOUtils::npos) os << "idx_time_str→" << idx_time_str << " ";
+	if (idx_year!=IOUtils::npos) os << "idx_year→" << idx_year << " ";
+	if (dt_2digits_year) os << "(cutoff_year=" << cutoff_year << ") ";
+	if (year_cst!=IOUtils::nodata) os << "year_cst→" << year_cst << " ";
+	if (idx_jdn!=IOUtils::npos) os << "idx_jdn→" << idx_jdn << " ";
+	if (idx_month!=IOUtils::npos) os << "idx_month→" << idx_month << " ";
+	if (idx_day!=IOUtils::npos) os << "idx_day→" << idx_day << " ";
+	if (idx_ntime!=IOUtils::npos) os << "idx_ntime→" << idx_ntime << " ";
+	if (idx_hours!=IOUtils::npos) os << "idx_hours→" << idx_hours << " ";
+	if (idx_minutes!=IOUtils::npos) os << "idx_minutes→" << idx_minutes << " ";
+	if (idx_seconds!=IOUtils::npos) os << "idx_seconds→" << idx_seconds << " ";
+	os << "tz→" << csv_tz << " ";
+	if (has_tz) os << "tz_in_data ";
 	if (auto_wrap) os << "auto_wrap";
+	
 	os << "]";
 	return os.str();
-}*/
+}
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
@@ -545,14 +553,14 @@ CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset()
 std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)
 {
 	std::multimap< size_t, std::pair<size_t, std::string> > meta_spec;
-	for (size_t ii=0; ii<vecMetaSpec.size(); ii++) {
+	for (const auto& metaSpec : vecMetaSpec) {
 		std::vector<std::string> vecArgs;
-		if (IOUtils::readLineToVec(vecMetaSpec[ii], vecArgs, ':') !=3)
-			throw InvalidFormatException("Wrong format for Metadata specification '"+vecMetaSpec[ii]+"'", AT);
+		if (IOUtils::readLineToVec(metaSpec, vecArgs, ':') !=3)
+			throw InvalidFormatException("Wrong format for Metadata specification '"+metaSpec+"'", AT);
 		const int linenr = atoi( vecArgs[1].c_str() );
 		const int colnr = atoi( vecArgs[2].c_str() );
 		if (linenr<=0 || colnr<=0)
-			throw InvalidFormatException("Line numbers and column numbers must be >0 in Metadata specification '"+vecMetaSpec[ii]+"'", AT);
+			throw InvalidFormatException("Line numbers and column numbers must be >0 in Metadata specification '"+metaSpec+"'", AT);
 		
 		meta_spec.insert( make_pair( linenr, make_pair( colnr, vecArgs[0]) ) );
 	}
@@ -563,11 +571,11 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 //Given a list of fields to skip, fill the skip_fields map
 void CsvParameters::setSkipFields(const std::vector<size_t>& vecSkipFields)
 {
-	for (size_t ii=0; ii<vecSkipFields.size(); ii++) {
-		if (vecSkipFields[ii]==0)
+	for (const auto& skipField : vecSkipFields) {
+		if (skipField==0)
 			throw InvalidArgumentException("Wrong format specification for fields to skip: first field is numbered field 1", AT);
 		
-		skip_fields[ vecSkipFields[ii]-1 ] = true;
+		skip_fields[ skipField-1 ] = true;
 	}
 }
 
@@ -789,27 +797,27 @@ void CsvParameters::setNodata(const std::string& nodata_markers)
 	//(such as default values)
 	
 	std::vector<std::string> vecNodata;
-	const size_t nrElems = IOUtils::readLineToVec(nodata_markers, vecNodata);
+	IOUtils::readLineToVec(nodata_markers, vecNodata);
 	
-	for (size_t ii=0; ii<nrElems; ii++) {
-		nodata.insert( vecNodata[ii] );
-		nodata.insert( "\""+vecNodata[ii]+"\"" );
-		nodata.insert( "'"+vecNodata[ii]+"'" );
+	for (const auto& marker : vecNodata) {
+		nodata.insert( marker );
+		nodata.insert( "\""+marker+"\"" );
+		nodata.insert( "'"+marker+"'" );
 	}
 }
 
 void CsvParameters::setPurgeChars(const std::string& chars_to_purge)
 {
 	std::vector<std::string> vecPurge;
-	const size_t nrElems = IOUtils::readLineToVec(chars_to_purge, vecPurge);
+	IOUtils::readLineToVec(chars_to_purge, vecPurge);
 	char rest[32] = "";
 	
-	for (size_t ii=0; ii<nrElems; ii++) {
+	for (const auto& purgeChar : vecPurge) {
 		unsigned int c;
-		const char* c_str( vecPurge[ii].c_str() );
+		const char* c_str( purgeChar.c_str() );
 		
-		if (vecPurge[ii].length()==1) { //the character has been directly given
-			purgeCharsSet.insert( vecPurge[ii][0] );
+		if (purgeChar.length()==1) { //the character has been directly given
+			purgeCharsSet.insert( purgeChar[0] );
 		} else if (sscanf(c_str, "0x%2x%31s", &c, rest) == 1) { //hexadecimal
 			purgeCharsSet.insert( static_cast<char>(c) );
 		} else if (sscanf(c_str, "%3u%31s", &c, rest) == 1) { //hexadecimal
@@ -854,8 +862,6 @@ void CsvParameters::setDateTimeSpecs(const std::string &datetime_spec, const std
 		throw InvalidArgumentException("It is not possible to define both decimaldate_type and other date / time specifications", AT);
 	if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
 		throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
-	/*if ((!date_spec.empty() && time_spec.empty()) || (date_spec.empty() && !time_spec.empty()))
-		throw InvalidArgumentException("Please define both date_spec and time_spec, ", AT);*/
 	
 	if (!datetime_spec.empty()) date_cols.setDateTimeSpec( datetime_spec );
 	if (!date_spec.empty()) date_cols.setDateSpec( date_spec );
