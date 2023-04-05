@@ -581,7 +581,7 @@ void CsvParameters::setSkipFields(const std::string& skipFieldSpecs)
 	for (const auto& skipField : fieldRange) {
 		//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
 		for (size_t ii=skipField.start; ii<=skipField.end; ii++)
-			skip_fields[ ii-1 ] = true;
+			skip_fields.insert( ii-1 );
 	}
 }
 
@@ -890,6 +890,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	if (!user_provided_field_names) fieldNames = headerFields;
 	
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
+		//if this has been given in the list of indices to skip by the user, don't even try to read the field name,
+		//so there won't be an error if the same name is used multiple times but skipped
+		if (skip_fields.count(ii)>0) continue;
+
 		std::string &tmp = fieldNames[ii];
 		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
 		IOUtils::toUpper( tmp );
@@ -902,16 +906,16 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			if (single_field_found)
 				throw InvalidArgumentException("It is not possible to have more than one PARAM field!", AT);
 			single_field_found = true;
-		} else if (date_cols.parseField(tmp, ii)) {
-			skip_fields[ ii ] = true;
+		} else if (date_cols.parseField(tmp, ii)) { //this is a date/time component
+			skip_fields.insert( ii );
 		} else if (tmp.compare("SKIP")==0 || tmp.compare("-")==0) {
-			skip_fields[ ii ] = true;
+			skip_fields.insert( ii );
 		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
 			ID_col = ii;
-			skip_fields[ ii ] = true;
+			skip_fields.insert( ii );
 		} else {
 			if (data_fields.count( tmp ) > 0)
-				throw InvalidArgumentException("Multiple definitions of the same field name either in column headers or user-provided CSV_FIELDS", AT);
+				throw InvalidArgumentException("Multiple definitions of the same field name ('"+tmp+"') either in column headers or user-provided CSV_FIELDS", AT);
 			data_fields[ tmp ] = ii;
 		}
 		

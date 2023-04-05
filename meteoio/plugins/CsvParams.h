@@ -115,7 +115,7 @@ class CsvParameters {
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		std::vector<double> field_offset, field_multiplier;		///< offsets and multipliers to apply to each field
-		std::map<size_t, bool> skip_fields;		///< Fields that should not be read
+		std::set<size_t> skip_fields;		///< Fields that should not be read
 		
 		std::string header_repeat_mk, filter_ID;
 		size_t ID_col;
