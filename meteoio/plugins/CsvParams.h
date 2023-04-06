@@ -93,7 +93,7 @@ class CsvParameters {
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
-		void setSkipFields(const std::string& skipFieldSpecs);
+		void setSkipFields(const std::string& skipFieldSpecs, const bool& negate);
 		void setUnits(const std::string& csv_units,  const char& delim=' ');
 		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;}
 		void setNodata(const std::string& nodata_markers);
@@ -108,6 +108,7 @@ class CsvParameters {
 		StationData getStation() const;
 		Date getDate(const std::vector<std::string>& vecFields) {return date_cols.parseDate(vecFields);}
 		bool excludeLine(const size_t& linenr, bool& hasExclusions);
+		bool skipField(const size_t& fieldnr) const;
 		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
 		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
 		bool isNodata(const std::string& value) const;
@@ -115,7 +116,6 @@ class CsvParameters {
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		std::vector<double> field_offset, field_multiplier;		///< offsets and multipliers to apply to each field
-		std::set<size_t> skip_fields;		///< Fields that should not be read
 		
 		std::string header_repeat_mk, filter_ID;
 		size_t ID_col;
@@ -134,12 +134,14 @@ class CsvParameters {
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component
 		Coords location;
 		std::set<std::string> nodata;		///< representations of nodata with their variants (with quotes, with double quotes, etc)
+		std::set<size_t> skip_fields;		///< Fields that should not be read
 		std::set<char> purgeCharsSet;			///< characters to purge from each line (such as quotes, double quotes, etc)
 		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
 		std::string file_and_path, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		double slope, azi;
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
+		size_t last_allowed_field;	///< index of the last allowed field (as set by the user with setSkipFields(negate=true)
 };
 
 } //namespace

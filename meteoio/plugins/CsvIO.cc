@@ -82,6 +82,7 @@ namespace mio {
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others). If CSV\#UNITS_OFFSET / MULTIPLIER were also provided, CSV\#_UNITS would be applied first.
  *    - CSV\#_SKIP_FIELDS: a comma-delimited list of field to skip (first field is numbered 1, ranges such as <i>12 - 17</i> are supported as well). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
+ *    - CSV\#_ONLY_FIELDS: a comma-delimited list of field to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that it is not allowed to use both keys simultaneously); optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
@@ -450,7 +451,14 @@ void CsvIO::parseInputOutputSection()
 		std::string skipFieldSpecs;
 		if (cfg.keyExists(pre+"SKIP_FIELDS", "Input")) cfg.getValue(pre+"SKIP_FIELDS", "Input", skipFieldSpecs);
 		else cfg.getValue(dflt+"SKIP_FIELDS", "Input", skipFieldSpecs, IOUtils::nothrow);
-		if (!skipFieldSpecs.empty()) tmp_csv.setSkipFields( skipFieldSpecs );
+		if (!skipFieldSpecs.empty()) tmp_csv.setSkipFields( skipFieldSpecs, false );
+		
+		std::string onlyFieldSpecs;
+		if (cfg.keyExists(pre+"ONLY_FIELDS", "Input")) cfg.getValue(pre+"ONLY_FIELDS", "Input", onlyFieldSpecs);
+		else cfg.getValue(dflt+"ONLY_FIELDS", "Input", onlyFieldSpecs, IOUtils::nothrow);
+		if (!skipFieldSpecs.empty() && !onlyFieldSpecs.empty()) 
+			throw InvalidArgumentException("It is not possible to provide both CSV_SKIP_FIELDS and CSV_ONLY_FIELDS", AT);
+		if (!onlyFieldSpecs.empty()) tmp_csv.setSkipFields( onlyFieldSpecs, true );
 		
 		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);
 		else cfg.getValue(dflt+"UNITS_HEADERS", "Input", tmp_csv.units_headers, IOUtils::nothrow);
@@ -537,7 +545,7 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 	//build MeteoData template
 	MeteoData template_md( Date(0., 0.), params.getStation() );
 	for (size_t ii=0; ii<nr_of_data_fields; ii++) {
-		if (params.skip_fields.count(ii)>0) continue;
+		if (params.skipField( ii)) continue;
 		template_md.addParameter( params.csv_fields[ii] );
 	}
 
@@ -677,8 +685,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		MeteoData md(template_md);
 		md.setDate(dt);
 		bool no_errors = true;
-		for (size_t ii=0; ii<tmp_vec.size(); ii++){
-			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped or this is a special field
+		for (size_t ii=0; ii<tmp_vec.size(); ii++) {
+			if (params.skipField( ii )) continue; //the user has requested this field to be skipped or this is a special field
 			if (params.isNodata( tmp_vec[ii] )) continue; //recognize nodata
 			
 			double tmp;

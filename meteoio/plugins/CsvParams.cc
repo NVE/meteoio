@@ -543,7 +543,7 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), date_cols(tz_in), location(), nodata(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), last_allowed_field(IOUtils::npos)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -569,16 +569,21 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 	return meta_spec;
 }
 
-//Given a list of fields to skip, fill the skip_fields map
-void CsvParameters::setSkipFields(const std::string& skipFieldSpecs)
+//Given a list of fields to skip, fill the skip_fields set
+void CsvParameters::setSkipFields(const std::string& skipFieldSpecs, const bool& negate)
 {
 	//HACK temportarily look for old, space delimited syntax
 	static const std::regex old_syntax_regex("[^;|#]*[0-9]+(\\s+)[0-9]+.*"); //space delimited list of ints
 	if (std::regex_match(skipFieldSpecs, old_syntax_regex))
 		throw InvalidArgumentException("Using old, space delimited list for CSV#_SKIP_FIELDS. It should now be a comma delimited list (ranges are also supported)", AT);
 
-	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, "INPUT::CSV#_SKIP_FIELDS", false) );
+	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, "INPUT::CSV#_SKIP_FIELDS", negate) );
+	
 	for (const auto& skipField : fieldRange) {
+		if (skipField.end==static_cast<size_t>(-1)) { //convert an open-ended skip to last_allowed_field 
+			last_allowed_field = skipField.start - 2;	//last valid position is -1, real idx start at 0, so -1 again
+			continue;
+		}
 		//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
 		for (size_t ii=skipField.start; ii<=skipField.end; ii++)
 			skip_fields.insert( ii-1 );
@@ -854,6 +859,14 @@ bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 	return false;
 }
 
+bool CsvParameters::skipField(const size_t& fieldnr) const
+{
+	if (skip_fields.count(fieldnr)>0) return true;
+	if (last_allowed_field!=IOUtils::npos && fieldnr>last_allowed_field) return true;
+	
+	return false;
+}
+
 bool CsvParameters::isNodata(const std::string& value) const
 {
 	if (value.empty()) return true;
@@ -892,7 +905,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
 		//if this has been given in the list of indices to skip by the user, don't even try to read the field name,
 		//so there won't be an error if the same name is used multiple times but skipped
-		if (skip_fields.count(ii)>0) continue;
+		if (skipField(ii)) continue;
 
 		std::string &tmp = fieldNames[ii];
 		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
