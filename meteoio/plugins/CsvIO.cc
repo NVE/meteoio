@@ -83,6 +83,8 @@ namespace mio {
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others). If CSV\#UNITS_OFFSET / MULTIPLIER were also provided, CSV\#_UNITS would be applied first.
  *    - CSV\#_SKIP_FIELDS: a comma-delimited list of field to skip (first field is numbered 1, ranges such as <i>12 - 17</i> are supported as well). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_ONLY_FIELDS: a comma-delimited list of field to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that it is not allowed to use both keys simultaneously); optional
+ *    - CSV\#_NUMBER_FIELDS: prefix every given field name by its column index in the original file (this is useful to "debug" CSV files when the columns' content don't match what was expected); optional
+ *    - CSV\#_FIELDS_POSTFIX: postfix every given field name by the provided string (this is also to "debug" CSV files); optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
