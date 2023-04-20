@@ -543,7 +543,7 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), last_allowed_field(IOUtils::npos)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), last_allowed_field(IOUtils::npos)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -724,7 +724,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
 	std::string prev_ID, prev_NAME;
 	//we now assume that we start with a variable
-	do {
+	do { //HACK redo with regex
 		//the start of the next constant pattern defines the end of the current variable
 		const size_t start_pattern = filename_spec.find('}', pos_mt);
 		const size_t end_pattern = filename_spec.find('{', pos_mt+1);
@@ -889,7 +889,7 @@ void CsvParameters::setDateTimeSpecs(const std::string &datetime_spec, const std
 }
 
 //user provided field names are in fieldNames, header field names are in headerFields
-//and user provided fields have priority.
+//and user provided fields have priority (headerFields only used if fieldNames is empty).
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
@@ -897,12 +897,14 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		if (single_field.empty())
 			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
 	}
-	
-	std::map<std::string, size_t> data_fields;
-	bool single_field_found = false;
 	if (!user_provided_field_names) fieldNames = headerFields;
 	
-	for (size_t ii=0; ii<fieldNames.size(); ii++) {
+	std::map<std::string, size_t> data_fields;	// this is only used to prevent multiple use of the same name and handle single_field if necessary
+	bool single_field_found = false;
+	const size_t nFields = fieldNames.size();
+	const int fwidth = static_cast<int>( ceil( log10( nFields ) ) ); //required if number_fields==true
+	
+	for (size_t ii=0; ii<nFields; ii++) {
 		//if this has been given in the list of indices to skip by the user, don't even try to read the field name,
 		//so there won't be an error if the same name is used multiple times but skipped
 		if (skipField(ii)) continue;
@@ -927,6 +929,12 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			ID_col = ii;
 			skip_fields.insert( ii );
 		} else {
+			if (number_fields) { //number the field names if so requested by the user
+				std::ostringstream os;
+				os << std::setw(fwidth) << std::setfill('0') << ii+1 << "_" << tmp << fields_postfix;
+				tmp = os.str();
+			}
+			
 			if (data_fields.count( tmp ) > 0)
 				throw InvalidArgumentException("Multiple definitions of the same field name ('"+tmp+"') either in column headers or user-provided CSV_FIELDS", AT);
 			data_fields[ tmp ] = ii;

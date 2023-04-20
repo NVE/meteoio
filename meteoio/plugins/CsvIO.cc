@@ -355,12 +355,12 @@ void CsvIO::parseInputOutputSection()
 		dirlist.sort();
 
 		size_t hit = 0; //human readable iterator
-		for (std::list<std::string>::iterator it=dirlist.begin(); it!=dirlist.end(); ++it) {
+		for (const std::string& filename : dirlist)	{
 			hit++;
 			std::stringstream ss;
 			ss << "STATION" << hit; //assign alphabetically ordered ID to station
 			
-			const std::pair<std::string, std::string> stat_id_and_name(ss.str(), *it);
+			const std::pair<std::string, std::string> stat_id_and_name(ss.str(), filename);
 			vecFilenames.push_back(stat_id_and_name);
 		}
 	} 
@@ -444,6 +444,12 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"FIELDS_POSTFIX", "Input")) cfg.getValue(pre+"FIELDS_POSTFIX", "Input", tmp_csv.fields_postfix);
+		else cfg.getValue(dflt+"FIELDS_POSTFIX", "Input", tmp_csv.fields_postfix, IOUtils::nothrow);
+		
+		if (cfg.keyExists(pre+"NUMBER_FIELDS", "Input")) cfg.getValue(pre+"NUMBER_FIELDS", "Input", tmp_csv.number_fields);
+		else cfg.getValue(dflt+"NUMBER_FIELDS", "Input", tmp_csv.number_fields, IOUtils::nothrow);
 		
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
 		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);

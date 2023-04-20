@@ -117,12 +117,14 @@ class CsvParameters {
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		std::vector<double> field_offset, field_multiplier;		///< offsets and multipliers to apply to each field
 		
-		std::string header_repeat_mk, filter_ID;
+		std::string header_repeat_mk, filter_ID, fields_postfix;
 		size_t ID_col;
 		size_t header_lines, columns_headers, units_headers;
 		char csv_delim, header_delim;
 		char eoln, comments_mk;
 		bool header_repeat_at_start, asc_order;
+		bool number_fields;	///< include a column number in the field names as well as an optional field_postfix (this helps when debugging invalid/changing column order)
+		
 	private:
 		static std::string identifyField(const std::string& fieldname);
 		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing);
