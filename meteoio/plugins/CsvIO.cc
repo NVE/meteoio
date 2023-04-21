@@ -322,6 +322,25 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV2_ID = 105
  * CSV2_NAME = Station105
  * @endcode
+ *
+ * @section csvio_debugging Debugging CSV files reading
+ * Unfortunatelly, there are some cases when the data in one or multiple files does not match the expected field content. This can happen with
+ * the data being spread over multiple files and the column order changing between files or even with the column order changing within
+ * a given file. Depending on the amount of data and the number of files, this can be quite cumbersome to correct, if even possible at all.
+ * Here is some rough procedure to help correcting such issues:
+ *     1. Split the data at the time of changes. If the data is provided for example in yearly files and such changes appear
+ *        between files, created one station ID per file (such as {base_id}_{year}). If such changes appear within one file,
+ *        split the file by reading it multiple times (with multiple STATION# statements) with different lines exclusions
+ *        commands and attribute a different station ID for each.
+ *     2. Name each column with its column index, using the CSV\#_NUMBER_FIELDS key. You can combine it with CSV\#_FIELDS_POSTFIX
+ *        in order to also have an indication of the origin of the data (such as the year or the line ranges).
+ *     3. Plot all the fields for each station ID (like a contact print or as individual plots) with the field name clearly
+ *        visible. It is often not that hard to distinguish between different meteorological parameters (such as between snow height
+ *        and wind speed), so it will be possible to quickly spot obvious mis-labeled fields.
+ *     4. Load successive data periods together on the same plot, select one parameter from one period and cycle through the
+ *        parameters of the other period until you find that there is a smooth transition between the two periods. The column index
+ *        in the field names (as advised to do in (2)) allow to know which field is at which index for which period.
+ *
  */
 
 
