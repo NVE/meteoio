@@ -82,8 +82,8 @@ namespace mio {
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others). If CSV\#UNITS_OFFSET / MULTIPLIER were also provided, CSV\#_UNITS would be applied first.
  *    - CSV\#_SKIP_FIELDS: a comma-delimited list of field to skip (first field is numbered 1, ranges such as <i>12 - 17</i> are supported as well). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
- *    - CSV\#_ONLY_FIELDS: a comma-delimited list of field to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that it is not allowed to use both keys simultaneously); optional
- *    - CSV\#_NUMBER_FIELDS: prefix every given field name by its column index in the original file (this is useful to "debug" CSV files when the columns' content don't match what was expected); optional
+ *    - CSV\#_ONLY_FIELDS: a comma-delimited list of field to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that if using both CSV\#_SKIP_FIELDS and CSV\#_ONLY_FIELDS, the most restrictive interpretation will be applied: only fields that are included in the ONLY list and NOT in the SKIP list will be kept); optional
+ *    - CSV\#_NUMBER_FIELDS: prefix every given field name by its column index in the original file (this is useful to "debug" CSV files when the columns' content don't match what was expected. Please note that special fields related to date/time, station ID or SKIP are left unchanged); optional
  *    - CSV\#_FIELDS_POSTFIX: postfix every given field name by the provided string (this is also to "debug" CSV files); optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
@@ -483,8 +483,6 @@ void CsvIO::parseInputOutputSection()
 		std::string onlyFieldSpecs;
 		if (cfg.keyExists(pre+"ONLY_FIELDS", "Input")) cfg.getValue(pre+"ONLY_FIELDS", "Input", onlyFieldSpecs);
 		else cfg.getValue(dflt+"ONLY_FIELDS", "Input", onlyFieldSpecs, IOUtils::nothrow);
-		if (!skipFieldSpecs.empty() && !onlyFieldSpecs.empty()) 
-			throw InvalidArgumentException("It is not possible to provide both CSV_SKIP_FIELDS and CSV_ONLY_FIELDS", AT);
 		if (!onlyFieldSpecs.empty()) tmp_csv.setSkipFields( onlyFieldSpecs, true );
 		
 		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);

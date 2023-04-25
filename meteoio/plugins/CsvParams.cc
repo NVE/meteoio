@@ -929,7 +929,8 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			ID_col = ii;
 			skip_fields.insert( ii );
 		} else {
-			if (number_fields) { //number the field names if so requested by the user
+			//number the field names if so requested by the user
+			if (number_fields) {
 				std::ostringstream os;
 				os << std::setw(fwidth) << std::setfill('0') << ii+1 << "_" << tmp << fields_postfix;
 				tmp = os.str();
