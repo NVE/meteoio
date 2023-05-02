@@ -223,6 +223,8 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 		const std::string id_num( vecStation[ii].first.substr(std::string("Vstation").length()) );
 		const bool has_id = cfg.keyExists("Vid"+id_num, "InputEditing");
 		const std::string vir_id = (has_id)? cfg.get("Vid"+id_num, "InputEditing"): "VIR"+id_num;
+		const bool has_name = cfg.keyExists("Vname"+id_num, "InputEditing");
+		const std::string vir_name = (has_name)? cfg.get("Vname"+id_num, "InputEditing"): std::string("");
 
 		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
 		if (fourNeighbors) { //pick the surrounding four nodes
@@ -258,7 +260,7 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			}
 
-			StationData sd(curr_point, vir_id, "Virtual_Station_"+id_num);
+			StationData sd(curr_point, vir_id, (has_name)? (vir_name): ("Virtual_Station_"+id_num) );
 			sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 			v_stations.push_back( sd );
 		}
