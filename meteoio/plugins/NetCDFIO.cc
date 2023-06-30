@@ -231,7 +231,15 @@ namespace mio {
  *
  * @note The reanalysis runs offer the mean fluxes over the last hour as well as accumulated precipitation over the last hour, making it very easy to work with.
  *
- * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, the request would be the following:
+ * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, you can use the code provided below to request the necessary data. Before
+ * using this Python code, you need to write your user ID and API key into the cdsapi configuration file:
+ *    + go to <a href="https://cds.climate.copernicus.eu/user">Copernicus.eu</a> and click on your user name to find your credentials (UID and API key);
+ *    + create a new file (in your home directory on Linux) named <i>".cdsapirc"</i> with the following content:
+ *    <pre>
+ *    url: https://cds.climate.copernicus.eu/api/v2
+ *    key: {UID}:{API key}
+ *    verify: 0
+ *    </pre>
  *
  * @code
  * #!/usr/bin/env python
