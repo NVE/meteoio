@@ -132,6 +132,9 @@ class EditingSwap : public EditingBlock {
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
  * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
  * the list to have a value has the priority).
+ *
+ * @note This editing command was previously MOVE. It has been renamed into RENAME so in the future a new MOVE command will be implemented to move
+ * parameters between stations.
  */
 class EditingRename : public EditingBlock {
 	public:
