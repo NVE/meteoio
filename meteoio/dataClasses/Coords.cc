@@ -341,7 +341,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 }
 
 /**
-* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* @brief Local projection constructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_lat_ref latitude of the reference point
