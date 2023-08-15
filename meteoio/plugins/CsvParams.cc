@@ -292,7 +292,7 @@ bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
 	return false;
 }
 
-int CsvDateTime::castToInt(const double &val)
+int CsvDateTime::castToInt(const float &val)
 {
 	const int ival = (int)val;
 	if ((float)ival!=val) return IOUtils::inodata;

@@ -107,6 +107,7 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 {
+	//we don't call FileUtils::getFilename() in order to avoid calling too many libraries while in exception handling
 #if defined _WIN32
 	#if !defined __CYGWIN__
 		const char *delim = strrchr(position.c_str(), '\\');
