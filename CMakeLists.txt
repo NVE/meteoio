@@ -374,6 +374,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
+		SET(CPACK_NSIS_MODIFY_PATH ON)
 		
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
