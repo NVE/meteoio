@@ -367,6 +367,7 @@ IF(UNIX)
 		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++") #simply libproj for OpenSuse
 		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
 		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+		SET(CPACK_RPM_SPEC_INSTALL_POST "/bin/true") #disable running strip on the binaries (fails on some distributions and makes debugging much harder)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)	#Windows packages
