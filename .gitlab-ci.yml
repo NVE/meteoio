@@ -96,7 +96,7 @@ Debian release build:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies: []
   before_script:
-    - apt-get update && apt-get -y install doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
+    - apt-get update && apt-get -y install cmake doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
   script:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
