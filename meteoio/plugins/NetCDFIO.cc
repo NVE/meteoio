@@ -226,8 +226,8 @@ namespace mio {
  * Ideally, download the hourly data and select the following fields:
  * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Near IR albedo for direct radiation, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Mean surface downward short-wave radiation flux, Mean surface downward long-wave radiation flux, Total precipitation
  *
- * Here we have included the *albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the
- * "others" section on the bottom of the page where you select the data to download).
+ * Here we have included the *albedo* so the RSWR can be computed from ISWR. You should download the altitude separately, it is available as variable:
+ * 'geopotential'. You need an additional python script where you download it for a single point in time so it is readable as a DEM.
  *
  * @note The reanalysis runs offer the mean fluxes over the last hour as well as accumulated precipitation over the last hour, making it very easy to work with.
  *
@@ -1288,7 +1288,7 @@ std::vector<StationData> ncFiles::readStationData()
 	if (hasDimension(ncpp::STATION)) { //multiple stations per file or one station but still with STATION dimension
 		//the gelocalisation must be available
 		if ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth)))
-			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
+			throw InvalidFormatException("No station geolocalization found in file "+file_and_path+"DEM or Pos: lat/lon,xy", AT);
 
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
@@ -1334,9 +1334,10 @@ std::vector<StationData> ncFiles::readStationData()
 		}
 
 	} else { //only one station, no station dimension
+		if (dimensions_map[ncpp::LONGITUDE].length > 1 || dimensions_map[ncpp::EASTING].length > 1)
+			throw InvalidFormatException("Multiple position values found in file "+file_and_path+", while parsing only one Station.", AT);
 		if (!allow_missing_coords && ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth))))
-			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
-
+			throw InvalidFormatException("No station geolocalization found in file " + file_and_path+"(DEM or Pos needed)", AT);
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 			nc_filename = file_and_path;
