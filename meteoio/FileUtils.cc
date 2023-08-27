@@ -21,6 +21,7 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>
+#include <sys/stat.h>
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
@@ -176,6 +177,42 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	std::list<std::string> dirlist;
 	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 	return dirlist;
+}
+
+void createDirectory(const std::string &path, const bool verbose = false) // work in progress
+{
+	if (path.empty())
+		throw IOException("Can not create empty directory", AT);
+	std::stringstream ps(path);
+
+	std::string tmp_path = "";
+	std::string item;
+	struct stat sb;
+
+	// recursively go through the path and create nonexisting directories
+	while (std::getline(ps, item, '/'))
+	{
+		tmp_path += item.empty() ? "/" : item;
+		// check if path already exists
+		if (stat(tmp_path.c_str(), &sb) == 0)
+		{
+			if (tmp_path != "/") tmp_path += "/";
+			continue;
+		}
+		else
+		{
+			bool check_creation = mkdir(tmp_path.c_str(), 0777);
+			std::cout << check_creation << std::endl;
+			if (verbose)
+			{
+				if (!check_creation)
+					std::cout << "Directory " << tmp_path << " created" << std::endl;
+				if (check_creation)
+					std::cout << "Directory " << tmp_path << " could not be created" << std::endl;
+			}
+			tmp_path += "/";
+		}
+	}
 }
 
 #if defined _WIN32 || defined __MINGW32__

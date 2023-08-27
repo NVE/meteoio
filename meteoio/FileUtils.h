@@ -53,6 +53,14 @@ namespace FileUtils {
 
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
 
+	/**
+	 * @brief creates the directory tree for the given path, including missing intermediate directories
+	 * (gives only rw permissions), only takes paths delimited with '/'
+	 * @param path directory tree to create, cannot include filenames
+	 * @param debug print additional information about the creation of directories (default=false)
+	 */
+	void create_directory(const std::string &path, const bool verbose=false);
+
 	bool validFileAndPath(const std::string& filename);
 
 	bool fileExists(const std::string& filename);
