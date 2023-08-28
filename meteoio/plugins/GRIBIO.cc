@@ -95,7 +95,8 @@ namespace mio {
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
  * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). The **altitude will be
- * replaced** by the one coming from the DEM, so feel free to use "-1" for example to make it obvious that it will be discarded (mandatory);
+ * replaced** by the one coming from the DEM, so feel free to use "-1" for example to make it obvious that it will be discarded. Finally, if a
+ * point leads to duplicate grid points, it will be removed from the list (mandatory);
  * - GRIB_DEBUG: output more information about the grib files in order to help fix potential problems (default: false).
  *
  * @code
