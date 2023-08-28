@@ -452,3 +452,8 @@ IF(BUILD_TESTING)
 	INCLUDE(CTest) # This makes ENABLE_TESTING() and gives support for Dashboard
 	ADD_SUBDIRECTORY(tests)
 ENDIF(BUILD_TESTING)
+
+###########################################################
+## Additional Options
+###########################################################
+OPTION(LIMIT_WRITE_ACCESS "Limit write access of the library to CWD" OFF)

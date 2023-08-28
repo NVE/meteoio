@@ -59,7 +59,7 @@ namespace FileUtils {
 	 * @param path directory tree to create, cannot include filenames
 	 * @param debug print additional information about the creation of directories (default=false)
 	 */
-	void create_directory(const std::string &path, const bool verbose=false);
+	void createDirectories(const std::string &path, const bool verbose=false);
 
 	bool validFileAndPath(const std::string& filename);
 

@@ -179,10 +179,10 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	return dirlist;
 }
 
-void createDirectory(const std::string &path, const bool verbose = false) // work in progress
+void createDirectories(const std::string &path, const bool verbose)
 {
 	if (path.empty())
-		throw IOException("Can not create empty directory", AT);
+		throw mio::IOException("Can not create empty directory", AT);
 	std::stringstream ps(path);
 
 	std::string tmp_path = "";
@@ -214,6 +214,8 @@ void createDirectory(const std::string &path, const bool verbose = false) // wor
 		}
 	}
 }
+
+
 
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()
