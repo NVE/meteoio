@@ -1288,7 +1288,7 @@ std::vector<StationData> ncFiles::readStationData()
 	if (hasDimension(ncpp::STATION)) { //multiple stations per file or one station but still with STATION dimension
 		//the gelocalisation must be available
 		if ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth)))
-			throw InvalidFormatException("No station geolocalization found in file "+file_and_path+"DEM or Pos: lat/lon,xy", AT);
+			throw InvalidFormatException("No station geolocalization found in file "+file_and_path+", either missing lat/lon or altitude", AT);
 
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
@@ -1335,9 +1335,9 @@ std::vector<StationData> ncFiles::readStationData()
 
 	} else { //only one station, no station dimension
 		if (dimensions_map[ncpp::LONGITUDE].length > 1 || dimensions_map[ncpp::EASTING].length > 1)
-			throw InvalidFormatException("Multiple position values found in file "+file_and_path+", while parsing only one Station.", AT);
+			throw InvalidFormatException("Expecting one position, found multiple ones in file "+file_and_path+". Are you attempting to read gridded data as stations? If so, please look at \"spatial resampling\" in the documentation!", AT);
 		if (!allow_missing_coords && ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth))))
-			throw InvalidFormatException("No station geolocalization found in file " + file_and_path+"(DEM or Pos needed)", AT);
+			throw InvalidFormatException("No station geolocalization found in file " + file_and_path+" (either missing lat/lon or altitude)", AT);
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 			nc_filename = file_and_path;
