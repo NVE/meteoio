@@ -91,6 +91,8 @@ namespace mio {
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  *     - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
  *     - GRID2DFILE: force reading the data from a single file within GRID2DPATH or specify the output file name; [Input] and [Output] section
+ *     - NETCDF_SPLIT_BY_YEAR: create a new file for each year of data, the precise naming being based on GRID2DFILE (default: false); [Output]
+ *     - NETCDF_SPLIT_BY_VAR: create a new file for each variable, the precise naming being based on GRID2DFILE (default: false); [Output]
  * - Time series handling:
  *     - STATION#: if provided, only the given station IDs will be kept in the input data (this is specially useful when reading a file containing multiple stations); [Input]
  *     - METEOPATH: meteo files directory where to read the meteofiles from; [Input] section. Two modes are available when reading input files:
