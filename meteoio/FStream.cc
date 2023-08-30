@@ -62,17 +62,24 @@ std::string cutPathToCWD(const std::string &path){
 	return outpath;
 }
 
-std::string limitAccess(const char* filename){
+std::string limitAccess(const char* filename, bool write_directories){
     std::string path = FileUtils::getPath(filename);
 	std::string file = FileUtils::getFilename(filename);
+	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
-	if (FileUtils::directoryExists(path)) {
-		path = cutPathToCWD(FileUtils::cleanPath(path,true));
-	} else {
-		path = cutPathToCWD(path);
-	}
+		if (FileUtils::directoryExists(path)	) {
+			path = cutPathToCWD(FileUtils::cleanPath(path,true));
+		} else {
+			path = cutPathToCWD(path);
+		}
 #endif
-	createTree((path+"/"+file).c_str());
+		createTree((path+"/"+file).c_str());
+	} else {
+#ifdef LIMIT_WRITE_ACCESS
+		throw IOException("Write access was limited, but directories are not supposed to be created, which makes it impossible to limit the output directories");
+#endif
+	}
+
 	std::string FILE = path+"/"+file;
     return FILE;
 }
@@ -88,7 +95,13 @@ void createTree(const char* filename, bool verbose){
 }
 
 std::string ofilestream::initialize(const char* filename) {
-	return limitAccess(filename);
+	return limitAccess(filename, true);
+}
+
+std::string ofilestream::initialize(const char* filename, const Config& cfgreader) {
+	bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
+	std::cerr << "WRITE_DIRECTORIES: " << write_directories << std::endl;
+	return limitAccess(filename, write_directories);
 }
 
 void ofilestream::open(const char* filename, std::ios_base::openmode mode) {
@@ -100,6 +113,12 @@ ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : s
 }
 
 ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str()).c_str(), mode) {
+}
+
+ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode) {
+}
+
+ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode) {
 }
 
 }
