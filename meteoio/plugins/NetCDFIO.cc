@@ -102,7 +102,8 @@ namespace mio {
  *     - METEOFILE: when NC_SINGLE_FILE is set, the output file name to use [Output];
  *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in
  * MeteoGrids::Parameters are also written out); [Output]
- *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
+ *     - NETCDF_SPLIT_BY_YEAR: create a new file for each year of data (default: false); [Output]
+ *     - NETCDF_SPLIT_BY_VAR: create a new file for each variable (default: false); [Output]
  *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus), in the [Output] section:
  *          - ZREF: the reference height for meteorological measurements;
  *          - UREF: the reference height for wind measurements;
