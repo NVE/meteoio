@@ -94,9 +94,6 @@ void createTree(const char* filename, bool verbose){
     }
 }
 
-std::string ofilestream::initialize(const char* filename) {
-	return limitAccess(filename);
-}
 
 std::string ofilestream::initialize(const char* filename, const Config& cfgreader) {
 	bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
@@ -104,19 +101,18 @@ std::string ofilestream::initialize(const char* filename, const Config& cfgreade
 }
 
 std::string ofilestream::initialize(const char* filename, bool write_directories) {
-	std::cerr << "WRITE_DIRECTORIES: " << write_directories << std::endl;
 	return limitAccess(filename, write_directories);
 }
 
 void ofilestream::open(const char* filename, std::ios_base::openmode mode) {
-	std::string FILE = limitAccess(filename);
+	std::string FILE = limitAccess(filename, write_directories_default);
     std::ofstream::open(FILE.c_str(), mode);
 }
 
-ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename).c_str(), mode) {
+ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode) {
 }
 
-ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str()).c_str(), mode) {
+ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), write_directories_default).c_str(), mode) {
 }
 
 ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode) {
@@ -124,8 +120,11 @@ ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios
 
 ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode) {
 }
-ofilestream::ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories).c_str(),mode) {
-}
 
+bool ofilestream::write_directories_default = true;
+
+bool ofilestream::getDefault() {
+	return ofilestream::write_directories_default;
+}
 
 }

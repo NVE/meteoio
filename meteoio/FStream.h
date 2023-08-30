@@ -21,12 +21,12 @@
 
 #include <sstream>
 #include <fstream>
-#include <meteoio/Config.h>
+#include <meteoio/IOManager.h>
 
 
 namespace mio {
 std::string cutPathToCWD(const std::string &path);
-std::string limitAccess(const char* filename, bool write_directories = true);
+std::string limitAccess(const char* filename, bool write_directories);
 
 void createTree(const char* filename, bool verbose = false);
 
@@ -36,6 +36,8 @@ class ofilestream : public std::ofstream
 		std::string initialize(const char* filename);
         std::string initialize(const char* filename, const Config& cfgreader);
         std::string initialize(const char* filename, bool write_directories);
+        static bool write_directories_default;
+        friend void IOManager::setOfstreamDefault(const Config& i_cfg);
     public:
         ofilestream(){}
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
@@ -44,6 +46,7 @@ class ofilestream : public std::ofstream
         ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode = std::ios_base::out);
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+        bool getDefault();
 };
 }
 
