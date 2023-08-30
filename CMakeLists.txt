@@ -124,6 +124,13 @@ SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SYNTHIO ON CACHE BOOL "Compilation SYNTHIO ON or OFF")
 SET(PLUGIN_ZRXPIO OFF CACHE BOOL "Compilation ZRXPIO ON or OFF")
 SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
+###########################################################
+## Additional Options
+###########################################################
+set(LIMIT_OUT_ACCESS ON CACHE BOOL "Limit write access of the library to CWD")
+if(LIMIT_OUT_ACCESS)
+	add_compile_definitions(LIMIT_WRITE_ACCESS)
+endif()
 
 ###########################################################
 #finally, SET compile flags
@@ -452,8 +459,3 @@ IF(BUILD_TESTING)
 	INCLUDE(CTest) # This makes ENABLE_TESTING() and gives support for Dashboard
 	ADD_SUBDIRECTORY(tests)
 ENDIF(BUILD_TESTING)
-
-###########################################################
-## Additional Options
-###########################################################
-OPTION(LIMIT_WRITE_ACCESS "Limit write access of the library to CWD" OFF)

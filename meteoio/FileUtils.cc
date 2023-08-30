@@ -179,6 +179,15 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	return dirlist;
 }
 
+bool directoryExists(const std::string &path) {
+	struct stat sb;
+	if (stat(path.c_str(), &sb) == 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void createDirectories(const std::string &path, const bool verbose)
 {
 	if (path.empty())
@@ -187,14 +196,13 @@ void createDirectories(const std::string &path, const bool verbose)
 
 	std::string tmp_path = "";
 	std::string item;
-	struct stat sb;
 
 	// recursively go through the path and create nonexisting directories
 	while (std::getline(ps, item, '/'))
 	{
 		tmp_path += item.empty() ? "/" : item;
 		// check if path already exists
-		if (stat(tmp_path.c_str(), &sb) == 0)
+		if (directoryExists(tmp_path))
 		{
 			if (tmp_path != "/") tmp_path += "/";
 			continue;

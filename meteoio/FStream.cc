@@ -21,6 +21,7 @@
 #include <sstream>
 #include <regex>
 #include <fstream>
+#include <iostream>
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/FStream.h>
@@ -65,9 +66,11 @@ std::string limitAccess(const char* filename){
     std::string path = FileUtils::getPath(filename);
 	std::string file = FileUtils::getFilename(filename);
 #ifdef LIMIT_WRITE_ACCESS
-	std::cout << "from limited access" << std::endl;
-	path = cutPathToCWD(path);
-	std::cout << path << std::endl;
+	if (FileUtils::directoryExists(path)) {
+		path = cutPathToCWD(FileUtils::cleanPath(path,true));
+	} else {
+		path = cutPathToCWD(path);
+	}
 #endif
 	createTree((path+"/"+file).c_str());
 	std::string FILE = path+"/"+file;
@@ -75,8 +78,7 @@ std::string limitAccess(const char* filename){
 }
 
 void createTree(const char* filename, bool verbose){
-	struct stat sb;
-    if (stat(mio::FileUtils::getPath(filename,false).c_str(), &sb) == 0)
+    if (FileUtils::directoryExists(FileUtils::getPath(filename,false)))
     {
     }
     else
@@ -85,17 +87,19 @@ void createTree(const char* filename, bool verbose){
     }
 }
 
-std::string ofstream::initialize(const char* filename){
+std::string ofilestream::initialize(const char* filename) {
 	return limitAccess(filename);
 }
 
-void ofstream::open(const char* filename, std::ios_base::openmode mode){
+void ofilestream::open(const char* filename, std::ios_base::openmode mode) {
 	std::string FILE = limitAccess(filename);
     std::ofstream::open(FILE.c_str(), mode);
 }
 
-ofstream::ofstream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename).c_str(), mode)
-{
+ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename).c_str(), mode) {
+}
+
+ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str()).c_str(), mode) {
 }
 
 }

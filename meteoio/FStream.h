@@ -29,13 +29,14 @@ std::string limitAccess(const char* filename);
 
 void createTree(const char* filename, bool verbose = false);
 
-class ofstream : public std::ofstream
+class ofilestream : public std::ofstream
 {
 	private:
 		std::string initialize(const char* filename);
     public:
-        ofstream(){};
-        ofstream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+        ofilestream(){}
+        ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+        ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 };
 }
