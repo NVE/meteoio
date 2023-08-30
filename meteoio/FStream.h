@@ -26,7 +26,7 @@
 
 namespace mio {
 std::string cutPathToCWD(const std::string &path);
-std::string limitAccess(const char* filename);
+std::string limitAccess(const char* filename, bool write_directories = true);
 
 void createTree(const char* filename, bool verbose = false);
 

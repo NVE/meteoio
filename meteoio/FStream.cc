@@ -95,7 +95,7 @@ void createTree(const char* filename, bool verbose){
 }
 
 std::string ofilestream::initialize(const char* filename) {
-	return limitAccess(filename, true);
+	return limitAccess(filename);
 }
 
 std::string ofilestream::initialize(const char* filename, const Config& cfgreader) {
