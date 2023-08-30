@@ -35,12 +35,14 @@ class ofilestream : public std::ofstream
 	private:
 		std::string initialize(const char* filename);
         std::string initialize(const char* filename, const Config& cfgreader);
+        std::string initialize(const char* filename, bool write_directories);
     public:
         ofilestream(){}
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
+        ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode = std::ios_base::out);
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 };
 }

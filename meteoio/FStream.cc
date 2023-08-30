@@ -100,6 +100,10 @@ std::string ofilestream::initialize(const char* filename) {
 
 std::string ofilestream::initialize(const char* filename, const Config& cfgreader) {
 	bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
+	return initialize(filename, write_directories);
+}
+
+std::string ofilestream::initialize(const char* filename, bool write_directories) {
 	std::cerr << "WRITE_DIRECTORIES: " << write_directories << std::endl;
 	return limitAccess(filename, write_directories);
 }
@@ -120,5 +124,8 @@ ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios
 
 ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode) {
 }
+ofilestream::ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories).c_str(),mode) {
+}
+
 
 }
