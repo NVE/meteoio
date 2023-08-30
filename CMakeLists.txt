@@ -127,7 +127,7 @@ SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
 ###########################################################
 ## Additional Options
 ###########################################################
-set(LIMIT_OUT_ACCESS ON CACHE BOOL "Limit write access of the library to CWD")
+set(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
 if(LIMIT_OUT_ACCESS)
 	add_compile_definitions(LIMIT_WRITE_ACCESS)
 endif()
