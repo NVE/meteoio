@@ -25,6 +25,7 @@
 #include <list>
 
 #include <meteoio/dataClasses/Date.h>
+#include <meteoio/FStream.h>
 
 namespace mio {
 namespace FileUtils {

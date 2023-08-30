@@ -39,6 +39,7 @@
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FStream.h>
 
 namespace mio {
 namespace FileUtils {
@@ -54,7 +55,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	if (fin.fail()) throw AccessException(src, AT);
 
 	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
-	std::ofstream fout(dest.c_str(), std::ios::binary);
+	ofilestream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
 		throw AccessException(dest, AT);
@@ -210,7 +211,6 @@ void createDirectories(const std::string &path, const bool verbose)
 		else
 		{
 			bool check_creation = mkdir(tmp_path.c_str(), 0777);
-			std::cout << check_creation << std::endl;
 			if (verbose)
 			{
 				if (!check_creation)
