@@ -76,7 +76,14 @@ std::string limitAccess(std::string& path, bool write_directories){
 		}
 	} else {
 #ifdef LIMIT_WRITE_ACCESS
-		throw IOException("Write access was limited, but directories are not supposed to be created, which makes it impossible to limit the output directories");
+		std::string cwd = FileUtils::getCWD();
+		std::string clean_path = FileUtils::cleanPath(path,true);
+		if (clean_path.find(cwd)=std::string::npos || (cwd.substr(0,4)!=clean_path.substr(0,4))) {
+			std::cerr <<"Write access was restricted, but directories are not supposed to be created. 
+								Making it impossible to use the specified directory" << std::endl;
+			throw IOException("Unqualified directory path "+path+"\n Please make sure you are not trying to access outside of the directory, or 
+								set WRITE_DIRECTORIES to true in the configuration file");
+		}
 #endif
 	}
 
