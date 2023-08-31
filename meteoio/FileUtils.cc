@@ -191,7 +191,7 @@ bool directoryExists(const std::string &path) {
 }
 
 bool isWindowsPath(const std::string& path) {
-	const std::regex e("^[a-zA-Z]:\/");
+	const std::regex e("^[a-zA-Z]:\\/");
 	return std::regex_search(path, e);
 }
 

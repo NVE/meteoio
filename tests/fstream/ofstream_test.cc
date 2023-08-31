@@ -47,6 +47,27 @@ int main() {
                 filestatus = true;
             }
         }
+        std::string win_path = "C:\\Users\\Thomas\\Documents\\MeteoIO\\tests\\fstream\\test.txt";
+        std::string win_path2 = "C:/Users/Thomas/Documents/MeteoIO/tests/fstream/test.txt";
+        try
+        {
+            ofilestream win(win_path);
+            std::cerr << "Creating Windows path type directories should not be possible";
+            exit(1);
+        }
+        catch(const std::exception& e)
+        {
+        }
+        try
+        {
+            ofilestream win2(win_path2);
+            std::cerr << "Creating Windows path type directories should not be possible";
+            exit(1);
+        }
+        catch(const std::exception& e)
+        {
+        }
+        
         std::cerr << "Everything works as expected"<< std::endl;
         std::cerr << "----------------------------" << std::endl;
 
