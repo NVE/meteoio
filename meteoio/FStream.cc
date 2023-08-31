@@ -62,9 +62,7 @@ std::string cutPathToCWD(const std::string &path){
 	return outpath;
 }
 
-std::string limitAccess(const char* filename, bool write_directories){
-    std::string path = FileUtils::getPath(filename);
-	std::string file = FileUtils::getFilename(filename);
+std::string limitAccess(std::string& path, bool write_directories){
 	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
 		if (FileUtils::directoryExists(path)	) {
@@ -73,25 +71,16 @@ std::string limitAccess(const char* filename, bool write_directories){
 			path = cutPathToCWD(path);
 		}
 #endif
-		createTree((path+"/"+file).c_str());
+		if (!FileUtils::directoryExists(path)) {
+			FileUtils::createDirectories(path, false);
+		}
 	} else {
 #ifdef LIMIT_WRITE_ACCESS
 		throw IOException("Write access was limited, but directories are not supposed to be created, which makes it impossible to limit the output directories");
 #endif
 	}
 
-	std::string FILE = path+"/"+file;
-    return FILE;
-}
-
-void createTree(const char* filename, bool verbose){
-    if (FileUtils::directoryExists(FileUtils::getPath(filename,false)))
-    {
-    }
-    else
-    {
-        FileUtils::createDirectories(FileUtils::getPath(filename,false), verbose);
-    }
+    return path;
 }
 
 
@@ -101,12 +90,17 @@ std::string ofilestream::initialize(const char* filename, const Config& cfgreade
 }
 
 std::string ofilestream::initialize(const char* filename, bool write_directories) {
-	return limitAccess(filename, write_directories);
+	std::string path = FileUtils::getPath(filename);
+	const std::string file = FileUtils::getFilename(filename);
+#if !defined _WIN32 && !defined __MINGW32__
+	if (FileUtils::isWindowsPath(path)) throw IOException("Windows paths are not allowed for UNIX systems");
+#endif
+	const std::string FILE = limitAccess(path, write_directories)+"/"+file;
+	return FILE;
 }
 
 void ofilestream::open(const char* filename, std::ios_base::openmode mode) {
-	std::string FILE = limitAccess(filename, write_directories_default);
-    std::ofstream::open(FILE.c_str(), mode);
+	std::ofstream::open(initialize(filename, write_directories_default).c_str(), mode);
 }
 
 ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode) {

@@ -40,6 +40,7 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FStream.h>
+#include <regex>
 
 namespace mio {
 namespace FileUtils {
@@ -187,6 +188,11 @@ bool directoryExists(const std::string &path) {
 	} else {
 		return false;
 	}
+}
+
+bool isWindowsPath(const std::string& path) {
+	const std::regex e("^[a-zA-Z]:\/");
+	return std::regex_search(path, e);
 }
 
 void createDirectories(const std::string &path, const bool verbose)

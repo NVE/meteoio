@@ -26,9 +26,8 @@
 
 namespace mio {
 std::string cutPathToCWD(const std::string &path);
-std::string limitAccess(const char* filename, bool write_directories);
+std::string limitAccess(std::string& path, bool write_directories);
 
-void createTree(const char* filename, bool verbose = false);
 
 class ofilestream : public std::ofstream
 {

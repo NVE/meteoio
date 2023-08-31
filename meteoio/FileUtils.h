@@ -55,6 +55,7 @@ namespace FileUtils {
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
 
 	bool directoryExists(const std::string &path);
+	bool isWindowsPath(const std::string &path);
 	/**
 	 * @brief creates the directory tree for the given path, including missing intermediate directories
 	 * (gives only rw permissions), only takes paths delimited with '/'
