@@ -65,11 +65,17 @@ std::string cutPathToCWD(const std::string &path){
 std::string limitAccess(std::string& path, bool write_directories){
 	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
+		if (FileUtils::isAbsolutePath(path)) {
+			std::cerr << "Output path is absolute, i.e. trying to access home directory or similar, which is not allowed."<<std::endl;
+			std::cerr << "Creating directory at " << cutPathToCWD(FileUtils::cleanPath(path,true)) << std::endl;
+		}
+
 		if (FileUtils::directoryExists(path)	) {
 			path = cutPathToCWD(FileUtils::cleanPath(path,true));
 		} else {
 			path = cutPathToCWD(path);
 		}
+
 #endif
 		if (!FileUtils::directoryExists(path)) {
 			FileUtils::createDirectories(path, false);
@@ -78,11 +84,9 @@ std::string limitAccess(std::string& path, bool write_directories){
 #ifdef LIMIT_WRITE_ACCESS
 		std::string cwd = FileUtils::getCWD();
 		std::string clean_path = FileUtils::cleanPath(path,true);
-		if (clean_path.find(cwd)=std::string::npos || (cwd.substr(0,4)!=clean_path.substr(0,4))) {
-			std::cerr <<"Write access was restricted, but directories are not supposed to be created. 
-								Making it impossible to use the specified directory" << std::endl;
-			throw IOException("Unqualified directory path "+path+"\n Please make sure you are not trying to access outside of the directory, or 
-								set WRITE_DIRECTORIES to true in the configuration file");
+		if (clean_path.find(cwd)==std::string::npos || (cwd.substr(0,4)!=clean_path.substr(0,4))) {
+			std::cerr <<"Write access was restricted, but directories are not supposed to be created. Making it impossible to use the specified directory" << std::endl;
+			throw IOException("Unqualified directory path "+path+"\n Please make sure you are not trying to access outside of the directory, or set WRITE_DIRECTORIES to true in the configuration file");
 		}
 #endif
 	}

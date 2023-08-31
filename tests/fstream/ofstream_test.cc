@@ -67,7 +67,15 @@ int main() {
         catch(const std::exception& e)
         {
         }
-        
+
+        std::string abs_path3 = "/home/leibersp/Documents/test.txt"; //should show a warning but work
+        ofilestream abs_fail(abs_path3);
+        abs_fail << "hiii";
+        abs_fail.close();
+    
+        int _ = system("rm -rf this");
+        _ = system("rm -rf Documents");
+
         std::cerr << "Everything works as expected"<< std::endl;
         std::cerr << "----------------------------" << std::endl;
 
@@ -113,8 +121,29 @@ int main() {
     ofilestream tmp2("hi");
     int _ = system("rm hi");
     if (tmp2.getDefault() != false) throw IOException("Default was not set");
+#ifdef LIMIT_WRITE_ACCESS
+    std::string abs_path1 = "/home/leibersp/Documents/test.txt";// should not work
+    try
+    {
+        ofilestream fail(abs_path1);
+        std::cerr<< "Default |" << fail.getDefault() << std::endl;
+        if (fail.getDefault()) std::cerr<<"Default was not kept"<<std::endl;
+        std::cerr << "accessing absolute invalid path, without writing directories should not be possible"<<std::endl;
+        exit(1);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "accessing absolute invalid path, without writing directories works as expected"<< std::endl;
+    }
+    
+    std::string abs_path2 = "/home/leibersp/slf/meteoio/tests/fstream/test.txt";
+    ofilestream works(abs_path2);
+    if (works.getDefault()) throw IOException("Default was not kept");
+    works << "hiii";
+    works.close();
+    _ = system("rm test.txt");
+#endif
 
-    _ = system("rm -rf this");
     std::cerr << "Checking for calls to std::ofstream outside of wrapper"<< std::endl;
     int sys_o = system("rgrep --exclude=\"*.cc.o\" \"ofstream\" ../../meteoio | grep -vE \"^../../meteoio/FStream.\" | grep -vE \"ofstream::app\" |grep -vE \"ofstream::out\">tmp_ofstream_instances.txt");
     std::ifstream ofstream_instances("tmp_ofstream_instances.txt");
