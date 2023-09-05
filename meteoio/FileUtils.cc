@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cstdio>
 #include <fstream>
 #include <sys/stat.h>
@@ -142,6 +143,15 @@ std::string getFilename(const std::string& path)
 		return path.substr(start_basename+1, std::string::npos);
 	else
 		return path;
+}
+
+std::string getDateTime()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%m%d_%H%M");
+	return oss.str();
 }
 
 bool validFileAndPath(const std::string& filename)

@@ -103,6 +103,12 @@ namespace FileUtils {
 	std::string getCWD();
 
 	/**
+	 * @brief returns the current date and time as a string.
+	 * @return date and time
+	 */
+	std::string getDateTime();
+
+	/**
 	* @brief returns the path preceeding a given filename.
 	* @param filename filename to extract the path from
 	* @param resolve resolve links, convert relative paths, etc? (default=false)

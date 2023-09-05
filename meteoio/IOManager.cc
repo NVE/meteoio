@@ -312,6 +312,7 @@ void IOManager::clear_cache()
 void IOManager::setOfstreamDefault(const Config& i_cfg)
 {
 	ofilestream::write_directories_default = i_cfg.get("WRITE_DIRECTORIES", "Output", true);
+	ofilestream::keep_old_files = i_cfg.get("KEEP_OLD_FILES", "Output", false);
 }
 
 size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)

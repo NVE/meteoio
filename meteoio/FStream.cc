@@ -62,12 +62,13 @@ std::string cutPathToCWD(const std::string &path){
 	return outpath;
 }
 
-std::string limitAccess(std::string& path, bool write_directories){
+std::string limitAccess(std::string& path, bool write_directories, bool warn_abs_path){
 	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
-		if (FileUtils::isAbsolutePath(path)) {
+		if (FileUtils::isAbsolutePath(path) && warn_abs_path) {
 			std::cerr << "Output path is absolute, i.e. trying to access home directory or similar, which is not allowed."<<std::endl;
 			std::cerr << "Creating directory at " << cutPathToCWD(FileUtils::cleanPath(path,true)) << std::endl;
+			warn_abs_path = false;
 		}
 
 		if (FileUtils::directoryExists(path)	) {
@@ -102,11 +103,20 @@ std::string ofilestream::initialize(const char* filename, const Config& cfgreade
 
 std::string ofilestream::initialize(const char* filename, bool write_directories) {
 	std::string path = FileUtils::getPath(filename);
-	const std::string file = FileUtils::getFilename(filename);
+	std::string file = FileUtils::getFilename(filename);
+	if (keep_old_files) {
+		const std::string extension = FileUtils::getExtension(file);
+		if (!extension.empty()) {
+			file = FileUtils::removeExtension(file) + "_" + FileUtils::getDateTime() +extension;
+		} else {
+			file = file + "_" + FileUtils::getDateTime();
+		}
+	}
 #if !defined _WIN32 && !defined __MINGW32__
 	if (FileUtils::isWindowsPath(path)) throw IOException("Windows paths are not allowed for UNIX systems");
 #endif
-	const std::string FILE = limitAccess(path, write_directories)+"/"+file;
+	const std::string FILE = limitAccess(path, write_directories, warn_abs_path)+"/"+file;
+	warn_abs_path = false;
 	return FILE;
 }
 
@@ -127,6 +137,8 @@ ofilestream::ofilestream(const std::string filename, const Config& cfgreader, st
 }
 
 bool ofilestream::write_directories_default = true;
+bool ofilestream::keep_old_files = false;
+bool ofilestream::warn_abs_path = true;
 
 bool ofilestream::getDefault() {
 	return ofilestream::write_directories_default;

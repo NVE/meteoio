@@ -26,7 +26,7 @@
 
 namespace mio {
 std::string cutPathToCWD(const std::string &path);
-std::string limitAccess(std::string& path, bool write_directories);
+std::string limitAccess(std::string& path, bool write_directories, bool warn_abs_path);
 
 
 class ofilestream : public std::ofstream
@@ -36,6 +36,8 @@ class ofilestream : public std::ofstream
         std::string initialize(const char* filename, const Config& cfgreader);
         std::string initialize(const char* filename, bool write_directories);
         static bool write_directories_default;
+        static bool keep_old_files;
+        static bool warn_abs_path;
         friend void IOManager::setOfstreamDefault(const Config& i_cfg);
     public:
         ofilestream(){}
