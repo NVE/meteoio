@@ -458,7 +458,7 @@ std::streampos FileIndexer::getIndex(const Date& i_date, size_t& o_linenr) const
 	if (foundIdx==static_cast<size_t>(-1))
 		return static_cast<std::streampos>(-1);
 
-	if (vecIndex[foundIdx].linenr != static_cast<size_t>(-1))
+	if (vecIndex[foundIdx].linenr == static_cast<size_t>(-1))
 		throw UnknownValueException("It is not possible to retrieve the line count from an indexed file if this has not been set when first reading the file. Please report it to the developers!", AT);
 
 	o_linenr = vecIndex[foundIdx].linenr;
