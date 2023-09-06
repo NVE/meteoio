@@ -82,6 +82,11 @@ stats:
   variables:
     TEST_NAME: stats.smoke
 
+fstream:
+  extends: .test_base
+  variables:
+    TEST_NAME: fstream.smoke
+
 running times and coverage:
   stage: test coverage
   script:
