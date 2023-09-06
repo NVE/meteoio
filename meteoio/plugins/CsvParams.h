@@ -104,6 +104,7 @@ class CsvParameters {
 		void setDateTimeSpecs(const std::string &datetime_spec, const std::string &date_spec, const std::string &time_spec, const std::string &decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap) {date_cols.setFixedYear(i_year, i_auto_wrap);}
 		
+		std::string toString() const;
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
 		Date getDate(const std::vector<std::string>& vecFields) {return date_cols.parseDate(vecFields);}

@@ -549,6 +549,15 @@ CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset()
 	setNodata( "NAN NULL" );
 }
 
+std::string CsvParameters::toString() const
+{
+	std::ostringstream os;
+	os << "<CsvParameters>\n";
+	os << "\t" << file_and_path << " - " << name << " - " << id << " - " << location.toString(Coords::FULL) << " - " << date_cols.toString() << "\n";
+	os << "</CsvParameters>\n";
+	return os.str();
+}
+
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
 //(since there can be multiple keys on the same line)
 std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)
