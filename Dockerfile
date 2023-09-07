@@ -9,11 +9,9 @@ RUN cd /root/src/meteoio && \
 
 FROM alpine AS meteoio
 ENV PATH=/root/usr/bin:$PATH
-ENV VERSION_MAJOR=2
-ENV VERSION_MINOR=10
-ENV VERSION_PATCH=0
+ENV METEOIO_VERSION=2.10.0
 ENV RELEASE_DATE=2021-10-05
-LABEL slf.ch.version="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}" com.example.release-date="${RELEASE_DATE}" vendor="slf.ch" licence="LGPL-v3"
+LABEL slf.ch.version="${METEOIO_VERSION}" com.example.release-date="${RELEASE_DATE}" vendor="slf.ch" licence="LGPL-v3"
 RUN apk update && apk add  --no-cache netcdf proj curl
 COPY --from=builder /root/usr /root/usr
 CMD ["bin/sh"]
