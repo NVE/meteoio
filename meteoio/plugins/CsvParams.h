@@ -144,6 +144,7 @@ class CsvParameters {
 		std::string name, id;
 		double slope, azi;
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
+		size_t exclusion_last_linenr; ///< pointer to the last line number that has been checked for exclusions
 		size_t last_allowed_field;	///< index of the last allowed field (as set by the user with setSkipFields(negate=true)
 };
 
