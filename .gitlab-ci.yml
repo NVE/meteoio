@@ -38,7 +38,6 @@ build latest image:
   services:
     - name: registry.hub.docker.com/library/docker:24.0.6-dind
       alias: docker
-      privileged: true
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
