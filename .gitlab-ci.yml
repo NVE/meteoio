@@ -32,9 +32,9 @@ build latest image:
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule" # change back to ==
-  image: $CI_REGISTRY/snow-models/meteoio/docker:20.10.16
+  image: docker:24.0.6
   services:
-    - name: $CI_REGISTRY/snow-models/meteoio/docker:20.10.16-dind
+    - name: docker:24.0.6-dind
       alias: docker
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
