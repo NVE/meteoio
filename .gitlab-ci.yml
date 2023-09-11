@@ -28,18 +28,23 @@ build:
       - build
       - lib
 
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  # Tell 'docker:dind' to enable TLS (recommended)
+  # and generate certificates in the specified directory.
+  DOCKER_TLS_CERTDIR: "/certs"
+
 build latest image:
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule" # change back to ==
-  image: docker:20.10.16
+  image: docker:latest
   services:
-    - docker:20.10.16-dind
+    - docker:dind
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY/snow-models/meteoio/image:latest .
-    - docker push $CI_REGISTRY/snow-models/meteoio/image:latest
-
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
   allow_failure: true
 
 
