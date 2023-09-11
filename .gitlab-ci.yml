@@ -10,7 +10,7 @@ stages:
   - test coverage
   - release build
   - release
-  - release and build image
+  - release docker image
   - pages
 
 build:
@@ -195,7 +195,7 @@ release:
           link_type: 'other'
 
 release image:
-  stage: release build image
+  stage: release docker image
   image: docker:24.0.6
   services:
     - docker:24.0.6-dind
