@@ -36,13 +36,9 @@ build latest image:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   image: docker:24.0.6
   services:
-    - name: docker:24.0.6-dind
+    - name: registry.hub.docker.com/library/docker:24.0.6-dind
       alias: docker
   before_script:
-    - echo "$CI_REGISTRY"
-    - echo "$CI_REGISTRY_USER"
-    - echo "$DOCKER_REGISTRY"
-    - echo "$DOCKER_REGISTRY_USER"
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker build -t $CI_REGISTRY_IMAGE:latest .
