@@ -36,8 +36,14 @@ build latest image:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   image: docker:24.0.6
   services:
-    - name: registry.hub.docker.com/library/docker:24.0.6-dind
-      alias: docker
+    - name: docker:24.0.6-dind
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    # See https://github.com/docker-library/docker/pull/166
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
