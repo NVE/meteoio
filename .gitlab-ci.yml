@@ -27,6 +27,8 @@ build:
     paths:
       - build
       - lib
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
 
 build latest image:
   stage: build
