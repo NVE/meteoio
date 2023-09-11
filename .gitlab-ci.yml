@@ -2,7 +2,7 @@ default:
   image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
   tags: ['docker']
   before_script:
-  - yum update && yum -y install cmake
+  - apt-get update && apt-get -y install cmake
 
 stages:
   - build
