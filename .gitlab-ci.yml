@@ -2,7 +2,7 @@ default:
   image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
   tags: ['docker']
   before_script:
-  - apt-get update && apt-get -y install cmake
+  - yum update && yum -y install cmake
 
 stages:
   - build
@@ -28,17 +28,16 @@ build:
       - build
       - lib
 
-variables:
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  # Tell 'docker:dind' to enable TLS (recommended)
-  # and generate certificates in the specified directory.
-  DOCKER_TLS_CERTDIR: "/certs"
-
 build latest image:
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule" # change back to ==
   image: docker:latest
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    # Tell 'docker:dind' to enable TLS (recommended)
+    # and generate certificates in the specified directory.
+    DOCKER_TLS_CERTDIR: "/certs"
   services:
     - docker:dind
   script:
