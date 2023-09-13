@@ -5,6 +5,7 @@ default:
   - apt-get update && apt-get -y install cmake
 
 stages:
+  - SSH
   - build
   - test
   - test coverage
@@ -114,6 +115,8 @@ running times and coverage:
     - cp -r tests build # copy the required test files into the tests folder
     - cd build
     - ctest && ctest -D NightlyCoverage
+
+
 
 Debian release build:
   stage: release build
@@ -228,6 +231,124 @@ release docker image:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
     - docker build --build-arg METEOIO_VERSION=$METEOIO_VERSION --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:$METEOIO_VERSION .
     - docker push $CI_REGISTRY_IMAGE:$METEOIO_VERSION    
+  allow_failure: true
+
+.ssh_access:
+  image: debian
+  stage: SSH
+  before_script: # set
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - touch ~/.ssh/config
+    - touch ~/.ssh/known_hosts
+    - chmod -R 400 ~/.ssh
+    # - cp "$SSH_KNOWN_HOSTS" ~/.ssh/known_hosts
+    # - chmod 644 ~/.ssh/known_hosts
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' # remove later for security reasons
+
+SSH copy WIN:
+  extends: .ssh_access
+  stage: SSH
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - ssh $SSH_USER@SSH_HOST
+    - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$WIN_FILE ./Meteo_WIN.extension
+  artifacts:
+    expire_in: 1h
+    paths:
+      - Meteo_WIN.extension
+  allow_failure: true
+
+SSH copy MAC:
+  extends: .ssh_access
+  stage: SSH
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - ssh $SSH_USER@SSH_HOST
+    - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$MAC_FILE ./Meteo_MAC.extension
+  artifacts:
+    expire_in: 1h
+    paths:
+      - Meteo_MAC.extension
+  allow_failure: true
+
+auto-add WIN to release:
+  stage: release
+  needs: ["release:release"]
+  dependencies: 
+    - SSH copy WIN
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_WIN.extension
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="Windows installer" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"
+              --data direct_asset_path="/bin/Windows installer" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+  allow_failure: true
+
+auto-add MAC to release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["release:release"]
+  dependencies: 
+    - SSH copy MAC
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_MAC.extension
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="MacOS disk image (DMG)" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"
+              --data direct_asset_path="/bin/MacOS disk image (DMG)" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+  allow_failure: true
+
+manuel-add WIN/MAC to release:
+  stage: SSH
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["SSH:SSH copy WIN", "SSH:SSH copy MAC"]
+  dependencies:
+    - SSH copy WIN
+    - SSH copy MAC
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_MAC.extension
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="MacOS disk image (DMG)" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"
+              --data direct_asset_path="/bin/MacOS disk image (DMG)" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_WIN.extension
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="Windows installer" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}.extension"
+              --data direct_asset_path="/bin/Windows installer" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+
 
 update pages:
   stage: pages
