@@ -14,12 +14,10 @@ stages:
   - release
   - pages
 
-build: # remove laterr
+build:
   stage: build
   script:
     # build meteoio including binaries (test if build works for all artifacts)
-    - echo $SSH_USER
-    - echo $SSH_PRIVATE_KEY
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
       -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
@@ -240,13 +238,13 @@ release docker image:
   when: manual
 
 
-# need to do the exporting of METEOVERSION every single time to avoid aving to install openssh-client unnecessarily
+# need to do the exporting of METEOVERSION every single time to have the variables available
 .ssh_access:
   image: debian
   tags: ['docker']
   stage: SSH
   before_script: # set
-    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client curl jq-y )'
     - eval $(ssh-agent -s)
     - echo $SSH_USER
     - echo $SSH_PRIVATE_KEY
@@ -266,7 +264,6 @@ SSH copy WIN:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
-    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
@@ -288,7 +285,6 @@ SSH copy MAC:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
-    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
@@ -351,7 +347,6 @@ manuel-add WIN/MAC to release:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
-    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
