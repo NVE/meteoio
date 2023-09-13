@@ -233,20 +233,11 @@ release docker image:
     - docker push $CI_REGISTRY_IMAGE:$METEOIO_VERSION    
   allow_failure: true
 
-.get_release: # maybe needs to be in ssh access
-  image: debian
-  stage: SSH
-  before_script: # set
-    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
-    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
-    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
-    - echo "Meteofile=${METEOVERSION} ..."
 
+# need to do the exporting of METEOVERSION every single time to avoid aving to install openssh-client unnecessarily
 .ssh_access:
   image: debian
   stage: SSH
-  extends: .get_release
   before_script: # set
     - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -255,8 +246,6 @@ release docker image:
     - touch ~/.ssh/config
     - touch ~/.ssh/known_hosts
     - chmod -R 400 ~/.ssh
-    # - cp "$SSH_KNOWN_HOSTS" ~/.ssh/known_hosts
-    # - chmod 644 ~/.ssh/known_hosts
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' # remove later for security reasons
 
 
@@ -268,6 +257,11 @@ SSH copy WIN:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
     - ssh $SSH_USER@SSH_HOST
     - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe ./$METEOVERSION-x86_64.exe
@@ -285,6 +279,11 @@ SSH copy MAC:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
     - ssh $SSH_USER@SSH_HOST
     - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg ./$METEOVERSION-x86_64.dmg
@@ -349,6 +348,11 @@ manuel-add WIN/MAC to release:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOVERSION} ..."
     - export METEOIO_VERSION=${METEOVERSION#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*"
