@@ -47,7 +47,7 @@ build latest image:
     - docker build --build-arg METEOIO_VERSION=unstable --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:latest .
     - docker push $CI_REGISTRY_IMAGE:latest
   allow_failure: true
-  when: never
+  when: manual
 
 
 .test_base:
@@ -61,25 +61,25 @@ meteo_reading_interpol:
   extends: .test_base
   variables:
     TEST_NAME: meteo_reading_interpol.smoke
-  when: never
+  when: manual
 
 meteo_reading_no_interpol:
   extends: .test_base
   variables:
     TEST_NAME: meteo_reading_no_interpol.smoke
-  when: never
+  when: manual
 
 dataEditing:
   extends: .test_base
   variables:
     TEST_NAME: data_editing.smoke
-  when: never
+  when: manual
 
 sun:
   extends: .test_base
   variables:
     TEST_NAME: sun.smoke
-  when: never
+  when: manual
   before_script:
   - apt-get update && apt-get -y install cmake numdiff
 
@@ -88,37 +88,37 @@ dem_reading:
   extends: .test_base
   variables:
     TEST_NAME: dem_reading.smoke
-  when: never
+  when: manual
 
 2D_interpolations:
   extends: .test_base
   variables:
     TEST_NAME: 2D_interpolations.smoke
-  when: never
+  when: manual
 
 arrays:
   extends: .test_base
   variables:
     TEST_NAME: arrays.smoke
-  when: never
+  when: manual
 
 coords:
   extends: .test_base
   variables:
     TEST_NAME: coordinates.smoke
-  when: never
+  when: manual
 
 stats:
   extends: .test_base
   variables:
     TEST_NAME: stats.smoke
-  when: never
+  when: manual
 
 fstream:
   extends: .test_base
   variables:
     TEST_NAME: fstream.smoke
-  when: never
+  when: manual
 
 running times and coverage:
   stage: test coverage
@@ -127,7 +127,7 @@ running times and coverage:
     - cp -r tests build # copy the required test files into the tests folder
     - cd build
     - ctest && ctest -D NightlyCoverage
-  when: never
+  when: manual
 
 
 
@@ -245,7 +245,7 @@ release docker image:
     - docker build --build-arg METEOIO_VERSION=$METEOIO_VERSION --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:$METEOIO_VERSION .
     - docker push $CI_REGISTRY_IMAGE:$METEOIO_VERSION    
   allow_failure: true
-  when: never
+  when: manual
 
 
 # need to do the exporting of METEOVERSION every single time to avoid aving to install openssh-client unnecessarily
@@ -392,4 +392,4 @@ update pages:
      --form token=${CI_JOB_TOKEN}
      --form ref=main
      "https://gitlabext.wsl.ch/api/v4/projects/174/trigger/pipeline"
-  when: never
+  when: manual
