@@ -274,7 +274,7 @@ SSH copy WIN:
   artifacts:
     expire_in: 1h
     paths:
-      - $METEOVERSION-x86_64.exe
+      - MeteoIO-*-x86_64.exe
   # allow_failure: true
 
 SSH copy MAC:
@@ -295,7 +295,7 @@ SSH copy MAC:
   artifacts:
     expire_in: 1h
     paths:
-      - $METEOVERSION-x86_64.dmg
+      - MeteoIO-*-x86_64.dmg
   # allow_failure: true
 
 auto-add WIN to release:
