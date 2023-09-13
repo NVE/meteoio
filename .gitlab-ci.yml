@@ -13,7 +13,7 @@ stages:
   - release
   - pages
 
-build:
+build: # remove laterr
   stage: build
   script:
     # build meteoio including binaries (test if build works for all artifacts)
