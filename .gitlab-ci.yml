@@ -295,7 +295,7 @@ SSH copy MAC:
 
 auto-add WIN to release:
   stage: release
-  needs: ["release", "SSH:SSH copy WIN"]
+  needs: ["release", "SSH copy WIN"]
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   script:
@@ -315,7 +315,7 @@ auto-add WIN to release:
 auto-add MAC to release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs: ["release:release", "SSH:SSH copy MAC"]
+  needs: ["release", "SSH copy MAC"]
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   script:
