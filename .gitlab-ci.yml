@@ -4,6 +4,7 @@ default:
   before_script:
   - apt-get update && apt-get -y install cmake
 
+
 stages:
   - SSH
   - build
@@ -17,6 +18,8 @@ build: # remove laterr
   stage: build
   script:
     # build meteoio including binaries (test if build works for all artifacts)
+    - echo $SSH_USER
+    - echo $SSH_PRIVATE_KEY
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
       -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
@@ -245,6 +248,7 @@ release docker image:
   before_script: # set
     - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
+    - echo $SSH_USER
     - echo $SSH_PRIVATE_KEY
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
