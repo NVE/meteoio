@@ -263,8 +263,8 @@ SSH copy WIN:
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - ssh $SSH_USER@SSH_HOST
-    - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe ./$METEOVERSION-x86_64.exe
+    - ssh $SSH_USER@$SSH_HOST
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe ./$METEOVERSION-x86_64.exe
   artifacts:
     expire_in: 1h
     paths:
@@ -285,8 +285,8 @@ SSH copy MAC:
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - ssh $SSH_USER@SSH_HOST
-    - scp $SSH_USER@SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg ./$METEOVERSION-x86_64.dmg
+    - ssh $SSH_USER@$SSH_HOST
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg ./$METEOVERSION-x86_64.dmg
   artifacts:
     expire_in: 1h
     paths:
