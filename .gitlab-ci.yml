@@ -343,6 +343,8 @@ manuel-add WIN/MAC to release:
   dependencies:
     - SSH copy WIN
     - SSH copy MAC
+  before_script:
+    - apt-get update && apt-get -y install curl jq
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
