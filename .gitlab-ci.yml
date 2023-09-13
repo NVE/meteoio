@@ -295,7 +295,7 @@ SSH copy MAC:
 
 auto-add WIN to release:
   stage: release
-  needs: ["release:release"]
+  needs: ["release:release", "SSH:SSH copy WIN"]
   dependencies: 
     - SSH copy WIN
   rules:
@@ -317,7 +317,7 @@ auto-add WIN to release:
 auto-add MAC to release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs: ["release:release"]
+  needs: ["release:release", "SSH:SSH copy MAC"]
   dependencies: 
     - SSH copy MAC
   rules:
