@@ -239,8 +239,9 @@ release docker image:
   before_script: # set
     - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install curl jq -y )'
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
-    - export METEOVERSION=`cat tmp.txt` # MeteoIO-0.0.0 (vNo)
-    - echo "Meteofile=${METEOVERSION:1:-1} ..."
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOVERSION} ..."
 
 .ssh_access:
   image: debian
@@ -327,7 +328,7 @@ auto-add MAC to release:
     - export METEOVERSION=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*.dmg"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_MAC.extension
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $METEOVERSION-x86_64.dmg
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
@@ -351,7 +352,7 @@ manuel-add WIN/MAC to release:
     - export METEOIO_VERSION=${METEOVERSION#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file Meteo_MAC.extension
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $METEOVERSION-x86_64.dmg
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
