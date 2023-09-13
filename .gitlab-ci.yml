@@ -47,6 +47,7 @@ build latest image:
     - docker build --build-arg METEOIO_VERSION=unstable --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:latest .
     - docker push $CI_REGISTRY_IMAGE:latest
   allow_failure: true
+  when: manual
 
 
 .test_base:
@@ -271,7 +272,7 @@ SSH copy WIN:
     expire_in: 1h
     paths:
       - $METEOVERSION-x86_64.exe
-  allow_failure: true
+  # allow_failure: true
 
 SSH copy MAC:
   extends: .ssh_access
@@ -293,7 +294,7 @@ SSH copy MAC:
     expire_in: 1h
     paths:
       - $METEOVERSION-x86_64.dmg
-  allow_failure: true
+  # allow_failure: true
 
 auto-add WIN to release:
   stage: release
