@@ -262,7 +262,7 @@ SSH copy WIN:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
-    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOFILE} ..."
@@ -282,7 +282,7 @@ SSH copy MAC:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
   script:
-    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOFILE} ..."
@@ -349,7 +349,7 @@ manuel-add WIN/MAC to release:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
   script:
-    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
     - echo "Meteofile=${METEOFILE} ..."
