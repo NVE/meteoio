@@ -7,6 +7,7 @@ default:
 
 stages:
   - SSH
+  - edit release
   - build
   - test
   - test coverage
@@ -337,7 +338,7 @@ auto-add MAC to release:
   allow_failure: true
 
 manuel-add WIN/MAC to release:
-  stage: SSH
+  stage: edit release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   dependencies:
     - SSH copy WIN
