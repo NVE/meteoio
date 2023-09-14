@@ -255,7 +255,6 @@ release docker image:
     - chmod -R 400 ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' # remove later for security reasons
 
-
 SSH copy WIN:
   extends: .ssh_access
   stage: SSH
