@@ -239,7 +239,7 @@ release docker image:
   when: manual
 
 
-# need to do the exporting of METEOVERSION every single time to have the variables available
+# need to do the exporting of METEOFILE every single time to have the variables available
 .ssh_access:
   image: debian
   tags: ['docker']
@@ -264,10 +264,10 @@ SSH copy WIN:
   script:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
-    - echo "Meteofile=${METEOVERSION} ..."
-    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe ./$METEOVERSION-x86_64.exe
+    - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOFILE} ..."
+    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.exe ./$METEOFILE-x86_64.exe
   artifacts:
     expire_in: 1h
     paths:
@@ -284,10 +284,10 @@ SSH copy MAC:
   script:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
-    - echo "Meteofile=${METEOVERSION} ..."
-    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg ./$METEOVERSION-x86_64.dmg
+    - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - echo "Meteofile=${METEOFILE} ..."
+    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.dmg ./$METEOFILE-x86_64.dmg
   artifacts:
     expire_in: 1h
     paths:
@@ -296,6 +296,7 @@ SSH copy MAC:
 
 auto-add WIN to release:
   stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
   needs: ["release", "SSH copy WIN"]
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
@@ -303,16 +304,16 @@ auto-add WIN to release:
     - apk add --no-cache curl
   script:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
-    - export METEOVERSION=MeteoIO-${METEOIO_VERSION}
+    - export METEOFILE=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN package to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*.exe"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.exe
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"'
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*.exe"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"
               --data direct_asset_path="/bin/Windows installer" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
   allow_failure: true
 
 auto-add MAC to release:
@@ -325,22 +326,22 @@ auto-add MAC to release:
     - apk add --no-cache curl
   script:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
-    - export METEOVERSION=MeteoIO-${METEOIO_VERSION}
+    - export METEOFILE=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*.dmg"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.dmg
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*.dmg"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.dmg
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"
               --data direct_asset_path="/bin/MacOS disk image (DMG)" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
   allow_failure: true
 
 manuel-add WIN/MAC to release:
-  stage: edit release
+  stage: edit release # needs to be in another stage to be able to see artifacts
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  dependencies:
+  needs:
     - SSH copy WIN
     - SSH copy MAC
   before_script:
@@ -350,25 +351,25 @@ manuel-add WIN/MAC to release:
   script:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - export METEOVERSION=${METEO:1:-1} # MeteoIO-0.0.0 (No)
-    - echo "Meteofile=${METEOVERSION} ..."
-    - export METEOIO_VERSION=${METEOVERSION#*-}
+    - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
+    - echo "Meteofile=${METEOFILE} ..."
+    - export METEOIO_VERSION=${METEOFILE#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.dmg
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.dmg
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"
               --data direct_asset_path="/bin/MacOS disk image (DMG)" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.exe
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"
               --data direct_asset_path="/bin/Windows installer" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
   allow_failure: true
 
 
