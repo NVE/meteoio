@@ -267,11 +267,11 @@ SSH copy WIN:
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe artifacts/$METEOVERSION-x86_64.exe
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.exe $METEOVERSION-x86_64.exe
   artifacts:
     expire_in: 1h
     paths:
-      - artifacts/MeteoIO-*-x86_64.exe
+      - MeteoIO-*-x86_64.exe
   # allow_failure: true
 
 SSH copy MAC:
@@ -286,11 +286,11 @@ SSH copy MAC:
     - export METEOVERSION=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
     - echo "Meteofile=${METEOVERSION} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOVERSION=${CI_COMMIT_TAG}; fi
-    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg artifacts/$METEOVERSION-x86_64.dmg
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOVERSION-x86_64.dmg $METEOVERSION-x86_64.dmg
   artifacts:
     expire_in: 1h
     paths:
-      - artifacts/MeteoIO-*-x86_64.dmg
+      - MeteoIO-*-x86_64.dmg
   # allow_failure: true
 
 auto-add WIN to release:
@@ -305,7 +305,7 @@ auto-add WIN to release:
     - export METEOVERSION=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN package to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*.exe"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file artifacts/${METEOVERSION}-x86_64.exe
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.exe
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
@@ -327,7 +327,7 @@ auto-add MAC to release:
     - export METEOVERSION=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*.dmg"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file artifacts/${METEOVERSION}-x86_64.dmg
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.dmg
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
@@ -354,14 +354,14 @@ manuel-add WIN/MAC to release:
     - export METEOIO_VERSION=${METEOVERSION#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-*"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file artifacts/${METEOVERSION}-x86_64.dmg
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.dmg
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
               --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.dmg"
               --data direct_asset_path="/bin/MacOS disk image (DMG)" 
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/test/assets/links"'
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file artifacts/${METEOVERSION}-x86_64.exe
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOVERSION}-x86_64.exe
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOVERSION}-x86_64.exe"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
