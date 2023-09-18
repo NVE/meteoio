@@ -307,16 +307,16 @@ auto-add WIN to release:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export METEOFILE=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN package to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*.exe"
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-*.exe"
     # upload to api
     - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"'
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-x86_64.exe"'
     # add to release
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-x86_64.exe"
               --data direct_asset_path="/bin/Windows installer" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${CI_COMMIT_TAG}/assets/links"'
   allow_failure: true
 
 
@@ -333,16 +333,16 @@ auto-add MAC to release:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export METEOFILE=MeteoIO-${METEOIO_VERSION}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*.dmg"
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-*.dmg"
     # upload to api
     - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.dmg
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"'
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-x86_64.dmg"'
     # add to release
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG}/${METEOFILE}-x86_64.dmg"
               --data direct_asset_path="/bin/MacOS disk image (DMG)" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${CI_COMMIT_TAG}/assets/links"'
   allow_failure: true
 
 
@@ -359,22 +359,22 @@ manuel-add WIN to release:
   script:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
+    - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No) == latest commit tag
     - echo "Meteofile=${METEOFILE} ..."
     - export METEOIO_VERSION=${METEOFILE#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*"
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-*"
     - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"'
-    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
-              --data name="Windows installer" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"
-              --data direct_asset_path="/bin/Windows installer" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"\
+              --data name="Windows installer" \
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"\
+              --data direct_asset_path="/bin/Windows installer" \
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOFILE}/assets/links"'
   allow_failure: true
 
 # add MAC packages to release manually after a release was created
-manuel-add WIN/MAC to release:
+manuel-add MAC to release:
   stage: edit release # needs to be in another stage to be able to see artifacts
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   needs:
@@ -390,14 +390,14 @@ manuel-add WIN/MAC to release:
     - echo "Meteofile=${METEOFILE} ..."
     - export METEOIO_VERSION=${METEOFILE#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
-      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*"
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-*"
     - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.dmg
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"'
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.dmg"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.dmg"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.dmg"
               --data direct_asset_path="/bin/MacOS disk image (DMG)" 
-              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOFILE}/assets/links"'
   allow_failure: true
 
 
