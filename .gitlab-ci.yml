@@ -362,7 +362,6 @@ manuel-add WIN to release:
     - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
     - echo "Meteofile=${METEOFILE} ..."
     - export METEOIO_VERSION=${METEOFILE#*-}
-    - cat MeteoIO-0.0.0-x86_64.exe
     - touch tmp.txt
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*"
