@@ -369,7 +369,7 @@ manuel-add WIN to release:
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer"
               --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"
-              --data direct_asset_path="/bin/Windows installer"
+              --data direct_asset_path="/bin/win-installer"
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOFILE}/assets/links"'
   allow_failure: true
 
@@ -396,7 +396,7 @@ manuel-add MAC to release:
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="MacOS disk image (DMG)" 
               --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.dmg"
-              --data direct_asset_path="/bin/MacOS disk image (DMG)" 
+              --data direct_asset_path="/bin/mac-image" 
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOFILE}/assets/links"'
   allow_failure: true
 
