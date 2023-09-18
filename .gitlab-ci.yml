@@ -265,8 +265,8 @@ SSH copy WIN:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
     - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
-    - echo "Meteofile=${METEOFILE} ..."
     - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi # if manual, use the tag name, else use the commit hash
+    - echo "Meteofile=${METEOFILE} ..."
     - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.exe ./$METEOFILE-x86_64.exe
   artifacts:
     expire_in: 1h
@@ -284,9 +284,9 @@ SSH copy MAC:
   script:
     - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
     - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
-    - echo "Meteofile=${METEOFILE} ..."
-    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi # if manual, use the tag name, else use the commit hash
     - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi # if manual, use the tag name, else use the commit hash
+    - echo "Meteofile=${METEOFILE} ..."
     - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.dmg ./$METEOFILE-x86_64.dmg
   artifacts:
     expire_in: 1h
@@ -362,14 +362,13 @@ manuel-add WIN to release:
     - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
     - echo "Meteofile=${METEOFILE} ..."
     - export METEOIO_VERSION=${METEOFILE#*-}
-    - touch tmp.txt
     - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-*"
-    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file tmp.txt
-      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/tmp.txt"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"'
     - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
               --data name="Windows installer" 
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/tmp.txt"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/${METEOFILE}-x86_64.exe"
               --data direct_asset_path="/bin/Windows installer" 
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOIO_VERSION}/assets/links"'
   allow_failure: true
