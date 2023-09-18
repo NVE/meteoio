@@ -366,10 +366,10 @@ manuel-add WIN to release:
       ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-*"
     - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ${METEOFILE}-x86_64.exe
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"'
-    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"\
-              --data name="Windows installer" \
-              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"\
-              --data direct_asset_path="/bin/Windows installer" \
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="Windows installer"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOFILE}/${METEOFILE}-x86_64.exe"
+              --data direct_asset_path="/bin/Windows installer"
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${METEOFILE}/assets/links"'
   allow_failure: true
 
