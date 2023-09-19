@@ -138,6 +138,7 @@ namespace FileUtils {
 			* @brief Add a new position to the index
 			* @param[in] i_date date of the new position
 			* @param[in] i_pos streampos position
+			* @param[in] linenr line number in the input file
 			*/
 			void setIndex(const Date& i_date, const std::streampos& i_pos, const size_t& linenr=static_cast<size_t>(-1));
 			void setIndex(const std::string& i_date, const std::streampos& i_pos, const size_t& linenr=static_cast<size_t>(-1));
