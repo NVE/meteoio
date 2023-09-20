@@ -66,7 +66,8 @@ class FilterRate : public ProcessingBlock {
 
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
         static size_t findNextPoint(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& start_idx);
-        double getRate(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& last_good, const size_t& next_good) const;
+        static double getRate(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& cmp_idx);
+        bool filterOut(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& last_good, const size_t& next_good) const;
 
 		double min_rate_of_change, max_rate_of_change;
         implementation_type methodParam; ///< controls which implementation of the filter is used
