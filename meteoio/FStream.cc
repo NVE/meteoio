@@ -28,31 +28,29 @@
 
 namespace mio {
 
-std::string cutPathToCWD(const std::string &path){
-	std::string outpath = "";
-	if (FileUtils::isAbsolutePath(path)){
-		std::string cwd = FileUtils::getCWD();
-		std::stringstream cwds(cwd);
+std::string ofilestream::cutPathToCWD(const std::string &path)
+{
+	std::string outpath;
+	if (FileUtils::isAbsolutePath(path)) {
+		std::stringstream cwds( FileUtils::getCWD() );
 		std::vector<std::string> cwd_parts;
 		std::string item;
-		while (std::getline(cwds, item, '/')){
+		while (std::getline(cwds, item, '/')) {
 			cwd_parts.push_back(item);
 		}
 
 		std::stringstream ps(path);
-		while (std::getline(ps,item,'/')){
-			if (std::find(cwd_parts.begin(), cwd_parts.end(), item)!=cwd_parts.end()){
+		while (std::getline(ps,item,'/')) {
+			if (std::find(cwd_parts.begin(), cwd_parts.end(), item)!=cwd_parts.end()) {
 				continue;
-			}
-			else {
-				outpath+=item;
-				outpath+="/";
+			} else {
+				outpath += item;
+				outpath += "/";
 			}
 		}
 		if (outpath.empty()) return "./";
 		else if (outpath.back()=='/') outpath.pop_back();
-	}
-	else {
+	} else {
 		std::regex e("\\.\\.\\/");
 		outpath = std::regex_replace(path, e, "");
 		std::regex e2("\\.\\/");
@@ -62,7 +60,8 @@ std::string cutPathToCWD(const std::string &path){
 	return outpath;
 }
 
-std::string limitAccess(std::string& path, bool write_directories, bool warn_abs_path){
+std::string ofilestream::limitAccess(std::string path, const bool& write_directories)
+{
 	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
 		if (FileUtils::isAbsolutePath(path) && warn_abs_path) {
@@ -71,7 +70,7 @@ std::string limitAccess(std::string& path, bool write_directories, bool warn_abs
 			warn_abs_path = false;
 		}
 
-		if (FileUtils::directoryExists(path)	) {
+		if (FileUtils::directoryExists(path)) {
 			path = cutPathToCWD(FileUtils::cleanPath(path,true));
 		} else {
 			path = cutPathToCWD(path);
@@ -83,8 +82,8 @@ std::string limitAccess(std::string& path, bool write_directories, bool warn_abs
 		}
 	} else {
 #ifdef LIMIT_WRITE_ACCESS
-		std::string cwd = FileUtils::getCWD();
-		std::string clean_path = FileUtils::cleanPath(path,true);
+		const std::string cwd( FileUtils::getCWD() );
+		const std::string clean_path( FileUtils::cleanPath(path,true) );
 		if (clean_path.find(cwd)==std::string::npos || (cwd.substr(0,4)!=clean_path.substr(0,4))) {
 			std::cerr <<"Write access was restricted, but directories are not supposed to be created. Making it impossible to use the specified directory" << std::endl;
 			throw IOException("Unqualified directory path "+path+"\n Please make sure you are not trying to access outside of the directory, or set WRITE_DIRECTORIES to true in the configuration file");
@@ -96,16 +95,18 @@ std::string limitAccess(std::string& path, bool write_directories, bool warn_abs
 }
 
 
-std::string ofilestream::initialize(const char* filename, const Config& cfgreader) {
-	bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
+std::string ofilestream::initialize(const char* filename, const Config& cfgreader)
+{
+	const bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
 	return initialize(filename, write_directories);
 }
 
-std::string ofilestream::initialize(const char* filename, bool write_directories) {
-	std::string path = FileUtils::getPath(filename);
-	std::string file = FileUtils::getFilename(filename);
+std::string ofilestream::initialize(const char* filename, bool write_directories)
+{
+	const std::string path( FileUtils::getPath(filename) );
+	std::string file( FileUtils::getFilename(filename) );
 	if (keep_old_files) {
-		const std::string extension = FileUtils::getExtension(file);
+		const std::string extension( FileUtils::getExtension(file) );
 		if (!extension.empty()) {
 			file = FileUtils::removeExtension(file) + "_" + FileUtils::getDateTime() +extension;
 		} else {
@@ -115,32 +116,33 @@ std::string ofilestream::initialize(const char* filename, bool write_directories
 #if !defined _WIN32 && !defined __MINGW32__
 	if (FileUtils::isWindowsPath(path)) throw IOException("Windows paths are not allowed for UNIX systems");
 #endif
-	const std::string FILE = limitAccess(path, write_directories, warn_abs_path)+"/"+file;
+	const std::string FILE( limitAccess(path, write_directories) + "/" + file );
 	warn_abs_path = false;
 	return FILE;
 }
 
-void ofilestream::open(const char* filename, std::ios_base::openmode mode) {
+void ofilestream::open(const char* filename, std::ios_base::openmode mode)
+{
 	std::ofstream::open(initialize(filename, write_directories_default).c_str(), mode);
 }
 
-ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode) {
-}
+ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode), warn_abs_path(true)
+{}
 
-ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), write_directories_default).c_str(), mode) {
-}
+ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), write_directories_default).c_str(), mode), warn_abs_path(true)
+{}
 
-ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode) {
-}
+ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode), warn_abs_path(true)
+{}
 
-ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode) {
-}
+ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode), warn_abs_path(true)
+{}
 
 bool ofilestream::write_directories_default = true;
 bool ofilestream::keep_old_files = false;
-bool ofilestream::warn_abs_path = true;
 
-bool ofilestream::getDefault() {
+bool ofilestream::getDefault()
+{
 	return ofilestream::write_directories_default;
 }
 

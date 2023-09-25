@@ -11,7 +11,8 @@ int main() {
     ofilestream tmp;
     bool dir_status, filestatus=true;
     if (tmp.getDefault()) {
-        dir_status, filestatus = false;
+        dir_status = false;
+        filestatus = false;
         std::cerr<< "Testing the generation of directories from path"<<std::endl;
         std::string filename1 = "./this/is/a/test.txt";
         std::string filename2 = "./this/is/a/second_test.txt";
@@ -73,8 +74,8 @@ int main() {
         abs_fail << "hiii";
         abs_fail.close();
     
-        int _ = system("rm -rf this");
-        _ = system("rm -rf Documents");
+        system("rm -rf this");
+        system("rm -rf Documents");
 
         std::cerr << "Everything works as expected"<< std::endl;
         std::cerr << "----------------------------" << std::endl;
@@ -92,7 +93,7 @@ int main() {
         } else {
             std::cerr << "directory was not created at all in write acces limitation scope"<< std::endl;
         }
-        int a = system ("rm -rf this_shouldnt_be_outside_of_fstream");
+        system ("rm -rf this_shouldnt_be_outside_of_fstream");
         std::cerr << "----------------------------" << std::endl;
 #endif
     } else {
@@ -110,7 +111,7 @@ int main() {
                 exit(1);
             }
         }
-        int _ = system("rm trial.txt");
+        system("rm trial.txt");
     }
 
     std::cerr << "checking the reading of ini file"<<std::endl;
@@ -119,7 +120,7 @@ int main() {
     if (cfg.get("WRITE_DIRECTORIES","Output",true)!=false) throw IOException("Ini file was not read properly");
     IOManager mng(cfg);
     ofilestream tmp2("hi");
-    int _ = system("rm hi");
+    system("rm hi");
     if (tmp2.getDefault() != false) throw IOException("Default was not set");
 #ifdef LIMIT_WRITE_ACCESS
     std::string abs_path1 = "/home/leibersp/Documents/test.txt";// should not work
@@ -141,11 +142,11 @@ int main() {
     if (works.getDefault()) throw IOException("Default was not kept");
     works << "hiii";
     works.close();
-    _ = system("rm test.txt");
+    system("rm test.txt");
 #endif
 
     std::cerr << "Checking for calls to std::ofstream outside of wrapper"<< std::endl;
-    int sys_o = system("rgrep --exclude=\"*.cc.o\" \"ofstream\" ../../meteoio | grep -vE \"^../../meteoio/FStream.\" | grep -vE \"ofstream::app\" |grep -vE \"ofstream::out\">tmp_ofstream_instances.txt");
+    system("rgrep --exclude=\"*.cc.o\" \"ofstream\" ../../meteoio | grep -vE \"^../../meteoio/FStream.\" | grep -vE \"ofstream::app\" |grep -vE \"ofstream::out\">tmp_ofstream_instances.txt");
     std::ifstream ofstream_instances("tmp_ofstream_instances.txt");
     std::string item;
     while (getline(ofstream_instances, item,':')) {
@@ -155,7 +156,7 @@ int main() {
             exit(1);
         }
     }
-    _ = system("rm tmp_ofstream_instances.txt");
+    system("rm tmp_ofstream_instances.txt");
     std::cerr << "Nothing found"<< std::endl;
 
     return !filestatus || !dir_status;

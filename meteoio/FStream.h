@@ -25,29 +25,32 @@
 
 
 namespace mio {
-std::string cutPathToCWD(const std::string &path);
-std::string limitAccess(std::string& path, bool write_directories, bool warn_abs_path);
-
 
 class ofilestream : public std::ofstream
 {
-	private:
-		std::string initialize(const char* filename);
-        std::string initialize(const char* filename, const Config& cfgreader);
-        std::string initialize(const char* filename, bool write_directories);
-        static bool write_directories_default;
-        static bool keep_old_files;
-        static bool warn_abs_path;
-        friend void IOManager::setOfstreamDefault(const Config& i_cfg);
     public:
-        ofilestream(){}
+        ofilestream(): warn_abs_path(true) {}
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode = std::ios_base::out);
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+
         bool getDefault();
+
+    private:
+		std::string initialize(const char* filename);
+        std::string initialize(const char* filename, const Config& cfgreader);
+        std::string initialize(const char* filename, bool write_directories);
+        static bool write_directories_default;
+        static bool keep_old_files;
+        friend void IOManager::setOfstreamDefault(const Config& i_cfg);
+
+        std::string cutPathToCWD(const std::string &path);
+        std::string limitAccess(std::string path, const bool& write_directories);
+
+        bool warn_abs_path;
 };
 }
 
