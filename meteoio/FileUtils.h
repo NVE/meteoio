@@ -25,6 +25,7 @@
 #include <list>
 
 #include <meteoio/dataClasses/Date.h>
+#include <meteoio/FStream.h>
 
 namespace mio {
 namespace FileUtils {
@@ -52,6 +53,16 @@ namespace FileUtils {
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="", const bool& isRecursive=false);
 
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
+
+	bool directoryExists(const std::string &path);
+	bool isWindowsPath(const std::string &path);
+	/**
+	 * @brief creates the directory tree for the given path, including missing intermediate directories
+	 * (gives only rw permissions), only takes paths delimited with '/'
+	 * @param path directory tree to create, cannot include filenames
+	 * @param debug print additional information about the creation of directories (default=false)
+	 */
+	void createDirectories(const std::string &path, const bool verbose=false);
 
 	bool validFileAndPath(const std::string& filename);
 
@@ -90,6 +101,12 @@ namespace FileUtils {
 	* @return path
 	*/
 	std::string getCWD();
+
+	/**
+	 * @brief returns the current date and time as a string.
+	 * @return date and time
+	 */
+	std::string getDateTime();
 
 	/**
 	* @brief returns the path preceeding a given filename.
