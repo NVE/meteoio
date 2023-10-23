@@ -130,7 +130,7 @@ namespace mio {
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  * 
  * Some general output options exist:
- * 	- WRITE_DIRECTORIES, writes any missing directories in a file path, allowing arbitrary file locations (might lead to weird locations if you use a copied INI File, default: true)
+ *  - WRITE_DIRECTORIES, writes any missing directories in a file path, allowing arbitrary file locations (might lead to weird locations if you use a copied INI File, default: true)
  *  - KEEP_OLD_FILES, puts a timestamp to the end of the filename, s.t. files that would be overwritten by a new run are kept (default: false)
  * 
  * 
