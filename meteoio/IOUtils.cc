@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+#include <regex>
 #include <ctype.h>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#ifndef NOMINMAX
@@ -137,11 +138,10 @@ void stripComments(std::string& str)
 	    found+=1;
 	}
 
-	const size_t found = str.find_first_of("#;");
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
 		std::regex re2("\\\\#");
-		str = regex_replace(str,re2,"#");
+		str = std::regex_replace(str,re2,"#");
 	}
 }
 
