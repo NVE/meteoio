@@ -128,21 +128,22 @@ std::string bearing(double bearing)
 
 void stripComments(std::string& str)
 {
-	bool found_comment = false;
-	size_t found =0;
-	while (!found_comment) {
-	    found = str.find_first_of("#;",found);
-	    if (str.at(found-1)!='\\' || found==std::string::npos){
-	        break;
-	    }
-	    found+=1;
-	}
-
-	if (found != std::string::npos){
-		str.erase(found); //rest of line disregarded
-		std::regex re2("\\\\#");
-		str = std::regex_replace(str,re2,"#");
-	}
+	size_t pos = 0;
+	do {
+		//find_first_of searches for any of the given chars while find search for an exact match...
+		const size_t pound_found_idx = str.find('#', pos);
+		const size_t semi_found_idx = str.find(';', pos);
+		pos = std::min(pound_found_idx, semi_found_idx);
+		
+		if (pos != std::string::npos) {
+			if (pos>0 && str[pos-1]=='\\') {
+				pos++;
+				continue;
+			}
+			str.erase(pos); //rest of line disregarded
+			return;
+		}
+	} while (pos != std::string::npos);
 }
 
 void stripComments(std::string& str, const char& comment_mk)
