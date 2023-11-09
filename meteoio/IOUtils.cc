@@ -127,9 +127,21 @@ std::string bearing(double bearing)
 
 void stripComments(std::string& str)
 {
+	bool found_comment = false;
+	size_t found =0;
+	while (!found_comment) {
+	    found = str.find_first_of("#;",found);
+	    if (str.at(found-1)!='\\' || found==std::string::npos){
+	        break;
+	    }
+	    found+=1;
+	}
+
 	const size_t found = str.find_first_of("#;");
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
+		std::regex re2("\\\\#");
+		str = regex_replace(str,re2,"#");
 	}
 }
 
