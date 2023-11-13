@@ -108,7 +108,7 @@ std::string ofilestream::initialize(const char* filename, bool write_directories
 	if (keep_old_files) {
 		const std::string extension( FileUtils::getExtension(file) );
 		if (!extension.empty()) {
-			file = FileUtils::removeExtension(file) + "_" + FileUtils::getDateTime() +extension;
+			file = FileUtils::removeExtension(file) + "_" + FileUtils::getDateTime()+"." +extension;
 		} else {
 			file = file + "_" + FileUtils::getDateTime();
 		}

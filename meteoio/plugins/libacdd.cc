@@ -71,6 +71,59 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 			}
 		}
 	}
+	checkMultiValueConsistency();
+}
+
+int findAllCommas(std::string& str) 
+{
+	int index = 0;
+	int occurrences = 0;
+    while ((index = str.find(',', index)) != std::string::npos) {
+        index++;
+		occurrences++;
+    }
+
+	return occurrences;
+}
+
+
+void ACDD::checkMultiValueConsistency()
+{
+	std::vector<std::string> creator_att_name{"creator_name", "creator_email", "creator_institution", "creator_url"};//, "creator_type"};
+	std::vector<std::string> publisher_att_name{"publisher_name", "publisher_email", "publisher_url"};//, "publisher_type"};
+
+	std::vector<std::string> creator, publisher;
+
+	bool is_list_creator = false;
+	bool is_list_publisher = false;
+
+	for (size_t ii=0; ii<creator_att_name.size(); ii++) {
+		size_t pos = find( creator_att_name[ii] );
+		if (pos!=mio::IOUtils::npos) {
+			creator.push_back( value[pos] );
+			if (value[pos].find(',') != std::string::npos) is_list_creator = true;	
+		}
+		if (ii<publisher_att_name.size()) {
+			size_t pos_p = find(publisher_att_name[ii]);
+			if (pos_p != mio::IOUtils::npos) {
+				publisher.push_back(value[pos_p]);
+				if (value[pos].find(',') != std::string::npos) is_list_publisher = true;	
+			}
+		}
+	}
+
+	if (!creator.empty() && is_list_creator) {
+		const int num_creators = findAllCommas(creator[0]);
+		for (size_t ii = 0; ii<creator.size();ii++){
+			if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of creators and " +creator_att_name[ii]+" do not match.");
+		}
+	}
+	if (!publisher.empty() && is_list_publisher) {
+		const int num_publishers = findAllCommas(publisher[0]);
+		for (size_t ii = 0; ii<publisher.size();ii++){
+			if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of publishers and " +publisher_att_name[ii]+" do not match.");
+		}
+	}
 }
 
 void ACDD::defaultInit()
@@ -108,6 +161,7 @@ void ACDD::defaultInit()
 	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
 	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
 	addAttribute("wmo__wsi", "", "WIGOS_ID");
+	checkMultiValueConsistency();
 }
 
 /**

@@ -135,6 +135,7 @@ class ACDD {
 	private:
 		void defaultInit();
 		size_t find(const std::string& search_name) const;
+		void checkMultiValueConsistency();
 		
 		std::vector<std::string> name, cfg_key, value;
 		bool enabled; //helper boolean for callers to know if this object should be used or not
