@@ -36,8 +36,6 @@ variables:
 
 build latest image:
   stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
   image: docker:24.0.6
   services:
     - name: docker:24.0.6-dind
