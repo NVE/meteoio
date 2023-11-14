@@ -45,7 +45,7 @@ build latest image:
     - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
     - echo $REALEASE_DATE
     - docker build --build-arg METEOIO_VERSION=unstable --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
+    # - docker push $CI_REGISTRY_IMAGE:test
   allow_failure: true
   when: manual
 
