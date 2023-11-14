@@ -40,8 +40,9 @@ build latest image:
   services:
     - name: docker:24.0.6-dind
       alias: docker
-  script:
+  before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER -password-stdin $CI_REGISTRY
+  script:
     - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
     - echo $REALEASE_DATE
     - docker build --build-arg METEOIO_VERSION=unstable --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:latest .
