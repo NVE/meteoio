@@ -1,0 +1,119 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for MeteoIO temporal interpolations
+-->
+
+<inishell_include>
+
+	<parametergroup name="1D_INTERPOLATIONS">
+		<parameter key="ENABLE_RESAMPLING" label="ENABLE_RESAMPLING" caption="Interpolate data" type="checkbox" default="TRUE">
+			<section name="Interpolations1D"/>
+			<help>Should the data be resampled to the timesteps requested from outside (it is very strongly suggested to keep it set to TRUE for most applications)</help>
+		</parameter>
+		<parameter key="WINDOW_SIZE" type="number" format="integer+" min="1" default="43200" unit="s">
+			<section name="Interpolations1D"/>
+			<help>Default width of the biggest data gap that can be filled by temporal interpolation (in seconds: 1/2 day=43200, 1 day=86400, 1 week=604800)</help>
+		</parameter>
+	
+		<parameter label="Add/Remove 1D interpolation" type="selector">
+			<section name="Interpolations1D"/>
+			<parameter key="%::RESAMPLE" label="Resample % with:" type="alternative" template="true">
+				<reference name="RESAMPLING_NONE"/>
+				<reference name="RESAMPLING_NEAREST"/>
+				<reference name="RESAMPLING_LINEAR"/>
+				<reference name="RESAMPLING_ACCUMULATE"/>
+				<reference name="RESAMPLING_SOLAR"/>
+				<reference name="RESAMPLING_DAILY_SOLAR"/>
+				<reference name="RESAMPLING_DAILY_AVG"/>
+			</parameter>
+			<reference name="METEOPARAMETERS"/>
+		</parameter>
+	</parametergroup>
+
+	<!-- 1D RESAMPLING -->
+	<parametergroup name="RESAMPLING_NONE">
+		<option caption="No Interpolation" value="NONE">
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1NoResampling.html&quot;&gt;No interpolation&lt;/a&gt; (can be useful to overwrite imported INIs)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_NEAREST">
+		<option caption="Nearest Neighbour" value="NEAREST">
+			<parameter key="%::NEAREST::WINDOW_SIZE" label="WINDOW_SIZE" type="number" format="integer" min="1" unit="s"/>
+			<parameter key="%::NEAREST::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data outside of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1NearestNeighbour.html&quot;&gt;Nearest neighbor interpolation&lt;/a&gt; between missing points</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_LINEAR">
+		<option caption="Linear" value="LINEAR">
+			<parameter key="%::LINEAR::WINDOW_SIZE" label="WINDOW_SIZE" type="number" format="integer" min="1" unit="s"/>
+			<parameter key="%::LINEAR::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data &lt;i&gt;outside&lt;/i&gt; of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1LinearResampling.html&quot;&gt;Linear interpolation&lt;/a&gt; between missing points</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_ACCUMULATE">
+		<option caption="Accumulate" value="ACCUMULATE">
+			<parameter key="%::ACCUMULATE::PERIOD" label="Accumulation period:" type="number" format="integer+" min="1" default="900" optional="false" unit="s">
+				<help>Accumulation period (in seconds). This must usually match the model time step. It is assumed that the measured accumulation period is equal to the data timesteps.</help>
+			</parameter>
+			<parameter key="%::ACCUMULATE::STRICT" caption="Strict nodatda propagation" type="checkbox">
+				<help>if enabling "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). Otherwise, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Accumulate.html&quot;&gt;Accumulation&lt;/a&gt; over a user given period (filter argument, in seconds - should coincide with your calculation step!).</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_SOLAR">
+		<option caption="Solar" value="SOLAR">
+			<parameter key="%::LINEAR::WINDOW_SIZE" label="WINDOW_SIZE" type="number" format="integer" min="1" unit="s"/>
+			<parameter key="%::LINEAR::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data &lt;i&gt;outside&lt;/i&gt; of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Solar.html&quot;&gt;Resample solar radiation&lt;/a&gt; by interpolating an atmospheric loss factor.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_DAILY_SOLAR">
+		<option caption="Solar daily sum" value="DAILY_SOLAR">
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Daily__solar.html&quot;&gt;Distribute a daily sum of solar radiation&lt;/a&gt; over the whole day.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_DAILY_AVG">
+		<option caption="Sinusoidal Daily Average" value="DAILY_AVG">
+			<parameter key="%::DAILY_AVG::RANGE" label="DAILY_AVG Range:" type="number" format="decimal" min="0" default="10.00" optional="false">
+				<help>How much should the value change around the average?</help>
+			</parameter>
+			<parameter key="%::DAILY_AVG::PHASE" label="DAILY_AVG Phase:" type="number" format="decimal" min="0" default="0.25" optional="false" unit="days">
+				<help>Where should the minimum value be, from the begining of the day (in days)?</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1DailyAverage.html&quot;&gt;This&lt;/a&gt; considers that the single daily value is the daily average of a sinusoidal variation.</help>
+		</option>
+	</parametergroup>
+
+</inishell_include>
