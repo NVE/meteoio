@@ -260,6 +260,16 @@ IF(INSTALL_DOC)
 	INSTALL(DIRECTORY "doc/examples" USE_SOURCE_PERMISSIONS DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
 ENDIF(INSTALL_DOC)
 
+# Install the inishell apps, so they can be found
+SET(XML_DEST inishell-apps/meteoio)
+IF((UNIX) AND (NOT APPLE))
+	SET(XML_DEST share/inishell-apps/meteoio)
+ENDIF()
+
+FILE(GLOB xmlfiles "inishell-apps/*.xml")
+INSTALL(FILES ${xmlfiles} DESTINATION ${XML_DEST} COMPONENT resources)
+FILE(GLOB pngfiles "inishell-apps/*.png")
+INSTALL(FILES ${pngfiles} DESTINATION ${XML_DEST} COMPONENT resources)
 ###########################################################
 ## CPACK section
 ###########################################################
