@@ -30,12 +30,12 @@ namespace mio {
 /**
  * @page ofstream_wrapper ofilestream
  * @section opt Output options
- * This wrapper provides some custom functionality for the wrriting of files. It is based on std::ofstream.
+ * This wrapper provides some custom functionality for the writing of files. It is based on std::ofstream.
  * 
  * It is possible to limit the write access to the current working directory, and its subdirectories. 
  * This is done by setting the cmake macro LIMIT_WRITE_ACCESS to ON. (Default: off)
  * 
- * The following inishell options are available to control the output:
+ * The following configuration keys are available to control the output:
  * - WRITE_DIRECTORIES: If set to true, the software will create non-existing directories in the output path. If set to false, the software will only write to existing directories. Default: true
  * - KEEP_OLD_FILES: If set to true, the software will not overwrite existing files, but create a new file with a timestamp in the filename. Default: false
  *
@@ -186,6 +186,7 @@ ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mod
 * @brief Constructor
 * @param filename file to write
 * @param cfgreader instance of Config, to read the inishell config keywords
+* @param mode mode to open the file in
 */
 ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode), warn_abs_path(true)
 {}
