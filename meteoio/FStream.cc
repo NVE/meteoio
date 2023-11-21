@@ -27,7 +27,35 @@
 #include <meteoio/FStream.h>
 
 namespace mio {
+/**
+ * @page ofstream wrapper ofilestream
+ * @section Output options
+ * This wrapper provides some custom functionality for the wrriting of files. It is based on std::ofstream.
+ * 
+ * It is possible to limit the write access to the current working directory, and its subdirectories. 
+ * This is done by setting the cmake macro LIMIT_WRITE_ACCESS to ON. (Default: off)
+ * 
+ * The following inishell options are available to control the output:
+ * - WRITE_DIRECTORIES: If set to true, the software will create non-existing directories in the output path. If set to false, the software will only write to existing directories. Default: true
+ * - KEEP_OLD_FILES: If set to true, the software will not overwrite existing files, but create a new file with a timestamp in the filename. Default: false
+ *
+ * @section example
+ * @code
+ * [Output]
+ * WRITE_DIRECTORIES = false
+ * KEEP_OLD_FILES = true
+ * @endcode
+ */
 
+
+/**
+* @brief Adjust the path, so that it starts from the current working directory.
+* @details
+* The path is checked, whether it points to a directory outside of the current working directory. If so, the path is adjusted to point to the current working directory.
+* If an absolute path is given, it will be prefixed by ./, possibly creating a lot of directories, if an absolute path to a restricted area was given.
+* @param path The output path that needs to be checked.
+* @return outpath The adjusted path.
+*/
 std::string ofilestream::cutPathToCWD(const std::string &path)
 {
 	std::string outpath;
@@ -60,6 +88,15 @@ std::string ofilestream::cutPathToCWD(const std::string &path)
 	return outpath;
 }
 
+
+/**
+* @brief Handles the limited access depending on different options and input
+* @details
+* Throws an error if directories are not supposed to be created, but the given path is outside of the permitted area.
+* @param path output filename and path
+* @param write_directories whether directories are supposed to be created
+* @return The adjusted path.
+*/
 std::string ofilestream::limitAccess(std::string path, const bool& write_directories)
 {
 	if (write_directories) {
@@ -121,17 +158,35 @@ std::string ofilestream::initialize(const char* filename, bool write_directories
 	return FILE;
 }
 
+
+/**
+* @brief The actual writing function
+* @details
+* works the same as std::ofstream::open, but with the additional functionality
+* @param filename file to write
+* @param mode mode to open the file in
+*/
 void ofilestream::open(const char* filename, std::ios_base::openmode mode)
 {
 	std::ofstream::open(initialize(filename, write_directories_default).c_str(), mode);
 }
 
+/**
+* @brief Constructor
+* @param filename file to write
+* @param mode mode to open the file in
+*/
 ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode), warn_abs_path(true)
 {}
 
 ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), write_directories_default).c_str(), mode), warn_abs_path(true)
 {}
 
+/**
+* @brief Constructor
+* @param filename file to write
+* @param cfgreader instance of Config, to read the inishell config keywords
+*/
 ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode), warn_abs_path(true)
 {}
 
