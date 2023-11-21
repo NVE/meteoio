@@ -205,15 +205,6 @@ bool isWindowsPath(const std::string& path) {
 	return std::regex_search(path, e);
 }
 
-int make_directory(const char* name)
-{
-#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
-    return _mkdir(name); /* Or what parameter you need here ... */
-#else
-    return mkdir(name, 0777);
-#endif
-}
-
 void createDirectories(const std::string &path, const bool verbose)
 {
 	if (path.empty())
@@ -235,7 +226,7 @@ void createDirectories(const std::string &path, const bool verbose)
 		}
 		else
 		{
-			bool check_creation = make_directory(tmp_path.c_str());
+			bool check_creation = mkdir(tmp_path.c_str(), 0777);
 			if (verbose)
 			{
 				if (!check_creation)
@@ -247,6 +238,8 @@ void createDirectories(const std::string &path, const bool verbose)
 		}
 	}
 }
+
+
 
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()
