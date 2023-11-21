@@ -28,8 +28,8 @@
 
 namespace mio {
 /**
- * @page ofstream wrapper ofilestream
- * @section Output options
+ * @page ofstream_wrapper ofilestream
+ * @section opt Output options
  * This wrapper provides some custom functionality for the wrriting of files. It is based on std::ofstream.
  * 
  * It is possible to limit the write access to the current working directory, and its subdirectories. 
@@ -39,7 +39,7 @@ namespace mio {
  * - WRITE_DIRECTORIES: If set to true, the software will create non-existing directories in the output path. If set to false, the software will only write to existing directories. Default: true
  * - KEEP_OLD_FILES: If set to true, the software will not overwrite existing files, but create a new file with a timestamp in the filename. Default: false
  *
- * @section example
+ * @section Example
  * @code
  * [Output]
  * WRITE_DIRECTORIES = false

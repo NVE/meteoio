@@ -130,7 +130,7 @@ namespace mio {
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  * 
  * 
- * Writing a file happens via a wrapper for std::ofstream \subpage ofilestream "ofilestream" that adds some functionality, like limiting the write access.
+ * Writing a file happens via a wrapper for std::ofstream \subpage ofstream_wrapper "ofilestream" that adds some functionality, like limiting the write access.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
  *
