@@ -208,7 +208,7 @@ bool isWindowsPath(const std::string& path) {
 int make_directory(const char* name)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
-    return _mkdir(name); /* Or what parameter you need here ... */
+    return mkdir(name); 
 #else
     return mkdir(name, 0777);
 #endif
