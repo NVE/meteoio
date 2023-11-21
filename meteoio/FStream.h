@@ -26,14 +26,6 @@
 
 namespace mio {
 
-/**
-* @class ofilestream
-* @brief A class that extends std::ofstream, adding some output functionality. Limiting the write access of the software, 
-*        writing non-existing output directories, and adding a timestamp to output filenames.
-*
-* @author Patrick Leibersperger
-* @date   2023-11-21
-*/
 class ofilestream : public std::ofstream
 {
     public:
@@ -42,13 +34,13 @@ class ofilestream : public std::ofstream
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
-
-
+        ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode = std::ios_base::out);
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 
         bool getDefault();
 
     private:
+		std::string initialize(const char* filename);
         std::string initialize(const char* filename, const Config& cfgreader);
         std::string initialize(const char* filename, bool write_directories);
         static bool write_directories_default;
