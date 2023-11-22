@@ -44,6 +44,7 @@ class ofilestream : public std::ofstream
 
 
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+        void createDirectoriesOfFile(const char* filename);
 
         bool getDefault();
         std::string getLimitBaseDir();

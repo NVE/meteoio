@@ -213,4 +213,9 @@ std::string ofilestream::getLimitBaseDir()
 	return LIMIT_BASE_DIR;
 }
 
+void ofilestream::createDirectoriesOfFile(const char* filename)
+{
+	initialize(filename, write_directories_default);
+}
+
 }
