@@ -142,13 +142,13 @@ std::string ofilestream::limitAccess(std::string path, const bool& write_directo
 }
 
 
-std::string ofilestream::initialize(const char* filename, const Config& cfgreader)
+std::string ofilestream::initializeFilesystem(const char* filename, const Config& cfgreader)
 {
 	const bool write_directories = cfgreader.get("WRITE_DIRECTORIES", "Output", true);
-	return initialize(filename, write_directories);
+	return initializeFilesystem(filename, write_directories);
 }
 
-std::string ofilestream::initialize(const char* filename, bool write_directories)
+std::string ofilestream::initializeFilesystem(const char* filename, bool write_directories)
 {
 	const std::string path( FileUtils::getPath(filename) );
 	std::string file( FileUtils::getFilename(filename) );
@@ -163,9 +163,9 @@ std::string ofilestream::initialize(const char* filename, bool write_directories
 #if !defined _WIN32 && !defined __MINGW32__
 	if (FileUtils::isWindowsPath(path)) throw IOException("Windows paths are not allowed for UNIX systems");
 #endif
-	const std::string FILE( limitAccess(path, write_directories) + "/" + file );
+	const std::string fileAndPath( limitAccess(path, write_directories) + "/" + file );
 	warn_abs_path = false;
-	return FILE;
+	return fileAndPath;
 }
 
 
@@ -178,7 +178,7 @@ std::string ofilestream::initialize(const char* filename, bool write_directories
 */
 void ofilestream::open(const char* filename, std::ios_base::openmode mode)
 {
-	std::ofstream::open(initialize(filename, write_directories_default).c_str(), mode);
+	std::ofstream::open(initializeFilesystem(filename, write_directories_default).c_str(), mode);
 }
 
 /**
@@ -186,10 +186,10 @@ void ofilestream::open(const char* filename, std::ios_base::openmode mode)
 * @param filename file to write
 * @param mode mode to open the file in
 */
-ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename, write_directories_default).c_str(), mode)
+ofilestream::ofilestream(const char* filename, std::ios_base::openmode mode) : std::ofstream(initializeFilesystem(filename, write_directories_default).c_str(), mode)
 {}
 
-ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), write_directories_default).c_str(), mode)
+ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mode) : std::ofstream(initializeFilesystem(filename.c_str(), write_directories_default).c_str(), mode)
 {}
 
 /**
@@ -198,10 +198,10 @@ ofilestream::ofilestream(const std::string filename, std::ios_base::openmode mod
 * @param cfgreader instance of Config, to read the inishell config keywords
 * @param mode mode to open the file in
 */
-ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename, cfgreader).c_str(),mode)
+ofilestream::ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initializeFilesystem(filename, cfgreader).c_str(),mode)
 {}
 
-ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initialize(filename.c_str(), cfgreader).c_str(), mode)
+ofilestream::ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode) : std::ofstream(initializeFilesystem(filename.c_str(), cfgreader).c_str(), mode)
 {}
 
 bool ofilestream::write_directories_default = true;
@@ -221,7 +221,7 @@ std::string ofilestream::getLimitBaseDir()
 
 void ofilestream::createDirectoriesOfFile(const char* filename)
 {
-	initialize(filename, write_directories_default);
+	initializeFilesystem(filename, write_directories_default);
 }
 
 }

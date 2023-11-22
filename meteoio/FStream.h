@@ -44,20 +44,20 @@ class ofilestream : public std::ofstream
 
 
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
-        void createDirectoriesOfFile(const char* filename);
+        static void createDirectoriesOfFile(const char* filename);
 
-        bool getDefault();
-        std::string getLimitBaseDir();
+        static bool getDefault();
+        static std::string getLimitBaseDir();
 
     private:
-        std::string initialize(const char* filename, const Config& cfgreader);
-        std::string initialize(const char* filename, bool write_directories);
+        static std::string initializeFilesystem(const char* filename, const Config& cfgreader);
+        static std::string initializeFilesystem(const char* filename, bool write_directories);
         static bool write_directories_default;
         static bool keep_old_files;
         friend void IOManager::setOfstreamDefault(const Config& i_cfg);
 
-        std::string cutPathToLimitDir(const std::string &path);
-        std::string limitAccess(std::string path, const bool& write_directories);
+        static std::string cutPathToLimitDir(const std::string &path);
+        static std::string limitAccess(std::string path, const bool& write_directories);
 
         static bool warn_abs_path;
 };
