@@ -132,9 +132,7 @@ if(LIMIT_OUT_ACCESS)
 	add_compile_definitions(LIMIT_WRITE_ACCESS)
 endif()
 set(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to special directory")
-if(LIMIT_OUT_ACCESS)
-	add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"")
-endif()
+add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"")
 
 ###########################################################
 #finally, SET compile flags
