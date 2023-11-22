@@ -68,15 +68,18 @@ std::string ofilestream::cutPathToLimitDir(const std::string &path)
 		}
 
 		std::stringstream ps(path);
+		int ii = 0;
 		while (std::getline(ps,item,'/')) {
-			if (std::find(lim_dir_parts.begin(), lim_dir_parts.end(), item)!=lim_dir_parts.end()) {
+			if (ii < lim_dir_parts.size() && lim_dir_parts[ii]==item) {
+				ii++;
 				continue;
 			} else {
 				outpath += item;
 				outpath += "/";
+				ii++;
 			}
 		}
-		if (outpath.empty()) return "./";
+		if (outpath.empty()) return getLimitBaseDir();
 		else if (outpath.back()=='/') outpath.pop_back();
 	} else {
 		outpath = path;
@@ -123,6 +126,9 @@ std::string ofilestream::limitAccess(std::string path, const bool& write_directo
 		} 
 	} else {
 #ifdef LIMIT_WRITE_ACCESS
+		if (!FileUtils::directoryExists(getLimitBaseDir())) { 
+			throw IOException("The directory "+getLimitBaseDir()+" does not exist, but is needed to limit the write access");
+		}
 		const std::string lim_dir( getLimitBaseDir() );
 		const std::string clean_path( FileUtils::cleanPath(path,true) );
 		if (clean_path.find(lim_dir)==std::string::npos || (lim_dir.substr(0,4)!=clean_path.substr(0,4))) {
