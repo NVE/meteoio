@@ -23,7 +23,6 @@
 #include <fstream>
 #include <meteoio/IOManager.h>
 
-
 namespace mio {
 
 /**
@@ -37,7 +36,7 @@ namespace mio {
 class ofilestream : public std::ofstream
 {
     public:
-        ofilestream(): warn_abs_path(true) {}
+        ofilestream() {};
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
@@ -47,6 +46,7 @@ class ofilestream : public std::ofstream
         void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 
         bool getDefault();
+        std::string getLimitBaseDir();
 
     private:
         std::string initialize(const char* filename, const Config& cfgreader);
@@ -55,10 +55,10 @@ class ofilestream : public std::ofstream
         static bool keep_old_files;
         friend void IOManager::setOfstreamDefault(const Config& i_cfg);
 
-        std::string cutPathToCWD(const std::string &path);
+        std::string cutPathToLimitDir(const std::string &path);
         std::string limitAccess(std::string path, const bool& write_directories);
 
-        bool warn_abs_path;
+        static bool warn_abs_path;
 };
 }
 

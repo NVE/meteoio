@@ -69,7 +69,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(std::string in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve, const bool& silent)
 {
 	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
@@ -95,7 +95,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
