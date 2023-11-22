@@ -58,7 +58,6 @@ const std::vector<std::string> dimnames( initDimensionNames() );
 
 void open_file(const std::string& filename, const int& omode, int& ncid)
 {	
-	mio::ofilestream::createDirectoriesOfFile(filename.c_str());
 	const int status = nc_open(filename.c_str(), omode, &ncid);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not open netcdf file '" + filename + "': " + nc_strerror(status), AT);
