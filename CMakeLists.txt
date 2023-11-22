@@ -262,7 +262,7 @@ ENDIF(INSTALL_DOC)
 
 # Install the inishell apps, so they can be found
 SET(XML_DEST inishell-apps/meteoio)
-IF((UNIX) AND (NOT APPLE))
+IF((UNIX) AND (NOT APPLE) AND (NOT WIN32))
 	SET(XML_DEST share/inishell-apps/meteoio)
 ENDIF()
 
