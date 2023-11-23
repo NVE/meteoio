@@ -59,7 +59,7 @@ namespace mio {
 std::string ofilestream::cutPathToLimitDir(const std::string &path)
 {
 	std::string outpath;
-	if (FileUtils::isAbsolutePath(path)) {
+	if (FileUtils::isAbsolutePath(path)) { //processing absolute path
 		std::stringstream lim_dirs( FileUtils::cleanPath(getLimitBaseDir(), true) );
 		std::vector<std::string> lim_dir_parts;
 		std::string item;
@@ -68,20 +68,17 @@ std::string ofilestream::cutPathToLimitDir(const std::string &path)
 		}
 
 		std::stringstream ps(path);
-		int ii = 0;
+		size_t ii = 0;
 		while (std::getline(ps,item,'/')) {
-			if (ii < lim_dir_parts.size() && lim_dir_parts[ii]==item) {
-				ii++;
-				continue;
-			} else {
+			if (ii >= lim_dir_parts.size() || lim_dir_parts[ii]!=item) {
 				outpath += item;
 				outpath += "/";
-				ii++;
 			}
+			ii++;
 		}
 		if (outpath.empty()) return getLimitBaseDir();
 		else if (outpath.back()=='/') outpath.pop_back();
-	} else {
+	} else { //processing relative path
 		outpath = path;
 		std::replace(outpath.begin(), outpath.end(), '\\', '/');
 		std::regex e("\\.\\.\\/");
