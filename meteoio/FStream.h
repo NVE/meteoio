@@ -36,7 +36,7 @@ namespace mio {
 class ofilestream : public std::ofstream
 {
     public:
-        ofilestream() {};
+        ofilestream() {}
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);

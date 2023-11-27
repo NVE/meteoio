@@ -63,7 +63,7 @@ bool FilterRate::filterOut(const std::vector<MeteoData>& vecM, const unsigned in
 	const Date dt_end(2012, 10, 29, 18, 30, 1.);
 
 	const double curr_value = vecM[idx](param);
-	if (curr_value == IOUtils::nodata) return IOUtils::nodata;
+	if (curr_value == IOUtils::nodata) return false; //this should have been tested before we called filterOut()
 
 	if (methodParam == LEFT) {
 		const double left_rate = getRate(vecM, param, idx, last_good);
@@ -121,7 +121,7 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 		if (methodParam != LEFT && (next_good == IOUtils::npos || next_good<=ii))
 			next_good = findNextPoint(ovec, param, ii+1);
 
-		const double filter_point = filterOut(ovec, param, ii, last_good, next_good);
+		const bool filter_point = filterOut(ovec, param, ii, last_good, next_good);
 		if (filter_point) {
 			curr_value = IOUtils::nodata;
 		} else {
