@@ -26,11 +26,7 @@ int main() {
 		ofs2.close();
 		struct stat sb;
 
-		if (stat(mio::FileUtils::getPath(filename1,false).c_str(), &sb) == 0) {
-			dir_status = true;
-		} else {
-			throw IOException("Output directory was not created.");
-		}
+		if (stat(mio::FileUtils::getPath(filename1,false).c_str(), &sb) == 0) dir_status = true;
 
 		std::string item;
 		std::ifstream infile1(filename1);
