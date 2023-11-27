@@ -74,7 +74,7 @@ namespace FileUtils {
 	* @param in_path the path string to cleanup
 	* @param resolve resolve links, convert relative paths, etc? (default=false)
 	*/
-	std::string cleanPath(std::string in_path, const bool& resolve=false);
+	std::string cleanPath(std::string in_path, const bool& resolve=false, const bool& silent=false);
 
 	/**
 	* @brief returns the extension part of a given filename.

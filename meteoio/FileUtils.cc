@@ -69,7 +69,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(std::string in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve, const bool& silent)
 {
 	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
@@ -95,7 +95,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
@@ -205,6 +205,15 @@ bool isWindowsPath(const std::string& path) {
 	return std::regex_search(path, e);
 }
 
+int make_directory(const char* name)
+{
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+    return mkdir(name); 
+#else
+    return mkdir(name, 0777);
+#endif
+}
+
 void createDirectories(const std::string &path, const bool verbose)
 {
 	if (path.empty())
@@ -226,7 +235,7 @@ void createDirectories(const std::string &path, const bool verbose)
 		}
 		else
 		{
-			bool check_creation = mkdir(tmp_path.c_str(), 0777);
+			bool check_creation = make_directory(tmp_path.c_str());
 			if (verbose)
 			{
 				if (!check_creation)
@@ -238,8 +247,6 @@ void createDirectories(const std::string &path, const bool verbose)
 		}
 	}
 }
-
-
 
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()
