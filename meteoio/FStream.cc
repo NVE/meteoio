@@ -119,7 +119,7 @@ std::string ofilestream::limitAccess(std::string path, const bool& write_directo
 
 #endif
 		if (!FileUtils::directoryExists(path)) {
-			FileUtils::createDirectories(path, false);
+			FileUtils::createDirectories(path);
 		} 
 	} else {
 #ifdef LIMIT_WRITE_ACCESS

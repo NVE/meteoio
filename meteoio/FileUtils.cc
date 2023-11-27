@@ -43,6 +43,23 @@
 #include <meteoio/FStream.h>
 #include <regex>
 
+//helper functions in file-scope only
+void make_directory(const std::string &path)
+{
+	errno = 0;
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+    const int status = mkdir(path.c_str());
+#else
+    const int status =  mkdir(path.c_str(), 0777);
+#endif
+	if (status==-1) {
+		std::ostringstream oss;
+		oss << "Creating directory \'" << path << "\' failed. Reason: " << std::strerror(errno) << "\n";
+		throw mio::IOException(oss.str(), AT);
+	}
+}
+
+
 namespace mio {
 namespace FileUtils {
 //we don't want to expose this function to the user, so we keep it local
@@ -205,16 +222,7 @@ bool isWindowsPath(const std::string& path) {
 	return std::regex_search(path, e);
 }
 
-int make_directory(const char* name)
-{
-#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
-    return mkdir(name); 
-#else
-    return mkdir(name, 0777);
-#endif
-}
-
-void createDirectories(const std::string &path, const bool verbose)
+void createDirectories(const std::string &path)
 {
 	if (path.empty())
 		throw mio::IOException("Can not create empty directory", AT);
@@ -224,25 +232,14 @@ void createDirectories(const std::string &path, const bool verbose)
 	std::string item;
 
 	// recursively go through the path and create nonexisting directories
-	while (std::getline(ps, item, '/'))
-	{
+	while (std::getline(ps, item, '/'))	{
 		tmp_path += item.empty() ? "/" : item;
 		// check if path already exists
-		if (directoryExists(tmp_path))
-		{
+		if (directoryExists(tmp_path)) {
 			if (tmp_path != "/") tmp_path += "/";
 			continue;
-		}
-		else
-		{
-			bool check_creation = make_directory(tmp_path.c_str());
-			if (verbose)
-			{
-				if (!check_creation)
-					std::cout << "Directory " << tmp_path << " created" << std::endl;
-				if (check_creation)
-					std::cout << "Directory " << tmp_path << " could not be created" << std::endl;
-			}
+		} else {
+			make_directory( tmp_path );
 			tmp_path += "/";
 		}
 	}
