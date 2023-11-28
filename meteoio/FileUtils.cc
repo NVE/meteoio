@@ -43,6 +43,10 @@
 #include <meteoio/FStream.h>
 #include <regex>
 
+#ifdef _MSC_VER
+	#include <direct.h>
+#endif
+
 namespace mio {
 namespace FileUtils {
 //we don't want to expose this function to the user, so we keep it local
@@ -209,6 +213,8 @@ int make_directory(const char* name)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
     return mkdir(name); 
+#elif defined _MSC_VER
+	return _mkdir(name);
 #else
     return mkdir(name, 0777);
 #endif
