@@ -74,16 +74,10 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 	checkMultiValueConsistency();
 }
 
-int findAllCommas(const std::string& str) 
+size_t ACDD::findAllCommas(const std::string& str)
 {
-	size_t index = 0;
-	int occurrences = 0;
-    while ((index = str.find(',', index)) != std::string::npos) {
-        index++;
-		occurrences++;
-    }
-
-	return occurrences;
+	const size_t count = std::count_if( str.begin(), str.end(), []( const char& c ){return c ==',';});
+	return count;
 }
 
 
@@ -113,13 +107,13 @@ void ACDD::checkMultiValueConsistency()
 	}
 
 	if (!creator.empty() && is_list_creator) {
-		const int num_creators = findAllCommas(creator[0]);
+		const size_t num_creators = findAllCommas(creator[0]);
 		for (size_t ii = 0; ii<creator.size();ii++){
 			if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of creators and " +creator_keys[ii]+" do not match.");
 		}
 	}
 	if (!publisher.empty() && is_list_publisher) {
-		const int num_publishers = findAllCommas(publisher[0]);
+		const size_t num_publishers = findAllCommas(publisher[0]);
 		for (size_t ii = 0; ii<publisher.size();ii++){
 			if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of publishers and " +publisher_keys[ii]+" do not match.");
 		}

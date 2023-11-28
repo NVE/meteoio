@@ -7,8 +7,6 @@
 using namespace std;
 using namespace mio;
 
-const double rand_range = 1000.;
-
 static void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 	X.clear(); X.resize(10);
 	Y.clear(); Y.resize(10);
@@ -26,6 +24,7 @@ static void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 }
 
 // static void cr_rand_vectors(vector<double> &X, vector<double> &Y) {
+//	static const double rand_range = 1000.;
 // 	const size_t N = 20;
 // 	srand( static_cast<unsigned int>(time(nullptr)) );
 // 	X.clear(); X.resize(N);
