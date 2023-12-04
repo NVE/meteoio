@@ -383,7 +383,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * @endcode
  *
  * @section csvio_debugging Debugging CSV files reading
- * Unfortunatelly, there are some cases when the data in one or multiple files does not match the expected field content. This can happen with
+ * Unfortunately, there are some cases when the data in one or multiple files does not match the expected field content. This can happen with
  * the data being spread over multiple files and the column order changing between files or even with the column order changing within
  * a given file. Depending on the amount of data and the number of files, this can be quite cumbersome to correct, if even possible at all.
  * Here is some rough procedure to help correcting such issues:
