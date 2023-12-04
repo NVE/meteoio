@@ -28,6 +28,8 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
+#include <algorithm>
+
 
 using namespace std;
 
@@ -80,11 +82,29 @@ size_t ACDD::findAllCommas(const std::string& str)
 	return count;
 }
 
+size_t whereisValueInVector(const std::vector<std::string>& vec, std::string value) {
+    auto it = std::find(vec.begin(), vec.end(), value);
+	if (it != vec.end())  
+    { 
+        size_t index = it - vec.begin(); 
+        return index;
+    } 
+	return mio::IOUtils::npos;
+}
+
+size_t ACDD::findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_values) {
+	for (size_t ii=0; ii<attribute_list.size(); ii++) {
+		if (whereisValueInVector(default_values, attribute_list[ii]) == mio::IOUtils::npos) return ii;
+	}
+	return 0;
+}
 
 void ACDD::checkMultiValueConsistency()
 {
-	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url"};//, "creator_type"};
-	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url"};//, "publisher_type"};
+	const std::vector<std::string> default_values{mio::IOUtils::getLogName(), "", mio::IOUtils::getDomainName(), mio::IOUtils::getDomainName(), "person"};
+
+	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url", "creator_type"};
+	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url", "publisher_type"};
 
 	std::vector<std::string> creator, publisher;
 
@@ -107,15 +127,25 @@ void ACDD::checkMultiValueConsistency()
 	}
 
 	if (!creator.empty() && is_list_creator) {
-		const size_t num_creators = findAllCommas(creator[0]);
+		const size_t num_creators = findAllCommas(creator[findNonDefault(creator, default_values)]);
 		for (size_t ii = 0; ii<creator.size();ii++){
-			if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of creators and " +creator_keys[ii]+" do not match.");
+			if (whereisValueInVector(default_values, creator[ii]) == mio::IOUtils::npos) {
+				if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of " +creator_keys[findNonDefault(creator,default_values)] + "and " +creator_keys[ii]+" do not match.");
+			}
+			else {
+				if (!creator[ii].empty()) value[find(creator_keys[ii])] += ","+default_values[whereisValueInVector(default_values, creator[ii])];
+			}
 		}
 	}
 	if (!publisher.empty() && is_list_publisher) {
-		const size_t num_publishers = findAllCommas(publisher[0]);
+		const size_t num_publishers = findAllCommas(publisher[findNonDefault(publisher, default_values)]);
 		for (size_t ii = 0; ii<publisher.size();ii++){
-			if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of publishers and " +publisher_keys[ii]+" do not match.");
+			if (whereisValueInVector(default_values, publisher[ii]) == mio::IOUtils::npos) {
+				if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of " +publisher_keys[findNonDefault(publisher,default_values)]+" and " +publisher_keys[ii]+" do not match.");
+			}
+			else {
+				if (!publisher[ii].empty()) value[find(publisher_keys[ii])] += ","+default_values[whereisValueInVector(default_values, publisher[ii])];
+			}		
 		}
 	}
 }
@@ -155,7 +185,6 @@ void ACDD::defaultInit()
 	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
 	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
 	addAttribute("wmo__wsi", "", "WIGOS_ID");
-	checkMultiValueConsistency();
 }
 
 /**

@@ -143,6 +143,7 @@ class ACDD {
 	private:
 		void defaultInit();
 		static size_t findAllCommas(const std::string& str);
+		size_t findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_list);
 		size_t find(const std::string& search_name) const;
 		void checkMultiValueConsistency();
 		
