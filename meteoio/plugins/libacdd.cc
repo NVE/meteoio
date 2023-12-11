@@ -74,6 +74,10 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 		}
 	}
 	checkMultiValueConsistency();
+#ifdef WEBSERVICE
+	//special handling for webservice
+	setSLFAsPublisher();
+#endif
 }
 
 size_t ACDD::findAllCommas(const std::string& str)
@@ -142,7 +146,11 @@ void ACDD::checkMultiValueConsistency()
 				if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of " +creator_keys[findNonDefault(creator,default_values)] + "and " +creator_keys[ii]+" do not match.");
 			}
 			else {
-				if (!creator[ii].empty()) value[find(creator_keys[ii])] += ","+default_values[whereisValueInVector(default_values, creator[ii])];
+				if (!creator[ii].empty()) {
+					for (size_t n_c = 0; n_c<num_creators; n_c++) {
+						value[find(creator_keys[ii])] += ","+default_values[whereisValueInVector(default_values, creator[ii])];
+					}
+				}
 			}
 		}
 	}
@@ -153,7 +161,11 @@ void ACDD::checkMultiValueConsistency()
 				if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of " +publisher_keys[findNonDefault(publisher,default_values)]+" and " +publisher_keys[ii]+" do not match.");
 			}
 			else {
-				if (!publisher[ii].empty()) value[find(publisher_keys[ii])] += ","+default_values[whereisValueInVector(default_values, publisher[ii])];
+				if (!publisher[ii].empty()) { 
+					for (size_t n_p = 0; n_p<num_publishers; n_p++) {
+						value[find(publisher_keys[ii])] += ","+default_values[whereisValueInVector(default_values, publisher[ii])];
+					}
+				}
 			}		
 		}
 	}
@@ -164,7 +176,11 @@ void ACDD::checkMultiValueConsistency()
 				if (num_contributors != findAllCommas(contributor[ii])) throw mio::InvalidFormatException("Number of " +contributor_keys[findNonDefault(contributor,default_values)]+" and " +contributor_keys[ii]+" do not match.");
 			}
 			else {
-				if (!contributor[ii].empty()) value[find(contributor_keys[ii])] += ","+default_values[whereisValueInVector(default_values, contributor[ii])];
+				if (!contributor[ii].empty()){
+					for (size_t n_c = 0; n_c<num_contributors; n_c++) {
+						value[find(contributor_keys[ii])] += ","+default_values[whereisValueInVector(default_values, contributor[ii])];
+					}
+				}
 			}		
 		}
 	}
@@ -506,6 +522,13 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const 
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
 		addAttribute("time_coverage_resolution", os.str());
 	}
+}
+
+void ACDD::setSLFAsPublisher() {
+	value[find("publisher_name")] = "WSL Institute for Snow and Avalanche Research SLF";
+	value[find("publisher_email")] = "bavay@slf.ch, patrick.leibersperger@slf.ch";
+	value[find("publisher_url")] = "https://service-meteoio.slf.ch";
+	value[find("publisher_type")] = "institution";
 }
 
 } //namespace

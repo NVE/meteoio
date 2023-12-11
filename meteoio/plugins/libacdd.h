@@ -152,6 +152,7 @@ class ACDD {
 		size_t findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_list);
 		size_t find(const std::string& search_name) const;
 		void checkMultiValueConsistency();
+		void setSLFAsPublisher();
 		
 		std::vector<std::string> name, cfg_key, value;
 		bool enabled; //helper boolean for callers to know if this object should be used or not
