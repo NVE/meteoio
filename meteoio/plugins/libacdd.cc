@@ -105,11 +105,13 @@ void ACDD::checkMultiValueConsistency()
 
 	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url", "creator_type"};
 	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url", "publisher_type"};
+	static const std::vector<std::string> contributor_keys{"contributor_name", "contributor_email", "contributor_institution", "contributor_url", "contributor_type"};
 
-	std::vector<std::string> creator, publisher;
+	std::vector<std::string> creator, publisher, contributor;
 
 	bool is_list_creator = false;
 	bool is_list_publisher = false;
+	bool is_list_contributor = false;
 
 	for (size_t ii=0; ii<creator_keys.size(); ii++) {
 		const size_t pos = find( creator_keys[ii] );
@@ -122,6 +124,13 @@ void ACDD::checkMultiValueConsistency()
 			if (pos_p != mio::IOUtils::npos) {
 				publisher.push_back(value[pos_p]);
 				if (value[pos].find(',') != std::string::npos) is_list_publisher = true;	
+			}
+		}
+		if (ii<contributor_keys.size()) {
+			const size_t pos_c = find(contributor_keys[ii]);
+			if (pos_c != mio::IOUtils::npos) {
+				contributor.push_back(value[pos_c]);
+				if (value[pos].find(',') != std::string::npos) is_list_contributor = true;	
 			}
 		}
 	}
@@ -148,6 +157,17 @@ void ACDD::checkMultiValueConsistency()
 			}		
 		}
 	}
+	if (!contributor.empty() && is_list_contributor) {
+		const size_t num_contributors = findAllCommas(contributor[findNonDefault(contributor, default_values)]);
+		for (size_t ii = 0; ii<contributor.size();ii++){
+			if (whereisValueInVector(default_values, contributor[ii]) == mio::IOUtils::npos) {
+				if (num_contributors != findAllCommas(contributor[ii])) throw mio::InvalidFormatException("Number of " +contributor_keys[findNonDefault(contributor,default_values)]+" and " +contributor_keys[ii]+" do not match.");
+			}
+			else {
+				if (!contributor[ii].empty()) value[find(contributor_keys[ii])] += ","+default_values[whereisValueInVector(default_values, contributor[ii])];
+			}		
+		}
+	}
 }
 
 void ACDD::defaultInit()
@@ -159,7 +179,12 @@ void ACDD::defaultInit()
 	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
 	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
 	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
-	addAttribute("creator_type", "person", "ACDD_CREATOR_TYPE");
+	addAttribute("creator_type", "person", "ACDD_CONTRIBUTOR_TYPE");
+	addAttribute("contributor_name", "", "ACDD_CONTRIBUTOR");
+	addAttribute("contributor_email", "", "ACDD_CONTRIBUTOR_EMAIL");
+	addAttribute("contributor_institution", "", "ACDD_CONTRIBUTOR_INSTITUTION");
+	addAttribute("contributor_url", "", "ACDD_CONTRIBUTOR_URL");
+	addAttribute("contributor_type", "person", "ACDD_CONTRIBUTOR_TYPE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
 	addAttribute("publisher_name", mio::IOUtils::getLogName(), "ACDD_PUBLISHER");
 	addAttribute("publisher_email", "", "ACDD_PUBLISHER_EMAIL");

@@ -67,6 +67,12 @@ namespace mio {
  *        - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
+ *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two contributors, then two emails must also be provided, etc):
+ *        - ACDD_CONTRIBUTOR: the name of the contributor of the data set (default: login name);
+ *        - ACDD_CONTRIBUTOR_EMAIL: the email of the contributor;
+ *        - ACDD_CONTRIBUTOR_INSTITUTION: the institution of the contributor; should uniquely identify the contributor's institution;
+ *        - ACDD_CONTRIBUTOR_URL: the URL of the contributor principally responsible for creating this data;
+ *        - ACDD_CONTRIBUTOR_TYPE: either person, group, institution, or position (default: person);
  *  - Miscellaneous
  *     - ACDD_PROCESSING_LEVEL: a textual description of the processing level
  *     - ACDD_LICENSE: describes the license applicable to the dataset;
