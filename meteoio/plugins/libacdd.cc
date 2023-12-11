@@ -44,9 +44,12 @@ namespace mio {
 */
 void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line)
 {
+#ifdef WEBSERVICE
+	ENVIDAT = cfg.get("ENVIDAT", "Output", false);
+#endif
 	for (size_t ii=0; ii<name.size(); ii++) {
 		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
-
+		
 		if (cfg_key[ii]=="ACDD_SUMMARY") { //overwrite with the content of summary_file if available
 			const std::string summary_file = cfg.get("ACDD_SUMMARY_FILE", section, "");
 			if (!summary_file.empty()) {
@@ -526,10 +529,17 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const 
 
 void ACDD::setSLFAsPublisher() {
 	value[find("publisher_name")] = "WSL Institute for Snow and Avalanche Research SLF";
-	value[find("publisher_email")] = "bavay@slf.ch, patrick.leibersperger@slf.ch";
-	value[find("publisher_url")] = "https://service-meteoio.slf.ch";
 	value[find("publisher_type")] = "institution";
+	if (!ENVIDAT) {
+		value[find("publisher_email")] = "bavay@slf.ch, patrick.leibersperger@slf.ch";
+		value[find("publisher_url")] = "https://service-meteoio.slf.ch";	}
+	else {
+		value[find("publisher_email")] = "";
+		value[find("publisher_url")] = "https://www.envidat.ch";
+	}
 }
+
+bool ACDD::ENVIDAT = false;
 
 } //namespace
 

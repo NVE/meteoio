@@ -153,6 +153,7 @@ class ACDD {
 		size_t find(const std::string& search_name) const;
 		void checkMultiValueConsistency();
 		void setSLFAsPublisher();
+		static bool ENVIDAT;
 		
 		std::vector<std::string> name, cfg_key, value;
 		bool enabled; //helper boolean for callers to know if this object should be used or not
