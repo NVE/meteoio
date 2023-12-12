@@ -336,6 +336,18 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 	
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
 	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
+
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	const double min_val = grid.getMin();
+	if (min_val!=IOUtils::nodata) {
+		//if there is a min_val, there is also a max_val
+		addAttribute("geospatial_vertical_min", min_val);
+		const double max_val = grid.getMax();
+		addAttribute("geospatial_vertical_max", max_val);
+	}
+
+
 }
 
 void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
@@ -345,6 +357,7 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
+	double alt_min=std::numeric_limits<double>::max(), alt_max=-std::numeric_limits<double>::max();
 	bool found = false;
 	for (const std::vector<mio::MeteoData>& timeseries : vecMeteo) {
 		if (timeseries.empty()) continue;
@@ -366,12 +379,15 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 
 		const double curr_lat = timeseries.front().meta.position.getLat();
 		const double curr_lon = timeseries.front().meta.position.getLon();
+		const double curr_alt = timeseries.front().meta.position.getAltitude();
 		found = true;
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
 		if (lon_max<curr_lon) lon_max = curr_lon;
+		if (alt_min>curr_alt) alt_min = curr_alt;
+		if (alt_max<curr_alt) alt_max = curr_alt;
 	}
 	if (!found) return;
 	
@@ -385,6 +401,13 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
 	addAttribute("geospatial_lon_max", lon_max);
+
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	if (alt_min!=IOUtils::nodata) {
+		addAttribute("geospatial_vertical_min", alt_min);
+		addAttribute("geospatial_vertical_max", alt_max);
+	}
 }
 
 void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool& isLatLon)
