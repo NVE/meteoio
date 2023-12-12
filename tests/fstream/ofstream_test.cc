@@ -56,12 +56,12 @@ static void testWinPath()
 		ofilestream win(win_path);
 		std::cerr << "Creating Windows path type directories should not be possible";
 		exit(1);
-	} catch(const std::exception& e) { }
+	} catch(const std::exception&) { }
 	try {
 		ofilestream win2(win_path2);
 		std::cerr << "Creating Windows path type directories should not be possible";
 		exit(1);
-	} catch(const std::exception& e) { }
+	} catch(const std::exception&) { }
 }
 
 static void testAbsPath()
@@ -73,7 +73,7 @@ static void testAbsPath()
 		abs_fail.open( abs_path3.c_str() );
 		abs_fail << "hiii";
 		abs_fail.close();
-	} catch(const std::exception& e) {
+	} catch(const std::exception&) {
 		abs_fail.close(); //is it needed?
 	}
 }
@@ -139,7 +139,7 @@ static void searchForRawCalls()
 
 int main() {
 	ofilestream tmp;
-	bool dir_status, filestatus=true;
+	bool dir_status=true, filestatus=true;
 	if (tmp.getDefault()) {
 		testRelativePath(dir_status, filestatus);
 		testWinPath();
@@ -177,6 +177,7 @@ int main() {
         fail.close();
 		exit(1);
 	} catch(const std::exception& e) {
+		std::cerr << e.print() << "\n";
 		std::cerr << "accessing absolute invalid path, without writing directories works as expected"<< std::endl;
 	}
 

@@ -89,19 +89,20 @@ size_t ACDD::findAllCommas(const std::string& str)
 	return count;
 }
 
-size_t whereisValueInVector(const std::vector<std::string>& vec, std::string value) {
-    auto it = std::find(vec.begin(), vec.end(), value);
-	if (it != vec.end())  
-    { 
-        size_t index = it - vec.begin(); 
+size_t ACDD::findInVector(const std::vector<std::string>& vec, std::string value)
+{
+    const auto it( std::find(vec.begin(), vec.end(), value) );
+	if (it != vec.end()) {
+        const size_t index = it - vec.begin();
         return index;
     } 
 	return mio::IOUtils::npos;
 }
 
-size_t ACDD::findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_values) {
+size_t ACDD::findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_values)
+{
 	for (size_t ii=0; ii<attribute_list.size(); ii++) {
-		if (whereisValueInVector(default_values, attribute_list[ii]) == mio::IOUtils::npos) return ii;
+		if (findInVector(default_values, attribute_list[ii]) == mio::IOUtils::npos) return ii;
 	}
 	return 0;
 }
@@ -145,13 +146,13 @@ void ACDD::checkMultiValueConsistency()
 	if (!creator.empty() && is_list_creator) {
 		const size_t num_creators = findAllCommas(creator[findNonDefault(creator, default_values)]);
 		for (size_t ii = 0; ii<creator.size();ii++){
-			if (whereisValueInVector(default_values, creator[ii]) == mio::IOUtils::npos) {
+			if (findInVector(default_values, creator[ii]) == mio::IOUtils::npos) {
 				if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of " +creator_keys[findNonDefault(creator,default_values)] + "and " +creator_keys[ii]+" do not match.");
 			}
 			else {
 				if (!creator[ii].empty()) {
 					for (size_t n_c = 0; n_c<num_creators; n_c++) {
-						value[find(creator_keys[ii])] += ","+default_values[whereisValueInVector(default_values, creator[ii])];
+						value[find(creator_keys[ii])] += ","+default_values[findInVector(default_values, creator[ii])];
 					}
 				}
 			}
@@ -160,13 +161,13 @@ void ACDD::checkMultiValueConsistency()
 	if (!publisher.empty() && is_list_publisher) {
 		const size_t num_publishers = findAllCommas(publisher[findNonDefault(publisher, default_values)]);
 		for (size_t ii = 0; ii<publisher.size();ii++){
-			if (whereisValueInVector(default_values, publisher[ii]) == mio::IOUtils::npos) {
+			if (findInVector(default_values, publisher[ii]) == mio::IOUtils::npos) {
 				if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of " +publisher_keys[findNonDefault(publisher,default_values)]+" and " +publisher_keys[ii]+" do not match.");
 			}
 			else {
 				if (!publisher[ii].empty()) { 
 					for (size_t n_p = 0; n_p<num_publishers; n_p++) {
-						value[find(publisher_keys[ii])] += ","+default_values[whereisValueInVector(default_values, publisher[ii])];
+						value[find(publisher_keys[ii])] += ","+default_values[findInVector(default_values, publisher[ii])];
 					}
 				}
 			}		
@@ -175,13 +176,13 @@ void ACDD::checkMultiValueConsistency()
 	if (!contributor.empty() && is_list_contributor) {
 		const size_t num_contributors = findAllCommas(contributor[findNonDefault(contributor, default_values)]);
 		for (size_t ii = 0; ii<contributor.size();ii++){
-			if (whereisValueInVector(default_values, contributor[ii]) == mio::IOUtils::npos) {
+			if (findInVector(default_values, contributor[ii]) == mio::IOUtils::npos) {
 				if (num_contributors != findAllCommas(contributor[ii])) throw mio::InvalidFormatException("Number of " +contributor_keys[findNonDefault(contributor,default_values)]+" and " +contributor_keys[ii]+" do not match.");
 			}
 			else {
 				if (!contributor[ii].empty()){
 					for (size_t n_c = 0; n_c<num_contributors; n_c++) {
-						value[find(contributor_keys[ii])] += ","+default_values[whereisValueInVector(default_values, contributor[ii])];
+						value[find(contributor_keys[ii])] += ","+default_values[findInVector(default_values, contributor[ii])];
 					}
 				}
 			}		
