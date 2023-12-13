@@ -70,19 +70,18 @@ static void testWinPath()
 		exit(1);
 	} catch(const std::exception&) { }
 }
+
 static void testAbsPath()
 {
 	static const std::string abs_path3 = mio::FileUtils::cleanPath("./", true) + "rand3/test.txt";
 	mio::FileUtils::createDirectories(abs_path3);
 
-	try
-	{
+	try {
 		ofilestream abs_fail(abs_path3.c_str());
 		abs_fail << "hiii";
 		abs_fail.close();
 	}
-	catch (const std::exception&)
-	{
+	catch (const std::exception&) {
 		// Handle the exception if needed
 	}
 
@@ -111,6 +110,33 @@ static void testLimitedWriteAccess()
 		std::cerr << "Directory was not created at all in write access limitation scope" << std::endl;
 	}
 	system(("rm -rf " + dirname3).c_str());
+}
+
+static void testLimitedAccessWithoutCreatingDirectories() {
+	const std::string abs_path11 = mio::FileUtils::cleanPath("./", true) + "rand/test.txt"; // should not work
+	try {
+		ofilestream fail(abs_path1);
+		std::cerr << "Default |" << fail.getDefault() << std::endl;
+		if (fail.getDefault())
+			std::cerr << "Default was not kept" << std::endl;
+		std::cerr << "Accessing absolute invalid path, without writing directories should not be possible" << std::endl;
+		fail.close();
+		exit(1);
+	} catch (const std::exception &e) {
+		std::cerr << e.print() << "\n";
+		std::cerr << "Accessing absolute invalid path, without writing directories works as expected" << std::endl;
+	}
+	system("rm -rf " + abs_path11);
+
+	const std::string abs_path2 = mio::FileUtils::cleanPath("./", true) + "rand2/test.txt";
+	mio::FileUtils::createDirectories(abs_path2);
+	ofilestream works(abs_path2);
+	if (works.getDefault())
+		throw IOException("Default was not kept");
+	works << "hiii";
+	works.close();
+	system("rm -rf " + abs_path2);
+	std:: cerr << "Accessing absolute valid path, without writing directories works as expected" << std::endl;
 }
 #endif
 
@@ -190,30 +216,7 @@ int main() {
 		throw IOException("Default was not set");
 
 #ifdef LIMIT_WRITE_ACCESS
-	const std::string abs_path1 = mio::FileUtils::cleanPath("./", true) + "rand/test.txt"; // should not work
-	mio::FileUtils::createDirectories(abs_path1);
-	try {
-		ofilestream fail(abs_path1);
-		std::cerr << "Default |" << fail.getDefault() << std::endl;
-		if (fail.getDefault())
-			std::cerr << "Default was not kept" << std::endl;
-		std::cerr << "Accessing absolute invalid path, without writing directories should not be possible" << std::endl;
-		fail.close();
-		exit(1);
-	} catch (const std::exception &e) {
-		std::cerr << e.print() << "\n";
-		std::cerr << "Accessing absolute invalid path, without writing directories works as expected" << std::endl;
-	}
-	system("rm -rf " + abs_path1);
-
-	const std::string abs_path2 = mio::FileUtils::cleanPath("./", true) + "rand2/test.txt";
-	mio::FileUtils::createDirectories(abs_path2);
-	ofilestream works(abs_path2);
-	if (works.getDefault())
-		throw IOException("Default was not kept");
-	works << "hiii";
-	works.close();
-	system("rm -rf " + abs_path2);
+	testLimitedAccessWithoutCreatingDirectories();
 #endif
 
 	searchForRawCalls();
