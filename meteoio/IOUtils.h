@@ -191,6 +191,10 @@ namespace IOUtils {
 	void stripComments(std::string& str);
 	
 	void stripComments(std::string& str, const char& comment_mk);
+
+	bool onlyOneEqual(const std::string& str);
+
+	void escapeCharacters(std::string& str);
 	
 	/**
 	 * @brief Replace a substring within a given string by another one.

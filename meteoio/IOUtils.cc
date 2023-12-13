@@ -137,7 +137,7 @@ void stripComments(std::string& str)
 		
 		if (pos != std::string::npos) {
 			if (pos>0 && str[pos-1]=='\\') {
-				pos++;
+				str.erase(pos-1, 1); //remove the escape character
 				continue;
 			}
 			str.erase(pos); //rest of line disregarded
@@ -152,6 +152,42 @@ void stripComments(std::string& str, const char& comment_mk)
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
 	}
+}
+
+void escapeCharacters(std::string& str)
+{
+	const std::vector<char> chars_to_escape = {' ', '='};
+	for (auto escape_char : chars_to_escape)
+	{
+		size_t pos = 0;
+		do {
+			//find_first_of searches for any of the given chars while find search for an exact match...
+			pos = str.find(escape_char, pos);
+			
+			if (pos != std::string::npos) {
+				if (pos>0 && str[pos-1]=='\\') {
+					str.erase(pos-1, 1); //remove the escape character
+					continue;
+				}
+				pos++;
+			}
+		} while (pos != std::string::npos);
+	}
+	return ;
+}
+
+
+bool onlyOneEqual(const std::string& str)
+{
+	size_t firstEqualPos = str.find('=');
+	if (firstEqualPos != std::string::npos) {
+		size_t secondEqualPos = str.find('=', firstEqualPos + 1);
+		if (secondEqualPos != std::string::npos && str[secondEqualPos - 1] == '\\') {
+			return onlyOneEqual(str.substr(secondEqualPos + 1));
+		}
+		return secondEqualPos == std::string::npos;
+	}
+	return true;
 }
 
 void trim(std::string& str)
