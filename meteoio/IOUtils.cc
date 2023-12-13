@@ -154,11 +154,9 @@ void stripComments(std::string& str, const char& comment_mk)
 	}
 }
 
-void escapeCharacters(std::string& str)
+void cleanEscapedCharacters(std::string& str, const std::vector<char>& escaped_chars)
 {
-	const std::vector<char> chars_to_escape = {' ', '='};
-	for (auto escape_char : chars_to_escape)
-	{
+	for (auto escape_char : escaped_chars) {
 		size_t pos = 0;
 		do {
 			//find_first_of searches for any of the given chars while find search for an exact match...
@@ -173,21 +171,6 @@ void escapeCharacters(std::string& str)
 			}
 		} while (pos != std::string::npos);
 	}
-	return ;
-}
-
-
-bool onlyOneEqual(const std::string& str)
-{
-	size_t firstEqualPos = str.find('=');
-	if (firstEqualPos != std::string::npos) {
-		size_t secondEqualPos = str.find('=', firstEqualPos + 1);
-		if (secondEqualPos != std::string::npos && str[secondEqualPos - 1] == '\\') {
-			return onlyOneEqual(str.substr(secondEqualPos + 1));
-		}
-		return secondEqualPos == std::string::npos;
-	}
-	return true;
 }
 
 void trim(std::string& str)

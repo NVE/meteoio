@@ -583,6 +583,20 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 	i_sections.insert(sections.begin(), sections.end());
 }
 
+bool ConfigParser::onlyOneEqual(const std::string& str)
+{
+	const size_t firstEqualPos = str.find('=');
+	if (firstEqualPos != std::string::npos) {
+		const size_t secondEqualPos = str.find('=', firstEqualPos + 1);
+		if (secondEqualPos != std::string::npos && str[secondEqualPos - 1] == '\\') {
+			return onlyOneEqual(str.substr(secondEqualPos + 1));
+		}
+		return secondEqualPos == std::string::npos;
+	}
+	
+	return true;
+}
+
 /**
 * @brief Parse the whole file, line per line
 * @param[in] filename file to parse
@@ -813,11 +827,13 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 	if (processSectionHeader(line, section, linenr)) return;
 
 	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
-	if (!IOUtils::onlyOneEqual(line)) {
+	if (!onlyOneEqual(line)) {
 		const std::string source_msg = (sourcename.empty())? "" : " in \""+sourcename+"\"";
 		throw InvalidFormatException("Error reading line "+IOUtils::toString(linenr)+source_msg, AT);
 	}
-	IOUtils::escapeCharacters(line);
+	
+	IOUtils::cleanEscapedCharacters(line, std::vector<char>({' ', '=', ';'}));
+	
 	//this can only be a key value pair...
 	std::string key, value;
 	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
