@@ -67,12 +67,9 @@ namespace mio {
  *        - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
- *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two contributors, then two emails must also be provided, etc):
- *        - ACDD_CONTRIBUTOR: the name of the contributor of the data set (default: login name);
- *        - ACDD_CONTRIBUTOR_EMAIL: the email of the contributor;
- *        - ACDD_CONTRIBUTOR_INSTITUTION: the institution of the contributor; should uniquely identify the contributor's institution;
- *        - ACDD_CONTRIBUTOR_URL: the URL of the contributor principally responsible for creating this data;
- *        - ACDD_CONTRIBUTOR_TYPE: either person, group, institution, or position (default: person);
+ *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two contributors, then two roles must also be provided, etc):
+ *        - ACDD_CONTRIBUTOR: the name of the individuals, instutitions or projects that have contributed to the data set (default: login name);
+ *        - ACDD_CONTRIBUTOR_ROLE: the role of the contributor;
  *  - Miscellaneous
  *     - ACDD_PROCESSING_LEVEL: a textual description of the processing level
  *     - ACDD_LICENSE: describes the license applicable to the dataset;
@@ -135,6 +132,7 @@ class ACDD {
 		*/
 		bool isEnabled() const {return enabled;}
 		void getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const;
+		std::string getAttribute(std::string &att_name) const;
 		size_t getNrAttributes() const {if(enabled) return name.size(); else return 0;}
 		
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
@@ -148,11 +146,10 @@ class ACDD {
 		
 	private:
 		void defaultInit();
-		static size_t findAllCommas(const std::string& str);
-		static size_t findInVector(const std::vector<std::string>& vec, std::string value);
-		size_t findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_list);
+		static size_t countCommas(const std::string& str);
 		size_t find(const std::string& search_name) const;
-		void checkMultiValueConsistency();
+		void setContactInfo();
+		void setContactInfo(const std::string& category, const std::vector<std::string>& vecKeys, const std::vector<std::string>& default_values, const bool& setDefaults);
 		void setSLFAsPublisher();
 		static bool ENVIDAT;
 		

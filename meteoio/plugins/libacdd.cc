@@ -76,118 +76,56 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 			}
 		}
 	}
-	checkMultiValueConsistency();
+	setContactInfo();
 #ifdef WEBSERVICE
 	//special handling for webservice
 	setSLFAsPublisher();
 #endif
 }
 
-size_t ACDD::findAllCommas(const std::string& str)
+size_t ACDD::countCommas(const std::string& str)
 {
 	const size_t count = std::count_if( str.begin(), str.end(), []( const char& c ){return c ==',';});
 	return count;
 }
 
-size_t ACDD::findInVector(const std::vector<std::string>& vec, std::string value)
+void ACDD::setContactInfo(const std::string& category, const std::vector<std::string>& vecKeys, const std::vector<std::string>& default_values, const bool& setDefaults)
 {
-    const auto it( std::find(vec.begin(), vec.end(), value) );
-	if (it != vec.end()) {
-        const size_t index = it - vec.begin();
-        return index;
-    } 
-	return mio::IOUtils::npos;
-}
-
-size_t ACDD::findNonDefault(const std::vector<std::string>& attribute_list, const std::vector<std::string>& default_values)
-{
-	for (size_t ii=0; ii<attribute_list.size(); ii++) {
-		if (findInVector(default_values, attribute_list[ii]) == mio::IOUtils::npos) return ii;
+	bool unset = true;
+	size_t min_count = IOUtils::npos, max_count = IOUtils::npos;
+	
+	for (std::string att_name : vecKeys) {
+		const std::string att_value( getAttribute(att_name) );
+		if (!att_value.empty()) {
+			unset = false;
+			const size_t num_elems = countCommas( att_value );
+			if (max_count==IOUtils::npos || num_elems>max_count) max_count = num_elems;
+			if (min_count==IOUtils::npos || num_elems<min_count) min_count = num_elems;
+		}
 	}
-	return 0;
+	
+	if (min_count!=max_count) throw mio::InvalidFormatException("Please configure the same number of fields for each comma-delimited ACDD fields of type '"+category+"'", AT);
+	
+	if (unset && setDefaults) {
+		for (size_t ii=0; ii<vecKeys.size(); ii++) {
+			addAttribute(vecKeys[ii], default_values[ii]);
+		}
+	}
 }
 
-void ACDD::checkMultiValueConsistency()
+void ACDD::setContactInfo()
 {
-	const std::vector<std::string> default_values{mio::IOUtils::getLogName(), "", mio::IOUtils::getDomainName(), mio::IOUtils::getDomainName(), "person"};
-
 	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url", "creator_type"};
+	static const std::vector<std::string> defaults_creator{mio::IOUtils::getLogName(), "", mio::IOUtils::getDomainName(), mio::IOUtils::getDomainName(), "person"};
+	setContactInfo("CREATOR", creator_keys, defaults_creator, true);
+
 	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url", "publisher_type"};
-	static const std::vector<std::string> contributor_keys{"contributor_name", "contributor_email", "contributor_institution", "contributor_url", "contributor_type"};
+	static const std::vector<std::string> defaults_publisher{mio::IOUtils::getLogName(), "", mio::IOUtils::getDomainName(), "person"};
+	setContactInfo("PUBLISHER", publisher_keys, defaults_publisher, true);
 
-	std::vector<std::string> creator, publisher, contributor;
-
-	bool is_list_creator = false;
-	bool is_list_publisher = false;
-	bool is_list_contributor = false;
-
-	for (size_t ii=0; ii<creator_keys.size(); ii++) {
-		const size_t pos = find( creator_keys[ii] );
-		if (pos!=mio::IOUtils::npos) {
-			creator.push_back( value[pos] );
-			if (value[pos].find(',') != std::string::npos) is_list_creator = true;	
-		}
-		if (ii<publisher_keys.size()) {
-			const size_t pos_p = find(publisher_keys[ii]);
-			if (pos_p != mio::IOUtils::npos) {
-				publisher.push_back(value[pos_p]);
-				if (value[pos].find(',') != std::string::npos) is_list_publisher = true;	
-			}
-		}
-		if (ii<contributor_keys.size()) {
-			const size_t pos_c = find(contributor_keys[ii]);
-			if (pos_c != mio::IOUtils::npos) {
-				contributor.push_back(value[pos_c]);
-				if (value[pos].find(',') != std::string::npos) is_list_contributor = true;	
-			}
-		}
-	}
-
-	if (!creator.empty() && is_list_creator) {
-		const size_t num_creators = findAllCommas(creator[findNonDefault(creator, default_values)]);
-		for (size_t ii = 0; ii<creator.size();ii++){
-			if (findInVector(default_values, creator[ii]) == mio::IOUtils::npos) {
-				if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of " +creator_keys[findNonDefault(creator,default_values)] + "and " +creator_keys[ii]+" do not match.");
-			}
-			else {
-				if (!creator[ii].empty()) {
-					for (size_t n_c = 0; n_c<num_creators; n_c++) {
-						value[find(creator_keys[ii])] += ","+default_values[findInVector(default_values, creator[ii])];
-					}
-				}
-			}
-		}
-	}
-	if (!publisher.empty() && is_list_publisher) {
-		const size_t num_publishers = findAllCommas(publisher[findNonDefault(publisher, default_values)]);
-		for (size_t ii = 0; ii<publisher.size();ii++){
-			if (findInVector(default_values, publisher[ii]) == mio::IOUtils::npos) {
-				if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of " +publisher_keys[findNonDefault(publisher,default_values)]+" and " +publisher_keys[ii]+" do not match.");
-			}
-			else {
-				if (!publisher[ii].empty()) { 
-					for (size_t n_p = 0; n_p<num_publishers; n_p++) {
-						value[find(publisher_keys[ii])] += ","+default_values[findInVector(default_values, publisher[ii])];
-					}
-				}
-			}		
-		}
-	}
-	if (!contributor.empty() && is_list_contributor) {
-		const size_t num_contributors = findAllCommas(contributor[findNonDefault(contributor, default_values)]);
-		for (size_t ii = 0; ii<contributor.size();ii++){
-			if (findInVector(default_values, contributor[ii]) == mio::IOUtils::npos) {
-				if (num_contributors != findAllCommas(contributor[ii])) throw mio::InvalidFormatException("Number of " +contributor_keys[findNonDefault(contributor,default_values)]+" and " +contributor_keys[ii]+" do not match.");
-			}
-			else {
-				if (!contributor[ii].empty()){
-					for (size_t n_c = 0; n_c<num_contributors; n_c++) {
-						value[find(contributor_keys[ii])] += ","+default_values[findInVector(default_values, contributor[ii])];
-					}
-				}
-			}		
-		}
-	}
+	static const std::vector<std::string> contributor_keys{"contributor_name", "contributor_role"};
+	static const std::vector<std::string> defaults_contributor{"", "technical"};
+	setContactInfo("CONTRIBUTOR", contributor_keys, defaults_contributor,false);
 }
 
 void ACDD::defaultInit()
@@ -195,21 +133,21 @@ void ACDD::defaultInit()
 	mio::Date now; 
 	now.setFromSys();
 	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
-	addAttribute("creator_name", mio::IOUtils::getLogName(), "ACDD_CREATOR");
-	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
-	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
-	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
-	addAttribute("creator_type", "person", "ACDD_CONTRIBUTOR_TYPE");
-	addAttribute("contributor_name", "", "ACDD_CONTRIBUTOR");
-	addAttribute("contributor_email", "", "ACDD_CONTRIBUTOR_EMAIL");
-	addAttribute("contributor_institution", "", "ACDD_CONTRIBUTOR_INSTITUTION");
-	addAttribute("contributor_url", "", "ACDD_CONTRIBUTOR_URL");
-	addAttribute("contributor_type", "person", "ACDD_CONTRIBUTOR_TYPE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
-	addAttribute("publisher_name", mio::IOUtils::getLogName(), "ACDD_PUBLISHER");
+
+	//defaults are set separately in setContactInfo()
+	addAttribute("creator_name", "", "ACDD_CREATOR");
+	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
+	addAttribute("creator_institution", "", "ACDD_CREATOR_INSTITUTION");
+	addAttribute("creator_url", "", "ACDD_CREATOR_URL");
+	addAttribute("creator_type", "", "ACDD_CREATOR_TYPE");
+	addAttribute("contributor_name", "", "ACDD_CONTRIBUTOR");
+	addAttribute("contributor_role", "", "ACDD_CONTRIBUTOR_ROLE");
+	addAttribute("publisher_name", "", "ACDD_PUBLISHER");
 	addAttribute("publisher_email", "", "ACDD_PUBLISHER_EMAIL");
-	addAttribute("publisher_url", mio::IOUtils::getDomainName(), "ACDD_PUBLISHER_URL");
-	addAttribute("publisher_type", "person", "ACDD_PUBLISHER_TYPE");
+	addAttribute("publisher_url", "", "ACDD_PUBLISHER_URL");
+	addAttribute("publisher_type", "", "ACDD_PUBLISHER_TYPE");
+
 	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true), "ACDD_SOURCE");
 	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
 	addAttribute("keywords_vocabulary", "AGU Index Terms", "ACDD_KEYWORDS_VOCABULARY");
@@ -292,6 +230,20 @@ void ACDD::getAttribute(const size_t ii, std::string &att_name, std::string & at
 		att_name="";
 		att_value="";
 	}
+}
+
+/**
+* @brief Given an attribute name, return its associated value (or an empty string if it does not exists)
+* @param[in] att_name attribute name to get the value for
+* @return attribute value or empty string
+*/
+std::string ACDD::getAttribute(std::string &att_name) const
+{
+	for (size_t ii=0; ii<name.size(); ii++) {
+		if (name[ii]==att_name) return value[ii];
+	}
+	
+	return "";
 }
 
 /**
@@ -418,6 +370,8 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
+	double alt_min=std::numeric_limits<double>::max(), alt_max=-std::numeric_limits<double>::max();
+	
 	for (const mio::Coords& location : vecLocation) {
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
@@ -436,11 +390,14 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 
 		const double curr_lat = location.getLat();
 		const double curr_lon = location.getLon();
+		const double curr_alt = location.getAltitude();
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
 		if (lon_max<curr_lon) lon_max = curr_lon;
+		if (alt_min>curr_alt) alt_min = curr_alt;
+		if (alt_max<curr_alt) alt_max = curr_alt;
 	}
 	
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
@@ -459,6 +416,13 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
 	addAttribute("geospatial_lon_max", lon_max);
+	
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	if (alt_min!=IOUtils::nodata) {
+		addAttribute("geospatial_vertical_min", alt_min);
+		addAttribute("geospatial_vertical_max", alt_max);
+	}
 }
 
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
@@ -482,6 +446,11 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 	addAttribute("geospatial_lat_max", location.getLat());
 	addAttribute("geospatial_lon_min", location.getLon());
 	addAttribute("geospatial_lon_max", location.getLon());
+	
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	addAttribute("geospatial_vertical_min", location.getAltitude());
+	addAttribute("geospatial_vertical_max", location.getAltitude());
 }
 
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
@@ -551,7 +520,8 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const 
 	}
 }
 
-void ACDD::setSLFAsPublisher() {
+void ACDD::setSLFAsPublisher()
+{
 	value[find("publisher_name")] = "WSL Institute for Snow and Avalanche Research SLF";
 	value[find("publisher_type")] = "institution";
 	if (!ENVIDAT) {
