@@ -189,7 +189,7 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 		acdd_attribute.second.setUserConfig(cfg, section, allow_multi_line);
 	}
 	
-	if (attributes.empty()) attributes=initAttributes();
+	if (attributes.empty()) attributes = initAttributes();
 	if (linked_attributes.empty()) {
 		linked_attributes = initLinks();
 		checkLinkedAttributes();
@@ -199,7 +199,7 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 void ACDD::setEnabled(const bool& i_enable)
 {
 	enabled = i_enable; 
-	if (attributes.empty()) attributes=initAttributes();
+	if (attributes.empty()) attributes = initAttributes();
 	if (linked_attributes.empty()) {
 		linked_attributes = initLinks();
 		checkLinkedAttributes();
@@ -290,16 +290,6 @@ void ACDD::addAttribute(const std::string& att_name, const double& att_value, co
 	os << att_value;
 	addAttribute(att_name, os.str(), mode);
 }
-
-/*void ACDD::getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const
-{
-	std::map<std::string, acdd_attrs>::const_iterator it = attributes.begin();
-	std::advance(it, ii);
-	if (it==attributes.end()) throw IndexOutOfBoundsException("Out-of-bound access to the ACDD fields map", AT);
-
-	att_name = it->first;
-	att_value = it->second.getValue();
-}*/
 
 /**
 * @brief Given an attribute name, return its associated value (or an empty string if it does not exists)
