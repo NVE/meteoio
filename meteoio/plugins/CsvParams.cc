@@ -87,8 +87,6 @@ bool CsvDateTime::isSet() const
 	const bool has_date = has_component_date || idx_date_str!=IOUtils::npos;
 	const bool has_component_time = (idx_hours!=IOUtils::npos) || (idx_ntime!=IOUtils::npos);
 	const bool has_time = has_component_time || idx_time_str!=IOUtils::npos || hour_cst!=IOUtils::inodata ;
-	std::cout << "hour_cst " << hour_cst << std::endl;
-	std::cout << has_time << std::endl;
 	if (has_date && has_time) return true;
 
 	return false;
@@ -248,7 +246,6 @@ void CsvDateTime::setFixedYear(const int& i_year, const bool& i_auto_wrap)
 
 void CsvDateTime::setFixedHour(const int& i_hour)
 {
-	std::cout << "fixing hour" << std::endl;
 	hour_cst = i_hour;
 }
 
