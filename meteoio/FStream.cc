@@ -213,7 +213,11 @@ bool ofilestream::getDefault()
 
 std::string ofilestream::getLimitBaseDir()
 {
+#if defined  LIMIT_BASE_DIR
 	return LIMIT_BASE_DIR;
+#else
+	return ".";
+#endif
 }
 
 void ofilestream::createDirectoriesOfFile(const char* filename)
