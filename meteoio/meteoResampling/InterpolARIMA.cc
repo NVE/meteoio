@@ -49,6 +49,19 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data, int gap_loc, int N_gap, s
     auto_arima_backward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
 }
 
+
+InterpolARIMA::InterpolARIMA(std::vector<double> data, int n_predictions, std::string direction, int s)
+    : data(data), time(arange(0, data.size())), gap_loc(data.end()), N_gap(n_predictions), data_forward(decideDirection(data, direction, true)),
+      N_data_forward(data_forward.size()), data_backward(decideDirection(data,direction,false)), N_data_backward(data_backward.size()),
+      xreg_vec(0), new_xreg_vec(0), xreg(NULL), r(0), s(s), pred_forward(N_gap), pred_backward(N_gap), amse_forward(N_gap),
+      amse_backward(N_gap) {
+        // initialize auto_arima objects
+        std::vector<int> pqdmax = {max_p, max_d, max_q};
+        std::vector<int> PQDmax = {max_P, max_D, max_Q};
+        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
+        auto_arima_backward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, 0);
+      }
+
 // Set the metadata for the auto arima objects
 void InterpolARIMA::setAutoArimaMetaData(int max_p, int max_d, int max_q, int start_p, int start_q, int max_P, int max_D, int max_Q,
                                          int start_P, int start_Q, bool seasonal, bool stationary) {
@@ -115,6 +128,12 @@ std::vector<double> InterpolARIMA::simulate(int n_steps, int seed) {
     // use the equations to simulate with random errors
     std::cerr << "not implemented, and not needed for now\n";
     return sim;
+}
+
+std::vector<double> predict() {
+    auto_arima_exec(auto_arima_forward, data_forward.data(), xreg);
+    auto_arima_predict(auto_arima_forward, data_forward.data(), xreg, N_gap, new_xreg, pred_forward.data(), amse_forward.data());
+    return pred_forward;
 }
 
 // Fill the gap using the auto arima objects

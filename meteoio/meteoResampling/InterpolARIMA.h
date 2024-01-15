@@ -13,6 +13,7 @@ class InterpolARIMA {
         InterpolARIMA();
         InterpolARIMA(std::vector<double> data, int gap_loc, int N_gap, int s = 0);
         InterpolARIMA(std::vector<double> data, int gap_loc, int N_gap, std::vector<double> xreg_vec, int s = 0);
+        InterpolARIMA(std::vector<double> data, int n_predictions, std::string direction = "forward", int s = 0);
 
         void setAutoArimaMetaData(int max_p = 8, int max_d =3, int max_q = 8, int start_p = 2, int start_q = 2, int max_P = 2, int max_D = 1, int max_Q = 2, int start_P = 1, int start_Q = 1, bool seasonal = false, bool stationary = false);
         void setOptMetaData(std::string method = "css-mle", std::string opt_method = "BFGS", bool stepwise = true, bool approximation = false, int num_models = 94);
@@ -23,6 +24,7 @@ class InterpolARIMA {
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
         void interpolate();
+        std::vector<double> predict();
         std::vector<double> getData() {return data;};
 
 
