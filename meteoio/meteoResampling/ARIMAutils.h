@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cassert>
+#include <meteoio/MeteoIO.h>
 #include <cmath>
 
 std::vector<double> slice(const std::vector<double> &vec, int start, int N) { 
@@ -70,6 +71,30 @@ void reverseVector(std::vector<T>& vec) {
         std::swap(vec[start], vec[end]);
         start++;
         end--;
+    }
+}
+
+std::vector<doubl> toVector(std::vector<MeteoData> vecM, const std::string &paramname) {
+    int paramindex = vecM[0].getParamIndex(paramname);
+    std::vector<double> vec(vecM.size());
+    for (int i = 0; i < vecM.size(); i++) {
+        vec[i] = vecM[i](paramindex);
+    }
+    return vec;
+}
+
+std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward) {
+    if (forward) {
+        if (direction == "forward") {
+            return data;
+        } else if (direction == "backward") {
+            reverseVector(data);
+            return data;
+        } else {
+            throw mio::IOException("Direction " + direction + " not recognized");
+        }
+    } else {
+        return std::vector<double>();
     }
 }
 #endif //UTILS_H
