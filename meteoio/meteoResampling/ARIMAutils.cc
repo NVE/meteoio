@@ -6,7 +6,7 @@
 namespace mio {
 
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double> &vec, int start, int N) { 
+std::vector<double> slice(const std::vector<double> &vec, size_t start, int N) { 
     std::vector<double> vec_sliced(N);
     for (int i = 0; i < N; i++) {
         vec_sliced[i] = vec[start+i];
@@ -15,18 +15,18 @@ std::vector<double> slice(const std::vector<double> &vec, int start, int N) {
 };
 
 // slice a vector from start to end
-std::vector<double> slice(const std::vector<double> &vec, int start) { 
+std::vector<double> slice(const std::vector<double> &vec, size_t start) { 
     std::vector<double> vec_sliced(vec.size()-start);
-    for (int i = 0; i < vec.size()-start; i++) {
+    for (size_t i = 0; i < vec.size()-start; i++) {	
         vec_sliced[i] = vec[start+i];
     }
     return vec_sliced;
 };
 
 // np.arange for c++
-std::vector<double> arange(int start, int N) {
+std::vector<double> arange(size_t start, int N) {
     std::vector<double> vec(N);
-    for (int i = 0; i < N; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(N); i++) {
         vec[i] = start + i;
     }
     return vec;
@@ -35,36 +35,36 @@ std::vector<double> arange(int start, int N) {
 //calculate the of a vector
 double calcVecMean(std::vector<double> vec) {
     double sum = 0;
-    for (int i = 0; i < vec.size(); i++) {
+    for (size_t i = 0; i < vec.size(); i++) {
         sum += vec[i];
     }
-    return sum/vec.size();
+    return sum/static_cast<int>(vec.size());
 }
 
 //calculate the standard deviation of a vector
 double stdDev(std::vector<double> vec) {
-    double mean_vec = calcVecMean(vec);
-    double sum = 0;
-    for (int i = 0; i < vec.size(); i++) {
-        sum += (vec[i] - mean_vec)*(vec[i] - mean_vec);
-    }
-    return std::sqrt(sum/vec.size());
+	double mean_vec = calcVecMean(vec);
+	double sum = 0;
+	for (size_t i = 0; i < vec.size(); i++) {
+		sum += (vec[i] - mean_vec)*(vec[i] - mean_vec);
+	}
+	return std::sqrt(sum/static_cast<double>(vec.size()));
 }
 
 // converts a vector of MeteoData to a vector of doubles
 std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &paramname) {
-    int paramindex = vecM[0].getParameterIndex(paramname);
+    size_t paramindex = vecM[0].getParameterIndex(paramname);
     std::vector<double> vec(vecM.size());
-    for (int i = 0; i < vecM.size(); i++) {
+    for (size_t i = 0; i < vecM.size(); i++) {
         vec[i] = vecM[i](paramindex);
     }
     return vec;
 }
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const int &paramindex) {
+std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramindex) {
     std::vector<double> vec(vecM.size());
-    for (int i = 0; i < vecM.size(); i++) {
+    for (size_t i = 0; i < vecM.size(); i++) {
         vec[i] = vecM[i](paramindex);
     }
     return vec;
@@ -181,6 +181,12 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	}
 }
 
+bool requal(Date &date1, Date &date2) {
+    double tolerance = 1e-6; // Define your tolerance level
+    return std::abs((date1 - date2).getJulian(true)) <= tolerance;
+}
+
+
 void computeGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
                                               const double& i_window_size, size_t& indexP1, size_t& indexP2)
 {
@@ -192,7 +198,6 @@ void computeGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex
         std::cerr << "Gap end: " << indexP2 << std::endl;
     }
 }
-
 
 // returns the most often accuring value in a vector
 double mostLikelyValue(const std::vector<double>& vec) {
@@ -212,7 +217,7 @@ double mostLikelyValue(const std::vector<double>& vec) {
 // compute the most often occuring sampling rate rounded to 1e-6
 double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector<MeteoData> vecM) {
     std::vector<double> time_diffs;
-    for (int i = 0; i < vecM.size(); i++) {
+    for (size_t i = 0; i < vecM.size(); i++) {
         if (vecM[i].date >= data_start_date && vecM[i].date <= data_end_date) {
             double value = 1/((vecM[i].date - vecM[i-1].date).getJulian(true));
             time_diffs.push_back(std::round(value*100000/100000));

@@ -9,13 +9,13 @@
 namespace mio {
 
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double> &vec, int start, int N);
+std::vector<double> slice(const std::vector<double> &vec, size_t start, int N);
 
 // slice a vector from start to end
-std::vector<double> slice(const std::vector<double> &vec, int start);
+std::vector<double> slice(const std::vector<double> &vec, size_t start);
 
 // np.arange for c++
-std::vector<double> arange(int start, int N);
+std::vector<double> arange(size_t start, int N);
 
 template <typename T>
 T findMinMax(const std::vector<T>& vec, bool findMin) {
@@ -39,8 +39,11 @@ double stdDev(std::vector<double> vec);
 // TODO: Test this
 template <typename T>
 void reverseVector(std::vector<T>& vec) {
+    if (vec.empty()) {
+        throw std::invalid_argument("Cannot reverse an empty vector");
+    }
     int start = 0;
-    int end = vec.size() - 1;
+    int end = int(vec.size()) - 1;
 
     while (start < end) {
         std::swap(vec[start], vec[end]);
@@ -53,7 +56,7 @@ void reverseVector(std::vector<T>& vec) {
 std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &paramname);
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const int &paramindex);
+std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramindex);
 
 // helper to parse direction argument for interpolarima
 std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward);
@@ -84,10 +87,7 @@ void computeGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex
                                               const double& i_window_size, size_t& indexP1, size_t& indexP2);
 
 // roughly equal between two dates, given a tolerance level
-static bool requal(Date &date1, Date &date2) {
-    double tolerance = 1e-6; // Define your tolerance level
-    return std::abs((date1 - date2).getJulian(true)) <= tolerance;
-}
+bool requal(Date &date1, Date &date2);
 
 
 // returns the most often accuring value in a vector

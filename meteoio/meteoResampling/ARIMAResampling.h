@@ -68,7 +68,7 @@ class ARIMAResampling : public ResamplingAlgorithms {
         int start_p = 2, start_q = 2;
         int max_P = 2, max_D = 1, max_Q = 2;
         int start_P = 1, start_Q = 1;
-        int s = 0;
+        int period = 0;
         std::string method = "css-mle", opt_method = "bfgs";
         bool stepwise = true, approximation = false;
         int num_models = 94;

@@ -329,14 +329,14 @@ double erfcinv(double x) {
 		oup = (p[0]/t+p[1]+t*(p[2]+t*(p[3]+t*(p[4]+t*p[5]))))/
           (q[0]+t*(q[1]+t*(q[2])));
 		
-	} else if( x < 1.0e-100 && x > 1.0e-1000 ) {
+	} else if( x < 1.0e-100 && x > 1.0e-308 ) {
 		//Coefficients from table 70
 		double p[4]={0.00980456202915,0.363667889171,0.97302949837,-0.5374947401};
 		double q[3]={0.00980451277802,0.363699971544,1.000000000000}; 
 		t = 1.0/sqrt(-log(x));
 		oup = (p[0]/t+p[1]+t*(p[2]+t*p[3]))/(q[0]+t*(q[1]+t*(q[2])));
 		
-	} else if (x <= 1.0e-1000) {
+	} else if (x <= 1.0e-308) {
 		 oup = xinf;
 	} else if (x == 2.) {
 		 oup = -xinf;
