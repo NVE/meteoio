@@ -44,6 +44,7 @@ namespace mio {
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
  *       - create a station file and an ini file to test the algorithm
+ *       - CHeck stationary and seasonal keyword defaults
  */
 class ARIMAResampling : public ResamplingAlgorithms {
 	public:
