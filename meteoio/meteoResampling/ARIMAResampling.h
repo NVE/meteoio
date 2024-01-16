@@ -21,8 +21,9 @@
 
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include "InterpolARIMA.h" // change the includes to make it uniform
-#include "ARIMAUtils.h" // change the includes to make it uniform
+#include "ARIMAutils.h" // change the includes to make it uniform
 #include <vector>
+
 
 namespace mio {
 
@@ -36,7 +37,12 @@ namespace mio {
  * Points that fall in between interpolated data will be interpolated linearly.
  * a gap is defined as at least 3 missing values in a row
  * 
+ * Also assuming that the meteovector fills all necessary fields with IOUtils::npos beforehand
+ * so i dont need to work with dates
+ * 
  * missing values in the data used to interpolate will be linearly interpolated
+ * 
+ * TODO: do i need to use getJulian(true) or does it not matter?
  */
 class ARIMAResampling : public ResamplingAlgorithms {
 	public:
@@ -48,13 +54,14 @@ class ARIMAResampling : public ResamplingAlgorithms {
 		std::string toString() const;
     
     private:
-        std::vector<GAP_INFO> gap_data;
-        std::vector<double> data;
+
+        std::vector<ARIMA_GAP> gap_data;
+        std::vector<std::vector<double>> filled_data;
+        std::vector<std::vector<Date>> all_dates;
 
         // depending of before and after windows are not available can predict in both directions
         double before_window, after_window;
-        int before_window_idx;
-        int after_window_idx;
+        double sampling_rate;
 
         // User defined Metadata
         int max_p = 8, max_d = 3, max_q = 8;
@@ -66,7 +73,8 @@ class ARIMAResampling : public ResamplingAlgorithms {
         bool stepwise = true, approximation = false;
         int num_models = 94;
         bool seasonal = false, stationary = false;  
-
+        double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
+        double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
 };
 
 } //end namespace mio
