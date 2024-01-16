@@ -42,7 +42,8 @@ namespace mio {
  * 
  * missing values in the data used to interpolate will be linearly interpolated
  * 
- * TODO: do i need to use getJulian(true) or does it not matter?
+ * TODO: - do i need to use getJulian(true) or does it not matter?
+ *       - create a station file and an ini file to test the algorithm
  */
 class ARIMAResampling : public ResamplingAlgorithms {
 	public:

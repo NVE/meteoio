@@ -25,6 +25,7 @@
 #include <meteoio/meteoResampling/NearestNeighbour.h>
 #include <meteoio/meteoResampling/NoResampling.h>
 #include <meteoio/meteoResampling/SolarResampling.h>
+#include <meteoio/meteoResampling/ARIMAResampling.h>
 
 namespace mio {
 /**
@@ -93,6 +94,8 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "DAILY_AVG") {
 		return new DailyAverage(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "ARIMA") {
+		return new ARIMAResampling(algoname, parname, dflt_window_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
