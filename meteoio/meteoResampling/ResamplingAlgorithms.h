@@ -81,6 +81,7 @@ class ResamplingAlgorithms {
 		double window_size;
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< These thresholds are used to handle solar radiation
 
+	private:
 		typedef struct GAP_INFO {
 			GAP_INFO() : start(), end(), startIdx(IOUtils::npos), endIdx(IOUtils::npos) {}
 			void extend(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx<startIdx) setStart(idx, vecM); if (idx>endIdx) setEnd(idx, vecM);}
@@ -97,7 +98,6 @@ class ResamplingAlgorithms {
                                               const double& i_window_size, const size_t& indexP1);
 		std::map<std::string, gap_info> gaps;
 	
-	private:
 };
 
 class ResamplingAlgorithmsFactory {

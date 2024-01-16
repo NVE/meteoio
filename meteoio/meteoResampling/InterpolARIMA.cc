@@ -4,17 +4,22 @@
 #include <iostream>
 #include <meteoio/MeteoIO.h>
 
+namespace mio {
 // ------------------- Constructor ------------------- //
 // Default constructor
-InterpolARIMA::InterpolARIMA() : data(0), time(0), gap_loc(0), N_gap(0), data_forward(0), N_data_forward(0), data_backward(0),
-                                 N_data_backward(0), xreg_vec(0), new_xreg_vec(0), xreg(NULL), new_xreg(NULL), r(0), s(0),
-                                 pred_forward(0), pred_backward(0), amse_forward(0), amse_backward(0) {
-    // initialize auto_arima objects
-    std::vector<int> pqdmax = {max_p, max_d, max_q};
-    std::vector<int> PQDmax = {max_P, max_D, max_Q};
-    auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
-    auto_arima_backward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
-}
+InterpolARIMA::InterpolARIMA()
+    : gap_loc(0), N_gap(0), time(), pred_forward(), pred_backward(), data(), xreg_vec(), 
+    data_forward(), data_backward(), new_xreg_vec(), xreg(NULL), new_xreg(NULL), 
+    amse_forward(), amse_backward(), N_data_forward(0), N_data_backward(0), max_p(8), 
+    max_d(3), max_q(8), start_p(2), start_q(2), max_P(2), max_D(1), max_Q(2), start_P(1), 
+    start_Q(1), r(0), s(0), method("css-mle"), opt_method("bfgs"), stepwise(true), 
+    approximation(false), num_models(94), seasonal(false), stationary(false) 
+    {// initialize auto_arima objects
+        std::vector<int> pqdmax = {max_p, max_d, max_q};
+        std::vector<int> PQDmax = {max_P, max_D, max_Q};
+        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
+        auto_arima_backward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
+    }
 
 // only need s when it is known
 InterpolARIMA::InterpolARIMA(std::vector<double> data, int gap_loc, int N_gap, int s)
@@ -51,7 +56,7 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data, int gap_loc, int N_gap, s
 
 
 InterpolARIMA::InterpolARIMA(std::vector<double> data, int n_predictions, std::string direction, int s)
-    : data(data), time(arange(0, data.size())), gap_loc(data.end()), N_gap(n_predictions), data_forward(decideDirection(data, direction, true)),
+    : data(data), time(arange(0, data.size())), gap_loc(data.size()-1), N_gap(n_predictions), data_forward(decideDirection(data, direction, true)),
       N_data_forward(data_forward.size()), data_backward(decideDirection(data,direction,false)), N_data_backward(data_backward.size()),
       xreg_vec(0), new_xreg_vec(0), xreg(NULL), r(0), s(s), pred_forward(N_gap), pred_backward(N_gap), amse_forward(N_gap),
       amse_backward(N_gap) {
@@ -130,7 +135,7 @@ std::vector<double> InterpolARIMA::simulate(int n_steps, int seed) {
     return sim;
 }
 
-std::vector<double> predict() {
+std::vector<double> InterpolARIMA::predict() {
     auto_arima_exec(auto_arima_forward, data_forward.data(), xreg);
     auto_arima_predict(auto_arima_forward, data_forward.data(), xreg, N_gap, new_xreg, pred_forward.data(), amse_forward.data());
     return pred_forward;
@@ -168,9 +173,9 @@ void InterpolARIMA::fillGap() {
 }
 
 bool InterpolARIMA::consistencyCheck() {
-    double mean_before = mean(data_forward);
+    double mean_before = calcVecMean(data_forward);
     double std_before = stdDev(data_forward);
-    double mean_after = mean(data_backward);
+    double mean_after = calcVecMean(data_backward);
     double std_after = stdDev(data_backward);
     double max_interpolated = findMinMax(slice(data, gap_loc, N_gap), false);
 
@@ -210,3 +215,5 @@ void InterpolARIMA::interpolate() {
         }
     }
 }
+
+} // end namespace mio
