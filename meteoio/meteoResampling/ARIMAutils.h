@@ -67,7 +67,7 @@ struct ARIMA_GAP {
         void extend(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx<start) setStart(idx, vecM); if (idx>end) setEnd(idx, vecM);}
         void setStart(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; start=idx; startDate=vecM[idx].date;}
         void setEnd(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; end=idx; endDate=vecM[idx].date;}
-        std::string toString() const {std::ostringstream os; os << startDate.toString(Date::ISO) << " (" << start << ") - " << endDate.toString(Date::ISO) << " (" << end << ")"; return os.str();}
+        std::string toString() const {std::ostringstream os; os << startDate.toString(Date::ISO) << " (" << start << ") - " << endDate.toString(Date::ISO) << " (" << end << ")\n With sampling rate: " << sampling_rate ; return os.str();}
         void reset() {start=IOUtils::npos; end=IOUtils::npos; startDate=Date(); endDate=Date();}
         size_t start, end;
         Date startDate, endDate;
@@ -83,8 +83,7 @@ size_t searchBackward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& para
 size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
                                               const double& i_window_size, const size_t& indexP1);
 
-void computeGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size, size_t& indexP1, size_t& indexP2);
+void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, size_t& indexP1, size_t& indexP2, double& before_window, double& after_window);
 
 // roughly equal between two dates, given a tolerance level
 bool requal(Date &date1, Date &date2);

@@ -105,7 +105,7 @@ size_t searchBackward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& para
 		for (; ii-- >0; ) {
 			if (vecM[ii].date < dateStart) break;
 			if (vecM[ii](paramindex) != IOUtils::nodata) {
-				last_gap.setStart(ii+1, vecM);
+				last_gap.setStart(ii, vecM);
 				last_gap.setEnd(pos, vecM);
 				return ii;
 			}
@@ -115,7 +115,7 @@ size_t searchBackward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& para
 		if (windowStartInGap) { //we can extend the current known gap
 			last_gap.extend(pos, vecM);
 		} else { //this is a new gap
-			last_gap.setStart(ii+1, vecM);
+			last_gap.setStart(ii, vecM);
 			last_gap.setEnd(pos, vecM);
 		}
 		return IOUtils::npos;
@@ -124,12 +124,12 @@ size_t searchBackward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& para
 		for (; ii-- >0; ) {
 			if (vecM[ii].date < windowStart) break;
 			if (vecM[ii](paramindex) != IOUtils::nodata) { //there is some data before the gap!
-				last_gap.extend(ii+1, vecM);
+				last_gap.extend(ii, vecM);
 				return ii;
 			}
 		}
 		
-		last_gap.extend(ii+1, vecM);
+		last_gap.extend(ii, vecM);
 		return IOUtils::npos;
 	}
 }
@@ -158,6 +158,17 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 				return ii;
 			}
 		}
+
+		if (ii == pos) {
+			if (vecM[ii-1].date <= dateEnd && vecM[ii].date >dateEnd) {
+				if (windowEndInGap) { //we can extend the current known gap
+					last_gap.extend(pos-1, vecM);
+				} else { //this is a new gap
+					last_gap.setStart(pos-1, vecM);
+					last_gap.setEnd(ii, vecM);
+				}				
+			}
+		}
 		
 		if (windowEndInGap) { //we can extend the current known gap
 			last_gap.extend(pos, vecM);
@@ -167,6 +178,7 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 		}
 		return IOUtils::npos;
 	} else { //what's left: the current point is in a known gap, but there might be some data after
+		std::cout << "or even this?" << std::endl;
 		size_t ii = last_gap.end;
 		for (; ii<vecM.size(); ++ii) { //start from the end of the last known gap
 			if (vecM[ii].date > windowEnd) break;
@@ -187,16 +199,19 @@ bool requal(Date &date1, Date &date2) {
 }
 
 
-void computeGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size, size_t& indexP1, size_t& indexP2)
+void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, size_t& indexP1, size_t& indexP2, double& before_window, double& after_window)
 {
-	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size);
-	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1);
+	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, before_window);
+	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, after_window, indexP1);
     if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
         std::cerr << "Could not find the end of the gap" << std::endl;
         std::cerr << "Gap start: " << indexP1 << std::endl;
         std::cerr << "Gap end: " << indexP2 << std::endl;
     }
+	Date data_start_date = last_gap.startDate - before_window;
+	Date data_end_date = last_gap.endDate + after_window;
+	last_gap.sampling_rate = computeSamplingRate(data_start_date, data_end_date, vecM);
+	
 }
 
 // returns the most often accuring value in a vector

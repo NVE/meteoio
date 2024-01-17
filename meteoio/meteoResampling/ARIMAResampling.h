@@ -43,8 +43,10 @@ namespace mio {
  * missing values in the data used to interpolate will be linearly interpolated
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
- *       - create a station file and an ini file to test the algorithm
- *       - CHeck stationary and seasonal keyword defaults
+ *       - predictions should only happen if the gap is at the end or the beginning
+ *       - if interpolation is not possible because the window size is smaller than the gap, just predict one step ahead
+ *       - be careful to not interpolate, if the gap still has missing data
+ * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {
 	public:
@@ -63,7 +65,6 @@ class ARIMAResampling : public ResamplingAlgorithms {
 
         // depending of before and after windows are not available can predict in both directions
         double before_window, after_window;
-        double sampling_rate;
 
         // User defined Metadata
         int max_p = 8, max_d = 3, max_q = 8;
@@ -71,10 +72,10 @@ class ARIMAResampling : public ResamplingAlgorithms {
         int max_P = 2, max_D = 1, max_Q = 2;
         int start_P = 1, start_Q = 1;
         int period = 0;
-        std::string method = "css-mle", opt_method = "bfgs";
+        std::string method = "CSS-MLE", opt_method = "BFGS";
         bool stepwise = true, approximation = false;
         int num_models = 94;
-        bool seasonal = false, stationary = false;  
+        bool seasonal = true, stationary = false;  
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
 };
