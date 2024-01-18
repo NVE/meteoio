@@ -51,13 +51,15 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, i
 }
 
 
-InterpolARIMA::InterpolARIMA(std::vector<double> data_in, int n_predictions, std::string direction, int period)
-    :auto_arima_forward(), auto_arima_backward(), data(data_in), gap_loc(data.size()-1), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))), pred_forward(n_predictions), pred_backward(n_predictions), 
-     xreg_vec(0), data_forward(decideDirection(data, direction, true)), 
-    data_backward(decideDirection(data,direction,false)), new_xreg_vec(0), xreg(NULL), new_xreg(NULL),
+InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end , int n_predictions, std::string direction, int period)
+    :auto_arima_forward(), auto_arima_backward(), data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))), pred_forward(n_predictions), pred_backward(n_predictions), 
+     xreg_vec(0), data_forward(decideDirection(data_in, direction, true, gap_loc)), 
+    data_backward(decideDirection(data_in,direction,false, gap_loc)), new_xreg_vec(0), xreg(NULL), new_xreg(NULL),
     amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), 
     N_data_backward(data_backward.size()), s(period) {
         // initialize auto_arima objects
+
+        std::cout << this->toString() << std::endl;
         std::vector<int> pqdmax = {max_p, max_d, max_q};
         std::vector<int> PQDmax = {max_P, max_D, max_Q};
         auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);

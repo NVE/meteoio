@@ -16,7 +16,7 @@ namespace mio {
         InterpolARIMA();
         InterpolARIMA(std::vector<double> data_in, size_t gap_loc, int N_gap, int s = 0);
         InterpolARIMA(std::vector<double> data_in, size_t gap_loc, int N_gap, std::vector<double> xreg_vec, int s = 0);
-        InterpolARIMA(std::vector<double> data_in, int n_predictions, std::string direction = "forward", int s = 0);
+        InterpolARIMA(std::vector<double> data_in, size_t gap_loc, int n_predictions, std::string direction = "forward", int s = 0);
 
         void setAutoArimaMetaData(int max_p_param = 8, int max_d_param = 3, int max_q = 8, int start_p = 2, int start_q = 2, int max_P = 2,
                                   int max_D = 1, int max_Q = 2, int start_P = 1, int start_Q = 1, bool seasonal = true,
@@ -98,7 +98,7 @@ namespace mio {
             delete new_xreg;
         }
 
-        std::string toString() const;
+        std::string toString();
 
     private:
         // Interpolation variables

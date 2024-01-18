@@ -71,13 +71,13 @@ std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramind
 }
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward) {
+std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc) {
     if (forward) {
         if (direction == "forward") {
-            return data;
+            return slice(data,0,gap_loc-1);
         } else if (direction == "backward") {
             reverseVector(data);
-            return data;
+            return slice(data,0,gap_loc-1);
         } else {
             throw mio::IOException("Direction " + direction + " not recognized");
         }
@@ -195,21 +195,36 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 
 bool requal(Date &date1, Date &date2) {
     double tolerance = 1e-6; // Define your tolerance level
-    return std::abs((date1 - date2).getJulian(true)) <= tolerance;
+    bool is_equal = std::abs((date1 - date2).getJulian(true)) <= tolerance;
+	return is_equal;
 }
 
 
-void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, size_t& indexP1, size_t& indexP2, double& before_window, double& after_window)
+void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, size_t& indexP1, size_t& indexP2, double& before_window, double& after_window, double& window_size, Date& data_start_date, Date& data_end_date)
 {
-	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, before_window);
-	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, after_window, indexP1);
+	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, window_size);
+	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, window_size, indexP1);
     if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
-        std::cerr << "Could not find the end of the gap" << std::endl;
+        std::cerr << "Could not find the end of the gap "<< last_gap.toString() << std::endl;
         std::cerr << "Gap start: " << indexP1 << std::endl;
         std::cerr << "Gap end: " << indexP2 << std::endl;
+		std::cerr << "Consider increasing the Window Size" << std::endl;
     }
-	Date data_start_date = last_gap.startDate - before_window;
-	Date data_end_date = last_gap.endDate + after_window;
+	std::cout << "okay till here" << std::endl;
+	data_start_date = last_gap.startDate - before_window;
+	data_end_date = last_gap.endDate + after_window;	
+
+	std::cout << "still okay" << std::endl;
+	// check that window size is not overreached
+	if (data_start_date < vecM[0].date) {
+		data_start_date = vecM[0].date;
+	}
+	if (data_end_date > vecM[vecM.size()-1].date) {
+		data_end_date = vecM[vecM.size()-1].date;
+	}
+	if (data_end_date - data_start_date > window_size) {
+		throw IOException("The data window needed to interpolate the gap " + last_gap.toString() + " is larger than the resampling window size");
+	}
 	last_gap.sampling_rate = computeSamplingRate(data_start_date, data_end_date, vecM);
 	
 }
@@ -240,4 +255,53 @@ double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector
     }
     return mostLikelyValue(time_diffs);
 }
+
+void printVectors(const std::vector<MeteoData>& vecM, const std::vector<Date>& dates, const size_t& paramindex) {
+	size_t maxSize = std::max(vecM.size(), dates.size());
+
+	// Print headers
+	std::cout << std::left << std::setw(30) << "MeteoData Date" << "| Date" << std::endl;
+	std::cout << "--------------------------------------------------" << std::endl;
+
+	for (size_t i = 0; i < maxSize; i++) {
+		// Print date from MeteoData or "NaN" if out of range
+		if (i < vecM.size()) {
+			std::cout << std::left << std::setw(30) << vecM[i].date.toString(Date::ISO)<< ":" << vecM[i](paramindex) << "| ";
+		} else {
+			std::cout << std::left << std::setw(30) << "NaN" << "| ";
+		}
+
+		// Print date from dates vector or "NaN" if out of range
+		if (i < dates.size()) {
+			std::cout << dates[i].toString(Date::ISO) << std::endl;
+		} else {
+			std::cout << "NaN" << std::endl;
+		}
+	}
+}
+
+void printVectors(const std::vector<Date>& dates1, const std::vector<Date>& dates2){ 
+	size_t maxSize = std::max(dates1.size(), dates2.size());
+
+	// Print headers
+	std::cout << std::left << std::setw(30) << "Date1" << "| Date2" << std::endl;
+	std::cout << "--------------------------------------------------" << std::endl;
+
+	for (size_t i = 0; i < maxSize; i++) {
+		// Print date from dates1 vector or "NaN" if out of range
+		if (i < dates1.size()) {
+			std::cout << std::left << std::setw(30) << dates1[i].toString(Date::ISO) << "| ";
+		} else {
+			std::cout << std::left << std::setw(30) << "NaN" << "| ";
+		}
+
+		// Print date from dates2 vector or "NaN" if out of range
+		if (i < dates2.size()) {
+			std::cout << dates2[i].toString(Date::ISO) << std::endl;
+		} else {
+			std::cout << "NaN" << std::endl;
+		}
+	}
+}
+
 } // namespace mio

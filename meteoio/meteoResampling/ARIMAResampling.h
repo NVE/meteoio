@@ -43,9 +43,10 @@ namespace mio {
  * missing values in the data used to interpolate will be linearly interpolated
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
- *       - predictions should only happen if the gap is at the end or the beginning
- *       - if interpolation is not possible because the window size is smaller than the gap, just predict one step ahead
- *       - be careful to not interpolate, if the gap still has missing data
+ *       - predictions should only happen if the gap is at the end or the beginning -> TODO
+ *       - if interpolation is not possible because the window size is smaller than the gap, just predict one step ahead -> Pretty much done
+ *       - be careful to not linearly interpolate, if the gap still has missing data (because window size to small) -> TODO
+ *       - fix error after "interpolating"
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {
