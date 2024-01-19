@@ -48,6 +48,7 @@ namespace mio {
  *       - be careful to not linearly interpolate, if the gap still has missing data (because window size to small) -> TODO
  *       - need xreg_back and xreg_forw
  *       - doing predict with data_backward leads to seg fault, but why?
+ *       - how do i avoid the whole size_t vs int problem?
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {

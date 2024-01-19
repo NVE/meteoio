@@ -33,8 +33,8 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, i
     std::vector<int> PQDmax = {max_P, max_D, max_Q};
     std::vector<int> pqdmax_b = {max_p, max_d, max_q};
     std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
-    auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
-    auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_gap);
+    auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
+    auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
 }
 
 InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, std::vector<double> xreg_vec_in, int period)
@@ -51,8 +51,8 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, i
     std::vector<int> PQDmax = {max_P, max_D, max_Q};
     std::vector<int> pqdmax_b = {max_p, max_d, max_q};
     std::vector<int> PQDmax_b = {max_P, max_D, max_Q}; 
-    auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
-    auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_gap);
+    auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
+    auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
 }
 
 
@@ -68,7 +68,7 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end , int 
         std::vector<int> PQDmax = {max_P, max_D, max_Q};
         std::vector<int> pqdmax_b = {max_p, max_d, max_q};
         std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
-        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_gap);
+        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
         auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, 0);
       }
 
@@ -242,6 +242,7 @@ void InterpolARIMA::fillGap() {
     }
 }
 
+
 bool InterpolARIMA::consistencyCheck() {
     double mean_before = calcVecMean(data_forward);
     double std_before = stdDev(data_forward);
@@ -257,7 +258,7 @@ bool InterpolARIMA::consistencyCheck() {
 void InterpolARIMA::interpolate() {
     bool fit = true;
     if (N_data_backward == 0 || N_data_forward == 0) {
-        throw mio::NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
+        throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
                                    ", backward datapoints " + std::to_string(N_data_backward) + "\n" );
         return;
     }
@@ -268,14 +269,14 @@ void InterpolARIMA::interpolate() {
 
         if (retval_f == 0 || retval_b == 0) {
             std::string where = (retval_f == 0) ? "forward data" : "backward data";
-            throw mio::AccessException("Interpolation Input data is erroneous in " + where);
+            throw AccessException("Interpolation Input data is erroneous in " + where);
         } else if (retval_f == 15 || retval_b == 15) {
             std::string where = (retval_f == 15) ? "forward data" : "backward data";
-            throw mio::InvalidFormatException("Interpolation Input data has Inf/Nan values in " + where);
+            throw InvalidFormatException("Interpolation Input data has Inf/Nan values in " + where);
         } else if (retval_f == 4 || retval_b == 4) {
             std::string where = (retval_f == 4) ? "forward data" : "backward data";
             if (method != "CSS-MLE" && opt_method != "BFGS") {
-                throw mio::IOException("Optimization of ARIMA did not converge in " + where +
+                throw IOException("Optimization of ARIMA did not converge in " + where +
                                        ".\n Please try another method and optimization method");
             } else {
                 std::string new_opt_method = "Nelder-Mead";

@@ -3065,6 +3065,7 @@ void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,
 		if (obj->idrift == 1) {
 			W[i] -= obj->exog[0]*(i+1);
 		}
+		printf("got some problems here in this loop, seg fault dunno why\n");
 		if (obj->r > 0) {
 			for(j = diter; j < obj->r;++j) {
 				W[i] -= obj->exog[j] * xreg[(j-diter)*N+i];
