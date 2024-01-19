@@ -141,7 +141,7 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 	// exact value or linearly interpolate, to get the correct value
 	std::cout << "resampling date : " << resampling_date.toString(Date::ISO) << std::endl;
 	std::cout << "gaps : " << gap_data.size() << std::endl;
-	// TODO: needs to be reavaluated
+	// TODO: needs a check to find missing data in the gap, which forwards it to the next step
 	for (size_t ii = 0; ii < gap_data.size(); ii++) {
 		ARIMA_GAP gap = gap_data[ii];
 		std::vector<Date> gap_dates = all_dates[ii];
