@@ -46,7 +46,8 @@ namespace mio {
  *       - predictions should only happen if the gap is at the end or the beginning -> TODO
  *       - if interpolation is not possible because the window size is smaller than the gap, just predict one step ahead -> Pretty much done
  *       - be careful to not linearly interpolate, if the gap still has missing data (because window size to small) -> TODO
- *       - fix error after "interpolating"
+ *       - need xreg_back and xreg_forw
+ *       - doing predict with data_backward leads to seg fault, but why?
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {

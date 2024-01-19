@@ -149,6 +149,8 @@ void printVectors(const std::vector<Date>& vec1, const std::vector<T>& vec2) {
 
 void printVectors(const std::vector<MeteoData>& vec1, const std::vector<Date>& vec2, const size_t& paramindex);
 void printVectors(const std::vector<Date>& vec1, const std::vector<Date>& vec2);
+void printVector(const std::vector<MeteoData>& vec1);
+void printVectors(const std::vector<double>& vec);
 
 } // namespace mio
 #endif //UTILS_H

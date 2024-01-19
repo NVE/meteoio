@@ -1,7 +1,7 @@
 #ifndef INTERPOLARIMA_H
 #define INTERPOLARIMA_H
 
-#include <ctsa.h>
+#include <meteoio/thirdParty/ctsa.h>
 #include <map>
 #include <string>
 #include <vector>

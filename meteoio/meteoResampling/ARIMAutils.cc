@@ -210,11 +210,9 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
         std::cerr << "Gap end: " << indexP2 << std::endl;
 		std::cerr << "Consider increasing the Window Size" << std::endl;
     }
-	std::cout << "okay till here" << std::endl;
 	data_start_date = last_gap.startDate - before_window;
 	data_end_date = last_gap.endDate + after_window;	
 
-	std::cout << "still okay" << std::endl;
 	// check that window size is not overreached
 	if (data_start_date < vecM[0].date) {
 		data_start_date = vecM[0].date;
@@ -302,6 +300,25 @@ void printVectors(const std::vector<Date>& dates1, const std::vector<Date>& date
 			std::cout << "NaN" << std::endl;
 		}
 	}
+}
+
+void printVector(const std::vector<MeteoData>& vec1) {
+	// Print header
+	std::cout << std::left << std::setw(30) << "MeteoData Date" << std::endl;
+	std::cout << "------------------------------" << std::endl;
+
+	for (size_t i = 0; i < vec1.size(); i++) {
+		// Print date from MeteoData
+		std::cout << std::left << std::setw(30) << vec1[i].date.toString() << std::endl;
+	}
+}
+
+void printVectors(const std::vector<double>& vec) {
+    // Wrap vec in another vector
+    std::vector<std::vector<double>> vecWrapped = {vec};
+
+    // Call the appropriate function
+    printVectors(vecWrapped);
 }
 
 } // namespace mio
