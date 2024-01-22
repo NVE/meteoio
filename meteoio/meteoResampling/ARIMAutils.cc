@@ -204,10 +204,10 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, window_size);
 	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, window_size, indexP1);
     if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
-        std::cerr << "Could not find the end of the gap "<< last_gap.toString() << std::endl;
-        std::cerr << "Gap start: " << indexP1 << std::endl;
-        std::cerr << "Gap end: " << indexP2 << std::endl;
-		std::cerr << "Consider increasing the Window Size" << std::endl;
+        std::cout << "Could not find the end of the gap "<< last_gap.toString() << std::endl;
+        std::cout << "Gap start: " << indexP1 << std::endl;
+        std::cout << "Gap end: " << indexP2 << std::endl;
+		std::cout << "Consider increasing the Window Size" << std::endl;
     }
 	data_start_date = last_gap.startDate - before_window;
 	data_end_date = last_gap.endDate + after_window;	

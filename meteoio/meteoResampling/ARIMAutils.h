@@ -89,7 +89,7 @@ struct ARIMA_GAP {
         size_t start, end;
         Date startDate, endDate;
         double sampling_rate;
-        bool isGap(){return (endDate-startDate).getJulian(true)*sampling_rate > 0;}; // TODO: should i always do arima prediction?
+        bool isGap(){return (endDate-startDate).getJulian(true)*sampling_rate >= 2;}; // TODO: should i always do arima prediction?
 };
 
 //return true if a valid point could be found backward from pos

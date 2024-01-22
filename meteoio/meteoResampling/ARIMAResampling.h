@@ -44,8 +44,8 @@ namespace mio {
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
  *       - how do i avoid the whole size_t vs int problem?
- *       - test with unfitting sampling rate
- *       - test with missing values in the beginning and end
+ *       - test with missing values in the beginning and end -> TODO, not working! probably wrong assignment of vals
+ *       - decrease output, maybe only at the end once
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {

@@ -1401,7 +1401,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 
 	if (!istepwise) {
-		printf("is ont stepwise \n");
+		printf("is not stepwise \n");
 		fit->otype = 1;
 		fit->Arima = NULL;
 
