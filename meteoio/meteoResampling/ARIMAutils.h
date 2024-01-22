@@ -51,6 +51,23 @@ void reverseVector(std::vector<T>& vec) {
         end--;
     }
 }
+template <typename T>
+std::vector<T> reverseVectorReturn(const std::vector<T>& vec) {
+    if (vec.empty()) {
+        throw std::invalid_argument("Cannot reverse an empty vector");
+    }
+    std::vector<T> reversed_vec = vec;
+    int start = 0;
+    int end = int(reversed_vec.size()) - 1;
+
+    while (start < end) {
+        std::swap(reversed_vec[start], reversed_vec[end]);
+        start++;
+        end--;
+    }
+
+    return reversed_vec;
+}
 
 // converts a vector of MeteoData to a vector of doubles
 std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &paramname);
@@ -72,7 +89,7 @@ struct ARIMA_GAP {
         size_t start, end;
         Date startDate, endDate;
         double sampling_rate;
-        bool isGap(){return (endDate-startDate).getJulian(true)*sampling_rate > 3;};
+        bool isGap(){return (endDate-startDate).getJulian(true)*sampling_rate > 0;}; // TODO: should i always do arima prediction?
 };
 
 //return true if a valid point could be found backward from pos

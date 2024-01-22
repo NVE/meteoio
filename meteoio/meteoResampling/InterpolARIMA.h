@@ -32,6 +32,7 @@ namespace mio {
         void interpolate();
         std::vector<double> predict();
         std::vector<double> getData() { return data; };
+        std::vector<double> getInterpolatedData();
 
 
         // Swap function
@@ -40,18 +41,22 @@ namespace mio {
             using std::swap;
             std::swap(first.auto_arima_forward, second.auto_arima_forward);
             std::swap(first.auto_arima_backward, second.auto_arima_backward);
-            std::swap(first.xreg, second.xreg);
-            std::swap(first.new_xreg, second.new_xreg);
+            std::swap(first.xreg_f, second.xreg_f);
+            std::swap(first.xreg_b, second.xreg_b);
+            std::swap(first.new_xreg_f, second.new_xreg_f);
+            std::swap(first.new_xreg_b, second.new_xreg_b);
             std::swap(first.gap_loc, second.gap_loc);
             std::swap(first.N_gap, second.N_gap);
             std::swap(first.time, second.time);
             std::swap(first.pred_forward, second.pred_forward);
             std::swap(first.pred_backward, second.pred_backward);
             std::swap(first.data, second.data);
-            std::swap(first.xreg_vec, second.xreg_vec);
+            std::swap(first.xreg_vec_f, second.xreg_vec_f);
+            std::swap(first.xreg_vec_b, second.xreg_vec_b);
             std::swap(first.data_forward, second.data_forward);
             std::swap(first.data_backward, second.data_backward);
-            std::swap(first.new_xreg_vec, second.new_xreg_vec);
+            std::swap(first.new_xreg_vec_f, second.new_xreg_vec_f);
+            std::swap(first.new_xreg_vec_b, second.new_xreg_vec_b);
             std::swap(first.N_data_forward, second.N_data_forward);
             std::swap(first.N_data_backward, second.N_data_backward);
             std::swap(first.max_p, second.max_p);
@@ -94,8 +99,10 @@ namespace mio {
         ~InterpolARIMA() {
             delete auto_arima_forward;
             delete auto_arima_backward;
-            delete xreg;
-            delete new_xreg;
+            delete xreg_f;
+            delete xreg_b;
+            delete new_xreg_f;
+            delete new_xreg_b;
         }
 
         std::string toString();
@@ -110,9 +117,11 @@ namespace mio {
 
         // Auto Arima variables
         // const doesnt work wiht c
-        std::vector<double> xreg_vec, data_forward, data_backward, new_xreg_vec;
-        double* xreg;
-        double* new_xreg;
+        std::vector<double> xreg_vec_f, xreg_vec_b, data_forward, data_backward, new_xreg_vec_f, new_xreg_vec_b;
+        double* xreg_f;
+        double* xreg_b;
+        double* new_xreg_f;
+        double* new_xreg_b;
         std::vector<double> amse_forward, amse_backward;
         size_t N_data_forward, N_data_backward;
         int max_p = 8, max_d = 3, max_q = 8;

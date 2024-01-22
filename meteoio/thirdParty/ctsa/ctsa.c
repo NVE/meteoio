@@ -489,7 +489,6 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		obj->sigma2 = fit->myarima->sigma2;
 	}
 
-
 	obj->p = p;
 	obj->d = d;
 	obj->q = q;
@@ -502,7 +501,6 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->M = M;
 	obj->r = r;
 	obj->retval = retval;
-	
 
 	obj->phi = &obj->params[0];
 	obj->theta = &obj->params[p];
@@ -603,7 +601,7 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 
 		rr = r;
 
-		
+	
 		if (drift == 1) {
 			obj->idrift = 1;
 			rr++;
@@ -717,16 +715,23 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	rr = r;
 
 	if (diffs == 1 && constant == 1) {
-		imean = 1;
-		rr++;
-		xreg2 = (double*)malloc(sizeof(double)*N*rr);
-		for(i = 0; i < N;++i) {
-			xreg2[i] = (double) (i+1);
-		}
-		memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
-		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
-		sarimax_exec(fit->sarimax,x,xreg2);
-		free(xreg2);
+		if (xreg== NULL) {
+			imean = 0;
+			fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,0,imean,N);
+			sarimax_setMethod(fit->sarimax,rmethod);
+			sarimax_exec(fit->sarimax,x,NULL);
+		} else {
+			imean = 1;
+			rr++;
+			xreg2 = (double*)malloc(sizeof(double)*N*rr);
+			for(i = 0; i < N;++i) {
+				xreg2[i] = (double) (i+1);
+			}
+			memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
+			fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
+			sarimax_exec(fit->sarimax,x,xreg2);
+			free(xreg2);
+			}
 		//sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
@@ -1046,7 +1051,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	int *icindex;
 
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
-
 	fit->otype = 0;
 
 	if (ordermax == NULL) {
@@ -1192,7 +1196,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 		//setIntercept(reg,0);
 		regress(reg,xreg,x,xx,varcovar,0.95);
-
 		free(varcovar);
 	}
 
@@ -1398,6 +1401,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 
 	if (!istepwise) {
+		printf("is ont stepwise \n");
 		fit->otype = 1;
 		fit->Arima = NULL;
 
@@ -1561,6 +1565,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	}
 
 	startk = 0;
+
 
 	while (startk < k && k < models) {
 		startk = k;
@@ -2085,7 +2090,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		//mdisplay(results,k,8);
 	}
 
-
 	// Delete the previous best model
 
 	myarima_free(bestfit);
@@ -2137,9 +2141,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	}
 
 	// Refit The Best Model
-
 	fit->myarima = myarima(x,N,bestorder,bestseasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
-
 	
 
 	free(x);
@@ -3065,7 +3067,6 @@ void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,
 		if (obj->idrift == 1) {
 			W[i] -= obj->exog[0]*(i+1);
 		}
-		printf("got some problems here in this loop, seg fault dunno why\n");
 		if (obj->r > 0) {
 			for(j = diter; j < obj->r;++j) {
 				W[i] -= obj->exog[j] * xreg[(j-diter)*N+i];
@@ -3073,6 +3074,7 @@ void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,
 		}
 		resid[i] = obj->res[i];
 	}
+
 	for (i = 0; i < ir; ++i) {
 		phi[i] = theta[i] = 0.0;
 	}

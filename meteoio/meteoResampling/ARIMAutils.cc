@@ -178,7 +178,6 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 		}
 		return IOUtils::npos;
 	} else { //what's left: the current point is in a known gap, but there might be some data after
-		std::cout << "or even this?" << std::endl;
 		size_t ii = last_gap.end;
 		for (; ii<vecM.size(); ++ii) { //start from the end of the last known gap
 			if (vecM[ii].date > windowEnd) break;

@@ -4,13 +4,14 @@
 #include <iostream>
 #include <meteoio/MeteoIO.h>
 #include <unistd.h>
+#include <cstdlib> // for std::rand and std::srand
 
 namespace mio {
 // ------------------- Constructor ------------------- //
 // Default constructor
 InterpolARIMA::InterpolARIMA()
-    : data(), gap_loc(0), N_gap(0), time(), pred_forward(), pred_backward(), xreg_vec(), 
-    data_forward(), data_backward(), new_xreg_vec(), xreg(NULL), new_xreg(NULL), 
+    : data(), gap_loc(0), N_gap(0), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), 
+    data_forward(), data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
     amse_forward(), amse_backward(), N_data_forward(0), N_data_backward(0)
     {// initialize auto_arima objects
         std::vector<int> pqdmax = {max_p, max_d, max_q};
@@ -22,8 +23,8 @@ InterpolARIMA::InterpolARIMA()
 // only need s when it is known
 InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, int period)
     : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
-    xreg_vec(0), data_forward(slice(data, 0, static_cast<int>(gap_loc))), data_backward(slice(data, gap_loc + static_cast<size_t>(N_gap))), 
-    new_xreg_vec(0), xreg(NULL), new_xreg(NULL), amse_forward(N_gap), amse_backward(N_gap), 
+    xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, static_cast<int>(gap_loc))), data_backward(slice(data, gap_loc + static_cast<size_t>(N_gap))), 
+    new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap), 
     N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period){
     // reverse the backward data
     reverseVector(data_backward); // TODO: can be done with std::reverse in C++17
@@ -35,14 +36,15 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, i
     std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
     auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
     auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
+
 }
 
 InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, std::vector<double> xreg_vec_in, int period)
     : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
-    xreg_vec(xreg_vec_in), data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)), 
-    new_xreg_vec(xreg_vec.size() == 0 ? 0 : N_gap), xreg(xreg_vec.size() == 0 ? NULL : &xreg_vec[0]), 
-    new_xreg(xreg_vec.size() == 0 ? NULL : &new_xreg_vec[0]), amse_forward(N_gap), amse_backward(N_gap), 
-    N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), r(xreg_vec.size() == 0 ? 0 : xreg_vec.size() / (N_data_backward + N_data_forward)), s(period) {
+    xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)), xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc+N_gap))), data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)), 
+    new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap), xreg_f(xreg_vec_f.size() == 0 ? NULL : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? NULL : &xreg_vec_b[0]),
+    new_xreg_f(xreg_vec_f.size() == 0 ? NULL : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size()==0? NULL: &new_xreg_vec_b[0]), amse_forward(N_gap), amse_backward(N_gap), 
+    N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), r(xreg_vec_in.size() == 0 ? 0 : xreg_vec_f.size() / (N_data_forward)), s(period) {
     // reverse the backward data
     reverseVector(data_backward); // TODO: Can be done with std::reverse in C++17
 
@@ -58,8 +60,8 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, i
 
 InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end , int n_predictions, std::string direction, int period)
     : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))), pred_forward(n_predictions), pred_backward(n_predictions), 
-     xreg_vec(0), data_forward(decideDirection(data_in, direction, true, gap_loc)), 
-    data_backward(decideDirection(data_in,direction,false, gap_loc)), new_xreg_vec(0), xreg(NULL), new_xreg(NULL),
+     xreg_vec_f(0), xreg_vec_b(0), data_forward(decideDirection(data_in, direction, true, gap_loc)), 
+    data_backward(decideDirection(data_in,direction,false, gap_loc)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
     amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), 
     N_data_backward(data_backward.size()), s(period) {
         // initialize auto_arima objects
@@ -177,6 +179,13 @@ void InterpolARIMA::setOptMetaData(std::string method_param, std::string opt_met
     auto_arima_forward->stepwise = stepwise;
 }
 
+// ------------------- Getters ------------------- //
+// Get the interpolated data
+std::vector<double> InterpolARIMA::getInterpolatedData() {
+    std::vector<double> interpolated_data(data.begin()+ gap_loc,data.begin()+gap_loc+N_gap);
+    return interpolated_data;
+}
+
 // ------------------- Interpolation methods ------------------- //
 // Simulate n_steps into the future
 std::vector<double> InterpolARIMA::simulate(int n_steps, int seed) {
@@ -188,8 +197,8 @@ std::vector<double> InterpolARIMA::simulate(int n_steps, int seed) {
 }
 
 std::vector<double> InterpolARIMA::predict() {
-    auto_arima_exec(auto_arima_forward, data_forward.data(), xreg);
-    auto_arima_predict(auto_arima_forward, data_forward.data(), xreg, N_gap, new_xreg, pred_forward.data(), amse_forward.data());
+    auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+    auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, N_gap, new_xreg_f, pred_forward.data(), amse_forward.data());
     return pred_forward;
 }
 
@@ -197,46 +206,66 @@ std::vector<double> InterpolARIMA::predict() {
 void InterpolARIMA::fillGap() {
     int max_iter = 5;
     for (int _i = 0; _i < max_iter; _i++) {
-        std::cout << "iteration " << _i << std::endl;
         // fit the models
-        std::cout << "fit forward" << std::endl;
-        auto_arima_exec(auto_arima_forward, data_forward.data(), xreg);
-        std::cout << "fit backward" << std::endl;
-        auto_arima_exec(auto_arima_backward, data_backward.data(), xreg);
 
+        auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+        auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
+
+        // check if the models are valid (p and q should not be zero at the same time)
+        if (auto_arima_forward->p == 0 && auto_arima_forward->q == 0) {
+            // perform a new auto arima but with extensive search
+            auto_arima_setStepwise(auto_arima_forward, false);
+            std::cout << "forward model is random walk, performing extensive search" << std::endl;
+            auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+        }
+        if (auto_arima_backward->p == 0 && auto_arima_backward->q == 0) {
+            // perform a new auto arima but with extensive search
+            auto_arima_setStepwise(auto_arima_backward, false);
+            std::cout << "backward model is random walk, performing extensive search" << std::endl;
+            auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
+        }
+
+
+        bool isRandom_f = false;
+        bool isRandom_b = false;
+        // weighting should not be done if one of the models ends up being a random walk
+        if (auto_arima_forward->p == 0 && auto_arima_forward->q == 0) {
+            isRandom_f = true;
+        } else if (auto_arima_backward->p == 0 && auto_arima_backward->q == 0) {
+            isRandom_b = true;
+        }
 
         // predict the gap
         // forward
-        std::cout << "predict forward" << std::endl;
-        auto_arima_predict(auto_arima_forward, data_forward.data(), xreg, N_gap, new_xreg, pred_forward.data(), amse_forward.data());
+        auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, N_gap, new_xreg_f, pred_forward.data(), amse_forward.data());
 
         // backward
-        //segfault appearing here
-        std::cout << "predict backward" << std::endl;
-        auto_arima_predict(auto_arima_backward, data_backward.data(), NULL, N_gap, NULL, pred_backward.data(), amse_backward.data());
+        auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, N_gap, new_xreg_b, pred_backward.data(), amse_backward.data());
         // interpolate with the weighting according to
         assert(pred_forward.size() == pred_backward.size());
         assert(pred_forward.size() == N_gap);
 
         reverseVector(pred_backward); // TODO: can be done with std::reverse in C++17
 
-        std::cout << "pred_forward: " << pred_forward.size() << std::endl;
-        for (int i = 0; i < pred_forward.size(); i++) {
-            std::cout << pred_forward[i] << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "pred_backward: " << pred_backward.size() << std::endl;
-        for (int i = 0; i < pred_backward.size(); i++) {
-            std::cout << pred_backward[i] << " ";
-        }
-
         // W1 = sqrt(T-t/T)
         // W2 = sqrt(t/T)
         for (int id = 0; id < N_gap; id++) {
-            double weight_f = std::sqrt((N_gap - time[id]) / N_gap);
-            double weight_b = std::sqrt(time[id] / N_gap);
+            double weight_f, weight_b;
+
+            if (isRandom_f) {
+                weight_f = 0;
+                weight_b = 1;
+            } else if (isRandom_b) {
+                weight_f = 1;
+                weight_b = 0;
+            } else {
+                weight_f = std::sqrt((N_gap - time[id]) / N_gap);
+                weight_b = std::sqrt(time[id] / N_gap);
+            }
             data[gap_loc + id] = weight_f * pred_forward[id] + weight_b * pred_backward[id];
         }
+
+
         if (consistencyCheck())
             break;
     }
