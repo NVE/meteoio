@@ -98,7 +98,20 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	protected:
-		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
+		typedef struct CLOUD_CACHE {
+			CLOUD_CACHE() : julian_gmt(IOUtils::nodata), cloudiness(IOUtils::nodata), is_ready(false) {}
+			CLOUD_CACHE(const double& in_julian_gmt, const double& in_cloudiness) : julian_gmt(in_julian_gmt), cloudiness(in_cloudiness), is_ready(true) {}
+
+			void setCloudiness(const double& in_julian_gmt, const double& in_cloudiness) {julian_gmt=in_julian_gmt; cloudiness=in_cloudiness; is_ready=true;}
+			//double getCloudiness();
+
+			double julian_gmt;
+			double cloudiness;
+			bool is_ready;
+		} cloud_cache;
+
+		double getCloudiness(const MeteoData& md);
+		double computeCloudiness(const MeteoData& md, bool &is_night);
 		double getClearness(const double& cloudiness) const;
 		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
 		double getHorizon(const MeteoData& md, const double& sun_azi);
@@ -108,6 +121,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		std::string horizons_outfile;
 		const Config &cfg;
 		DEMObject dem;
+		SunObject sun;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
 		bool write_mask_out, use_horizons, from_dem;
