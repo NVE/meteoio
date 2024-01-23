@@ -46,7 +46,7 @@ std::string WindComponents::findVComponent(const MeteoData& md)
 }
 
 
-bool WindComponents::generate(const size_t& param, MeteoData& md)
+bool WindComponents::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	if (param!=MeteoData::VW && param!=MeteoData::DW)
 		throw InvalidArgumentException("The "+where+" generator can only be applied to VW and/or DW", AT);

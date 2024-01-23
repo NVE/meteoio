@@ -143,12 +143,22 @@ double TauCLDGenerator::interpolateCloudiness(const std::string& station_hash, c
 	const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a cloudCache object
 	if (cloudiness_point==last_cloudiness.end()) return IOUtils::nodata;
 
-	const double last_cloudiness_julian = cloudiness_point->second.julian_gmt;
-	const double last_cloudiness_value = cloudiness_point->second.cloudiness;
+	const double last_cloudiness_julian = cloudiness_point->second.julian_gmt_before;
+	const double last_cloudiness_value = cloudiness_point->second.cloudiness_before;
 	double cloudiness = IOUtils::nodata;
 	if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
 	
 	return cloudiness;
+}
+
+void TauCLDGenerator::cloudCache::addCloudiness(const double& julian_gmt, const double& cloudiness)
+{
+	/*if (julian_gmt>(julian_gmt_after+1)) { //start a new pair of before/after
+		julian_gmt_before, cloudiness_before;
+		julian_gmt_after, cloudiness_after;
+	}*/
+	julian_gmt_before = julian_gmt;
+	cloudiness_before = cloudiness;
 }
 
 /**
@@ -273,7 +283,7 @@ double TauCLDGenerator::computeCloudiness(const MeteoData& md, bool &is_night)
 		return IOUtils::nodata; //this should never happen
 }
 
-bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
+bool TauCLDGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -290,7 +300,7 @@ bool TauCLDGenerator::create(const size_t& param, const size_t& ii_min, const si
 
 	bool status = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		if (!generate(param, vecMeteo[ii]))
+		if (!generate(param, vecMeteo[ii], vecMeteo))
 			status = false;
 	}
 
