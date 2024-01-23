@@ -98,9 +98,9 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	protected:
-		typedef struct CLOUD_CACHE {
-			CLOUD_CACHE() : julian_gmt(IOUtils::nodata), cloudiness(IOUtils::nodata), is_ready(false) {}
-			CLOUD_CACHE(const double& in_julian_gmt, const double& in_cloudiness) : julian_gmt(in_julian_gmt), cloudiness(in_cloudiness), is_ready(true) {}
+		typedef struct CLOUDCACHE {
+			CLOUDCACHE() : julian_gmt(IOUtils::nodata), cloudiness(IOUtils::nodata), is_ready(false) {}
+			CLOUDCACHE(const double& in_julian_gmt, const double& in_cloudiness) : julian_gmt(in_julian_gmt), cloudiness(in_cloudiness), is_ready(true) {}
 
 			void setCloudiness(const double& in_julian_gmt, const double& in_cloudiness) {julian_gmt=in_julian_gmt; cloudiness=in_cloudiness; is_ready=true;}
 			//double getCloudiness();
@@ -108,15 +108,16 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 			double julian_gmt;
 			double cloudiness;
 			bool is_ready;
-		} cloud_cache;
+		} cloudCache;
 
+		double interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const;
 		double getCloudiness(const MeteoData& md);
 		double computeCloudiness(const MeteoData& md, bool &is_night);
 		double getClearness(const double& cloudiness) const;
 		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
 		double getHorizon(const MeteoData& md, const double& sun_azi);
 		
-		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		std::map< std::string, cloudCache > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		std::string horizons_outfile;
 		const Config &cfg;

@@ -138,6 +138,19 @@ double TauCLDGenerator::getHorizon(const MeteoData& md, const double& sun_azi)
 	return DEMAlgorithms::getHorizon(mask->second, sun_azi);
 }
 
+double TauCLDGenerator::interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const
+{
+	const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a cloudCache object
+	if (cloudiness_point==last_cloudiness.end()) return IOUtils::nodata;
+
+	const double last_cloudiness_julian = cloudiness_point->second.julian_gmt;
+	const double last_cloudiness_value = cloudiness_point->second.cloudiness;
+	double cloudiness = IOUtils::nodata;
+	if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
+	
+	return cloudiness;
+}
+
 /**
  * @brief Return the atmospheric cloudiness
  * @details
@@ -161,7 +174,6 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md)
 
 	const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
 	const double julian_gmt = md.date.getJulian(true);
-	bool cloudiness_from_cache = false;
 
 	//try to get a cloudiness value
 	if (cloudiness==IOUtils::nodata) {
@@ -176,21 +188,13 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md)
 		cloudiness = computeCloudiness(md, is_night);
 		if (cloudiness==IOUtils::nodata && !is_night) return IOUtils::nodata;
 
-		if (is_night) { //interpolate the cloudiness over the night
-			const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a pair<julian_date, cloudiness>
-			if (cloudiness_point==last_cloudiness.end()) return IOUtils::nodata;
-
-			cloudiness_from_cache = true;
-			const double last_cloudiness_julian = cloudiness_point->second.first;
-			const double last_cloudiness_value = cloudiness_point->second.second;
-			if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
-			else return IOUtils::nodata;
+		if (is_night) { //interpolate the cloudiness over the night but don't cache it!
+			return interpolateCloudiness(station_hash, julian_gmt); //either interpolated cloudiness or nodata
 		}
 	}
 
 	//save the last valid cloudiness
-	if (!cloudiness_from_cache)
-		last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
+	last_cloudiness[station_hash] = cloudCache( julian_gmt, cloudiness );
 
 	return cloudiness;
 }
