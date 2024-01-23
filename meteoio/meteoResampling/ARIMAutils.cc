@@ -71,19 +71,19 @@ std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramind
 }
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc) {
+std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc, int length) {
     if (forward) {
         if (direction == "forward") {
-            return slice(data,0,gap_loc-1);
+            return slice(data,0,gap_loc);
         } else if (direction == "backward") {
             reverseVector(data);
-            return slice(data,0,gap_loc-1);
+            return slice(data,0,data.size()-length);
         } else {
             throw mio::IOException("Direction " + direction + " not recognized");
         }
     } else {
-        return std::vector<double>();
-    }
+		return std::vector<double>(5, 0.0);
+	}
 }
 
 //return true if a valid point could be found backward from pos
@@ -203,18 +203,25 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 {
 	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, window_size);
 	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, window_size, indexP1);
-    if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
-        std::cout << "Could not find the end of the gap "<< last_gap.toString() << std::endl;
-        std::cout << "Gap start: " << indexP1 << std::endl;
-        std::cout << "Gap end: " << indexP2 << std::endl;
+	if (indexP1 == IOUtils::npos  && indexP2 == 0) {
+		std::cout << "Gap is before the data" << std::endl;
+		last_gap.startDate = resampling_date;
+		indexP1 = 0;
+	} else if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
+        std::cout << "Could not pinpoint the gap "<< last_gap.toString() << std::endl;
+        std::cout << "Gap start: " << last_gap.startDate.toString(Date::ISO) << "("<< indexP1 <<")" << std::endl;
+        std::cout << "Gap end: " << last_gap.endDate.toString(Date::ISO) << "("<< indexP2 <<")" << std::endl;
 		std::cout << "Consider increasing the Window Size" << std::endl;
     }
 	data_start_date = last_gap.startDate - before_window;
 	data_end_date = last_gap.endDate + after_window;	
 
+
 	// check that window size is not overreached
-	if (data_start_date < vecM[0].date) {
+	if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
 		data_start_date = vecM[0].date;
+	} else if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
+		data_start_date = resampling_date;
 	}
 	if (data_end_date > vecM[vecM.size()-1].date) {
 		data_end_date = vecM[vecM.size()-1].date;
@@ -250,7 +257,11 @@ double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector
             time_diffs.push_back(std::round(value*100000/100000));
         }
     }
-    return mostLikelyValue(time_diffs);
+	double val = mostLikelyValue(time_diffs);
+	if (val == 0) {
+		throw IOException("Could not compute sampling rate");
+	}
+    return val;
 }
 
 void printVectors(const std::vector<MeteoData>& vecM, const std::vector<Date>& dates, const size_t& paramindex) {

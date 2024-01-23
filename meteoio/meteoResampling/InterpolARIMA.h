@@ -1,14 +1,13 @@
 #ifndef INTERPOLARIMA_H
 #define INTERPOLARIMA_H
 
-#include <meteoio/thirdParty/ctsa.h>
 #include <map>
+#include <meteoio/thirdParty/ctsa.h>
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace mio {
-
-
     // It is assumed that data is a vector of length N_data_forward + N_gap + N_data_backward, i.e. containing missing values, or similar in
     // the gap with linearly spaced entries in time
     class InterpolARIMA {
@@ -30,75 +29,86 @@ namespace mio {
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
         void interpolate();
-        std::vector<double> predict();
+        std::vector<double> predict(int n_steps = 0);
         std::vector<double> getData() { return data; };
         std::vector<double> getInterpolatedData();
 
-
-        // Swap function
-        void swap(InterpolARIMA& first, InterpolARIMA& second) 
-        {
-            using std::swap;
-            std::swap(first.auto_arima_forward, second.auto_arima_forward);
-            std::swap(first.auto_arima_backward, second.auto_arima_backward);
-            std::swap(first.xreg_f, second.xreg_f);
-            std::swap(first.xreg_b, second.xreg_b);
-            std::swap(first.new_xreg_f, second.new_xreg_f);
-            std::swap(first.new_xreg_b, second.new_xreg_b);
-            std::swap(first.gap_loc, second.gap_loc);
-            std::swap(first.N_gap, second.N_gap);
-            std::swap(first.time, second.time);
-            std::swap(first.pred_forward, second.pred_forward);
-            std::swap(first.pred_backward, second.pred_backward);
-            std::swap(first.data, second.data);
-            std::swap(first.xreg_vec_f, second.xreg_vec_f);
-            std::swap(first.xreg_vec_b, second.xreg_vec_b);
-            std::swap(first.data_forward, second.data_forward);
-            std::swap(first.data_backward, second.data_backward);
-            std::swap(first.new_xreg_vec_f, second.new_xreg_vec_f);
-            std::swap(first.new_xreg_vec_b, second.new_xreg_vec_b);
-            std::swap(first.N_data_forward, second.N_data_forward);
-            std::swap(first.N_data_backward, second.N_data_backward);
-            std::swap(first.max_p, second.max_p);
-            std::swap(first.max_d, second.max_d);
-            std::swap(first.max_q, second.max_q);
-            std::swap(first.start_p, second.start_p);
-            std::swap(first.start_q, second.start_q);
-            std::swap(first.max_P, second.max_P);
-            std::swap(first.max_D, second.max_D);
-            std::swap(first.max_Q, second.max_Q);
-            std::swap(first.start_P, second.start_P);
-            std::swap(first.start_Q, second.start_Q);
-            std::swap(first.r, second.r);
-            std::swap(first.s, second.s);
-            std::swap(first.method, second.method);
-            std::swap(first.opt_method, second.opt_method);
-            std::swap(first.stepwise, second.stepwise);
-            std::swap(first.approximation, second.approximation);
-            std::swap(first.num_models, second.num_models);
-            std::swap(first.seasonal, second.seasonal);
-            std::swap(first.stationary, second.stationary);
-
+        // Copy constructor
+        InterpolARIMA(const InterpolARIMA &other)
+            : gap_loc(other.gap_loc), N_gap(other.N_gap), time(other.time), pred_forward(other.pred_forward),
+              pred_backward(other.pred_backward), data(other.data), xreg_vec_f(other.xreg_vec_f), xreg_vec_b(other.xreg_vec_b), 
+                data_forward(other.data_forward), data_backward(other.data_backward), new_xreg_vec_f(other.new_xreg_vec_f), 
+                new_xreg_vec_b(other.new_xreg_vec_b), N_data_forward(other.N_data_forward), N_data_backward(other.N_data_backward),
+                max_p(other.max_p), max_d(other.max_d), max_q(other.max_q), start_p(other.start_p), start_q(other.start_q),
+                max_P(other.max_P), max_D(other.max_D), max_Q(other.max_Q), start_P(other.start_P), start_Q(other.start_Q),
+                r(other.r), s(other.s), method(other.method), opt_method(other.opt_method), stepwise(other.stepwise),
+                approximation(other.approximation), num_models(other.num_models), seasonal(other.seasonal), stationary(other.stationary) 
+        {    
+            auto_arima_forward = auto_arima_copy(other.auto_arima_forward);
+            auto_arima_backward = auto_arima_copy(other.auto_arima_backward);
+            xreg_f = (xreg_vec_f.empty()) ? NULL : &xreg_vec_f[0]; 
+            xreg_b = (xreg_vec_b.empty()) ? NULL : &xreg_vec_b[0];
+            new_xreg_f = (new_xreg_vec_f.empty()) ? NULL : &new_xreg_vec_f[0];
+            new_xreg_b = (new_xreg_vec_b.empty()) ? NULL : &new_xreg_vec_b[0];
         }
 
         // Copy assignment operator
-        InterpolARIMA& operator=(InterpolARIMA other) 
+        InterpolARIMA& operator=(const InterpolARIMA &other)
         {
-            swap(*this, other);
-            return *this;
-        }
+            if (this != &other) // protect against invalid self-assignment
+            {
+                auto_arima_forward = auto_arima_copy(other.auto_arima_forward);
+                auto_arima_backward = auto_arima_copy(other.auto_arima_backward);
 
-        // Copy constructor
-        InterpolARIMA(const InterpolARIMA& other) 
-        : InterpolARIMA() // Default-construct this object
-        {
-            *this = other; // Use copy assignment
+                // 3: copy all the other fields from the other object
+                gap_loc = other.gap_loc;
+                N_gap = other.N_gap;
+                time = other.time;
+                pred_forward = other.pred_forward;
+                pred_backward = other.pred_backward;
+                data = other.data;
+                xreg_vec_f = other.xreg_vec_f;
+                xreg_vec_b = other.xreg_vec_b;
+                data_forward = other.data_forward;
+                data_backward = other.data_backward;
+                new_xreg_vec_f = other.new_xreg_vec_f;
+                new_xreg_vec_b = other.new_xreg_vec_b;
+                N_data_forward = other.N_data_forward;
+                N_data_backward = other.N_data_backward;
+                max_p = other.max_p;
+                max_d = other.max_d;
+                max_q = other.max_q;
+                start_p = other.start_p;
+                start_q = other.start_q;
+                max_P = other.max_P;
+                max_D = other.max_D;
+                max_Q = other.max_Q;
+                start_P = other.start_P;
+                start_Q = other.start_Q;
+                r = other.r;
+                s = other.s;
+                method = other.method;
+                opt_method = other.opt_method;
+                stepwise = other.stepwise;
+                approximation = other.approximation;
+                num_models = other.num_models;
+                seasonal = other.seasonal;
+                stationary = other.stationary;
+
+                // 4: handle the pointers to the vectors
+                xreg_f = (xreg_vec_f.empty()) ? NULL : &xreg_vec_f[0]; 
+                xreg_b = (xreg_vec_b.empty()) ? NULL : &xreg_vec_b[0];
+                new_xreg_f = (new_xreg_vec_f.empty()) ? NULL : &new_xreg_vec_f[0];
+                new_xreg_b = (new_xreg_vec_b.empty()) ? NULL : &new_xreg_vec_b[0];
+            }
+            // by convention, always return *this
+            return *this;
         }
 
         // Destructor
         ~InterpolARIMA() {
-            delete auto_arima_forward;
-            delete auto_arima_backward;
+            auto_arima_free(auto_arima_forward);
+            auto_arima_free(auto_arima_backward);
             delete xreg_f;
             delete xreg_b;
             delete new_xreg_f;
@@ -118,10 +128,10 @@ namespace mio {
         // Auto Arima variables
         // const doesnt work wiht c
         std::vector<double> xreg_vec_f, xreg_vec_b, data_forward, data_backward, new_xreg_vec_f, new_xreg_vec_b;
-        double* xreg_f;
-        double* xreg_b;
-        double* new_xreg_f;
-        double* new_xreg_b;
+        double *xreg_f;
+        double *xreg_b;
+        double *new_xreg_f;
+        double *new_xreg_b;
         std::vector<double> amse_forward, amse_backward;
         size_t N_data_forward, N_data_backward;
         int max_p = 8, max_d = 3, max_q = 8;
@@ -145,7 +155,9 @@ namespace mio {
                                                      {"BFGS Using More Thuente Method", 7}};
 
         bool consistencyCheck();
+
     };
+
 
 } // namespace mio
 

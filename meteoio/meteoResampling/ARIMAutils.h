@@ -76,7 +76,7 @@ std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &par
 std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramindex);
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc);
+std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc, int length);
 
 // a class to cache information about a gap
 struct ARIMA_GAP {

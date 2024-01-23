@@ -44,7 +44,7 @@ namespace mio {
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
  *       - how do i avoid the whole size_t vs int problem?
- *       - test with missing values in the beginning and end -> TODO, not working! probably wrong assignment of vals
+ *       - gap at end not working because of assignemtn stuff, currently having a problem with arima_exec, dunno why (maybe have to do it without assignment)
  *       - decrease output, maybe only at the end once
  * 
  */
@@ -76,8 +76,12 @@ class ARIMAResampling : public ResamplingAlgorithms {
         bool stepwise = true, approximation = false;
         int num_models = 94;
         bool seasonal = true, stationary = false;  
+
+        InterpolARIMA cache_end_arima = InterpolARIMA();
+        bool arima_is_cached = false;
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
+        std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingPosition re_position);
 };
 
 } //end namespace mio
