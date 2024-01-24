@@ -45,6 +45,7 @@ namespace mio {
      *       - how do i avoid the whole size_t vs int problem?
      *       - should i do the linear interpolation, or just return?
      *       - vecM is filled with the new value right? (avoid having nodata in before and after data)
+     *       - should i set a limit on the prediction steps?
      *
      */
     class ARIMAResampling : public ResamplingAlgorithms {
