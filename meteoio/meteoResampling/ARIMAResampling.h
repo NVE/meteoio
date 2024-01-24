@@ -81,6 +81,7 @@ namespace mio {
         bool is_zero_possible = false;
         bool checked_vecM = false;
         bool gave_warning_end = false;
+        bool gave_warning_start = false;
         bool gave_warning_interpol = false;
         std::vector<bool> is_valid_gap_data;
         std::vector<bool> warned_about_gap;
