@@ -204,7 +204,6 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, window_size);
 	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, window_size, indexP1);
 	if (indexP1 == IOUtils::npos  && indexP2 == 0) {
-		std::cout << "Gap is before the data" << std::endl;
 		last_gap.startDate = resampling_date;
 		indexP1 = 0;
 	} else if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
