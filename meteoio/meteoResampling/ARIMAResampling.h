@@ -19,51 +19,51 @@
 #ifndef ARIMARESAMPLING_H
 #define ARIMARESAMPLING_H
 
-#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
+#include "ARIMAutils.h"    // change the includes to make it uniform
 #include "InterpolARIMA.h" // change the includes to make it uniform
-#include "ARIMAutils.h" // change the includes to make it uniform
+#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <vector>
-
 
 namespace mio {
 
-/**
- * @brief Brief description
- * @details
- * Longer description of the algorithm as well as example of use
- * 
- * Assuming a constant sampling rate a data vector will be created with the available data, 
- * all gaps will be located, and the gaps will be filled with the ARIMA model.
- * Points that fall in between interpolated data will be interpolated linearly.
- * a gap is defined as at least 3 missing values in a row
- * 
- * Also assuming that the meteovector fills all necessary fields with IOUtils::npos beforehand
- * so i dont need to work with dates
- * 
- * missing values in the data used to interpolate will be linearly interpolated
- * 
- * TODO: - do i need to use getJulian(true) or does it not matter?
- *       - how do i avoid the whole size_t vs int problem?
- *       - do a final test run
- *       - should i do the linear interpolation, or just return?
- * 
- */
-class ARIMAResampling : public ResamplingAlgorithms {
-	public:
-		ARIMAResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+    /**
+     * @brief Brief description
+     * @details
+     * Longer description of the algorithm as well as example of use
+     *
+     * Assuming a constant sampling rate a data vector will be created with the available data,
+     * all gaps will be located, and the gaps will be filled with the ARIMA model.
+     * Points that fall in between interpolated data will be interpolated linearly.
+     * a gap is defined as at least 3 missing values in a row
+     *
+     * Also assuming that the meteovector fills all necessary fields with IOUtils::npos beforehand
+     * so i dont need to work with dates
+     *
+     * missing values in the data used to interpolate will be linearly interpolated
+     *
+     * TODO: - do i need to use getJulian(true) or does it not matter?
+     *       - how do i avoid the whole size_t vs int problem?
+     *       - should i do the linear interpolation, or just return?
+     *       - vecM is filled with the new value right? (avoid having nodata in before and after data)
+     *
+     */
+    class ARIMAResampling : public ResamplingAlgorithms {
+    public:
+        ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_window_size,
+                        const std::vector<std::pair<std::string, std::string>> &vecArgs);
 
-        // it will do the ARIMA interpolation the first time it is called, as this is also the first time the data is available
-		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md);
-		std::string toString() const;
-    
+        // Performs ARIMA interpolation the first time it is called, as this is also the first time the data is available
+        void resample(const std::string &stationHash, const size_t &index, const ResamplingPosition &position, const size_t &paramindex,
+                      const std::vector<MeteoData> &vecM, MeteoData &md);
+        std::string toString() const;
+
     private:
-
+        // ARIMA related data
         std::vector<ARIMA_GAP> gap_data;
         std::vector<std::vector<double>> filled_data;
         std::vector<std::vector<Date>> all_dates;
 
-        // depending of before and after windows are not available can predict in both directions
+        // Window parameters
         double before_window, after_window;
 
         // User defined Metadata
@@ -75,21 +75,24 @@ class ARIMAResampling : public ResamplingAlgorithms {
         std::string method = "CSS-MLE", opt_method = "BFGS";
         bool stepwise = true, approximation = true;
         int num_models = 94;
-        bool seasonal = true, stationary = false;  
+        bool seasonal = true, stationary = false;
 
-        bool is_zero_possible = false; 
+        // Flags
+        bool is_zero_possible = false;
         bool checked_vecM = false;
         bool gave_warning_end = false;
         bool gave_warning_interpol = false;
         std::vector<bool> is_valid_gap_data;
         std::vector<bool> warned_about_gap;
 
+        // Private methods
         void setMetaData(InterpolARIMA &arima);
-
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
-        std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingAlgorithms::ResamplingPosition re_position);
-};
-} //end namespace mio
+        std::vector<double> fillGapWithPrediction(std::vector<double> &data, const std::string &direction, const size_t &startIdx,
+                                                  const int &length, const int &period,
+                                                  ResamplingAlgorithms::ResamplingPosition re_position);
+    };
+} // end namespace mio
 
 #endif
