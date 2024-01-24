@@ -30,6 +30,8 @@ namespace mio {
         void interpolate();
         std::vector<double> predict(int n_steps = 0);
         std::vector<double> getData() { return data; };
+        std::vector<double> getForwardData() { return data_forward; };
+        std::vector<double> getBackwardData() { return data_backward; };
         std::vector<double> getInterpolatedData();
 
 
@@ -140,7 +142,7 @@ namespace mio {
         int start_P = 1, start_Q = 1;
         int r = 0, s = 0;
         std::string method = "CSS-MLE", opt_method = "BFGS";
-        bool stepwise = true, approximation = false;
+        bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;
 

@@ -95,7 +95,9 @@ std::string ARIMAResampling::toString() const
 double ARIMAResampling::interpolVecAt(const std::vector<MeteoData> &vecMet,const size_t &idx, const Date &date, const size_t &paramindex) {
 	if (idx >= vecMet.size()) throw IOException("The index of the element to be resampled is out of bounds", AT);
 	else if (idx == vecMet.size()-1) {
+#ifdef DEBUG
 		std::cout << "Extrapolation needed to gather ARIMA data, will use constant value"; 
+#endif
 		return vecMet[idx](paramindex);
 	} 
 	MeteoData p1 = vecMet[idx];
@@ -106,7 +108,9 @@ double ARIMAResampling::interpolVecAt(const std::vector<MeteoData> &vecMet,const
 double ARIMAResampling::interpolVecAt(const std::vector<double> &data, const std::vector<Date> &datesVec, const size_t &pos, const Date &date) {
 	if (pos >= data.size()) throw IOException("The index of the element to be resampled is out of bounds, for date: "+date.toString(Date::ISO), AT);
 	else if (pos == data.size()-1) {
+#ifdef DEBUG
 		std::cout << "Extrapolation needed to gather ARIMA data, will use constant value"; 
+#endif
 		return data[pos];
 		}
 	return linearInterpolation(datesVec[pos].getJulian(), data[pos], datesVec[pos+1].getJulian(), data[pos+1], date.getJulian(true));
@@ -114,6 +118,7 @@ double ARIMAResampling::interpolVecAt(const std::vector<double> &data, const std
 
 std::vector<double> ARIMAResampling::fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingAlgorithms::ResamplingPosition re_position) {
 	InterpolARIMA arima(data, startIdx, length, direction, period);
+	setMetaData(arima);
 	std::vector<double> predictions = arima.predict();
 	std::copy(predictions.begin(), predictions.end(), data.begin() + startIdx);
 	return predictions;
@@ -124,6 +129,10 @@ std::vector<Date>::iterator findDate(std::vector<Date>& gap_dates, Date& resampl
     return std::find_if(gap_dates.begin(), gap_dates.end(), exactTime);
 }
 
+void ARIMAResampling::setMetaData(InterpolARIMA &arima) {
+	arima.setAutoArimaMetaData(max_p, max_d, max_q, start_p, start_q, max_P, max_D, max_Q, start_P, start_Q, seasonal, stationary);
+	arima.setOptMetaData(method, opt_method, stepwise, approximation, num_models);
+}
 
 
 void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
@@ -139,6 +148,27 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		}
 	}
 
+	if (!checked_vecM) {
+		// check if there are any zero values in the data, to see if a prediction of zero makes sense
+		double sum = 0.0, mean, standardDeviation = 0.0;
+
+		for(size_t ii = 0; ii < vecM.size(); ++ii)
+			sum += vecM[ii](paramindex);
+		mean = sum/vecM.size();
+
+		for(size_t ii = 0; ii < vecM.size(); ++ii)
+			standardDeviation += pow(vecM[ii](paramindex) - mean, 2);
+		standardDeviation = sqrt(standardDeviation / vecM.size());
+
+		for (size_t ii = 0; ii < vecM.size(); ii++) {
+			if (std::abs(vecM[ii](paramindex)) <= standardDeviation) {
+				is_zero_possible = true;
+				break;
+			}
+		}
+		checked_vecM = true;
+	}
+
 	Date resampling_date = md.date;
 
 	// check wether given position is in a known gap, if it is either return the 
@@ -147,7 +177,15 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		ARIMA_GAP gap = gap_data[ii];
 		std::vector<Date> gap_dates = all_dates[ii];
 		std::vector<double> data_in_gap = filled_data[ii];
+		bool is_valid_data = is_valid_gap_data[ii];
 		if (resampling_date >= gap.startDate && resampling_date <= gap.endDate) {
+			if (!is_valid_data) {
+				if (!warned_about_gap[ii]) {
+					std::cerr << "Could not find a useful ARIMA model, try other parameters, or another interpolation algorithm for data in between " << gap.startDate.toString(Date::ISO) << "---" << gap.endDate.toString(Date::ISO)<< "||" << std::endl;
+					warned_about_gap[ii] = true;
+				}
+				return;
+			}
 			auto it = findDate(gap_dates, resampling_date);
 			// if there is an exact match, return the data
 			if (it != gap_dates.end()) {
@@ -167,7 +205,17 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 				return;
 			}
 		} else if (position == ResamplingAlgorithms::end && resampling_date > gap.endDate && resampling_date >= gap.startDate && gap.startDate == vecM[vecM.size()-1].date) {
-			std::cerr << "Extrapolating more than 25 steps into the future is pointless, last known data point: " << gap.startDate.toString(Date::ISO) << std::endl;
+			if (!is_valid_data) {
+				if (!warned_about_gap[ii]) {
+					std::cerr << "Could not find a useful ARIMA model, try other parameters, or another interpolation algorithm for data in between " << gap.startDate.toString(Date::ISO) << "---" << gap.endDate.toString(Date::ISO) <<"||" << std::endl;
+					warned_about_gap[ii] = true;
+				}
+				return;
+			}
+			if (!gave_warning_end) {
+				std::cerr << "Extrapolating more than 25 steps into the future is pointless, last known data point: " << gap.startDate.toString(Date::ISO)<<"||" << std::endl;
+				gave_warning_end = true;
+			}
 			return;
 		}
 	}
@@ -220,10 +268,12 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		bool has_data_before = data_vec_before.size() > 1;
 		bool has_data_after = data_vec_after.size() > 1;
 
-		if (data_vec_before.size() < 10 && data_vec_after.size() < 10) {
+		if (data_vec_before.size() < 10 && data_vec_after.size() < 10 && !gave_warning_interpol) {
 			std::cerr << "Not enough data to interpolate the gap" << std::endl;
+			std::cerr << new_gap.toString() << std::endl;
 			std::cerr << "Datapoints before the gap: " << data_vec_before.size() << std::endl;
-			std::cerr << "Datapoints after the gap: " << data_vec_after.size() << std::endl;
+			std::cerr << "Datapoints after the gap: " << data_vec_after.size() << "||" << std::endl;
+			gave_warning_interpol = true;
 			return;
 		}
 
@@ -291,11 +341,11 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 			throw IOException("Could not accumulate enough data for parameter estimation; Increasing window sizes might help");
 		} else {
 			InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, period);
+			setMetaData(arima);
 			arima.interpolate();
 			interpolated_data = arima.getInterpolatedData();
 		}
 		
-		gap_data.push_back(new_gap);
 		std::vector<Date> interpolated_dates(dates.begin() + startIdx_interpol, dates.begin() + startIdx_interpol + length_gap_interpol);
 		// need to push the first value after the gap to the interpolated data and dates, otherwise the interpolation will fail in case of requested value between data points
 		if (data_end_date != new_gap.endDate) {
@@ -303,9 +353,33 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 			interpolated_dates.push_back(dates[endIdx_interpol]);
 		}
 
+		// check whether the interpolated data has only zeros, or if it has zeros when the original data does not
+		bool only_zeros = true;
+		bool any_zeros = false;
+		for (size_t ii = 0; ii < interpolated_data.size(); ii++) {
+			if (interpolated_data[ii] != 0.0) only_zeros = false;
+			if (interpolated_data[ii] == 0.0) any_zeros = true;
+		}
 
+		gap_data.push_back(new_gap);
+		if (only_zeros) {
+			is_valid_gap_data.push_back(false);
+		} else if (any_zeros && !is_zero_possible) {
+			is_valid_gap_data.push_back(false);
+		} else {
+			is_valid_gap_data.push_back(true);
+		}
+		warned_about_gap.push_back(false);
 		filled_data.push_back(interpolated_data);
 		all_dates.push_back(interpolated_dates);
+		
+		if (!is_valid_gap_data[gap_data.size()-1]) {
+			if (!warned_about_gap[warned_about_gap.size()-1]) {
+				std::cerr << "Could not find a useful ARIMA model, try other parameters, or another interpolation algorithm for data in between " << new_gap.startDate.toString(Date::ISO) << "---" << new_gap.endDate.toString(Date::ISO)<< "||" << std::endl;
+				warned_about_gap[warned_about_gap.size()-1] = true;
+			}
+			return;
+		}
 
 		auto it = findDate(interpolated_dates, resampling_date);
 		// if there is an exact match, return the data

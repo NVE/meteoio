@@ -44,8 +44,8 @@ namespace mio {
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
  *       - how do i avoid the whole size_t vs int problem?
- *       - decrease output, maybe only at the end once
- *       - probably dont return anything, if the arima predictions are only zero --> diff model
+ *       - do a final test run
+ *       - should i do the linear interpolation, or just return?
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {
@@ -73,12 +73,19 @@ class ARIMAResampling : public ResamplingAlgorithms {
         int start_P = 1, start_Q = 1;
         int period = 0;
         std::string method = "CSS-MLE", opt_method = "BFGS";
-        bool stepwise = true, approximation = false;
+        bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;  
 
-        InterpolARIMA cache_end_arima = InterpolARIMA();
-        bool arima_is_cached = false;
+        bool is_zero_possible = false; 
+        bool checked_vecM = false;
+        bool gave_warning_end = false;
+        bool gave_warning_interpol = false;
+        std::vector<bool> is_valid_gap_data;
+        std::vector<bool> warned_about_gap;
+
+        void setMetaData(InterpolARIMA &arima);
+
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
         std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingAlgorithms::ResamplingPosition re_position);
