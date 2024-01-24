@@ -1,14 +1,12 @@
 #ifndef INTERPOLARIMA_H
 #define INTERPOLARIMA_H
 
-#include <meteoio/thirdParty/ctsa.h>
 #include <map>
+#include <meteoio/thirdParty/ctsa.h>
 #include <string>
 #include <vector>
 #include <iostream>
 namespace mio {
-
-
     // It is assumed that data is a vector of length N_data_forward + N_gap + N_data_backward, i.e. containing missing values, or similar in
     // the gap with linearly spaced entries in time
     class InterpolARIMA {
@@ -30,6 +28,7 @@ namespace mio {
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
         void interpolate();
+        std::vector<double> predict(int n_steps = 0);
         std::vector<double> predict(int n_steps = 0);
         std::vector<double> getData() { return data; };
         std::vector<double> getInterpolatedData();
@@ -130,10 +129,10 @@ namespace mio {
         // Auto Arima variables
         // const doesnt work wiht c
         std::vector<double> xreg_vec_f, xreg_vec_b, data_forward, data_backward, new_xreg_vec_f, new_xreg_vec_b;
-        double* xreg_f;
-        double* xreg_b;
-        double* new_xreg_f;
-        double* new_xreg_b;
+        double *xreg_f;
+        double *xreg_b;
+        double *new_xreg_f;
+        double *new_xreg_b;
         std::vector<double> amse_forward, amse_backward;
         size_t N_data_forward, N_data_backward;
         int max_p = 8, max_d = 3, max_q = 8;
@@ -157,7 +156,9 @@ namespace mio {
                                                      {"BFGS Using More Thuente Method", 7}};
 
         bool consistencyCheck();
+
     };
+
 
 } // namespace mio
 
