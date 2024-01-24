@@ -86,6 +86,8 @@ std::string ARIMAResampling::toString() const
 	ss << "  Amount of found gaps " << gap_data.size() << std::endl;
 	ss << "  Amount of filled data " << filled_data.size() << std::endl;
 	ss << "  Amount of dates " << all_dates.size() << std::endl;
+	ss << "  interpolated data: " << std::endl;
+	ss << convertVectorsToString(filled_data);
 	return ss.str();
 }
 
@@ -138,17 +140,14 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 	}
 
 	Date resampling_date = md.date;
-	std::cout << "resampling date: " << resampling_date.toString(Date::ISO) << std::endl;
 
 	// check wether given position is in a known gap, if it is either return the 
 	// exact value or linearly interpolate, to get the correct value
-	std::cout << "num gaps: " << gap_data.size() << std::endl;
 	for (size_t ii = 0; ii < gap_data.size(); ii++) {
 		ARIMA_GAP gap = gap_data[ii];
 		std::vector<Date> gap_dates = all_dates[ii];
 		std::vector<double> data_in_gap = filled_data[ii];
 		if (resampling_date >= gap.startDate && resampling_date <= gap.endDate) {
-			std::cout << "using a known gap" << std::endl;
 			auto it = findDate(gap_dates, resampling_date);
 			// if there is an exact match, return the data
 			if (it != gap_dates.end()) {
@@ -167,7 +166,10 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 				md(paramindex) = interpolVecAt(data_in_gap, gap_dates, idx, resampling_date);
 				return;
 			}
-		} 
+		} else if (position == ResamplingAlgorithms::end && resampling_date > gap.endDate && resampling_date >= gap.startDate && gap.startDate == vecM[vecM.size()-1].date) {
+			std::cerr << "Extrapolating more than 25 steps into the future is pointless, last known data point: " << gap.startDate.toString(Date::ISO) << std::endl;
+			return;
+		}
 	}
 
 	// if it is not in a known gap, cache the gap, and interpolate it for subsequent calls
@@ -181,7 +183,7 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		new_gap.start = vecM.size()-1;
 		data_start_date = new_gap.startDate-window_size;
 		new_gap.sampling_rate = computeSamplingRate(data_start_date, new_gap.startDate, vecM);
-		new_gap.endDate = resampling_date+3/new_gap.sampling_rate;
+		new_gap.endDate = resampling_date+25/new_gap.sampling_rate;
 		new_gap.end = vecM.size()-1;
 		data_end_date = new_gap.endDate;
 		data_start_date = adjustStartDate(vecM, new_gap, data_start_date, data_end_date);
@@ -197,7 +199,6 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 	}
 
 	if (new_gap.isGap()) {
-		std::cout << "using new gap" << std::endl;
 		// data vector is of length (data_end_date - data_start_date) * sampling_rate
 		int length = static_cast<int>((data_end_date - data_start_date).getJulian(true) * new_gap.sampling_rate)+1; // otherwise end date is not included
 		std::vector<double> data(length);
@@ -277,10 +278,14 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		// either by interpolating or predicting forward or backward
 		std::vector<double> interpolated_data;
 		if (data_vec_before.size()<8 && data_vec_after.size() > 8) {
+#ifdef DEBUG	
 			std::cout << "predicting backward" << std::endl;
+#endif
 			interpolated_data =  fillGapWithPrediction(data, "backward", startIdx_interpol, length_gap_interpol, period, position);
 		} else if (data_vec_after.size()<8 && data_vec_before.size() > 8) {
+#ifdef DEBUG
 			std::cout << "predicting forward" << std::endl;
+#endif
 			interpolated_data = fillGapWithPrediction(data, "forward", startIdx_interpol, length_gap_interpol, period, position);
 		} else if (data_vec_before.size() < 8 && data_vec_after.size() < 8) {
 			throw IOException("Could not accumulate enough data for parameter estimation; Increasing window sizes might help");
@@ -317,7 +322,9 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 
 	} else {
 		// linearly interpolate the point
+#ifdef DEBUG
 		std::cout << "linearly interpolating the point" << std::endl;
+#endif
 		double start_value = vecM[gap_start-1](paramindex);
 		double end_value = vecM[gap_end+1](paramindex);
 		Date start_date = vecM[gap_start-1].date;

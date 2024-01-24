@@ -145,6 +145,35 @@ void printVectors(const std::vector<std::vector<T>>& vecs) {
 }
 
 template <typename T>
+std::string convertVectorsToString(const std::vector<std::vector<T>>& vecs) {
+    std::ostringstream oss;
+    size_t maxSize = 0;
+    for (const auto& vec : vecs) {
+        maxSize = std::max(maxSize, vec.size());
+    }
+
+    // Print headers
+    for (size_t i = 0; i < vecs.size(); i++) {
+        oss << std::left << std::setw(10) << "Vector" + std::to_string(i+1);
+    }
+    oss << std::endl;
+    oss << std::string(vecs.size() * 10, '-') << std::endl;
+
+    for (size_t i = 0; i < maxSize; i++) {
+        for (const auto& vec : vecs) {
+            // Print elements from vec or "NaN" if out of range
+            if (i < vec.size()) {
+                oss << std::left << std::setw(10) << vec[i];
+            } else {
+                oss << std::left << std::setw(10) << "NaN";
+            }
+        }
+        oss << std::endl;
+    }
+    return oss.str();
+}
+
+template <typename T>
 void printVectors(const std::vector<Date>& vec1, const std::vector<T>& vec2) {
     size_t maxSize = std::max(vec1.size(), vec2.size());
 
