@@ -112,6 +112,11 @@ double mostLikelyValue(const std::vector<double>& vec);
 // compute the most often occuring sampling rate rounded to 1e-6
 double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector<MeteoData> vecM);
 
+void findClosestDate(std::vector<MeteoData> vecM, Date& date, double& sampling_rate);
+
+Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, Date& data_end_date);
+Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, Date data_end_date);
+
 template <typename T>
 void printVectors(const std::vector<std::vector<T>>& vecs) {
     size_t maxSize = 0;

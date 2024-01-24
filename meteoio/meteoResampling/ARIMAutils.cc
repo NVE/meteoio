@@ -220,9 +220,7 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	// check that window size is not overreached
 	if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
 		data_start_date = vecM[0].date;
-	} else if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
-		data_start_date = resampling_date;
-	}
+	} 
 	if (data_end_date > vecM[vecM.size()-1].date) {
 		data_end_date = vecM[vecM.size()-1].date;
 	}
@@ -230,7 +228,13 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 		throw IOException("The data window needed to interpolate the gap " + last_gap.toString() + " is larger than the resampling window size");
 	}
 	last_gap.sampling_rate = computeSamplingRate(data_start_date, data_end_date, vecM);
-	
+	if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
+		data_start_date = adjustStartDate(vecM, last_gap, resampling_date, data_end_date);
+		data_start_date -= 1/last_gap.sampling_rate;
+		last_gap.startDate = data_start_date;
+	} else {
+		data_start_date = adjustStartDate(vecM, last_gap, data_start_date, data_end_date);
+	}
 }
 
 // returns the most often accuring value in a vector
@@ -263,6 +267,58 @@ double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector
 	}
     return val;
 }
+
+
+Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, Date& data_end_date) {
+	Date closestDate = data_start_date;
+	double minDiff = std::numeric_limits<double>::max();
+
+	for (size_t i = 0; i < vecM.size(); ++i) {
+		if (vecM[i].date >= data_start_date && vecM[i].date <= data_end_date) {
+			double diff = std::abs((vecM[i].date - data_start_date).getJulian(true));
+			if (diff < minDiff && diff <= 1.5 / sampling_rate) {
+				minDiff = diff;
+				closestDate = vecM[i].date;
+			}
+		}
+	}
+	return closestDate;
+}
+
+Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, Date data_end_date) {
+	Date neededDate = findFirstDateWithSamplingRate(vecM, last_gap.sampling_rate, data_start_date, data_end_date);	
+	if (data_start_date != neededDate) {
+		double diff = std::abs((neededDate - data_start_date).getJulian(true));
+		if (diff < last_gap.sampling_rate) {
+			data_start_date = neededDate;
+		} else {
+			// closest date that can be reached with the sampling rate
+			int num_steps = std::floor(diff*last_gap.sampling_rate);
+			if (num_steps == 0) {
+				num_steps = 1;
+			}
+			data_start_date = neededDate - num_steps/last_gap.sampling_rate;
+		}
+	}
+	return data_start_date;
+}
+
+void findClosestDate(std::vector<MeteoData> vecM, Date& date, double& sampling_rate) {
+	double min_diff = 1e10;
+	int best_idx = IOUtils::npos;
+	for (size_t i = 0; i < vecM.size(); i++) {
+		double diff = std::abs((vecM[i].date - date).getJulian(true));
+		if (diff < min_diff) {
+			min_diff = diff;
+			best_idx = i;
+		}
+	}
+	if (best_idx != IOUtils::npos && min_diff < sampling_rate) {
+		date = vecM[best_idx].date;
+	} 
+}
+
+// ------------------- print helpers ------------------- //
 
 void printVectors(const std::vector<MeteoData>& vecM, const std::vector<Date>& dates, const size_t& paramindex) {
 	size_t maxSize = std::max(vecM.size(), dates.size());

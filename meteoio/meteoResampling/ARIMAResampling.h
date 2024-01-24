@@ -44,8 +44,8 @@ namespace mio {
  * 
  * TODO: - do i need to use getJulian(true) or does it not matter?
  *       - how do i avoid the whole size_t vs int problem?
- *       - gap at end not working because of assignemtn stuff, currently having a problem with arima_exec, dunno why (maybe have to do it without assignment)
  *       - decrease output, maybe only at the end once
+ *       - probably dont return anything, if the arima predictions are only zero --> diff model
  * 
  */
 class ARIMAResampling : public ResamplingAlgorithms {

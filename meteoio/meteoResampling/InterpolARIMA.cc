@@ -210,6 +210,13 @@ std::vector<double> InterpolARIMA::predict(int n_steps) {
     }
 
     auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+    // check if the models are valid (p and q should not be zero at the same time)
+    if (auto_arima_forward->p == 0 && auto_arima_forward->q == 0) {
+        // perform a new auto arima but with extensive search
+        auto_arima_setStepwise(auto_arima_forward, false);
+        std::cout << "forward model is random walk, performing extensive search" << std::endl;
+        auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+    }
     auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, n_steps, new_xreg_f, pred_forward.data(), amse_forward.data());
     return pred_forward;
 }
