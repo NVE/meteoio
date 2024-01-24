@@ -29,7 +29,6 @@ namespace mio {
         void fillGap();
         void interpolate();
         std::vector<double> predict(int n_steps = 0);
-        std::vector<double> predict(int n_steps = 0);
         std::vector<double> getData() { return data; };
         std::vector<double> getInterpolatedData();
 

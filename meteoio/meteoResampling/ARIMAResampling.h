@@ -81,9 +81,8 @@ class ARIMAResampling : public ResamplingAlgorithms {
         bool arima_is_cached = false;
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
-        std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingPosition re_position);
+        std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingAlgorithms::ResamplingPosition re_position);
 };
-
 } //end namespace mio
 
 #endif

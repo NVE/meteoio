@@ -110,7 +110,7 @@ double ARIMAResampling::interpolVecAt(const std::vector<double> &data, const std
 	return linearInterpolation(datesVec[pos].getJulian(), data[pos], datesVec[pos+1].getJulian(), data[pos+1], date.getJulian(true));
 }
 
-std::vector<double> fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period) {
+std::vector<double> ARIMAResampling::fillGapWithPrediction(std::vector<double>& data, const std::string& direction, const size_t &startIdx, const int &length, const int &period, ResamplingAlgorithms::ResamplingPosition re_position) {
 	InterpolARIMA arima(data, startIdx, length, direction, period);
 	std::vector<double> predictions = arima.predict();
 	std::copy(predictions.begin(), predictions.end(), data.begin() + startIdx);
@@ -194,7 +194,6 @@ void ARIMAResampling::resample(const std::string& /*stationHash*/, const size_t&
 		throw IOException("The window size is smaller than the data gap to be interpolated, please increase window size, by at least: " + std::to_string(difference) + "s", AT);
 	}
 
-	std::cout << new_gap.toString() << std::endl;
 
 	if (new_gap.isGap()) {
 		std::cout << new_gap.toString() << std::endl;

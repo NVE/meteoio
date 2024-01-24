@@ -63,8 +63,6 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end , int 
     : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))), pred_forward(n_predictions), pred_backward(n_predictions), 
      xreg_vec_f(0), xreg_vec_b(0), data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)), 
     data_backward(decideDirection(data_in,direction,false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
-     xreg_vec_f(0), xreg_vec_b(0), data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)), 
-    data_backward(decideDirection(data_in,direction,false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
     amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), 
     N_data_backward(data_backward.size()), s(period) {
         // initialize auto_arima objects
