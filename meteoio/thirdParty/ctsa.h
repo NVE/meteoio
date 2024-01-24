@@ -16,6 +16,8 @@ typedef struct auto_arima_set* auto_arima_object;
 
 auto_arima_object auto_arima_init(int *pdqmax,int *PDQmax,int s, int r, int N);
 
+auto_arima_object auto_arima_copy(auto_arima_object original);
+
 struct auto_arima_set{
 	int N;// length of time series
 	int Nused;//length of time series after differencing, Nused = N - d
@@ -77,7 +79,6 @@ struct auto_arima_set{
 	double aicc;
 	double params[0];
 };
-
 
 typedef struct sarimax_set* sarimax_object;
 
