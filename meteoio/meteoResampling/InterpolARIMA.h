@@ -1,3 +1,22 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef INTERPOLARIMA_H
 #define INTERPOLARIMA_H
 
@@ -6,9 +25,40 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+
 namespace mio {
-    // It is assumed that data is a vector of length N_data_forward + N_gap + N_data_backward, i.e. containing missing values, or similar in
-    // the gap with linearly spaced entries in time
+/**
+ * @class InterpolARIMA
+ * @file InterpolARIMA.h
+ * 
+ * @brief This class is used for interpolating or predicting missing data in a time series using the Auto ARIMA algorithm.
+ * 
+ * @details Depending on the constructor that is used, the data and auto ARIMA models are set up for either interpolation or prediction. 
+ * The interpolation is interpolate(). The prediction methods is predict(). 
+ * 
+ * Interpolate will fill a gap in the data, whose start is specified by gap_loc 
+ * and whose length is specified by N_gap. Data is assumed to be of equal time steps, and is split into two parts, data_before and data_after. 
+ * So in the end data should be of size data_before + data_after + N_gap. The interpolation is done by fitting one ARIMA model to data_before and 
+ * one to data_after. The ARIMA models are fitted using the auto.arima algorithm from the ctsa library (https://github.com/rafat/ctsa/tree/master). The ARIMA models are then used to predict 
+ * the missing data forward and backward in time. The final prediction is a weighted average of the two, where the weighting is done so more information 
+ * comes from the closer data. 
+ * 
+ * Predict will predict the next n_steps values in the time series. It can either be forward in time (direction = "forward") or backward in time (direction = "backward").
+ * For forward prediction data[0:gap_loc] is used to fit the ARIMA model, and for backward prediction data[gap_loc + N_gap:] is used.
+ * 
+ * For more Information concerning ARIMA see, https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average, and https://otexts.com/fpp2/arima.html, and the final 
+ * interpolation algorithm: https://www.tandfonline.com/doi/abs/10.1080/02664769624332?casa_token=fEVPFRYrr7sAAAAA:ozZFAcUWX4mKaUI8tvOn6R-3giOHefH0p8vaRDFCN1ORGy0d9evP7Hn9aLbMWsUQsIKrKEKxP-M
+ * 
+ * 
+ * @note Interpolate is meant to only be used, when there is actually backward data available. If there is no backward data, then predict should be used instead. 
+ *          Where predict is meant to be used in conjunction with the according constructor.
+ *      Currently prediction forward or backward, when providing both is not implemented, but can be easily added on demand.
+ * 
+ * @author Patrick Leibersperger
+ * @date 2024-01-25
+ * 
+ */
     class InterpolARIMA {
     public:
         InterpolARIMA();
@@ -16,19 +66,21 @@ namespace mio {
         InterpolARIMA(std::vector<double> data_in, size_t gap_loc, int N_gap, std::vector<double> xreg_vec, int s = 0);
         InterpolARIMA(std::vector<double> data_in, size_t gap_loc, int n_predictions, std::string direction = "forward", int s = 0);
 
+        // Setters
         void setAutoArimaMetaData(int max_p_param = 8, int max_d_param = 3, int max_q = 8, int start_p = 2, int start_q = 2, int max_P = 2,
                                   int max_D = 1, int max_Q = 2, int start_P = 1, int start_Q = 1, bool seasonal = true,
                                   bool stationary = false);
-        void setOptMetaData(std::string method = "css-mle", std::string opt_method = "BFGS", bool stepwise = true,
+        void setOptMetaData(std::string method = "CSS-MLE", std::string opt_method = "BFGS", bool stepwise = true,
                             bool approximation = false, int num_models = 94);
 
-        auto_arima_object auto_arima_forward;
-        auto_arima_object auto_arima_backward;
-
+        // Interpolation methods
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
         void interpolate();
         std::vector<double> predict(int n_steps = 0);
+        std::vector<double> ARIMApredict(int n_steps);
+
+        // Getters
         std::vector<double> getData() { return data; };
         std::vector<double> getForwardData() { return data_forward; };
         std::vector<double> getBackwardData() { return data_backward; };
@@ -157,6 +209,12 @@ namespace mio {
                                                      {"BFGS Using More Thuente Method", 7}};
 
         bool consistencyCheck();
+        auto_arima_object initAutoArima(int N_data);
+
+    // last to be initialized
+    public:
+        auto_arima_object auto_arima_forward;
+        auto_arima_object auto_arima_backward;
 
     };
 

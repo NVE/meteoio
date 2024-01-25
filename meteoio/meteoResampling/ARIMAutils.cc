@@ -1,26 +1,44 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "ARIMAutils.h"
 #include <cmath>
-#include <map>
-
+#include <unordered_map>
+#include <numeric>
+#include <algorithm>
 
 namespace mio {
 
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double> &vec, size_t start, int N) { 
-    std::vector<double> vec_sliced(N);
-    for (int i = 0; i < N; i++) {
-        vec_sliced[i] = vec[start+i];
-    }
-    return vec_sliced;
+std::vector<double> slice(const std::vector<double>& vec, size_t start, int N) { 
+	assert(start + N < vec.size()); // Ensure the range is valid
+	std::vector<double> vec_sliced;
+	vec_sliced.assign(vec.begin() + start, vec.begin() + start + N);
+	return vec_sliced;
 };
 
 // slice a vector from start to end
-std::vector<double> slice(const std::vector<double> &vec, size_t start) { 
-    std::vector<double> vec_sliced(vec.size()-start);
-    for (size_t i = 0; i < vec.size()-start; i++) {	
-        vec_sliced[i] = vec[start+i];
-    }
-    return vec_sliced;
+std::vector<double> slice(const std::vector<double>& vec, size_t start) { 
+	assert(start < vec.size()); // Ensure the range is valid
+	std::vector<double> vec_sliced;
+	vec_sliced.assign(vec.begin() + start, vec.end());
+	return vec_sliced;
 };
 
 // np.arange for c++
@@ -32,17 +50,13 @@ std::vector<double> arange(size_t start, int N) {
     return vec;
 };
 
-//calculate the of a vector
-double calcVecMean(std::vector<double> vec) {
-    double sum = 0;
-    for (size_t i = 0; i < vec.size(); i++) {
-        sum += vec[i];
-    }
-    return sum/static_cast<int>(vec.size());
+//calculate the mean of a vector
+double calcVecMean(const std::vector<double>& vec) {
+    double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
+    return sum / vec.size();
 }
-
 //calculate the standard deviation of a vector
-double stdDev(std::vector<double> vec) {
+double stdDev(const std::vector<double>& vec) {
 	double mean_vec = calcVecMean(vec);
 	double sum = 0;
 	for (size_t i = 0; i < vec.size(); i++) {
@@ -52,38 +66,40 @@ double stdDev(std::vector<double> vec) {
 }
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &paramname) {
+std::vector<double> toVector(const std::vector<MeteoData>& vecM, const std::string &paramname) {
     size_t paramindex = vecM[0].getParameterIndex(paramname);
     std::vector<double> vec(vecM.size());
-    for (size_t i = 0; i < vecM.size(); i++) {
-        vec[i] = vecM[i](paramindex);
-    }
+    std::transform(vecM.begin(), vecM.end(), vec.begin(), [paramindex](const MeteoData& data) {
+        return data(paramindex);
+    });
     return vec;
 }
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramindex) {
+std::vector<double> toVector(const std::vector<MeteoData>& vecM, const size_t &paramindex) {
     std::vector<double> vec(vecM.size());
-    for (size_t i = 0; i < vecM.size(); i++) {
-        vec[i] = vecM[i](paramindex);
-    }
+    std::transform(vecM.begin(), vecM.end(), vec.begin(), [paramindex](const MeteoData& data) {
+        return data(paramindex);
+    });
     return vec;
 }
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc, int length) {
-    if (forward) {
-        if (direction == "forward") {
-            return slice(data,0,gap_loc);
-        } else if (direction == "backward") {
-            reverseVector(data);
-            return slice(data,0,data.size()-length);
-        } else {
-            throw mio::IOException("Direction " + direction + " not recognized");
-        }
-    } else {
+std::vector<double> decideDirection(const std::vector<double>& data, const std::string& direction, bool forward, size_t gap_loc, int length) {
+	if (!forward) {
 		return std::vector<double>(5, 0.0);
 	}
+
+	if (direction == "forward") {
+		return slice(data, 0, gap_loc);
+	} 
+
+	if (direction == "backward") {
+		auto reversedData = reverseVectorReturn(data);
+		return slice(reversedData, 0, reversedData.size() - length);
+	} 
+
+	throw mio::IOException("Direction " + direction + " not recognized");
 }
 
 //return true if a valid point could be found backward from pos
@@ -193,9 +209,31 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 }
 
 bool requal(Date &date1, Date &date2) {
-    double tolerance = 1e-6; // Define your tolerance level
+    double tolerance = DATE_TOLERANCE; // Define your tolerance level
     bool is_equal = std::abs((date1 - date2).getJulian(true)) <= tolerance;
 	return is_equal;
+}
+
+void adjustDataStartDate(ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date) {
+    if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
+        data_start_date = adjustStartDate(vecM, last_gap, resampling_date, data_end_date);
+        data_start_date -= 1/last_gap.sampling_rate;
+        last_gap.startDate = data_start_date;
+    } else {
+        data_start_date = adjustStartDate(vecM, last_gap, data_start_date, data_end_date);
+    }
+}
+
+void checkWindowSize(const ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date, const double& window_size) {
+    if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
+        data_start_date = vecM[0].date;
+    } 
+    if (data_end_date > vecM[vecM.size()-1].date) {
+        data_end_date = vecM[vecM.size()-1].date;
+    }
+    if (data_end_date - data_start_date > window_size) {
+        throw IOException("The data window needed to interpolate the gap " + last_gap.toString() + " is larger than the resampling window size");
+    }
 }
 
 
@@ -216,24 +254,9 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	data_end_date = last_gap.endDate + after_window;	
 
 
-	// check that window size is not overreached
-	if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
-		data_start_date = vecM[0].date;
-	} 
-	if (data_end_date > vecM[vecM.size()-1].date) {
-		data_end_date = vecM[vecM.size()-1].date;
-	}
-	if (data_end_date - data_start_date > window_size) {
-		throw IOException("The data window needed to interpolate the gap " + last_gap.toString() + " is larger than the resampling window size");
-	}
+	checkWindowSize(last_gap, vecM, resampling_date, data_start_date, data_end_date, window_size);
 	last_gap.sampling_rate = computeSamplingRate(data_start_date, data_end_date, vecM);
-	if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
-		data_start_date = adjustStartDate(vecM, last_gap, resampling_date, data_end_date);
-		data_start_date -= 1/last_gap.sampling_rate;
-		last_gap.startDate = data_start_date;
-	} else {
-		data_start_date = adjustStartDate(vecM, last_gap, data_start_date, data_end_date);
-	}
+	adjustDataStartDate(last_gap, vecM, resampling_date, data_start_date, data_end_date);
 }
 
 // returns the most often accuring value in a vector
@@ -241,7 +264,7 @@ double mostLikelyValue(const std::vector<double>& vec) {
     if (vec.empty()) {
         throw mio::IOException("Vector of sampling rates is empty");
     }
-    std::map<double, int> counts;
+    std::unordered_map<double, int> counts;
     for (double num : vec) {
         counts[num]++;
     }
@@ -254,9 +277,9 @@ double mostLikelyValue(const std::vector<double>& vec) {
 // compute the most often occuring sampling rate rounded to 1e-6
 double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector<MeteoData> vecM) {
     std::vector<double> time_diffs;
-    for (size_t i = 0; i < vecM.size(); i++) {
+    for (size_t i = 0; i < vecM.size()-1; i++) {
         if (vecM[i].date >= data_start_date && vecM[i].date <= data_end_date) {
-            double value = 1/((vecM[i].date - vecM[i-1].date).getJulian(true));
+            double value = 1/std::abs((vecM[i+1].date - vecM[i].date).getJulian(true));
             time_diffs.push_back(std::round(value*100000/100000));
         }
     }
@@ -268,122 +291,37 @@ double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector
 }
 
 
-Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, Date& data_end_date) {
-	Date closestDate = data_start_date;
-	double minDiff = std::numeric_limits<double>::max();
+Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, const Date& data_end_date) {
+    Date closestDate = data_start_date;
+    double minDiff = std::numeric_limits<double>::max();
 
-	for (size_t i = 0; i < vecM.size(); ++i) {
-		if (vecM[i].date >= data_start_date && vecM[i].date <= data_end_date) {
-			double diff = std::abs((vecM[i].date - data_start_date).getJulian(true));
-			if (diff < minDiff && diff <= 1.5 / sampling_rate) {
-				minDiff = diff;
-				closestDate = vecM[i].date;
-			}
-		}
-	}
-	return closestDate;
+    for (const auto& data : vecM) {
+        if (data.date < data_start_date || data.date > data_end_date) {
+            continue;
+        }
+        double diff = std::abs((data.date - data_start_date).getJulian(true));
+        if (diff <= 1.5 / sampling_rate) {
+            minDiff = std::min(minDiff, diff);
+            closestDate = data.date;
+        }
+    }
+    return closestDate;
 }
 
-Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, Date data_end_date) {
-	Date neededDate = findFirstDateWithSamplingRate(vecM, last_gap.sampling_rate, data_start_date, data_end_date);	
-	if (data_start_date != neededDate) {
-		double diff = std::abs((neededDate - data_start_date).getJulian(true));
-		if (diff < last_gap.sampling_rate) {
-			data_start_date = neededDate;
-		} else {
-			// closest date that can be reached with the sampling rate
-			int num_steps = std::floor(diff*last_gap.sampling_rate);
-			if (num_steps == 0) {
-				num_steps = 1;
-			}
-			data_start_date = neededDate - num_steps/last_gap.sampling_rate;
-		}
-	}
-	return data_start_date;
-}
-
-void findClosestDate(std::vector<MeteoData> vecM, Date& date, double& sampling_rate) {
-	double min_diff = 1e10;
-	int best_idx = IOUtils::npos;
-	for (size_t i = 0; i < vecM.size(); i++) {
-		double diff = std::abs((vecM[i].date - date).getJulian(true));
-		if (diff < min_diff) {
-			min_diff = diff;
-			best_idx = i;
-		}
-	}
-	if (best_idx != IOUtils::npos && min_diff < sampling_rate) {
-		date = vecM[best_idx].date;
-	} 
-}
-
-// ------------------- print helpers ------------------- //
-
-void printVectors(const std::vector<MeteoData>& vecM, const std::vector<Date>& dates, const size_t& paramindex) {
-	size_t maxSize = std::max(vecM.size(), dates.size());
-
-	// Print headers
-	std::cout << std::left << std::setw(30) << "MeteoData Date" << "| Date" << std::endl;
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	for (size_t i = 0; i < maxSize; i++) {
-		// Print date from MeteoData or "NaN" if out of range
-		if (i < vecM.size()) {
-			std::cout << std::left << std::setw(30) << vecM[i].date.toString(Date::ISO)<< ":" << vecM[i](paramindex) << "| ";
-		} else {
-			std::cout << std::left << std::setw(30) << "NaN" << "| ";
-		}
-
-		// Print date from dates vector or "NaN" if out of range
-		if (i < dates.size()) {
-			std::cout << dates[i].toString(Date::ISO) << std::endl;
-		} else {
-			std::cout << "NaN" << std::endl;
-		}
-	}
-}
-
-void printVectors(const std::vector<Date>& dates1, const std::vector<Date>& dates2){ 
-	size_t maxSize = std::max(dates1.size(), dates2.size());
-
-	// Print headers
-	std::cout << std::left << std::setw(30) << "Date1" << "| Date2" << std::endl;
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	for (size_t i = 0; i < maxSize; i++) {
-		// Print date from dates1 vector or "NaN" if out of range
-		if (i < dates1.size()) {
-			std::cout << std::left << std::setw(30) << dates1[i].toString(Date::ISO) << "| ";
-		} else {
-			std::cout << std::left << std::setw(30) << "NaN" << "| ";
-		}
-
-		// Print date from dates2 vector or "NaN" if out of range
-		if (i < dates2.size()) {
-			std::cout << dates2[i].toString(Date::ISO) << std::endl;
-		} else {
-			std::cout << "NaN" << std::endl;
-		}
-	}
-}
-
-void printVector(const std::vector<MeteoData>& vec1) {
-	// Print header
-	std::cout << std::left << std::setw(30) << "MeteoData Date" << std::endl;
-	std::cout << "------------------------------" << std::endl;
-
-	for (size_t i = 0; i < vec1.size(); i++) {
-		// Print date from MeteoData
-		std::cout << std::left << std::setw(30) << vec1[i].date.toString() << std::endl;
-	}
-}
-
-void printVectors(const std::vector<double>& vec) {
-    // Wrap vec in another vector
-    std::vector<std::vector<double>> vecWrapped = {vec};
-
-    // Call the appropriate function
-    printVectors(vecWrapped);
+Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, const Date& data_end_date) {
+    const Date neededDate = findFirstDateWithSamplingRate(vecM, last_gap.sampling_rate, data_start_date, data_end_date);	
+    if (data_start_date == neededDate) {
+        return data_start_date;
+    }
+    double diff = std::abs((neededDate - data_start_date).getJulian(true));
+    if (diff < last_gap.sampling_rate) {
+        data_start_date = neededDate;
+    } else {
+        // closest date that can be reached with the sampling rate
+        int num_steps = std::max(1, static_cast<int>(std::floor(diff*last_gap.sampling_rate)));
+        data_start_date = neededDate - num_steps/last_gap.sampling_rate;
+    }
+    return data_start_date;
 }
 
 } // namespace mio

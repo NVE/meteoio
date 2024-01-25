@@ -27,24 +27,64 @@
 namespace mio {
 
     /**
-     * @brief Brief description
-     * @details
-     * Longer description of the algorithm as well as example of use
+     * @brief This class is designed to handle interpolation (resampling) of data using the ARIMA (AutoRegressive Integrated Moving Average) model
+     * 
+     * @details It uses the InterpolARIMA class, see InterpolARIMA, to perform interpolation using ARIMA.
      *
-     * Assuming a constant sampling rate a data vector will be created with the available data,
-     * all gaps will be located, and the gaps will be filled with the ARIMA model.
-     * Points that fall in between interpolated data will be interpolated linearly.
-     * a gap is defined as at least 3 missing values in a row
+     * Gaps in the data are detected, and when possible data before and after the gap is used to interpolate the missing values. Otherwise, either 
+     * only the data before or after the gap (depending on what is available) is used to predict the missing values. 
+     * 
+     * The ARIMA model needs constant sampling rates, therefore the most likely rate is calculated in the data used to fit, and the data is resampled 
+     * to that sampling rate. If a requested point falls in between available data, it will be linearly interpolated.
+     * 
+     * Missing values in the data used to fit the ARIMA Model, will be linearly interpolated as well.
+     * 
+     * A gap is defined as a period of missing data, that has at least 2 data points with the most likely sampling rate. Only 1 missing data point is
+     * linearly interpolated (should maybe just return instead).
      *
-     * Also assuming that the meteovector fills all necessary fields with IOUtils::npos beforehand
-     * so i dont need to work with dates
-     *
-     * missing values in the data used to interpolate will be linearly interpolated
-     *
+     * Mandatory parameters:
+     * - `BEFORE_WINDOW` : The time before a gap that will be used to accumulate data to fit the ARIMA model. 
+     * - `AFTER_WINDOW` : The time after a gap that will be used to accumulate data to fit the ARIMA model.
+     * (BEFORE_WINDOW + AFTER_WINDOW < window_size)
+     * 
+     * Optional parameters:
+     * - `MAX_P` : The maximum number of AR coefficients to use in the ARIMA model. Default: 8
+     * - `MAX_D` : The maximum number of differences to use in the ARIMA model. Default: 3
+     * - `MAX_Q` : The maximum number of MA coefficients to use in the ARIMA model. Default: 8
+     * - `START_P` : The starting number of AR coefficients to use in the ARIMA model. Default: 2
+     * - `START_Q` : The starting number of MA coefficients to use in the ARIMA model. Default: 2
+     * - `MAX_P_SEASONAL` : The maximum number of seasonal AR coefficients to use in the ARIMA model. Default: 2
+     * - `MAX_D_SEASONAL` : The maximum number of seasonal differences to use in the ARIMA model. Default: 1
+     * - `MAX_Q_SEASONAL` : The maximum number of seasonal MA coefficients to use in the ARIMA model. Default: 2
+     * - `START_P_SEASONAL` : The starting number of seasonal AR coefficients to use in the ARIMA model. Default: 1
+     * - `START_Q_SEASONAL` : The starting number of seasonal MA coefficients to use in the ARIMA model. Default: 1
+     * - `SEASONAL_PERIOD` : The period of the seasonal component. Default: 0 (no seasonal component)
+     * - `LIK_METHOD` : The method used to fit the ARIMA model. Default: CSS-MLE
+     * - `OPT_METHOD` : The optimization method used to fit the ARIMA model. Default: BFGS
+     * - `STEPWISE` : Whether to use stepwise search of the best ARIMA model. Default: true (faster)
+     * - `APPROXIMATION` : Whether to use approximation to determin the Information Criteria and the Likelihood. Default: true
+     * - `NUM_MODELS` : The number of models to try when using stepwise search. Default: 94
+     * - `SEASONAL` : Whether to use a seasonal component in the ARIMA model. Default: true
+     * - `STATIONARY` : Whether to use a stationary ARIMA model. Default: false
+     * 
+     * 
+     * @code
+     * [Interpolations1D]
+     * TA::resample = ARIMA
+     * TA::ARIMA::BEFORE_WINDOW = 86400
+     * TA::ARIMA::AFTER_WINDOW = 86400
+     * 
+     * @endcode
+     * 
+     * @note In the case that only random/random walk arima models are found, the missing values will not be filled (It would be just the mean otherwise)
+     * 
+     * @author Patrick Leibersperger
+     * @date 2024-01-25
+     * 
      * TODO: - do i need to use getJulian(true) or does it not matter?
      *       - how do i avoid the whole size_t vs int problem?
      *       - should i do the linear interpolation, or just return?
-     *       - vecM is filled with the new value right? (avoid having nodata in before and after data)
+     *       - vecM is filled with the new value right? (avoid having nodata in before data)
      *       - should i set a limit on the prediction steps?
      *
      */
@@ -91,9 +131,7 @@ namespace mio {
         void setMetaData(InterpolARIMA &arima);
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
-        std::vector<double> fillGapWithPrediction(std::vector<double> &data, const std::string &direction, const size_t &startIdx,
-                                                  const int &length, const int &period,
-                                                  ResamplingAlgorithms::ResamplingPosition re_position);
+        std::vector<double> predictData(std::vector<double>& data, const std::string& direction, size_t startIdx_interpol, int length_gap_interpol, int period, ResamplingAlgorithms::ResamplingPosition re_position);
     };
 } // end namespace mio
 

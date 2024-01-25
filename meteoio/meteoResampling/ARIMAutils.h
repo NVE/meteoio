@@ -1,9 +1,32 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef UTILS_H
 #define UTILS_H
 
 #include <vector>
 #include <meteoio/MeteoIO.h>
 #include <cassert>
+
+
+static const double DATE_TOLERANCE = 1e-6;
+static const int MIN_ARIMA_DATA_POINTS = 8;
+static const int MAX_ARIMA_EXTRAPOLATION = 25;
 
 
 namespace mio {
@@ -31,12 +54,12 @@ T findMinMax(const std::vector<T>& vec, bool findMin) {
 }
 
 //calculate the of a vector
-double calcVecMean(std::vector<double> vec);
+double calcVecMean(const std::vector<double>& vec);
 
 //calculate the standard deviation of a vector
-double stdDev(std::vector<double> vec);
+double stdDev(const std::vector<double>& vec);
 
-// TODO: Test this
+// reverse a vector in place
 template <typename T>
 void reverseVector(std::vector<T>& vec) {
     if (vec.empty()) {
@@ -51,6 +74,8 @@ void reverseVector(std::vector<T>& vec) {
         end--;
     }
 }
+
+// reverse a vector and return it
 template <typename T>
 std::vector<T> reverseVectorReturn(const std::vector<T>& vec) {
     if (vec.empty()) {
@@ -70,15 +95,15 @@ std::vector<T> reverseVectorReturn(const std::vector<T>& vec) {
 }
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const std::string &paramname);
+std::vector<double> toVector(const std::vector<MeteoData>& vecM, const std::string &paramname);
 
 // converts a vector of MeteoData to a vector of doubles
-std::vector<double> toVector(std::vector<MeteoData> vecM, const size_t &paramindex);
+std::vector<double> toVector(const std::vector<MeteoData>& vecM, const size_t &paramindex);
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(std::vector<double> data, std::string direction, bool forward, size_t gap_loc, int length);
+std::vector<double> decideDirection(const std::vector<double>& data,const std::string& direction, bool forward, size_t gap_loc, int length);
 
-// a class to cache information about a gap
+// a struct to cache information about a gap
 struct ARIMA_GAP {
         ARIMA_GAP() : start(), end(), startDate(), endDate(), sampling_rate() {}
         void extend(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx<start) setStart(idx, vecM); if (idx>end) setEnd(idx, vecM);}
@@ -112,37 +137,9 @@ double mostLikelyValue(const std::vector<double>& vec);
 // compute the most often occuring sampling rate rounded to 1e-6
 double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector<MeteoData> vecM);
 
-void findClosestDate(std::vector<MeteoData> vecM, Date& date, double& sampling_rate);
 
 Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, Date& data_end_date);
-Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, Date data_end_date);
-
-template <typename T>
-void printVectors(const std::vector<std::vector<T>>& vecs) {
-    size_t maxSize = 0;
-    for (const auto& vec : vecs) {
-        maxSize = std::max(maxSize, vec.size());
-    }
-
-    // Print headers
-    for (size_t i = 0; i < vecs.size(); i++) {
-        std::cout << std::left << std::setw(10) << "Vector" + std::to_string(i+1);
-    }
-    std::cout << std::endl;
-    std::cout << std::string(vecs.size() * 10, '-') << std::endl;
-
-    for (size_t i = 0; i < maxSize; i++) {
-        for (const auto& vec : vecs) {
-            // Print elements from vec or "NaN" if out of range
-            if (i < vec.size()) {
-                std::cout << std::left << std::setw(10) << vec[i];
-            } else {
-                std::cout << std::left << std::setw(10) << "NaN";
-            }
-        }
-        std::cout << std::endl;
-    }
-}
+Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, const Date& data_end_date);
 
 template <typename T>
 std::string convertVectorsToString(const std::vector<std::vector<T>>& vecs) {
@@ -174,6 +171,33 @@ std::string convertVectorsToString(const std::vector<std::vector<T>>& vecs) {
 }
 
 template <typename T>
+void printVectors(const std::vector<std::vector<T>>& vecs) {
+    size_t maxSize = 0;
+    for (const auto& vec : vecs) {
+        maxSize = std::max(maxSize, vec.size());
+    }
+
+    // Print headers
+    for (size_t i = 0; i < vecs.size(); i++) {
+        std::cout << std::left << std::setw(10) << "Vector" + std::to_string(i+1);
+    }
+    std::cout << std::endl;
+    std::cout << std::string(vecs.size() * 10, '-') << std::endl;
+
+    for (size_t i = 0; i < maxSize; i++) {
+        for (const auto& vec : vecs) {
+            // Print elements from vec or "NaN" if out of range
+            if (i < vec.size()) {
+                std::cout << std::left << std::setw(10) << vec[i];
+            } else {
+                std::cout << std::left << std::setw(10) << "NaN";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
+template <typename T>
 void printVectors(const std::vector<Date>& vec1, const std::vector<T>& vec2) {
     size_t maxSize = std::max(vec1.size(), vec2.size());
 
@@ -198,10 +222,6 @@ void printVectors(const std::vector<Date>& vec1, const std::vector<T>& vec2) {
     }
 }
 
-void printVectors(const std::vector<MeteoData>& vec1, const std::vector<Date>& vec2, const size_t& paramindex);
-void printVectors(const std::vector<Date>& vec1, const std::vector<Date>& vec2);
-void printVector(const std::vector<MeteoData>& vec1);
-void printVectors(const std::vector<double>& vec);
 
 } // namespace mio
 #endif //UTILS_H

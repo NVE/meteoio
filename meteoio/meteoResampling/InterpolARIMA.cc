@@ -1,3 +1,22 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/***********************************************************************************/
+/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "InterpolARIMA.h"
 #include "ARIMAutils.h"
 #include <cmath>
@@ -8,38 +27,47 @@
 #include <unistd.h>
 
 namespace mio {
+
     // ------------------- Constructor ------------------- //
+    
     // Default constructor
     InterpolARIMA::InterpolARIMA()
         : data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(),
           data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
-          amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5) {
-        // dont initialize auto arima objects to not accidentally use "empty ones"
-        std::vector<int> pqdmax = {max_p, max_d, max_q};
-        std::vector<int> PQDmax = {max_P, max_D, max_Q};
-        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
-        auto_arima_backward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_backward);
-    }
+          amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
+        }
 
-    // only need s when it is known
+
+    /**
+     * @brief Main Constructor for an InterpolARIMA object. Used to fill 1 gap in the data.
+     *
+     * @param data_in A vector of double values representing the input data.
+     * @param gap_location The location of the gap in the data.
+     * @param gap_length The length of the gap in the data.
+     * @param period (Optional) The period of the ARIMA model. Defaults to 0. Only needed when the period is known.
+ */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, int period)
         : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
           xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, static_cast<int>(gap_loc))),
           data_backward(slice(data, gap_loc + static_cast<size_t>(N_gap))), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),
           xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
-          N_data_backward(data_backward.size()), s(period) {
+          N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
         reverseVector(data_backward); // TODO: can be done with std::reverse in C++17
-
-        // initialize auto_arima objects
-        std::vector<int> pqdmax = {max_p, max_d, max_q};
-        std::vector<int> PQDmax = {max_P, max_D, max_Q};
-        std::vector<int> pqdmax_b = {max_p, max_d, max_q};
-        std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
-        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
-        auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
     }
 
+    /**
+     * @brief This constructor is used to initialize an InterpolARIMA object for filling a gap in the data with exogenous variables.
+     *
+     * @param data_in The input data for making predictions.
+     * @param gap_location The starting location of the data gap.
+     * @param gap_length The length of the data gap.
+     * @param xreg_vec_in The exogenous inputs for the ARIMA model.
+     * @param period The period for the ARIMA model.
+     * 
+     *
+     * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class.
+     */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, std::vector<double> xreg_vec_in,
                                  int period)
         : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
@@ -49,34 +77,42 @@ namespace mio {
           xreg_f(xreg_vec_f.size() == 0 ? NULL : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? NULL : &xreg_vec_b[0]),
           new_xreg_f(xreg_vec_f.size() == 0 ? NULL : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size() == 0 ? NULL : &new_xreg_vec_b[0]),
           amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()),
-          r(xreg_vec_in.size() == 0 ? 0 : xreg_vec_f.size() / (N_data_forward)), s(period) {
+          r(xreg_vec_in.size() == 0 ? 0 : xreg_vec_f.size() / (N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
         reverseVector(data_backward); // TODO: Can be done with std::reverse in C++17
-
-        // initialize auto_arima objects
-        std::vector<int> pqdmax = {max_p, max_d, max_q};
-        std::vector<int> PQDmax = {max_P, max_D, max_Q};
-        std::vector<int> pqdmax_b = {max_p, max_d, max_q};
-        std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
-        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
-        auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
     }
 
+    /**
+     * @brief This constructor is used to initialize an InterpolARIMA object for making predictions ahead or backward in time.
+     *
+     * @param data_in The input data for making predictions.
+     * @param gap_loc The end location of the data gap.
+     * @param n_predictions The number of predictions to be made.
+     * @param direction The direction of the prediction. Can be either "forward" or "past".
+     * @param period The period for the ARIMA model.
+     * 
+     * It also decides the direction of the data based on the `direction` parameter and the `gap_loc`: 
+     * - If the direction is "forward", the prediction is made based on the data from 
+     *   the beginning of the data set up to `gap_loc`. 
+     * - If the direction is "past", the prediction is made based on the data from `gap_loc` 
+     *   to the end of the data set.
+     *
+     * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class in [InterpolARIMA.cc](meteoio/meteoResampling/InterpolARIMA.cc).
+     */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, int n_predictions, std::string direction, int period)
         : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))),
           pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0), xreg_vec_b(0),
           data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)),
           data_backward(decideDirection(data_in, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
           xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap),
-          N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period) {
-        // initialize auto_arima objects
+          N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)){
+    }
 
+    // ------------------- Helper methods ------------------- //
+    auto_arima_object InterpolARIMA::initAutoArima(int N_data) {
         std::vector<int> pqdmax = {max_p, max_d, max_q};
         std::vector<int> PQDmax = {max_P, max_D, max_Q};
-        std::vector<int> pqdmax_b = {max_p, max_d, max_q};
-        std::vector<int> PQDmax_b = {max_P, max_D, max_Q};
-        auto_arima_forward = auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data_forward);
-        auto_arima_backward = auto_arima_init(pqdmax_b.data(), PQDmax_b.data(), s, r, N_data_backward);
+        return auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data);
     }
 
     std::string InterpolARIMA::toString() {
@@ -126,6 +162,7 @@ namespace mio {
         return ss.str();
     }
 
+    // ------------------- Setters ------------------- //
     // Set the metadata for the auto arima objects
     void InterpolARIMA::setAutoArimaMetaData(int max_p_param, int max_d_param, int max_q_param, int start_p_param, int start_q_param,
                                              int max_P_param, int max_D_param, int max_Q_param, int start_P_param, int start_Q_param,
@@ -204,7 +241,7 @@ namespace mio {
         return sim;
     }
 
-    std::vector<double> InterpolARIMA::predict(int n_steps) {
+    std::vector<double> InterpolARIMA::ARIMApredict(int n_steps) {
         if (n_steps == 0) {
             n_steps = N_gap;
         } else {
@@ -224,6 +261,10 @@ namespace mio {
         return pred_forward;
     }
 
+    // Check if the model is a random walk
+    bool isRandomWalk(auto_arima_object model) {
+        return (model->p == 0 && model->q == 0) && (model->P == 0 && model->Q == 0);
+    }
     // Fill the gap using the auto arima objects
     void InterpolARIMA::fillGap() {
         bool isRandom_f;
@@ -233,15 +274,8 @@ namespace mio {
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
             auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
 
-            isRandom_b = false;
-            isRandom_f = false;
-            // weighting should not be done if one of the models ends up being a random walk
-            if ((auto_arima_forward->p == 0 && auto_arima_forward->q == 0) && (auto_arima_forward->P == 0 && auto_arima_forward->Q == 0)) {
-                isRandom_f = true;
-            } 
-            if ((auto_arima_backward->p == 0 && auto_arima_backward->q == 0) && (auto_arima_backward->P == 0 && auto_arima_backward->Q == 0)){
-                isRandom_b = true;
-            }
+            isRandom_b = isRandomWalk(auto_arima_backward);
+            isRandom_f = isRandomWalk(auto_arima_forward);
 
             if (isRandom_b && isRandom_f && meth_Id == 0) {
                 isRandom_b = false;
@@ -305,12 +339,6 @@ namespace mio {
         double std_after = stdDev(data_backward);
         double max_interpolated = findMinMax(slice(data, gap_loc, N_gap), false);
 
-        std::cout << "mean before: " << mean_before << std::endl;
-        std::cout << "std before: " << std_before << std::endl;
-        std::cout << "mean after: " << mean_after << std::endl;
-        std::cout << "std after: " << std_after << std::endl;
-        std::cout << "max interpolated: " << max_interpolated << std::endl;
-
         // needs more checks
         if (max_interpolated > mean_before + 4 * std_before && max_interpolated > mean_after + 4 * std_after)
             return false;
@@ -319,6 +347,8 @@ namespace mio {
         return true;
     }
 
+    // ------------------- Wrappers ------------------- //
+    // wrapper for filling the gap
     void InterpolARIMA::interpolate() {
         bool fit = true;
         if (N_data_backward == 0 || N_data_forward == 0) {
@@ -350,6 +380,37 @@ namespace mio {
                 fit = false;
             }
         }
+        return;
     }
 
+    // wrapper for predicting the gap
+    std::vector<double> InterpolARIMA::predict(int n_steps) {
+        bool fit = true;
+        std::vector<double> pred;
+        if (N_data_backward == 0 || N_data_forward == 0) {
+            throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
+                                  ", backward datapoints " + std::to_string(N_data_backward) + "\n");
+            return pred;
+        }
+        while (fit) {
+            pred = ARIMApredict(n_steps);
+            int retval_f = auto_arima_forward->retval;
+
+            if (retval_f == 0) {
+                throw AccessException("Interpolation Input data is erroneous when trying to predict" );
+            } else if (retval_f == 15) {
+                throw InvalidFormatException("Interpolation Input data has Inf/Nan values for prediction");
+            } else if (retval_f == 4) {
+                if (method != "CSS-MLE" && opt_method != "BFGS") {
+                    throw IOException("Optimization of ARIMA did not converge for prediction.\n Please try another method and optimization method");
+                } else {
+                    std::string new_opt_method = "Nelder-Mead";
+                    setOptMetaData(method, new_opt_method);
+                }
+            } else {
+                fit = false;
+            }
+        }
+        return pred;
+    }
 } // end namespace mio
