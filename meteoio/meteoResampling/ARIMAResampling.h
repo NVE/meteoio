@@ -89,8 +89,9 @@ namespace mio {
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - includes
-     *       - documentation improvements
+     * TODO: - documentation improvements
+     *       - add testing
+     *       - enum instead of strings for method and opt_method
      *
      *
      * Copyright (c) 2014, Rafat Hussain
