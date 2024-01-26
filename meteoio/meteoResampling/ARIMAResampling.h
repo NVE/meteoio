@@ -30,7 +30,8 @@ using namespace ARIMAutils;
     /**
      * @brief This class is designed to handle interpolation (resampling) of data using the ARIMA (AutoRegressive Integrated Moving Average) model
      * 
-     * @details It uses the InterpolARIMA class, see InterpolARIMA, to perform interpolation using ARIMA.
+     * @details It uses the InterpolARIMA class to perform interpolation using ARIMA, with model selection and fitting done with the <a href="https://github.com/rafat/ctsa/tree/master">ctsa</a> (BSD-3 Clause, see below) library. That implements the 
+     * auto ARIMA algorithm from <a href="https://www.jstatsoft.org/article/view/v027i03">Hyndman and Khandakar (2008)</a>.
      *
      * Gaps in the data are detected, and when possible data before and after the gap is used to interpolate the missing values. Otherwise, either 
      * only the data before or after the gap (depending on what is available) is used to predict the missing values. 
@@ -79,15 +80,36 @@ using namespace ARIMAutils;
      * 
      * @note In the case that only random/random walk arima models are found, the missing values will not be filled (It would be just the mean otherwise)
      * 
+     * @section Introduction
+     * 
+     * 
      * @author Patrick Leibersperger
      * @date 2024-01-25
      * 
      * TODO: - do i need to use getJulian(true) or does it not matter?
      *       - how do i avoid the whole size_t vs int problem? -> probably size-t
-     *       - refactor resample
-     *      - includes 
+     *       - includes 
+     *       - documentation improvements
      *      
      *
+     * Copyright (c) 2014, Rafat Hussain
+     * All rights reserved.
+     * 
+     * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+     * 
+     *  1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+     * 
+     *  2.  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+     *  	in the documentation and/or other materials provided with the distribution.
+     * 
+     *  3.  The name of the author may not be used to endorse or promote products derived from this software without specific prior written permission.
+     * 
+     * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+     * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+     * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+     * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+     * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+     *  OF SUCH DAMAGE.
      */
     class ARIMAResampling : public ResamplingAlgorithms {
     public:

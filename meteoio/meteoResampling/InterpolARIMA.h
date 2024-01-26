@@ -46,8 +46,8 @@ namespace mio {
  * Predict will predict the next n_steps values in the time series. It can either be forward in time (direction = "forward") or backward in time (direction = "backward").
  * For forward prediction data[0:gap_loc] is used to fit the ARIMA model, and for backward prediction data[gap_loc + N_gap:] is used.
  * 
- * For more Information concerning ARIMA see, https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average, and https://otexts.com/fpp2/arima.html, and the final 
- * interpolation algorithm: https://www.tandfonline.com/doi/abs/10.1080/02664769624332?casa_token=fEVPFRYrr7sAAAAA:ozZFAcUWX4mKaUI8tvOn6R-3giOHefH0p8vaRDFCN1ORGy0d9evP7Hn9aLbMWsUQsIKrKEKxP-M
+ * For more Information concerning ARIMA see, <a href="https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average">Wikipedia</a>, and <a href="https://otexts.com/fpp2/arima.html">Forecast documentation</a>, and the final 
+ * interpolation algorithm: <a href="https://www.tandfonline.com/doi/abs/10.1080/02664769624332?casa_token=fEVPFRYrr7sAAAAA:ozZFAcUWX4mKaUI8tvOn6R-3giOHefH0p8vaRDFCN1ORGy0d9evP7Hn9aLbMWsUQsIKrKEKxP-M">Time weighted average</a> 
  * 
  * 
  * @note Interpolate is meant to only be used, when there is actually backward data available. If there is no backward data, then predict should be used instead. 
@@ -59,23 +59,23 @@ namespace mio {
  * 
  * 
  * Copyright (c) 2014, Rafat Hussain
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
- 1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
- 2.  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
- 	in the documentation and/or other materials provided with the distribution.
-
- 3.  The name of the author may not be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- OF SUCH DAMAGE.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ * 
+ *  1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * 
+ *  2.  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+ *  	in the documentation and/or other materials provided with the distribution.
+ * 
+ *  3.  The name of the author may not be used to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  */
     class InterpolARIMA {
     public:
