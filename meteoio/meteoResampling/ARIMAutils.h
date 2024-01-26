@@ -26,11 +26,12 @@
 
 static const double DATE_TOLERANCE = 1e-6;
 static const int MIN_ARIMA_DATA_POINTS = 8;
-static const int MAX_ARIMA_EXTRAPOLATION = 25;
+static const int MAX_ARIMA_EXTRAPOLATION = 100;
 
 
 namespace mio {
 
+namespace ARIMAutils {
 // slice a vector from start to start+N
 std::vector<double> slice(const std::vector<double> &vec, size_t start, int N);
 
@@ -128,7 +129,7 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, size_t& indexP1, size_t& indexP2, double& before_window, double& after_window, double& window_size, Date& data_start_date, Date& data_end_date);
 
 // roughly equal between two dates, given a tolerance level
-bool requal(Date &date1, Date &date2);
+bool requal(const Date &date1, const Date &date2);
 
 
 // returns the most often accuring value in a vector
@@ -223,5 +224,6 @@ void printVectors(const std::vector<Date>& vec1, const std::vector<T>& vec2) {
 }
 
 
+} // namespace ARIMAutils
 } // namespace mio
 #endif //UTILS_H

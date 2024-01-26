@@ -25,6 +25,7 @@
 
 namespace mio {
 
+namespace ARIMAutils {
 // slice a vector from start to start+N
 std::vector<double> slice(const std::vector<double>& vec, size_t start, int N) { 
 	assert(start + N < vec.size()); // Ensure the range is valid
@@ -208,7 +209,7 @@ size_t searchForward(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	}
 }
 
-bool requal(Date &date1, Date &date2) {
+bool requal(const Date &date1, const Date &date2) {
     double tolerance = DATE_TOLERANCE; // Define your tolerance level
     bool is_equal = std::abs((date1 - date2).getJulian(true)) <= tolerance;
 	return is_equal;
@@ -324,4 +325,5 @@ Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_g
     return data_start_date;
 }
 
+} // namespace ARIMAutils
 } // namespace mio

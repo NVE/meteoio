@@ -28,6 +28,9 @@
 
 namespace mio {
 
+using namespace ARIMAutils;
+
+
     // ------------------- Constructor ------------------- //
     
     // Default constructor

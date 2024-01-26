@@ -30,7 +30,6 @@
 namespace mio {
 /**
  * @class InterpolARIMA
- * @file InterpolARIMA.h
  * 
  * @brief This class is used for interpolating or predicting missing data in a time series using the Auto ARIMA algorithm.
  * 
@@ -40,7 +39,7 @@ namespace mio {
  * Interpolate will fill a gap in the data, whose start is specified by gap_loc 
  * and whose length is specified by N_gap. Data is assumed to be of equal time steps, and is split into two parts, data_before and data_after. 
  * So in the end data should be of size data_before + data_after + N_gap. The interpolation is done by fitting one ARIMA model to data_before and 
- * one to data_after. The ARIMA models are fitted using the auto.arima algorithm from the ctsa library (https://github.com/rafat/ctsa/tree/master). The ARIMA models are then used to predict 
+ * one to data_after. The ARIMA models are fitted using the auto.arima algorithm from the <a href="https://github.com/rafat/ctsa/tree/master">ctsa</a> (BSD-3 Clause, see below). The ARIMA models are then used to predict 
  * the missing data forward and backward in time. The final prediction is a weighted average of the two, where the weighting is done so more information 
  * comes from the closer data. 
  * 
@@ -58,6 +57,25 @@ namespace mio {
  * @author Patrick Leibersperger
  * @date 2024-01-25
  * 
+ * 
+ * Copyright (c) 2014, Rafat Hussain
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+ 1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+ 2.  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+ 	in the documentation and/or other materials provided with the distribution.
+
+ 3.  The name of the author may not be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ OF SUCH DAMAGE.
  */
     class InterpolARIMA {
     public:

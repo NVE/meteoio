@@ -26,6 +26,7 @@
 
 namespace mio {
 
+using namespace ARIMAutils;
     /**
      * @brief This class is designed to handle interpolation (resampling) of data using the ARIMA (AutoRegressive Integrated Moving Average) model
      * 
@@ -82,10 +83,10 @@ namespace mio {
      * @date 2024-01-25
      * 
      * TODO: - do i need to use getJulian(true) or does it not matter?
-     *       - how do i avoid the whole size_t vs int problem?
-     *       - should i do the linear interpolation, or just return?
-     *       - vecM is filled with the new value right? (avoid having nodata in before data)
-     *       - should i set a limit on the prediction steps?
+     *       - how do i avoid the whole size_t vs int problem? -> probably size-t
+     *       - refactor resample
+     *      - includes 
+     *      
      *
      */
     class ARIMAResampling : public ResamplingAlgorithms {
@@ -129,9 +130,18 @@ namespace mio {
 
         // Private methods
         void setMetaData(InterpolARIMA &arima);
+        std::vector<double> predictData(std::vector<double>& data, const std::string& direction, size_t startIdx_interpol, int length_gap_interpol, int period, ResamplingAlgorithms::ResamplingPosition re_position);
+
+        // Helper methods for resample
+        void checkZeroPossibility(const std::vector<MeteoData> &vecM, size_t paramindex);
+        bool processKnownGaps(const Date& resampling_date, const size_t paramindex, const ResamplingAlgorithms::ResamplingPosition& position, const std::vector<MeteoData>& vecM, MeteoData& md);
+        void setEndGap(ARIMA_GAP& new_gap, Date& data_start_date, Date& data_end_date, const std::vector<MeteoData>& vecM, const Date& resampling_date);
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
-        std::vector<double> predictData(std::vector<double>& data, const std::string& direction, size_t startIdx_interpol, int length_gap_interpol, int period, ResamplingAlgorithms::ResamplingPosition re_position);
+        void resampleInterpolationData(int& length_gap_interpol, int& endIdx_interpol, size_t& startIdx_interpol, const ARIMA_GAP& new_gap, const Date& data_start_date, const Date& data_end_date, const std::vector<MeteoData>& data_vec_before, const std::vector<MeteoData>& data_vec_after, bool has_data_before, bool has_data_after, int paramindex, std::vector<double>& data, std::vector<Date>& dates, int length);
+        std::vector<double> getInterpolatedData(std::vector<double>& data, size_t size_before, size_t size_after, int startIdx_interpol, int length_gap_interpol, int period, ResamplingAlgorithms::ResamplingPosition position);
+        void cacheGap(const std::vector<double>& interpolated_data, const std::vector<Date>& interpolated_dates, const ARIMA_GAP& new_gap);
+
     };
 } // end namespace mio
 
