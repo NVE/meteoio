@@ -49,10 +49,10 @@ using namespace ARIMAutils;
      * @param gap_length The length of the gap in the data.
      * @param period (Optional) The period of the ARIMA model. Defaults to 0. Only needed when the period is known.
  */
-    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, int period)
+    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, int period)
         : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
-          xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, static_cast<int>(gap_loc))),
-          data_backward(slice(data, gap_loc + static_cast<size_t>(N_gap))), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),
+          xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, gap_loc)),
+          data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),
           xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
           N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
@@ -71,7 +71,7 @@ using namespace ARIMAutils;
      *
      * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class.
      */
-    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, int gap_length, std::vector<double> xreg_vec_in,
+    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, std::vector<double> xreg_vec_in,
                                  int period)
         : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
           xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)), xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))),
@@ -80,7 +80,7 @@ using namespace ARIMAutils;
           xreg_f(xreg_vec_f.size() == 0 ? NULL : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? NULL : &xreg_vec_b[0]),
           new_xreg_f(xreg_vec_f.size() == 0 ? NULL : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size() == 0 ? NULL : &new_xreg_vec_b[0]),
           amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()),
-          r(xreg_vec_in.size() == 0 ? 0 : xreg_vec_f.size() / (N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
+          r(xreg_vec_in.size() == 0 ? 0 : static_cast<int>(xreg_vec_f.size() / N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
         reverseVector(data_backward); // TODO: Can be done with std::reverse in C++17
     }
@@ -102,8 +102,8 @@ using namespace ARIMAutils;
      *
      * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class in [InterpolARIMA.cc](meteoio/meteoResampling/InterpolARIMA.cc).
      */
-    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, int n_predictions, std::string direction, int period)
-        : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, static_cast<int>(data.size()))),
+    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, size_t n_predictions, std::string direction, int period)
+        : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())),
           pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0), xreg_vec_b(0),
           data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)),
           data_backward(decideDirection(data_in, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
@@ -112,10 +112,10 @@ using namespace ARIMAutils;
     }
 
     // ------------------- Helper methods ------------------- //
-    auto_arima_object InterpolARIMA::initAutoArima(int N_data) {
+    auto_arima_object InterpolARIMA::initAutoArima(size_t N_data) {
         std::vector<int> pqdmax = {max_p, max_d, max_q};
         std::vector<int> PQDmax = {max_P, max_D, max_Q};
-        return auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, N_data);
+        return auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, static_cast<int>(N_data));
     }
 
     std::string InterpolARIMA::toString() {
@@ -244,7 +244,7 @@ using namespace ARIMAutils;
         return sim;
     }
 
-    std::vector<double> InterpolARIMA::ARIMApredict(int n_steps) {
+    std::vector<double> InterpolARIMA::ARIMApredict(size_t n_steps) {
         if (n_steps == 0) {
             n_steps = N_gap;
         } else {
@@ -260,7 +260,7 @@ using namespace ARIMAutils;
             auto_arima_setStepwise(auto_arima_forward, !current_stepwise);
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
         }
-        auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, n_steps, new_xreg_f, pred_forward.data(), amse_forward.data());
+        auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(n_steps), new_xreg_f, pred_forward.data(), amse_forward.data());
         return pred_forward;
     }
 
@@ -299,11 +299,11 @@ using namespace ARIMAutils;
                 break;
             // predict the gap
             // forward
-            auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, N_gap, new_xreg_f, pred_forward.data(),
+            auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(N_gap), new_xreg_f, pred_forward.data(),
                                 amse_forward.data());
 
             // backward
-            auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, N_gap, new_xreg_b, pred_backward.data(),
+            auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, static_cast<int>(N_gap), new_xreg_b, pred_backward.data(),
                                 amse_backward.data());
             // interpolate with the weighting according to
             assert(pred_forward.size() == pred_backward.size());
@@ -318,7 +318,7 @@ using namespace ARIMAutils;
         }
         // W1 = sqrt(T-t/T)
         // W2 = sqrt(t/T)
-        for (int id = 0; id < N_gap; id++) {
+        for (size_t id = 0; id < N_gap; id++) {
             double weight_f, weight_b;
 
             if (isRandom_f) {
@@ -328,8 +328,9 @@ using namespace ARIMAutils;
                 weight_f = 1;
                 weight_b = 0;
             } else {
-                weight_f = std::sqrt((N_gap - time[id]) / N_gap);
-                weight_b = std::sqrt(time[id] / N_gap);
+                double N = static_cast<double>(N_gap);
+                weight_f = std::sqrt((N - time[id]) / N);
+                weight_b = std::sqrt(time[id] / N);
             }
             data[gap_loc + id] = weight_f * pred_forward[id] + weight_b * pred_backward[id];
         }
@@ -387,7 +388,7 @@ using namespace ARIMAutils;
     }
 
     // wrapper for predicting the gap
-    std::vector<double> InterpolARIMA::predict(int n_steps) {
+    std::vector<double> InterpolARIMA::predict(size_t n_steps) {
         bool fit = true;
         std::vector<double> pred;
         if (N_data_backward == 0 || N_data_forward == 0) {

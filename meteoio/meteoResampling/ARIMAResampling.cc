@@ -27,7 +27,7 @@ namespace mio {
     ARIMAResampling::ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_window_size,
                                      const std::vector<std::pair<std::string, std::string>> &vecArgs)
         : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), gap_data(), filled_data(), all_dates(), before_window(),
-          after_window() {
+          after_window(), is_valid_gap_data(), warned_about_gap() {
         const std::string where("Interpolations1D::" + i_parname + "::" + i_algoname);
         if (vecArgs.empty()) // incorrect arguments, throw an exception
             throw InvalidArgumentException("Wrong number of arguments for \"" + where + "\"", AT);
@@ -95,12 +95,11 @@ namespace mio {
     // ------------------------------ Private functions ------------------------------
 
     std::vector<double> ARIMAResampling::predictData(std::vector<double> &data, const std::string &direction, size_t startIdx_interpol,
-                                                     int length_gap_interpol, int period,
-                                                     ResamplingAlgorithms::ResamplingPosition position) {
+                                                     size_t length_gap_interpol, int sr_period) {
 #ifdef DEBUG
         std::cout << "predicting " << direction << std::endl;
 #endif
-        InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, direction, period);
+        InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, direction, sr_period);
         setMetaData(arima);
         std::vector<double> predictions = arima.predict();
         std::copy(predictions.begin(), predictions.end(), data.begin() + startIdx_interpol);
@@ -170,8 +169,9 @@ namespace mio {
                 sumOfSquares += value * value;
             }
 
-            mean = sum / vecM.size();
-            standardDeviation = sqrt(sumOfSquares / vecM.size() - mean * mean);
+            double num = static_cast<double>(vecM.size());
+            mean = sum / num;
+            standardDeviation = sqrt(sumOfSquares / num - mean * mean);
 
             for (size_t ii = 0; ii < vecM.size(); ii++) {
                 if (vecM[ii](paramindex) <= standardDeviation) {
@@ -266,11 +266,11 @@ namespace mio {
     }
 
     bool accumulateData(const Date &data_start_date, const Date &data_end_date, const ARIMA_GAP &new_gap,
-                        const std::vector<MeteoData> &vecM, bool &gave_warning_interpol, int &length, std::vector<double> &data,
+                        const std::vector<MeteoData> &vecM, bool &gave_warning_interpol, size_t &length, std::vector<double> &data,
                         std::vector<Date> &dates, std::vector<MeteoData> &data_vec_before, std::vector<MeteoData> &data_vec_after,
                         bool &has_data_before, bool &has_data_after) {
         // data vector is of length (data_end_date - data_start_date) * sampling_rate
-        length = static_cast<int>((data_end_date - data_start_date).getJulian(true) * new_gap.sampling_rate) +
+        length = static_cast<size_t>((data_end_date - data_start_date).getJulian(true) * new_gap.sampling_rate) +
                  1; // otherwise end date is not included
         data.resize(length);
         dates.resize(length);
@@ -302,13 +302,13 @@ namespace mio {
         return true;
     }
 
-    void ARIMAResampling::resampleInterpolationData(int &length_gap_interpol, int &endIdx_interpol, size_t &startIdx_interpol,
+    void ARIMAResampling::resampleInterpolationData(size_t &length_gap_interpol, size_t &endIdx_interpol, size_t &startIdx_interpol,
                                                     const ARIMA_GAP &new_gap, const Date &data_start_date, const Date &data_end_date,
                                                     const std::vector<MeteoData> &data_vec_before,
                                                     const std::vector<MeteoData> &data_vec_after, bool has_data_before, bool has_data_after,
-                                                    int paramindex, std::vector<double> &data, std::vector<Date> &dates, int length) {
-        for (int i = 0; i < length; i++) {
-            Date date = data_start_date + i / new_gap.sampling_rate;
+                                                    size_t paramindex, std::vector<double> &data, std::vector<Date> &dates, size_t length) {
+        for (size_t i = 0; i < length; i++) {
+            Date date = data_start_date + static_cast<double>(i) / new_gap.sampling_rate;
             dates[i] = date;
 
             bool isBeforeGap = date >= data_start_date && date <= new_gap.startDate;
@@ -316,7 +316,7 @@ namespace mio {
             bool isWithinGap = date > new_gap.startDate && date < new_gap.endDate;
 
             if (isAfterGap && length_gap_interpol == 0) {
-                length_gap_interpol = i - static_cast<int>(startIdx_interpol);
+                length_gap_interpol = i - startIdx_interpol;
                 endIdx_interpol = i;
             }
 
@@ -324,7 +324,7 @@ namespace mio {
                 data[i] = requal(date, data_vec_before[i].date) ? data_vec_before[i](paramindex)
                                                                 : interpolVecAt(data_vec_before, i, date, paramindex);
             } else if (isAfterGap && has_data_after && i - endIdx_interpol < data_vec_after.size()) {
-                int after_id = i - endIdx_interpol;
+                size_t after_id = i - endIdx_interpol;
                 data[i] = requal(date, data_vec_after[after_id].date) ? data_vec_after[after_id](paramindex)
                                                                       : interpolVecAt(data_vec_after, after_id, date, paramindex);
             } else if (isWithinGap && startIdx_interpol == IOUtils::npos) {
@@ -340,17 +340,16 @@ namespace mio {
     }
 
     std::vector<double> ARIMAResampling::getInterpolatedData(std::vector<double> &data, size_t size_before, size_t size_after,
-                                                             int startIdx_interpol, int length_gap_interpol, int period,
-                                                             ResamplingAlgorithms::ResamplingPosition position) {
+                                                             size_t startIdx_interpol, size_t length_gap_interpol, int sr_period) {
         std::vector<double> interpolated_data;
         if (size_before < MIN_ARIMA_DATA_POINTS && size_after > MIN_ARIMA_DATA_POINTS) {
-            interpolated_data = predictData(data, "backward", startIdx_interpol, length_gap_interpol, period, position);
+            interpolated_data = predictData(data, "backward", startIdx_interpol, length_gap_interpol, sr_period);
         } else if (size_after < MIN_ARIMA_DATA_POINTS && size_before > MIN_ARIMA_DATA_POINTS) {
-            interpolated_data = predictData(data, "forward", startIdx_interpol, length_gap_interpol, period, position);
+            interpolated_data = predictData(data, "forward", startIdx_interpol, length_gap_interpol, sr_period);
         } else if (size_before < MIN_ARIMA_DATA_POINTS && size_after < MIN_ARIMA_DATA_POINTS) {
             throw IOException("Could not accumulate enough data for parameter estimation; Increasing window sizes might help");
         } else {
-            InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, period);
+            InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, sr_period);
             setMetaData(arima);
             arima.interpolate();
             interpolated_data = arima.getInterpolatedData();
@@ -411,7 +410,7 @@ namespace mio {
         }
 
         if (position == ResamplingAlgorithms::begin) {
-            int gap_length = static_cast<int>((new_gap.endDate - new_gap.startDate).getJulian(true) * new_gap.sampling_rate);
+            size_t gap_length = static_cast<size_t>((new_gap.endDate - new_gap.startDate).getJulian(true) * new_gap.sampling_rate);
             if (gap_length > MAX_ARIMA_EXTRAPOLATION) {
                 if (!gave_warning_start) {
                     std::cerr << "Extrapolating more than " << MAX_ARIMA_EXTRAPOLATION
@@ -435,7 +434,7 @@ namespace mio {
 
         if (new_gap.isGap()) {
             // data vector is of length (data_end_date - data_start_date) * sampling_rate
-            int length;
+            size_t length;
             std::vector<double> data;
             std::vector<Date> dates;
 
@@ -449,16 +448,17 @@ namespace mio {
                 return;
 
             // resample to the desired sampling rate
-            int length_gap_interpol = 0;
-            int endIdx_interpol = IOUtils::npos;
+            size_t length_gap_interpol = 0;
+            size_t endIdx_interpol = IOUtils::npos;
             size_t startIdx_interpol = (data_start_date == new_gap.startDate) ? 0 : IOUtils::npos;
 
             resampleInterpolationData(length_gap_interpol, endIdx_interpol, startIdx_interpol, new_gap, data_start_date, data_end_date,
                                       data_vec_before, data_vec_after, has_data_before, has_data_after, paramindex, data, dates, length);
 
             // Now fill the data with the arima model
+            int sr_period = static_cast<int>(period * new_gap.sampling_rate);
             std::vector<double> interpolated_data = getInterpolatedData(data, data_vec_before.size(), data_vec_after.size(),
-                                                                        startIdx_interpol, length_gap_interpol, period, position);
+                                                                        startIdx_interpol, length_gap_interpol, sr_period);
 
             std::vector<Date> interpolated_dates(dates.begin() + startIdx_interpol,
                                                  dates.begin() + startIdx_interpol + length_gap_interpol);

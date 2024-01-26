@@ -27,7 +27,7 @@ namespace mio {
 
 namespace ARIMAutils {
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double>& vec, size_t start, int N) { 
+std::vector<double> slice(const std::vector<double>& vec, size_t start, size_t N) { 
 	assert(start + N < vec.size()); // Ensure the range is valid
 	std::vector<double> vec_sliced;
 	vec_sliced.assign(vec.begin() + start, vec.begin() + start + N);
@@ -43,10 +43,10 @@ std::vector<double> slice(const std::vector<double>& vec, size_t start) {
 };
 
 // np.arange for c++
-std::vector<double> arange(size_t start, int N) {
+std::vector<double> arange(size_t start, size_t N) {
     std::vector<double> vec(N);
-    for (size_t i = 0; i < static_cast<size_t>(N); i++) {
-        vec[i] = start + i;
+    for (size_t i = 0; i < N; i++) {
+        vec[i] = static_cast<double>(start + i);
     }
     return vec;
 };
@@ -54,7 +54,7 @@ std::vector<double> arange(size_t start, int N) {
 //calculate the mean of a vector
 double calcVecMean(const std::vector<double>& vec) {
     double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-    return sum / vec.size();
+    return sum / static_cast<double>(vec.size());
 }
 //calculate the standard deviation of a vector
 double stdDev(const std::vector<double>& vec) {
@@ -86,7 +86,7 @@ std::vector<double> toVector(const std::vector<MeteoData>& vecM, const size_t &p
 }
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(const std::vector<double>& data, const std::string& direction, bool forward, size_t gap_loc, int length) {
+std::vector<double> decideDirection(const std::vector<double>& data, const std::string& direction, bool forward, size_t gap_loc, size_t length) {
 	if (!forward) {
 		return std::vector<double>(5, 0.0);
 	}

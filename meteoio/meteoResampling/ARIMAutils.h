@@ -33,13 +33,13 @@ namespace mio {
 
 namespace ARIMAutils {
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double> &vec, size_t start, int N);
+std::vector<double> slice(const std::vector<double> &vec, size_t start, size_t N);
 
 // slice a vector from start to end
 std::vector<double> slice(const std::vector<double> &vec, size_t start);
 
 // np.arange for c++
-std::vector<double> arange(size_t start, int N);
+std::vector<double> arange(size_t start, size_t N);
 
 template <typename T>
 T findMinMax(const std::vector<T>& vec, bool findMin) {
@@ -102,7 +102,7 @@ std::vector<double> toVector(const std::vector<MeteoData>& vecM, const std::stri
 std::vector<double> toVector(const std::vector<MeteoData>& vecM, const size_t &paramindex);
 
 // helper to parse direction argument for interpolarima
-std::vector<double> decideDirection(const std::vector<double>& data,const std::string& direction, bool forward, size_t gap_loc, int length);
+std::vector<double> decideDirection(const std::vector<double>& data,const std::string& direction, bool forward, size_t gap_loc, size_t length);
 
 // a struct to cache information about a gap
 struct ARIMA_GAP {
