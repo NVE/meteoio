@@ -16,9 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "InterpolARIMA.h"
-#include "ARIMAutils.h"
+#include <meteoio/meteoResampling/InterpolARIMA.h>
+#include <meteoio/meteoResampling/ARIMAutils.h>
 #include <cmath>
 #include <cstdlib> // for std::rand and std::srand
 #include <cstring>

@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ARIMAResampling.h" // change include to make it uniform
+#include <meteoio/meteoResampling/ARIMAResampling.h>
 #include <unistd.h>
 
 #include <sstream>

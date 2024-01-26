@@ -19,8 +19,8 @@
 #ifndef ARIMARESAMPLING_H
 #define ARIMARESAMPLING_H
 
-#include "ARIMAutils.h"    // change the includes to make it uniform
-#include "InterpolARIMA.h" // change the includes to make it uniform
+#include <meteoio/meteoResampling/ARIMAutils.h>
+#include <meteoio/meteoResampling/InterpolARIMA.h>
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <vector>
 
@@ -89,9 +89,7 @@ namespace mio {
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - do i need to use getJulian(true) or does it not matter?
-     *       - how do i avoid the whole size_t vs int problem? -> probably size-t
-     *       - includes
+     * TODO: - includes
      *       - documentation improvements
      *
      *
