@@ -222,10 +222,14 @@ namespace mio {
      * \image html arima_simulation.png "Figure 1: Forecast and Simulation using an ARIMA model"
      * \image html arima_interpolation.png "Figure 2: Interpolation using an ARIMA model"
      *
+     * 
+     * @note 
+     * 
+     * 
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - documentation improvements-->Introduction
+     * TODO: - add not
      *       - add testing
      *
      *
