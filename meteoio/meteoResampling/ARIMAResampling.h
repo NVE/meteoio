@@ -83,8 +83,144 @@ namespace mio {
      * @note In the case that only random/random walk arima models are found, the missing values will not be filled (It would be just the
      * mean otherwise)
      *
-     * @section Introduction
+     * @section introduction Introduction
      *
+     * Autoregressive Integrated Moving Average (ARIMA) is a method for forecasting on historic data. It assumes a stochastic process, with
+     * errors that are uncorrelated and have a mean of zero. The ARIMA model is a generalization of an autoregressive moving average (ARMA)
+     which assumes
+     * stationary (statistically stable over time) data. Autoregressive refers to a prediciton based on past values of the data. Integrated
+     refers to
+     * the differencing of the data to make it stationary. Moving average refers to the use of past errors.
+     *
+     * To account for seasonality of the data this model can be extended to Seasonal ARIMA (SARIMA). See the <a
+     * href="https://towardsdatascience.com/time-series-forecasting-with-arima-sarima-and-sarimax-ee61099e78f6#:~:text=SARIMA%20models%20allow%20for%20differencing,search%20frameworks%20such%20as%20pmdarina."
+     * >following article</a> for more information.
+     *
+     * @subsection model Model Formulation
+     *
+     * @subsubsection AR Autoregressive (AR) Component:
+     * 
+     *  The autoregressive component of order p (denoted as AR(p)) represents the correlation between the current observation and its
+     *      \f$p\f$ past observations. The general formula for AR(\f$p\f$) is:
+     *
+     *      \f[
+     *          Y_t = \phi_1 Y_{t-1} + \phi_2 Y_{t-2} + \ldots + \phi_p Y_{t-p} + a_t
+     *      \f]
+     *
+     *  Here:
+     *
+     *  - \f$Y_t\f$ is the value at time t,
+     *
+     *  - \f$\phi_t\f$ are the autoregressive coefficients,
+     *
+     *  - \f$Y_{t-i}\f$ are the past observations,
+     *
+     *  - \f$a_t is\f$ a white noise term (random error) at time
+     *
+     * @subsubsection Int Integrated (I) Component:
+     * 
+     *  The integrated component of order \f$d\f$ (denoted as I(\f$d\f$)) is responsible for differencing the time series data to achieve
+     *      stationarity. The differenced series is denoted as \f$\mathbf{Y'}\f$ and is defined as:
+     *
+     *  \f[
+     *      Y'_t = Y_t - Y_{t-d}
+     *  \f]
+     * 
+     *  Repeat differencing d times until stationarity is achieved.
+     *
+     * @subsubsection ma Moving Average (MA) Component:
+     * 
+     *  The moving average component of order \f$q\f$ (denoted as MA(\f$q\f$)) represents the correlation between the current observation and
+     *      \f$q\f$ past white noise terms. The general formula for MA(\f$q\f$) is:
+     *
+     *  \f[
+     *      Y_t = a_t - \theta_1 a_{t-1} - \theta_2 a_{t-2} - \ldots - \theta_q a_{t-q}
+     *  \f]
+     *
+     *  Here:
+     *
+     *  - \f$\theta\f$ are the moving average coefficients,​
+     *
+     *  - \f$a_{t-q}\f$ are the past white noise terms.
+     *
+     * 
+     * @subsubsection arima ARIMA(p, d, q) Model:
+     * Combining the AR, I, and MA components, an ARIMA(\f$p, d, q\f$) model is expressed as:
+     * 
+     *  \f[
+     *      Y'_t = \phi_1 Y'_{t-1} + \phi_2 Y'_{t-2} + \ldots + \phi_p Y'_{t-p} + a_t - \theta_1 a_{t-1} - \theta_2 a_{t-2} - \ldots - \theta_q a_{t-q}
+     *  \f]
+     *
+     * @subsection estimation Parameter Estimation
+     *
+     * The parameters of the model are estimated by either maximising the likelihood function or minimising the sum of squared errors.
+     *  The likelihood function measures the probability of observing the given data given the model parameters. Optimization is done using
+     *  optimization routines like <a href="https://en.wikipedia.org/wiki/Broyden–Fletcher–Goldfarb–Shanno_algorithm">BFGS</a>  or the <a
+     *  href="https://en.wikipedia.org/wiki/Nelder–Mead_method">Nelder-Mead</a> method.
+     *
+     *  Maximum Likelihood estimation usually gives better results but is computationally more expensive. As default a mix between the two:
+     *  CSS-MLE is used, with BFGS to optimize:
+     *
+     * @code
+     * TA::ARIMA::LIK_METHOD = CSS-MLE
+     * TA::ARIMA:::OPT_METHOD = BFGS
+     * @endcode
+     *
+     *
+     * @subsection selection Model Selection
+     * Usually, the parameter selection (p, d, q)(P,D,Q) is done by minimizing the Akaike Information Criterion <a
+     * href="https://en.wikipedia.org/wiki/Akaike_information_criterion">AIC</a> or the Bayesian Information Criterion <a
+     * href="https://en.wikipedia.org/wiki/Bayesian_information_criterion">BIC</a>.
+     * Which parameterize the goodness of a fit. Either an extensive search is done, i.e. all possible combinations between p=0...max_P,
+     * q=0...max_Q, ... are tried. Or a stepwise search is done, following the Implementation of <a
+     * href="https://www.jstatsoft.org/article/view/v027i03">Hyndman and Khandakar (2008)</a>.
+     *
+     * As default a stepwise search is done. Additionally, an approximation of the ICs can be used to speed up the search, and the maxima of
+     * the parameters can be chosen as well.
+     *
+     * @code
+     * TA::ARIMA::STEPWISE = TRUE
+     * TA::ARIMA::APPROXIMATION = TRUE
+     * TA::ARIMA::MAX_P = 8
+     * TA::ARIMA::MAX_D = 3
+     * .
+     * .
+     * .
+     * @endcode
+     *
+     *
+     * In the case of a known seasonal period, e.g. yearly cycles, the seasonal component can be added to the model, by setting the seasonal
+     * period (in seconds), if it is 0 it will be estimated automatically (not always reliable):
+     * @code
+     * TA::ARIMA::SEASONAL_PERIOD = 31536000
+     * @endcode
+     *
+     * Not yet implemented:
+     * If you are familiar with finding the best ARIMA parameters via the PACF and ACF plots, you can also set the parameters manually:
+     * @code
+     * TA::ARIMA::P = 2
+     * TA::ARIMA::D = 1
+     * TA::ARIMA::Q = 2
+     * TA::ARIMA::P_SEASONAL = 1
+     * TA::ARIMA::D_SEASONAL = 1
+     * TA::ARIMA::Q_SEASONAL = 1
+     * @endcode
+     *
+     * @subsection forecasting Forecasting and Interpolation
+     *
+     * Forecasting is then done by using the fitted model on the available data, and predicting the next time steps. As random errors are
+     * needed, a prediction
+     * will return the mean of predicted values, and not a single simulation (one draw of the random error).
+     *
+     * If data is available before and after a gap, two ARIMA models are fitted, one to predict forward the other to predict backward in
+     * time. A weighted
+     * average will then be computed and then used as actual prediction.
+     *
+     * As the ARIMA model only works with constant sampling rates, the data is resampled to the most likely sampling rate. If a requested
+     * point falls in between available data, it will be linearly interpolated.
+     *
+     * \image html arima_simulation.png "Figure 1: Forecast and Simulation using an ARIMA model"
+     * \image html arima_interpolation.png "Figure 2: Interpolation using an ARIMA model"
      *
      * @author Patrick Leibersperger
      * @date 2024-01-25
