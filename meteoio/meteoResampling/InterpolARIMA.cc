@@ -17,7 +17,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoResampling/InterpolARIMA.h>
-#include <meteoio/meteoResampling/ARIMAutils.h>
 #include <cmath>
 #include <cstdlib> // for std::rand and std::srand
 #include <cstring>
@@ -26,8 +25,6 @@
 #include <unistd.h>
 
 namespace mio {
-
-using namespace ARIMAutils;
 
 
     // ------------------- Constructor ------------------- //
@@ -211,17 +208,17 @@ using namespace ARIMAutils;
     // options for method: "css-mle", "ml", "css"
     // options for opt_method: "Nelder-Mead", "Newton Line Search", "Newton Trust Region - Hook Step", "Newton Trust Region - Double
     // Dog-Leg", "Conjugate Gradient", "BFGS", "Limited Memory BFGS", "BFGS Using More Thuente Method"
-    void InterpolARIMA::setOptMetaData(std::string method_param, std::string opt_method_param, bool stepwise_param,
+    void InterpolARIMA::setOptMetaData(ObjectiveFunction method_param, OptimizationMethod opt_method_param, bool stepwise_param,
                                        bool approximation_param, int num_models_param) {
         this->method = method_param;
         this->opt_method = opt_method_param;
         this->stepwise = stepwise_param;
         this->approximation = approximation_param;
         this->num_models = num_models_param;
-        auto_arima_backward->method = method_map[method];
-        auto_arima_forward->method = method_map[method];
-        auto_arima_backward->optmethod = opt_method_map[opt_method];
-        auto_arima_forward->optmethod = opt_method_map[opt_method];
+        auto_arima_backward->method = static_cast<int>(this->method);
+        auto_arima_forward->method = static_cast<int>(this->method);
+        auto_arima_backward->optmethod = static_cast<int>(this->opt_method);
+        auto_arima_forward->optmethod = static_cast<int>(this->opt_method);
         auto_arima_backward->stepwise = stepwise;
         auto_arima_forward->stepwise = stepwise;
     }
@@ -372,11 +369,11 @@ using namespace ARIMAutils;
                 throw InvalidFormatException("Interpolation Input data has Inf/Nan values in " + where);
             } else if (retval_f == 4 || retval_b == 4) {
                 std::string where = (retval_f == 4) ? "forward data" : "backward data";
-                if (method != "CSS-MLE" && opt_method != "BFGS") {
+                if (method != CSS_MLE && opt_method != BFGS) {
                     throw IOException("Optimization of ARIMA did not converge in " + where +
                                       ".\n Please try another method and optimization method");
                 } else {
-                    std::string new_opt_method = "Nelder-Mead";
+                    OptimizationMethod new_opt_method = Nelder_Mead;
                     setOptMetaData(method, new_opt_method);
                 }
             } else {
@@ -404,10 +401,10 @@ using namespace ARIMAutils;
             } else if (retval_f == 15) {
                 throw InvalidFormatException("Interpolation Input data has Inf/Nan values for prediction");
             } else if (retval_f == 4) {
-                if (method != "CSS-MLE" && opt_method != "BFGS") {
+                if (method != CSS_MLE && opt_method != BFGS) {
                     throw IOException("Optimization of ARIMA did not converge for prediction.\n Please try another method and optimization method");
                 } else {
-                    std::string new_opt_method = "Nelder-Mead";
+                    OptimizationMethod new_opt_method = Nelder_Mead;
                     setOptMetaData(method, new_opt_method);
                 }
             } else {

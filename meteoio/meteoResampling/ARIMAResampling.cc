@@ -33,6 +33,8 @@ namespace mio {
             throw InvalidArgumentException("Wrong number of arguments for \"" + where + "\"", AT);
 
         before_window = after_window = 0.;
+        std::string method_string;
+        std::string opt_method_string;
         for (size_t ii = 0; ii < vecArgs.size(); ii++) {
             if (vecArgs[ii].first == "BEFORE_WINDOW") {
                 IOUtils::parseArg(vecArgs[ii], where, before_window);
@@ -56,9 +58,35 @@ namespace mio {
                 IOUtils::parseArg(vecArgs[ii], where, period);
                 period /= 86400.;
             } else if (vecArgs[ii].first == "LIK_METHOD") {
-                IOUtils::parseArg(vecArgs[ii], where, method);
+                IOUtils::parseArg(vecArgs[ii], where, method_string);
+                if (method_string == "CSS_MLE")
+                    method = CSS_MLE;
+                else if (method_string == "MLE")
+                    method = MLE;
+                else if (method_string == "CSS")
+                    method = CSS;
+                else
+                    throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             } else if (vecArgs[ii].first == "OPTIMIZATION_METHOD") {
-                IOUtils::parseArg(vecArgs[ii], where, opt_method);
+                IOUtils::parseArg(vecArgs[ii], where, opt_method_string);
+                if (opt_method_string == "Nelder_Mead")
+                    opt_method = Nelder_Mead;
+                else if (opt_method_string == "Newton_Line_Search")
+                    opt_method = Newton_Line_Search;
+                else if (opt_method_string == "Newton_Trust_Region_Hook_Step")
+                    opt_method = Newton_Trust_Region_Hook_Step;
+                else if (opt_method_string == "Newton_Trust_Region_Double_Dog_Leg")
+                    opt_method = Newton_Trust_Region_Double_Dog_Leg;
+                else if (opt_method_string == "Conjugate_Gradient")
+                    opt_method = Conjugate_Gradient;
+                else if (opt_method_string == "BFGS")
+                    opt_method = BFGS;
+                else if (opt_method_string == "Limited_Memory_BFGS")
+                    opt_method = Limited_Memory_BFGS;
+                else if (opt_method_string == "BFGS_Using_More_Thuente_Method")
+                    opt_method = BFGS_Using_More_Thuente_Method;
+                else
+                    throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             } else if (vecArgs[ii].first == "STEPWISE") {
                 IOUtils::parseArg(vecArgs[ii], where, stepwise);
             } else if (vecArgs[ii].first == "APPROXIMATION") {
@@ -80,6 +108,8 @@ namespace mio {
             throw InvalidArgumentException("The ARIMA window is larger than the resampling window for " + where, AT);
     }
 
+
+
     std::string ARIMAResampling::toString() const {
         // this should help when debugging, so output relevant parameters for your algorithm
         std::ostringstream ss;
@@ -93,6 +123,8 @@ namespace mio {
     }
 
     // ------------------------------ Private functions ------------------------------
+
+
 
     std::vector<double> ARIMAResampling::predictData(std::vector<double> &data, const std::string &direction, size_t startIdx_interpol,
                                                      size_t length_gap_interpol, int sr_period) {
@@ -111,7 +143,11 @@ namespace mio {
         arima.setOptMetaData(method, opt_method, stepwise, approximation, num_models);
     }
 
+
+
     // ------------------------------ Resample helper functions ------------------------------
+
+
 
     double ARIMAResampling::interpolVecAt(const std::vector<MeteoData> &vecMet, const size_t &idx, const Date &date,
                                           const size_t &paramindex) {
@@ -127,6 +163,8 @@ namespace mio {
         MeteoData p2 = vecMet[idx + 1];
         return linearInterpolation(p1.date.getJulian(true), p1(paramindex), p2.date.getJulian(true), p2(paramindex), date.getJulian(true));
     }
+
+
 
     double ARIMAResampling::interpolVecAt(const std::vector<double> &data, const std::vector<Date> &datesVec, const size_t &pos,
                                           const Date &date) {
@@ -153,11 +191,15 @@ namespace mio {
         return linearInterpolation(x1, y1, x2, y2, x);
     }
 
+
+
     std::vector<Date>::iterator findDate(std::vector<Date> &gap_dates, const Date &resampling_date) {
         auto exactTime = [&resampling_date](Date curr_date) { return requal(curr_date, resampling_date); };
         return std::find_if(gap_dates.begin(), gap_dates.end(), exactTime);
     }
 
+    
+    
     void ARIMAResampling::checkZeroPossibility(const std::vector<MeteoData> &vecM, size_t paramindex) {
         if (!checked_vecM) {
             // check if there are any zero values in the data, to see if a prediction of zero makes sense
@@ -183,6 +225,8 @@ namespace mio {
             checked_vecM = true;
         }
     }
+
+
 
     bool ARIMAResampling::processKnownGaps(const Date &resampling_date, const size_t paramindex,
                                            const ResamplingAlgorithms::ResamplingPosition &position, const std::vector<MeteoData> &vecM,
@@ -253,6 +297,8 @@ namespace mio {
         return false;
     }
 
+
+
     void ARIMAResampling::setEndGap(ARIMA_GAP &new_gap, Date &data_start_date, Date &data_end_date, const std::vector<MeteoData> &vecM,
                                     const Date &resampling_date) {
         new_gap.startDate = vecM[vecM.size() - 1].date;
@@ -264,6 +310,8 @@ namespace mio {
         data_end_date = new_gap.endDate;
         data_start_date = adjustStartDate(vecM, new_gap, data_start_date, data_end_date);
     }
+
+
 
     bool accumulateData(const Date &data_start_date, const Date &data_end_date, const ARIMA_GAP &new_gap,
                         const std::vector<MeteoData> &vecM, bool &gave_warning_interpol, size_t &length, std::vector<double> &data,
@@ -302,6 +350,8 @@ namespace mio {
         return true;
     }
 
+
+
     void ARIMAResampling::resampleInterpolationData(size_t &length_gap_interpol, size_t &endIdx_interpol, size_t &startIdx_interpol,
                                                     const ARIMA_GAP &new_gap, const Date &data_start_date, const Date &data_end_date,
                                                     const std::vector<MeteoData> &data_vec_before,
@@ -339,6 +389,8 @@ namespace mio {
             length_gap_interpol = data.size() - startIdx_interpol;
     }
 
+
+
     std::vector<double> ARIMAResampling::getInterpolatedData(std::vector<double> &data, size_t size_before, size_t size_after,
                                                              size_t startIdx_interpol, size_t length_gap_interpol, int sr_period) {
         std::vector<double> interpolated_data;
@@ -356,6 +408,8 @@ namespace mio {
         }
         return interpolated_data;
     }
+
+
 
     void ARIMAResampling::cacheGap(const std::vector<double> &interpolated_data, const std::vector<Date> &interpolated_dates,
                                    const ARIMA_GAP &new_gap) {

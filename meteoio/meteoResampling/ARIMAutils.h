@@ -32,6 +32,23 @@ static const int MAX_ARIMA_EXTRAPOLATION = 100;
 namespace mio {
 
 namespace ARIMAutils {
+
+enum ObjectiveFunction {
+    CSS_MLE,
+    MLE,
+    CSS,
+};
+enum OptimizationMethod {
+    Nelder_Mead,
+    Newton_Line_Search,
+    Newton_Trust_Region_Hook_Step,
+    Newton_Trust_Region_Double_Dog_Leg,
+    Conjugate_Gradient,
+    BFGS,
+    Limited_Memory_BFGS,
+    BFGS_Using_More_Thuente_Method,
+};
+
 // slice a vector from start to start+N
 std::vector<double> slice(const std::vector<double> &vec, size_t start, size_t N);
 

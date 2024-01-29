@@ -89,9 +89,8 @@ namespace mio {
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - documentation improvements
+     * TODO: - documentation improvements-->Introduction
      *       - add testing
-     *       - enum instead of strings for method and opt_method
      *
      *
      * Copyright (c) 2014, Rafat Hussain
@@ -140,7 +139,8 @@ namespace mio {
         int max_P = 2, max_D = 1, max_Q = 2;
         int start_P = 1, start_Q = 1;
         double period = 0;
-        std::string method = "CSS-MLE", opt_method = "BFGS";
+        ObjectiveFunction method = CSS_MLE;
+        OptimizationMethod opt_method = BFGS;
         bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;

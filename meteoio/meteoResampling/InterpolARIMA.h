@@ -23,10 +23,13 @@
 #include <iostream>
 #include <map>
 #include <meteoio/thirdParty/ctsa.h>
+#include <meteoio/meteoResampling/ARIMAutils.h>
 #include <string>
 #include <vector>
 
 namespace mio {
+
+    using namespace ARIMAutils;
     /**
      * @class InterpolARIMA
      *
@@ -94,7 +97,7 @@ namespace mio {
         void setAutoArimaMetaData(int max_p_param = 8, int max_d_param = 3, int max_q = 8, int start_p = 2, int start_q = 2, int max_P = 2,
                                   int max_D = 1, int max_Q = 2, int start_P = 1, int start_Q = 1, bool seasonal = true,
                                   bool stationary = false);
-        void setOptMetaData(std::string method = "CSS-MLE", std::string opt_method = "BFGS", bool stepwise = true,
+        void setOptMetaData(ObjectiveFunction method = CSS_MLE, OptimizationMethod opt_method = BFGS, bool stepwise = true,
                             bool approximation = false, int num_models = 94);
 
         // Interpolation methods
@@ -211,20 +214,11 @@ private:
     int max_P = 2, max_D = 1, max_Q = 2;
     int start_P = 1, start_Q = 1;
     int r = 0, s = 0;
-    std::string method = "CSS-MLE", opt_method = "BFGS";
+    ObjectiveFunction method = CSS_MLE; OptimizationMethod opt_method = BFGS;
     bool stepwise = true, approximation = true;
     int num_models = 94;
     bool seasonal = true, stationary = false;
 
-    std::map<std::string, int> method_map = {{"CSS-MLE", 0}, {"MLE", 1}, {"CSS", 2}};
-    std::map<std::string, int> opt_method_map = {{"Nelder-Mead", 0},
-                                                 {"Newton Line Search", 1},
-                                                 {"Newton Trust Region - Hook Step", 2},
-                                                 {"Newton Trust Region - Double Dog-Leg", 3},
-                                                 {"Conjugate Gradient", 4},
-                                                 {"BFGS", 5},
-                                                 {"Limited Memory BFGS", 6},
-                                                 {"BFGS Using More Thuente Method", 7}};
 
     bool consistencyCheck();
     auto_arima_object initAutoArima(size_t N_data);
