@@ -223,14 +223,14 @@ namespace mio {
      * \image html arima_interpolation.png "Figure 2: Interpolation using an ARIMA model"
      *
      * 
-     * @note 
+     * @note The performance of the ARIMA model can vary and also depends on the given data. In general the more data the better, and when computing time is not 
+     * an issue an extensive search might be useful
      * 
      * 
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - add not
-     *       - add testing
+     * TODO: - add testing
      *
      *
      * Copyright (c) 2014, Rafat Hussain
