@@ -32,7 +32,7 @@ std::vector<double> slice(const std::vector<double>& vec, size_t start, size_t N
 	std::vector<double> vec_sliced;
 	vec_sliced.assign(vec.begin() + start, vec.begin() + start + N);
 	return vec_sliced;
-};
+}
 
 // slice a vector from start to end
 std::vector<double> slice(const std::vector<double>& vec, size_t start) { 
@@ -40,7 +40,7 @@ std::vector<double> slice(const std::vector<double>& vec, size_t start) {
 	std::vector<double> vec_sliced;
 	vec_sliced.assign(vec.begin() + start, vec.end());
 	return vec_sliced;
-};
+}
 
 // np.arange for c++
 std::vector<double> arange(size_t start, size_t N) {
@@ -49,7 +49,7 @@ std::vector<double> arange(size_t start, size_t N) {
         vec[i] = static_cast<double>(start + i);
     }
     return vec;
-};
+}
 
 //calculate the mean of a vector
 double calcVecMean(const std::vector<double>& vec) {
