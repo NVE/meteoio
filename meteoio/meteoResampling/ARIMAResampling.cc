@@ -26,8 +26,8 @@ namespace mio {
 
     ARIMAResampling::ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_window_size,
                                      const std::vector<std::pair<std::string, std::string>> &vecArgs)
-        : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), gap_data(), filled_data(), all_dates(), before_window(),
-          after_window(), is_valid_gap_data(), warned_about_gap() {
+        : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), verbose(true), gap_data(), filled_data(), all_dates(), before_window(),
+          after_window(), is_valid_gap_data(), warned_about_gap(), newest_gap() {
         const std::string where("Interpolations1D::" + i_parname + "::" + i_algoname);
         if (vecArgs.empty()) // incorrect arguments, throw an exception
             throw InvalidArgumentException("Wrong number of arguments for \"" + where + "\"", AT);
@@ -97,6 +97,8 @@ namespace mio {
                 IOUtils::parseArg(vecArgs[ii], where, seasonal);
             } else if (vecArgs[ii].first == "STATIONARY") {
                 IOUtils::parseArg(vecArgs[ii], where, stationary);
+            } else if (vecArgs[ii].first == "VERBOSE") {
+                IOUtils::parseArg(vecArgs[ii], where, verbose);
             } else {
                 throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             }
@@ -122,6 +124,13 @@ namespace mio {
         return ss.str();
     }
 
+    void ARIMAResampling::infoARIMA(InterpolARIMA arima) {
+        std::cout << "Interpolating gap: " << std::endl;
+        std::cout << newest_gap.toString() << std::endl;
+        std::cout << "With ARIMA model: " << std::endl;
+        std::cout << arima.toString() << std::endl;
+        }
+
     // ------------------------------ Private functions ------------------------------
 
 
@@ -134,6 +143,7 @@ namespace mio {
         InterpolARIMA arima(data, startIdx_interpol, length_gap_interpol, direction, sr_period);
         setMetaData(arima);
         std::vector<double> predictions = arima.predict();
+        if (verbose) infoARIMA(arima);
         std::copy(predictions.begin(), predictions.end(), data.begin() + startIdx_interpol);
         return predictions;
     }
@@ -141,6 +151,7 @@ namespace mio {
     void ARIMAResampling::setMetaData(InterpolARIMA &arima) {
         arima.setAutoArimaMetaData(max_p, max_d, max_q, start_p, start_q, max_P, max_D, max_Q, start_P, start_Q, seasonal, stationary);
         arima.setOptMetaData(method, opt_method, stepwise, approximation, num_models);
+        arima.setVerbose(verbose);
     }
 
 
@@ -405,6 +416,7 @@ namespace mio {
             setMetaData(arima);
             arima.interpolate();
             interpolated_data = arima.getInterpolatedData();
+            if (verbose) infoARIMA(arima);
         }
         return interpolated_data;
     }
@@ -488,6 +500,7 @@ namespace mio {
 
         if (new_gap.isGap()) {
             // data vector is of length (data_end_date - data_start_date) * sampling_rate
+            newest_gap = new_gap;
             size_t length;
             std::vector<double> data;
             std::vector<Date> dates;

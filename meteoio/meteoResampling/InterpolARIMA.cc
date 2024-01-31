@@ -21,6 +21,8 @@
 #include <cstdlib> // for std::rand and std::srand
 #include <cstring>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <meteoio/MeteoIO.h>
 #include <unistd.h>
 
@@ -119,6 +121,7 @@ namespace mio {
 
         ss << "\n---------------- Auto ARIMA Model Information ----------------\n";
 
+#ifdef DEBUG
         // Base Arima variables
         ss << "\nBase Arima Variables:\n";
         ss << std::left << std::setw(10) << "Max p:" << max_p << "\n";
@@ -140,6 +143,7 @@ namespace mio {
         ss << std::left << std::setw(10) << "s:" << s << "\n";
 
         ss << "\n-------------------------------------------------------------\n";
+#endif
 
         // Data information
         ss << "\nData Information:\n";
@@ -151,14 +155,151 @@ namespace mio {
 
         ss << "\n-------------------------------------------------------------\n";
         ss << "Forward Model:\n";
-        auto_arima_summary(auto_arima_forward);
+        ss << autoArimaInfo(auto_arima_forward);
         ss << "\n-------------------------------------------------------------\n";
         ss << "Backward Model:\n";
-        auto_arima_summary(auto_arima_backward);
+        ss << autoArimaInfo(auto_arima_backward);
 
         ss << "\n-------------------------------------------------------------\n";
 
         return ss.str();
+    }
+
+    std::string InterpolARIMA::autoArimaInfo(auto_arima_object obj) {
+        int i, pq,t,ncxreg,mean;
+        pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
+        mean = obj->M - obj->r;
+
+        std::stringstream result;
+
+        if (obj->method == 0 || obj->method == 1) {
+            result << "\n\n Exit Status \n";
+            result << "Return Code : " << obj->retval << "\n";
+            result << "Exit Message : ";
+            if (obj->retval == 0) {
+                result << "Input Error";
+            }
+            else if (obj->retval == 1) {
+                result << "Probable Success";
+            }
+            else if (obj->retval == 4) {
+                result << "Optimization Routine didn't converge";
+            }
+            else if (obj->retval == 7) {
+                result << "Exogenous Variables are collinear";
+            }
+            else if (obj->retval == 10) {
+                result << "Nonstationary AR part";
+            }
+            else if (obj->retval == 12) {
+                result << "Nonstationary Seasonal AR part";
+            }
+            else if (obj->retval == 15) {
+                result << "Optimization Routine Encountered Inf/Nan Values";
+            }
+            result << "\n\n"; // Add a newline after the exit message
+        }
+
+
+        result << "  ARIMA Seasonal Order : ( " << obj->p << ", " << obj->d << ", " << obj->q << ") * (" << obj->P << ", " << obj->D << ", " << obj->Q << ")\n\n";
+
+        result << std::setw(20) << "Coefficients" << std::setw(20) << "Value" << std::setw(20) << "Standard Error" << "\n\n";
+        for (i = 0; i < obj->p; ++i) {
+            result << "AR" << std::setw(15) << i + 1 << std::setw(20) << obj->phi[i] << std::setw(20) << sqrt(obj->vcov[i + pq*i]) << "\n";
+        }
+        for (i = 0; i < obj->q; ++i) {
+            t = obj->p + i;
+            result << "MA" << std::setw(15) << i + 1 << std::setw(20) << obj->theta[i] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+        }
+        for (i = 0; i < obj->P; ++i) {
+            t = obj->p + obj->q + i;
+            result << "SAR" << std::setw(14) << i + 1 << std::setw(20) << obj->PHI[i] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+        }
+        for (i = 0; i < obj->Q; ++i) {
+            t = obj->p + obj->q + obj->P + i;
+            result << "SMA" << std::setw(14) << i + 1 << std::setw(20) << obj->THETA[i] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+        }
+        result << "\n";
+        t = obj->p + obj->q + obj->P + obj->Q;
+        if (mean > 0) {
+            result << std::setw(17) << "MEAN" << std::setw(20) << obj->mean << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+            t++;
+        }
+        else {
+            result << std::setw(17) << "MEAN" << std::setw(20) << obj->mean << "\n";
+        }
+        ncxreg = 0;
+        if (obj->idrift == 1) {
+            result << std::setw(17) << "TREND" << std::setw(20) << obj->exog[0] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+            t++;
+            ncxreg++;
+        } else {
+            result << std::setw(17) << "TREND" << std::setw(20) << 0.0 << "\n";
+        }
+        for(i = ncxreg; i < obj->r; ++i) {
+            result << std::setw(17) << "EXOG" << std::setw(20) << obj->exog[i] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
+            t++;
+        }
+
+        result << "\n" << std::setw(17) << "SIGMA^2" << std::setw(20) << obj->sigma2 << "\n\n";
+
+        result << "ESTIMATION METHOD : ";
+        if (obj->method == 0) {
+            result << "CSS-MLE";
+        }
+        else if (obj->method == 1) {
+            result << "MLE";
+        }
+        else if (obj->method == 2) {
+            result << "CSS";
+        }
+        result << "\n\n";
+
+        result << "OPTIMIZATION METHOD : ";
+        if (obj->optmethod == 0) {
+            result << "Nelder-Mead";
+        }
+        else if (obj->optmethod == 1) {
+            result << "Newton Line Search";
+        }
+        else if (obj->optmethod == 2) {
+            result << "Newton Trust Region - Hook Step";
+        }
+        else if (obj->optmethod == 3) {
+            result << "Newton Trust Region - Double Dog-Leg";
+        }
+        else if (obj->optmethod == 4) {
+            result << "Conjugate Gradient";
+        }
+        else if (obj->optmethod == 5) {
+            result << "BFGS";
+        }
+        else if (obj->optmethod == 6) {
+            result << "L-BFGS";
+        }
+        else if (obj->optmethod == 7) {
+            result << "BFGS More-Thuente Line Search";
+        }
+
+        result << "\n\n";
+
+        result << "AIC criterion : " << obj->aic << "\n\n";
+
+        result << "BIC criterion : " << obj->bic << "\n\n";
+
+        result << "AICC criterion : " << obj->aicc << "\n\n";
+
+        if (obj->method == 0 || obj->method == 1 || obj->method == 2) {
+            result << "Log Likelihood : " << obj->loglik << "\n\n";
+        }
+
+        result << "Auto ARIMA Parameters \n\n";
+
+        result << "Approximation: " << (obj->approximation == 1 ? "TRUE" : "FALSE") << "\n";
+
+        result << "Stepwise: " << (obj->stepwise == 1 ? "TRUE" : "FALSE");
+
+        return result.str(); // Return the resulting string
     }
 
     // ------------------- Setters ------------------- //
@@ -221,6 +362,11 @@ namespace mio {
         auto_arima_forward->optmethod = static_cast<int>(this->opt_method);
         auto_arima_backward->stepwise = stepwise;
         auto_arima_forward->stepwise = stepwise;
+    }
+
+    void InterpolARIMA::setVerbose(bool verbose) {
+        auto_arima_backward->verbose = verbose;
+        auto_arima_forward->verbose = verbose;
     }
 
     // ------------------- Getters ------------------- //
@@ -308,7 +454,6 @@ namespace mio {
             reverseVector(pred_backward); // TODO: can be done with std::reverse in C++17
 
             bool consistency = consistencyCheck();
-            std::cout << "consistency check " << consistency << std::endl;
             if (consistency)
                 break;
         }

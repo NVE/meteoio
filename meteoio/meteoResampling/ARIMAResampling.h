@@ -230,8 +230,6 @@ namespace mio {
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
-     * TODO: - add testing
-     *
      *
      * Copyright (c) 2014, Rafat Hussain
      * All rights reserved.
@@ -265,6 +263,7 @@ namespace mio {
         std::string toString() const;
 
     private:
+        bool verbose;
         // ARIMA related data
         std::vector<ARIMA_GAP> gap_data;
         std::vector<std::vector<double>> filled_data;
@@ -294,6 +293,7 @@ namespace mio {
         std::vector<bool> is_valid_gap_data;
         std::vector<bool> warned_about_gap;
 
+        ARIMA_GAP newest_gap;
         // Private methods
         void setMetaData(InterpolARIMA &arima);
         std::vector<double> predictData(std::vector<double> &data, const std::string &direction, size_t startIdx_interpol,
@@ -315,6 +315,9 @@ namespace mio {
         std::vector<double> getInterpolatedData(std::vector<double> &data, size_t size_before, size_t size_after, size_t startIdx_interpol,
                                                 size_t length_gap_interpol, int period);
         void cacheGap(const std::vector<double> &interpolated_data, const std::vector<Date> &interpolated_dates, const ARIMA_GAP &new_gap);
+
+        // info 
+        void infoARIMA(InterpolARIMA arima);
     };
 } // end namespace mio
 

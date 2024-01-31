@@ -1554,7 +1554,9 @@ static int checkroots_cerr(double *phi, int *p, double *theta, int *q, double *P
 		ret = archeck(*p,phi);
 		if (!ret) {
 			out = 10;
+#ifdef DEBUG
 			printf("\nnon-stationary AR part\n");
+#endif
 			return out;
 		}
 	}
@@ -1568,7 +1570,9 @@ static int checkroots_cerr(double *phi, int *p, double *theta, int *q, double *P
 			ret = archeck(*P,PHI);
 			if (!ret) {
 				out = 12;
+#ifdef DEBUG
 				printf("\nnon-stationary seasonal AR part\n");
+#endif
 				return out;
 			}
 		}
@@ -2652,7 +2656,9 @@ void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P,
 	if (*p > 0) {
 		ret = archeck(*p,phi);
 		if (!ret) {
+#ifdef DEBUG
 			printf("\nnon-stationary AR part\n");
+#endif
 			exit(-1);
 		}
 	}
@@ -2665,7 +2671,9 @@ void checkroots(double *phi, int *p, double *theta, int *q, double *PHI, int *P,
 		if (*P > 0) {
 			ret = archeck(*P,PHI);
 			if (!ret) {
+#ifdef DEBUG
 				printf("\nnon-stationary seasonal AR part\n");
+#endif
 				exit(-1);
 			}
 		}

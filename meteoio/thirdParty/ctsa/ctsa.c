@@ -957,9 +957,9 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							}
 
 							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, NULL);
-							if (verbose == 1) {
-								printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,K,fit->ic);
-							}
+							// if (verbose == 1) {
+							// 	printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,K,fit->ic);
+							// }
 							
 							//myarima_summary(fit);
 
@@ -1186,7 +1186,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		if (rnk < r) {
 			free(xx);
 			free(x);
-			printf("Exogenous Variables are collinear. \n");
+			if (verbose == 1) printf("Exogenous Variables are collinear. \n");
 			exit(-1);
 		}
 
@@ -1401,7 +1401,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 
 	if (!istepwise) {
-		printf("is not stepwise \n");
+		if (verbose==1) printf("is not stepwise \n");
 		fit->otype = 1;
 		fit->Arima = NULL;
 
@@ -2081,14 +2081,14 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
 	}
 
-	if (verbose == 1) {
-		for(i = 0; i < k; ++i) {
-			printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",(int)results[i*8],(int)results[i*8+1],(int)results[i*8+2],(int)results[i*8+3],
-			(int)results[i*8+4], (int)results[i*8+5],(int)results[i*8+6],results[i*8+7]);
-		}
+	// if (verbose == 1) {
+	// 	for(i = 0; i < k; ++i) {
+	// 		printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",(int)results[i*8],(int)results[i*8+1],(int)results[i*8+2],(int)results[i*8+3],
+	// 		(int)results[i*8+4], (int)results[i*8+5],(int)results[i*8+6],results[i*8+7]);
+	// 	}
 		
-		//mdisplay(results,k,8);
-	}
+	// 	//mdisplay(results,k,8);
+	// }
 
 	// Delete the previous best model
 

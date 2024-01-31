@@ -99,6 +99,7 @@ namespace mio {
                                   bool stationary = false);
         void setOptMetaData(ObjectiveFunction method = CSS_MLE, OptimizationMethod opt_method = BFGS, bool stepwise = true,
                             bool approximation = false, int num_models = 94);
+        void setVerbose(bool verbose = false);
 
         // Interpolation methods
         std::vector<double> simulate(int n_steps, int seed = 0);
@@ -190,7 +191,11 @@ namespace mio {
         delete new_xreg_f;
         delete new_xreg_b;
     }
+
+    // info
     std::string toString();
+    std::string autoArimaInfo(auto_arima_object obj);
+
 
 private:
     // Interpolation variables
