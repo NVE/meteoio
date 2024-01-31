@@ -128,7 +128,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
     dodiff = runstattests(x,N,test,type,alpha_);
 
     // TODO: if there are problems with the auto arima check here
-    // if (dodiff != dodiff) return d;
+    if (dodiff != dodiff) return d;
 
     y = (double*)malloc(sizeof(double)*NX);
     z = (double*)malloc(sizeof(double)*NX);
