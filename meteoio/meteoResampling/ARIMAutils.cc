@@ -215,7 +215,7 @@ bool requal(const Date &date1, const Date &date2) {
 	return is_equal;
 }
 
-void adjustDataStartDate(ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date) {
+static void adjustDataStartDate(ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date) {
     if (data_start_date < vecM[0].date && last_gap.startDate == resampling_date) {
         data_start_date = adjustStartDate(vecM, last_gap, resampling_date, data_end_date);
         data_start_date -= 1/last_gap.sampling_rate;
@@ -292,7 +292,7 @@ double computeSamplingRate(Date data_start_date, Date data_end_date, std::vector
 }
 
 
-Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, const Date& data_end_date) {
+static Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, const double sampling_rate, const Date& data_start_date, const Date& data_end_date) {
     Date closestDate = data_start_date;
     double minDiff = std::numeric_limits<double>::max();
 

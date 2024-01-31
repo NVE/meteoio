@@ -108,9 +108,9 @@ namespace mio {
         std::vector<double> ARIMApredict(size_t n_steps);
 
         // Getters
-        std::vector<double> getData() { return data; };
-        std::vector<double> getForwardData() { return data_forward; };
-        std::vector<double> getBackwardData() { return data_backward; };
+        std::vector<double> getData() { return data; }
+        std::vector<double> getForwardData() { return data_forward; }
+        std::vector<double> getBackwardData() { return data_backward; }
         std::vector<double> getInterpolatedData();
 
         // Copy constructor
@@ -118,9 +118,9 @@ namespace mio {
             : data(other.data), gap_loc(other.gap_loc), N_gap(other.N_gap), time(other.time), pred_forward(other.pred_forward),
               pred_backward(other.pred_backward), xreg_vec_f(other.xreg_vec_f), xreg_vec_b(other.xreg_vec_b),
               data_forward(other.data_forward), data_backward(other.data_backward), new_xreg_vec_f(other.new_xreg_vec_f),
-              new_xreg_vec_b(other.new_xreg_vec_b), xreg_f((xreg_vec_f.empty()) ? NULL : &xreg_vec_f[0]),
-              xreg_b((xreg_vec_b.empty()) ? NULL : &xreg_vec_b[0]), new_xreg_f((new_xreg_vec_f.empty()) ? NULL : &new_xreg_vec_f[0]),
-              new_xreg_b((new_xreg_vec_b.empty()) ? NULL : &new_xreg_vec_b[0]), amse_forward(other.amse_forward),
+              new_xreg_vec_b(other.new_xreg_vec_b), xreg_f((xreg_vec_f.empty()) ? nullptr : &xreg_vec_f[0]),
+              xreg_b((xreg_vec_b.empty()) ? nullptr : &xreg_vec_b[0]), new_xreg_f((new_xreg_vec_f.empty()) ? nullptr : &new_xreg_vec_f[0]),
+              new_xreg_b((new_xreg_vec_b.empty()) ? nullptr : &new_xreg_vec_b[0]), amse_forward(other.amse_forward),
               amse_backward(other.amse_backward), N_data_forward(other.N_data_forward), N_data_backward(other.N_data_backward),
               max_p(other.max_p), max_d(other.max_d), max_q(other.max_q), start_p(other.start_p), start_q(other.start_q),
               max_P(other.max_P), max_D(other.max_D), max_Q(other.max_Q), start_P(other.start_P), start_Q(other.start_Q), r(other.r),
@@ -173,10 +173,10 @@ namespace mio {
             stationary = other.stationary;
 
             // 4: handle the pointers to the vectors
-            xreg_f = (xreg_vec_f.empty()) ? NULL : &xreg_vec_f[0];
-            xreg_b = (xreg_vec_b.empty()) ? NULL : &xreg_vec_b[0];
-            new_xreg_f = (new_xreg_vec_f.empty()) ? NULL : &new_xreg_vec_f[0];
-            new_xreg_b = (new_xreg_vec_b.empty()) ? NULL : &new_xreg_vec_b[0];
+            xreg_f = (xreg_vec_f.empty()) ? nullptr : &xreg_vec_f[0];
+            xreg_b = (xreg_vec_b.empty()) ? nullptr : &xreg_vec_b[0];
+            new_xreg_f = (new_xreg_vec_f.empty()) ? nullptr : &new_xreg_vec_f[0];
+            new_xreg_b = (new_xreg_vec_b.empty()) ? nullptr : &new_xreg_vec_b[0];
         }
         // by convention, always return *this
         return *this;

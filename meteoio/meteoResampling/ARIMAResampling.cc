@@ -193,7 +193,7 @@ namespace mio {
 
 
 
-    std::vector<Date>::iterator findDate(std::vector<Date> &gap_dates, const Date &resampling_date) {
+    static std::vector<Date>::iterator findDate(std::vector<Date> &gap_dates, const Date &resampling_date) {
         auto exactTime = [&resampling_date](Date curr_date) { return requal(curr_date, resampling_date); };
         return std::find_if(gap_dates.begin(), gap_dates.end(), exactTime);
     }
@@ -313,7 +313,7 @@ namespace mio {
 
 
 
-    bool accumulateData(const Date &data_start_date, const Date &data_end_date, const ARIMA_GAP &new_gap,
+    static bool accumulateData(const Date &data_start_date, const Date &data_end_date, const ARIMA_GAP &new_gap,
                         const std::vector<MeteoData> &vecM, bool &gave_warning_interpol, size_t &length, std::vector<double> &data,
                         std::vector<Date> &dates, std::vector<MeteoData> &data_vec_before, std::vector<MeteoData> &data_vec_after,
                         bool &has_data_before, bool &has_data_after) {

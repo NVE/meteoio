@@ -32,7 +32,7 @@ namespace mio {
     // Default constructor
     InterpolARIMA::InterpolARIMA()
         : data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(),
-          data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL),
+          data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr),
           amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         }
 
@@ -48,8 +48,8 @@ namespace mio {
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, int period)
         : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
           xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, gap_loc)),
-          data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(NULL),
-          xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
+          data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr),
+          xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
           N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
         reverseVector(data_backward); // TODO: can be done with std::reverse in C++17
@@ -73,8 +73,8 @@ namespace mio {
           xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)), xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))),
           data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)),
           new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap),
-          xreg_f(xreg_vec_f.size() == 0 ? NULL : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? NULL : &xreg_vec_b[0]),
-          new_xreg_f(xreg_vec_f.size() == 0 ? NULL : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size() == 0 ? NULL : &new_xreg_vec_b[0]),
+          xreg_f(xreg_vec_f.size() == 0 ? nullptr : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? nullptr : &xreg_vec_b[0]),
+          new_xreg_f(xreg_vec_f.size() == 0 ? nullptr : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size() == 0 ? nullptr : &new_xreg_vec_b[0]),
           amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()),
           r(xreg_vec_in.size() == 0 ? 0 : static_cast<int>(xreg_vec_f.size() / N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         // reverse the backward data
@@ -103,7 +103,7 @@ namespace mio {
           pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0), xreg_vec_b(0),
           data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)),
           data_backward(decideDirection(data_in, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
-          xreg_f(NULL), xreg_b(NULL), new_xreg_f(NULL), new_xreg_b(NULL), amse_forward(N_gap), amse_backward(N_gap),
+          xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap),
           N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)){
     }
 
@@ -266,8 +266,8 @@ namespace mio {
     }
     // Fill the gap using the auto arima objects
     void InterpolARIMA::fillGap() {
-        bool isRandom_f;
-        bool isRandom_b;
+        bool isRandom_f = false;
+        bool isRandom_b = false;
         for (int meth_Id = 0; meth_Id <3 ; meth_Id++) {
             // fit the models
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
@@ -354,7 +354,6 @@ namespace mio {
         if (N_data_backward == 0 || N_data_forward == 0) {
             throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
                                   ", backward datapoints " + std::to_string(N_data_backward) + "\n");
-            return;
         }
         while (fit) {
             fillGap();
@@ -390,7 +389,6 @@ namespace mio {
         if (N_data_backward == 0 || N_data_forward == 0) {
             throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
                                   ", backward datapoints " + std::to_string(N_data_backward) + "\n");
-            return pred;
         }
         while (fit) {
             pred = ARIMApredict(n_steps);

@@ -59,10 +59,12 @@ double inv_boxcox_eval(double *x,int N, double lambda,double *bxcx) {
         for(i = 0; i < N;++i) {
             bxcx[i] = exp(x[i]);
         }
+        return 0;
     } else {
         for(i = 0; i < N;++i) {
             bxcx[i] = exp(log1p(lambda * x[i])/lambda);
         }
+        return 1;
     }
 }
 
