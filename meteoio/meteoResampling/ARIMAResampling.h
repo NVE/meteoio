@@ -283,6 +283,7 @@ namespace mio {
         bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;
+        Normalization::Mode normalize=Normalization::Mode::MinMax;
 
         // Flags
         bool is_zero_possible = false;

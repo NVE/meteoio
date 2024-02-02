@@ -33,7 +33,7 @@ namespace mio {
     
     // Default constructor
     InterpolARIMA::InterpolARIMA()
-        : data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(),
+        : norm(data), data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(),
           data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr),
           amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
         }
@@ -48,7 +48,7 @@ namespace mio {
      * @param period (Optional) The period of the ARIMA model. Defaults to 0. Only needed when the period is known.
  */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, int period)
-        : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
+        : norm(data_in), data(norm.normalize(data_in)), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
           xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, gap_loc)),
           data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr),
           xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
@@ -71,7 +71,7 @@ namespace mio {
      */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, std::vector<double> xreg_vec_in,
                                  int period)
-        : data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
+        : norm(data_in), data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
           xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)), xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))),
           data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)),
           new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap),
@@ -101,10 +101,10 @@ namespace mio {
      * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class in [InterpolARIMA.cc](meteoio/meteoResampling/InterpolARIMA.cc).
      */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, size_t n_predictions, std::string direction, int period)
-        : data(data_in), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())),
+        : norm(data_in), data(norm.normalize(data_in)), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())),
           pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0), xreg_vec_b(0),
-          data_forward(decideDirection(data_in, direction, true, gap_loc, n_predictions)),
-          data_backward(decideDirection(data_in, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
+          data_forward(decideDirection(data, direction, true, gap_loc, n_predictions)),
+          data_backward(decideDirection(data, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
           xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap),
           N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)){
     }
@@ -302,7 +302,21 @@ namespace mio {
         return result.str(); // Return the resulting string
     }
 
-    // ------------------- Setters ------------------- //
+    // ------------------- Setters ------------------- //}
+    // Change the Normalization of the data
+    void InterpolARIMA::setNormalizationMode(Normalization::Mode mode) {
+        if (mode == norm.getMode())
+            return;
+        data = norm.denormalize(data);
+        data_backward = norm.denormalize(data_backward);
+        data_forward = norm.denormalize(data_forward);
+        norm.setMode(mode);
+        data = norm.normalize(data);
+        data_backward = norm.normalize(data_backward);
+        data_forward = norm.normalize(data_forward);
+        return;
+    }
+
     // Set the metadata for the auto arima objects
     void InterpolARIMA::setAutoArimaMetaData(int max_p_param, int max_d_param, int max_q_param, int start_p_param, int start_q_param,
                                              int max_P_param, int max_D_param, int max_Q_param, int start_P_param, int start_Q_param,
@@ -373,7 +387,7 @@ namespace mio {
     // Get the interpolated data
     std::vector<double> InterpolARIMA::getInterpolatedData() {
         std::vector<double> interpolated_data(data.begin() + gap_loc, data.begin() + gap_loc + N_gap);
-        return interpolated_data;
+        return norm.denormalize(interpolated_data);
     }
 
     // ------------------- Interpolation methods ------------------- //
@@ -403,7 +417,7 @@ namespace mio {
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
         }
         auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(n_steps), new_xreg_f, pred_forward.data(), amse_forward.data());
-        return pred_forward;
+        return norm.denormalize(pred_forward);
     }
 
     // Check if the model is a random walk

@@ -33,8 +33,6 @@ namespace mio {
             throw InvalidArgumentException("Wrong number of arguments for \"" + where + "\"", AT);
 
         before_window = after_window = 0.;
-        std::string method_string;
-        std::string opt_method_string;
         for (size_t ii = 0; ii < vecArgs.size(); ii++) {
             if (vecArgs[ii].first == "BEFORE_WINDOW") {
                 IOUtils::parseArg(vecArgs[ii], where, before_window);
@@ -58,6 +56,7 @@ namespace mio {
                 IOUtils::parseArg(vecArgs[ii], where, period);
                 period /= 86400.;
             } else if (vecArgs[ii].first == "LIK_METHOD") {
+                std::string method_string;  
                 IOUtils::parseArg(vecArgs[ii], where, method_string);
                 if (method_string == "CSS_MLE")
                     method = CSS_MLE;
@@ -68,6 +67,7 @@ namespace mio {
                 else
                     throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             } else if (vecArgs[ii].first == "OPTIMIZATION_METHOD") {
+                std::string opt_method_string;
                 IOUtils::parseArg(vecArgs[ii], where, opt_method_string);
                 if (opt_method_string == "Nelder_Mead")
                     opt_method = Nelder_Mead;
@@ -99,6 +99,18 @@ namespace mio {
                 IOUtils::parseArg(vecArgs[ii], where, stationary);
             } else if (vecArgs[ii].first == "VERBOSE") {
                 IOUtils::parseArg(vecArgs[ii], where, verbose);
+            } else if (vecArgs[ii].first == "NORMALIZATION") {
+                std::string normalization_string;
+                IOUtils::parseArg(vecArgs[ii], where, normalization_string);
+                if (normalization_string == "NOTHING")
+                    normalize = Normalization::Nothing;
+                else if (normalization_string == "ZSCORE") {
+                    normalize = Normalization::ZScore;
+                } else if (normalization_string == "MINMAX"){
+                    normalize = Normalization::MinMax;
+                } else {
+                    throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
+                }
             } else {
                 throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             }
@@ -152,6 +164,7 @@ namespace mio {
         arima.setAutoArimaMetaData(max_p, max_d, max_q, start_p, start_q, max_P, max_D, max_Q, start_P, start_Q, seasonal, stationary);
         arima.setOptMetaData(method, opt_method, stepwise, approximation, num_models);
         arima.setVerbose(verbose);
+        arima.setNormalizationMode(normalize);
     }
 
 

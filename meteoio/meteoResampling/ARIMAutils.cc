@@ -26,6 +26,42 @@
 namespace mio {
 
 namespace ARIMAutils {
+
+Normalization::Normalization(): mean(0), std(0), min(0), max(0) {}
+
+Normalization::Normalization(std::vector<double>& data): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(), data.end())), max(*std::max_element(data.begin(), data.end())) {};
+
+Normalization::Normalization(std::vector<double>& data, Mode new_mode): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(),data.end())), max(*std::max_element(data.begin(), data.end())), mode(new_mode) {}
+
+std::vector<double> Normalization::normalize(const std::vector<double>& data) {
+	std::vector<double> normalizedData = data; // Create a copy of data
+	if (mode == Mode::ZScore) {
+		for (size_t i = 0; i < normalizedData.size(); i++) {
+			normalizedData[i] = (normalizedData[i] - mean) / std;
+		}
+	} else if (mode == Mode::MinMax) {
+		for (size_t i = 0; i < normalizedData.size(); i++) {
+			normalizedData[i] = (normalizedData[i] - min) / (max - min);
+		}
+	}
+	return normalizedData; // Return the modified data
+}
+
+std::vector<double> Normalization::denormalize(const std::vector<double>& data) {
+	std::vector<double> denormalizedData = data; // Create a copy of data
+	if (mode == Mode::ZScore) {
+		for (size_t i = 0; i < denormalizedData.size(); i++) {
+			denormalizedData[i] = denormalizedData[i] * std + mean;
+		}
+	} else if (mode == Mode::MinMax) {
+		for (size_t i = 0; i < denormalizedData.size(); i++) {
+			denormalizedData[i] = denormalizedData[i] * (max - min) + min;
+		}
+	}
+	return denormalizedData; // Return the modified data
+}
+
+
 // slice a vector from start to start+N
 std::vector<double> slice(const std::vector<double>& vec, size_t start, size_t N) { 
 	assert(start + N < vec.size()); // Ensure the range is valid

@@ -100,23 +100,25 @@ namespace mio {
         void setOptMetaData(ObjectiveFunction method = CSS_MLE, OptimizationMethod opt_method = BFGS, bool stepwise = true,
                             bool approximation = false, int num_models = 94);
         void setVerbose(bool verbose = false);
+        void setNormalizationMode(Normalization::Mode mode);
 
         // Interpolation methods
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
         void interpolate();
         std::vector<double> predict(size_t n_steps = 0);
+        // only do denormalization ARIMA predict! otherwise it will denorm twice
         std::vector<double> ARIMApredict(size_t n_steps);
 
         // Getters
-        std::vector<double> getData() { return data; }
-        std::vector<double> getForwardData() { return data_forward; }
-        std::vector<double> getBackwardData() { return data_backward; }
+        std::vector<double> getData() { return norm.denormalize(data); }
+        std::vector<double> getForwardData() { return norm.denormalize(data_forward); }
+        std::vector<double> getBackwardData() { return  norm.denormalize(data_backward); }
         std::vector<double> getInterpolatedData();
 
         // Copy constructor
         InterpolARIMA(const InterpolARIMA &other)
-            : data(other.data), gap_loc(other.gap_loc), N_gap(other.N_gap), time(other.time), pred_forward(other.pred_forward),
+            : norm(other.norm), data(other.data), gap_loc(other.gap_loc), N_gap(other.N_gap), time(other.time), pred_forward(other.pred_forward),
               pred_backward(other.pred_backward), xreg_vec_f(other.xreg_vec_f), xreg_vec_b(other.xreg_vec_b),
               data_forward(other.data_forward), data_backward(other.data_backward), new_xreg_vec_f(other.new_xreg_vec_f),
               new_xreg_vec_b(other.new_xreg_vec_b), xreg_f((xreg_vec_f.empty()) ? nullptr : &xreg_vec_f[0]),
@@ -144,6 +146,7 @@ namespace mio {
             time = other.time;
             pred_forward = other.pred_forward;
             pred_backward = other.pred_backward;
+            norm = other.norm;
             data = other.data;
             xreg_vec_f = other.xreg_vec_f;
             xreg_vec_b = other.xreg_vec_b;
@@ -199,6 +202,7 @@ namespace mio {
 
 private:
     // Interpolation variables
+    Normalization norm;
     std::vector<double> data;
     size_t gap_loc;
     size_t N_gap;

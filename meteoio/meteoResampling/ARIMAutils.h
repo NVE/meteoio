@@ -47,6 +47,32 @@ namespace mio {
             BFGS_Using_More_Thuente_Method,
         };
 
+        // a struct to hold the coefficients for normalization and denormalization of a time series, cannot be used 
+        // for multiple time series
+        class Normalization {
+            public:
+                enum Mode {
+                    MinMax,
+                    ZScore,
+                    Nothing,
+                };
+                Normalization(); 
+                Normalization(std::vector<double>& data, Mode new_mode); 
+                Normalization(std::vector<double>& data);
+                
+                void setMode(Mode new_mode) {mode = new_mode;}
+                Mode getMode() {return mode;}
+                std::vector<double> normalize(const std::vector<double>& data); 
+                std::vector<double> denormalize(const std::vector<double>& data);
+
+            private:
+                double mean;
+                double std;
+                double min;
+                double max;
+                Mode mode = MinMax;
+            };
+
         // slice a vector from start to start+N
         std::vector<double> slice(const std::vector<double> &vec, size_t start, size_t N);
 
