@@ -55,7 +55,7 @@ namespace mio {
             } else if (vecArgs[ii].first == "SEASONAL_PERIOD") {
                 IOUtils::parseArg(vecArgs[ii], where, period);
                 period /= 86400.;
-            } else if (vecArgs[ii].first == "LIK_METHOD") {
+            } else if (vecArgs[ii].first == "LIKELIHOOD_METHOD") {
                 std::string method_string;  
                 IOUtils::parseArg(vecArgs[ii], where, method_string);
                 if (method_string == "CSS_MLE")
@@ -81,10 +81,10 @@ namespace mio {
                     opt_method = Conjugate_Gradient;
                 else if (opt_method_string == "BFGS")
                     opt_method = BFGS;
-                else if (opt_method_string == "Limited_Memory_BFGS")
-                    opt_method = Limited_Memory_BFGS;
-                else if (opt_method_string == "BFGS_Using_More_Thuente_Method")
-                    opt_method = BFGS_Using_More_Thuente_Method;
+                else if (opt_method_string == "LBFGS")
+                    opt_method = LBFGS;
+                else if (opt_method_string == "BFGS_MTM")
+                    opt_method = BFGS_MTM;
                 else
                     throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             } else if (vecArgs[ii].first == "STEPWISE") {

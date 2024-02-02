@@ -35,8 +35,12 @@ namespace mio {
      * href="https://github.com/rafat/ctsa/tree/master">ctsa</a> (BSD-3 Clause, see below) library. That implements the auto ARIMA algorithm
      * from <a href="https://www.jstatsoft.org/article/view/v027i03">Hyndman and Khandakar (2008)</a>.
      *
-     * Gaps in the data are detected, and when possible data before and after the gap is used to interpolate the missing values. Otherwise,
-     * either only the data before or after the gap (depending on what is available) is used to predict the missing values.
+     * Gaps in the data are detected and interpolated using the ARIMA model. If available, data before and after the gap is used to fit an
+     * ARIMA model each,
+     * one model predicting the gap forward in time, the other backward in time. A weighted average of the two predictions is then used as
+     * interpolated value.
+     * If only data is available before or after the gap, only one model is fitted and used for a prediction, either forward or backward in
+     * time.
      *
      * The ARIMA model needs constant sampling rates, therefore the most likely rate is calculated in the data used to fit, and the data is
      * resampled to that sampling rate. If a requested point falls in between available data, it will be linearly interpolated.
@@ -45,6 +49,14 @@ namespace mio {
      *
      * A gap is defined as a period of missing data, that has at least 2 data points with the most likely sampling rate. Only 1 missing data
      * point is linearly interpolated (should maybe just return instead).
+     *
+     * As ARIMA is a stochastic process (white noise errors are an inherent part of the model), "prediction" needs to be specified. Here we
+     * call it a simulation,
+     * when we draw a random error for each timestep, and use the ARIMA equations (see below) to predict the proceeding values. A
+     * "prediction" is
+     * essentially the mean of many simulations, including a standard deviation (see Figure 1). As interpolated values, we only use the
+     * mean, as
+     * this is the most likely missing value, and not subject to a possible random divergence.
      *
      * Mandatory parameters:
      * - `BEFORE_WINDOW` : The time before a gap that will be used to accumulate data to fit the ARIMA model.
@@ -62,14 +74,33 @@ namespace mio {
      * - `MAX_Q_SEASONAL` : The maximum number of seasonal MA coefficients to use in the ARIMA model. Default: 2
      * - `START_P_SEASONAL` : The starting number of seasonal AR coefficients to use in the ARIMA model. Default: 1
      * - `START_Q_SEASONAL` : The starting number of seasonal MA coefficients to use in the ARIMA model. Default: 1
-     * - `SEASONAL_PERIOD` : The period of the seasonal component. Default: 0 (no seasonal component)
-     * - `LIK_METHOD` : The method used to fit the ARIMA model. Default: CSS-MLE
-     * - `OPT_METHOD` : The optimization method used to fit the ARIMA model. Default: BFGS
+     * - `SEASONAL_PERIOD` : The period of the seasonal component. Default: 0s (no seasonal component)
+     * - `LIKELIHOOD_METHOD` : The method used to fit the ARIMA model. Default: CSS-MLE\n
+     *      Options are:
+     *      - `CSS-MLE` : Conditional Sum of Squares - Maximum Likelihood Estimation
+     *      - `ML` : Maximum Likelihood Estimation
+     *      - `CSS` : Conditional Sum of Squares
+     * - `OPTIMIZATION_METHOD` : The optimization method used to fit the ARIMA model. Default: BFGS\n
+     *     Options are:
+     *      - `BFGS` : Broyden–Fletcher–Goldfarb–Shanno algorithm
+     *      - `Nelder-Mead` : Nelder-Mead method
+     *      - `Newton_Line_Search` : Newton Line Search
+     *      - `Newton_Trust_Region_Hook_Step` : Newton Trust Region Hook Step
+     *      - `Newton_Trust_Region_Double_Dog_Leg` : Newton Trust Region Double Dog Leg
+     *      - `Conjugate_Gradient` : Conjugate Gradient
+     *      - `LBFGS` : Limited Memory BFGS
+     *      - `BFGS_MTM` : BFGS Using More Thuente Method
      * - `STEPWISE` : Whether to use stepwise search of the best ARIMA model. Default: true (faster)
      * - `APPROXIMATION` : Whether to use approximation to determin the Information Criteria and the Likelihood. Default: true
      * - `NUM_MODELS` : The number of models to try when using stepwise search. Default: 94
      * - `SEASONAL` : Whether to use a seasonal component in the ARIMA model. Default: true
      * - `STATIONARY` : Whether to use a stationary ARIMA model. Default: false
+     * - `NORMALIZATION` : The normalization method used to fit the ARIMA model. Default: MinMax\n
+     *     Options are:
+     *      - `MINMAX` : Min-Max Normalization
+     *      - `ZSCORE` : Z-Score Normalization
+     *      - `NOTHING` : No Normalization
+     * - `VERBOSE` : Whether to print additional information. Default: false
      *
      *
      * @code
@@ -87,9 +118,9 @@ namespace mio {
      *
      * Autoregressive Integrated Moving Average (ARIMA) is a method for forecasting on historic data. It assumes a stochastic process, with
      * errors that are uncorrelated and have a mean of zero. The ARIMA model is a generalization of an autoregressive moving average (ARMA)
-     which assumes
+     * which assumes
      * stationary (statistically stable over time) data. Autoregressive refers to a prediciton based on past values of the data. Integrated
-     refers to
+     * refers to
      * the differencing of the data to make it stationary. Moving average refers to the use of past errors.
      *
      * To account for seasonality of the data this model can be extended to Seasonal ARIMA (SARIMA). See the <a
@@ -99,7 +130,7 @@ namespace mio {
      * @subsection model Model Formulation
      *
      * @subsubsection AR Autoregressive (AR) Component:
-     * 
+     *
      *  The autoregressive component of order p (denoted as AR(p)) represents the correlation between the current observation and its
      *      \f$p\f$ past observations. The general formula for AR(\f$p\f$) is:
      *
@@ -118,19 +149,20 @@ namespace mio {
      *  - \f$a_t is\f$ a white noise term (random error) at time
      *
      * @subsubsection Int Integrated (I) Component:
-     * 
+     *
      *  The integrated component of order \f$d\f$ (denoted as I(\f$d\f$)) is responsible for differencing the time series data to achieve
      *      stationarity. The differenced series is denoted as \f$\mathbf{Y'}\f$ and is defined as:
      *
      *  \f[
      *      Y'_t = Y_t - Y_{t-d}
      *  \f]
-     * 
+     *
      *  Repeat differencing d times until stationarity is achieved.
      *
      * @subsubsection ma Moving Average (MA) Component:
-     * 
-     *  The moving average component of order \f$q\f$ (denoted as MA(\f$q\f$)) represents the correlation between the current observation and
+     *
+     *  The moving average component of order \f$q\f$ (denoted as MA(\f$q\f$)) represents the correlation between the current observation
+     * and
      *      \f$q\f$ past white noise terms. The general formula for MA(\f$q\f$) is:
      *
      *  \f[
@@ -143,12 +175,13 @@ namespace mio {
      *
      *  - \f$a_{t-q}\f$ are the past white noise terms.
      *
-     * 
+     *
      * @subsubsection arima ARIMA(p, d, q) Model:
      * Combining the AR, I, and MA components, an ARIMA(\f$p, d, q\f$) model is expressed as:
-     * 
+     *
      *  \f[
-     *      Y'_t = \phi_1 Y'_{t-1} + \phi_2 Y'_{t-2} + \ldots + \phi_p Y'_{t-p} + a_t - \theta_1 a_{t-1} - \theta_2 a_{t-2} - \ldots - \theta_q a_{t-q}
+     *      Y'_t = \phi_1 Y'_{t-1} + \phi_2 Y'_{t-2} + \ldots + \phi_p Y'_{t-p} + a_t - \theta_1 a_{t-1} - \theta_2 a_{t-2} - \ldots -
+     * \theta_q a_{t-q}
      *  \f]
      *
      * @subsection estimation Parameter Estimation
@@ -163,7 +196,7 @@ namespace mio {
      *
      * @code
      * TA::ARIMA::LIK_METHOD = CSS-MLE
-     * TA::ARIMA:::OPT_METHOD = BFGS
+     * TA::ARIMA::OPT_METHOD = BFGS
      * @endcode
      *
      *
@@ -219,14 +252,23 @@ namespace mio {
      * As the ARIMA model only works with constant sampling rates, the data is resampled to the most likely sampling rate. If a requested
      * point falls in between available data, it will be linearly interpolated.
      *
-     * \image html arima_simulation.png "Figure 1: Forecast and Simulation using an ARIMA model"
-     * \image html arima_interpolation.png "Figure 2: Interpolation using an ARIMA model"
+     * \image html arima_simulation.png "Figure 1: Prediction and Simulation using an ARIMA model."
+     * 
+     * The cyan line is the prediction (mean)
+     * with standard deviation (blue 1\f$\sigma\f$ and red 2\f$\sigma\f$). The Blue and Red lines show two simulations, each with a different
+     * draw of random errors.
+     * 
+     * \image html arima_interpolation.png "Figure 2: Interpolation using an ARIMA model."
+     * 
+     * Green shows the data given to the Interpolation
+     * Algorithm, in blue its output. And orange the original test data.
      *
-     * 
-     * @note The performance of the ARIMA model can vary and also depends on the given data. In general the more data the better, and when computing time is not 
+     *
+     * @note The performance of the ARIMA model can vary and also depends on the given data. In general the more data the better, and when
+     * computing time is not
      * an issue an extensive search might be useful
-     * 
-     * 
+     *
+     *
      * @author Patrick Leibersperger
      * @date 2024-01-25
      *
@@ -283,7 +325,7 @@ namespace mio {
         bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;
-        Normalization::Mode normalize=Normalization::Mode::MinMax;
+        Normalization::Mode normalize = Normalization::Mode::MinMax;
 
         // Flags
         bool is_zero_possible = false;
@@ -317,7 +359,7 @@ namespace mio {
                                                 size_t length_gap_interpol, int period);
         void cacheGap(const std::vector<double> &interpolated_data, const std::vector<Date> &interpolated_dates, const ARIMA_GAP &new_gap);
 
-        // info 
+        // info
         void infoARIMA(InterpolARIMA arima);
     };
 } // end namespace mio

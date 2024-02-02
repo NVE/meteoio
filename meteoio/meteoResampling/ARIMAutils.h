@@ -43,8 +43,8 @@ namespace mio {
             Newton_Trust_Region_Double_Dog_Leg,
             Conjugate_Gradient,
             BFGS,
-            Limited_Memory_BFGS,
-            BFGS_Using_More_Thuente_Method,
+            LBFGS,
+            BFGS_MTM,
         };
 
         // a struct to hold the coefficients for normalization and denormalization of a time series, cannot be used 
