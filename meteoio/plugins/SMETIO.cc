@@ -39,6 +39,8 @@ namespace mio {
  *
  * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase.
  * It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
+ * 
+ * @note There is also a python library, <a href="https://gitlabext.wsl.ch/patrick.leibersperger/pysmet">pySMET</a> available, to read SMET files.
  *
  * @section smetio_units Units
  * All units are <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.330-2019.pdf">coherent derived SI units</a> (section 2.3.4 in the SI-Brochure),
