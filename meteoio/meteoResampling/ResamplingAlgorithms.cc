@@ -240,6 +240,21 @@ size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos
 	}
 }
 
+ResamplingAlgorithms::gap_info ResamplingAlgorithms::findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
+					 const double& i_window_size) {
+	ResamplingAlgorithms::gap_info last_gap;
+	size_t indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size);
+	size_t indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1);
+
+	if (indexP1 == IOUtils::npos) {
+		last_gap.setStart(0, vecM);
+	}
+	if (indexP2 == IOUtils::npos) {
+		last_gap.setEnd(vecM.size()-1, vecM);
+	}
+	return last_gap;
+}
+
 /**
  * @brief This function returns the last and next valid points around a given position
  * @param stationHash hash used to uniquely identify timeseries (so we can cache some data per timeseries)
