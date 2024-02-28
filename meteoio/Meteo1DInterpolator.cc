@@ -77,7 +77,13 @@ namespace mio {
 			std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
 			if (algo_name == "NONE")
 				algo_name = "LINEAR"; // default value
-			const double max_gap_size = cfg.get(algo_name + "::MAX_GAP_SIZE", interpol_section, 0.);
+			double max_gap_size = cfg.get(parname +"::"+algo_name + "::MAX_GAP_SIZE", interpol_section);
+            if (max_gap_size != IOUtils::nodata) {
+                if (max_gap_size < 0.)
+                    throw IOException("MAX_GAP_SIZE not valid, it should be a duration in seconds at least greater than 0", AT);
+                else max_gap_size /= 86400.; // user uses seconds, internally julian day is used
+            }
+
 
 			if (first_time && algo_name == "ACCUMULATE" && mode == IOUtils::VSTATIONS && rank == 1) {
 				const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
@@ -223,7 +229,8 @@ namespace mio {
 	std::vector<std::shared_ptr<ResamplingAlgorithms>> ResamplingStack::buildStack(const ResamplingAlgorithms::gap_info &gap) const {
 		std::vector<std::shared_ptr<ResamplingAlgorithms>> res;
 		for (size_t ii = 0; ii < stack.size(); ii++) {
-			if (gap.size() <= max_gap_sizes[ii]) {
+            if (max_gap_sizes[ii] == IOUtils::nodata) res.push_back(stack[ii]);
+			else if (gap.size() <= max_gap_sizes[ii]) {
 				res.push_back(stack[ii]);
 			}
 		}
@@ -240,8 +247,12 @@ namespace mio {
 		const ResamplingAlgorithms::gap_info gap = ResamplingAlgorithms::findGap(index, ii, vecM, md.date, i_window_size);
 		const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
 		for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
-			resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
-            if (jj > 0 &&(index != IOUtils::npos) && vecM[index](ii) != md(ii)) break;
+            resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
+            if (jj > 0 && (index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
+                break;
+            } else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](ii) == md(ii)){
+                break;
+            }
 		}
 	}
 

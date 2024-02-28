@@ -57,7 +57,7 @@ class ResamplingAlgorithms {
 			void setStart(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; startIdx=idx; start=vecM[idx].date;}
 			void setEnd(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx>=vecM.size()) return; endIdx=idx; end=vecM[idx].date;}
 			std::string toString() const {std::ostringstream os; os << start.toString(Date::ISO) << " (" << startIdx << ") - " << end.toString(Date::ISO) << " (" << endIdx << ")"; return os.str();}
-			double size() const {return end.getJulian(true)-start.getJulian(true);}
+			double size() const {return std::abs(end.getJulian(true)-start.getJulian(true));}
 			Date start, end;
 			size_t startIdx, endIdx;
 		} gap_info;
