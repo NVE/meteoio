@@ -77,13 +77,12 @@ namespace mio {
 			std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
 			if (algo_name == "NONE")
 				algo_name = "LINEAR"; // default value
-			double max_gap_size = cfg.get(parname +"::"+algo_name + "::MAX_GAP_SIZE", interpol_section);
+			double max_gap_size = cfg.get(parname +"::"+algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
             if (max_gap_size != IOUtils::nodata) {
                 if (max_gap_size < 0.)
                     throw IOException("MAX_GAP_SIZE not valid, it should be a duration in seconds at least greater than 0", AT);
                 else max_gap_size /= 86400.; // user uses seconds, internally julian day is used
             }
-
 
 			if (first_time && algo_name == "ACCUMULATE" && mode == IOUtils::VSTATIONS && rank == 1) {
 				const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
