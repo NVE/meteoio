@@ -575,19 +575,6 @@ namespace mio {
             md(paramindex) = interpolVecAt(interpolated_data, interpolated_dates, idx, resampling_date);
             return;
         }
-
-        // TODO: remove when interpolation stack is implemented
-        //  linearly interpolate the point
-        //  should i actually do that or just return?
-#ifdef DEBUG
-        std::cout << "linearly interpolating the point" << std::endl;
-#endif
-        double start_value = vecM[gap_start - 1](paramindex);
-        double end_value = vecM[gap_end + 1](paramindex);
-        Date start_date = vecM[gap_start - 1].date;
-        Date end_date = vecM[gap_end + 1].date;
-        md(paramindex) = linearInterpolation(start_date.getJulian(true), start_value, end_date.getJulian(true), end_value,
-                                             resampling_date.getJulian(true));
         return;
     }
 } // namespace
