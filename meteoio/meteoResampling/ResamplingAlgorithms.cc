@@ -35,21 +35,29 @@ namespace mio {
  *
  * @section resampling_section Resampling section
  * The resampling is specified for each parameter in the [Interpolations1D] section. This section contains
- * a list of the various meteo parameters with their associated choice of resampling algorithm and
+ * a list of the various meteo parameters with their associated choice of resampling algorithm stacks and
  * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
- * assumed. An example of such section is given below:
+ * assumed. The Resampling is done by using a stack of resampling algorithms, with optional specifications of 
+ * the maximum data gap that the respective algorithm should be used for.
+ * (The default for the maximum gap size is -999 = internal nodata value, meaning that the algorithm should be used for all gaps).
+ * 
+ * An example of such section is given below:
  * @code
  * [Interpolations1D]
  * WINDOW_SIZE     = 86400
- * TA::resample    = linear
+ * TA::RESAMPLE1    = linear
  *
- * RH::resample            = linear
- * RH::linear::window_size = 172800
+ * RH::RESAMPLE1            = linear
+ * RH::LINEAR::window_size = 172800
+ * RH::LINEAR::MAX_GAP_SIZE = 86400 # 1 day in seconds
  *
- * VW::resample             = nearest
+ * VW::resample1             = nearest
  * VW::nearest::extrapolate = true
+ * VW::nearest::max_gap_size = 3600
+ * VW::resample2			 = linear
+ * 
  *
- * PSUM::resample           = accumulate
+ * PSUM::resample1           = accumulate
  * PSUM::accumulate::period = 3600
  * @endcode
  *
