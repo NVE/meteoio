@@ -464,7 +464,6 @@ namespace mio {
                 return;
             }
         }
-
         checkZeroPossibility(vecM, paramindex);
 
         const Date resampling_date = md.date;
@@ -502,7 +501,7 @@ namespace mio {
         }
 
         // check if gap ended up being bigger than the window size
-        if (new_gap.endDate - new_gap.startDate > window_size) {
+        if (new_gap.endDate.getJulian(true) - new_gap.startDate.getJulian(true) > window_size) {
             double difference = (new_gap.endDate - new_gap.startDate).getJulian(true) - window_size;
             difference *= 86400;
             throw IOException(
