@@ -40,7 +40,7 @@ namespace mio {
         }
     }
 
-	// --------------------- Meteo1DInterpolator Implementation --------------------------------------
+    // --------------------- Meteo1DInterpolator Implementation --------------------------------------
 
     Meteo1DInterpolator::Meteo1DInterpolator(const Config &in_cfg, const char &rank, const IOUtils::OperationMode &mode)
         : mapAlgorithms(), cfg(in_cfg), window_size(86400.), enable_resampling(true), data_qa_logs(false) {
@@ -55,47 +55,52 @@ namespace mio {
         if (window_size == 0.)
             enable_resampling = false;
 
-		createResamplingStacks(mode, rank);
-
+        createResamplingStacks(mode, rank);
     }
 
-	void Meteo1DInterpolator::createResamplingStacks(const IOUtils::OperationMode& mode, const char& rank) {
-		for (size_t ii = 0; ii < MeteoData::nrOfParameters; ii++) {     // loop over all MeteoData member variables
-			const std::string parname(MeteoData::getParameterName(ii)); // Current parameter name
+    void Meteo1DInterpolator::createResamplingStacks(const IOUtils::OperationMode &mode, const char &rank) {
+        for (size_t ii = 0; ii < MeteoData::nrOfParameters; ii++) {     // loop over all MeteoData member variables
+            const std::string parname(MeteoData::getParameterName(ii)); // Current parameter name
 
-			// extract each interpolation algorithm and its arguments, then build the stack
-			const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
-			mapAlgorithms[parname] = ResamplingStack();
+            // extract each interpolation algorithm and its arguments, then build the stack
+            const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
+            mapAlgorithms[parname] = ResamplingStack();
+            processAlgorithms(true, parname, vecAlgos, mode, rank);
+        }
+    }
 
-			processAlgorithms(true, parname, vecAlgos, mode, rank);
-		}
-	}
-
-	void Meteo1DInterpolator::processAlgorithms(bool first_time, const std::string& parname, const std::vector<std::pair<std::string, std::string>>& vecAlgos, const IOUtils::OperationMode& mode, const char& rank) {
-		for (size_t ii = 0; ii < vecAlgos.size(); ii++) {
-			std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
-			if (algo_name == "NONE")
-				algo_name = "LINEAR"; // default value
-			double max_gap_size = cfg.get(parname +"::"+algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
+    void Meteo1DInterpolator::processAlgorithms(bool first_time, const std::string &parname, const std::vector<std::pair<std::string, std::string>> &vecAlgos, const IOUtils::OperationMode &mode,
+                                                const char &rank) {
+        for (size_t ii = 0; ii < vecAlgos.size(); ii++) {
+            std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
+            if (algo_name == "NONE")
+                algo_name = "LINEAR"; // default value
+            double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
             if (max_gap_size != IOUtils::nodata) {
                 if (max_gap_size < 0.)
                     throw IOException("MAX_GAP_SIZE not valid, it should be a duration in seconds at least greater than 0", AT);
-                else max_gap_size /= 86400.; // user uses seconds, internally julian day is used
+                else
+                    max_gap_size /= 86400.; // user uses seconds, internally julian day is used
             }
 
-			if (first_time && algo_name == "ACCUMULATE" && mode == IOUtils::VSTATIONS && rank == 1) {
-				const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
-				const std::vector<std::pair<std::string, std::string>> vecArgs(1, std::make_pair("PERIOD", vstations_refresh_rate));
-				std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs));
-				mapAlgorithms[parname].addAlgorithm(algo_ptr, max_gap_size);
-			} else {
-				std::vector<std::pair<std::string, std::string>> vecArgs(cfg.getArgumentsForAlgorithm(parname, algo_name));
-				eraseArg(vecArgs, "MAX_GAP_SIZE");
-				std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs));
-				mapAlgorithms[parname].addAlgorithm(algo_ptr, max_gap_size);			}
-		}
-	}
-
+            if (first_time && algo_name == "ACCUMULATE" && mode == IOUtils::VSTATIONS && rank == 1) {
+                const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
+                const std::vector<std::pair<std::string, std::string>> vecArgs(1, std::make_pair("PERIOD", vstations_refresh_rate));
+                std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs));
+                mapAlgorithms[parname].addAlgorithm(algo_ptr, max_gap_size);
+            } else {
+                std::vector<std::pair<std::string, std::string>> vecArgs(cfg.getArgumentsForAlgorithm(parname, algo_name));
+                eraseArg(vecArgs, "MAX_GAP_SIZE");
+                std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs));
+                mapAlgorithms[parname].addAlgorithm(algo_ptr, max_gap_size);
+            }
+        }
+        if (mapAlgorithms[parname].empty()) { // create a default linear algorithm
+            std::vector<std::pair<std::string, std::string>> vecArgs(cfg.getArgumentsForAlgorithm(parname, "LINEAR"));
+            std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm("LINEAR", parname, window_size, vecArgs));
+            mapAlgorithms[parname].addAlgorithm(algo_ptr, IOUtils::nodata);        
+        }
+    }
 
     void Meteo1DInterpolator::getWindowSize(ProcessingProperties &o_properties) const {
         o_properties.points_before = 1;
@@ -147,15 +152,15 @@ namespace mio {
         for (size_t ii = 0; ii < md.getNrOfParameters(); ii++) {
             const std::string parname(md.getNameForParameter(ii)); // Current parameter name
             const std::map<std::string, ResamplingStack>::const_iterator it = mapAlgorithms.find(parname);
-            if (it != mapAlgorithms.end()) {                                                                   // the parameter has been found
-            	it->second.resample(stationHash, index, elementpos, ii, vecM, md, window_size);
+            if (it != mapAlgorithms.end()) { // the parameter has been found
+                it->second.resample(stationHash, index, elementpos, ii, vecM, md, window_size);
 
             } else { // we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
                 const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
                 mapAlgorithms[parname] = ResamplingStack();
 
                 processAlgorithms(false, parname, vecAlgos);
-				mapAlgorithms[parname].resample(stationHash, index, elementpos, ii, vecM, md, window_size);
+                mapAlgorithms[parname].resample(stationHash, index, elementpos, ii, vecM, md, window_size);
             }
 
             if ((index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
@@ -165,7 +170,7 @@ namespace mio {
                     const std::string statName(md.meta.getStationName());
                     const std::string statID(md.meta.getStationID());
                     const std::string stat = (!statID.empty()) ? statID : statName;
-                    const std::string algo_name(it2->second.getStackStr() );
+                    const std::string algo_name(it2->second.getStackStr());
                     cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
                 }
             }
@@ -216,53 +221,60 @@ namespace mio {
         return os.str();
     }
 
-	// --------------------- Resampling Stack Implementation --------------------------------------
-	ResamplingStack::ResamplingStack() : max_gap_sizes(), stack() {}
+    // --------------------- Resampling Stack Implementation --------------------------------------
+    ResamplingStack::ResamplingStack() : max_gap_sizes(), stack() {}
 
-	void ResamplingStack::addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double &max_gap_size) {
-		stack.push_back(algo);
-		max_gap_sizes.push_back(max_gap_size);
-	}
+    void ResamplingStack::addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double &max_gap_size) {
+        stack.push_back(algo);
+        max_gap_sizes.push_back(max_gap_size);
+    }
 
-	std::vector<std::shared_ptr<ResamplingAlgorithms>> ResamplingStack::buildStack(const ResamplingAlgorithms::gap_info &gap) const {
-		std::vector<std::shared_ptr<ResamplingAlgorithms>> res;
-		for (size_t ii = 0; ii < stack.size(); ii++) {
-            if (max_gap_sizes[ii] == IOUtils::nodata) res.push_back(stack[ii]);
-			else if (gap.size() <= max_gap_sizes[ii]) {
-				res.push_back(stack[ii]);
-			}
-		}
-		return res;
-	}
+    std::vector<std::shared_ptr<ResamplingAlgorithms>> ResamplingStack::buildStack(const ResamplingAlgorithms::gap_info &gap) const {
+        std::vector<std::shared_ptr<ResamplingAlgorithms>> res;
+        for (size_t ii = 0; ii < stack.size(); ii++) {
+            if (max_gap_sizes[ii] == IOUtils::nodata)
+                res.push_back(stack[ii]);
+            else if (gap.size() <= max_gap_sizes[ii]) {
+                res.push_back(stack[ii]);
+            }
+        }
+        return res;
+    }
 
-	void ResamplingStack::resetResampling() {
-		for (size_t ii = 0; ii < stack.size(); ii++) {
-			stack[ii]->resetResampling();
-		}
-	}
+    void ResamplingStack::resetResampling() {
+        for (size_t ii = 0; ii < stack.size(); ii++) {
+            stack[ii]->resetResampling();
+        }
+    }
 
-	void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& i_window_size) const {
-		const ResamplingAlgorithms::gap_info gap = ResamplingAlgorithms::findGap(index, ii, vecM, md.date, i_window_size);
-		const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
-		for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
+    void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM,
+                                   MeteoData &md, const double &i_window_size) const {
+        const ResamplingAlgorithms::gap_info gap = ResamplingAlgorithms::findGap(index, ii, vecM, md.date, i_window_size);
+        const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
+        for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
             resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
             if (jj > 0 && (index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
                 break;
-            } else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](ii) == md(ii)){
+            } else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](ii) == md(ii)) {
                 break;
             }
-		}
-	}
+        }
+    }
 
-	std::string ResamplingStack::getStackStr() const {
-		ostringstream os;
-		os << "[";
-		for (size_t ii = 0; ii < stack.size(); ii++) {
-			os << stack[ii]->getAlgo();
-			if (ii < stack.size() - 1) os << ", ";
-		}
-		os << "]";
-		return os.str();
-	}
+    bool ResamplingStack::empty() const {
+        return stack.empty();
+    }
+
+    std::string ResamplingStack::getStackStr() const {
+        ostringstream os;
+        os << "[";
+        for (size_t ii = 0; ii < stack.size(); ii++) {
+            os << stack[ii]->getAlgo();
+            if (ii < stack.size() - 1)
+                os << ", ";
+        }
+        os << "]";
+        return os.str();
+    }
 
 } // namespace

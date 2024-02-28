@@ -93,6 +93,7 @@ class ResamplingStack {
 		void resetResampling();
 		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& i_window_size) const;
 		std::string getStackStr() const;
+		bool empty() const;
 
     private:
         std::vector<double> max_gap_sizes;
