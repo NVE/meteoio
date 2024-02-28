@@ -28,7 +28,6 @@ namespace mio {
 
     const std::string Meteo1DInterpolator::interpol_section("Interpolations1D");
     const std::string Meteo1DInterpolator::interpol_pattern("::RESAMPLE");
-    const std::string Meteo1DInterpolator::arg_pattern("ARG");
 
     static void eraseArg(std::vector<std::pair<std::string, std::string>> &vecArgs, const std::string &argname) {
         std::vector<std::pair<std::string, std::string>>::iterator it = vecArgs.begin();
