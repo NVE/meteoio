@@ -262,13 +262,13 @@ static void adjustDataStartDate(ARIMA_GAP &last_gap, const std::vector<MeteoData
 }
 
 void checkWindowSize(const ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date, const double& window_size) {
-    if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
+	if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
         data_start_date = vecM[0].date;
     } 
     if (data_end_date > vecM[vecM.size()-1].date) {
         data_end_date = vecM[vecM.size()-1].date;
     }
-    if (data_end_date - data_start_date > window_size) {
+    if (data_end_date.getJulian(true) - data_start_date.getJulian(true) > window_size) {
         throw IOException("The data window needed to interpolate the gap " + last_gap.toString() + " is larger than the resampling window size");
     }
 }
@@ -278,6 +278,7 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 {
 	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, window_size);
 	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, window_size, indexP1);
+
 	if (indexP1 == IOUtils::npos  && indexP2 == 0) {
 		last_gap.startDate = resampling_date;
 		indexP1 = 0;

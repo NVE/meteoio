@@ -464,7 +464,6 @@ namespace mio {
                 return;
             }
         }
-
         checkZeroPossibility(vecM, paramindex);
 
         const Date resampling_date = md.date;
@@ -502,7 +501,7 @@ namespace mio {
         }
 
         // check if gap ended up being bigger than the window size
-        if (new_gap.endDate - new_gap.startDate > window_size) {
+        if (new_gap.endDate.getJulian(true) - new_gap.startDate.getJulian(true) > window_size) {
             double difference = (new_gap.endDate - new_gap.startDate).getJulian(true) - window_size;
             difference *= 86400;
             throw IOException(
@@ -576,19 +575,6 @@ namespace mio {
             md(paramindex) = interpolVecAt(interpolated_data, interpolated_dates, idx, resampling_date);
             return;
         }
-
-        // TODO: remove when interpolation stack is implemented
-        //  linearly interpolate the point
-        //  should i actually do that or just return?
-#ifdef DEBUG
-        std::cout << "linearly interpolating the point" << std::endl;
-#endif
-        double start_value = vecM[gap_start - 1](paramindex);
-        double end_value = vecM[gap_end + 1](paramindex);
-        Date start_date = vecM[gap_start - 1].date;
-        Date end_date = vecM[gap_end + 1].date;
-        md(paramindex) = linearInterpolation(start_date.getJulian(true), start_value, end_date.getJulian(true), end_value,
-                                             resampling_date.getJulian(true));
         return;
     }
 } // namespace
