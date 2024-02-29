@@ -19,6 +19,8 @@
 
 #include <meteoio/IOManager.h>
 #include <meteoio/FStream.h>
+#include <set>
+
 
 using namespace std;
 
@@ -345,8 +347,9 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS));
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
 		}
-		
-		return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool success = tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	if (ts_mode==IOUtils::GRID_SMART) {
@@ -356,18 +359,21 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool success = tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	if (ts_mode==IOUtils::VSTATIONS) {
 		const Date bufferStart( tsm2.getBufferStart( TimeSeriesManager::RAW ) );
 		const Date bufferEnd( tsm2.getBufferEnd( TimeSeriesManager::RAW ) );
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
+			// TODO: check meteodata
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool success = tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	throw InvalidArgumentException("Unsupported operation_mode", AT);
@@ -380,7 +386,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	vecMeteo.clear();
 
 	if (ts_mode==IOUtils::STD) {
-		return tsm1.getMeteoData(i_date, vecMeteo);
+		bool success = tsm1.getMeteoData(i_date, vecMeteo);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	if (ts_mode>=IOUtils::GRID_EXTRACT && ts_mode!=IOUtils::GRID_SMART) {
@@ -392,9 +400,12 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			
 			const Date dateStart = i_date - buffer_before;
 			const Date dateEnd( i_date - buffer_before + buffer_size );
+			// TODO: check meteodata
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS)));
 		}
-		return tsm1.getMeteoData(i_date, vecMeteo);
+		bool success = tsm1.getMeteoData(i_date, vecMeteo);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	if (ts_mode==IOUtils::GRID_SMART) {
@@ -414,10 +425,12 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			
 			const Date dateStart2( i_date - buffer_before );
 			const Date dateEnd2( i_date - buffer_before + buffer_size );
+			// TODO: check meteodata
 			tsm2.push_meteo_data(IOUtils::raw, dateStart2, dateEnd2, getVirtualStationsData(source_dem, dateStart2, dateEnd2));
 		}
-		
-		return tsm2.getMeteoData(i_date, vecMeteo);
+		bool success = tsm2.getMeteoData(i_date, vecMeteo);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	if (ts_mode==IOUtils::VSTATIONS) {
@@ -432,10 +445,12 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateStart( i_date - buffer_before );
 			const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );	
 			const Date dateEnd( i_date - buffer_before + buffer_size );
+			// TODO: check meteodata
 			tsm2.push_meteo_data(IOUtils::raw, buff_start, dateEnd, getVirtualStationsData(source_dem, buff_start, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(i_date, vecMeteo);
+		bool success = tsm2.getMeteoData(i_date, vecMeteo);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return success;
 	}
 	
 	throw InvalidArgumentException("Unsuppported operation_mode", AT);
@@ -447,6 +462,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
                   Grid2DObject& result)
 {
 	std::string info_string;
+	// TODO: check gridded meteo data
 	const bool status = getMeteoData(date, dem, meteoparam, result, info_string);
 	if (!info_string.empty()) { //not read as raw grid
 		cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
@@ -459,6 +475,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
                   Grid2DObject& result)
 {
 	std::string info_string;
+	// TODO: check gridded meteodata
 	const bool status = getMeteoData(date, dem, param_name, result, info_string);
 	if (!info_string.empty()) { //not read as raw grid
 		cerr << "[i] Interpolating " << param_name;
@@ -480,6 +497,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 			
 			const Date dateStart( date - buffer_before );
 			const Date dateEnd( date - buffer_before + buffer_size );
+			// TODO: check gridded meteodata
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
@@ -487,9 +505,10 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
 		if (write_resampled_grids)
 			gdm1.write2DGrid(result, gpar, date);
+		// TODO: check gridded meteodata
 		return (!result.empty());
 	}
-
+	// TODO: check gridded meteodata
 	info_string = interpolator.interpolate(date, dem, meteoparam, result);
 	return (!result.empty());
 }
@@ -507,6 +526,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 			
 			const Date dateStart( date - buffer_before );
 			const Date dateEnd( date - buffer_before + buffer_size );
+			//TODO: check gridded meteodata
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
@@ -514,10 +534,13 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
 		if (write_resampled_grids)
 			gdm1.write2DGrid(result, gpar, date);
+		// TODO: check gridded meteodata
 		return (!result.empty());
 	}
 
+	// TODO: check gridded meteodata
 	info_string = interpolator.interpolate(date, dem, param_name, result);
+	
 	return (!result.empty());
 }
 
@@ -526,6 +549,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
 {
+	// TODO: check meteodata
 	const std::string info_string( interpolator.interpolate(date, dem, meteoparam, in_coords, result) );
 	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cerr << " (" << info_string << ") " << endl;
@@ -534,12 +558,14 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
+	// TODO: check meteodata
 	info_string = interpolator.interpolate(date, dem, meteoparam, in_coords, result);
 }
 
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string)
 {
+	// TODO: check meteodata
 	info_string = interpolator.interpolate(date, dem, meteoparam, in_stations, result);
 }
 
@@ -590,9 +616,41 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 			}
 		}
 	}
-	
+	if (!isValidDataSet(vecvecMeteo)) throw IOException("Duplicate Dates in virtual stations data set", AT);
 	return vecvecMeteo;
 }
+
+
+bool isValidSeries(const METEO_SET& vecMeteo)
+{
+	//check for duplicate dates
+	// is there anything else we need to check for?
+	std::vector<Date> vecDate;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		vecDate.push_back( vecMeteo[ii].date);
+	}
+	std::set<Date> setDate( vecDate.begin(), vecDate.end() );
+	return (setDate.size()==vecDate.size());
+}
+
+bool isValidDataSet(const std::vector<METEO_SET>& vecvecMeteo)
+{
+	// checks duplicate dates, and duplicate stations
+	std::vector<StationData> vecStation;
+	for (size_t ii=0; ii<vecvecMeteo.size(); ii++) {
+		if (!isValidSeries(vecvecMeteo[ii])) return false;
+		vecStation.push_back( vecvecMeteo[ii][0].meta );
+	}
+	for (size_t i = 0; i < vecStation.size(); ++i) {
+        for (size_t j = i + 1; j < vecStation.size(); ++j) {
+            if (vecStation[i] == vecStation[j]) {
+                throw IOException("Duplicate stations in data set", AT);
+            } 
+		}
+    }
+	return true;
+}
+
 
 const std::string IOManager::toString() const {
 	ostringstream os;

@@ -224,6 +224,9 @@ class IOManager {
 		 */
 		void clear_cache();
 
+		bool isValidSeries(const METEO_SET& vecMeteo);
+		bool isValidDataSet(const std::vector< METEO_SET >& vecVecMeteo);
+
 	private:
 		/**
 		 * @brief Returns the mode to be used for the IOManager for TimeSeries
