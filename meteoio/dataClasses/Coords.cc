@@ -538,6 +538,40 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 	validIndex = false;
 }
 
+const std::set<int> Coords::latlon_epsgs = {4326};
+
+/**
+* @brief Set coordinates based on the previously defined EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude) {
+	if (latlon_epsgs.find(getEPSG()) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
+/**
+* @brief Set coordinates based on a given EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude, const int epsg) {
+	if (latlon_epsgs.find(epsg) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setEPSG(epsg);
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
+
 /**
 * @brief Set grid indices
 * This index represent the position in a cartesian grid. It can not be automatically matched with

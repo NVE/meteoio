@@ -91,6 +91,11 @@ IF(PLUGIN_NETCDFIO)
 	SET(plugins_sources ${plugins_sources} plugins/NetCDFIO.cc)
 ENDIF(PLUGIN_NETCDFIO)
 
+IF(PLUGIN_NEADIO)
+	set(plugins_sources ${plugins_sources} plugins/NEADHelper.cc)
+	set(plugins_sources ${plugins_sources} plugins/NEADIO.cc)
+ENDIF(PLUGIN_NEADIO)
+
 IF(PLUGIN_OSHDIO)
 	FIND_PACKAGE(Matio REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM "${Matio_INCLUDE_DIR}")

@@ -475,6 +475,17 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, co
 	return vecRet.size();
 }
 
+std::vector<std::string> split(const std::string &s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        trim(token);
+		tokens.push_back(token);
+    }
+    return tokens;
+}
+
 // generic template function convertString must be defined in the header
 
 static const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -664,6 +675,7 @@ bool convertString(Date& t, std::string str, const double& time_zone, std::ios_b
 
 	if (sscanf(c_str, "%d-%u-%u %u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
 		const std::string timezone_iso(rest);
+		if (timezone_iso.empty() && time_zone==nodata) return false;
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
