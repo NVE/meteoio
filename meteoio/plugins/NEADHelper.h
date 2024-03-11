@@ -78,6 +78,7 @@ namespace mio {
                 loc.setPoint(x, y, z, epsg);
                 return loc;
             }
+            
             geoLocation& operator=(const geoLocation& rhs);
             geoLocation(const geoLocation& rhs);
             geoLocation() = default;
@@ -87,6 +88,7 @@ namespace mio {
         
         bool operator==(const geoLocation& lhs, const geoLocation& rhs);
         bool operator!=(const geoLocation& lhs, const geoLocation& rhs);
+        
         /**
          * @brief Stores information on the METADATA section of a NEAD file.
          */
@@ -103,7 +105,7 @@ namespace mio {
 
             std::map<std::string, std::string> optional_metadata = {}; /**< The optional metadata. */
 
-            std::vector<char> valid_delimiters = {',', '/', '\\', '|', ':', ';'}; /**< The valid delimiters. */
+            const std::vector<char> valid_delimiters = {',', '/', '\\', '|', ':', ';'}; /**< The valid delimiters. */
 
             /**
              * @brief Set the EPSG code and update the SRID.
@@ -122,7 +124,7 @@ namespace mio {
              * @return The value of the optional metadata field.
              */
             std::string getOptionalMetaData(const std::string &key) const {
-                auto it = optional_metadata.find(key);
+                const auto it = optional_metadata.find(key);
                 if (it != optional_metadata.end()) {
                     return it->second;
                 }
