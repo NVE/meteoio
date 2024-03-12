@@ -141,24 +141,22 @@ double TauCLDGenerator::getHorizon(const MeteoData& md, const double& sun_azi)
 double TauCLDGenerator::interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const
 {
 	const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a cloudCache object
-	if (cloudiness_point==last_cloudiness.end()) return IOUtils::nodata;
+	if (cloudiness_point==last_cloudiness.end()) {
+		return IOUtils::nodata;
+	}
 
-	const double last_cloudiness_julian = cloudiness_point->second.julian_gmt_before;
-	const double last_cloudiness_value = cloudiness_point->second.cloudiness_before;
+	//TODO for now, exact same behavior as before. The goal is to implement better interpolations!
+	const double last_cloudiness_julian = cloudiness_point->second.last_valid.first;
+	const double last_cloudiness_value = cloudiness_point->second.last_valid.second;
 	double cloudiness = IOUtils::nodata;
 	if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
-	
+
 	return cloudiness;
 }
 
 void TauCLDGenerator::cloudCache::addCloudiness(const double& julian_gmt, const double& cloudiness)
 {
-	/*if (julian_gmt>(julian_gmt_after+1)) { //start a new pair of before/after
-		julian_gmt_before, cloudiness_before;
-		julian_gmt_after, cloudiness_after;
-	}*/
-	julian_gmt_before = julian_gmt;
-	cloudiness_before = cloudiness;
+	last_valid = std::make_pair(julian_gmt, cloudiness);
 }
 
 /**

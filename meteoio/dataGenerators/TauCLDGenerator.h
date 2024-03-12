@@ -100,13 +100,12 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 	protected:
 
 		typedef struct CLOUDCACHE {
-			CLOUDCACHE() : julian_gmt_before(IOUtils::nodata), cloudiness_before(IOUtils::nodata), julian_gmt_after(IOUtils::nodata), cloudiness_after(IOUtils::nodata) {}
-			CLOUDCACHE(const double& julian_gmt, const double& cloudiness) : julian_gmt_before(julian_gmt), cloudiness_before(cloudiness), julian_gmt_after(IOUtils::nodata), cloudiness_after(IOUtils::nodata) {}
+			CLOUDCACHE() : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) {}
+			CLOUDCACHE(const double& julian_gmt, const double& cloudiness) : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) { addCloudiness(julian_gmt, cloudiness); }
 
 			void addCloudiness(const double& julian_gmt, const double& cloudiness);
 
-			double julian_gmt_before, cloudiness_before;
-			double julian_gmt_after, cloudiness_after;
+			std::pair<double, double> last_valid;
 		} cloudCache;
 
 		double interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const;
