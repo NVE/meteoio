@@ -308,7 +308,9 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		data = &raw_buffer.getBuffer();
 	}
 
-	std::vector<size_t> stations_idx((*data).size(), IOUtils::npos); //vector to match indices between data (all stations) and vecMeteo (only stations that could provide data at the requested date)
+	//vector to match indices between data (all stations) and vecMeteo (only stations that could provide data at the requested date)
+	std::vector<size_t> stations_idx((*data).size(), IOUtils::npos);
+
 	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			if ((*data)[ii].empty()) continue;
