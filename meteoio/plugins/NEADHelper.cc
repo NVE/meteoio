@@ -99,7 +99,7 @@ static std::vector<double> extractMatches(const std::string &match) {
 *
 * For Now only returs the last point in the geometry string.
 */
-static geoLocation processGeometryRegexes(const std::string &geometry, const std::regex &reg, bool has_Z) {
+static geoLocation processGeometryRegexes(const std::string &geometry, const std::regex &reg, const bool& has_Z) {
     size_t stride = has_Z ? 3 : 2;
     std::smatch matches;
     geoLocation location;
@@ -148,7 +148,7 @@ std::vector<double> convertVector(const std::vector<std::string> &vec) {
     return result;
 }
 
-std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, int epsg) {
+std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, const int& epsg) {
     std::vector<Coords> result;
     for (auto loc : vec) {
         loc.standardizeNodata();
@@ -161,11 +161,11 @@ std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, int epsg)
 
 /**
 * Converts the given Coords object to a geoLocation object.
-*
-* @param coords The Coords object to convert.
+* @param[in] loc The Coords object to convert.
+* @param[in] epsg <a href="https://epsg.org/home.html">EPSG code</a> of the provided coordinates
 * @return The converted geoLocation object.
 */
-geoLocation toNEADLocation(Coords loc, int epsg) {
+geoLocation toNEADLocation(Coords loc, const int& epsg) {
     geoLocation location;
     if (Coords::latlon_epsgs.find(epsg) != Coords::latlon_epsgs.end()) {
         location = geoLocation(loc.getLat(), loc.getLon(), loc.getAltitude());
@@ -177,7 +177,9 @@ geoLocation toNEADLocation(Coords loc, int epsg) {
 }
 
 /**
-* @brief extracts a geoLocation object out of a geometry string.
+* @brief extracts a geoLocation object out of a <a href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">WKT geometry string</a>.
+* @param[in] geometry WKT geometry string
+* @return the matching geoLocation object
 */
 geoLocation extractCoordinates(const std::string &geometry) {
     geoLocation coordinates;
@@ -218,10 +220,10 @@ NEADFile::NEADFile(const NEADFile &other)
 *
 * The data is only read if read_sequential is set to false. Otherwise, only the HEADER is processed
 *
-* @param infile The path to the input file.
-* @param read_sequential If true, only HEADER will be processed.
+* @param[in] infile The path to the input file.
+* @param[in] read_sequential If true, only HEADER will be processed.
 */
-NEADFile::NEADFile(const std::string &infile, bool read_sequential)
+NEADFile::NEADFile(const std::string &infile, const bool& read_sequential)
     : skip_lines_to_data(0), filename(infile), firstline(""), station_location(), METADATA(), FIELDS(), location_in_header(true),
         timezone_in_data(false), timestamp_present(false), julian_present(false), time_id(IOUtils::npos), location_id(IOUtils::npos),
         dates_in_file(), row_data(), locations_in_data() {
@@ -234,12 +236,12 @@ NEADFile::NEADFile(const std::string &infile, bool read_sequential)
 /**
 * Reads the contents of a NEAD file.
 *
-* @param infile The path of the input file to be read.
-* @param sequentially Flag indicating whether to read the data
+* @param[in] infile The path of the input file to be read.
+* @param[in] sequentially Flag indicating whether to read the data
 * @throws IOException If there is an error opening or reading the file.
 * @throws InvalidFormatException If the NEAD file format is invalid.
 */
-void NEADFile::readFile(const std::string &infile, bool sequentially) {
+void NEADFile::readFile(const std::string &infile, const bool& sequentially) {
     size_t hash_count = 0;
     std::string line;
 
@@ -255,7 +257,7 @@ void NEADFile::readFile(const std::string &infile, bool sequentially) {
     }
     hash_count++;
 
-    std::string section = "meta";
+    std::string section( "meta" );
 
     // In your main function or where the while loop was
     while (std::getline(file, line)) {
@@ -269,7 +271,7 @@ void NEADFile::readFile(const std::string &infile, bool sequentially) {
     skip_lines_to_data = hash_count;
 }
 
-bool NEADFile::processLine(const std::string &line, std::string &section, bool &sequentially) {
+bool NEADFile::processLine(const std::string &line, std::string &section, const bool &sequentially) {
     if (line == "#")
         return true;
     if (line.find("[METADATA]") != std::string::npos) {
@@ -306,7 +308,7 @@ bool NEADFile::processLine(const std::string &line, std::string &section, bool &
     return true;
 }
 
-void NEADFile::processContent(const std::string &content, std::string &section) {
+void NEADFile::processContent(const std::string &content, const std::string &section) {
     std::string key, value;
     if (section != "data") {
         std::vector<std::string> key_value = IOUtils::split(content, '=');
@@ -401,8 +403,8 @@ void NEADFile::populateFields(const std::string &key, const std::string &value) 
 /**
 * Reads the data for a given date and fieldname from the NEAD file.
 *
-* @param r_date The date for which to read the data.
-* @param fieldname The name of the field for which to read the data.
+* @param[in] r_date The date for which to read the data.
+* @param[in] fieldname The name of the field for which to read the data.
 * @return The data value for the given date and fieldname.
 * @throws IOException If there is no data available or if the date is out of range.
 */
@@ -424,7 +426,7 @@ double NEADFile::readData(const Date &r_date, const std::string &fieldname) {
 /**
 * Aggregates data from the given vector of MeteoData objects.
 *
-* @param vecMeteo The vector of MeteoData objects to aggregate.
+* @param[in] vecMeteo The vector of MeteoData objects to aggregate.
 * @throws IOException if the vector is empty.
 */
 void NEADFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
@@ -436,7 +438,7 @@ void NEADFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
         md.date.setTimeZone(METADATA.timezone);
         dates_in_file.push_back(md.date);
         if (!location_in_header) {
-            Coords loc = md.meta.position;
+            const Coords &loc = md.meta.position;
             locations_in_data.push_back(toNEADLocation(loc, METADATA.epsg));
         }
         std::vector<double> row;
@@ -492,35 +494,29 @@ bool NEADFile::checkFormatValidity() {
     // all fields must have the same number of entries if they are not empty
     if (!FIELDS.units_multipliers.empty() && FIELDS.units_multipliers.size() != FIELDS.fields.size()) {
         throw InvalidFormatException(format_type + "Invalid units_multipliers: " + std::to_string(FIELDS.units_multipliers.size()) +
-                                            " != " + std::to_string(FIELDS.fields.size()),
-                                        AT);
+                                            " != " + std::to_string(FIELDS.fields.size()), AT);
     }
     if (!FIELDS.units_offsets.empty() && FIELDS.units_offsets.size() != FIELDS.fields.size()) {
         throw InvalidFormatException(format_type + "Invalid units_offsets: " + std::to_string(FIELDS.units_offsets.size()) +
-                                            " != " + std::to_string(FIELDS.fields.size()),
-                                        AT);
+                                            " != " + std::to_string(FIELDS.fields.size()), AT);
     }
     if (!FIELDS.units.empty() && FIELDS.units.size() != FIELDS.fields.size()) {
         throw InvalidFormatException(format_type + "Invalid units: " + std::to_string(FIELDS.units.size()) +
-                                            " != " + std::to_string(FIELDS.fields.size()),
-                                        AT);
+                                            " != " + std::to_string(FIELDS.fields.size()), AT);
     }
     if (!FIELDS.long_name.empty() && FIELDS.long_name.size() != FIELDS.fields.size()) {
         throw InvalidFormatException(format_type + "Invalid long_name: " + std::to_string(FIELDS.long_name.size()) +
-                                            " != " + std::to_string(FIELDS.fields.size()),
-                                        AT);
+                                            " != " + std::to_string(FIELDS.fields.size()), AT);
     }
     if (!FIELDS.standard_name.empty() && FIELDS.standard_name.size() != FIELDS.fields.size()) {
         throw InvalidFormatException(format_type + "Invalid standard_name: " + std::to_string(FIELDS.standard_name.size()) +
-                                            " != " + std::to_string(FIELDS.fields.size()),
-                                        AT);
+                                            " != " + std::to_string(FIELDS.fields.size()), AT);
     }
     // iterate through the other_fields and check if they have the same number of entries as fields
     for (const auto &field : FIELDS.other_fields) {
         if (!field.second.empty() && field.second.size() != FIELDS.fields.size()) {
             throw InvalidFormatException(format_type + "Invalid " + field.first + ": " + std::to_string(field.second.size()) +
-                                                " != " + std::to_string(FIELDS.fields.size()),
-                                            AT);
+                                                " != " + std::to_string(FIELDS.fields.size()), AT);
         }
     }
 
@@ -545,7 +541,7 @@ bool NEADFile::checkMeteoIOCompatibility() const {
 }
 
 // ----------------- NEADFile Helperss -----------------
-bool NEADFile::isValidLocation(geoLocation location) { return location.x != getNoData() && location.y != getNoData(); }
+bool NEADFile::isValidLocation(const geoLocation& location) { return location.x != getNoData() && location.y != getNoData(); }
 
 bool NEADFile::isColumnName(const std::string &geometry) { // TODO: if column name can be multiple columns need to handle that
     return std::find(FIELDS.fields.begin(), FIELDS.fields.end(), geometry) != FIELDS.fields.end();
@@ -554,7 +550,7 @@ bool NEADFile::isColumnName(const std::string &geometry) { // TODO: if column na
 /**
 * Finds parameters, that are used in MeteoIO but not given in a NEAD file.
 *
-* @param vecMeteo The vector of MeteoData objects to compare with.
+* @param[in] vecMeteo The vector of MeteoData objects to compare with.
 * @return A vector of strings containing the parameters to append.
 * @throws IOException if the vector is empty.
 */
@@ -562,7 +558,7 @@ std::vector<std::string> NEADFile::columnsToAppend(const std::vector<MeteoData> 
     if (vecMeteo.empty()) {
         throw IOException("No data available", AT);
     }
-    std::set<std::string> available_params = MeteoData::listAvailableParameters(vecMeteo);
+    std::set<std::string> available_params( MeteoData::listAvailableParameters(vecMeteo) );
 
     auto contains = [&](const std::string &s) {
         return std::find(FIELDS.fields.begin(), FIELDS.fields.end(), s) != FIELDS.fields.end();
@@ -594,7 +590,7 @@ std::vector<std::string> NEADFile::columnsToAppend(const std::vector<MeteoData> 
 * or if the location is invalid.
 */
 void NEADFile::parseGeometry() {
-    geoLocation coordinates = extractCoordinates(METADATA.geometry);
+    geoLocation coordinates( extractCoordinates(METADATA.geometry) );
     if (coordinates.isEmpty()) {
         if (!isColumnName(METADATA.geometry)) {
             throw IOException("Geometry is neither a column name, nor a known WKTS station location (POINT/POINTZ)", AT);
@@ -644,6 +640,7 @@ void NEADFile::findLocation() {
 // ----------------- OPERATORS -----------------
 bool operator==(const geoLocation &lhs, const geoLocation &rhs) { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z; }
 bool operator!=(const geoLocation &lhs, const geoLocation &rhs) { return !(lhs == rhs); }
+
 geoLocation &geoLocation::operator=(const geoLocation &rhs) {
     this->x = rhs.x;
     this->y = rhs.y;
@@ -652,6 +649,7 @@ geoLocation &geoLocation::operator=(const geoLocation &rhs) {
     this->slope_azi = rhs.slope_azi;
     return *this;
 }
+
 geoLocation::geoLocation(const geoLocation &other) {
     this->x = other.x;
     this->y = other.y;
@@ -659,7 +657,8 @@ geoLocation::geoLocation(const geoLocation &other) {
     this->slope_angle = other.slope_angle;
     this->slope_azi = other.slope_azi;
 }
-geoLocation::geoLocation(double in_x, double in_y, double in_z, double in_slope_angle, double in_slope_azi)
+
+geoLocation::geoLocation(const double& in_x, const double& in_y, const double& in_z, const double& in_slope_angle, const double& in_slope_azi)
     : x(in_x), y(in_y), z(in_z), slope_angle(in_slope_angle), slope_azi(in_slope_azi) {}
 
 bool operator==(const MetaDataSection &lhs, const MetaDataSection &rhs) {
