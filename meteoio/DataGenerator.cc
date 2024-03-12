@@ -100,7 +100,11 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) ) {
-					status = vecGenerators[jj]->generate(param, station, fullDataset[ stations_idx[ii] ]);
+					const size_t station_idx = stations_idx[ii];
+					if (station_idx!=IOUtils::npos)
+						status = vecGenerators[jj]->generate(param, station, fullDataset[ stations_idx[ii] ]);
+					else
+						status = vecGenerators[jj]->generate(param, station, std::vector<MeteoData>());
 					if (station(param) != old_val) {
 						station.setGenerated(param);
 						if (data_qa_logs) {
