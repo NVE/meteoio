@@ -33,7 +33,7 @@ namespace mio {
  * @section dbo_format Format
  * This plugin reads meteorological data from DBO
  * via the RESTful web service. To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
- * \warning{This plugin is for SLF's internal use only!}
+ * \warning This plugin is for SLF's internal use only!
  *
  * You can have a look at the stations that are available through this web service on <a href="https://map.geo.admin.ch/?zoom=5&lang=en&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=KML%7C%7Chttps:%2F%2Fstationdocu.slf.ch%2Fkml%2Fnetwork-map.kml&E=2782095.39&N=1179586.56">this map</a>.
  * Please keep in mind that some stations might be overlaid on top of each other and will require you to zoom in quite a lot in order to differentiate them!
