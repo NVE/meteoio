@@ -101,6 +101,22 @@ namespace mio {
      *      - `ZSCORE` : Z-Score Normalization
      *      - `NOTHING` : No Normalization
      * - `VERBOSE` : Whether to print additional information. Default: false
+     * 
+     * It is also possible to set the parameters of the ARIMA model manually. However, only the forward part. It is optionally supported,
+     * that a gap is filled in backwards with an auto arima model as well. Be careful when using this though, as it might lead to different results as you have 
+     * been expecting. This can be done via these Keywords:
+     * 
+     * - `SET_MANUAL` : Whether to set the ARIMA parameters manually. Default: false
+     * - `FILL_BACKWARD_MANUAL` : Whether to fill the gap backwards with an ARIMA model. Default: false
+     * - `P` : The number of AR coefficients to use in the ARIMA model. Default: 0
+     * - `D` : The number of differences to use in the ARIMA model. Default: 0
+     * - `Q` : The number of MA coefficients to use in the ARIMA model. Default: 0
+     * - `P_SEASONAL` : The number of seasonal AR coefficients to use in the ARIMA model. Default: 0
+     * - `D_SEASONAL` : The number of seasonal differences to use in the ARIMA model. Default: 0
+     * - `Q_SEASONAL` : The number of seasonal MA coefficients to use in the ARIMA model. Default: 0
+     * 
+     * @note When setting the parameters manually, please provide a seasonal period, as this will now not be estimated anymore, and per default assumed to be 0.
+     * 
      *
      *
      * @code
