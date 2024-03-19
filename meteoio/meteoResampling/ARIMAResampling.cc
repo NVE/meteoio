@@ -111,6 +111,22 @@ namespace mio {
                 } else {
                     throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
                 }
+            } else if (vecArgs[ii].first == "SET_MANUAL") {
+                IOUtils::parseArg(vecArgs[ii], where, set_arima_manual);
+            } else if (vecArgs[ii].first == "P") {
+                IOUtils::parseArg(vecArgs[ii], where, p);
+            } else if (vecArgs[ii].first == "D") {
+                IOUtils::parseArg(vecArgs[ii], where, d);
+            } else if (vecArgs[ii].first == "Q") {
+                IOUtils::parseArg(vecArgs[ii], where, q);
+            } else if (vecArgs[ii].first == "P_SEASONAL") {
+                IOUtils::parseArg(vecArgs[ii], where, P);
+            } else if (vecArgs[ii].first == "D_SEASONAL") {
+                IOUtils::parseArg(vecArgs[ii], where, D);
+            } else if (vecArgs[ii].first == "Q_SEASONAL") {
+                IOUtils::parseArg(vecArgs[ii], where, Q);
+            } else if (vecArgs[ii].first == "FILL_BACKWARD") {
+                IOUtils::parseArg(vecArgs[ii], where, fill_backward_manual);
             } else {
                 throw InvalidArgumentException("Unknown argument \"" + vecArgs[ii].first + "\" for \"" + where + "\"", AT);
             }
@@ -165,6 +181,9 @@ namespace mio {
         arima.setOptMetaData(method, opt_method, stepwise, approximation, num_models);
         arima.setVerbose(verbose);
         arima.setNormalizationMode(normalize);
+        if (set_arima_manual) {
+            arima.setManualARIMA(p, d, q, P, D, Q, fill_backward_manual);
+        }
     }
 
 

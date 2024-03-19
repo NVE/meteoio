@@ -16,28 +16,25 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteoResampling/InterpolARIMA.h>
 #include <cmath>
 #include <cstdlib> // for std::rand and std::srand
 #include <cstring>
-#include <iostream>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <meteoio/MeteoIO.h>
+#include <meteoio/meteoResampling/InterpolARIMA.h>
+#include <sstream>
 #include <unistd.h>
 
 namespace mio {
 
-
     // ------------------- Constructor ------------------- //
-    
+
     // Default constructor
     InterpolARIMA::InterpolARIMA()
-        : norm(data), data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(),
-          data_backward(), new_xreg_vec_f(), new_xreg_vec_b(), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr),
-          amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
-        }
-
+        : norm(data), data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(), data_backward(), new_xreg_vec_f(), new_xreg_vec_b(),
+          xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5),
+          auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)), sarima_forward() {}
 
     /**
      * @brief Main Constructor for an InterpolARIMA object. Used to fill 1 gap in the data.
@@ -46,13 +43,12 @@ namespace mio {
      * @param gap_location The location of the gap in the data.
      * @param gap_length The length of the gap in the data.
      * @param period (Optional) The period of the ARIMA model. Defaults to 0. Only needed when the period is known.
- */
+     */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, int period)
-        : norm(data_in), data(norm.normalize(data_in)), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
-          xreg_vec_f(0), xreg_vec_b(0), data_forward(slice(data, 0, gap_loc)),
-          data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr),
-          xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()),
-          N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
+        : norm(data_in), data(norm.normalize(data_in)), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap), xreg_vec_f(0), xreg_vec_b(0),
+          data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr),
+          new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period),
+          auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)), sarima_forward() {
         // reverse the backward data
         reverseVector(data_backward); // TODO: can be done with std::reverse in C++17
     }
@@ -65,20 +61,18 @@ namespace mio {
      * @param gap_length The length of the data gap.
      * @param xreg_vec_in The exogenous inputs for the ARIMA model.
      * @param period The period for the ARIMA model.
-     * 
+     *
      *
      * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class.
      */
-    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, std::vector<double> xreg_vec_in,
-                                 int period)
-        : norm(data_in), data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap),
-          xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)), xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))),
-          data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)),
-          new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap),
-          xreg_f(xreg_vec_f.size() == 0 ? nullptr : &xreg_vec_f[0]), xreg_b(xreg_vec_b.size() == 0 ? nullptr : &xreg_vec_b[0]),
-          new_xreg_f(xreg_vec_f.size() == 0 ? nullptr : &new_xreg_vec_f[0]), new_xreg_b(xreg_vec_b.size() == 0 ? nullptr : &new_xreg_vec_b[0]),
-          amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()),
-          r(xreg_vec_in.size() == 0 ? 0 : static_cast<int>(xreg_vec_f.size() / N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)) {
+    InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, std::vector<double> xreg_vec_in, int period)
+        : norm(data_in), data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap), xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)),
+          xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))), data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)),
+          new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap), xreg_f(xreg_vec_f.size() == 0 ? nullptr : &xreg_vec_f[0]),
+          xreg_b(xreg_vec_b.size() == 0 ? nullptr : &xreg_vec_b[0]), new_xreg_f(xreg_vec_f.size() == 0 ? nullptr : &new_xreg_vec_f[0]),
+          new_xreg_b(xreg_vec_b.size() == 0 ? nullptr : &new_xreg_vec_b[0]), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()),
+          r(xreg_vec_in.size() == 0 ? 0 : static_cast<int>(xreg_vec_f.size() / N_data_forward)), s(period), auto_arima_forward(initAutoArima(N_data_forward)),
+          auto_arima_backward(initAutoArima(N_data_backward)), sarima_forward() {
         // reverse the backward data
         reverseVector(data_backward); // TODO: Can be done with std::reverse in C++17
     }
@@ -91,23 +85,21 @@ namespace mio {
      * @param n_predictions The number of predictions to be made.
      * @param direction The direction of the prediction. Can be either "forward" or "past".
      * @param period The period for the ARIMA model.
-     * 
-     * It also decides the direction of the data based on the `direction` parameter and the `gap_loc`: 
-     * - If the direction is "forward", the prediction is made based on the data from 
-     *   the beginning of the data set up to `gap_loc`. 
-     * - If the direction is "past", the prediction is made based on the data from `gap_loc` 
+     *
+     * It also decides the direction of the data based on the `direction` parameter and the `gap_loc`:
+     * - If the direction is "forward", the prediction is made based on the data from
+     *   the beginning of the data set up to `gap_loc`.
+     * - If the direction is "past", the prediction is made based on the data from `gap_loc`
      *   to the end of the data set.
      *
      * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class in [InterpolARIMA.cc](meteoio/meteoResampling/InterpolARIMA.cc).
      */
     InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, size_t n_predictions, std::string direction, int period)
-        : norm(data_in), data(norm.normalize(data_in)), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())),
-          pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0), xreg_vec_b(0),
-          data_forward(decideDirection(data, direction, true, gap_loc, n_predictions)),
-          data_backward(decideDirection(data, direction, false, gap_loc, n_predictions)), new_xreg_vec_f(0), new_xreg_vec_b(0),
-          xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap),
-          N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)){
-    }
+        : norm(data_in), data(norm.normalize(data_in)), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())), pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0),
+          xreg_vec_b(0), data_forward(decideDirection(data, direction, true, gap_loc, n_predictions)), data_backward(decideDirection(data, direction, false, gap_loc, n_predictions)),
+          new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap),
+          N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period), auto_arima_forward(initAutoArima(N_data_forward)),
+          auto_arima_backward(initAutoArima(N_data_backward)), sarima_forward() {}
 
     // ------------------- Helper methods ------------------- //
     auto_arima_object InterpolARIMA::initAutoArima(size_t N_data) {
@@ -166,7 +158,7 @@ namespace mio {
     }
 
     std::string InterpolARIMA::autoArimaInfo(auto_arima_object obj) {
-        int i, pq,t,ncxreg,mean;
+        int i, pq, t, ncxreg, mean;
         pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
         mean = obj->M - obj->r;
 
@@ -178,34 +170,28 @@ namespace mio {
             result << "Exit Message : ";
             if (obj->retval == 0) {
                 result << "Input Error";
-            }
-            else if (obj->retval == 1) {
+            } else if (obj->retval == 1) {
                 result << "Probable Success";
-            }
-            else if (obj->retval == 4) {
+            } else if (obj->retval == 4) {
                 result << "Optimization Routine didn't converge";
-            }
-            else if (obj->retval == 7) {
+            } else if (obj->retval == 7) {
                 result << "Exogenous Variables are collinear";
-            }
-            else if (obj->retval == 10) {
+            } else if (obj->retval == 10) {
                 result << "Nonstationary AR part";
-            }
-            else if (obj->retval == 12) {
+            } else if (obj->retval == 12) {
                 result << "Nonstationary Seasonal AR part";
-            }
-            else if (obj->retval == 15) {
+            } else if (obj->retval == 15) {
                 result << "Optimization Routine Encountered Inf/Nan Values";
             }
             result << "\n\n"; // Add a newline after the exit message
         }
 
-
         result << "  ARIMA Seasonal Order : ( " << obj->p << ", " << obj->d << ", " << obj->q << ") * (" << obj->P << ", " << obj->D << ", " << obj->Q << ")\n\n";
 
-        result << std::setw(20) << "Coefficients" << std::setw(20) << "Value" << std::setw(20) << "Standard Error" << "\n\n";
+        result << std::setw(20) << "Coefficients" << std::setw(20) << "Value" << std::setw(20) << "Standard Error"
+               << "\n\n";
         for (i = 0; i < obj->p; ++i) {
-            result << "AR" << std::setw(15) << i + 1 << std::setw(20) << obj->phi[i] << std::setw(20) << sqrt(obj->vcov[i + pq*i]) << "\n";
+            result << "AR" << std::setw(15) << i + 1 << std::setw(20) << obj->phi[i] << std::setw(20) << sqrt(obj->vcov[i + pq * i]) << "\n";
         }
         for (i = 0; i < obj->q; ++i) {
             t = obj->p + i;
@@ -224,8 +210,7 @@ namespace mio {
         if (mean > 0) {
             result << std::setw(17) << "MEAN" << std::setw(20) << obj->mean << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
             t++;
-        }
-        else {
+        } else {
             result << std::setw(17) << "MEAN" << std::setw(20) << obj->mean << "\n";
         }
         ncxreg = 0;
@@ -236,7 +221,7 @@ namespace mio {
         } else {
             result << std::setw(17) << "TREND" << std::setw(20) << 0.0 << "\n";
         }
-        for(i = ncxreg; i < obj->r; ++i) {
+        for (i = ncxreg; i < obj->r; ++i) {
             result << std::setw(17) << "EXOG" << std::setw(20) << obj->exog[i] << std::setw(20) << sqrt(obj->vcov[t + pq * t]) << "\n";
             t++;
         }
@@ -246,11 +231,9 @@ namespace mio {
         result << "ESTIMATION METHOD : ";
         if (obj->method == 0) {
             result << "CSS-MLE";
-        }
-        else if (obj->method == 1) {
+        } else if (obj->method == 1) {
             result << "MLE";
-        }
-        else if (obj->method == 2) {
+        } else if (obj->method == 2) {
             result << "CSS";
         }
         result << "\n\n";
@@ -258,26 +241,19 @@ namespace mio {
         result << "OPTIMIZATION METHOD : ";
         if (obj->optmethod == 0) {
             result << "Nelder-Mead";
-        }
-        else if (obj->optmethod == 1) {
+        } else if (obj->optmethod == 1) {
             result << "Newton Line Search";
-        }
-        else if (obj->optmethod == 2) {
+        } else if (obj->optmethod == 2) {
             result << "Newton Trust Region - Hook Step";
-        }
-        else if (obj->optmethod == 3) {
+        } else if (obj->optmethod == 3) {
             result << "Newton Trust Region - Double Dog-Leg";
-        }
-        else if (obj->optmethod == 4) {
+        } else if (obj->optmethod == 4) {
             result << "Conjugate Gradient";
-        }
-        else if (obj->optmethod == 5) {
+        } else if (obj->optmethod == 5) {
             result << "BFGS";
-        }
-        else if (obj->optmethod == 6) {
+        } else if (obj->optmethod == 6) {
             result << "L-BFGS";
-        }
-        else if (obj->optmethod == 7) {
+        } else if (obj->optmethod == 7) {
             result << "BFGS More-Thuente Line Search";
         }
 
@@ -318,9 +294,8 @@ namespace mio {
     }
 
     // Set the metadata for the auto arima objects
-    void InterpolARIMA::setAutoArimaMetaData(int max_p_param, int max_d_param, int max_q_param, int start_p_param, int start_q_param,
-                                             int max_P_param, int max_D_param, int max_Q_param, int start_P_param, int start_Q_param,
-                                             bool seasonal_param, bool stationary_param) {
+    void InterpolARIMA::setAutoArimaMetaData(int max_p_param, int max_d_param, int max_q_param, int start_p_param, int start_q_param, int max_P_param, int max_D_param, int max_Q_param,
+                                             int start_P_param, int start_Q_param, bool seasonal_param, bool stationary_param) {
         this->max_p = max_p_param;
         this->max_d = max_d_param;
         this->max_q = max_q_param;
@@ -363,8 +338,7 @@ namespace mio {
     // options for method: "css-mle", "ml", "css"
     // options for opt_method: "Nelder-Mead", "Newton Line Search", "Newton Trust Region - Hook Step", "Newton Trust Region - Double
     // Dog-Leg", "Conjugate Gradient", "BFGS", "Limited Memory BFGS", "BFGS Using More Thuente Method"
-    void InterpolARIMA::setOptMetaData(ObjectiveFunction method_param, OptimizationMethod opt_method_param, bool stepwise_param,
-                                       bool approximation_param, int num_models_param) {
+    void InterpolARIMA::setOptMetaData(ObjectiveFunction method_param, OptimizationMethod opt_method_param, bool stepwise_param, bool approximation_param, int num_models_param) {
         this->method = method_param;
         this->opt_method = opt_method_param;
         this->stepwise = stepwise_param;
@@ -381,6 +355,15 @@ namespace mio {
     void InterpolARIMA::setVerbose(bool verbose) {
         auto_arima_backward->verbose = verbose;
         auto_arima_forward->verbose = verbose;
+    }
+
+    void InterpolARIMA::setManualARIMA(int p, int d, int q, int P, int D, int Q, bool fill_backward) {
+        set_manual = true;
+        fill_backward_manual = fill_backward;
+        if (N_data_forward < 5) {
+            throw NoDataException("Not enough data to set the ARIMA model manually");
+        }
+        sarima_forward = sarima_init(p, d, q, s, P, D, Q, static_cast<int>(N_data_forward));
     }
 
     // ------------------- Getters ------------------- //
@@ -408,27 +391,31 @@ namespace mio {
             amse_forward.resize(n_steps);
         }
 
-
-        auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
-        // check if the models are valid (p and q should not be zero at the same time)
-        if ((auto_arima_forward->p == 0 && auto_arima_forward->q == 0 ) && (auto_arima_forward->P == 0 && auto_arima_forward->Q == 0)) {
-            bool current_stepwise = auto_arima_forward->stepwise;
-            auto_arima_setStepwise(auto_arima_forward, !current_stepwise);
+        if (set_manual) {
+            sarima_exec(sarima_forward, data_forward.data());
+            sarima_predict(sarima_forward, data_forward.data(), static_cast<int>(n_steps), pred_forward.data(), amse_forward.data());
+        } else {
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+            // check if the models are valid (p and q should not be zero at the same time)
+            if ((auto_arima_forward->p == 0 && auto_arima_forward->q == 0) && (auto_arima_forward->P == 0 && auto_arima_forward->Q == 0)) {
+                bool current_stepwise = auto_arima_forward->stepwise;
+                auto_arima_setStepwise(auto_arima_forward, !current_stepwise);
+                auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
+            }
+            auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(n_steps), new_xreg_f, pred_forward.data(), amse_forward.data());
         }
-        auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(n_steps), new_xreg_f, pred_forward.data(), amse_forward.data());
         return norm.denormalize(pred_forward);
     }
 
     // Check if the model is a random walk
-    bool isRandomWalk(auto_arima_object model) {
-        return (model->p == 0 && model->q == 0) && (model->P == 0 && model->Q == 0);
-    }
+    bool isRandomWalk(auto_arima_object model) { return (model->p == 0 && model->q == 0) && (model->P == 0 && model->Q == 0); }
+    
+
     // Fill the gap using the auto arima objects
     void InterpolARIMA::fillGap() {
         bool isRandom_f = false;
         bool isRandom_b = false;
-        for (int meth_Id = 0; meth_Id <3 ; meth_Id++) {
+        for (int meth_Id = 0; meth_Id < 3; meth_Id++) {
             // fit the models
             auto_arima_exec(auto_arima_forward, data_forward.data(), xreg_f);
             auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
@@ -436,6 +423,7 @@ namespace mio {
             isRandom_b = isRandomWalk(auto_arima_backward);
             isRandom_f = isRandomWalk(auto_arima_forward);
 
+            // refit but using full search
             if (isRandom_b && isRandom_f && meth_Id == 0) {
                 isRandom_b = false;
                 isRandom_f = false;
@@ -446,8 +434,8 @@ namespace mio {
                 auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
                 if ((auto_arima_forward->p == 0 && auto_arima_forward->q == 0) && (auto_arima_forward->P == 0 && auto_arima_forward->Q == 0)) {
                     isRandom_f = true;
-                } 
-                if ((auto_arima_backward->p == 0 && auto_arima_backward->q == 0) && (auto_arima_backward->P == 0 && auto_arima_backward->Q == 0)){
+                }
+                if ((auto_arima_backward->p == 0 && auto_arima_backward->q == 0) && (auto_arima_backward->P == 0 && auto_arima_backward->Q == 0)) {
                     isRandom_b = true;
                 }
             }
@@ -455,12 +443,10 @@ namespace mio {
                 break;
             // predict the gap
             // forward
-            auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(N_gap), new_xreg_f, pred_forward.data(),
-                                amse_forward.data());
+            auto_arima_predict(auto_arima_forward, data_forward.data(), xreg_f, static_cast<int>(N_gap), new_xreg_f, pred_forward.data(), amse_forward.data());
 
             // backward
-            auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, static_cast<int>(N_gap), new_xreg_b, pred_backward.data(),
-                                amse_backward.data());
+            auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, static_cast<int>(N_gap), new_xreg_b, pred_backward.data(), amse_backward.data());
             // interpolate with the weighting according to
             assert(pred_forward.size() == pred_backward.size());
             assert(pred_forward.size() == N_gap);
@@ -471,6 +457,7 @@ namespace mio {
             if (consistency)
                 break;
         }
+
         // W1 = sqrt(T-t/T)
         // W2 = sqrt(t/T)
         for (size_t id = 0; id < N_gap; id++) {
@@ -488,6 +475,72 @@ namespace mio {
                 weight_b = std::sqrt(time[id] / N);
             }
             data[gap_loc + id] = weight_f * pred_forward[id] + weight_b * pred_backward[id];
+        }
+    }
+
+     // Fill the gap using the manually set arima model
+    void InterpolARIMA::fillGapManual() {
+        if (!set_manual) {
+            throw TimeOutException("No manual ARIMA model set");
+        }
+
+        sarima_exec(sarima_forward, data_forward.data());
+        sarima_predict(sarima_forward, data_forward.data(), static_cast<int>(N_gap), pred_forward.data(), amse_forward.data());
+
+        assert(pred_forward.size() == N_gap);
+
+        if (fill_backward_manual) {
+            bool isRandom_b = false;
+            for (int meth_Id = 0; meth_Id < 3; meth_Id++) {
+                // fit the models
+                auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
+
+                isRandom_b = isRandomWalk(auto_arima_backward);
+
+                // refit but using full search
+                if (isRandom_b  && meth_Id == 0) {
+                    isRandom_b = false;
+                    bool current_stepwise = auto_arima_forward->stepwise;
+                    auto_arima_setStepwise(auto_arima_backward, !current_stepwise);
+                    auto_arima_exec(auto_arima_backward, data_backward.data(), xreg_b);
+                    if ((auto_arima_backward->p == 0 && auto_arima_backward->q == 0) && (auto_arima_backward->P == 0 && auto_arima_backward->Q == 0)) {
+                        isRandom_b = true;
+                    }
+                }
+                if (isRandom_b)
+                    break;
+
+                // backward
+                auto_arima_predict(auto_arima_backward, data_backward.data(), xreg_b, static_cast<int>(N_gap), new_xreg_b, pred_backward.data(), amse_backward.data());
+                // interpolate with the weighting according to
+                assert(pred_forward.size() == pred_backward.size());
+
+                reverseVector(pred_backward); // TODO: can be done with std::reverse in C++17
+
+                bool consistency = consistencyCheck();
+                if (consistency)
+                    break;
+            }
+            
+            // W1 = sqrt(T-t/T)
+            // W2 = sqrt(t/T)
+            for (size_t id = 0; id < N_gap; id++) {
+                double weight_f, weight_b;
+
+                if (isRandom_b) {
+                    weight_f = 1;
+                    weight_b = 0;
+                } else {
+                    double N = static_cast<double>(N_gap);
+                    weight_f = std::sqrt((N - time[id]) / N);
+                    weight_b = std::sqrt(time[id] / N);
+                }
+                data[gap_loc + id] = weight_f * pred_forward[id] + weight_b * pred_backward[id];
+            }
+        } else {
+            for (size_t id = 0; id < N_gap; id++) {
+                data[gap_loc + id] = pred_forward[id];
+            }
         }
     }
 
@@ -511,14 +564,16 @@ namespace mio {
     void InterpolARIMA::interpolate() {
         bool fit = true;
         if (N_data_backward == 0 || N_data_forward == 0) {
-            throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
-                                  ", backward datapoints " + std::to_string(N_data_backward) + "\n");
+            throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) + ", backward datapoints " + std::to_string(N_data_backward) + "\n");
         }
         while (fit) {
-            fillGap();
-            int retval_f = auto_arima_forward->retval;
-            int retval_b = auto_arima_backward->retval;
-
+            if (set_manual)
+                fillGapManual();
+            else
+                fillGap();
+                
+            int retval_f = set_manual ? sarima_forward->retval : auto_arima_forward->retval;
+            int retval_b = (set_manual && !fill_backward_manual) ? 1 : auto_arima_backward->retval;
             if (retval_f == 0 || retval_b == 0) {
                 std::string where = (retval_f == 0) ? "forward data" : "backward data";
                 throw AccessException("Interpolation Input data is erroneous in " + where);
@@ -528,8 +583,7 @@ namespace mio {
             } else if (retval_f == 4 || retval_b == 4) {
                 std::string where = (retval_f == 4) ? "forward data" : "backward data";
                 if (method != CSS_MLE && opt_method != BFGS) {
-                    throw IOException("Optimization of ARIMA did not converge in " + where +
-                                      ".\n Please try another method and optimization method");
+                    throw IOException("Optimization of ARIMA did not converge in " + where + ".\n Please try another method and optimization method");
                 } else {
                     OptimizationMethod new_opt_method = Nelder_Mead;
                     setOptMetaData(method, new_opt_method);
@@ -546,15 +600,14 @@ namespace mio {
         bool fit = true;
         std::vector<double> pred;
         if (N_data_backward == 0 || N_data_forward == 0) {
-            throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) +
-                                  ", backward datapoints " + std::to_string(N_data_backward) + "\n");
+            throw NoDataException("No data to interpolate: forward datapoints " + std::to_string(N_data_forward) + ", backward datapoints " + std::to_string(N_data_backward) + "\n");
         }
         while (fit) {
             pred = ARIMApredict(n_steps);
-            int retval_f = auto_arima_forward->retval;
+            int retval_f = set_manual ? sarima_forward->retval : auto_arima_forward->retval;
 
             if (retval_f == 0) {
-                throw AccessException("Interpolation Input data is erroneous when trying to predict" );
+                throw AccessException("Interpolation Input data is erroneous when trying to predict");
             } else if (retval_f == 15) {
                 throw InvalidFormatException("Interpolation Input data has Inf/Nan values for prediction");
             } else if (retval_f == 4) {

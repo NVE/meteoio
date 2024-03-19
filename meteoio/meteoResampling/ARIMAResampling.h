@@ -327,6 +327,11 @@ namespace mio {
         bool seasonal = true, stationary = false;
         Normalization::Mode normalize = Normalization::Mode::MinMax;
 
+        bool set_arima_manual = false;
+        bool fill_backward_manual = false;
+        int p = 0, d = 0, q = 0;
+        int P = 0, D = 0, Q = 0;
+
         // Flags
         bool is_zero_possible = false;
         bool checked_vecM = false;

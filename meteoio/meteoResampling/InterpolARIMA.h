@@ -101,10 +101,13 @@ namespace mio {
                             bool approximation = false, int num_models = 94);
         void setVerbose(bool verbose = false);
         void setNormalizationMode(Normalization::Mode mode);
+        void setManualARIMA(int p, int d, int q, int P, int D, int Q, bool fill_backward);
 
         // Interpolation methods
         std::vector<double> simulate(int n_steps, int seed = 0);
         void fillGap();
+        void fillGapManual();
+
         void interpolate();
         std::vector<double> predict(size_t n_steps = 0);
         // only do denormalization ARIMA predict! otherwise it will denorm twice
@@ -129,7 +132,7 @@ namespace mio {
               max_P(other.max_P), max_D(other.max_D), max_Q(other.max_Q), start_P(other.start_P), start_Q(other.start_Q), r(other.r),
               s(other.s), method(other.method), opt_method(other.opt_method), stepwise(other.stepwise), approximation(other.approximation),
               num_models(other.num_models), seasonal(other.seasonal), stationary(other.stationary),
-              auto_arima_forward(auto_arima_copy(other.auto_arima_forward)), auto_arima_backward(auto_arima_copy(other.auto_arima_backward)) {
+              auto_arima_forward(auto_arima_copy(other.auto_arima_forward)), auto_arima_backward(auto_arima_copy(other.auto_arima_backward)), sarima_forward(other.sarima_forward) {
     }
 
     // Copy assignment operator
@@ -210,7 +213,7 @@ private:
     std::vector<double> pred_forward, pred_backward;
 
     // Auto Arima variables
-    // const doesnt work wiht c
+    // const doesnt work with c
     std::vector<double> xreg_vec_f, xreg_vec_b, data_forward, data_backward, new_xreg_vec_f, new_xreg_vec_b;
     double *xreg_f;
     double *xreg_b;
@@ -228,7 +231,6 @@ private:
     int num_models = 94;
     bool seasonal = true, stationary = false;
 
-
     bool consistencyCheck();
     auto_arima_object initAutoArima(size_t N_data);
 
@@ -236,6 +238,14 @@ private:
 public:
     auto_arima_object auto_arima_forward;
     auto_arima_object auto_arima_backward;
+
+private:
+    // (S)ARIMA variables
+    bool set_manual = false;
+    bool fill_backward_manual = false;
+
+public:
+    sarima_object sarima_forward;
 };
 
 } // namespace mio
