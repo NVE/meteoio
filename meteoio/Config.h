@@ -29,6 +29,10 @@
 
 namespace mio {
 
+namespace ConfigConstants {
+	static const std::string interpol_section("Interpolations1D");
+}
+
 /**
  * @class Config
  * @brief A class that reads a key/value file. These files (typically named *.ini) follow the INI file format standard (see http://en.wikipedia.org/wiki/INI_file) and have the following structure:

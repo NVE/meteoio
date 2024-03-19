@@ -70,6 +70,23 @@ void TimeSeriesManager::setDfltBufferProperties()
 	if (buff_before>chunk_size) chunk_size = buff_before;
 	//NOTE we still have the meteo1d window in the way
 	//NOTE -> we end up not reading enough data and rebuffering... solution: never only use the buffer definition but add proc_properties
+
+	// in case a resampling requires data from another station:
+	
+}
+
+void TimeSeriesManager::listAdditionalStations() const {
+	std::vector<std::string> additional_stations_raw;
+	cfg.getValues("ADDITIONAL_STATIONS", ConfigConstants::interpol_section, additional_stations_raw);
+	// returns a vector with the raw values in the form of ID1::ID2,ID3,ID4
+	for (const auto& station : additional_stations_raw) {
+		std::vector<std::string> station_ids = IOUtils::split(station, '::');
+		if (station_ids.size() != 2) {
+			throw InvalidArgumentException("The additional stations should be in the form ID1::ID2,ID3,ID4", AT);
+		}
+		std::vector<std::string> additional_stations = IOUtils::split(station_ids[1], ',');
+		additional_stations_info[station_ids[0]] = additional_stations;
+	}
 }
 
 void TimeSeriesManager::setBufferProperties(const double& i_chunk_size, const double& i_buff_before)
@@ -254,6 +271,44 @@ size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEn
 	return vecVecMeteo.size(); //equivalent with the number of stations that have data
 }
 
+std::vector<METEO_SET> findAdditionalStations(const std::vector<METEO_SET>& data, std::map<std::string, std::vector<std::string>>& additional_stations, const size_t& current_station_index)
+{
+	std::string current_station_id = data[current_station_index].front().meta.getStationID();
+	std::vector<METEO_SET> result;
+	if (additional_stations.find(current_station_id) == additional_stations.end()) return result;
+
+	std::vector<std::string> related_stations = additional_stations[current_station_id];
+	if (related_stations.empty()) return result;
+	if (related_stations.size() == 1 && related_stations[0] == "CLOSEST") {
+		// find the closest station in data
+		Coords current_station_coords = data[current_station_index].front().meta.getPosition();
+		double min_distance = std::numeric_limits<double>::max();
+		size_t closest_station_index = 0;
+		for (size_t i = 0; i < data.size(); i++) {
+			if (i == current_station_index) continue;
+			Coords station_coords = data[i].front().meta.getPosition();
+			double distance = current_station_coords.distance(station_coords);
+			if (distance < min_distance) {
+				min_distance = distance;
+				closest_station_index = i;
+			}
+		}
+		result.push_back(data[closest_station_index]);
+	} else {
+		// find the stations in data that match the related_stations
+		for (const auto& stationID : related_stations) {
+			if (stationID.empty()) continue;
+			if (stationID == "CLOSEST") throw InvalidArgumentException("CLOSEST should be the only related station for additional stations", AT);
+			const auto it = std::find_if(data.begin(), data.end(), [stationID](const METEO_SET& s) { return s.front().meta.getStationID() == stationID; });
+			if (it != data.end()) {
+				result.push_back(*it);
+			}
+		}
+	}
+	return result;
+}
+
+
 size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
@@ -316,7 +371,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			if ((*data)[ii].empty()) continue;
 			const std::string stationHash( IOUtils::toString(ii)+"-"+(*data)[ii].front().meta.getHash() );
 			MeteoData md;
-			const bool success = meteoprocessor.resample(i_date, stationHash, (*data)[ii], md);
+			std::vector<METEO_SET> additional_stations = findAdditionalStations(*data, additional_stations_info, ii);
+			const bool success = additional_stations.empty() ? meteoprocessor.resample(i_date, stationHash, (*data)[ii], md) : meteoprocessor.resample(i_date, stationHash, (*data)[ii], md, additional_stations);
 			if (success) {
 				vecMeteo.push_back( md );
 				stations_idx[ ii ] = vecMeteo.size()-1;

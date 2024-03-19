@@ -219,6 +219,8 @@ class TimeSeriesManager {
 		 */
 		Date getDataEnd(const cache_types& cache) const;
 
+		void listAdditionalStations() const;
+
 		
 	private:
 		static bool compare(std::pair<Date, METEO_SET> p1, std::pair<Date, METEO_SET> p2);
@@ -240,6 +242,9 @@ class TimeSeriesManager {
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int processing_level;
+
+		// we might need additional stations for the resampling
+		std::map<std::string, std::vector<std::string>> additional_stations_info;
 };
 } //end namespace
 #endif

@@ -79,7 +79,11 @@ class ResamplingAlgorithms {
 
 		virtual void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;
-		
+		virtual void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		              const std::vector<MeteoData>& vecM, MeteoData& md, std::vector<METEO_SET> &additional_stations) {
+						throw IOException("This resampling algorithm does not support additional stations", AT);
+					  };
+
 		void resetResampling() {gaps.clear();} //invalidate all gaps, usually after rebuffering
 
 		virtual std::string toString() const = 0;
