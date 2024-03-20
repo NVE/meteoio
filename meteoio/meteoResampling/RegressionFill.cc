@@ -52,6 +52,10 @@ std::string RegressionFill::toString() const
 	//this should help when debugging, so output relevant parameters for your algorithm
 	std::ostringstream ss;
 	ss << std::right << std::setw(10) << parname << "::"  << std::left << std::setw(15) << algo << "[ ]";
+	ss << std::endl;
+	ss << std::right << std::setw(10) << " " << std::left << std::setw(15) << "VERBOSE" << verbose << std::endl;
+	ss << std::right << std::setw(10) << " " << std::left << std::setw(15) << "TYPE" << (reg_type == LINEAR ? "LINEAR" : "UNKNOWN") << std::endl;
+	ss << std::right << std::setw(10) << " " << std::left << std::setw(15) << "Computed Coefficients" << regression_coefficients.size() << std::endl;
 	return ss.str();
 }
 
@@ -91,9 +95,9 @@ double RegressionFill::linear(double julian_date, const std::vector<double>& coe
 
 
 // ------------------------- MAIN FUNCTION -----------------------
-void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& /* index */, const ResamplingPosition& /* position */, const size_t& /* paramindex */,
+void RegressionFill::resample(const std::string& /* stationHash */, const size_t& /* index */, const ResamplingPosition& /* position */, const size_t& /* paramindex */,
                             const std::vector<MeteoData>& /* vecM */, MeteoData& /* md */) {
-								throw IOException("The Regression Fill needs additional stations to work properly, none provided", AT);
+								return;
 							}
 
 
@@ -103,14 +107,6 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md, const std::vector<METEO_SET>& additional_stations)
 {
-	if (additional_stations.empty()) throw IOException("The Regression Fill needs additional stations to work properly. Make sure to use the correct Station IDs", AT);
-	if (additional_stations.size() != 1) throw IOException("The Regression Fill needs exactly one additional station to work properly", AT);
-
-	if (verbose && !printed_info) {
-		std::cout << "RegressionFill: Using station " << additional_stations[0].front().meta.getStationID() << " as support station for station " << vecM[index].meta.getStationID() << std::endl;
-		printed_info = true;
-	}
-
 	if (index >= vecM.size()) throw IOException("The index of the element to be resampled is out of bounds", AT);
 
 	if (position == ResamplingAlgorithms::exact_match) {
@@ -121,15 +117,24 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 		}
 	}
 
+	if (additional_stations.empty()) throw IOException("The Regression Fill needs additional stations to work properly. Make sure to use the correct Station IDs", AT);
+	if (additional_stations.size() != 1) throw IOException("The Regression Fill needs exactly one additional station to work properly", AT);
+
+	if (verbose && !printed_info) {
+		std::cout << "RegressionFill: Using station " << additional_stations[0].front().meta.getStationID() << " as support station for station " << vecM[index].meta.getStationID() << std::endl;
+		printed_info = true;
+	}
+
+
 	double new_x_val;
-	if (!findValueAt(additional_stations[0], vecM[index].date, paramindex, new_x_val)) {
+	if (!findValueAt(additional_stations[0], md.date, paramindex, new_x_val)) {
 		if (verbose) std::cout << "RegressionFill: could not find value at required timestamp in support station" << std::endl;
 		return;
 	}
 
 	// if already fitted for parameter, use the cached coefficients
-	if (regression_coefficients.find(index) != regression_coefficients.end()) {
-		md(paramindex) = linear(new_x_val, regression_coefficients[index]); // TODO: do i need to convert to gmt?
+	if (regression_coefficients.find(paramindex) != regression_coefficients.end()) {
+		md(paramindex) = linear(new_x_val, regression_coefficients[paramindex]); // TODO: do i need to convert to gmt?
 		return;
 	}
 
@@ -149,7 +154,7 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 	model.fit();
 
 	// cache and fill
-	regression_coefficients[index] = model.getParams();
+	regression_coefficients[paramindex] = model.getParams();
 
 	md(paramindex) = model.f(new_x_val);
 	return;

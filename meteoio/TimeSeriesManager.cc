@@ -73,12 +73,16 @@ void TimeSeriesManager::setDfltBufferProperties()
 	//NOTE -> we end up not reading enough data and rebuffering... solution: never only use the buffer definition but add proc_properties
 
 	// in case a resampling requires data from another station:
-	
+	listAdditionalStations();
 }
 
 void TimeSeriesManager::listAdditionalStations() {
 	std::vector<std::string> additional_stations_raw;
-	cfg.getValues("ADDITIONAL_STATIONS", ConfigConstants::interpol_section, additional_stations_raw);
+	std::vector<std::pair<std::string, std::string>> vecKeyVal = cfg.getValuesFromPart("ADDITIONAL", ConfigConstants::interpol_section);
+	for (const auto& keyVal : vecKeyVal) {
+		additional_stations_raw.push_back(keyVal.second);
+	}
+
 	// returns a vector with the raw values in the form of ID1::ID2,ID3,ID4
 	for (const auto& station : additional_stations_raw) {
 		std::vector<std::string> station_ids = IOUtils::split(station, "--");
