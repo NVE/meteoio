@@ -387,6 +387,8 @@ class Config {
 		
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
 
+		std::vector< std::pair<std::string, std::string> > getValuesFromPart(std::string keymatch, std::string section) const;
+
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
 		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
@@ -399,7 +401,8 @@ class Config {
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
-		
+		std::vector<std::string> getKeysFromPart(std::string keypart,
+                        std::string section) const;
 		/**
 		 * @brief Returns all the sections that are present in the config object
 		 * @return a set that holds all the sections names
