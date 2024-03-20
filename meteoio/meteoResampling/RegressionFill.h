@@ -31,6 +31,12 @@ namespace mio {
  */
 class RegressionFill : public ResamplingAlgorithms {
 	public:
+        enum RegressionType {
+            LINEAR,
+            QUADRATIC,
+            CUBIC
+        };
+
 		RegressionFill(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
@@ -39,10 +45,18 @@ class RegressionFill : public ResamplingAlgorithms {
                 const std::vector<MeteoData>& vecM, MeteoData& md, const std::vector<METEO_SET>& additional_stations);
 		std::string toString() const;
 
+        bool findValueAt(const std::vector<MeteoData>& support_station, const Date& date, const size_t& paramindex, double& value);
+        void getRegressionData(const size_t index, const size_t paramindex, const std::vector<MeteoData>& vecM, const std::vector<METEO_SET>& additional_stations, std::vector<double>& x, std::vector<double>& y, std::vector<Date>& dates);
+
         double linear(double julian_date, const std::vector<double>& coefficients);
 
     private: 
-        std::unordered_map<int, std::vector<double>> regression_coefficients;
+        std::unordered_map<size_t, std::vector<double>> regression_coefficients;
+        bool verbose;
+        RegressionType reg_type;
+
+        // flag
+        bool printed_info = false;
 };
 
 } //end namespace mio

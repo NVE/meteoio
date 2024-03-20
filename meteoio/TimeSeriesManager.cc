@@ -81,7 +81,7 @@ void TimeSeriesManager::listAdditionalStations() {
 	cfg.getValues("ADDITIONAL_STATIONS", ConfigConstants::interpol_section, additional_stations_raw);
 	// returns a vector with the raw values in the form of ID1::ID2,ID3,ID4
 	for (const auto& station : additional_stations_raw) {
-		std::vector<std::string> station_ids = IOUtils::split(station, "::");
+		std::vector<std::string> station_ids = IOUtils::split(station, "--");
 		if (station_ids.size() != 2) {
 			throw InvalidArgumentException("The additional stations should be in the form ID1::ID2,ID3,ID4", AT);
 		}

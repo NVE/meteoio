@@ -13,4 +13,5 @@ SET(meteoResampling_sources
 	meteoResampling/ARIMAutils.cc
 	meteoResampling/InterpolARIMA.cc
 	meteoResampling/ARIMAResampling.cc
+	meteoResampling/RegressionFill.cc
 )
