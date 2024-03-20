@@ -33,7 +33,8 @@ TimeSeriesManager::TimeSeriesManager(IOHandler& in_iohandler, const Config& in_c
                                             meteoprocessor(in_cfg, rank, mode), dataGenerator(in_cfg),
                                             proc_properties(), point_cache(), raw_buffer(), filtered_cache(),
                                             raw_requested_start(), raw_requested_end(), chunk_size(), buff_before(),
-                                            processing_level(IOUtils::raw | IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
+                                            processing_level(IOUtils::raw | IOUtils::filtered | IOUtils::resampled | IOUtils::generated), 
+											additional_stations_info()
 {
 	meteoprocessor.getWindowSize(proc_properties);
 	setDfltBufferProperties();
@@ -75,12 +76,12 @@ void TimeSeriesManager::setDfltBufferProperties()
 	
 }
 
-void TimeSeriesManager::listAdditionalStations() const {
+void TimeSeriesManager::listAdditionalStations() {
 	std::vector<std::string> additional_stations_raw;
 	cfg.getValues("ADDITIONAL_STATIONS", ConfigConstants::interpol_section, additional_stations_raw);
 	// returns a vector with the raw values in the form of ID1::ID2,ID3,ID4
 	for (const auto& station : additional_stations_raw) {
-		std::vector<std::string> station_ids = IOUtils::split(station, '::');
+		std::vector<std::string> station_ids = IOUtils::split(station, "::");
 		if (station_ids.size() != 2) {
 			throw InvalidArgumentException("The additional stations should be in the form ID1::ID2,ID3,ID4", AT);
 		}

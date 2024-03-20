@@ -219,7 +219,7 @@ class TimeSeriesManager {
 		 */
 		Date getDataEnd(const cache_types& cache) const;
 
-		void listAdditionalStations() const;
+		void listAdditionalStations();
 
 		
 	private:
