@@ -153,7 +153,6 @@ class Meteo1DInterpolator {
 		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
 	
 	public:
-		static const std::string interpol_section;
 		static const std::string interpol_pattern;
 		static const std::string arg_pattern;
 };

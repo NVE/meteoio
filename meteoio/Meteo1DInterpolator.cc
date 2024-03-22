@@ -26,7 +26,6 @@ using namespace std;
 
 namespace mio {
 
-    const std::string Meteo1DInterpolator::interpol_section("Interpolations1D");
     const std::string Meteo1DInterpolator::interpol_pattern("::RESAMPLE");
 
     static void eraseArg(std::vector<std::pair<std::string, std::string>> &vecArgs, const std::string &argname) {
@@ -63,7 +62,7 @@ namespace mio {
             const std::string parname(MeteoData::getParameterName(ii)); // Current parameter name
 
             // extract each interpolation algorithm and its arguments, then build the stack
-            const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
+            const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern,ConfigConstants::interpol_section));
             mapAlgorithms[parname] = ResamplingStack();
             processAlgorithms(true, parname, vecAlgos, mode, rank);
         }
@@ -75,7 +74,7 @@ namespace mio {
             std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
             if (algo_name == "NONE")
                 algo_name = "LINEAR"; // default value
-            double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
+            double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE",ConfigConstants::interpol_section, IOUtils::nodata);
             if (max_gap_size != IOUtils::nodata) {
                 if (max_gap_size < 0.)
                     throw IOException("MAX_GAP_SIZE not valid, it should be a duration in seconds at least greater than 0", AT);
@@ -156,7 +155,7 @@ namespace mio {
                 it->second.resample(stationHash, index, elementpos, ii, vecM, md, window_size);
 
             } else { // we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
-                const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
+                const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, ConfigConstants::interpol_section));
                 mapAlgorithms[parname] = ResamplingStack();
 
                 processAlgorithms(false, parname, vecAlgos);
