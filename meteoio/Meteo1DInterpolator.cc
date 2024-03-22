@@ -26,6 +26,7 @@ using namespace std;
 
 namespace mio {
 
+    const std::string Meteo1DInterpolator::interpol_section("Interpolations1D");
     const std::string Meteo1DInterpolator::interpol_pattern("::RESAMPLE");
 
     static void eraseArg(std::vector<std::pair<std::string, std::string>> &vecArgs, const std::string &argname) {
@@ -62,7 +63,7 @@ namespace mio {
             const std::string parname(MeteoData::getParameterName(ii)); // Current parameter name
 
             // extract each interpolation algorithm and its arguments, then build the stack
-            const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, ConfigConstants::interpol_section));
+            const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
             mapAlgorithms[parname] = ResamplingStack();
             processAlgorithms(true, parname, vecAlgos, mode, rank);
         }
@@ -74,7 +75,7 @@ namespace mio {
             std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
             if (algo_name == "NONE")
                 algo_name = "LINEAR"; // default value
-            double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE", ConfigConstants::interpol_section, IOUtils::nodata);
+            double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
             if (max_gap_size != IOUtils::nodata) {
                 if (max_gap_size < 0.)
                     throw IOException("MAX_GAP_SIZE not valid, it should be a duration in seconds at least greater than 0", AT);
@@ -109,12 +110,6 @@ namespace mio {
     }
 
     bool Meteo1DInterpolator::resampleData(const Date &date, const std::string &stationHash, const std::vector<MeteoData> &vecM, MeteoData &md) {
-        std::vector<METEO_SET> additional_stations = {};
-        return resampleData(date, stationHash, vecM, md, additional_stations);
-    }
-
-
-    bool Meteo1DInterpolator::resampleData(const Date &date, const std::string &stationHash, const std::vector<MeteoData> &vecM, MeteoData &md, const std::vector<METEO_SET> &additional_stations) {
         if (vecM.empty()) // Deal with case of the empty vector
             return false; // nothing left to do
 
@@ -158,14 +153,14 @@ namespace mio {
             const std::string parname(md.getNameForParameter(ii)); // Current parameter name
             const std::map<std::string, ResamplingStack>::const_iterator it = mapAlgorithms.find(parname);
             if (it != mapAlgorithms.end()) { // the parameter has been found
-                it->second.resample(stationHash, index, elementpos, ii, vecM, md, window_size, additional_stations);
+                it->second.resample(stationHash, index, elementpos, ii, vecM, md, window_size);
 
             } else { // we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
-                const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, ConfigConstants::interpol_section));
+                const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(parname + interpol_pattern, interpol_section));
                 mapAlgorithms[parname] = ResamplingStack();
 
                 processAlgorithms(false, parname, vecAlgos);
-                mapAlgorithms[parname].resample(stationHash, index, elementpos, ii, vecM, md, window_size, additional_stations);
+                mapAlgorithms[parname].resample(stationHash, index, elementpos, ii, vecM, md, window_size);
             }
 
             if ((index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
@@ -253,14 +248,11 @@ namespace mio {
     }
 
     void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM,
-                                   MeteoData &md, const double &i_window_size, const std::vector<METEO_SET> &additional_stations) const {
+                                   MeteoData &md, const double &i_window_size) const {
         const ResamplingAlgorithms::gap_info gap = ResamplingAlgorithms::findGap(index, ii, vecM, md.date, i_window_size);
         const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
         for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
-            if (additional_stations.empty())
-                resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
-            else
-                resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md, additional_stations);
+            resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
             if (jj > 0 && (index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
                 break;
             } else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](ii) == md(ii)) {

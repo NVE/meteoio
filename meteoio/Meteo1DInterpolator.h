@@ -91,7 +91,7 @@ class ResamplingStack {
         std::vector<std::shared_ptr<ResamplingAlgorithms>> buildStack(const ResamplingAlgorithms::gap_info& gap) const;
 
 		void resetResampling();
-		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& i_window_size, const std::vector<METEO_SET> &additional_stations) const;
+		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& i_window_size) const;
 		std::string getStackStr() const;
 		bool empty() const;
 
@@ -129,8 +129,7 @@ class Meteo1DInterpolator {
 		 * @return true if successfull, false if no resampling was possible (no element created)
 		 */
 		bool resampleData(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& vecM, MeteoData& md);
-		bool resampleData(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& vecM, MeteoData& md, const std::vector<METEO_SET>& additional_stations);
-
+		
 		/**
 		 * @brief Call each ResamplingAlgorithms to reset its cached data (as might be needed after a rebuffer)
 		 */
@@ -154,6 +153,7 @@ class Meteo1DInterpolator {
 		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
 	
 	public:
+		static const std::string interpol_section;
 		static const std::string interpol_pattern;
 		static const std::string arg_pattern;
 };
