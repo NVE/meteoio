@@ -148,6 +148,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 		return new EditingMetadata(i_stationID, vecArgs, name, cfg);
 	} else if (name == "MOVE"){ //HACK keep this for a while until every user of MOVE has migrated
 		throw IOException("The MOVE data editing block '"+name+"' has been renamed into RENAME! Please note that in the near future, a new MOVE editing will be implemented to move parameters between stations." , AT);
+	} else if (name == "REGRESSIONFILL") {
+		return new EditingRegFill(i_stationID, vecArgs, name, cfg);
 	} else {
 		throw IOException("The input data editing block '"+name+"' does not exist! " , AT);
 	}
@@ -956,10 +958,10 @@ void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			
 			if (params_to_merge.empty()) { //merge all parameters
 				if (time_restrictions.empty()) {
-					fillTimeseries( vecMeteo[toStationIdx], vecMeteo[ii], regtype);
+					fillTimeseries( vecMeteo[toStationIdx], vecMeteo[ii]);
 				} else {
 					std::vector<MeteoData> tmp_meteo( timeFilterFromStation(vecMeteo[ii]) );
-					fillTimeseries( vecMeteo[toStationIdx], tmp_meteo, regtype);
+					fillTimeseries( vecMeteo[toStationIdx], tmp_meteo);
 				}
 			} else { //only merge some specific parameters
 				std::vector<MeteoData> tmp_meteo = (time_restrictions.empty())? vecMeteo[ii] : timeFilterFromStation(vecMeteo[ii]);
@@ -968,7 +970,7 @@ void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 				//std::vector<MeteoData> tmp_meteo( vecMeteo[ii] );
 				EditingKeep::processStation(tmp_meteo, 0, tmp_meteo.size(), params_to_merge);
 				
-				fillTimeseries( vecMeteo[toStationIdx], tmp_meteo, regtype);
+				fillTimeseries( vecMeteo[toStationIdx], tmp_meteo);
 			}
 		}
 	}
@@ -1029,11 +1031,10 @@ std::vector<double> findDuplicateDates(const std::unordered_map<double,size_t>& 
 	return duplicate_dates;
 }
 
-void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMeteoSource, const RegressionType& regtype) {
+void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMeteoSource) {
 	
 	if (vecMeteo.empty() || vecMeteoSource.empty()) throw InvalidArgumentException("Empty METEO_SET", AT);
 
-	const size_t max_idx = max(vecMeteo.size(), vecMeteoSource.size());
 	METEO_SET tmp_meteoOut;
 
 	MeteoData md_pattern = vecMeteo.front();

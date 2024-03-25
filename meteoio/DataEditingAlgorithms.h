@@ -486,11 +486,10 @@ class EditingRegFill : public EditingBlock {
 		EditingRegFill(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		void fillTimeseries(METEO_SET& vecMeteo1, const METEO_SET& vecMeteo2, const RegressionType& regtype);
+		void fillTimeseries(METEO_SET& vecMeteo1, const METEO_SET& vecMeteo2);
 		std::vector< std::string > source_stations;
 		std::set< std::string > params_to_merge;
 		RegressionType regtype;
