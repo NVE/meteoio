@@ -16,46 +16,37 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef NEAD_H
-#define NEAD_H
+#ifndef ECSV_H
+#define ECSV_H
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/plugins/NEADHelper.h>
+#include <meteoio/plugins/ECSVHelper.h>
 #include <meteoio/plugins/libacdd.h>
 
 #include <vector>
 
 namespace mio {
 
-    using namespace NEAD;
+    using namespace ECSV;
     /**
-     * @class NEADIO
-     * @brief A class to read and write NEAD files
+     * @class ECSVIO
+     * @brief A class to read and write ECSV files
      *
      * @section TODO (when available)
-     * - file extension in inishell and plugin is .nead at the moment, is probably something else
      * - if meteoparam metadata is available use it to pass along long_name ... and also write it out
      *     
-     * @section notes Notes on Nead
-     * - geometry cant handle UTM
-     * - timestamp should be iso and required for stations
-     * - in pyNEAD the file format is forced to be UTF-8
-     * - geometry = column name (is something like "lat,lon,alt" allowed?) --> fix TODOs if so
-     * - should the file extension actually be .csv?
-     * - xy + latlon in geometry
-     * - the example files do not follow the format with add_offset and scale_factor...
      *
      * @ingroup plugins
      * @author Patrick Leibersperger
      * @date   2024-02-015
      */
-    class NEADIO : public IOInterface {
+    class ECSVIO : public IOInterface {
     public:
-        NEADIO(const std::string &configfile);
-        NEADIO(const NEADIO &);
-        NEADIO(const Config &cfgreader);
+        ECSVIO(const std::string &configfile);
+        ECSVIO(const ECSVIO &);
+        ECSVIO(const Config &cfgreader);
 
         virtual void readStationData(const Date &date, std::vector<StationData> &vecStation);
         virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo);
@@ -70,7 +61,7 @@ namespace mio {
         bool read_sequential;
 
         // file information
-        std::vector<NEADFile> stations_files;
+        std::vector<ECSVFile> stations_files;
 
         // output section
         ACDD acdd_metadata;
@@ -81,8 +72,8 @@ namespace mio {
         char out_delimiter;
 
         // constants
-        const std::string NEAD_version = "1.0";
-        const std::string NEAD_firstline = "# NEAD " + NEAD_version + " UTF-8";
+        const std::string ECSV_version = "1.0";
+        const std::string ECSV_firstline = "# ECSV " + ECSV_version + " UTF-8";
         static const double snVirtualSlopeAngle;
 
         // constructor helpers
@@ -93,27 +84,27 @@ namespace mio {
         void identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md,
                                      const std::string &geometry_field);
         double getSnowpackSlope(const std::string &id);
-        void read_meta_data(const NEADFile &current_file, StationData &meta);
-        void setMetaDataPosition(const NEADFile &current_file, StationData &meta, const double &nodata_value);
-        void setMetaDataSlope(const NEADFile &current_file, StationData &meta, const double &nodata_value);
+        void read_meta_data(const ECSVFile &current_file, StationData &meta);
+        void setMetaDataPosition(const ECSVFile &current_file, StationData &meta, const double &nodata_value);
+        void setMetaDataSlope(const ECSVFile &current_file, StationData &meta, const double &nodata_value);
 
-        void readDataSequential(NEADFile &current_file);
-        std::vector<MeteoData> createMeteoDataVector(NEADFile &current_file, std::vector<Date> &date_vec,
+        void readDataSequential(ECSVFile &current_file);
+        std::vector<MeteoData> createMeteoDataVector(ECSVFile &current_file, std::vector<Date> &date_vec,
                                                              std::vector<geoLocation> &location_vec);
-        void setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, NEADFile &current_file, double nodata);
-        void setMeteoDataFields(MeteoData &tmp_md, NEADFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata);
+        void setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, ECSVFile &current_file, double nodata);
+        void setMeteoDataFields(MeteoData &tmp_md, ECSVFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata);
 
         // write helpers
-        void prepareOutfile(NEADFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
-        void handleNewFile(NEADFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
-        void handleFileAppend(NEADFile &outfile, const std::vector<MeteoData> &vecMeteo);
+        void prepareOutfile(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
+        void handleNewFile(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
+        void handleFileAppend(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo);
 
         std::string getGeometry(const geoLocation &loc);
         bool checkLocationConsistency(const std::vector<MeteoData> &vecMeteo);
-        bool createFilename(NEADFile &outfile, const StationData &station, size_t station_num);
-        void createMetaDataSection(NEADFile &current_file, const std::vector<MeteoData> &vecMeteo);
-        void createFieldsSection(NEADFile &current_file, const std::vector<MeteoData> &vecMeteo);
-        void writeToFile(const NEADFile &outfile);
+        bool createFilename(ECSVFile &outfile, const StationData &station, size_t station_num);
+        void createMetaDataSection(ECSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
+        void createFieldsSection(ECSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
+        void writeToFile(const ECSVFile &outfile);
     };
 
 } // namespace

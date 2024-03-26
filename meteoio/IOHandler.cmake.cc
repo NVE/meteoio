@@ -42,7 +42,7 @@
 #cmakedefine PLUGIN_METEOBLUE
 #cmakedefine PLUGIN_MYSQLIO
 #cmakedefine PLUGIN_NETCDFIO
-#cmakedefine PLUGIN_NEADIO
+#cmakedefine PLUGIN_ECSVIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_PGMIO
 #cmakedefine PLUGIN_PNGIO
@@ -90,8 +90,8 @@
 #include <meteoio/plugins/GrassIO.h>
 #endif
 
-#ifdef PLUGIN_NEADIO
-#include <meteoio/plugins/NEADIO.h>
+#ifdef PLUGIN_ECSVIO
+#include <meteoio/plugins/ECSVIO.h>
 #endif
 
 #ifdef PLUGIN_PGMIO
@@ -215,7 +215,7 @@ namespace mio {
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
- * <tr><td>\subpage neadio "NEAD"</td><td>meteo, poi</td><td>meteo</td>		<td>NEAD data files</td><td></td></tr>
+ * <tr><td>\subpage ecsvio "ECSV"</td><td>meteo, poi</td><td>meteo</td>		<td>ECSV data files</td><td></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td></td>		<td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>
@@ -298,8 +298,8 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_NETCDFIO
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
 #endif
-#ifdef PLUGIN_NEADIO
-	if (plugin_name == "NEAD") return new NEADIO(i_cfg);
+#ifdef PLUGIN_ECSVIO
+	if (plugin_name == "ECSV") return new ECSVIO(i_cfg);
 #endif
 #ifdef PLUGIN_OSHDIO
 	if (plugin_name == "OSHD") return new OshdIO(i_cfg);

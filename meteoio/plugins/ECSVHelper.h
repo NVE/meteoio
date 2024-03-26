@@ -16,8 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef NEADHELP_H
-#define NEADHELP_H
+#ifndef ECSVHELP_H
+#define ECSVHELP_H
 
 #include <meteoio/IOUtils.h>
 
@@ -29,12 +29,12 @@
 
 static const double default_nodata = M_PI;
 namespace mio {
-namespace NEAD {
+namespace ECSV {
 
 
 // ----------------- Datat structures -----------------
 /**
-    * @brief Represents a geographic location extracted from NEAD files. (POINT(X Y)...)
+    * @brief Represents a geographic location extracted from ECSV files. (POINT(X Y)...)
     */
 struct geoLocation {
     double x = default_nodata; /**< The x-coordinate of the location. */
@@ -90,7 +90,7 @@ bool operator==(const geoLocation& lhs, const geoLocation& rhs);
 bool operator!=(const geoLocation& lhs, const geoLocation& rhs);
 
 /**
-    * @brief Stores information on the METADATA section of a NEAD file.
+    * @brief Stores information on the METADATA section of a ECSV file.
     */
 struct MetaDataSection {
     char field_delimiter = '0'; /**< The field delimiter character. */
@@ -192,7 +192,7 @@ bool roughlyEqual(const MetaDataSection &lhs, const MetaDataSection &rhs);
 MetaDataSection& operator+=(MetaDataSection& lhs, const MetaDataSection& rhs);
 
 /**
-    * @brief Stores Information on the FIELDS section of a NEAD file.
+    * @brief Stores Information on the FIELDS section of a ECSV file.
     *
     */
 struct fieldsSection {
@@ -273,16 +273,16 @@ fieldsSection& operator+=(fieldsSection& lhs, const fieldsSection& rhs);
 std::vector<double> convertVector(const std::vector<std::string> &vec);
 std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, int epsg);
 geoLocation extractCoordinates(const std::string &geometry);
-geoLocation toNEADLocation(Coords coords, const int& epsg);
+geoLocation toECSVLocation(Coords coords, const int& epsg);
 
 
 
-// ----------------- NEADFile class -----------------
+// ----------------- ECSVFile class -----------------
 
 /**
-* @class NEADFile
+* @class ECSVFile
 *
-* @brief This class is responsible for handling and storing NEAD files.
+* @brief This class is responsible for handling and storing ECSV files.
 *
 * General information about the file is stored as public members, the station_location is an additional member.
 * The MetaData is stored in the METADATA member, and the fields are stored in the FIELDS member.
@@ -294,7 +294,7 @@ geoLocation toNEADLocation(Coords coords, const int& epsg);
 * Getters are provided to access the data, Metadata is directly accessed.
 *
 */
-class NEADFile {
+class ECSVFile {
     public:
         // Essential information
         size_t skip_lines_to_data;
@@ -322,9 +322,9 @@ class NEADFile {
 
     public:
         // Constructors
-        NEADFile();
-        NEADFile(const NEADFile &);
-        NEADFile(const std::string &infile, const bool& read_sequential);
+        ECSVFile();
+        ECSVFile(const ECSVFile &);
+        ECSVFile(const std::string &infile, const bool& read_sequential);
 
         // Main methods
         void readFile(const std::string &infile, const bool& sequentially);
@@ -387,6 +387,6 @@ class NEADFile {
         void populateFields(const std::string &key, const std::string &value);
 };
 
-} // namespace NEAD
+} // namespace ECSV
 } // namespace mio
-#endif // NEADHELP_H
+#endif // ECSVHELP_H
