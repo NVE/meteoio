@@ -48,7 +48,6 @@ class ClearSkySWGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		SunObject sun;
 };
 

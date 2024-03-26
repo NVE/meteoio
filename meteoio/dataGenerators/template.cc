@@ -23,6 +23,8 @@ namespace mio {
 
 void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	//Non-processed arguments can be provided, for example for stations' restrictions.
+	//Therefore, accept arguments that are not handled by the generator itself!
 	//Get the optional arguments for the algorithm. For example, process 1 argument
 	/*const std::string where( section+"::"+algo );
 	bool has_val=false; //so we can check the syntax
