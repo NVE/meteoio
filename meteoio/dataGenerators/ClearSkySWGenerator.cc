@@ -23,15 +23,6 @@
 
 namespace mio {
 
-void ClearSkySWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	const std::string where( section+"::"+algo );
-	//Get the optional arguments for the algorithm: constant value to use
-	if (!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for "+where, AT);
-	}
-}
-
 bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);

@@ -43,7 +43,6 @@ class WindComponents : public GeneratorAlgorithm {
 	private:
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::string where;
 };
 

@@ -22,11 +22,6 @@
 
 namespace mio {
 
-void RadiationComponents::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	if (!vecArgs.empty()) throw InvalidArgumentException("The "+where+" generator does not take any arguments", AT);
-}
-
 bool RadiationComponents::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	if (param!=MeteoData::ISWR)
