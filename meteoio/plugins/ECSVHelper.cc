@@ -48,17 +48,17 @@ static void custom_assert(const std::string& value, const std::string& asssert_v
     }
 }
 
-static void custom_assert(const std::string& value, const std::string& asssert_val1, const std::string& assert_val2) {
-    if (value.empty() && !asssert_val1.empty() && !assert_val2.empty()) {
-        std::cerr << "Assertion failed: No input value" << std::endl;
-        std::abort();
-    }
-    bool condition = value == asssert_val1 || value == assert_val2;
-    if (!condition) {
-        std::cerr << "Assertion failed: " << value << " != " << asssert_val1 << " || " << assert_val2 << std::endl;
-        std::abort();
-    }
-}
+// static void custom_assert(const std::string& value, const std::string& asssert_val1, const std::string& assert_val2) {
+//     if (value.empty() && !asssert_val1.empty() && !assert_val2.empty()) {
+//         std::cerr << "Assertion failed: No input value" << std::endl;
+//         std::abort();
+//     }
+//     bool condition = value == asssert_val1 || value == assert_val2;
+//     if (!condition) {
+//         std::cerr << "Assertion failed: " << value << " != " << asssert_val1 << " || " << assert_val2 << std::endl;
+//         std::abort();
+//     }
+// }
 
 /**
 * Checks if the first line of ECSV data is conforming to the standard.

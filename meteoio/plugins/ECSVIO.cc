@@ -20,6 +20,7 @@
 #include <iostream>
 #include <meteoio/FStream.h>
 #include <meteoio/plugins/ECSVIO.h>
+#include <regex>
 
 // using namespace std;
 
@@ -162,14 +163,14 @@ using namespace ECSV;
 // ----------------- ECSVIO -----------------
 ECSVIO::ECSVIO(const std::string &configfile)
     : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(',') {
+        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_ECSV) {
     parseInputSection();
     parseOutputSection();
 }
 
 ECSVIO::ECSVIO(const Config &cfgreader)
     : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(',') {
+        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_ECSV) {
     parseInputSection();
     parseOutputSection();
 }
@@ -186,6 +187,7 @@ void ECSVIO::parseInputSection() {
     if (in_meteo == "ECSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
         cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
         const std::string inpath = cfg.get("METEOPATH", "Input");
+
         std::vector<std::string> vecFilenames;
         cfg.getValues("STATION", "INPUT", vecFilenames);
 
@@ -206,6 +208,11 @@ void ECSVIO::parseOutputSection() {
     outpath.clear();
     const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
     if (out_meteo == "ECSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+
+        cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
+        const std::regex valid_extension("^[.][a-zA-Z0-9]+$");
+        if (!std::regex_match(file_extension_out, valid_extension))
+            throw InvalidFormatException("Invalid extension format (valid: \".abc123\") : " + file_extension_out, AT);
 
         bool write_acdd = false;
         cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
@@ -529,7 +536,7 @@ void ECSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMet
 */
 bool ECSVIO::createFilename(ECSVFile &outfile, const StationData &station, size_t ii) {
     outfile.METADATA.station_id = station.getStationID().empty() ? "Station" + IOUtils::toString(ii + 1) : station.getStationID();
-    outfile.filename = outpath + "/" + outfile.METADATA.station_id + dflt_extension_ECSV;
+    outfile.filename = outpath + "/" + outfile.METADATA.station_id + file_extension_out;
     if (!FileUtils::validFileAndPath(outfile.filename)) {
         throw InvalidNameException(outfile.filename, AT);
     }

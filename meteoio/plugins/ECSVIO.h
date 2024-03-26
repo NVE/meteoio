@@ -70,6 +70,8 @@ namespace mio {
         bool allow_overwrite;
         bool allow_append;
         char out_delimiter;
+        std::string file_extension_out;
+
 
         // constants
         const std::string ECSV_version = "1.0";
