@@ -72,7 +72,7 @@ static bool isValidFirstLine(const std::string &firstline) {
     iss >> hash >> ecsv >> version >> encoding;
     custom_assert(ecsv, "ECSV");
     custom_assert(version, "1.0");
-    custom_assert(encoding, "UTF-8", "ASCII");
+    custom_assert(encoding, "UTF-8");
     return true;
 }
 
@@ -535,7 +535,7 @@ bool ECSVFile::checkMeteoIOCompatibility() const {
     }
     if (std::find(FIELDS.fields.begin(), FIELDS.fields.end(), "timestamp") == FIELDS.fields.end() &&
         std::find(FIELDS.fields.begin(), FIELDS.fields.end(), "julian") == FIELDS.fields.end()) {
-        throw InvalidFormatException(format_type + "Please provide a ISO timestamps or julian dates", AT);
+        throw InvalidFormatException(format_type + "Please provide a ISO86 timestamps or julian dates", AT);
     }
     return true;
 }
