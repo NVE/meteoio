@@ -213,7 +213,7 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 	}
 }
 
-std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(std::string regex_str, std::string section) const
+std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const std::string& regex_str, std::string section) const
 {
 	//regex for selecting the keys
 	static const std::regex user_regex(regex_str);
@@ -351,38 +351,10 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 	return vecResult;
 }
 
-std::vector< std::pair<std::string, std::string> > Config::getValuesFromPart(std::string keymatch, std::string section) const
+
+std::vector<std::string> Config::getKeysRegex(const std::string& regex_str, std::string section) const
 {
-	IOUtils::toUpper(section);
-	IOUtils::toUpper(keymatch);
-	
-	std::vector< std::pair<std::string, std::string> > vecResult;
-	//stores (index, key_root) as map index and (key, value) as map value
-	//although the key could be rebuilt from (index, key_root), storing it makes conversion 
-	//to the vector of pair to be returned easier and robust
-	std::map< std::pair<int, std::string>, std::pair<std::string, std::string> > keyMap;
-
-	for (const auto& prop : properties) {
-		const size_t found_pos = (prop.first).find(keymatch);
-		if (found_pos!=string::npos) { //found it!
-			const std::string key( prop.first ); 
-			// we need to remove section::
-			const size_t section_len = section.length();
-			const std::string key_no_section( key.substr(section_len + 2) ); 
-			
-			// append it to the result
-			vecResult.push_back( make_pair(key_no_section, prop.second) );
-		}
-	}
-
-	return vecResult;
-}
-
-std::vector<std::string> Config::getKeys(std::string keymatch,
-                        std::string section, const bool& anywhere) const
-{
-	
-	const std::vector< std::pair<std::string, std::string> > vecKeys( getValues(keymatch, section, anywhere) );
+	const std::vector< std::pair<std::string, std::string> > vecKeys( getValuesRegex(regex_str, section) );
 	std::vector<std::string> vecResult;
 	
 	for (const auto& key_record : vecKeys) {
@@ -392,11 +364,11 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 	return vecResult;
 }
 
-std::vector<std::string> Config::getKeysFromPart(std::string keypart,
-                        std::string section) const
+std::vector<std::string> Config::getKeys(std::string keymatch,
+                        std::string section, const bool& anywhere) const
 {
 	
-	const std::vector< std::pair<std::string, std::string> > vecKeys( getValuesFromPart(keypart, section) );
+	const std::vector< std::pair<std::string, std::string> > vecKeys( getValues(keymatch, section, anywhere) );
 	std::vector<std::string> vecResult;
 	
 	for (const auto& key_record : vecKeys) {
