@@ -54,7 +54,7 @@ IF(PLUGIN_GRIBIO)
 	FIND_PACKAGE(ecCodes REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM "${ecCodes_INCLUDE_DIRS}")
 	SET(plugin_libs ${plugin_libs} "${ecCodes_LIBRARIES}")
-	SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc)
+	SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc plugins/libcodes.cc)
 ENDIF(PLUGIN_GRIBIO)
 
 IF(PLUGIN_GEOTOPIO)
