@@ -988,9 +988,11 @@ FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) {
 }
 
 std::vector<double> doRegression(const std::vector<double>& x, const std::vector<double>& y, const EditingRegFill::RegressionType& regtype) {
-	FitLeastSquare* model = chooseModel(regtype);
+	std::unique_ptr<FitLeastSquare> model(chooseModel(regtype));
 	model->setData(x, y);
-	model->fit();
+	bool success = model->fit();
+	if (!success) 
+		return std::vector<double>();
 	return model->getParams();
 }
 
@@ -1054,10 +1056,15 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 	for (size_t ii = 0; ii < md_pattern.getNrOfParameters(); ii++) {
 		std::vector<double> x, y;
 		for (double date : duplicate_dates) {
-			x.push_back(vecMeteoSource[dates_2[date]](ii));
+			x.push_back(vecMeteoSource[dates_2[date]](ii));	
 			y.push_back(vecMeteo[dates_1[date]](ii));
 		}
-		regression_coefficients[ii] = doRegression(x, y, regtype);
+		std::vector<double> reg_res = doRegression(x, y, regtype);
+		if (reg_res.empty()) {
+			std::cerr << "Regression fit failed for station: "<< vecMeteoSource.front().getStationID() <<"\n";
+			return;
+		}
+		regression_coefficients[ii] = reg_res;
 	}
 
 	std::set<double> all_dates;
