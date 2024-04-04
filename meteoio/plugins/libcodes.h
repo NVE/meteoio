@@ -27,6 +27,7 @@
 namespace mio
 {   
     namespace codes {
+        
         struct HandleDeleter {
             void operator()(codes_handle* h) const {
                 codes_handle_delete(h);
@@ -52,17 +53,21 @@ namespace mio
         }
 
 
-        CodesIndexPtr getListOfParamaters(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers);
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr index, const std::string &paramID, const long& ensembleNumber, const long& levelType);
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes);
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long& ensembleNumber, const long& levelType);
+        std::vector<CodesHandlePtr> getMessages(const std::string &filename);
 
-        Date getDate(CodesHandlePtr h, double &d1, double &d2, const double &tz_in);
+        Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
 
-        void getGriddedValues(CodesHandlePtr h, std::vector<double> &values, long &Ni, long &Nj, double &cellsize_x, double &cellsize_y);// further stuff i need for grids
-        Coords getGeolocalization(CodesHandlePtr h, double &cellsize_x, double &cellsize_y);
+        std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique );
+        void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string,double> &gridParams);
+        std::map<std::string,double> getGriddedValues(CodesHandlePtr &h, std::vector<double> &values);
 
-        void getParameter(codes_handle* h, const std::string& parameterName, double &defaultValue);
-        void getParameter(codes_handle* h, const std::string& parameterName, long &defaultValue);
-        void getParameter(codes_handle* h, const std::string& parameterName, std::string& defaultValue);
+        std::tuple<std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<int>&&> getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons);
+
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, double &param_value);
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, long &param_value);
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& param_value);
 
     }
 } // namespace mio

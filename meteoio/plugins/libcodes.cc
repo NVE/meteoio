@@ -21,6 +21,10 @@
 
 */
 
+/*
+NOTES:
+- so far this is grib specific, will change to include bufr as well
+*/
 #include "libcodes.h"
 #include <meteoio/FileUtils.h>
 
@@ -29,26 +33,26 @@
 namespace mio {
     namespace codes {
 
-        void getParameter(codes_handle* h, const std::string& parameterName, double& parameterValue) {
-            CODES_CHECK(codes_get_double(h, parameterName.c_str(), &parameterValue), 0);
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
+            CODES_CHECK(codes_get_double(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
-        void getParameter(codes_handle* h, const std::string& parameterName, long& parameterValue) {
-            CODES_CHECK(codes_get_long(h, parameterName.c_str(), &parameterValue), 0);
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue) {
+            CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
-        void getParameter(codes_handle* h, const std::string& parameterName, std::string& parameterValue) {
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
             size_t len = 500;
             char name[len] = {'\0'};
-            CODES_CHECK(codes_get_string(h, parameterName.c_str(), name, &len), 0);
+            CODES_CHECK(codes_get_string(h.get(), parameterName.c_str(), name, &len), 0);
             parameterValue = std::string(name);
         }
 
         // Function to get the list of parameters from a GRIB file, caller needs to free the index
-        CodesIndexPtr getListOfParamaters(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers) {
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
 
             int ret;
-            size_t paramIdSize, numberSize, values_len = 0;
+            size_t paramIdSize, numberSize, levelsSize, values_len = 0;
 
             codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,indicatorOfTypeOfLevel", &ret);
 
@@ -71,24 +75,99 @@ namespace mio {
 
             CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
 
-            std::vector<long> ensembleNumbers(numberSize);
+            ensembleNumbers.resize(numberSize);
             CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
+            
+            CODES_CHECK(codes_index_get_size(index, "indicatorOfTypeOfLevel", &levelsSize), 0);
+
+            levelNumbers.resize(levelsSize);
+            CODES_CHECK(codes_index_get_long(index, "indicatorOfTypeOfLevel", levelNumbers.data(), &levelsSize), 0);
 #ifdef DEBUG
             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
             for (const std::string &param : paramIdList) {
                 std::cerr << param << "\n";
+            }
+            std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
+            for (const long &number : ensembleNumbers) {
+                std::cerr << number << "\n";
+            }
+            std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
+            for (const long &number : levelNumbers) {
+                std::cerr << number << "\n";
             }
 #endif
 
             return makeUnique(index);
         }
 
-        Date getDate(CodesHandlePtr h, double &d1, double &d2, const double &tz_in) {
-            codes_handle *raw = h.get();
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const long &levelType) {
+            codes_index *raw = index.get();
+            CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
+            if (ensembleNumber != -1)
+                CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
+            CODES_CHECK(codes_index_select_long(raw, "indicatorOfTypeOfLevel", levelType), 0);
+
+            codes_handle *h = nullptr;
+            int ret;
+            std::vector<CodesHandlePtr> handles;
+            while ((h = codes_handle_new_from_index(raw, &ret)) != nullptr) {
+                if (!h)
+                    throw IOException("Unable to create grib handle from index", AT);
+                if (ret != 0 && ret != CODES_END_OF_INDEX) {
+                    throw IOException("Error reading message: Errno " + std::to_string(ret), AT);
+                }
+#ifdef DEBUG
+                size_t len = 500;
+                char name[len] = {'\0'};
+                std::cerr << "Found message for " << paramID << " " << ensembleNumber << " " << levelType << "\n";
+                CODES_CHECK(codes_get_string(h, "name", name, &len), 0);
+                std::cerr << "With name " << name << "\n";
+                CODES_CHECK(codes_get_string(h, "shortName", name, &len), 0);
+                std::cerr << "With shortName " << name << "\n";
+                if (levelType != 1) {
+                    long level;
+                    GRIB_CHECK(codes_get_long(h, "level", &level), 0);
+                    std::cerr << "With level " << level << "\n";
+                }
+#endif
+                handles.push_back(makeUnique(h));
+            }
+            return handles;
+        }
+
+        std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB) {
+            if (!FileUtils::fileExists(filename))
+                throw AccessException(filename, AT); // prevent invalid filenames
+            errno = 0;
+            FILE *fp = fopen(filename.c_str(),"r");
+            if (fp==nullptr) {
+                std::ostringstream ss;
+                ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+                throw AccessException(ss.str(), AT);
+            }
+
+            codes_handle *h = nullptr;
+            int err = 0;
+            std::vector<CodesHandlePtr> handles;
+            while ((h = codes_handle_new_from_file(0, fp, product, &err)) != nullptr) {
+                if (!h)
+                    throw IOException("Unable to create grib handle from file", AT);
+                if (err != 0) {
+                    codes_handle_delete(h);
+                    throw IOException("Error reading message: Errno " + std::to_string(err), AT);
+                }
+                handles.push_back(makeUnique(h));
+            }
+            fclose(fp);
+            return handles;
+        }
+
+
+        Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
             long dataDate, dataTime;
-            getParameter(raw, "dataDate", dataDate);
-            getParameter(raw, "dataTime", dataTime);
+            getParameter(h, "dataDate", dataDate);
+            getParameter(h, "dataTime", dataTime);
 
             const int year = static_cast<int>(dataDate / 10000), month = static_cast<int>(dataDate / 100 - year * 100), day = static_cast<int>(dataDate - month * 100 - year * 10000);
             const int hour = static_cast<int>(dataTime / 100), minutes = static_cast<int>(dataTime - hour * 100); // HACK: handle seconds!
@@ -97,9 +176,9 @@ namespace mio {
             // reading offset to base date/time, as used for forecast, computed at time t for t+offset
             long startStep, endStep;
             std::string stepUnits;
-            getParameter(raw, "stepUnits", stepUnits);
-            getParameter(raw, "startStep", startStep);
-            getParameter(raw, "endStep", endStep);
+            getParameter(h, "stepUnits", stepUnits);
+            getParameter(h, "startStep", startStep);
+            getParameter(h, "endStep", endStep);
 
             double step_units; // in julian, ie. in days
 
@@ -134,64 +213,39 @@ namespace mio {
 
             d1 = static_cast<double>(startStep) * step_units;
             d2 = static_cast<double>(endStep) * step_units;
+            return base;
         }
 
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr index, const std::string &paramID, const long &ensembleNumber, const long &levelType) {
-            codes_index *raw = index.get();
-            CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
-            CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
-            CODES_CHECK(codes_index_select_long(raw, "indicatorOfTypeOfLevel", levelType), 0);
 
-            codes_handle *h = nullptr;
-            int ret;
-            std::vector<CodesHandlePtr> handles;
-            while ((h = codes_handle_new_from_index(raw, &ret)) != nullptr) {
-                if (!h)
-                    throw IOException("Unable to create grib handle from index", AT);
-                if (ret != 0 && ret != CODES_END_OF_INDEX) {
-                    throw IOException("Error reading message: Errno " + std::to_string(ret), AT);
-                }
-#ifdef DEBUG
-                size_t len = 500;
-                char name[len] = {'\0'};
-                std::cerr << "Found message for " << paramID << " " << ensembleNumber << " " << levelType << "\n";
-                CODES_CHECK(codes_get_string(h, "name", name, &len), 0);
-                std::cerr << "With name " << name << "\n";
-                CODES_CHECK(codes_get_string(h, "shortName", name, &len), 0);
-                std::cerr << "With shortName " << name << "\n";
-                if (levelType != 1) {
-                    long level;
-                    GRIB_CHECK(codes_get_long(h, "level", &level), 0);
-                    std::cerr << "With level " << level << "\n";
-                }
-#endif
-                handles.push_back(makeUnique(h));
-            }
-            return handles;
-        }
-
-        std::map<std::string, double> getGridParameters(codes_handle* h ) {
+        std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique ) {
             // getting transformation parameters
+            long Ni, Nj;
+            getParameter(h_unique, "Ni", Ni);
+            getParameter(h_unique, "Nj", Nj);
+
             double angleOfRotationInDegrees, latitudeOfSouthernPole, longitudeOfSouthernPole, latitudeOfNorthernPole, longitudeOfNorthernPole;
-            getParameter(h, "angleOfRotationInDegrees", angleOfRotationInDegrees);
+            getParameter(h_unique, "angleOfRotationInDegrees", angleOfRotationInDegrees);
             if (angleOfRotationInDegrees != 0.) {
                 throw InvalidArgumentException("Rotated grids not supported!", AT);
             }
 
-            getParameter(h, "latitudeOfSouthernPoleInDegrees", latitudeOfSouthernPole);
-            getParameter(h, "longitudeOfSouthernPoleInDegrees", longitudeOfSouthernPole);
+            getParameter(h_unique, "latitudeOfSouthernPoleInDegrees", latitudeOfSouthernPole);
+            getParameter(h_unique, "longitudeOfSouthernPoleInDegrees", longitudeOfSouthernPole);
             latitudeOfNorthernPole = -latitudeOfSouthernPole;
             longitudeOfNorthernPole = longitudeOfSouthernPole + 180.;
 
             // determining llcorner, urcorner and center coordinates
             double ll_latitude, ll_longitude, ur_latitude, ur_longitude;
-            getParameter(h, "latitudeOfFirstGridPointInDegrees", ll_latitude);
-            getParameter(h, "longitudeOfFirstGridPointInDegrees", ll_longitude);
+            getParameter(h_unique, "latitudeOfFirstGridPointInDegrees", ll_latitude);
+            getParameter(h_unique, "longitudeOfFirstGridPointInDegrees", ll_longitude);
 
-            getParameter(h, "latitudeOfLastGridPointInDegrees", ur_latitude);
-            getParameter(h, "longitudeOfLastGridPointInDegrees", ur_longitude);
+            getParameter(h_unique, "latitudeOfLastGridPointInDegrees", ur_latitude);
+            getParameter(h_unique, "longitudeOfLastGridPointInDegrees", ur_longitude);
 
             std::map<std::string, double> gridParams = {
+                {"Ni", static_cast<double>(Ni)},
+                {"Nj", static_cast<double>(Nj)},
+                {"Nj", Nj},
                 {"ll_latitude", ll_latitude},
                 {"ll_longitude", ll_longitude},
                 {"ur_latitude", ur_latitude},
@@ -205,12 +259,22 @@ namespace mio {
             return gridParams;
         }
 
-        void getGriddedValues(CodesHandlePtr h, std::vector<double> &values, long &Ni, long &Nj, std::map<std::string,double> &gridParams) {
+        std::map<std::string,double> getGriddedValues(CodesHandlePtr &h, std::vector<double> &values) {
+            std::map<std::string, double> gridParams = getGridParameters(h);
+            getGriddedValues(h, values, gridParams);
+            return gridParams;
+        }
+
+        void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string,double> &gridParams) {
             codes_handle *raw = h.get();
+
+            if (gridParams.empty()) {
+                gridParams = getGridParameters(h);
+            }
+
             size_t values_len;
             CODES_CHECK(codes_get_size(raw, "values", &values_len), 0);
-            getParameter(raw, "Ni", Ni);
-            getParameter(raw, "Nj", Nj);
+            long Ni = gridParams.at("Ni"), Nj = gridParams.at("Nj");
             if (values_len != (unsigned)(Ni * Nj)) {
                 std::ostringstream ss;
                 ss << "Declaring grid of size " << Ni << "x" << Nj << "=" << Ni * Nj << " ";
@@ -218,14 +282,33 @@ namespace mio {
                 throw InvalidArgumentException(ss.str(), AT);
             }
             
-            gridParams = getGridParameters(raw);
-
             values.resize(values_len);
             GRIB_CHECK(codes_get_double_array(raw, "values", values.data(), &values_len), 0);
 
         }
 
         // Retrieve Meteo Specific Data
+        /**
+         * Retrieves the nearest values from a GRIB message based on the given latitude and longitude coordinates.
+         *
+         * @param h The handle to the GRIB file.
+         * @param in_lats The input latitude coordinates.
+         * @param in_lons The input longitude coordinates.
+         * @return A tuple containing vectors with the output latitude coordinates, output longitude coordinates,
+         *         distances between the points, values at the points, and indexes of the nearest values.
+         */
+        std::tuple<std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<int>&&> getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons) {
+            codes_handle *raw = h.get();
+
+            size_t npoints = in_lats.size();
+            std::vector<double> out_lats(npoints), out_lons(npoints), distances(npoints), values(npoints);
+            std::vector<int> indexes(npoints);
+
+
+            CODES_CHECK(codes_grib_nearest_find_multiple(raw, 0, in_lats.data(), in_lons.data(), static_cast<long>(npoints), out_lats.data(), out_lons.data(), values.data(), distances.data(), indexes.data()), 0);
+
+            return std::make_tuple(std::move(out_lats), std::move(out_lons), std::move(distances), std::move(values), std::move(indexes));
+        }
 
     } // namespace codes
 
