@@ -1061,8 +1061,8 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 		}
 		std::vector<double> reg_res = doRegression(x, y, regtype);
 		if (reg_res.empty()) {
-			std::cerr << "Regression fit failed for station: "<< vecMeteoSource.front().getStationID() <<"\n";
-			return;
+			std::cerr << "Regression fit failed for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
+			reg_res = regtype == LINEAR ? std::vector<double>{0.0, IOUtils::nodata} : std::vector<double>{0.0, 0.0, IOUtils::nodata};
 		}
 		regression_coefficients[ii] = reg_res;
 	}
