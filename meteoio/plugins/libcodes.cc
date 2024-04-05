@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* https://codes.ecmwf.int/grib/param-db/?ordering=id&encoding=grib2 -- parameter database
+/* https://codes.ecmwf.int/grib/param-db/?ordering=id-- parameter database
 
 */
 
@@ -32,6 +32,40 @@ NOTES:
 
 namespace mio {
     namespace codes {
+
+        const std::map<std::string,std::string> PARAMETER_MAP{
+            {"geometric_height","3008"},
+            {"10m_wind_u","165"},
+            {"10m_wind_v","166"},
+            {"wind_direction","3031"},
+            {"wind_speed","10"},
+            {"pressure","54"},
+            {"temperature_2m","167"}, 
+            {"dew_point_temperature","3017"},
+            {"relative_humidity","157"},
+            {"snow_surface_temperature","201203"}, //TODO: or 500170
+            {"total_precipitation","228"},
+            {"runoff","205"}, //TODO: is this the surf+subsurf runoff?
+            {"SWE_m", "141"},
+            {"SWE_kgm-2","228141"},
+            {"snow_depth", "3066"},
+            {"snow_density","33"},
+            {"albedo","32,174..."}, //TODO: is it snow albedo, or uv, or...?
+            {"long_wave_radiation_flux","3115"},
+            {"medium_cloud_cover","187"}, // 0-1
+            {"short_wave_radiation_flux","3116"},
+            {"diffuse_radiation_albedo","228245"},
+            {"direct_radiation_albedo","228244"},
+            {"global_radiation_flux","3117"}, // is this glob->111.250
+            {"subgrid_slope","163"},
+            {"subgrid_angle_eastward","162"},
+            {"maximum_wind_velocity","201187"},
+            {"geometric_verival_velocity","260238"},
+            {"surface_pressure","134"},
+            {"water_equivalent_of_accumulated_snow_depth(deprecated)","260056"}, // what to use instead??
+            {"",""},
+
+        };
 
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
             CODES_CHECK(codes_get_double(h.get(), parameterName.c_str(), &parameterValue), 0);
@@ -55,6 +89,59 @@ namespace mio {
             size_t paramIdSize, numberSize, levelsSize, values_len = 0;
 
             codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,indicatorOfTypeOfLevel", &ret);
+
+            CODES_CHECK(ret, 0);
+
+            CODES_CHECK(codes_index_get_size(index, "paramId", &paramIdSize), 0);
+
+            std::vector<char *> paramId(paramIdSize);
+            CODES_CHECK(codes_index_get_string(index, "paramId", paramId.data(), &paramIdSize), 0);
+
+            paramIdList.reserve(paramId.size());
+
+            for (char* cstr : paramId) {
+                if (cstr != nullptr) {
+                    paramIdList.push_back(std::string(cstr));
+                    delete[] cstr;
+                }
+            }
+            paramId.clear();
+
+            CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
+
+            ensembleNumbers.resize(numberSize);
+            CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
+            
+            CODES_CHECK(codes_index_get_size(index, "indicatorOfTypeOfLevel", &levelsSize), 0);
+
+            levelNumbers.resize(levelsSize);
+            CODES_CHECK(codes_index_get_long(index, "indicatorOfTypeOfLevel", levelNumbers.data(), &levelsSize), 0);
+#ifdef DEBUG
+            std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
+            for (const std::string &param : paramIdList) {
+                std::cerr << param << "\n";
+            }
+            std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
+            for (const long &number : ensembleNumbers) {
+                std::cerr << number << "\n";
+            }
+            std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
+            for (const long &number : levelNumbers) {
+                std::cerr << number << "\n";
+            }
+#endif
+
+            return makeUnique(index);
+        }
+
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers, std::vector<double> &datesList) {
+            if (!FileUtils::fileExists(filename))
+                throw AccessException(filename, AT); // prevent invalid filenames
+
+            int ret;
+            size_t paramIdSize, numberSize, levelsSize, values_len = 0;
+
+            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,indicatorOfTypeOfLevel,dataDate", &ret);
 
             CODES_CHECK(ret, 0);
 
@@ -294,8 +381,12 @@ namespace mio {
          * @param h The handle to the GRIB file.
          * @param in_lats The input latitude coordinates.
          * @param in_lons The input longitude coordinates.
-         * @return A tuple containing vectors with the output latitude coordinates, output longitude coordinates,
-         *         distances between the points, values at the points, and indexes of the nearest values.
+         * @return A tuple containing vectors with.
+         *         - the output latitude coordinates, 
+         *         - output longitude coordinates,
+         *         - distances between the points,
+         *         - values at the points,
+         *         - indexes of the nearest values.
          */
         std::tuple<std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<int>&&> getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons) {
             codes_handle *raw = h.get();

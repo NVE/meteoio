@@ -54,8 +54,10 @@ namespace mio
 
 
         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes);
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes, std::vector<double> &datesList);
+
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long& ensembleNumber, const long& levelType);
-        std::vector<CodesHandlePtr> getMessages(const std::string &filename);
+        std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
 
         Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
 
@@ -68,6 +70,8 @@ namespace mio
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double &param_value);
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, long &param_value);
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& param_value);
+
+        const std::map<std::string, std::string> PARAMETER_MAP;
 
     }
 } // namespace mio

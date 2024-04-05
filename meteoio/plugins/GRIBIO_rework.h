@@ -62,11 +62,11 @@ class GRIBIO : public IOInterface {
 
 		void scanMeteoPath();
 
-		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats, double *lons);
-		bool readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, double *lats, double *lons);
-		bool readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const size_t& npoints, double *lats, double *lons, double *values);
-		void fillMeteo(double *values, const MeteoData::Parameters& param, const size_t& npoints, std::vector<MeteoData> &Meteo);
-		void readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo);
+		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, std::vector<double> &lats, std::vector<double> &lons);
+		bool readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
+		bool readMeteoValues(const std::string& paramId, const long& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double>& lats, std::vector<double>& lons, std::vector<double>& values);
+		void fillMeteo(std::vector<double> &values, const MeteoData::Parameters& param, const size_t& npoints, std::vector<MeteoData> &Meteo);
+		void readMeteoStep(std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons, const Date i_date, std::vector<MeteoData> &Meteo);
 
 		const Config cfg;
 		std::string grid2dpath_in;
@@ -82,7 +82,9 @@ class GRIBIO : public IOInterface {
 		Coords llcorner;
 
 		CodesIndexPtr file_index; //because it needs to be kept between calls
-		double num_ensembles;
+		std::vector<std::string> paramIdList;
+		std::vector<long> ensembleNumbers;
+		std::vector<long> levelTypes;
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
 		double cellsize, factor_x, factor_y;
@@ -92,7 +94,8 @@ class GRIBIO : public IOInterface {
 		static const double tz_in; //GRIB time zone
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
 		bool llcorner_initialized; //set to true after we properly computed llcorner
-		bool update_dem;
+		bool update_dem, indexed;
+		bool warned_date_in_file;
 
 };
 
