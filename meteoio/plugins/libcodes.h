@@ -41,8 +41,6 @@ namespace mio {
         CodesIndexPtr makeUnique(codes_index *i);
 
         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long &ensembleNumber, bool verbose);
-        // CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes, std::vector<double>
-        // &datesList);
 
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);

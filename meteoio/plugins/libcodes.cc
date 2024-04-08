@@ -168,58 +168,6 @@ namespace mio {
             return makeUnique(index);
         }
 
-//         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers, std::vector<double> &datesList) {
-//             if (!FileUtils::fileExists(filename))
-//                 throw AccessException(filename, AT); // prevent invalid filenames
-
-//             int ret;
-//             size_t paramIdSize, numberSize, levelsSize, values_len = 0;
-
-//             codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel,dataDate", &ret);
-
-//             CODES_CHECK(ret, 0);
-
-//             CODES_CHECK(codes_index_get_size(index, "paramId", &paramIdSize), 0);
-
-//             std::vector<char *> paramId(paramIdSize);
-//             CODES_CHECK(codes_index_get_string(index, "paramId", paramId.data(), &paramIdSize), 0);
-
-//             paramIdList.reserve(paramId.size());
-
-//             for (char* cstr : paramId) {
-//                 if (cstr != nullptr) {
-//                     paramIdList.push_back(std::string(cstr));
-//                     delete[] cstr;
-//                 }
-//             }
-//             paramId.clear();
-
-//             CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
-
-//             ensembleNumbers.resize(numberSize);
-//             CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
-            
-//             CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
-
-//             levelNumbers.resize(levelsSize);
-//             CODES_CHECK(codes_index_get_long(index, "typeOfLevel", levelNumbers.data(), &levelsSize), 0);
-// #ifdef DEBUG
-//             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
-//             for (const std::string &param : paramIdList) {
-//                 std::cerr << param << "\n";
-//             }
-//             std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
-//             for (const long &number : ensembleNumbers) {
-//                 std::cerr << number << "\n";
-//             }
-//             std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
-//             for (const long &number : levelNumbers) {
-//                 std::cerr << number << "\n";
-//             }
-// #endif
-
-//             return makeUnique(index);
-//         }
 
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
             codes_index *raw = index.get();
