@@ -53,7 +53,7 @@ class GRIBIO : public IOInterface {
 
 		Coords getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &gridParams);
 		void read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out);
-		bool read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensembleNumber=0);
+		bool read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		void readWind(const std::string& filename, const Date& date);
@@ -82,9 +82,12 @@ class GRIBIO : public IOInterface {
 		Coords llcorner;
 
 		CodesIndexPtr file_index; //because it needs to be kept between calls
+		std::vector<std::string> params_to_read;
+		std::vector<long> level_types_to_read;
+		std::vector<double> levels_to_read;
+		long ensemble_to_read;
+		bool verbose;
 		std::vector<std::string> paramIdList;
-		std::vector<long> ensembleNumbers;
-		std::vector<std::string> levelTypes;
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
 		double cellsize, factor_x, factor_y;

@@ -40,7 +40,7 @@ namespace mio {
             {"wind_direction","3031"},
             {"wind_speed","10"},
             {"pressure","54"},
-            {"temperature_2m","167"}, 
+            {"temperature_2m","167"}, // there is two in meteoio, both have 11 in grib 1 table 2 what is the correct way?
             {"dew_point_temperature","3017"},
             {"relative_humidity","157"},
             {"snow_surface_temperature","201203"}, //TODO: or 500170
@@ -73,6 +73,7 @@ namespace mio {
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue) {
             CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
+
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
             size_t len = 500;
             char name[len] = {'\0'};
@@ -81,14 +82,16 @@ namespace mio {
         }
 
         // Function to get the list of parameters from a GRIB file, caller needs to free the index
-        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<std::string> &levelNumbers) {
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long& ensembleNumber, bool verbose) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
 
             int ret;
-            size_t paramIdSize, numberSize, levelsSize, values_len = 0;
+            size_t paramIdSize, values_len = 0;
 
-            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel", &ret);
+            std::string index_str = "paramId,typeOfLevel";
+            if (ensembleNumber != -1) index_str += ",number";
+            codes_index *index = codes_index_new_from_file(0, filename.c_str(), index_str.c_str(), &ret);
 
             CODES_CHECK(ret, 0);
 
@@ -106,7 +109,19 @@ namespace mio {
                 }
             }
             paramId.clear();
+            if (verbose) {
+                std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
+                for (const std::string &param : paramIdList) {
+                    std::cerr << param << "\n";
+                }
+            
+            }
 
+
+#ifdef DEBUG
+            size_t numberSize, levelsSize;
+            std::vector<long> ensembleNumbers;
+            std::vector<std::string> levelNumbers;
             CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
 
             ensembleNumbers.resize(numberSize);
@@ -123,7 +138,7 @@ namespace mio {
                     delete[] cstr;
                 }
             }
-#ifdef DEBUG
+            levelTypes.clear();
             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
             for (const std::string &param : paramIdList) {
                 std::cerr << param << "\n";
@@ -133,7 +148,7 @@ namespace mio {
                 std::cerr << number << "\n";
             }
             std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
-            for (const long &number : levelNumbers) {
+            for (const std::string &number : levelNumbers) {
                 std::cerr << number << "\n";
             }
 #endif
@@ -141,58 +156,58 @@ namespace mio {
             return makeUnique(index);
         }
 
-        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers, std::vector<double> &datesList) {
-            if (!FileUtils::fileExists(filename))
-                throw AccessException(filename, AT); // prevent invalid filenames
+//         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers, std::vector<double> &datesList) {
+//             if (!FileUtils::fileExists(filename))
+//                 throw AccessException(filename, AT); // prevent invalid filenames
 
-            int ret;
-            size_t paramIdSize, numberSize, levelsSize, values_len = 0;
+//             int ret;
+//             size_t paramIdSize, numberSize, levelsSize, values_len = 0;
 
-            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel,dataDate", &ret);
+//             codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel,dataDate", &ret);
 
-            CODES_CHECK(ret, 0);
+//             CODES_CHECK(ret, 0);
 
-            CODES_CHECK(codes_index_get_size(index, "paramId", &paramIdSize), 0);
+//             CODES_CHECK(codes_index_get_size(index, "paramId", &paramIdSize), 0);
 
-            std::vector<char *> paramId(paramIdSize);
-            CODES_CHECK(codes_index_get_string(index, "paramId", paramId.data(), &paramIdSize), 0);
+//             std::vector<char *> paramId(paramIdSize);
+//             CODES_CHECK(codes_index_get_string(index, "paramId", paramId.data(), &paramIdSize), 0);
 
-            paramIdList.reserve(paramId.size());
+//             paramIdList.reserve(paramId.size());
 
-            for (char* cstr : paramId) {
-                if (cstr != nullptr) {
-                    paramIdList.push_back(std::string(cstr));
-                    delete[] cstr;
-                }
-            }
-            paramId.clear();
+//             for (char* cstr : paramId) {
+//                 if (cstr != nullptr) {
+//                     paramIdList.push_back(std::string(cstr));
+//                     delete[] cstr;
+//                 }
+//             }
+//             paramId.clear();
 
-            CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
+//             CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
 
-            ensembleNumbers.resize(numberSize);
-            CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
+//             ensembleNumbers.resize(numberSize);
+//             CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
             
-            CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
+//             CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
 
-            levelNumbers.resize(levelsSize);
-            CODES_CHECK(codes_index_get_long(index, "typeOfLevel", levelNumbers.data(), &levelsSize), 0);
-#ifdef DEBUG
-            std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
-            for (const std::string &param : paramIdList) {
-                std::cerr << param << "\n";
-            }
-            std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
-            for (const long &number : ensembleNumbers) {
-                std::cerr << number << "\n";
-            }
-            std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
-            for (const long &number : levelNumbers) {
-                std::cerr << number << "\n";
-            }
-#endif
+//             levelNumbers.resize(levelsSize);
+//             CODES_CHECK(codes_index_get_long(index, "typeOfLevel", levelNumbers.data(), &levelsSize), 0);
+// #ifdef DEBUG
+//             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
+//             for (const std::string &param : paramIdList) {
+//                 std::cerr << param << "\n";
+//             }
+//             std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
+//             for (const long &number : ensembleNumbers) {
+//                 std::cerr << number << "\n";
+//             }
+//             std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
+//             for (const long &number : levelNumbers) {
+//                 std::cerr << number << "\n";
+//             }
+// #endif
 
-            return makeUnique(index);
-        }
+//             return makeUnique(index);
+//         }
 
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
             codes_index *raw = index.get();
@@ -259,12 +274,12 @@ namespace mio {
 
         Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
-            long dataDate, dataTime;
-            getParameter(h, "dataDate", dataDate);
-            getParameter(h, "dataTime", dataTime);
+            long validityDate, validityTime;
+            getParameter(h, "validityDate", validityDate);
+            getParameter(h, "validityTime", validityTime);
 
-            const int year = static_cast<int>(dataDate / 10000), month = static_cast<int>(dataDate / 100 - year * 100), day = static_cast<int>(dataDate - month * 100 - year * 10000);
-            const int hour = static_cast<int>(dataTime / 100), minutes = static_cast<int>(dataTime - hour * 100); // HACK: handle seconds!
+            const int year = static_cast<int>(validityDate / 10000), month = static_cast<int>(validityDate / 100 - year * 100), day = static_cast<int>(validityDate - month * 100 - year * 10000);
+            const int hour = static_cast<int>(validityTime / 100), minutes = static_cast<int>(validityTime - hour * 100); // HACK: handle seconds!
             base.setDate(year, month, day, hour, minutes, tz_in);
 
             // reading offset to base date/time, as used for forecast, computed at time t for t+offset

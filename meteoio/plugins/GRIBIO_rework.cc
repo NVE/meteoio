@@ -46,10 +46,8 @@ namespace mio {
  * - should it be possible to read multiple dates from a single file?
  * 
  * @note
- * TODO: exchange time range indicator, to make it edition independent
- * 		 temperature vs temperature2m when should be what, w surface and height above ground...
- * 		 add reading arbitrary parameter
- * 		 add ensemble possibility
+ * TODO: temperature vs temperature2m when should be what, with surface and height above ground...
+ * 		 add reading arbitrary parameter -->> shouldnt meteogrids have an addParameter as well? -> needs to be done in the handler, when grids are seperate from meteodata
  * 
  */
 
@@ -60,7 +58,7 @@ const std::string GRIBIO::default_ext=".grb"; //filename extension
 GRIBIO::GRIBIO(const std::string& configfile)
         : cfg(configfile), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), paramIdList(), ensembleNumbers(), levelTypes(),
+          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), paramIdList(), verbose(false),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata), meteo_initialized(false), llcorner_initialized(false), update_dem(false), indexed(false), warned_date_in_file(false)
 {
@@ -70,7 +68,7 @@ GRIBIO::GRIBIO(const std::string& configfile)
 GRIBIO::GRIBIO(const Config& cfgreader)
         : cfg(cfgreader), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), paramIdList(), ensembleNumbers(), levelTypes(),
+          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), paramIdList(), verbose(false),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata), meteo_initialized(false), llcorner_initialized(false), update_dem(false), indexed(false), warned_date_in_file(false)
 {
@@ -94,6 +92,15 @@ void GRIBIO::setOptions()
 
 	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
 	if (grid2d_ext=="none") grid2d_ext.clear();
+
+	cfg.getValue("GRIB_PARAM_IDs", "Input", params_to_read, IOUtils::nothrow);
+	cfg.getValue("GRIB_LEVEL_TYPES", "Input", level_types_to_read, IOUtils::nothrow);
+	cfg.getValue("GRIB_LEVELS", "Input", levels_to_read, IOUtils::nothrow);
+	if (params_to_read.size() != level_types_to_read.size() || params_to_read.size() != levels_to_read.size()) {
+		throw IOException("GRIB_PARAM_IDs, GRIB_LEVEL_TYPES and GRIB_LEVELS must have the same number of elements", AT);
+	}
+	cfg.getValue("GRIB_ENSEMBLE", "Input", ensemble_to_read, IOUtils::nothrow);
+	cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
 }
 
 void GRIBIO::readStations(std::vector<Coords> &vecPoints)
@@ -188,10 +195,10 @@ void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out)
 	}
 }
 
-bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensemble_number)
+bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out)
 {	
 	//TODO: implement the ensemble_number, i.e. remove it cause we dont need it, or choose the right one
-	std::vector<CodesHandlePtr> handles = getMessages(file_index, in_paramId, ensemble_number, i_levelType);
+	std::vector<CodesHandlePtr> handles = getMessages(file_index, in_paramId, ensemble_to_read, i_levelType);
 	for (auto &h : handles) {
 
 		double P1, P2;
@@ -204,12 +211,14 @@ bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const std::string
 		// 3 -> average within [base_date+P1 , base_date+P2]
 		// 4 -> accumulation from base_date+P1 to base_date+P2
 		// 5 -> difference (base_date+P2) - (base_date+P1)
-		long timeRange;
+		long timeRange = -999;
 		getParameter(h, "timeRangeIndicator", timeRange);
 
 		long level=0;
 		if (i_level!=0) getParameter(h, "level", level);
-		if (level==i_level) {
+
+
+		if (level==i_level && timeRange>=0) {
 			if ( (i_date.isUndef()) ||
 			    (timeRange==0 && i_date==base_date+P1) ||
 			    (timeRange==1 && i_date==base_date) ||
@@ -281,7 +290,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 { //Parameters should be read in table 2 if available since this table is the one standardized by WMO
 	if (!indexed ) {
-		file_index = indexFile(filename, paramIdList, ensembleNumbers, levelTypes);
+		file_index = indexFile(filename, paramIdList, ensemble_to_read, verbose);
 	}
 
 	//Basic meteo parameters
@@ -511,7 +520,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			const std::string filename( meteopath_in+"/"+cache_meteo_files[ii].second );
 
 			if (!indexed) {
-				indexFile(filename, paramIdList, ensembleNumbers, levelTypes); //this will also read geolocalization
+				indexFile(filename, paramIdList, ensemble_to_read, verbose); //this will also read geolocalization
 			}
 			if (!meta_ok) {
 				if (readMeteoMeta(vecPts, meta, lats, lons)==false) {
@@ -564,7 +573,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 {//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPoints has been changed)
 	stations.clear();
 
-	std::vector<CodesHandlePtr> handles = getMessages(file_index, PARAMETER_MAP.at("geometric_height"), 0, "surface");// TODO: not the correct parameter
+	std::vector<CodesHandlePtr> handles = getMessages(file_index, PARAMETER_MAP.at("geometric_height"), ensemble_to_read, "surface");// TODO: not the correct parameter
 
 	if (handles.empty()) {
 		throw IOException("No DEM grid found in GRIB file!", AT);
@@ -617,7 +626,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 
 bool GRIBIO::readMeteoValues(const std::string& paramId, const std::string& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double> &lats, std::vector<double> &lons, std::vector<double> &values) 
 {
-	std::vector<CodesHandlePtr> handles = getMessages(file_index, paramId, 0, levelType);
+	std::vector<CodesHandlePtr> handles = getMessages(file_index, paramId, ensemble_to_read, levelType);
 
 	if (handles.empty()) {
 		throw IOException("No grid found in GRIB file!", AT);
@@ -632,12 +641,12 @@ bool GRIBIO::readMeteoValues(const std::string& paramId, const std::string& leve
 		Date base_date = getMessageDate(h, P1, P2, tz_in);
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
-		long timeRange;
+		long timeRange = -999;
 		getParameter(h, "timeRangeIndicator", timeRange);
 
 		long level=0;
 		if (i_level!=0) getParameter(h, "level", level);
-		if (level==i_level) {
+		if (level==i_level && timeRange>=0) {
 			if ( (i_date.isUndef()) ||
 			    (timeRange==0 && i_date==base_date+P1) ||
 			    (timeRange==1 && i_date==base_date) ||
@@ -678,7 +687,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<doubl
 	if (readMeteoValues(PARAMETER_MAP.at("pressure"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::P, npoints, Meteo); //PS
 	if (readMeteoValues(PARAMETER_MAP.at("temperature_2m"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TA, npoints, Meteo); //T_2M
 	if (readMeteoValues(PARAMETER_MAP.at("snow_surface_temperature"), "depthBelowLand", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO take 118, BRTMP instead?
-	if (readMeteoValues(PARAMETER_MAP.at("temperature_2m"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
+	if (readMeteoValues(PARAMETER_MAP.at("temperature_2m"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G <<< is this anpther temperature?
 	if (readMeteoValues(PARAMETER_MAP.at("relative_humidity"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
 	else if (readMeteoValues(PARAMETER_MAP.at("dew_point_temperature"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) { //TD_2M
 		for (size_t ii=0; ii<npoints; ii++) {
@@ -705,9 +714,9 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<doubl
 	} else if (readMeteoValues(PARAMETER_MAP.at("surface_wave_radiation_downwards"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S <<< 25.201
 	if (readMeteoValues(PARAMETER_MAP.at("global_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB_H
 	else {
-		const bool read_dir = (readMeteoValues(108.250, "surface", 0, i_date, npoints, lats, lons, values) //ASWDIR_SH  <<< whwat are these?
+		const bool read_dir = (readMeteoValues(PARAMETER_MAP.at(""), "surface", 0, i_date, npoints, lats, lons, values) //ASWDIR_SH-108.250  <<< whwat are these?
 		                                 || readMeteoValues(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values) //O_ASWDIR_S
-		                                 || readMeteoValues(22.201, "surface", 0, i_date, npoints, lats, lons, values)); //ASWDIR_S  <<< whwat are these?
+		                                 || readMeteoValues(PARAMETER_MAP.at(""), "surface", 0, i_date, npoints, lats, lons, values)); //ASWDIR_S  -22.201 <<< whwat are these?
 		const bool read_diff = (readMeteoValues(PARAMETER_MAP.at("global_radiation_flu"), "surface", 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S <<< was 117.2
 		                                  || readMeteoValues(PARAMETER_MAP.at("surface_solar_radiation_difference"), "surface", 0, i_date, npoints, lats, lons, values2)); //ASWDIFD_S << was 23.201
 		if (read_dir && read_diff){
