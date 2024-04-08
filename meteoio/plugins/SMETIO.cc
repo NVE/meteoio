@@ -69,8 +69,11 @@ namespace mio {
  * - SMET_DEFAULT_WIDTH: default number of characters for parameters that don't already define it (default: 8); [Output] section
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
- * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
- * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
+ * - SMET_APPEND (deprecated): when an output file already exists, should the plugin try to append data (default: false); [Output] section
+ * - SMET_OVERWRITE (deprecated): when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
+ * - SMET_WRITEMODE: when an output file already exists, should the plugin append data, overwrite it or append? [Output] section
+ * 		- APPEND: append data to the existing file;
+ * 		- OVERWRITE: overwrite the existing file;
  * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
@@ -241,8 +244,20 @@ void SMETIO::parseInputOutputSection()
 		else
 			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
 
-		if (allowOverwrite && allowAppend)
-			throw InvalidFormatException("Cannot allow both SMET_APPEND and SMET_OVERWRITE", AT);
+		if (allowOverwrite && allowAppend) {
+			std::cerr << "OVERWRITE and APPEND are deprecated, please use SMET_WRITEMODE instead\n";
+			allowOverwrite = false;
+		}
+
+		std::string writeMode;
+		cfg.getValue("SMET_WRITEMODE", "Output", writeMode, IOUtils::nothrow);
+		if (!writeMode.empty()) {
+			allowOverwrite = false; // allowAppend is already false
+			if (writeMode=="APPEND") allowAppend = true;
+			else if (writeMode=="OVERWRITE") allowOverwrite = true;
+			else
+				throw InvalidArgumentException("Unknown value '"+writeMode+"' for SMET_WRITEMODE", AT);
+		}
 	}
 }
 
