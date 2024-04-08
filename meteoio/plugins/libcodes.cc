@@ -35,8 +35,8 @@ namespace mio {
 
         const std::map<std::string,std::string> PARAMETER_MAP{
             {"geometric_height","3008"},
-            {"10m_wind_u","165"},
-            {"10m_wind_v","166"},
+            {"10m_wind_u","165"}, // is it necessary to specify 10 levl here then?
+            {"10m_wind_v","166"}, // is it necessary to specify 10 levl here then?
             {"wind_direction","3031"},
             {"wind_speed","10"},
             {"pressure","54"},
@@ -56,15 +56,15 @@ namespace mio {
             {"short_wave_radiation_flux","3116"},
             {"diffuse_radiation_albedo","228245"},
             {"direct_radiation_albedo","228244"},
-            {"global_radiation_flux","3117"}, // is this glob->111.250
+            {"global_radiation_flux","3117"}, // is this glob->111.250 and whats the difference to 117.2?
             {"subgrid_slope","163"},
             {"subgrid_angle_eastward","162"},
             {"maximum_wind_velocity","201187"},
-            {"geometric_verival_velocity","260238"},
+            {"geometric_vertival_velocity","260238"},
             {"surface_pressure","134"},
             {"water_equivalent_of_accumulated_snow_depth(deprecated)","260056"}, // what to use instead??
-            {"",""},
-
+            {"surface_short_wave_radiation_downwards","169"}, // is this the correct one, or mean...
+            {"surface_solar_radiation_difference","200176"} // or is it 200047?
         };
 
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
@@ -81,14 +81,14 @@ namespace mio {
         }
 
         // Function to get the list of parameters from a GRIB file, caller needs to free the index
-        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelNumbers) {
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<std::string> &levelNumbers) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
 
             int ret;
             size_t paramIdSize, numberSize, levelsSize, values_len = 0;
 
-            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,indicatorOfTypeOfLevel", &ret);
+            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel", &ret);
 
             CODES_CHECK(ret, 0);
 
@@ -112,10 +112,17 @@ namespace mio {
             ensembleNumbers.resize(numberSize);
             CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
             
-            CODES_CHECK(codes_index_get_size(index, "indicatorOfTypeOfLevel", &levelsSize), 0);
+            CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
 
-            levelNumbers.resize(levelsSize);
-            CODES_CHECK(codes_index_get_long(index, "indicatorOfTypeOfLevel", levelNumbers.data(), &levelsSize), 0);
+            std::vector<char *> levelTypes(levelsSize);
+            CODES_CHECK(codes_index_get_string(index, "typeOfLevel", levelTypes.data(), &levelsSize), 0);
+
+            for (char* cstr : levelTypes) {
+                if (cstr != nullptr) {
+                    levelNumbers.push_back(std::string(cstr));
+                    delete[] cstr;
+                }
+            }
 #ifdef DEBUG
             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
             for (const std::string &param : paramIdList) {
@@ -141,7 +148,7 @@ namespace mio {
             int ret;
             size_t paramIdSize, numberSize, levelsSize, values_len = 0;
 
-            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,indicatorOfTypeOfLevel,dataDate", &ret);
+            codes_index *index = codes_index_new_from_file(0, filename.c_str(), "paramId,number,typeOfLevel,dataDate", &ret);
 
             CODES_CHECK(ret, 0);
 
@@ -165,10 +172,10 @@ namespace mio {
             ensembleNumbers.resize(numberSize);
             CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
             
-            CODES_CHECK(codes_index_get_size(index, "indicatorOfTypeOfLevel", &levelsSize), 0);
+            CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
 
             levelNumbers.resize(levelsSize);
-            CODES_CHECK(codes_index_get_long(index, "indicatorOfTypeOfLevel", levelNumbers.data(), &levelsSize), 0);
+            CODES_CHECK(codes_index_get_long(index, "typeOfLevel", levelNumbers.data(), &levelsSize), 0);
 #ifdef DEBUG
             std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
             for (const std::string &param : paramIdList) {
@@ -187,12 +194,12 @@ namespace mio {
             return makeUnique(index);
         }
 
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const long &levelType) {
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
             codes_index *raw = index.get();
             CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
             if (ensembleNumber != -1)
                 CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
-            CODES_CHECK(codes_index_select_long(raw, "indicatorOfTypeOfLevel", levelType), 0);
+            CODES_CHECK(codes_index_select_string(raw, "typeOfLevel", levelType.c_str()), 0);
 
             codes_handle *h = nullptr;
             int ret;

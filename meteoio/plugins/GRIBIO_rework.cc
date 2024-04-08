@@ -46,7 +46,11 @@ namespace mio {
  * - should it be possible to read multiple dates from a single file?
  * 
  * @note
- * TODO: make a map of parameters to paramID
+ * TODO: exchange time range indicator, to make it edition independent
+ * 		 temperature vs temperature2m when should be what, w surface and height above ground...
+ * 		 add reading arbitrary parameter
+ * 		 add ensemble possibility
+ * 
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
@@ -184,7 +188,7 @@ void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out)
 	}
 }
 
-bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensemble_number)
+bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensemble_number)
 {	
 	//TODO: implement the ensemble_number, i.e. remove it cause we dont need it, or choose the right one
 	std::vector<CodesHandlePtr> handles = getMessages(file_index, in_paramId, ensemble_number, i_levelType);
@@ -253,13 +257,13 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 {
 	if (wind_date==date) return; //wind fields are already up to date
 
-	if (read2DGrid_indexed(32.2, 105, 10, date, VW)) { //FF_10M speed
-		if (!read2DGrid_indexed(31.2, 105, 10, date, DW)) //DD_10M dir
+	if (read2DGrid_indexed(PARAMETER_MAP.at("wind_speed"), "heightAboveGround", 10, date, VW)) { //FF_10M speed <<< 105=heightAboveGround
+		if (!read2DGrid_indexed(PARAMETER_MAP.at("wind_direction"), "heightAboveGround", 10, date, DW)) //DD_10M dir
 			throw NoDataException("Can not read wind direction in file \""+filename+"\"", AT);
 	} else {
 		Grid2DObject U,V;
-		read2DGrid_indexed(33.2, 105, 10, date, U); //U_10M, also in 110, 10 as U
-		read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M, also in 110, 10 as V
+		read2DGrid_indexed("10m_wind_u", "heightAboveGround", 10, date, U); //U_10M, also in 110, 10 as U
+		read2DGrid_indexed("10m_wind_v", "heightAboveGround", 10, date, V); //V_10M, also in 110, 10 as V
 
 		VW.set(U.getNx(), U.getNy(), U.cellsize, U.llcorner);
 		DW.set(U.getNx(), U.getNy(), U.cellsize, U.llcorner);
@@ -281,13 +285,13 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 
 	//Basic meteo parameters
-	if (parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS 
-	if (parameter==MeteoGrids::TA) read2DGrid_indexed(11.2, 105, 2, date, grid_out); //T_2M
+	if (parameter==MeteoGrids::P) read2DGrid_indexed(PARAMETER_MAP.at("pressure"), "surface", 0, date, grid_out); //PS  <<< 1 = surface
+	if (parameter==MeteoGrids::TA) read2DGrid_indexed(PARAMETER_MAP.at("temperature_2m"), "heightAboveGround", 2, date, grid_out); //T_2M
 	if (parameter==MeteoGrids::RH) {
-		if (!read2DGrid_indexed(52.2, 105, 2, date, grid_out)) { //RELHUM_2M
+		if (!read2DGrid_indexed(PARAMETER_MAP.at("relative_humidity"), "heightAboveGround", 2, date, grid_out)) { //RELHUM_2M
 			Grid2DObject ta;
-			read2DGrid_indexed(11.2, 105, 2, date, ta); //T_2M
-			read2DGrid_indexed(17.2, 105, 2, date, grid_out); //TD_2M
+			read2DGrid_indexed(PARAMETER_MAP.at("temperature_2m"), "heightAboveGround", 2, date, ta); //T_2M <<< do we actually need the level then?
+			read2DGrid_indexed("dew_point_temperature", "heightAboveGround", 2, date, grid_out); //TD_2M
 			for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 				for (size_t ii=0; ii<grid_out.getNx(); ii++) {
 					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
@@ -295,56 +299,56 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			}
 		}
 	}
-	if (parameter==MeteoGrids::TSS) read2DGrid_indexed(197.201, 111, 0, date, grid_out); //T_SO
-	if (parameter==MeteoGrids::TSG) read2DGrid_indexed(11.2, 1, 0, date, grid_out); //T_G
+	if (parameter==MeteoGrids::TSS) read2DGrid_indexed(PARAMETER_MAP.at("snow_surface_temperature"), "depthBelowLand", 0, date, grid_out); //T_SO // 111 = depthBelowLand<<< why?
+	if (parameter==MeteoGrids::TSG) read2DGrid_indexed(PARAMETER_MAP.at("temperature_2m"), "surface", 0, date, grid_out); //T_G
 
 	//hydrological parameters
-	if (parameter==MeteoGrids::PSUM) read2DGrid_indexed(61.2, 1, 0, date, grid_out); //tp
-	if (parameter==MeteoGrids::ROT) read2DGrid_indexed(90.2, 112, 0, date, grid_out); //RUNOFF
-	if (parameter==MeteoGrids::SWE) read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
+	if (parameter==MeteoGrids::PSUM) read2DGrid_indexed(PARAMETER_MAP.at("total_precipitation"), "surface", 0, date, grid_out); //tp
+	if (parameter==MeteoGrids::ROT) read2DGrid_indexed(PARAMETER_MAP.at("runoff"),"depthBelowLandLayer", 0, date, grid_out); //RUNOFF <<<< 112 = depthBelowLandLayer
+	if (parameter==MeteoGrids::SWE) read2DGrid_indexed(PARAMETER_MAP.at("SWE_kgm-2"), "surface", 0, date, grid_out); //W_SNOW
 	if (parameter==MeteoGrids::HS) {
-		if (!read2DGrid_indexed(66.2, 1, 0, date, grid_out)) {
+		if (!read2DGrid_indexed(PARAMETER_MAP.at("snow_depth"), "surface", 0, date, grid_out)) {
 			Grid2DObject snow_density;
-			read2DGrid_indexed(133.201, 1, 0, date, snow_density); //RHO_SNOW
-			read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
+			read2DGrid_indexed(PARAMETER_MAP.at("snow_density"), "surface", 0, date, snow_density); //RHO_SNOW
+			read2DGrid_indexed(PARAMETER_MAP.at("SWE_kgm-2"), "surface", 0, date, grid_out); //W_SNOW
 			grid_out.grid2D /= snow_density.grid2D;
 		}
 	}
 
 	//radiation parameters
 	if (parameter==MeteoGrids::ALB) {
-		read2DGrid_indexed(84.2, 1, 0, date, grid_out); //ALB_RAD
+		read2DGrid_indexed(PARAMETER_MAP.at("albedo"), "surface", 0, date, grid_out); //ALB_RAD
 		grid_out.grid2D /= 100.;
 	}
 	if (parameter==MeteoGrids::ILWR) {
-		if (read2DGrid_indexed(115.2, 1, 0, date, grid_out)) { //long wave
+		if (read2DGrid_indexed(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, date, grid_out)) { //long wave
 			grid_out.grid2D *= -1.;
-		} else read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
+		} else read2DGrid_indexed("25.201", "surface", 0, date, grid_out); //ALWD_S <<< what is this?
 	}
 	if (parameter==MeteoGrids::TAU_CLD) { //cloudiness
-		if (read2DGrid_indexed(74.2, 1, 0, date, grid_out)) //CLCM
+		if (read2DGrid_indexed(PARAMETER_MAP.at("medium_cloud_cover"), "surface", 0, date, grid_out)) //CLCM
 		grid_out.grid2D /= 100.;
 	}
 
 	if (parameter==MeteoGrids::ISWR) {
-		if (read2DGrid_indexed(116.2, 1, 0, date, grid_out)) { //short wave
+		if (read2DGrid_indexed(PARAMETER_MAP.at("short_wave_radiation_flux"), "surface", 0, date, grid_out)) { //short wave <<< why is the -1 there?
 			grid_out.grid2D *= -1.;
-		} else if (!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
+		} else if (!read2DGrid_indexed(PARAMETER_MAP.at("global_radiation_flux"), "surface", 0, date, grid_out)) { //GLOB 
 			Grid2DObject diff;
-			read2DGrid_indexed(23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
-			read2DGrid_indexed(22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
+			read2DGrid_indexed(PARAMETER_MAP.at("diffuse_radiation_albedo"), "surface", 0, date, diff); //diffuse rad, ASWDIFD_S << 23.201
+			read2DGrid_indexed(PARAMETER_MAP.at("direct_radiation_albedo"), "surface", 0, date, grid_out); //direct rad, ASWDIR_S<< 22.201
 			grid_out.grid2D += diff.grid2D;
 		}
 	}
 
 	//DEM parameters
-	if (parameter==MeteoGrids::DEM) read2DGrid_indexed(8.2, 1, 0, date, grid_out); //HSURF
+	if (parameter==MeteoGrids::DEM) read2DGrid_indexed(PARAMETER_MAP.at("geometric_height"), "surface", 0, date, grid_out); //HSURF
 	if (parameter==MeteoGrids::SLOPE) {
-		read2DGrid_indexed(98.202, 1, 0, date, grid_out); //SLO_ANG
+		read2DGrid_indexed(PARAMETER_MAP.at("subgrid_slope"), "surface", 0, date, grid_out); //SLO_ANG
 		grid_out.grid2D *= Cst::to_deg;
 	}
 	if (parameter==MeteoGrids::AZI) {
-		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
+		read2DGrid_indexed(PARAMETER_MAP.at("subgrid_angle_eastward"), "surface", 0, date, grid_out); //SLO_ASP <<< 99.202, is conversion still necessary?
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = fmod( grid_out(ii,jj)*Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
@@ -353,8 +357,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 
 	//Wind parameters
-	if (parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(187.201, 105, 10, date, grid_out); //VMAX_10M 10m
-	if (parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
+	if (parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(PARAMETER_MAP.at("maximum_wind_velocity"), "heightAboveGround", 10, date, grid_out); //VMAX_10M 10m
+	if (parameter==MeteoGrids::W) read2DGrid_indexed(PARAMETER_MAP.at("geometric_vertical_velocity"), "hybrid", 10, date, grid_out); //W, 10m <<<< 109 = hybrid
 	 //we need to use VW, DW, correct for re-projection and recompute U,V
 	if (parameter==MeteoGrids::U) {
 		readWind(filename, date);
@@ -560,7 +564,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 {//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPoints has been changed)
 	stations.clear();
 
-	std::vector<CodesHandlePtr> handles = getMessages(file_index, "DEM ID", 0, 1);// TODO: not the correct parameter
+	std::vector<CodesHandlePtr> handles = getMessages(file_index, PARAMETER_MAP.at("geometric_height"), 0, "surface");// TODO: not the correct parameter
 
 	if (handles.empty()) {
 		throw IOException("No DEM grid found in GRIB file!", AT);
@@ -611,7 +615,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 	return true;
 }
 
-bool GRIBIO::readMeteoValues(const std::string& paramId, const long& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double> &lats, std::vector<double> &lons, std::vector<double> &values) 
+bool GRIBIO::readMeteoValues(const std::string& paramId, const std::string& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double> &lats, std::vector<double> &lons, std::vector<double> &values) 
 {
 	std::vector<CodesHandlePtr> handles = getMessages(file_index, paramId, 0, levelType);
 
@@ -657,7 +661,6 @@ void GRIBIO::fillMeteo(std::vector<double> &values, const MeteoData::Parameters&
 	}
 }
 
-//TODO: go through this and fnd the paramIds
 void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons, const Date i_date, std::vector<MeteoData> &Meteo)
 {
 	const size_t npoints = stations.size();
@@ -672,12 +675,12 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<doubl
 	std::vector<double> values(npoints), values2(npoints); //
 
 	//basic meteorological parameters
-	if (readMeteoValues(1.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::P, npoints, Meteo); //PS
-	if (readMeteoValues(11.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TA, npoints, Meteo); //T_2M
-	if (readMeteoValues(197.201, 111, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO take 118, BRTMP instead?
-	if (readMeteoValues(11.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
-	if (readMeteoValues(52.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
-	else if (readMeteoValues(17.2, 105, 2, i_date, npoints, lats, lons, values)) { //TD_2M
+	if (readMeteoValues(PARAMETER_MAP.at("pressure"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::P, npoints, Meteo); //PS
+	if (readMeteoValues(PARAMETER_MAP.at("temperature_2m"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TA, npoints, Meteo); //T_2M
+	if (readMeteoValues(PARAMETER_MAP.at("snow_surface_temperature"), "depthBelowLand", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO take 118, BRTMP instead?
+	if (readMeteoValues(PARAMETER_MAP.at("temperature_2m"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
+	if (readMeteoValues(PARAMETER_MAP.at("relative_humidity"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
+	else if (readMeteoValues(PARAMETER_MAP.at("dew_point_temperature"), "heightAboveGround", 2, i_date, npoints, lats, lons, values)) { //TD_2M
 		for (size_t ii=0; ii<npoints; ii++) {
 			if (Meteo[ii](MeteoData::TA)!=IOUtils::nodata)
 				Meteo[ii](MeteoData::RH) = Atmosphere::DewPointtoRh(values[ii], Meteo[ii](MeteoData::TA), true);
@@ -685,55 +688,55 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<doubl
 	}
 
 	//hydrological parameters
-	if (readMeteoValues(61.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::PSUM, npoints, Meteo); //tp
-	if (readMeteoValues(66.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HS, npoints, Meteo);
-	else if (readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
-	   && readMeteoValues(65.2, 1, 0, i_date, npoints, lats, lons, values2)) { //W_SNOW
+	if (readMeteoValues(PARAMETER_MAP.at("total_precipitation"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::PSUM, npoints, Meteo); //tp
+	if (readMeteoValues(PARAMETER_MAP.at("snow_depth"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HS, npoints, Meteo);
+	else if (readMeteoValues(PARAMETER_MAP.at("snow_density"), "surface", 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
+	   && readMeteoValues(PARAMETER_MAP.at("SWE_kgm-2"), "surface", 0, i_date, npoints, lats, lons, values2)) { //W_SNOW
 		for (size_t ii=0; ii<npoints; ii++) {
 			Meteo[ii](MeteoData::HS) = values2[ii] / values[ii];
 		}
 	}
 
 	//radiation parameters
-	if (readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values)) { //long wave
+	if (readMeteoValues(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values)) { //long wave
 		for (size_t ii=0; ii<npoints; ii++) {
 			Meteo[ii](MeteoData::ISWR) = -values[ii];
 		}
-	} else if (readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
-	if (readMeteoValues(109.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB_H
+	} else if (readMeteoValues(PARAMETER_MAP.at("surface_wave_radiation_downwards"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S <<< 25.201
+	if (readMeteoValues(PARAMETER_MAP.at("global_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB_H
 	else {
-		const bool read_dir = (readMeteoValues(108.250, 1, 0, i_date, npoints, lats, lons, values) //ASWDIR_SH
-		                                 || readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values) //O_ASWDIR_S
-		                                 || readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values)); //ASWDIR_S
-		const bool read_diff = (readMeteoValues(117.2, 1, 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S
-		                                  || readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values2)); //ASWDIFD_S
+		const bool read_dir = (readMeteoValues(108.250, "surface", 0, i_date, npoints, lats, lons, values) //ASWDIR_SH  <<< whwat are these?
+		                                 || readMeteoValues(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values) //O_ASWDIR_S
+		                                 || readMeteoValues(22.201, "surface", 0, i_date, npoints, lats, lons, values)); //ASWDIR_S  <<< whwat are these?
+		const bool read_diff = (readMeteoValues(PARAMETER_MAP.at("global_radiation_flu"), "surface", 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S <<< was 117.2
+		                                  || readMeteoValues(PARAMETER_MAP.at("surface_solar_radiation_difference"), "surface", 0, i_date, npoints, lats, lons, values2)); //ASWDIFD_S << was 23.201
 		if (read_dir && read_diff){
 			for (size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::ISWR) = values[ii] + values2[ii];
 			}
 		}
 	}
-	if (readMeteoValues(84.2, 1, 0, i_date, npoints, lats, lons, values)) { //ALB_RAD
+	if (readMeteoValues(PARAMETER_MAP.at("albedo"), "surface", 0, i_date, npoints, lats, lons, values)) { //ALB_RAD
 		for (size_t ii=0; ii<npoints; ii++) {
 			if (Meteo[ii](MeteoData::ISWR)!=IOUtils::nodata) Meteo[ii](MeteoData::RSWR) = Meteo[ii](MeteoData::ISWR) * values[ii]/100.;
 		}
 	}
 
 	//Wind parameters
-	if (readMeteoValues(187.201, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW_MAX, npoints, Meteo); //VMAX_10M
-	if (readMeteoValues(31.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::DW, npoints, Meteo); //DD_10M
+	if (readMeteoValues(PARAMETER_MAP.at("maximum_wind_velocity"), "heightAboveGround", 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW_MAX, npoints, Meteo); //VMAX_10M << was 187.201
+	if (readMeteoValues(PARAMETER_MAP.at("wind_direction"), "heightAboveGround", 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::DW, npoints, Meteo); //DD_10M
 	else {
-		if (readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
-		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
+		if (readMeteoValues(PARAMETER_MAP.at("10m_wind_v"), "heightAboveGround", 10, i_date, npoints, lats, lons, values) //V_10M
+		   && readMeteoValues(PARAMETER_MAP.at("10m_wind_u"), "heightAboveGround", 10, i_date, npoints, lats, lons, values2)) { //U_10M
 			for (size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::DW) = fmod( IOUtils::UV_TO_DW(values2[ii], values[ii]) + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
-	if (readMeteoValues(32.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW, npoints, Meteo); //FF_10M
+	if (readMeteoValues(PARAMETER_MAP.at("wind_speed"), "heightAboveGround", 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW, npoints, Meteo); //FF_10M
 	else {
-		if (readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
-		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
+		if (readMeteoValues(PARAMETER_MAP.at("10m_wind_v"), "heightAboveGround", 10, i_date, npoints, lats, lons, values) //V_10M
+		   && readMeteoValues(PARAMETER_MAP.at("10m_wind_u"), "heightAboveGround", 10, i_date, npoints, lats, lons, values2)) { //U_10M
 			for (size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::VW) =  sqrt( Optim::pow2(values[ii]) + Optim::pow2(values2[ii]) );
 			}

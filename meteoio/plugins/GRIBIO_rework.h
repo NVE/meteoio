@@ -53,7 +53,7 @@ class GRIBIO : public IOInterface {
 
 		Coords getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &gridParams);
 		void read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out);
-		bool read2DGrid_indexed(const std::string& in_paramId, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensembleNumber=0);
+		bool read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out, const long &ensembleNumber=0);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		void readWind(const std::string& filename, const Date& date);
@@ -64,7 +64,7 @@ class GRIBIO : public IOInterface {
 
 		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, std::vector<double> &lats, std::vector<double> &lons);
 		bool readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
-		bool readMeteoValues(const std::string& paramId, const long& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double>& lats, std::vector<double>& lons, std::vector<double>& values);
+		bool readMeteoValues(const std::string& paramId, const std::string& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double>& lats, std::vector<double>& lons, std::vector<double>& values);
 		void fillMeteo(std::vector<double> &values, const MeteoData::Parameters& param, const size_t& npoints, std::vector<MeteoData> &Meteo);
 		void readMeteoStep(std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons, const Date i_date, std::vector<MeteoData> &Meteo);
 
@@ -84,7 +84,7 @@ class GRIBIO : public IOInterface {
 		CodesIndexPtr file_index; //because it needs to be kept between calls
 		std::vector<std::string> paramIdList;
 		std::vector<long> ensembleNumbers;
-		std::vector<long> levelTypes;
+		std::vector<std::string> levelTypes;
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
 		double cellsize, factor_x, factor_y;
