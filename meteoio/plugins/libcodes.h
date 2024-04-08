@@ -24,54 +24,43 @@
 
 #include <iostream>
 
-namespace mio
-{   
+namespace mio {
     namespace codes {
-        
+
         struct HandleDeleter {
-            void operator()(codes_handle* h) const {
-                codes_handle_delete(h);
-            }
+            void operator()(codes_handle *h) const { codes_handle_delete(h); }
         };
 
         struct IndexDeleter {
-            void operator()(codes_index* i) const {
-                codes_index_delete(i);
-            }
+            void operator()(codes_index *i) const { codes_index_delete(i); }
         };
         using CodesHandlePtr = std::unique_ptr<codes_handle, HandleDeleter>;
         using CodesIndexPtr = std::unique_ptr<codes_index, IndexDeleter>;
-        CodesHandlePtr makeUnique(codes_handle* h) {
-            CodesHandlePtr ptr(h);
-            h = nullptr;
-            return ptr;
-        }
-        CodesIndexPtr makeUnique(codes_index* i) {
-            CodesIndexPtr ptr(i);
-            i = nullptr;
-            return ptr;
-        }
 
+        CodesHandlePtr makeUnique(codes_handle *h);
+        CodesIndexPtr makeUnique(codes_index *i);
 
-        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long& ensembleNumber, bool verbose);
-        // CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes, std::vector<double> &datesList);
+        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long &ensembleNumber, bool verbose);
+        // CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, std::vector<long> &ensembleNumbers, std::vector<long> &levelTypes, std::vector<double>
+        // &datesList);
 
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long& ensembleNumber, const std::string& levelType);
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
 
         Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
 
-        std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique );
-        void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string,double> &gridParams);
-        std::map<std::string,double> getGriddedValues(CodesHandlePtr &h, std::vector<double> &values);
+        std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
+        void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
+        std::map<std::string, double> getGriddedValues(CodesHandlePtr &h, std::vector<double> &values);
 
-        std::tuple<std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<int>&&> getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons);
+        std::tuple<std::vector<double> &&, std::vector<double> &&, std::vector<double> &&, std::vector<double> &&, std::vector<int> &&>
+        getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons);
 
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, double &param_value);
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, long &param_value);
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& param_value);
+        void getParameter(CodesHandlePtr &h, const std::string &parameterName, double &param_value);
+        void getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value);
+        void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
 
-        const std::map<std::string, std::string> PARAMETER_MAP;
+        extern const std::map<std::string, std::string> PARAMETER_MAP;
 
     }
 } // namespace mio

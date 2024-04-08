@@ -25,10 +25,11 @@
 NOTES:
 - so far this is grib specific, will change to include bufr as well
 */
-#include "libcodes.h"
+#include <meteoio/plugins/libcodes.h>
 #include <meteoio/FileUtils.h>
 
 #include <string>
+#include <cstring>
 
 namespace mio {
     namespace codes {
@@ -67,6 +68,17 @@ namespace mio {
             {"surface_solar_radiation_difference","200176"} // or is it 200047?
         };
 
+        CodesHandlePtr makeUnique(codes_handle *h) {
+            CodesHandlePtr ptr(h);
+            h = nullptr;
+            return ptr;
+        }
+        CodesIndexPtr makeUnique(codes_index *i) {
+            CodesIndexPtr ptr(i);
+            i = nullptr;
+            return ptr;
+        }
+
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
             CODES_CHECK(codes_get_double(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
@@ -76,7 +88,7 @@ namespace mio {
 
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
             size_t len = 500;
-            char name[len] = {'\0'};
+            char name[500] = {'\0'};
             CODES_CHECK(codes_get_string(h.get(), parameterName.c_str(), name, &len), 0);
             parameterValue = std::string(name);
         }
@@ -87,7 +99,7 @@ namespace mio {
                 throw AccessException(filename, AT); // prevent invalid filenames
 
             int ret;
-            size_t paramIdSize, values_len = 0;
+            size_t paramIdSize = 0;
 
             std::string index_str = "paramId,typeOfLevel";
             if (ensembleNumber != -1) index_str += ",number";
@@ -244,7 +256,7 @@ namespace mio {
             return handles;
         }
 
-        std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB) {
+        std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
             errno = 0;
@@ -334,9 +346,6 @@ namespace mio {
 
             double angleOfRotationInDegrees, latitudeOfSouthernPole, longitudeOfSouthernPole, latitudeOfNorthernPole, longitudeOfNorthernPole;
             getParameter(h_unique, "angleOfRotationInDegrees", angleOfRotationInDegrees);
-            if (angleOfRotationInDegrees != 0.) {
-                throw InvalidArgumentException("Rotated grids not supported!", AT);
-            }
 
             getParameter(h_unique, "latitudeOfSouthernPoleInDegrees", latitudeOfSouthernPole);
             getParameter(h_unique, "longitudeOfSouthernPoleInDegrees", longitudeOfSouthernPole);
@@ -383,7 +392,7 @@ namespace mio {
 
             size_t values_len;
             CODES_CHECK(codes_get_size(raw, "values", &values_len), 0);
-            long Ni = gridParams.at("Ni"), Nj = gridParams.at("Nj");
+            double Ni = gridParams.at("Ni"), Nj = gridParams.at("Nj");
             if (values_len != (unsigned)(Ni * Nj)) {
                 std::ostringstream ss;
                 ss << "Declaring grid of size " << Ni << "x" << Nj << "=" << Ni * Nj << " ";

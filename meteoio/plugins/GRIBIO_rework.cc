@@ -58,7 +58,7 @@ const std::string GRIBIO::default_ext=".grb"; //filename extension
 GRIBIO::GRIBIO(const std::string& configfile)
         : cfg(configfile), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), paramIdList(), verbose(false),
+          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), verbose(false), paramIdList(),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata), meteo_initialized(false), llcorner_initialized(false), update_dem(false), indexed(false), warned_date_in_file(false)
 {
@@ -68,7 +68,7 @@ GRIBIO::GRIBIO(const std::string& configfile)
 GRIBIO::GRIBIO(const Config& cfgreader)
         : cfg(cfgreader), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), paramIdList(), verbose(false),
+          VW(), DW(), wind_date(), llcorner(), file_index(nullptr), params_to_read(), level_types_to_read(), levels_to_read(), ensemble_to_read(-1), verbose(false), paramIdList(), 
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata), meteo_initialized(false), llcorner_initialized(false), update_dem(false), indexed(false), warned_date_in_file(false)
 {
@@ -130,6 +130,10 @@ Coords GRIBIO::getGeolocalization(double &cell_x, double &cell_y, const std::map
 	double angleOfRotationInDegrees = grid_params.at("angleOfRotationInDegrees");
 	double Ni = grid_params.at("Ni");
 	double Nj = grid_params.at("Nj");
+	
+	if (angleOfRotationInDegrees != 0.) {
+		throw InvalidArgumentException("Rotated grids not supported!", AT);
+	}
 
 	double ur_lat, ur_lon, ll_lat, ll_lon; 
 	CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ur_latitude, ur_longitude, ur_lat, ur_lon);
@@ -160,8 +164,8 @@ void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out)
 	std::map<std::string,double> grid_params;
 	getGriddedValues(h, values, grid_params);
 
-	long Ni = grid_params.at("Ni");
-	long Nj = grid_params.at("Nj");
+	double Ni = grid_params.at("Ni");
+	double Nj = grid_params.at("Nj");
 
 	if (!llcorner_initialized) {
 		//most important: get cellsize. llcorner will be finalized AFTER aspect ration correction
@@ -590,7 +594,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		std::map<std::string,double> grid_params= getGridParameters(h);
 		latitudeOfNorthernPole = grid_params.at("latitudeOfNorthernPole");
 		longitudeOfNorthernPole = grid_params.at("longitudeOfNorthernPole");
-		long Ni = grid_params.at("Ni"); 
+		long Ni = static_cast<long>(grid_params.at("Ni")); 
 		
 		//build GRIB local coordinates for the points
 		for (size_t ii=0; ii<npoints; ii++) {
