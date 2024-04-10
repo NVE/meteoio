@@ -721,7 +721,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, std::vector<doubl
 		const bool read_dir = (readMeteoValues(PARAMETER_MAP.at(""), "surface", 0, i_date, npoints, lats, lons, values) //ASWDIR_SH-108.250  <<< whwat are these?
 		                                 || readMeteoValues(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values) //O_ASWDIR_S
 		                                 || readMeteoValues(PARAMETER_MAP.at(""), "surface", 0, i_date, npoints, lats, lons, values)); //ASWDIR_S  -22.201 <<< whwat are these?
-		const bool read_diff = (readMeteoValues(PARAMETER_MAP.at("global_radiation_flu"), "surface", 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S <<< was 117.2
+		const bool read_diff = (readMeteoValues(PARAMETER_MAP.at("global_radiation_flux"), "surface", 0, i_date, npoints, lats, lons, values2) //O_ASWDIFD_S <<< was 117.2
 		                                  || readMeteoValues(PARAMETER_MAP.at("surface_solar_radiation_difference"), "surface", 0, i_date, npoints, lats, lons, values2)); //ASWDIFD_S << was 23.201
 		if (read_dir && read_diff){
 			for (size_t ii=0; ii<npoints; ii++) {

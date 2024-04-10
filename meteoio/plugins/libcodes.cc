@@ -35,37 +35,63 @@ namespace mio {
     namespace codes {
 
         const std::map<std::string,std::string> PARAMETER_MAP{
-            {"geometric_height","3008"},
-            {"10m_wind_u","165"}, // is it necessary to specify 10 levl here then?
-            {"10m_wind_v","166"}, // is it necessary to specify 10 levl here then?
+            {"dem_geometric_height","300008"},
+            {"dem_model_terrain_height","260183"},
+            {"dem_geometric_height_above_sea_level","500007"},
+            {"dem_orography","228002"},
+            {"wind_u_10m","165"}, 
+            {"wind_u","131"}, 
+            {"wind_v_10m","166"}, 
+            {"wind_v","132"}, 
             {"wind_direction","3031"},
+            {"wind_dir_10m","260260"},
+            {"wind_direction_v2","300031"},
+            {"wind_direction_dd_10m","500023"},
+            {"wind_direction_dd","500024"},
             {"wind_speed","10"},
+            {"wind_speed_10m","207"},
+            {"wind_speed_10m_2","160246"},
             {"pressure","54"},
             {"temperature_2m","167"}, // there is two in meteoio, both have 11 in grib 1 table 2 what is the correct way?
+            {"temperature","130"},
             {"dew_point_temperature","3017"},
-            {"relative_humidity","157"},
-            {"snow_surface_temperature","201203"}, //TODO: or 500170
+            {"dew_point_temperature","300017"},
+            {"dew_point_temperature_2m","500017"},
+            {"relative_humidity_per_cent","157"},
+            {"relative_humidity_int","160157"},
+            {"snow_surface_temperature_top","500170"},
+            {"snow_surface_temperature","201203"}, 
             {"total_precipitation","228"},
             {"runoff","205"}, //TODO: is this the surf+subsurf runoff?
             {"SWE_m", "141"},
             {"SWE_kgm-2","228141"},
             {"snow_depth", "3066"},
             {"snow_density","33"},
-            {"albedo","32,174..."}, //TODO:-->forecast albedo
+            {"albedo","243"}, 
+            {"albedo_backup", "160243"},
             {"long_wave_radiation_flux","3115"},
+            {"net_long_wave_radiation_flux","260099"}, // TODO: probably need a conversion here 
             {"medium_cloud_cover","187"}, // 0-1
+            {"medium_cloud_cover_per_cent","3074"},
             {"short_wave_radiation_flux","3116"},
-            {"diffuse_radiation_albedo","228245"},//->diffuse flux (grib1+2)
-            {"direct_radiation_albedo","228244"},
-            {"global_radiation_flux","3117"}, // is this glob->111.250 and whats the difference to 117.2?
+            {"short_wave_radiation_flux_at_surface","174116"},
+            {"short_wave_radiation_flux_direct","260262"},
+            {"short_wave_radiation_flux_diffuse","260263"},
+            {"short_wave_net_radiation_flux","500079"},
+            {"short_wave_net_radiation_flux_2","500083"},
+            {"global_radiation_flux","3117"}, 
             {"subgrid_slope","163"},
             {"subgrid_angle_eastward","162"},
             {"maximum_wind_velocity","201187"},
+            {"vertical_velocity","135"},
+            {"vertical_velocity_v1","300040"},
+            {"geometric_vertical_velocity","500032"},
             {"geometric_vertival_velocity","260238"},
             {"surface_pressure","134"},
-            {"water_equivalent_of_accumulated_snow_depth(deprecated)","260056"}, 
+            {"logarithm_of_surface_pressure","152"},
             {"surface_short_wave_radiation_downwards","169"}, // +long wave
-            {"surface_solar_radiation_difference","200176"} 
+            {"surface_long_wave_radiation_downwards","175"},
+            {"surface_solar_radiation_difference","200169"} 
         };
 
         CodesHandlePtr makeUnique(codes_handle *h) {
