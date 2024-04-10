@@ -352,7 +352,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
 		}
 		bool success = tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
-		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData, when extracting from grid", AT);
 		return success;
 	}
 	
@@ -364,7 +364,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
 		bool success = tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
-		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT); //remove
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData, while using Grid Smart", AT); //remove
 		return success;
 	}
 	
@@ -389,7 +389,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	if (ts_mode==IOUtils::STD) {
 		bool success = tsm1.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData for station: "+vecMeteo.front().meta.getStationID(), AT);
 		return success;
 	}
 	
@@ -405,7 +405,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS)));
 		}
 		bool success = tsm1.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData when extracting from grid for station: "+vecMeteo.front().meta.getStationID(), AT);
 		return success;
 	}
 	
@@ -429,7 +429,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			tsm2.push_meteo_data(IOUtils::raw, dateStart2, dateEnd2, getVirtualStationsData(source_dem, dateStart2, dateEnd2));
 		}
 		bool success = tsm2.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData when using grid smart for station: "+vecMeteo.front().meta.getStationID(), AT);
 		return success;
 	}
 	
@@ -603,7 +603,6 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 			}
 		}
 	}
-	if (!isValidDataSet(vecvecMeteo)) throw IOException("Duplicate Dates in virtual stations data set", AT);
 	return vecvecMeteo;
 }
 
@@ -631,7 +630,7 @@ bool isValidDataSet(const std::vector<METEO_SET>& vecvecMeteo)
 	for (size_t i = 0; i < vecStation.size(); ++i) {
         for (size_t j = i + 1; j < vecStation.size(); ++j) {
             if (vecStation[i] == vecStation[j]) {
-                throw IOException("Duplicate stations in data set", AT);
+                throw IOException("Duplicate stations in data set: "+vecStation[i].getStationID(), AT);
             } 
 		}
     }
