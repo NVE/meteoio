@@ -16,46 +16,37 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef BUFRIO_H
-#define BUFRIO_H
 
-#include "BUFRFile.h"
+#ifndef BUFRFILE_H
+#define BUFRFILE_H
+
+#include <meteoio/IOInterface.h>
+#include <meteoio/plugins/libcodes.h>
 
 #include <string>
 
 namespace mio {
 
-/**
- * @class BUFRIO
- * @brief This (empty) class is to be used as a bufrio for developing new plugins
- *
- * @ingroup plugins
- * @author Mathias Bavay
- * @date   2010-06-14
- */
-class BUFRIO : public IOInterface {
-	public:
-		BUFRIO(const std::string& configfile);
-		BUFRIO(const Config& cfgreader);
+using namespace codes;
 
-		virtual void readStationData(const Date &date, std::vector<StationData> &vecStation);
-        virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo);
+class BUFRFile {
+    public:
+        BUFRFile(const std::string &filename);
+        
+        void readMetaData();
+        void readData(std::vector<MeteoData> &vecMeteo, const std::vector<std::string> &additional_params = {});
 
-        virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "");
+    private:
+        std::string filename;
+        StationData meta_data;
+        Date start_date;
+        Date end_date;
 
-	private:
-		const Config cfg;
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-
-		std::unique_ptr<FILE> in_file;
-
-		std::vector<StationData> allStationsInFile;
-
-		static const std::string template_filename;
-
+        std::vector<CodesHandlePtr> ;
 
 };
 
 } //namespace
-#endif
+
+
+#endif // BUFRFILE_H

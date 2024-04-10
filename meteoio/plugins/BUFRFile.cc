@@ -16,46 +16,29 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef BUFRIO_H
-#define BUFRIO_H
 
 #include "BUFRFile.h"
 
-#include <string>
-
 namespace mio {
 
-/**
- * @class BUFRIO
- * @brief This (empty) class is to be used as a bufrio for developing new plugins
- *
- * @ingroup plugins
- * @author Mathias Bavay
- * @date   2010-06-14
- */
-class BUFRIO : public IOInterface {
-	public:
-		BUFRIO(const std::string& configfile);
-		BUFRIO(const Config& cfgreader);
+BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date() {
+    in_file = std::unique_ptr<FILE>(fopen(filename.c_str(), "r"));
+    if (!in_file) {
+        throw AccessException("Could not open file " + filename);
+    };
 
-		virtual void readStationData(const Date &date, std::vector<StationData> &vecStation);
-        virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo);
-
-        virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "");
-
-	private:
-		const Config cfg;
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-
-		std::unique_ptr<FILE> in_file;
-
-		std::vector<StationData> allStationsInFile;
-
-		static const std::string template_filename;
-
-
+    readMetaData();
 };
 
-} //namespace
-#endif
+void BUFRFile::readMetaData() {
+    // Read the metadata
+    // ...
+};
+
+void BUFRFile::readData(std::vector<MeteoData> &vecMeteo, const std::vector<std::string> &additional_params) {
+    // Read the data
+    // try for all meteo standard parameters and additional_params
+    // ...
+};
+
+} //namespace mio

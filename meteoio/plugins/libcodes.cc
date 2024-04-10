@@ -51,11 +51,11 @@ namespace mio {
             {"SWE_kgm-2","228141"},
             {"snow_depth", "3066"},
             {"snow_density","33"},
-            {"albedo","32,174..."}, //TODO: is it snow albedo, or uv, or...?
+            {"albedo","32,174..."}, //TODO:-->forecast albedo
             {"long_wave_radiation_flux","3115"},
             {"medium_cloud_cover","187"}, // 0-1
             {"short_wave_radiation_flux","3116"},
-            {"diffuse_radiation_albedo","228245"},
+            {"diffuse_radiation_albedo","228245"},//->diffuse flux (grib1+2)
             {"direct_radiation_albedo","228244"},
             {"global_radiation_flux","3117"}, // is this glob->111.250 and whats the difference to 117.2?
             {"subgrid_slope","163"},
@@ -63,9 +63,9 @@ namespace mio {
             {"maximum_wind_velocity","201187"},
             {"geometric_vertival_velocity","260238"},
             {"surface_pressure","134"},
-            {"water_equivalent_of_accumulated_snow_depth(deprecated)","260056"}, // what to use instead??
-            {"surface_short_wave_radiation_downwards","169"}, // is this the correct one, or mean...
-            {"surface_solar_radiation_difference","200176"} // or is it 200047?
+            {"water_equivalent_of_accumulated_snow_depth(deprecated)","260056"}, 
+            {"surface_short_wave_radiation_downwards","169"}, // +long wave
+            {"surface_solar_radiation_difference","200176"} 
         };
 
         CodesHandlePtr makeUnique(codes_handle *h) {
@@ -168,10 +168,9 @@ namespace mio {
             return makeUnique(index);
         }
 
-
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
             codes_index *raw = index.get();
-            CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
+                CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
             if (ensembleNumber != -1)
                 CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
             CODES_CHECK(codes_index_select_string(raw, "typeOfLevel", levelType.c_str()), 0);
@@ -220,7 +219,7 @@ namespace mio {
             std::vector<CodesHandlePtr> handles;
             while ((h = codes_handle_new_from_file(0, fp, product, &err)) != nullptr) {
                 if (!h)
-                    throw IOException("Unable to create grib handle from file", AT);
+                    throw IOException("Unable to create handle from file", AT);
                 if (err != 0) {
                     codes_handle_delete(h);
                     throw IOException("Error reading message: Errno " + std::to_string(err), AT);
@@ -232,7 +231,7 @@ namespace mio {
         }
 
 
-        Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
+        Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
             long validityDate, validityTime;
             getParameter(h, "validityDate", validityDate);
@@ -285,6 +284,9 @@ namespace mio {
             return base;
         }
 
+        Date getMessageDateBUFR(CodesHandlePtr &h){
+
+        };
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique ) {
             // getting transformation parameters

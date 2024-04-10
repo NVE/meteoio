@@ -206,7 +206,7 @@ bool GRIBIO::read2DGrid_indexed(const std::string& in_paramId, const std::string
 	for (auto &h : handles) {
 
 		double P1, P2;
-		Date base_date = getMessageDate(h, P1, P2, tz_in);
+		Date base_date = getMessageDateGrib(h, P1, P2, tz_in);
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
 		// 0 -> at base_date + P1
@@ -336,7 +336,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	if (parameter==MeteoGrids::ILWR) {
 		if (read2DGrid_indexed(PARAMETER_MAP.at("long_wave_radiation_flux"), "surface", 0, date, grid_out)) { //long wave
 			grid_out.grid2D *= -1.;
-		} else read2DGrid_indexed("25.201", "surface", 0, date, grid_out); //ALWD_S <<< what is this?
+		} else read2DGrid_indexed("25.201", "surface", 0, date, grid_out); //ALWD_S <<< what is this?->long down amt
 	}
 	if (parameter==MeteoGrids::TAU_CLD) { //cloudiness
 		if (read2DGrid_indexed(PARAMETER_MAP.at("medium_cloud_cover"), "surface", 0, date, grid_out)) //CLCM
@@ -348,8 +348,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			grid_out.grid2D *= -1.;
 		} else if (!read2DGrid_indexed(PARAMETER_MAP.at("global_radiation_flux"), "surface", 0, date, grid_out)) { //GLOB 
 			Grid2DObject diff;
-			read2DGrid_indexed(PARAMETER_MAP.at("diffuse_radiation_albedo"), "surface", 0, date, diff); //diffuse rad, ASWDIFD_S << 23.201
-			read2DGrid_indexed(PARAMETER_MAP.at("direct_radiation_albedo"), "surface", 0, date, grid_out); //direct rad, ASWDIR_S<< 22.201
+			read2DGrid_indexed(PARAMETER_MAP.at("diffuse_radiation_albedo"), "surface", 0, date, diff); //diffuse rad, ASWDIFD_S << 23.201 -- change
+			read2DGrid_indexed(PARAMETER_MAP.at("direct_radiation_albedo"), "surface", 0, date, grid_out); //direct rad, ASWDIR_S<< 22.201 -- change
 			grid_out.grid2D += diff.grid2D;
 		}
 	}
@@ -361,7 +361,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		grid_out.grid2D *= Cst::to_deg;
 	}
 	if (parameter==MeteoGrids::AZI) {
-		read2DGrid_indexed(PARAMETER_MAP.at("subgrid_angle_eastward"), "surface", 0, date, grid_out); //SLO_ASP <<< 99.202, is conversion still necessary?
+		read2DGrid_indexed(PARAMETER_MAP.at("subgrid_angle_eastward"), "surface", 0, date, grid_out); //SLO_ASP <<< check later
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = fmod( grid_out(ii,jj)*Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
@@ -642,7 +642,7 @@ bool GRIBIO::readMeteoValues(const std::string& paramId, const std::string& leve
 		}
 
 		double P1, P2;
-		Date base_date = getMessageDate(h, P1, P2, tz_in);
+		Date base_date = getMessageDateGrib(h, P1, P2, tz_in);
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
 		long timeRange = -999;

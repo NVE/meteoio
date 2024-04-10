@@ -45,7 +45,8 @@ namespace mio {
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
 
-        Date getMessageDate(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
+        Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
+        Date getMessageDateBUFR(CodesHandlePtr &h);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
