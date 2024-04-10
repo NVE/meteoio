@@ -20,7 +20,8 @@
 #include <meteoio/IOManager.h>
 #include <meteoio/FStream.h>
 #include <set>
-
+#include <unordered_set>
+#include <iostream>
 
 using namespace std;
 
@@ -334,6 +335,47 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 	return vecStation.size();
 }
 
+static bool isValidSeries(const METEO_SET& vecMeteo)
+{
+	//check for duplicate dates
+	std::set<Date> setDate;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		auto result =  setDate.insert( vecMeteo[ii].date);
+		if (!result.second) return false;
+	}
+	return true;
+}
+
+struct StationHash {
+    std::size_t operator()(const StationData& meta) const {
+        return std::hash<std::string>()(meta.getStationID());
+    }
+};
+
+static bool isValidStationSet(const METEO_SET& vecMeteo) {
+	std::unordered_set<StationData, StationHash> vecStation;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		auto result = vecStation.insert( vecMeteo[ii].meta );
+		if (!result.second){
+			return false;		
+		} 
+	}
+	return true;
+
+}
+
+static bool isValidDataSet(const std::vector<METEO_SET>& vecvecMeteo)
+{
+	// checks duplicate dates, and duplicate stations
+	std::unordered_set<StationData, StationHash> vecStation;
+	for (size_t ii=0; ii<vecvecMeteo.size(); ii++) {
+		if (!isValidSeries(vecvecMeteo[ii])) return false;
+		auto result = vecStation.insert( vecvecMeteo[ii][0].meta );
+		if (!result.second) throw IOException("Duplicate Stations in MeteoData: "+result.first->getStationID(), AT);
+	}
+	return true;
+}
+
 //TODO: smarter rebuffer! (ie partial)
 size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo) 
 {
@@ -389,7 +431,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	if (ts_mode==IOUtils::STD) {
 		bool success = tsm1.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData for station: "+vecMeteo.front().meta.getStationID(), AT);
+		if (!isValidStationSet(vecMeteo) ) throw IOException("Duplicate Stations in MeteoData for station: "+vecMeteo.front().meta.getStationID(), AT); // TODO: this is a vector of stations 
 		return success;
 	}
 	
@@ -405,7 +447,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS)));
 		}
 		bool success = tsm1.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData when extracting from grid for station: "+vecMeteo.front().meta.getStationID(), AT);
+		if (!isValidStationSet(vecMeteo)) throw IOException("Duplicate Stations in MeteoData when extracting from grid for station: "+vecMeteo.front().meta.getStationID(), AT);
 		return success;
 	}
 	
@@ -429,7 +471,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			tsm2.push_meteo_data(IOUtils::raw, dateStart2, dateEnd2, getVirtualStationsData(source_dem, dateStart2, dateEnd2));
 		}
 		bool success = tsm2.getMeteoData(i_date, vecMeteo);
-		if (!isValidSeries(vecMeteo)) throw IOException("Duplicate Dates in MeteoData when using grid smart for station: "+vecMeteo.front().meta.getStationID(), AT);
+		if (!isValidStationSet(vecMeteo)) throw IOException("Duplicate Stations in MeteoData when using grid smart for station: "+vecMeteo.front().meta.getStationID(), AT);
 		return success;
 	}
 	
@@ -606,36 +648,6 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 	return vecvecMeteo;
 }
 
-
-bool isValidSeries(const METEO_SET& vecMeteo)
-{
-	//check for duplicate dates
-	// is there anything else we need to check for?
-	std::vector<Date> vecDate;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		vecDate.push_back( vecMeteo[ii].date);
-	}
-	std::set<Date> setDate( vecDate.begin(), vecDate.end() );
-	return (setDate.size()==vecDate.size());
-}
-
-bool isValidDataSet(const std::vector<METEO_SET>& vecvecMeteo)
-{
-	// checks duplicate dates, and duplicate stations
-	std::vector<StationData> vecStation;
-	for (size_t ii=0; ii<vecvecMeteo.size(); ii++) {
-		if (!isValidSeries(vecvecMeteo[ii])) return false;
-		vecStation.push_back( vecvecMeteo[ii][0].meta );
-	}
-	for (size_t i = 0; i < vecStation.size(); ++i) {
-        for (size_t j = i + 1; j < vecStation.size(); ++j) {
-            if (vecStation[i] == vecStation[j]) {
-                throw IOException("Duplicate stations in data set: "+vecStation[i].getStationID(), AT);
-            } 
-		}
-    }
-	return true;
-}
 
 
 const std::string IOManager::toString() const {
