@@ -42,7 +42,8 @@ class BUFRFile {
         Date start_date;
         Date end_date;
 
-        std::vector<CodesHandlePtr> ;
+        std::unique_ptr<FILE> in_file;
+        std::vector<CodesHandlePtr> messages;
 
 };
 

@@ -266,11 +266,17 @@ namespace mio {
                 ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
                 throw AccessException(ss.str(), AT);
             }
+            std::vector<CodesHandlePtr> handles = getMessages(fp, product);
+           
+            fclose(fp);
+            return handles;
+        }
 
+        std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product) {
             codes_handle *h = nullptr;
             int err = 0;
             std::vector<CodesHandlePtr> handles;
-            while ((h = codes_handle_new_from_file(0, fp, product, &err)) != nullptr) {
+            while ((h = codes_handle_new_from_file(0, in_file, product, &err)) != nullptr) {
                 if (!h)
                     throw IOException("Unable to create handle from file", AT);
                 if (err != 0) {
@@ -279,10 +285,8 @@ namespace mio {
                 }
                 handles.push_back(makeUnique(h));
             }
-            fclose(fp);
             return handles;
         }
-
 
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
@@ -340,6 +344,11 @@ namespace mio {
         Date getMessageDateBUFR(CodesHandlePtr &h){
 
         };
+
+        StationData getStationData(CodesHandlePtr &h) {
+
+        };
+
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique ) {
             // getting transformation parameters

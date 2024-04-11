@@ -21,8 +21,9 @@
 
 namespace mio {
 
-BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date() {
-    in_file = std::unique_ptr<FILE>(fopen(filename.c_str(), "r"));
+
+// initialize start_date very low, and end_date very high
+BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date(), in_file(fopen(filename.c_str(), "r")), messages() {
     if (!in_file) {
         throw AccessException("Could not open file " + filename);
     };
@@ -31,8 +32,24 @@ BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data
 };
 
 void BUFRFile::readMetaData() {
-    // Read the metadata
-    // ...
+    messages = getMessages(in_file.get(), PRODUCT_BUFR);
+    StationData meta_data;
+    for (CodesHandlePtr &message : messages) {
+        if (meta_data.getStationID().empty()) {
+            // fill metadata
+        } else {
+            // check if metadata is consistent
+        };
+        
+        Date date = getMessageDateBUFR(message);
+        if (date < start_date) {
+            start_date = date;
+        };
+        if (date > end_date) {
+            end_date = date;
+        };
+
+    };
 };
 
 void BUFRFile::readData(std::vector<MeteoData> &vecMeteo, const std::vector<std::string> &additional_params) {
