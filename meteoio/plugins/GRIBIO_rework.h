@@ -54,6 +54,7 @@ class GRIBIO : public IOInterface {
 		Coords getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &gridParams);
 		void read2Dlevel(CodesHandlePtr &h, Grid2DObject& grid_out);
 		bool read2DGrid_indexed(const std::string& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
+		bool read2DGrid_indexed(const std::vector<std::string>& in_paramId, const std::string& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		void readWind(const std::string& filename, const Date& date);
@@ -65,6 +66,7 @@ class GRIBIO : public IOInterface {
 		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, std::vector<double> &lats, std::vector<double> &lons);
 		bool readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
 		bool readMeteoValues(const std::string& paramId, const std::string& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double>& lats, std::vector<double>& lons, std::vector<double>& values);
+		bool readMeteoValues(const std::vector<std::string>& paramId_list, const std::string& levelType, const long& i_level, const Date& i_date, const size_t& npoints, std::vector<double> &lats, std::vector<double> &lons, std::vector<double> &values);
 		void fillMeteo(std::vector<double> &values, const MeteoData::Parameters& param, const size_t& npoints, std::vector<MeteoData> &Meteo);
 		void readMeteoStep(std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons, const Date i_date, std::vector<MeteoData> &Meteo);
 

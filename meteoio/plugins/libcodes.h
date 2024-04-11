@@ -43,6 +43,7 @@ namespace mio {
         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long &ensembleNumber, bool verbose);
 
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType);
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::vector<std::string> &paramID_list, const long &ensembleNumber, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
 
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
@@ -60,6 +61,7 @@ namespace mio {
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
 
         extern const std::map<std::string, std::string> PARAMETER_MAP;
+        extern const std::map<std::string, std::vector<std::string>> PARAMETER_GROUPS;
 
     }
 } // namespace mio

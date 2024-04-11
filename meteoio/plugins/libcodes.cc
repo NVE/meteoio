@@ -34,6 +34,7 @@ NOTES:
 namespace mio {
     namespace codes {
 
+        // Mapping of parameter names to their GRIB codes
         const std::map<std::string,std::string> PARAMETER_MAP{
             {"dem_geometric_height","300008"},
             {"dem_model_terrain_height","260183"},
@@ -44,7 +45,7 @@ namespace mio {
             {"wind_v_10m","166"}, 
             {"wind_v","132"}, 
             {"wind_direction","3031"},
-            {"wind_dir_10m","260260"},
+            {"wind_direction_10m","260260"},
             {"wind_direction_v2","300031"},
             {"wind_direction_dd_10m","500023"},
             {"wind_direction_dd","500024"},
@@ -55,7 +56,7 @@ namespace mio {
             {"temperature_2m","167"}, // there is two in meteoio, both have 11 in grib 1 table 2 what is the correct way?
             {"temperature","130"},
             {"dew_point_temperature","3017"},
-            {"dew_point_temperature","300017"},
+            {"dew_point_temperature_2","300017"},
             {"dew_point_temperature_2m","500017"},
             {"relative_humidity_per_cent","157"},
             {"relative_humidity_int","160157"},
@@ -67,8 +68,11 @@ namespace mio {
             {"SWE_kgm-2","228141"},
             {"snow_depth", "3066"},
             {"snow_density","33"},
-            {"albedo","243"}, 
-            {"albedo_backup", "160243"},
+            {"albedo_per_cent","500056"},
+            {"albedo_backup_int","243"}, 
+            {"albedo_backup_2_per_cent", "160243"},
+            {"albedo_backup_3_per_cent","500057"},
+            {"albedo_backup_4_per_cent","260509"},
             {"long_wave_radiation_flux","3115"},
             {"net_long_wave_radiation_flux","260099"}, // TODO: probably need a conversion here 
             {"medium_cloud_cover","187"}, // 0-1
@@ -86,12 +90,25 @@ namespace mio {
             {"vertical_velocity","135"},
             {"vertical_velocity_v1","300040"},
             {"geometric_vertical_velocity","500032"},
-            {"geometric_vertival_velocity","260238"},
+            {"geometric_vertival_velocity_2","260238"},
             {"surface_pressure","134"},
             {"logarithm_of_surface_pressure","152"},
-            {"surface_short_wave_radiation_downwards","169"}, // +long wave
+            {"surface_short_wave_radiation_downwards","169"}, 
             {"surface_long_wave_radiation_downwards","175"},
             {"surface_solar_radiation_difference","200169"} 
+        };
+
+        // clustering parameters that will give exactly the same results
+        const std::map<std::string,std::vector<std::string>> PARAMETER_GROUPS {
+            {"DEM",{PARAMETER_MAP.at("dem_geometric_height"), PARAMETER_MAP.at("dem_model_terrain_height"), PARAMETER_MAP.at("dem_geometric_height_above_sea_level"), PARAMETER_MAP.at("dem_orography")}},
+            {"wind_direction",{PARAMETER_MAP.at("wind_direction"), PARAMETER_MAP.at("wind_direction_v2"), PARAMETER_MAP.at("wind_direction_dd")}},
+            {"wind_direction_10m",{PARAMETER_MAP.at("wind_direction_10m"), PARAMETER_MAP.at("wind_direction_dd_10m")}},
+            {"wind_speed_10m",{PARAMETER_MAP.at("wind_speed_10m"), PARAMETER_MAP.at("wind_speed_10m_2")}},
+            {"dew_point_temperature",{PARAMETER_MAP.at("dew_point_temperature"), PARAMETER_MAP.at("dew_point_temperature_2")}},
+            {"snow_surface_temperature",{PARAMETER_MAP.at("snow_surface_temperature_top"), PARAMETER_MAP.at("snow_surface_temperature")}},
+            {"albedo_per_cent",{PARAMETER_MAP.at("albedo_per_cent"), PARAMETER_MAP.at("albedo_backup_2_per_cent"), PARAMETER_MAP.at("albedo_backup_3_per_cent"), PARAMETER_MAP.at("albedo_backup_4_per_cent")}},
+            {"short_wave_radiation_flux",{PARAMETER_MAP.at("short_wave_radiation_flux"), PARAMETER_MAP.at("short_wave_radiation_flux_at_surface")}},
+            {"vertical_velocity",{PARAMETER_MAP.at("vertical_velocity"), PARAMETER_MAP.at("vertical_velocity_v1"), PARAMETER_MAP.at("geometric_vertical_velocity"),PARAMETER_MAP.at("geometric_vertical_velocity_2")}}
         };
 
         CodesHandlePtr makeUnique(codes_handle *h) {
@@ -196,7 +213,9 @@ namespace mio {
 
         std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
             codes_index *raw = index.get();
-                CODES_CHECK(codes_index_select_string(raw, "paramId", paramID.c_str()), 0);
+            if (codes_index_select_string(raw, "paramId", paramID.c_str()) != 0) {
+                return {};
+            };
             if (ensembleNumber != -1)
                 CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
             CODES_CHECK(codes_index_select_string(raw, "typeOfLevel", levelType.c_str()), 0);
@@ -227,6 +246,14 @@ namespace mio {
                 handles.push_back(makeUnique(h));
             }
             return handles;
+        }
+
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::vector<std::string> &paramID_list, const long &ensembleNumber, const std::string &levelType) {
+            for (const std::string &paramID : paramID_list) {
+                std::vector<CodesHandlePtr> handles = getMessages(index, paramID, ensembleNumber, levelType);
+                if (!handles.empty())
+                    return handles;
+            }
         }
 
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {
