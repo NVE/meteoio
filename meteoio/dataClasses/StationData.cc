@@ -200,4 +200,9 @@ std::istream& operator>>(std::istream& is, StationData& station) {
 	return is;
 }
 
+bool StationData::isValid() {
+	if (position.isNodata() || stationID.empty()) return false;
+	return true;
+};
+
 } //end namespace

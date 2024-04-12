@@ -47,10 +47,9 @@ namespace mio {
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product = PRODUCT_GRIB);
 
-        StationData getStationData(CodesHandlePtr &h);
-
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
-        Date getMessageDateBUFR(CodesHandlePtr &h);
+        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in=0);
+        StationData getStationDataBUFR(CodesHandlePtr &h);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
@@ -61,10 +60,24 @@ namespace mio {
 
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, double &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value);
+        void getParameter(CodesHandlePtr &h, const std::string &parameterName, int &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
+        template <typename T>
+        void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {
+            T tmp = param_value;
+            for (const auto &paramName : paramNames) {
+                getParameter(h, paramName, param_value);
+                if (param_value != tmp) {
+                    return;
+                }
+            }
+            return;
+        }
 
         extern const std::map<std::string, std::string> PARAMETER_MAP;
         extern const std::map<std::string, std::vector<std::string>> PARAMETER_GROUPS;
+
+        extern const std::map<std::string, std::string> BUFR_PARAMETER;
 
     }
 } // namespace mio

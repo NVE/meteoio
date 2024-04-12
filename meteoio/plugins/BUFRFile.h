@@ -34,13 +34,15 @@ class BUFRFile {
         BUFRFile(const std::string &filename);
         
         void readMetaData();
-        void readData(std::vector<MeteoData> &vecMeteo, const std::vector<std::string> &additional_params = {});
+        // takes a map that contatins the bufr keys as keys, and names as values. Should map to itself, if no renaming is needed
+        void readData(std::vector<MeteoData> &vecMeteo, const std::map<std::string,std::string> &additional_params = {});
 
     private:
         std::string filename;
         StationData meta_data;
         Date start_date;
         Date end_date;
+        double tz;
 
         std::unique_ptr<FILE> in_file;
         std::vector<CodesHandlePtr> messages;

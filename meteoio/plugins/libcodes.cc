@@ -111,6 +111,25 @@ namespace mio {
             {"vertical_velocity",{PARAMETER_MAP.at("vertical_velocity"), PARAMETER_MAP.at("vertical_velocity_v1"), PARAMETER_MAP.at("geometric_vertical_velocity"),PARAMETER_MAP.at("geometric_vertical_velocity_2")}}
         };
 
+        const std::map<std::string, std::string> BUFR_PARAMETER {
+                {"P","pressure"}, 
+                {"TA","airTemperature"}, // TODO: or is it airTemperatureAt2M	
+                {"RH","relativeHumidity"}, 
+                {"TSG","groundTemperature"}, 
+                {"TSS","snowTemperature"}, 
+                {"HS","totalSnowDepth"}, 
+                {"VW","windSpeed"}, 
+                {"DW","windDirection"},
+                {"VW_MAX","maximumWindSpeedMeanWind"}, //TODO: or is it maximumWindGustSpeed
+                {"RSWR",""}, // TODO: which parameters are tey
+                {"ISWR",""}, // TODO: which parameters are tey
+                {"ILWR",""}, // TODO: which parameters are tey
+                {"TAU_CLD","cloudCoverTotal	"}, // TODO: is in per_cent
+                {"PSUM","totalPrecipitationOrTotalWaterEquivalent	"},  
+                {"PSUM_PH","precipitationType"} // should the type be mapped to the phase?
+        };
+
+
         CodesHandlePtr makeUnique(codes_handle *h) {
             CodesHandlePtr ptr(h);
             h = nullptr;
@@ -129,12 +148,21 @@ namespace mio {
             CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
 
+        // casts long to int
+        void getParameter(CodesHandlePtr &h, const std::string& parameterName, int& parameterValue) {
+            long tmp;
+            CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &tmp), 0);
+            parameterValue = static_cast<int>(tmp);
+        }
+
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
             size_t len = 500;
             char name[500] = {'\0'};
             CODES_CHECK(codes_get_string(h.get(), parameterName.c_str(), name, &len), 0);
             parameterValue = std::string(name);
         }
+
+
 
         // Function to get the list of parameters from a GRIB file, caller needs to free the index
         CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long& ensembleNumber, bool verbose) {
@@ -341,12 +369,38 @@ namespace mio {
             return base;
         }
 
-        Date getMessageDateBUFR(CodesHandlePtr &h){
+        // assumes UTC 0, need to convert to local time after
+        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in){
+            std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute", "second"};
+            std::vector<int> values(parameters.size(), -1);
 
+            for (size_t i = 0; i < parameters.size(); ++i) {
+                getParameter(h, parameters[i], values[i]);
+            }
+
+            if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1) return Date();
+            if (values[5] == -1) return Date(values[0], values[1], values[2], values[3], values[4], tz_in);
+            
+            Date base(values[0], values[1], values[2], values[3], values[4], values[5], tz_in);
+            return base;
         };
 
-        StationData getStationData(CodesHandlePtr &h) {
-
+        StationData getStationDataBUFR(CodesHandlePtr &h) {
+            StationData stationData;
+            double latitude, longitude, altitude;
+            getParameter(h, "latitude", latitude);
+            getParameter(h, "longitude", longitude);
+            std::vector<std::string> height_keys = {"heightOfStation","height","elevation"};
+            getParameter(h, height_keys, altitude);
+            std::vector<std::string> id_keys = {"stationNumber", "nationalStationNumber", "stationID","stationId"};
+            std::vector<std::string> name_keys = {"shortStationName","stationOrSiteName","longStationName"};
+            std::string stationID, stationName;
+            getParameter(h, id_keys, stationID);
+            getParameter(h, name_keys, stationName);
+            Coords position;
+            position.setLatLon(latitude, longitude, altitude);
+            stationData.setStationData(position, stationID, stationName);            
+            return stationData;
         };
 
 
