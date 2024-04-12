@@ -48,9 +48,7 @@ class BUFRIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 
-		std::unique_ptr<FILE> in_file;
-
-		std::vector<StationData> allStationsInFile;
+		std::vector<BUFRFile> allFiles;
 
 		static const std::string template_filename;
 

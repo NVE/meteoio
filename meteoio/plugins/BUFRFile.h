@@ -40,8 +40,10 @@ class BUFRFile {
     private:
         std::string filename;
         StationData meta_data;
+
         Date start_date;
         Date end_date;
+        std::set<Date> dates;
         double tz;
 
         std::unique_ptr<FILE> in_file;

@@ -129,6 +129,8 @@ namespace mio {
                 {"PSUM_PH","precipitationType"} // should the type be mapped to the phase?
         };
 
+        static const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
+
 
         CodesHandlePtr makeUnique(codes_handle *h) {
             CodesHandlePtr ptr(h);
@@ -385,20 +387,49 @@ namespace mio {
             return base;
         };
 
-        StationData getStationDataBUFR(CodesHandlePtr &h) {
+        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords) {
             StationData stationData;
+
             double latitude, longitude, altitude;
             getParameter(h, "latitude", latitude);
             getParameter(h, "longitude", longitude);
+
             std::vector<std::string> height_keys = {"heightOfStation","height","elevation"};
             getParameter(h, height_keys, altitude);
+
             std::vector<std::string> id_keys = {"stationNumber", "nationalStationNumber", "stationID","stationId"};
             std::vector<std::string> name_keys = {"shortStationName","stationOrSiteName","longStationName"};
             std::string stationID, stationName;
             getParameter(h, id_keys, stationID);
             getParameter(h, name_keys, stationName);
+
+            long ref_flag = 999;
+            getParameter(h, "coordinateReferenceSystem", ref_flag);
             Coords position;
-            position.setLatLon(latitude, longitude, altitude);
+
+            if (ref_flag == 999 && ref_coords.empty()) {
+                throw InvalidArgumentException("Could not find reference coordinates in BUFR file and none externally provided.", AT);
+            }
+
+            if(ref_flag == 65535) {
+                if (ref_coords.empty()) {
+                    throw InvalidArgumentException("Missing reference coordinates in BUFR file and none externally provided.", AT);
+                } else {
+                    Coords ref_coords_obj(ref_coords);
+                    ref_coords_obj.setLatLon(latitude, longitude, altitude);
+                    position = ref_coords_obj;
+                }
+            } else {
+                if (ref_flag > 3) {
+                    std::ostringstream ss;
+                    ss << "Unsuppported reference flag " << ref_flag << " in BUFR file";
+                    throw InvalidFormatException(ss.str(), AT);
+                } else {
+                    position.setEPSG(FLAG_TO_EPSG[ref_flag]);
+                    position.setPoint(latitude, longitude, altitude);
+                }
+            }
+            
             stationData.setStationData(position, stationID, stationName);            
             return stationData;
         };

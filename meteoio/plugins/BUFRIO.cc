@@ -63,17 +63,6 @@ BUFRIO::BUFRIO(const Config& cfgreader) : cfg(cfgreader)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-BUFRIO::~BUFRIO() noexcept
-{
-	//if there is no need to cleanup some pointers before exiting, do not even declare a destructor!
-}
-
-void BUFRIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
-{
-	//copy/paste from IOInterface.h the methods that are implemented by your plugin and fill-in the implementation
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
 
 void BUFRIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
                              std::vector< std::vector<MeteoData> >& /*vecMeteo*/)
@@ -81,54 +70,12 @@ void BUFRIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 	
-	/* Example: how to read coordinate in the input coordinate system and make them availabe to any other coordinate system*/
-	/* //we assume we already have easting, northing and altitude in "double" variables
-	* Coords point1(coordin, coordinparam);
-	* point1.setXY(easting , northing., altitude);
-	* 
-	* //in order to get lat/lon:
-	* const double lat = point1.getLat();
-	* 
-	* //if we have lat/lon instead:
-	* point1.setLatLon(lat , lon., altitude, true);
-	* 
-	* //to set a coodrinate system by EPSG code:
-	* point1.setEPSG(epsg);
-	* 
-	* //for more information: see the "Coords" class and the "coordinates.cc" example and have a look at Coords::check()
-	*/
-	
-	
-	/* Example: how to copy the meteo data has read by the plugin into the vector of MeteoData*/
-	/* 
-	 * //for each station, repeat the following:
-	 *  vector<MeteoData> timeseries;				//create a time vector of MeteoData for the station
-	 * 
-	 * //we read the station coordinates and put them in a Coords object (see above).
-	 * //we also read a station id and station name (they might be identical if only one is available)
-	 * StationData sd(point1, id, name);
-	 *
-	 * //then, we loop over all the available timestamps and fill the MeteoData
-	 * for (size_t step=0; step<nr_steps; step++) {
-	* 	//we read the date and put it in a Date object:
-	* 	Date date(julian, TZ_in); 						//from julian date and input timezone
-	* 
-	* 	Date date;									//other possibility:
-	* 	IOUtils::convertString(date, timestamp, TZ_in); 	//from a text timestamp and input timezone
-	* 
-	* 	MeteoData md(date, sd);						//create an empty MeteoData object initialized at a given date and station
-	* 	md(MeteoData::TA) = my_ta;					//add each field
-	* 	md(MeteoData::RH) = my_rh;					//of course, this could be done without relying on these "my_rh" intermediate variables!
-	* 	//etc
-	* 
-	* 	timeseries.push_back( md );					//add the MeteoData to the time vector
-	 * }
-	 */
 }
 
-void BUFRIO::cleanup() noexcept
-{
-	//if there is nothing to cleanup, remove this method
+void BUFRIO::readStationData(const Date &/* date */, std::vector<StationData> &vecStation) {
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
 }
+
 
 } //namespace

@@ -23,7 +23,7 @@ namespace mio {
 
 
 // initialize start_date very low, and end_date very high
-BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date(), in_file(fopen(filename.c_str(), "r")), messages() {
+BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date(), dates(), tz(), in_file(fopen(filename.c_str(), "r")), messages() {
     if (!in_file) {
         throw AccessException("Could not open file " + filename);
     };
@@ -41,6 +41,10 @@ void BUFRFile::readMetaData() {
         };
         if (date > end_date) {
             end_date = date;
+        };
+        auto success = dates.insert(date);
+        if (success.second == false) {
+            throw IOException("Duplicate date in file " + filename);
         };
 
         if (!meta_data.isValid()) {
