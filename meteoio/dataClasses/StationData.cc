@@ -205,4 +205,9 @@ bool StationData::isValid() {
 	return true;
 };
 
+bool StationData::isEmpty() {
+	if (position.isNodata() && stationID.empty() && stationName.empty()) return true;
+	return false;
+};
+
 } //end namespace

@@ -388,7 +388,7 @@ namespace mio {
             return base;
         };
 
-        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords) {
+        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string& error) {
             StationData stationData;
 
             double latitude, longitude, altitude;
@@ -409,12 +409,14 @@ namespace mio {
             Coords position;
 
             if (ref_flag == 999 && ref_coords.empty()) {
-                throw InvalidArgumentException("Could not find reference coordinates in BUFR file and none externally provided.", AT);
+                error = "No reference coordinates found in BUFR file and none provided in the configuration";
+                return stationData;
             }
 
             if(ref_flag == 65535) {
                 if (ref_coords.empty()) {
-                    throw InvalidArgumentException("Missing reference coordinates in BUFR file and none externally provided.", AT);
+                    error = "Missing reference coordinates in BUFR file, and none provided in configuration";
+                    return stationData;
                 } else {
                     Coords ref_coords_obj(ref_coords);
                     ref_coords_obj.setLatLon(latitude, longitude, altitude);

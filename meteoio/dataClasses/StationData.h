@@ -139,6 +139,7 @@ class StationData {
 
 	public:
 		bool isValid();
+		bool isEmpty();
 };
 
 typedef std::vector<StationData> STATIONS_SET;

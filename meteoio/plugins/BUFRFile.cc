@@ -34,6 +34,7 @@ BUFRFile::BUFRFile(const std::string &filename, const std::string& ref_coords) :
 void BUFRFile::readMetaData(const std::string& ref_coords) {
     messages = getMessages(in_file.get(), PRODUCT_BUFR);
     StationData meta_data;
+    std::string error_msg;
     for (CodesHandlePtr &message : messages) {      
         Date date = getMessageDateBUFR(message);
         if (date < start_date) {
@@ -47,18 +48,24 @@ void BUFRFile::readMetaData(const std::string& ref_coords) {
             throw IOException("Duplicate date in file " + filename);
         };
 
+        StationData new_meta = getStationDataBUFR(message, ref_coords, error_msg);
         if (!meta_data.isValid()) {
-            meta_data = getStationDataBUFR(message, ref_coords);
+            meta_data = new_meta;
             continue;
         };
 
-        if (meta_data != getStationDataBUFR(message, ref_coords)) {
+        if (!new_meta.isEmpty() && meta_data != new_meta) {
             throw IOException("Inconsistent station data in file " + filename);
         }
     };
 
     if (!meta_data.isValid()) {
-        throw IOException("No station data in file " + filename);
+        std::ostringstream msg;
+        msg << "No valid station data in file " << filename;
+        if (!error_msg.empty()) {
+            msg << "\n(" << error_msg << ")";
+        }
+        throw IOException(msg.str(),AT);
     }
     tz = IOUtils::nodata; // TODO: find timezone from location
     return;

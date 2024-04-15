@@ -95,5 +95,9 @@ void BUFRIO::readStationData(const Date &/* date */, std::vector<StationData> &v
 	}
 }
 
+void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "") {
+	throw IOException("Writing BUFR files is not implemented", AT);
+}
+
 
 } //namespace
