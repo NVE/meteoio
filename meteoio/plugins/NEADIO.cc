@@ -21,6 +21,8 @@
 #include <meteoio/FStream.h>
 #include <meteoio/plugins/NEADIO.h>
 
+#include <meteoio/plugins/plugin_utils.h>
+
 // using namespace std;
 
 namespace mio {
@@ -68,7 +70,7 @@ namespace mio {
 * @note There is a python package available to read NEAD files, see <a href="https://github.com/GEUS-Glaciology-and-Climate/pyNEAD/tree/main">pyNEAD</a>
 * 
 */
-
+using namespace PLUGIN;
 // clang-format off
 static const std::string dflt_extension_NEAD = ".nead";
 const double NEADIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
@@ -125,38 +127,6 @@ static std::vector<Coords> getUniqueLocations(NEADFile &file) {
     return locations;
 }
 
-/**
-* @brief Get the file names together with paths and check for validity
-*
-* @param vecFilenames The vector of filenames to check.
-* @param inpath The input path
-* @return std::vector<std::string> The vector of filenames together with paths
-* @throw InvalidNameException if a filename is invalid
-*
-*/
-static std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath) {
-    std::vector<std::string> all_files_and_paths;
-    for (const std::string& filename : vecFilenames) {
-        const std::string extension(FileUtils::getExtension(filename));
-        const std::string file_and_path =
-            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + dflt_extension_NEAD;
-
-        if (!FileUtils::validFileAndPath(file_and_path)) // Check whether filename is valid
-            throw InvalidNameException(file_and_path, AT);
-        all_files_and_paths.push_back(file_and_path);
-    }
-    return all_files_and_paths;
-}
-
-static void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames) {
-    bool is_recursive = false;
-    cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-    std::list<std::string> dirlist(FileUtils::readDirectory(inpath, dflt_extension_NEAD, is_recursive));
-    dirlist.sort();
-    vecFilenames.reserve(dirlist.size());
-    std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
-}
-
 using namespace NEAD;
 
 // ----------------- NEADIO -----------------
@@ -190,9 +160,9 @@ void NEADIO::parseInputSection() {
         cfg.getValues("STATION", "INPUT", vecFilenames);
 
         if (vecFilenames.empty())
-            scanMeteoPath(cfg, inpath, vecFilenames);
+            scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_NEAD);
 
-        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath);
+        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_NEAD);
         read_sequential = !areFilesWithinLimit(all_files_and_paths);
         for (auto &filename : all_files_and_paths)
             stations_files.push_back(NEADFile(filename, read_sequential));

@@ -49,7 +49,7 @@ namespace mio {
 
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
         Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in=0);
-        StationData getStationDataBUFR(CodesHandlePtr &h);
+        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);

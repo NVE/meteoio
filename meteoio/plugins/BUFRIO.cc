@@ -17,7 +17,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 // #include <meteoio/plugins/bufrio.h>
-#include "BUFRIO.h"
+#include <meteoio/plugins/BUFRIO.h>
+#include <meteoio/plugins/plugin_utils.h>
 
 using namespace std;
 
@@ -36,45 +37,62 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - etc
  */
-
+using namespace PLUGIN;
 const double BUFRIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const std::string dflt_extension_BUFR = ".bufr";
+const std::string BUFRIO::template_filename = "MeteoIO.bufr";
 
-BUFRIO::BUFRIO(const std::string& configfile) : cfg(configfile)
+BUFRIO::BUFRIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	
-	/* Example: how to read keys from the Config object*/
-	/*const double factor = cfg.get("PLUGIN_FACTOR", "Input"); //if the key PLUGIN_FACTOR is not found in the [Input] section, an exception will be thrown
-	 * 
-	 * bool enable_feature = false;
-	 * cfg.getValue("ENABLE_FEATURE", "Input", enable_feature, IOUtils::nothrow); //if the key is not found, it simply keeps its previous value
-	 * 
-	 * int parameter = 0;
-	 * cfg.getValue("PLUGIN_NR_PARAMS", "Output", parameter); //if the key is not found, an exception will be thrown
-	 * 
-	 * //it is also possible to get all the keys starting with a given pattern at once and then loop through them:
-	 * std::vector<std::string> vecFilenames;
-	* cfg.getValues("STATION", "INPUT", vecFilenames);
-	 */
+	parseInputSection();
 }
 
-BUFRIO::BUFRIO(const Config& cfgreader) : cfg(cfgreader)
+BUFRIO::BUFRIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	parseInputSection();
+}
+
+void BUFRIO::parseInputSection() {
+	const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
+	if (in_meteo == "BUFR") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+        const std::string inpath = cfg.get("METEOPATH", "Input");
+        std::vector<std::string> vecFilenames;
+        cfg.getValues("STATION", "INPUT", vecFilenames);
+
+
+        if (vecFilenames.empty())
+            scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_BUFR);
+
+        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_BUFR);
+		for (const auto &filename : all_files_and_paths) {
+			station_files.push_back(BUFRFile(filename, coordin));
+		}
+	}
 }
 
 
 void BUFRIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/)
+                             std::vector< std::vector<MeteoData> >& vecvecMeteo)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	vecvecMeteo.clear();
+	vecvecMeteo.reserve(station_files.size());
+	for (auto &station_file : station_files) {
+		std::vector<MeteoData> vecMeteo;
+		station_file.readData(vecMeteo);
+		vecvecMeteo.push_back(vecMeteo);
+	}
 	
 }
 
 void BUFRIO::readStationData(const Date &/* date */, std::vector<StationData> &vecStation) {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	vecStation.clear();
+	vecStation.reserve(station_files.size());
+	for (const auto &station_file : station_files) {
+		vecStation.push_back(station_file.getMetadata());
+	}
 }
 
 

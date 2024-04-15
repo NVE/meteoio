@@ -284,6 +284,7 @@ namespace mio {
                 if (!handles.empty())
                     return handles;
             }
+            return {};
         }
 
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {

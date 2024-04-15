@@ -16,44 +16,25 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef PLUGIN_UTILS_H
+#define PLUGIN_UTILS_H
 
-#ifndef BUFRFILE_H
-#define BUFRFILE_H
+#include <meteoio/FileUtils.h>
+#include <meteoio/Config.h>
 
-#include <meteoio/IOInterface.h>
-#include <meteoio/plugins/libcodes.h>
+#include <vector>
 
-#include <string>
+namespace mio
+{
+namespace PLUGIN
+{
 
-namespace mio {
+    std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath, const std::string& dflt_extension);
+    void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames, const std::string& dflt_extension);
 
-using namespace codes;
-
-class BUFRFile {
-    public:
-        BUFRFile(const std::string &filename, const std::string& ref_coords);
-        
-        void readMetaData(const std::string& ref_coords);
-        // takes a map that contatins the bufr keys as keys, and names as values. Should map to itself, if no renaming is needed
-        void readData(std::vector<MeteoData> &vecMeteo, const std::map<std::string,std::string> &additional_params = {});
-
-        StationData getMetadata() const { return meta_data; };
-
-    private:
-        std::string filename;
-        StationData meta_data;
-
-        Date start_date;
-        Date end_date;
-        std::set<Date> dates;
-        double tz;
-
-        std::unique_ptr<FILE> in_file;
-        std::vector<CodesHandlePtr> messages;
-
-};
-
-} //namespace
+    
+} // namespace PLUGIN
+} // namespace mio
 
 
-#endif // BUFRFILE_H
+#endif // PLUGIN_UTILS_H

@@ -17,21 +17,21 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "BUFRFile.h"
+#include <meteoio/plugins/BUFRFile.h>
 
 namespace mio {
 
 
 // initialize start_date very low, and end_date very high
-BUFRFile::BUFRFile(const std::string &filename) : filename(filename) , meta_data(), start_date(), end_date(), dates(), tz(), in_file(fopen(filename.c_str(), "r")), messages() {
+BUFRFile::BUFRFile(const std::string &filename, const std::string& ref_coords) : filename(filename) , meta_data(), start_date(), end_date(), dates(), tz(), in_file(fopen(filename.c_str(), "r")), messages() {
     if (!in_file) {
         throw AccessException("Could not open file " + filename);
     };
 
-    readMetaData();
+    readMetaData(ref_coords);
 };
 
-void BUFRFile::readMetaData() {
+void BUFRFile::readMetaData(const std::string& ref_coords) {
     messages = getMessages(in_file.get(), PRODUCT_BUFR);
     StationData meta_data;
     for (CodesHandlePtr &message : messages) {      
@@ -48,11 +48,11 @@ void BUFRFile::readMetaData() {
         };
 
         if (!meta_data.isValid()) {
-            meta_data = getStationDataBUFR(message);
+            meta_data = getStationDataBUFR(message, ref_coords);
             continue;
         };
 
-        if (meta_data != getStationDataBUFR(message)) {
+        if (meta_data != getStationDataBUFR(message, ref_coords)) {
             throw IOException("Inconsistent station data in file " + filename);
         }
     };
