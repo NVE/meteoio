@@ -1,0 +1,36 @@
+# This is the default file that is used, to read GRIB files. To read parameters differently than specified here, 
+# just copy this file, and edit the respective part, and hint to it with the GRIB_TABLE ini-key.
+
+# Empty lines and lines starting with '#' or ' ' will be skipped.
+# Comments cannot be placed at the end of a line!
+# Be careful to not accidentally include whitespaces at the beginning of lines.
+
+# The reading was implemented edition independent, so GRIB1 and GRIB2 keys can be used.
+
+# Please do not change how the parameters are specified, as a strict layout is assumed.
+# Please do not change the default Names of the parameter names, as this will lead MetoIO to assume it is a new parameter.
+
+# The indexes to be used to find the parameters (first token needs to be index, the other two can be chosen as desired)
+# Default: the ECMWF paramId (https://codes.ecmwf.int/grib/param-db/) is used to identify the parameters, and the level type (https://codes.ecmwf.int/grib/format/edition-independent/3/) is used to identify the vertical layering. 
+# Vertical levels will be read with the "level" key.
+
+
+index:paramId:typeOfLevel
+
+
+# When using a different index key to identify parameters (e.g. marsParam) the Id can have a different type.
+# paramId is given as a string, marsParam as a double, others as long, therefore this has to be specified
+# as: paramIdType:[double|string|long]. Again do not change the first token!
+
+
+paramIdType:string
+
+
+# Now the actual parameter identification. All pre defined MeteoIO parameters are listed here, with their default specification.
+# If you need to read additional parameters, just add them to the bottom of the list, with the same schema.
+# The specification is as follows:
+# parameterName:parameterId:levelType:levelNumber
+
+
+# Air Temperature at 2m
+TA:130:heightAboveGround:2

@@ -23,7 +23,7 @@
 
 /*
 NOTES:
-- so far this is grib specific, will change to include bufr as well
+- needs documentatino and refactoring
 */
 #include <meteoio/plugins/libcodes.h>
 #include <meteoio/FileUtils.h>
@@ -34,7 +34,7 @@ NOTES:
 namespace mio {
     namespace codes {
 
-        // Mapping of parameter names to their GRIB codes
+        // ------------------- GRIB PARAMETER MAPPING -------------------
         const std::map<std::string,std::string> PARAMETER_MAP{
             {"dem_geometric_height","300008"},
             {"dem_model_terrain_height","260183"},
@@ -111,6 +111,7 @@ namespace mio {
             {"vertical_velocity",{PARAMETER_MAP.at("vertical_velocity"), PARAMETER_MAP.at("vertical_velocity_v1"), PARAMETER_MAP.at("geometric_vertical_velocity"),PARAMETER_MAP.at("geometric_vertical_velocity_2")}}
         };
 
+        // ------------------- BUFR -------------------
         const std::map<std::string, std::string> BUFR_PARAMETER {
                 {"P","pressure"}, 
                 {"TA","airTemperature"}, // TODO: or is it airTemperatureAt2M	
@@ -131,7 +132,7 @@ namespace mio {
 
         static const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
 
-
+        // ------------------- POINTER HANDLING -------------------
         CodesHandlePtr makeUnique(codes_handle *h) {
             CodesHandlePtr ptr(h);
             h = nullptr;
@@ -143,6 +144,50 @@ namespace mio {
             return ptr;
         }
 
+        // ------------------- FILE HANDLING -------------------
+        // Function to get the list of parameters from a GRIB file, caller needs to free the index
+        CodesIndexPtr indexFile(const std::string &filename, const std::vector<std::string>& index_keys, bool verbose) {
+            if (!FileUtils::fileExists(filename))
+                throw AccessException(filename, AT); // prevent invalid filenames
+
+            std::string indexing_string;
+            for (const std::string &key : index_keys) {
+                if (!indexing_string.empty()) {
+                    indexing_string += ",";
+                }
+                indexing_string += key;
+            }
+
+            int ret;
+            codes_index *index = codes_index_new_from_file(0, filename.c_str(), indexing_string.c_str(), &ret);
+
+            CODES_CHECK(ret, 0);
+
+            if (verbose) {
+                std::cerr << "Indexing " << filename << " with keys " << indexing_string << "\n";
+                for (const std::string &key : index_keys) {
+                    size_t size;
+                    CODES_CHECK(codes_index_get_size(index, key.c_str(), &size), 0);
+                    std::cerr << "Found " << size << " " << key << " in " << filename << "\n";
+
+                    std::vector<char *> values(size);
+                    CODES_CHECK(codes_index_get_string(index, key.c_str(), values.data(), &size), 0);
+
+                    std::cerr << "Values:\n";
+                    for (char* cstr : values) {
+                        if (cstr != nullptr) {
+                            std::cerr << cstr << "\n";
+                            delete[] cstr;
+                        }
+                    }   
+
+
+                }
+            }
+            return makeUnique(index);
+        }
+
+        // ------------------- GETTERS -------------------
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
             CODES_CHECK(codes_get_double(h.get(), parameterName.c_str(), &parameterValue), 0);
         }
@@ -164,143 +209,14 @@ namespace mio {
             parameterValue = std::string(name);
         }
 
-
-
-        // Function to get the list of parameters from a GRIB file, caller needs to free the index
-        CodesIndexPtr indexFile(const std::string &filename, std::vector<std::string> &paramIdList, const long& ensembleNumber, bool verbose) {
-            if (!FileUtils::fileExists(filename))
-                throw AccessException(filename, AT); // prevent invalid filenames
-
-            int ret;
-            size_t paramIdSize = 0;
-
-            std::string index_str = "paramId,typeOfLevel";
-            if (ensembleNumber != -1) index_str += ",number";
-            codes_index *index = codes_index_new_from_file(0, filename.c_str(), index_str.c_str(), &ret);
-
-            CODES_CHECK(ret, 0);
-
-            CODES_CHECK(codes_index_get_size(index, "paramId", &paramIdSize), 0);
-
-            std::vector<char *> paramId(paramIdSize);
-            CODES_CHECK(codes_index_get_string(index, "paramId", paramId.data(), &paramIdSize), 0);
-
-            paramIdList.reserve(paramId.size());
-
-            for (char* cstr : paramId) {
-                if (cstr != nullptr) {
-                    paramIdList.push_back(std::string(cstr));
-                    delete[] cstr;
-                }
-            }
-            paramId.clear();
-            if (verbose) {
-                std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
-                for (const std::string &param : paramIdList) {
-                    std::cerr << param << "\n";
-                }
-            
-            }
-
-
-#ifdef DEBUG
-            size_t numberSize, levelsSize;
-            std::vector<long> ensembleNumbers;
-            std::vector<std::string> levelNumbers;
-            CODES_CHECK(codes_index_get_size(index, "number", &numberSize), 0);
-
-            ensembleNumbers.resize(numberSize);
-            CODES_CHECK(codes_index_get_long(index, "number", ensembleNumbers.data(), &numberSize), 0);
-            
-            CODES_CHECK(codes_index_get_size(index, "typeOfLevel", &levelsSize), 0);
-
-            std::vector<char *> levelTypes(levelsSize);
-            CODES_CHECK(codes_index_get_string(index, "typeOfLevel", levelTypes.data(), &levelsSize), 0);
-
-            for (char* cstr : levelTypes) {
-                if (cstr != nullptr) {
-                    levelNumbers.push_back(std::string(cstr));
-                    delete[] cstr;
-                }
-            }
-            levelTypes.clear();
-            std::cerr << "Found " << paramIdList.size() << " parameters in " << filename << "\n";
-            for (const std::string &param : paramIdList) {
-                std::cerr << param << "\n";
-            }
-            std::cerr << "Found " << ensembleNumbers.size() << " ensemble numbers in " << filename << "\n";
-            for (const long &number : ensembleNumbers) {
-                std::cerr << number << "\n";
-            }
-            std::cerr << "Found " << levelNumbers.size() << " level numbers in " << filename << "\n";
-            for (const std::string &number : levelNumbers) {
-                std::cerr << number << "\n";
-            }
-#endif
-
-            return makeUnique(index);
-        }
-
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &paramID, const long &ensembleNumber, const std::string &levelType) {
-            codes_index *raw = index.get();
-            if (codes_index_select_string(raw, "paramId", paramID.c_str()) != 0) {
-                return {};
-            };
-            if (ensembleNumber != -1)
-                CODES_CHECK(codes_index_select_long(raw, "number", ensembleNumber), 0);
-            CODES_CHECK(codes_index_select_string(raw, "typeOfLevel", levelType.c_str()), 0);
-
-            codes_handle *h = nullptr;
-            int ret;
-            std::vector<CodesHandlePtr> handles;
-            while ((h = codes_handle_new_from_index(raw, &ret)) != nullptr) {
-                if (!h)
-                    throw IOException("Unable to create grib handle from index", AT);
-                if (ret != 0 && ret != CODES_END_OF_INDEX) {
-                    throw IOException("Error reading message: Errno " + std::to_string(ret), AT);
-                }
-#ifdef DEBUG
-                size_t len = 500;
-                char name[len] = {'\0'};
-                std::cerr << "Found message for " << paramID << " " << ensembleNumber << " " << levelType << "\n";
-                CODES_CHECK(codes_get_string(h, "name", name, &len), 0);
-                std::cerr << "With name " << name << "\n";
-                CODES_CHECK(codes_get_string(h, "shortName", name, &len), 0);
-                std::cerr << "With shortName " << name << "\n";
-                if (levelType != 1) {
-                    long level;
-                    GRIB_CHECK(codes_get_long(h, "level", &level), 0);
-                    std::cerr << "With level " << level << "\n";
-                }
-#endif
-                handles.push_back(makeUnique(h));
-            }
-            return handles;
-        }
-
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::vector<std::string> &paramID_list, const long &ensembleNumber, const std::string &levelType) {
-            for (const std::string &paramID : paramID_list) {
-                std::vector<CodesHandlePtr> handles = getMessages(index, paramID, ensembleNumber, levelType);
-                if (!handles.empty())
-                    return handles;
-            }
-            return {};
-        }
-
+        // ------------------- MESSAGE HANDLING -------------------
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
             errno = 0;
             FILE *fp = fopen(filename.c_str(),"r");
-            if (fp==nullptr) {
-                std::ostringstream ss;
-                ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
-                throw AccessException(ss.str(), AT);
-            }
-            std::vector<CodesHandlePtr> handles = getMessages(fp, product);
-           
-            fclose(fp);
-            return handles;
+            
+            return getMessages(fp, product);
         }
 
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product) {
@@ -319,6 +235,7 @@ namespace mio {
             return handles;
         }
 
+        // TODO: check if this gives the correct date, and what is d1, d2??
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
             long validityDate, validityTime;

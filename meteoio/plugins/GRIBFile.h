@@ -26,6 +26,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 namespace mio
 {
@@ -33,19 +34,20 @@ namespace mio
 using namespace codes;
 
 class GRIBTable {
-    enum class KEY_TYPE {
-        PARAM,
-        LEVEL,
-        ENSEMBLE
+
+    enum class PARAM_TYPE {
+        DOUBLE,
+        LONG,
+        STRING,
     };
 
     public:
-        GRIBTable(const std::string &filename);
+        GRIBTable(const std::string &in_filename);
 
-        std::string getIndexString() const;
-        std::string getIndexingKey(KEY_TYPE &key) const;
+        // GETTERS
+        std::vector<std::string> getIndexes() const;
 
-        std::string getParamId(const std::string &param_name) const;
+        void GRIBTable::getParamId(const std::string &param_name, std::string &paramId, double &paramId_num, long &paramId_long) const;
         std::string getLevelType(const std::string &level_name) const;
         double getLevelNo(const std::string &level) const;
     
@@ -54,27 +56,42 @@ class GRIBTable {
 
         std::string param_indexing;
         std::string level_indexing;
-        std::string ensemble_indexing;
 
         std::map<std::string, std::string> param_table;
         std::map<std::string, double> param_table_double;
+        std::map<std::string, long> param_table_long;
         std::map<std::string, std::string> level_type_table;
         std::map<std::string, double> level_no_table;
 
-        bool ensemble_average;
-        size_t ensemble_no;
+        PARAM_TYPE parameter_id_type;
+
+        std::unordered_set<std::string> known_params;
+
+        // initialization
+        void init_known_params();
+
+        void readTable();
+        bool parseIndexing(const std::vector<std::string> &line_vals);
+        bool parseParamType(const std::vector<std::string> &line_vals);
+        void fillParameterTables(const std::vector<std::string> &line_vals, std::vector<std::string>& unknown_params);
+
+        static const std::string default_table;
+
 
 };
 
+// Needs to contain all variables for 1 timepoint, and only 1 timepoint
 class GRIBFile {
     public:
-        GRIBFile(const std::string &filename, const GRIBTable &table);
+        GRIBFile(const std::string &in_filename, const std::vector<std::string> &indexes);
 
-        std::vector<CodesHandlePtr> listParameterMessages(const std::string& param_name);
-    
+        template <typename T>
+        std::vector<CodesHandlePtr> listParameterMessages(const std::string& param_key, const T& paramID, const std::string& level_key,const std::string &levelType) {
+            return getMessages(file, param_key, paramID, level_key, levelType);
+        };
+
     private:
         std::string filename;
-        GRIBTable table;
         CodesIndexPtr file;
 
         std::map<std::string, double> grid_params;
