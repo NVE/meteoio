@@ -18,6 +18,7 @@
 */
 #include <meteoio/plugins/GRIBFile.h>
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/IOUtils.h>
 
 #include <fstream>
 
@@ -26,20 +27,18 @@ namespace mio {
     using namespace codes;
 
     // ------------------------- GRIBTable -------------------------
-    const std::string GRIBTable::default_table = "doc/resources/GRIB_param.tbl"; 
+
+    GRIBTable::GRIBTable()
+        : filename(), param_indexing(), level_indexing(), param_table(), param_table_double(), param_table_long(), level_type_table(), level_no_table(),
+          parameter_id_type(PARAM_TYPE::STRING), known_params() {
+        init_known_params();
+        readTable();
+    }
 
     GRIBTable::GRIBTable(const std::string &in_filename)
         : filename(in_filename), param_indexing(), level_indexing(), param_table(), param_table_double(), param_table_long(), level_type_table(), level_no_table(),
           parameter_id_type(PARAM_TYPE::STRING), known_params() {
         // Open the file
-
-        if (filename.empty()) {
-#ifdef DEBUG
-            std::cerr << "No GRIB table specified, using default table" << std::endl;
-#endif
-            filename = default_table;
-        }
-
         init_known_params();
         readTable();
     }
@@ -183,6 +182,7 @@ namespace mio {
         } else {
             throw InvalidArgumentException("Invalid parameter type, if this appears, please contact the developers", AT);
         }
+        
         level_type_table[key] = levelType;
         level_no_table[key] = levelNo;
     }
@@ -196,23 +196,24 @@ namespace mio {
         if (parameter_id_type == PARAM_TYPE::DOUBLE) {
             paramId_num = param_table_double.at(param_name);
             paramId = "";
-            paramId_long = 0;
+            paramId_long = static_cast<long> (IOUtils::npos);
         } else if (parameter_id_type == PARAM_TYPE::STRING) {
             paramId = param_table.at(param_name);
-            paramId_num = 0.0;
-            paramId_long = 0;
+            paramId_num = static_cast<double> (IOUtils::npos);
+            paramId_long = static_cast<long> (IOUtils::npos);
         } else if (parameter_id_type == PARAM_TYPE::LONG) {
             paramId_long = param_table_long.at(param_name);
             paramId = "";
-            paramId_num = 0.0;
+            paramId_num = static_cast<double> (IOUtils::npos);
         } else {
             throw InvalidArgumentException("Invalid parameter type, if this appears, please contact the developers", AT);
         }   
     }
 
-    std::string GRIBTable::getLevelType(const std::string &param_name) const { return level_type_table.at(level_name); }
+    // TODO: capture missing keys
+    std::string GRIBTable::getLevelType(const std::string &param_name) const { return level_type_table.at(param_name); }
 
-    double GRIBTable::getLevelNo(const std::string &param_name) const { return level_no_table.at(level); }
+    long GRIBTable::getLevelNo(const std::string &param_name) const { return level_no_table.at(param_name); }
 
 
 
@@ -224,13 +225,12 @@ namespace mio {
             checkValidity();
         }
     
-    bool GRIBFile::checkValidity() {
+    void GRIBFile::checkValidity() {
         std::vector<CodesHandlePtr> messages = getMessages(filename, PRODUCT_GRIB);
         if (messages.empty()) {
             throw AccessException("No messages found in GRIB file: " + filename);
         }
 
-        Date timepoint;
         for (auto &m : messages) {
             std::map<std::string, double> new_grid_params = getGridParameters(m);
             if (grid_params.empty()) {
@@ -253,5 +253,6 @@ namespace mio {
         if (grid_params.empty()) {
             throw InvalidFormatException("No grid parameters found in GRIB file: " + filename);
         }
+        if (timepoint == Date()) throw InvalidFormatException("No timepoint found in GRIB file: " + filename);
     }  
 } // namespace mio

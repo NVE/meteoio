@@ -28,8 +28,7 @@
 #include <vector>
 #include <unordered_set>
 
-namespace mio
-{
+namespace mio {
 
 using namespace codes;
 
@@ -43,13 +42,17 @@ class GRIBTable {
 
     public:
         GRIBTable(const std::string &in_filename);
+        GRIBTable();
 
         // GETTERS
         std::vector<std::string> getIndexes() const;
+        std::string getParamKey() const { return param_indexing; };
+        std::string getLevelKey() const { return level_indexing; };
+
 
         void GRIBTable::getParamId(const std::string &param_name, std::string &paramId, double &paramId_num, long &paramId_long) const;
-        std::string getLevelType(const std::string &level_name) const;
-        double getLevelNo(const std::string &level) const;
+        std::string getLevelType(const std::string &param_name) const;
+        long getLevelNo(const std::string &param_name) const;
     
     private:
         std::string filename;
@@ -61,7 +64,7 @@ class GRIBTable {
         std::map<std::string, double> param_table_double;
         std::map<std::string, long> param_table_long;
         std::map<std::string, std::string> level_type_table;
-        std::map<std::string, double> level_no_table;
+        std::map<std::string, long> level_no_table;
 
         PARAM_TYPE parameter_id_type;
 
@@ -74,8 +77,6 @@ class GRIBTable {
         bool parseIndexing(const std::vector<std::string> &line_vals);
         bool parseParamType(const std::vector<std::string> &line_vals);
         void fillParameterTables(const std::vector<std::string> &line_vals, std::vector<std::string>& unknown_params);
-
-        static const std::string default_table;
 
 
 };
@@ -90,13 +91,22 @@ class GRIBFile {
             return getMessages(file, param_key, paramID, level_key, levelType);
         };
 
+        std::map<std::string, double> getGridParams() const {
+            return grid_params;
+        };
+
+        bool isValidDate(const Date& date) const {
+            return date == timepoint; // TODO: work with time range
+        };
+
     private:
         std::string filename;
-        CodesIndexPtr file;
+        CodesIndexPtr file; // TODO: will this save the contents of the file? If so, it will be way to big to save, but then do calls to selectIndex always open the file?
 
         std::map<std::string, double> grid_params;
+        Date timepoint; // TODO: Do i need a validity range here?
 
-        bool checkValidity();
+        void checkValidity();
 
 };
 
