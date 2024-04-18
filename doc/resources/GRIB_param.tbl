@@ -26,13 +26,15 @@ index:paramId:typeOfLevel
 # as: paramIdType:[double|string|long]. Again do not change the first token!
 
 
-paramIdType:string
+paramIdType:long
 
 
 # Now the actual parameter identification. All pre defined MeteoIO parameters are listed here, with their default specification.
 # If you need to read additional parameters, just add them to the bottom of the list, with the same schema.
+
 # The specification is as follows:
 # parameterName:parameterId:levelType:levelNumber
+# If your levelType is surface, or something that does not need a levelNumber (i.e. height, or depth...) than just set it to 0
 
 # Meteo Data
 

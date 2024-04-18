@@ -39,6 +39,7 @@ namespace mio {
  * @todo do we need the other read2DGrid methods?
  * @todo surface... do not need levels, so should be possible to remove in gribtable
  * @todo do their data contain multiple timepoints, i.e. every hour in a day, or is really 1 file 1 timepoint?
+ * @todo check how time is stored in grib files
  */
 class GRIBIO : public IOInterface {
 	public:
@@ -79,8 +80,8 @@ class GRIBIO : public IOInterface {
 		Coords getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &grid_params);
 
 		// GRIDDED DATA
-		void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params );
-		std::vector<CodesHandlePtr> GRIBIO::findMessages(const std::string& param_key, const std::string& level_key, const std::string& level_type, const std::string& paramID_string, double paramID_double, long paramID_long, int idx);
+		void read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params );
+		void processSingleMessage(Grid2DObject& dem_out ,GRIBFile& dem_file, const GRIBTable& dem_table, const MeteoGrids::Parameters& parameter);
 
 
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

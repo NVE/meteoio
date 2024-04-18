@@ -99,6 +99,10 @@ class GRIBFile {
             return date == timepoint; // TODO: work with time range
         };
 
+        std::string getFilename() const {
+            return filename;
+        };
+
     private:
         std::string filename;
         CodesIndexPtr file; // TODO: will this save the contents of the file? If so, it will be way to big to save, but then do calls to selectIndex always open the file?

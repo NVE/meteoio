@@ -223,26 +223,55 @@ Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const 
         }
     }
 
-void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& parameter) { // TODO: do we actually need this? And how do i specify where and what?
-	throw IOException("Nothing implemented here", AT);
-};
+    void GRIBIO::read2DGrid(Grid2DObject &grid_out, const std::string &i_name) {
+        const std::string filename(grid2dpath_in + "/" + i_name);
+        if (!FileUtils::fileExists(filename))
+            throw AccessException(filename, AT); // prevent invalid filenames
+
+        std::vector<CodesHandlePtr> handles = getMessages(filename);
+
+        if (handles.empty())
+            throw IOException("No grid found in file \"" + filename + "\"", AT);
+        if (handles.size() > 1)
+            throw IOException("Multiple grids found in file \"" + filename + "\". Please specify which to load.", AT);
+
+        read2Dlevel(handles.front(), grid_out, getGridParameters(handles.front()));
+    }
 
 
-std::vector<CodesHandlePtr> GRIBIO::findMessages(const std::string& param_key, const std::string& level_key, const std::string& level_type, const std::string& paramID_string, double paramID_double, long paramID_long, int idx) {
+
+static std::vector<CodesHandlePtr> findMessages(GRIBFile& file, const std::string& param_key, const std::string& level_key, const std::string& level_type, const std::string& paramID_string, double paramID_double, long paramID_long) {
     double npos_double = static_cast<double>(IOUtils::npos);
     long npos_long = static_cast<long>(IOUtils::npos);
 
     if (!paramID_string.empty() && paramID_double == npos_double && paramID_long == npos_long) {
-        return cache_grid2d[idx].listParameterMessages(param_key, paramID_string, level_key, level_type);
+        return file.listParameterMessages(param_key, paramID_string, level_key, level_type);
     } else if (paramID_string.empty() && paramID_double != npos_double && paramID_long == npos_long) {
-        return cache_grid2d[idx].listParameterMessages(param_key, paramID_double, level_key, level_type);
+        return file.listParameterMessages(param_key, paramID_double, level_key, level_type);
     } else if (paramID_string.empty() && paramID_double == npos_double && paramID_long != npos_long) {
-        return cache_grid2d[idx].listParameterMessages(param_key, paramID_long, level_key, level_type);
+        return file.listParameterMessages(param_key, paramID_long, level_key, level_type);
     } else {
         throw IOException("paramID needs to be either string, double or long", AT);
     }
 }
 
+static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile& file, const MeteoGrids::Parameters& parameter, const GRIBTable& parameter_table, long& level_no) {
+    std::string param_name = MeteoGrids::getParameterName(parameter);
+
+    // get the paramID	
+    std::string paramID_string;
+    double paramID_double;
+    long paramID_long;
+    parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
+
+    // get additional information from the parameter table
+    std::string param_key = parameter_table.getParamKey();
+    std::string level_key = parameter_table.getLevelKey();
+    level_no = parameter_table.getLevelNo(param_name);
+    std::string level_type = parameter_table.getLevelType(param_name);
+
+    return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long);
+}
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {
 	size_t idx = findDate(cache_grid2d, date);
@@ -250,21 +279,8 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		throw IOException("No grid found for the specified date", AT); // TODO: do we need to throw an exception here, or just return?
 	}
 
-	std::string param_name = MeteoGrids::getParameterName(parameter);
-
-	// get the paramID	
-	std::string paramID_string;
-	double paramID_double;
-	long paramID_long;
-	parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
-
-	// get additional information from the parameter table
-	std::string param_key = parameter_table.getParamKey();
-	std::string level_key = parameter_table.getLevelKey();
-	long level_no = parameter_table.getLevelNo(param_name);
-	std::string level_type = parameter_table.getLevelType(param_name);
-
-	std::vector<CodesHandlePtr> messages = findMessages(param_key, level_key, level_type, paramID_string, paramID_double, paramID_long, idx);
+    long level_no;
+	std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_grid2d[idx], parameter, parameter_table, level_no);
 
 	if (messages.empty()) {
 		throw IOException("No messages found for the specified parameter", AT); // TODO: do we need to throw an exception here, or just return?
@@ -283,10 +299,63 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	return;
 };
 
+// ---------------------------- DIGITAL ELEVATION MODEL -----------------------------
+void GRIBIO::processSingleMessage(Grid2DObject& dem_out ,GRIBFile& dem_file, const GRIBTable& dem_table, const MeteoGrids::Parameters& parameter) {
+    long level_no;
+    std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(dem_file, parameter, dem_table, level_no);
+    
+    if (messages.empty()) {
+        throw IOException("No messages containing DEM information found." AT); 
+    }
+    if (messages.size() > 1) {
+        throw IOException("Multiple messages containing DEM information found in file"+dem_file.getFilename(), AT);
+    }
+
+    read2Dlevel(messages.front(), dem_out, dem_file.getGridParams());
+}
+
+void GRIBIO::readDEM(DEMObject &dem_out) {
+    const std::string filename = cfg.get("DEMFILE", "Input");
+    const std::string dem_table_path = cfg.get("DEM_TABLE", "Input", default_table);
+
+    GRIBTable dem_table(dem_table_path);
+    GRIBFile dem_file(filename, dem_table.getIndexes());
+
+    processSingleMessage(dem_out, dem_file, dem_table, MeteoGrids::DEM);
+
+
+    if (update_dem) {
+        dem_out.update();
+    } else {
+        const int dem_ppt = dem_out.getUpdatePpt();
+        if (dem_ppt & DEMObject::SLOPE) {
+            Grid2DObject slope;
+            processSingleMessage(slope, dem_file, dem_table, MeteoGrids::SLOPE);
+            dem_out.slope = slope.grid2D;
+            Grid2DObject azi;
+            processSingleMessage(azi, dem_file, dem_table, MeteoGrids::AZI);
+            dem_out.azi = azi.grid2D;
+        }
+        if (dem_ppt & DEMObject::NORMAL || dem_ppt & DEMObject::CURVATURE) {
+            // we will only update the normals and/or curvatures, then revert update properties
+            if (dem_ppt & DEMObject::NORMAL && dem_ppt & DEMObject::CURVATURE)
+                dem_out.setUpdatePpt((DEMObject::update_type)(DEMObject::NORMAL | DEMObject::CURVATURE));
+            else if (dem_ppt & DEMObject::NORMAL)
+                dem_out.setUpdatePpt(DEMObject::NORMAL);
+            else if (dem_ppt & DEMObject::CURVATURE)
+                dem_out.setUpdatePpt(DEMObject::CURVATURE);
+
+            dem_out.update();
+            dem_out.setUpdatePpt((DEMObject::update_type)dem_ppt);
+        }
+
+        dem_out.updateAllMinMax();
+    }
+}
 
 // ---------------------------- STATION DATA ----------------------------- 
 void GRIBIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/)
+                             std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
