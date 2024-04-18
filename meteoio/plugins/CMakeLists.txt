@@ -38,6 +38,7 @@ IF(PLUGIN_BUFRIO OR PLUGIN_GRIBIO)
 	ENDIF(PLUGIN_BUFRIO)
 
 	IF(PLUGIN_GRIBIO)
+		SET(plugins_sources ${plugins_sources} plugins/GRIBFile.cc)
 		SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc)
 	ENDIF(PLUGIN_GRIBIO)
 ENDIF(PLUGIN_BUFRIO OR PLUGIN_GRIBIO)

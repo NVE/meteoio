@@ -50,7 +50,7 @@ class GRIBTable {
         std::string getLevelKey() const { return level_indexing; };
 
 
-        void GRIBTable::getParamId(const std::string &param_name, std::string &paramId, double &paramId_num, long &paramId_long) const;
+        void getParamId(const std::string &param_name, std::string &paramId, double &paramId_num, long &paramId_long) const;
         std::string getLevelType(const std::string &param_name) const;
         long getLevelNo(const std::string &param_name) const;
     

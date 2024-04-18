@@ -69,10 +69,7 @@ namespace mio {
 
 
         // ------------------------- CONSTANTS -------------------------
-        static const std::map<std::string, std::string> PARAMETER_MAP;
-        static const std::map<std::string, std::vector<std::string>> PARAMETER_GROUPS;
-
-        static const std::map<std::string, std::string> BUFR_PARAMETER;
+        extern const std::map<std::string, std::string> BUFR_PARAMETER;
 
 
         // ------------------------- TEMPLATE FUNCTIONS -------------------------

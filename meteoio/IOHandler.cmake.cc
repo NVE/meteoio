@@ -123,6 +123,11 @@
 #include <meteoio/plugins/GRIBIO.h>
 #endif
 
+#ifdef PLUGIN_BUFRIO
+#include <meteoio/plugins/BUFRIO.h>
+#endif
+
+
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
 #endif
