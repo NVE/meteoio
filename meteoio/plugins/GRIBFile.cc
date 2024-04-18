@@ -53,6 +53,15 @@ namespace mio {
             level_type_table[param_name] = "";
             level_no_table[param_name] = 0.0;
         }
+        for (size_t i=0; i<MeteoGrids::nrOfParameters; i++) {
+            std::string param_name = MeteoGrids::getParameterName(i);
+            known_params.insert(param_name);
+            param_table[param_name] = "";
+            param_table_double[param_name] = 0.0;
+            param_table_long[param_name] = 0;
+            level_type_table[param_name] = "";
+            level_no_table[param_name] = 0.0;
+        }
     };
 
     // ------------------------- reading the GRIB table -------------------------
@@ -65,7 +74,6 @@ namespace mio {
 
         // Read the file line by line and parse it
         std::string line;
-        std::vector<std::string> unknown_parameters;
         while (std::getline(file, line)) {
             if (line.empty() || line[0] == '#' || line[0] == ' ') {
                 continue;
@@ -79,17 +87,8 @@ namespace mio {
                 continue;
 
             // only comments or parameters left so fill the parameter table
-            fillParameterTables(values, unknown_parameters);
+            fillParameterTables(values);
         }
-#ifdef DEBUG
-        if (!unknown_parameters.empty()) {
-            std::cerr << "Unknown parameters in GRIB table: ";
-            for (const auto &p : unknown_parameters) {
-                std::cerr << p << " ";
-            }
-            std::cerr << std::endl;
-        }
-#endif
     }
 
     bool GRIBTable::parseIndexing(const std::vector<std::string> &line_vals) {
@@ -140,7 +139,7 @@ namespace mio {
         return false;
     }
 
-    void GRIBTable::fillParameterTables(const std::vector<std::string> &line_vals, std::vector<std::string> &unknown_params) {
+    void GRIBTable::fillParameterTables(const std::vector<std::string> &line_vals) {
         std::string key, paramID, levelType;
         double levelNo;
         if (line_vals.size() != 4) {
@@ -162,7 +161,7 @@ namespace mio {
         };
 
         if (known_params.find(key) == known_params.end()) {
-            unknown_params.push_back(key);
+            throw InvalidArgumentException("Unknown parameter: " + key, AT);
         }
 
         if (parameter_id_type == PARAM_TYPE::DOUBLE) {
@@ -210,7 +209,6 @@ namespace mio {
         }   
     }
 
-    // TODO: capture missing keys
     std::string GRIBTable::getLevelType(const std::string &param_name) const { return level_type_table.at(param_name); }
 
     long GRIBTable::getLevelNo(const std::string &param_name) const { return level_no_table.at(param_name); }

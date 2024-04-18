@@ -35,11 +35,7 @@ namespace mio {
  * @author Patrick Leibersperge
  * @date   2024-04-17
  * 
- * 
- * @todo do we need the other read2DGrid methods?
- * @todo surface... do not need levels, so should be possible to remove in gribtable
- * @todo do their data contain multiple timepoints, i.e. every hour in a day, or is really 1 file 1 timepoint?
- * @todo check how time is stored in grib files
+ * @todo Handle special cases
  */
 class GRIBIO : public IOInterface {
 	public:
@@ -69,8 +65,12 @@ class GRIBIO : public IOInterface {
 		Coords llcorner;
 		double cellsize, factor_x, factor_y;
 
+
+		bool grid_initialized, meteo_initialized;
 		GRIBTable parameter_table;
 		std::vector<GRIBFile> cache_meteo, cache_grid2d;
+
+		std::vector<Coords> vecPts; //points to use for virtual stations if METEO=GRIB
 
 		void setOptions();
 		void initTable();
@@ -83,6 +83,9 @@ class GRIBIO : public IOInterface {
 		void read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params );
 		void processSingleMessage(Grid2DObject& dem_out ,GRIBFile& dem_file, const GRIBTable& dem_table, const MeteoGrids::Parameters& parameter);
 
+		// METEO DATA
+		bool readMeteoMeta(GRIBFile& file ,std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
+    	bool removeDuplicatePoints(std::vector<Coords> &vecPoints, std::vector<double> &lats, std::vector<double> &lons); // remove potential duplicates. Returns true if some have been removed
 
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string default_table;

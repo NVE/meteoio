@@ -12,6 +12,7 @@
 # - the default Names of the parameter names, as this will lead MetoIO to assume it is a new parameter.
 
 # All listed parameters will be attmpted to read, if they are not available they are skipped. If you want to skip some from the beginning, just remove them.
+# However it is not possible to read parameters that are not known to MeteoIO, so you cannot add your own parameter name
 
 # The indexes to be used to find the parameters (first token needs to be index, the other two can be chosen as desired)
 # Default: the ECMWF paramId (https://codes.ecmwf.int/grib/param-db/) is used to identify the parameters, and the level type (https://codes.ecmwf.int/grib/format/edition-independent/3/) is used to identify the vertical layering. 

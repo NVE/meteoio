@@ -16,95 +16,89 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/plugins/GRIBIO_redesign.h>
-#include <meteoio/dataClasses/CoordsAlgorithms.h>
-#include <meteoio/MathOptim.h>
-#include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/FileUtils.h>
-
+#include <meteoio/MathOptim.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
+#include <meteoio/meteoStats/libresampling2D.h>
+#include <meteoio/plugins/GRIBIO_redesign.h>
 
 namespace mio {
-	using namespace codes;
-/**
- * @page gribio GRIBIO
- * @section gribio_format Format
- * *Put here the information about the standard format that is implemented*
- *
- * @section gribio_units Units
- *
- *
- * @section gribio_keywords Keywords
- * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - etc
- * 
- * @note Grid2d and Meteo Files need to be seperated by either pattern or extension
- */
+    using namespace codes;
+    /**
+     * @page gribio GRIBIO
+     * @section gribio_format Format
+     * *Put here the information about the standard format that is implemented*
+     *
+     * @section gribio_units Units
+     *
+     *
+     * @section gribio_keywords Keywords
+     * This plugin uses the following keywords:
+     * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
+     * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+     * - etc
+     *
+     * @note Grid2d and Meteo Files need to be seperated by either pattern or extension
+     */
 
-const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl"; 
+    const double GRIBIO::plugin_nodata = -999.; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+    const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
 #include <algorithm>
 
-static size_t findDate(const std::vector<GRIBFile>& cache, const Date& date) {
-    auto it = std::find_if(cache.begin(), cache.end(), [&date](const GRIBFile& file) { return file.isValidDate(date); });
+    static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
+        auto it = std::find_if(cache.begin(), cache.end(), [&date](const GRIBFile &file) { return file.isValidDate(date); });
 
-    return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
-}
+        return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
+    }
 
-// ----------------------------- INITIALIZE -----------------------------
-GRIBIO::GRIBIO(const std::string& configfile) : cfg(configfile)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	initialize();
-}
+    // ----------------------------- INITIALIZE -----------------------------
+    GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile) {
+        IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+        initialize();
+    }
 
-GRIBIO::GRIBIO(const Config& cfgreader) : cfg(cfgreader)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	initialize();
-}
+    GRIBIO::GRIBIO(const Config &cfgreader) : cfg(cfgreader) {
+        IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+        initialize();
+    }
 
-void GRIBIO::initialize() {
-	setOptions();
-	initTable();
-	scanPath(grid2dpath_in, grid2d_ext, grid_2d_pattern, cache_grid2d);
-	scanPath(meteopath_in, meteo_ext, meteo_pattern, cache_meteo);
-}
+    void GRIBIO::initialize() {
+        setOptions();
+        initTable();
+    }
 
-void GRIBIO::setOptions()
-{
-	const std::string tmp = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
-	if (tmp == "GRIB") { // keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-		cfg.getValue("GRIB_TABLE", "Input", table_path);
+    void GRIBIO::setOptions() {
+        const std::string tmp = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
+        if (tmp == "GRIB") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+            cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+            cfg.getValue("GRIB_TABLE", "Input", table_path);
 
-		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
-	}
+            cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
+        }
 
-	cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
-	if (meteo_ext == "none")
-		meteo_ext.clear();
-	cfg.getValue("METEOPATTERN", "Input", meteo_pattern, IOUtils::nothrow);
-	if (meteo_ext == "none")
-		meteo_ext.clear();
+        cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
+        if (meteo_ext == "none")
+            meteo_ext.clear();
+        cfg.getValue("METEOPATTERN", "Input", meteo_pattern, IOUtils::nothrow);
+        if (meteo_ext == "none")
+            meteo_ext.clear();
 
-	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
-	if (grid2d_ext == "none")
-		grid2d_ext.clear();
-	cfg.getValue("GRID2DPATTERN", "Input", grid_2d_pattern, IOUtils::nothrow);
-	if (grid2d_ext == "none")
-		grid2d_ext.clear();
+        cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
+        if (grid2d_ext == "none")
+            grid2d_ext.clear();
+        cfg.getValue("GRID2DPATTERN", "Input", grid_2d_pattern, IOUtils::nothrow);
+        if (grid2d_ext == "none")
+            grid2d_ext.clear();
 
-	cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
-	cfg.getValue("RECURSIVE", "Input", recursive_search, IOUtils::nothrow);
+        cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
+        cfg.getValue("RECURSIVE", "Input", recursive_search, IOUtils::nothrow);
 
-	if (meteo_ext == grid2d_ext && meteo_pattern == grid_2d_pattern && meteopath_in == grid2dpath_in)
-		throw InvalidArgumentException("Meteo and Grid2D files cannot have the same naming and be located in the same place.", AT);
-}
+        if (meteo_ext == grid2d_ext && meteo_pattern == grid_2d_pattern && meteopath_in == grid2dpath_in)
+            throw InvalidArgumentException("Meteo and Grid2D files cannot have the same naming and be located in the same place.", AT);
+    }
 
-void GRIBIO::initTable() {
+    void GRIBIO::initTable() {
 
         if (table_path.empty()) {
 #ifdef DEBUG
@@ -112,41 +106,40 @@ void GRIBIO::initTable() {
 #endif
             table_path = default_table;
         }
-		parameter_table = GRIBTable(table_path);
-}
+        parameter_table = GRIBTable(table_path);
+    }
 
-void GRIBIO::scanPath(const std::string &in_path, const std::string &in_ext, const std::string &in_pattern, std::vector<GRIBFile> &cache) {
-	std::list<std::string> dirlist;
-	FileUtils::readDirectory(in_path, dirlist, in_ext, recursive_search);
+    void GRIBIO::scanPath(const std::string &in_path, const std::string &in_ext, const std::string &in_pattern, std::vector<GRIBFile> &cache) {
+        std::list<std::string> dirlist;
+        FileUtils::readDirectory(in_path, dirlist, in_ext, recursive_search);
 
-	std::list<std::string>::const_iterator it = dirlist.begin();
-	while ((it != dirlist.end())) {
-		const std::string filename = *it;
-		if (filename.find(grid_2d_pattern) != std::string::npos) {
-			const std::string fullpath = grid2dpath_in + "/" + filename;
-			cache_grid2d.push_back(GRIBFile(fullpath, parameter_table.getIndexes())); // Files will not be read twice, as we enforce a seperation between meteo and grid
-		}
-		it++;
-	}
-}
+        std::list<std::string>::const_iterator it = dirlist.begin();
+        while ((it != dirlist.end())) {
+            const std::string filename = *it;
+            if (filename.find(grid_2d_pattern) != std::string::npos) {
+                const std::string fullpath = grid2dpath_in + "/" + filename;
+                cache_grid2d.push_back(GRIBFile(fullpath, parameter_table.getIndexes())); // Files will not be read twice, as we enforce a seperation between meteo and grid
+            }
+            it++;
+        }
+    }
 
+    void GRIBIO::readStations(std::vector<Coords> &vecPoints) {
+        cfg.getValue("METEOPATH", "Input", meteopath_in);
 
-void GRIBIO::readStations(std::vector<Coords> &vecPoints) {
-	cfg.getValue("METEOPATH", "Input", meteopath_in);
+        std::vector<std::string> vecStation;
+        cfg.getValues("STATION", "INPUT", vecStation);
+        for (size_t ii = 0; ii < vecStation.size(); ii++) {
+            Coords tmp(coordin, coordinparam, vecStation[ii]);
+            if (!tmp.isNodata())
+                vecPoints.push_back(tmp);
 
-	std::vector<std::string> vecStation;
-	cfg.getValues("STATION", "INPUT", vecStation);
-	for (size_t ii = 0; ii < vecStation.size(); ii++) {
-		Coords tmp(coordin, coordinparam, vecStation[ii]);
-		if (!tmp.isNodata())
-			vecPoints.push_back(tmp);
+            std::cerr << "\tRead virtual station " << vecPoints.back().toString(Coords::LATLON) << "\n";
+        }
+    }
 
-		std::cerr << "\tRead virtual station " << vecPoints.back().toString(Coords::LATLON) << "\n";
-	}
-}
-
-Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &grid_params) {
-		latitudeOfNorthernPole = grid_params.at("latitudeOfNorthernPole");
+    Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string, double> &grid_params) {
+        latitudeOfNorthernPole = grid_params.at("latitudeOfNorthernPole");
         longitudeOfNorthernPole = grid_params.at("longitudeOfNorthernPole");
         double ll_latitude = grid_params.at("ll_latitude");
         double ll_longitude = grid_params.at("ll_longitude");
@@ -180,11 +173,10 @@ Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const 
         cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
 
         return cntr;
-}
+    }
 
-
-// ----------------------------- GRIDDED DATA -----------------------------
-    void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params ) {
+    // ----------------------------- GRIDDED DATA -----------------------------
+    void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params) {
         std::vector<double> values;
         getGriddedValues(h, values);
 
@@ -238,129 +230,330 @@ Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const 
         read2Dlevel(handles.front(), grid_out, getGridParameters(handles.front()));
     }
 
+    static std::vector<CodesHandlePtr> findMessages(GRIBFile &file, const std::string &param_key, const std::string &level_key, const std::string &level_type, const std::string &paramID_string,
+                                                    double paramID_double, long paramID_long) {
+        double npos_double = static_cast<double>(IOUtils::npos);
+        long npos_long = static_cast<long>(IOUtils::npos);
 
-
-static std::vector<CodesHandlePtr> findMessages(GRIBFile& file, const std::string& param_key, const std::string& level_key, const std::string& level_type, const std::string& paramID_string, double paramID_double, long paramID_long) {
-    double npos_double = static_cast<double>(IOUtils::npos);
-    long npos_long = static_cast<long>(IOUtils::npos);
-
-    if (!paramID_string.empty() && paramID_double == npos_double && paramID_long == npos_long) {
-        return file.listParameterMessages(param_key, paramID_string, level_key, level_type);
-    } else if (paramID_string.empty() && paramID_double != npos_double && paramID_long == npos_long) {
-        return file.listParameterMessages(param_key, paramID_double, level_key, level_type);
-    } else if (paramID_string.empty() && paramID_double == npos_double && paramID_long != npos_long) {
-        return file.listParameterMessages(param_key, paramID_long, level_key, level_type);
-    } else {
-        throw IOException("paramID needs to be either string, double or long", AT);
+        if (!paramID_string.empty() && paramID_double == npos_double && paramID_long == npos_long) {
+            return file.listParameterMessages(param_key, paramID_string, level_key, level_type);
+        } else if (paramID_string.empty() && paramID_double != npos_double && paramID_long == npos_long) {
+            return file.listParameterMessages(param_key, paramID_double, level_key, level_type);
+        } else if (paramID_string.empty() && paramID_double == npos_double && paramID_long != npos_long) {
+            return file.listParameterMessages(param_key, paramID_long, level_key, level_type);
+        } else {
+            throw IOException("paramID needs to be either string, double or long", AT);
+        }
     }
-}
 
-static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile& file, const MeteoGrids::Parameters& parameter, const GRIBTable& parameter_table, long& level_no) {
-    std::string param_name = MeteoGrids::getParameterName(parameter);
 
-    // get the paramID	
-    std::string paramID_string;
-    double paramID_double;
-    long paramID_long;
-    parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
+    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const std::string &param_name, const GRIBTable &parameter_table, long &level_no) {
+        // get the paramID
+        std::string paramID_string;
+        double paramID_double;
+        long paramID_long;
+        parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
 
-    // get additional information from the parameter table
-    std::string param_key = parameter_table.getParamKey();
-    std::string level_key = parameter_table.getLevelKey();
-    level_no = parameter_table.getLevelNo(param_name);
-    std::string level_type = parameter_table.getLevelType(param_name);
+        // get additional information from the parameter table
+        std::string param_key = parameter_table.getParamKey();
+        std::string level_key = parameter_table.getLevelKey();
+        level_no = parameter_table.getLevelNo(param_name);
+        std::string level_type = parameter_table.getLevelType(param_name);
 
-    return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long);
-}
-
-void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {
-	size_t idx = findDate(cache_grid2d, date);
-	if (idx == IOUtils::npos) {
-		throw IOException("No grid found for the specified date", AT); // TODO: do we need to throw an exception here, or just return?
-	}
-
-    long level_no;
-	std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_grid2d[idx], parameter, parameter_table, level_no);
-
-	if (messages.empty()) {
-		throw IOException("No messages found for the specified parameter", AT); // TODO: do we need to throw an exception here, or just return?
-	}
-	
-	for (auto &m : messages) {
-		long level = 0;
-		if (level_no != 0)
-			getParameter(m, "level", level);
-		if (level == level_no) {
-			read2Dlevel(m, grid_out, cache_grid2d[idx].getGridParams());
-			return;
-		}
-	}
-	throw IOException("No messages found for the specified level", AT); // TODO: do we need to throw an exception here, or just return?
-	return;
-};
-
-// ---------------------------- DIGITAL ELEVATION MODEL -----------------------------
-void GRIBIO::processSingleMessage(Grid2DObject& dem_out ,GRIBFile& dem_file, const GRIBTable& dem_table, const MeteoGrids::Parameters& parameter) {
-    long level_no;
-    std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(dem_file, parameter, dem_table, level_no);
+        return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long);
+    }
     
-    if (messages.empty()) {
-        throw IOException("No messages containing DEM information found." AT); 
+    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const MeteoGrids::Parameters &parameter, const GRIBTable &parameter_table, long &level_no) {
+        std::string param_name = MeteoGrids::getParameterName(parameter);
+        return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no);
+    };
+
+    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const MeteoData::Parameters &parameter, const GRIBTable &parameter_table, long &level_no) {
+        std::string param_name = MeteoData::getParameterName(parameter);
+        return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no);
+    };
+
+    static void handleSpecialCases(Grid2DObject &grid_out, const MeteoGrids::Parameters &parameter) {
+        throw IOException("Special cases not implemented", AT);
     }
-    if (messages.size() > 1) {
-        throw IOException("Multiple messages containing DEM information found in file"+dem_file.getFilename(), AT);
-    }
 
-    read2Dlevel(messages.front(), dem_out, dem_file.getGridParams());
-}
-
-void GRIBIO::readDEM(DEMObject &dem_out) {
-    const std::string filename = cfg.get("DEMFILE", "Input");
-    const std::string dem_table_path = cfg.get("DEM_TABLE", "Input", default_table);
-
-    GRIBTable dem_table(dem_table_path);
-    GRIBFile dem_file(filename, dem_table.getIndexes());
-
-    processSingleMessage(dem_out, dem_file, dem_table, MeteoGrids::DEM);
-
-
-    if (update_dem) {
-        dem_out.update();
-    } else {
-        const int dem_ppt = dem_out.getUpdatePpt();
-        if (dem_ppt & DEMObject::SLOPE) {
-            Grid2DObject slope;
-            processSingleMessage(slope, dem_file, dem_table, MeteoGrids::SLOPE);
-            dem_out.slope = slope.grid2D;
-            Grid2DObject azi;
-            processSingleMessage(azi, dem_file, dem_table, MeteoGrids::AZI);
-            dem_out.azi = azi.grid2D;
+    void GRIBIO::read2DGrid(Grid2DObject &grid_out, const MeteoGrids::Parameters &parameter, const Date &date) {
+        if (!grid_initialized) {
+            scanPath(grid2dpath_in, grid2d_ext, grid_2d_pattern, cache_grid2d);
+            grid_initialized = true;
         }
-        if (dem_ppt & DEMObject::NORMAL || dem_ppt & DEMObject::CURVATURE) {
-            // we will only update the normals and/or curvatures, then revert update properties
-            if (dem_ppt & DEMObject::NORMAL && dem_ppt & DEMObject::CURVATURE)
-                dem_out.setUpdatePpt((DEMObject::update_type)(DEMObject::NORMAL | DEMObject::CURVATURE));
-            else if (dem_ppt & DEMObject::NORMAL)
-                dem_out.setUpdatePpt(DEMObject::NORMAL);
-            else if (dem_ppt & DEMObject::CURVATURE)
-                dem_out.setUpdatePpt(DEMObject::CURVATURE);
 
+        size_t idx = findDate(cache_grid2d, date);
+        if (idx == IOUtils::npos) {
+            if (verbose) {
+                std::cerr << "No grid found for the specified date" << std::endl;
+            }
+            return;
+        }
+
+        long level_no;
+        std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_grid2d[idx], parameter, parameter_table, level_no);
+
+        if (messages.empty()) {
+            if (verbose) {
+                std::cerr << "No messages found for the specified parameter "+MeteoGrids::getParameterName(parameter) << std::endl;
+            }
+            return;
+        }
+
+        for (auto &m : messages) {
+            long level = 0;
+            if (level_no != 0)
+                getParameter(m, "level", level);
+            if (level == level_no) {
+                read2Dlevel(m, grid_out, cache_grid2d[idx].getGridParams());
+                handleSpecialCases(grid_out, parameter);
+                return;
+            }
+        }
+        if (verbose)
+            std::cerr << "No messages found for the specified level" << std::endl;
+        return;
+    };
+
+    // ---------------------------- DIGITAL ELEVATION MODEL -----------------------------
+    void GRIBIO::processSingleMessage(Grid2DObject &dem_out, GRIBFile &dem_file, const GRIBTable &dem_table, const MeteoGrids::Parameters &parameter) {
+        long level_no;
+        std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(dem_file, parameter, dem_table, level_no);
+
+        if (messages.empty()) {
+            throw IOException("No messages containing DEM information found." AT);
+        }
+        if (messages.size() > 1) {
+            throw IOException("Multiple messages containing DEM information found in file" + dem_file.getFilename(), AT);
+        }
+
+        read2Dlevel(messages.front(), dem_out, dem_file.getGridParams());
+    }
+
+    void GRIBIO::readDEM(DEMObject &dem_out) {
+        const std::string filename = cfg.get("DEMFILE", "Input");
+        const std::string dem_table_path = cfg.get("DEM_TABLE", "Input", default_table);
+
+        GRIBTable dem_table(dem_table_path);
+        GRIBFile dem_file(filename, dem_table.getIndexes());
+
+        processSingleMessage(dem_out, dem_file, dem_table, MeteoGrids::DEM);
+
+        if (update_dem) {
             dem_out.update();
-            dem_out.setUpdatePpt((DEMObject::update_type)dem_ppt);
+        } else {
+            const int dem_ppt = dem_out.getUpdatePpt();
+            if (dem_ppt & DEMObject::SLOPE) {
+                Grid2DObject slope;
+                processSingleMessage(slope, dem_file, dem_table, MeteoGrids::SLOPE);
+                dem_out.slope = slope.grid2D;
+                Grid2DObject azi;
+                processSingleMessage(azi, dem_file, dem_table, MeteoGrids::AZI);
+                dem_out.azi = azi.grid2D;
+            }
+            if (dem_ppt & DEMObject::NORMAL || dem_ppt & DEMObject::CURVATURE) {
+                // we will only update the normals and/or curvatures, then revert update properties
+                if (dem_ppt & DEMObject::NORMAL && dem_ppt & DEMObject::CURVATURE)
+                    dem_out.setUpdatePpt((DEMObject::update_type)(DEMObject::NORMAL | DEMObject::CURVATURE));
+                else if (dem_ppt & DEMObject::NORMAL)
+                    dem_out.setUpdatePpt(DEMObject::NORMAL);
+                else if (dem_ppt & DEMObject::CURVATURE)
+                    dem_out.setUpdatePpt(DEMObject::CURVATURE);
+
+                dem_out.update();
+                dem_out.setUpdatePpt((DEMObject::update_type)dem_ppt);
+            }
+
+            dem_out.updateAllMinMax();
+        }
+    }
+
+
+    // ---------------------------- METEO DATA -----------------------------
+    // ---------------------------- STATIC HELPERS
+    static bool compareByDate(const GRIBFile &a, const GRIBFile &b) { return a.getDate() < b.getDate(); }
+
+    static std::vector<MeteoData> createMeteoDataVector(const std::vector<StationData>& stations, const Date& date) {
+        std::vector<MeteoData> vecMeteo;
+        const size_t npoints = stations.size();
+
+        for (size_t ii = 0; ii < npoints; ii++) {
+            MeteoData md;
+            md.meta = stations[ii];
+            md.date = date;
+            vecMeteo.push_back(md);
         }
 
-        dem_out.updateAllMinMax();
+        return vecMeteo;
     }
-}
 
-// ---------------------------- STATION DATA ----------------------------- 
-void GRIBIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& vecMeteo)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
+    static void processMessages(std::vector<CodesHandlePtr>& messages, const long& level_no, std::vector<MeteoData>& vecMeteo, const std::vector<double>& lats, const std::vector<double>& lons, const size_t& npoints, const size_t& par_index) {
+        for (auto &m : messages) {
+            long level = 0;
+            if (level_no != 0)
+                getParameter(m, "level", level);
+            if (level == level_no) {
+                std::vector<double> outlats_vec(npoints), outlons_vec(npoints), distances_vec(npoints), values(npoints);
+                std::vector<int> indexes_vec(npoints);
+                std::tie(outlats_vec, outlons_vec, distances_vec, values, indexes_vec) = getNearestValues_grib(m, lats, lons);
+
+                for (size_t ii = 0; ii < npoints; ii++) {
+                    vecMeteo[ii](par_index) = values[ii];
+                }
+            }
+        }
+    }
 
 
 
-} //namespace
+    // ---------------------------- METEO READING -----------------------------
+    void GRIBIO::readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
+        if (!meteo_initialized) {
+            readStations(vecPts);
+            scanPath(meteopath_in, meteo_ext, meteo_pattern, cache_meteo);
+            meteo_initialized = true;
+            std::sort(cache_meteo.begin(), cache_meteo.end(), compareByDate);
+        }
+
+        vecvecMeteo.clear();
+
+        std::vector<double> lats(vecPts.size());
+        std::vector<double> lons(vecPts.size());
+
+        std::vector<StationData> stations;
+        bool meta_ok = false;
+
+        auto it = std::lower_bound(cache_meteo.begin(), cache_meteo.end(), dateStart, compareByDate);
+        if (it == cache_meteo.end()) {
+            return;
+        }
+
+        size_t start_idx = 0;
+        start_idx = std::distance(cache_meteo.begin(), it);
+
+
+        if (start_idx > 0)
+            start_idx--;
+
+        for (size_t i = start_idx; i < cache_meteo.size(); i++) {
+            const Date &current_date = cache_meteo[i].getDate();
+            if (current_date > dateEnd) {
+                break;
+            }
+
+            if (!meta_ok) {
+                if (!readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons)) {
+                    // some points have been removed vecPts has been changed -> re-reading
+                    lats.clear();
+                    lons.clear();
+                    readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons);
+                }
+                vecvecMeteo.insert(vecvecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); // allocation for the vectors now that we know how many true stations we have
+                meta_ok = true;
+            }
+
+            std::vector<MeteoData> vecMeteo = createMeteoDataVector(stations, current_date);
+            const size_t npoints = vecMeteo.size();
+
+            for (size_t par_index; par_index <= MeteoData::Parameters::lastparam; par_index++) {
+                std::string param_name = MeteoData::getParameterName(par_index);
+
+                long level_no;
+                std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_meteo[i], param_name, parameter_table, level_no);
+
+                if (messages.empty()) {
+                    if (verbose) {
+                        std::cerr << "No messages found for parameter " << param_name << " in file " << cache_meteo[i].getFilename() << std::endl;
+                    }
+                    continue; 
+                }
+
+                processMessages(messages, level_no, vecMeteo, lats, lons, npoints, par_index);
+            }
+        }
+    }
+
+
+    // ---------------------------- METEO READING HELPERS -----------------------------
+    bool GRIBIO::removeDuplicatePoints(std::vector<Coords> &vecPoints, std::vector<double> &lats, std::vector<double> &lons) { // remove potential duplicates. Returns true if some have been removed
+        const size_t npoints = vecPoints.size();
+        std::vector<size_t> deletions;
+        deletions.reserve(npoints);
+        for (size_t ii = 0; ii < npoints; ii++) {
+            const double lat = lats[ii];
+            const double lon = lons[ii];
+            for (size_t jj = ii + 1; jj < npoints; jj++) {
+                if (lat == lats[jj] && lon == lons[jj]) {
+                    deletions.push_back(jj);
+                }
+            }
+        }
+
+        // we need to erase from the end in order to keep the index unchanged...
+        for (size_t ii = deletions.size(); ii-- > 0;) {
+            const size_t index = deletions[ii - 1];
+            vecPoints.erase(vecPoints.begin() + index);
+        }
+
+        if (!deletions.empty())
+            return true;
+        return false;
+    }
+
+    bool GRIBIO::readMeteoMeta(GRIBFile& file ,std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons) {
+
+        long level_no;
+        std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(file, MeteoGrids::DEM, parameter_table, level_no);
+
+        if (messages.empty()) {
+            throw IOException("No messages containing DEM information found." AT);
+        }
+
+        const size_t npoints = vecPoints.size();
+
+        for (auto &h : messages) {
+
+            if (h == nullptr) {
+                throw IOException("Can not find DEM grid in GRIB file!", AT);
+            }
+
+            std::map<std::string, double> grid_params = getGridParameters(h);
+            latitudeOfNorthernPole = grid_params.at("latitudeOfNorthernPole");
+            longitudeOfNorthernPole = grid_params.at("longitudeOfNorthernPole");
+            long Ni = static_cast<long>(grid_params.at("Ni"));
+
+            // build GRIB local coordinates for the points
+            for (size_t ii = 0; ii < npoints; ii++) {
+                CoordsAlgorithms::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
+            }
+
+            // retrieve nearest points
+            std::vector<double> outlats_vec(npoints), outlons_vec(npoints), altitudes_vec(npoints), distances_vec(npoints);
+            std::vector<int> indexes_vec(npoints);
+            std::tie(outlats_vec, outlons_vec, distances_vec, altitudes_vec, indexes_vec) = getNearestValues_grib(h, lats, lons);
+
+            // remove potential duplicates
+            if (removeDuplicatePoints(vecPoints, outlats_vec, outlons_vec) == true)
+                return false;
+
+            // fill metadata
+            for (size_t ii = 0; ii < npoints; ii++) {
+                StationData sd;
+                sd.position.setProj(coordin, coordinparam);
+                double true_lat, true_lon;
+                CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats_vec[ii], outlons_vec[ii], true_lat, true_lon);
+                sd.position.setLatLon(true_lat, true_lon, altitudes_vec[ii]);
+                sd.stationID = "Point_" + IOUtils::toString(indexes_vec[ii]);
+                std::ostringstream ss2;
+                ss2 << "GRIB point (" << indexes_vec[ii] % Ni << "," << indexes_vec[ii] / Ni << ")";
+                sd.stationName = ss2.str();
+                stations.push_back(sd);
+            }
+        }
+        return true;
+    }
+
+    
+
+} // namespace

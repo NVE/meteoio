@@ -76,7 +76,7 @@ class GRIBTable {
         void readTable();
         bool parseIndexing(const std::vector<std::string> &line_vals);
         bool parseParamType(const std::vector<std::string> &line_vals);
-        void fillParameterTables(const std::vector<std::string> &line_vals, std::vector<std::string>& unknown_params);
+        void fillParameterTables(const std::vector<std::string> &line_vals);
 
 
 };
@@ -101,6 +101,10 @@ class GRIBFile {
 
         std::string getFilename() const {
             return filename;
+        };
+
+        Date getDate() const {
+            return timepoint;
         };
 
     private:
