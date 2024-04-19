@@ -261,7 +261,7 @@ static void adjustDataStartDate(ARIMA_GAP &last_gap, const std::vector<MeteoData
     }
 }
 
-void checkWindowSize(const ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date, const double& window_size) {
+static void checkWindowSize(const ARIMA_GAP &last_gap, const std::vector<MeteoData>& vecM, const Date& resampling_date, Date& data_start_date, Date& data_end_date, const double& window_size) {
 	if (data_start_date < vecM[0].date && last_gap.startDate != resampling_date) {
         data_start_date = vecM[0].date;
     } 
