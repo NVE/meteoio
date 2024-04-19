@@ -48,18 +48,6 @@ static void custom_assert(const std::string& value, const std::string& asssert_v
     }
 }
 
-// static void custom_assert(const std::string& value, const std::string& asssert_val1, const std::string& assert_val2) {
-//     if (value.empty() && !asssert_val1.empty() && !assert_val2.empty()) {
-//         std::cerr << "Assertion failed: No input value" << std::endl;
-//         std::abort();
-//     }
-//     bool condition = value == asssert_val1 || value == assert_val2;
-//     if (!condition) {
-//         std::cerr << "Assertion failed: " << value << " != " << asssert_val1 << " || " << assert_val2 << std::endl;
-//         std::abort();
-//     }
-// }
-
 /**
 * Checks if the first line of iCSV data is conforming to the standard.
 *
@@ -85,9 +73,9 @@ static std::vector<double> extractMatches(const std::string &match) {
     auto words_end = std::sregex_iterator();
 
     std::vector<double> temp_coordinates;
-    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-        const std::smatch smatch = *i;
-        const std::string match_str = smatch.str();
+    for (std::sregex_iterator ii = words_begin; ii != words_end; ++ii) {
+        const std::smatch smatch = *ii;
+        const std::string match_str( smatch.str() );
         temp_coordinates.push_back(std::stod(match_str));
     }
 
@@ -104,10 +92,9 @@ static geoLocation processGeometryRegexes(const std::string &geometry, const std
     std::smatch matches;
     geoLocation location;
     if (std::regex_search(geometry, matches, reg)) {
-        const std::vector<double> temp_coordinates = extractMatches(matches.str());
-        for (size_t i = 0; i < temp_coordinates.size(); i += stride) {
-            location =
-                geoLocation(temp_coordinates[i], temp_coordinates[i + 1], stride == 3 ? temp_coordinates[i + 2] : default_nodata);
+        const std::vector<double> temp_coordinates( extractMatches(matches.str()) );
+        for (size_t ii = 0; ii < temp_coordinates.size(); ii += stride) {
+            location = geoLocation(temp_coordinates[ii], temp_coordinates[ii + 1], stride == 3 ? temp_coordinates[ii + 2] : default_nodata);
         }
     }
     return location;
@@ -203,7 +190,8 @@ geoLocation extractCoordinates(const std::string &geometry) {
 iCSVFile::iCSVFile()
     : skip_lines_to_data(0), filename(""), firstline(""), station_location(), METADATA(), FIELDS(), location_in_header(true),
         timezone_in_data(false), timestamp_present(false), julian_present(false), time_id(IOUtils::npos), location_id(IOUtils::npos),
-        dates_in_file(), row_data(), locations_in_data() {}
+        dates_in_file(), row_data(), locations_in_data() 
+{}
 
 iCSVFile::iCSVFile(const iCSVFile &other)
     : skip_lines_to_data(other.skip_lines_to_data), filename(other.filename), firstline(other.firstline),
@@ -211,7 +199,8 @@ iCSVFile::iCSVFile(const iCSVFile &other)
         location_in_header(other.location_in_header), timezone_in_data(other.timezone_in_data),
         timestamp_present(other.timestamp_present), julian_present(other.julian_present), time_id(other.time_id),
         location_id(other.location_id), dates_in_file(other.dates_in_file), row_data(other.row_data),
-        locations_in_data(other.locations_in_data) {}
+        locations_in_data(other.locations_in_data) 
+{}
 
 /**
 * iCSVFile constructor
@@ -226,7 +215,8 @@ iCSVFile::iCSVFile(const iCSVFile &other)
 iCSVFile::iCSVFile(const std::string &infile, const bool& read_sequential)
     : skip_lines_to_data(0), filename(infile), firstline(""), station_location(), METADATA(), FIELDS(), location_in_header(true),
         timezone_in_data(false), timestamp_present(false), julian_present(false), time_id(IOUtils::npos), location_id(IOUtils::npos),
-        dates_in_file(), row_data(), locations_in_data() {
+        dates_in_file(), row_data(), locations_in_data() 
+{
     readFile(infile, read_sequential);
     parseGeometry();
     checkFormatValidity();
@@ -311,7 +301,7 @@ bool iCSVFile::processLine(const std::string &line, std::string &section, const 
 void iCSVFile::processContent(const std::string &content, const std::string &section) {
     std::string key, value;
     if (section != "data") {
-        std::vector<std::string> key_value = IOUtils::split(content, '=');
+        const std::vector<std::string> key_value( IOUtils::split(content, '=') );
 
         if (key_value.size() != 2) {
             throw IOException("Invalid line: " + content, AT);
@@ -333,7 +323,7 @@ void iCSVFile::processContent(const std::string &content, const std::string &sec
 }
 
 void iCSVFile::processData(const std::string &content) {
-    std::vector<std::string> row = IOUtils::split(content, METADATA.field_delimiter);
+    std::vector<std::string> row( IOUtils::split(content, METADATA.field_delimiter) );
     Date tmp_date;
     // TODO: need to handle geometry = multiple columns
     if (!location_in_header) {
@@ -348,7 +338,7 @@ void iCSVFile::processData(const std::string &content) {
         throw IOException("Cannot parse date: " + row[time_id] + err_msg, AT);
     }
     row[time_id] = std::to_string(getNoData());
-    std::vector<double> row_vals = convertVector(row);
+    const std::vector<double> row_vals( convertVector(row) );
     row_data.push_back(row_vals);
     dates_in_file.push_back(tmp_date);
 }
@@ -385,10 +375,10 @@ void iCSVFile::populateFields(const std::string &key, const std::string &value) 
     if (key == "fields")
         FIELDS.fields = IOUtils::split(value, METADATA.field_delimiter);
     else if (key == "units_multipliers") {
-        std::vector<std::string> str_units_multipliers = IOUtils::split(value, METADATA.field_delimiter);
+        const std::vector<std::string> str_units_multipliers( IOUtils::split(value, METADATA.field_delimiter) );
         FIELDS.units_multipliers = convertVector(str_units_multipliers);
     } else if (key == "units_offsets") {
-        std::vector<std::string> str_units_offsets = IOUtils::split(value, METADATA.field_delimiter);
+        const std::vector<std::string> str_units_offsets( IOUtils::split(value, METADATA.field_delimiter) );
         FIELDS.units_offsets = convertVector(str_units_offsets);
     } else if (key == "units")
         FIELDS.units = IOUtils::split(value, METADATA.field_delimiter);
@@ -415,9 +405,9 @@ double iCSVFile::readData(const Date &r_date, const std::string &fieldname) {
     if (r_date < dates_in_file.front() || r_date > dates_in_file.back()) {
         throw IOException("Date out of range", AT);
     }
-    for (size_t i = 0; i < dates_in_file.size(); i++) {
-        if (dates_in_file[i] == r_date) {
-            return row_data[i][FIELDS.getFieldIndex(fieldname)];
+    for (size_t ii = 0; ii < dates_in_file.size(); ii++) {
+        if (dates_in_file[ii] == r_date) {
+            return row_data[ii][FIELDS.getFieldIndex(fieldname)];
         }
     }
     return IOUtils::nodata;
@@ -433,7 +423,7 @@ void iCSVFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
     if (vecMeteo.empty()) {
         throw IOException("No data available", AT);
     }
-    const std::set<std::string> available_params = MeteoData::listAvailableParameters(vecMeteo);
+    const std::set<std::string> available_params( MeteoData::listAvailableParameters(vecMeteo) );
     for (auto md : vecMeteo) {
         md.date.setTimeZone(METADATA.timezone);
         dates_in_file.push_back(md.date);
@@ -529,7 +519,7 @@ bool iCSVFile::checkFormatValidity() {
 * @return true if the iCSV file is compatible with MeteoIO, false otherwise.
 */
 bool iCSVFile::checkMeteoIOCompatibility() const {
-    static const std::string format_type = "MeteoIO format: ";
+    static const std::string format_type( "MeteoIO format: " );
     if (station_location.isEmpty() && location_in_header ) {
         throw InvalidFormatException(format_type + "Please provide a location for a MeteoStation", AT);
     }
@@ -558,7 +548,7 @@ std::vector<std::string> iCSVFile::columnsToAppend(const std::vector<MeteoData> 
     if (vecMeteo.empty()) {
         throw IOException("No data available", AT);
     }
-    std::set<std::string> available_params( MeteoData::listAvailableParameters(vecMeteo) );
+    const std::set<std::string> available_params( MeteoData::listAvailableParameters(vecMeteo) );
 
     auto contains = [&](const std::string &s) {
         return std::find(FIELDS.fields.begin(), FIELDS.fields.end(), s) != FIELDS.fields.end();
@@ -728,7 +718,7 @@ bool roughlyEqual(const MetaDataSection &lhs, const MetaDataSection &rhs) {
     }
 
     for (const auto &pair : lhs.optional_metadata) {
-        auto found = rhs.optional_metadata.find(pair.first);
+        const auto& found = rhs.optional_metadata.find(pair.first);
         if (found->second != pair.second) {
             return false;
         }
@@ -799,7 +789,7 @@ bool operator==(const fieldsSection &lhs, const fieldsSection &rhs) {
     }
 
     for (const auto &pair : lhs.other_fields) {
-        auto found = rhs.other_fields.find(pair.first);
+        const auto& found = rhs.other_fields.find(pair.first);
         if (found->second != pair.second) {
             return false;
         }
@@ -829,7 +819,7 @@ bool roughlyEqual(const fieldsSection &lhs, const fieldsSection &rhs) {
     }
 
     for (const auto &pair : lhs.other_fields) {
-        auto found = rhs.other_fields.find(pair.first);
+        const auto& found = rhs.other_fields.find(pair.first);
         if (found->second != pair.second) {
             return false;
         }

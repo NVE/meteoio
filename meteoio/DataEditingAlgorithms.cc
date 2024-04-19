@@ -976,7 +976,7 @@ void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 }
 
-FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) {
+static FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) {
 	switch (regtype) {
 		case EditingRegFill::LINEAR:
 			return new LinearLS();
@@ -987,7 +987,7 @@ FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) {
 	}
 }
 
-std::vector<double> doRegression(const std::vector<double>& x, const std::vector<double>& y, const EditingRegFill::RegressionType& regtype) {
+static std::vector<double> doRegression(const std::vector<double>& x, const std::vector<double>& y, const EditingRegFill::RegressionType& regtype) {
 	std::unique_ptr<FitLeastSquare> model(chooseModel(regtype));
 	model->setData(x, y);
 	bool success = model->fit();
@@ -996,15 +996,15 @@ std::vector<double> doRegression(const std::vector<double>& x, const std::vector
 	return model->getParams();
 }
 
-double linear(double x, const std::vector<double>& params) {
+static double linear(double x, const std::vector<double>& params) {
 	return params[0]*x + params[1];
 }
 
-double quadratic(double x, const std::vector<double>& params) {
+static double quadratic(double x, const std::vector<double>& params) {
 	return params[0]*x*x + params[1]*x + params[2];
 }
 
-double forward(double x, const std::vector<double>& params, EditingRegFill::RegressionType regtype) {
+static double forward(double x, const std::vector<double>& params, EditingRegFill::RegressionType regtype) {
 	switch (regtype) {
 		case EditingRegFill::LINEAR:
 			return linear(x, params);
@@ -1015,7 +1015,7 @@ double forward(double x, const std::vector<double>& params, EditingRegFill::Regr
 	}
 }
 
-std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMeteo) {
+static std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMeteo) {
 	std::unordered_map<double,size_t> dates;
 	for (size_t ii = 0; ii < vecMeteo.size(); ++ii) {
 		dates.insert({vecMeteo[ii].date.getJulian(true), ii});
@@ -1023,7 +1023,7 @@ std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMeteo) {
 	return dates;
 }
 
-std::vector<double> findDuplicateDates(const std::unordered_map<double,size_t>& dates_1, const std::unordered_map<double,size_t>& dates_2) {
+static std::vector<double> findDuplicateDates(const std::unordered_map<double,size_t>& dates_1, const std::unordered_map<double,size_t>& dates_2) {
 	std::vector<double> duplicate_dates;
 	for (auto it = dates_2.begin(); it != dates_2.end(); ++it) {
 		if (dates_1.find(it->first) != dates_1.end()) {
@@ -1042,11 +1042,9 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 	MeteoData md_pattern = vecMeteo.front();
 	md_pattern.reset();
 
-
-	std::unordered_map<double,size_t> dates_1 = mapDatesToIndex(vecMeteo);
-	std::unordered_map<double,size_t> dates_2 = mapDatesToIndex(vecMeteoSource);
-
-	std::vector<double> duplicate_dates = findDuplicateDates(dates_1, dates_2);
+	const std::unordered_map<double,size_t> dates_1( mapDatesToIndex(vecMeteo) );
+	const std::unordered_map<double,size_t> dates_2( mapDatesToIndex(vecMeteoSource) );
+	const std::vector<double> duplicate_dates( findDuplicateDates(dates_1, dates_2) );
 
 	if (duplicate_dates.empty()) return;
 	if (duplicate_dates.size() == vecMeteo.size()) return;
@@ -1055,11 +1053,11 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 	std::map<size_t, std::vector<double>> regression_coefficients;
 	for (size_t ii = 0; ii < md_pattern.getNrOfParameters(); ii++) {
 		std::vector<double> x, y;
-		for (double date : duplicate_dates) {
-			x.push_back(vecMeteoSource[dates_2[date]](ii));	
-			y.push_back(vecMeteo[dates_1[date]](ii));
+		for (const double date : duplicate_dates) { //we know that date is in both dates_1 and dates_2 so at() is a good choice
+			x.push_back(vecMeteoSource[dates_2.at(date)](ii));	
+			y.push_back(vecMeteo[dates_1.at(date)](ii));
 		}
-		std::vector<double> reg_res = doRegression(x, y, regtype);
+		std::vector<double> reg_res( doRegression(x, y, regtype) );
 		if (reg_res.empty()) {
 			std::cerr << "Regression fit failed for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
 			reg_res = regtype == LINEAR ? std::vector<double>{0.0, IOUtils::nodata} : std::vector<double>{0.0, 0.0, IOUtils::nodata};
@@ -1077,14 +1075,14 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 
 	// fill a vector with all the dates
 	for (double date : all_dates) {
-		if (dates_1.find(date) != dates_1.end()) {
-			tmp_meteoOut.push_back(vecMeteo[dates_1[date]]);
+		if (dates_1.find(date) != dates_1.end()) { //we know that date is in both dates_1 and dates_2 so at() is a good choice
+			tmp_meteoOut.push_back(vecMeteo[dates_1.at(date)]);
 		} else if (dates_2.find(date) == dates_2.end()) {
 			throw IOException("Something went seriously wrong", AT);
 		} else {
 			md_pattern.date.setDate(date, 0.0);
 			for (size_t ii = 0; ii < md_pattern.getNrOfParameters(); ii++) {
-				md_pattern(ii) = forward(vecMeteoSource[dates_2[date]](ii), regression_coefficients[ii], regtype);
+				md_pattern(ii) = forward(vecMeteoSource[dates_2.at(date)](ii), regression_coefficients[ii], regtype);
 			}
 			tmp_meteoOut.push_back(md_pattern);
 			md_pattern.reset();

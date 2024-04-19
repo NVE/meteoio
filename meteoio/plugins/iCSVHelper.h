@@ -271,7 +271,7 @@ fieldsSection& operator+=(fieldsSection& lhs, const fieldsSection& rhs);
 
 // ----------------- Helper functions -----------------
 std::vector<double> convertVector(const std::vector<std::string> &vec);
-std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, int epsg);
+std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, const int& epsg);
 geoLocation extractCoordinates(const std::string &geometry);
 geoLocation toiCSVLocation(Coords coords, const int& epsg);
 
