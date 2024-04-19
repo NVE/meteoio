@@ -215,7 +215,7 @@ namespace mio {
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
- * <tr><td>\subpage ecsvio "iCSV"</td><td>meteo, poi</td><td>meteo</td>		<td>iCSV data files</td><td></td></tr>
+ * <tr><td>\subpage icsvio "iCSV"</td><td>meteo, poi</td><td>meteo</td>		<td>iCSV data files</td><td></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td></td>		<td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>

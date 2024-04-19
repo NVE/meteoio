@@ -89,7 +89,7 @@ static bool areFilesWithinLimit(const std::vector<std::string> &filenames) {
     for (const auto &filename : filenames) {
         std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
-        std::streamsize size = file.tellg();
+        const std::streamsize size = file.tellg();
         file.close();
 
         totalSize += size;
@@ -117,7 +117,7 @@ static std::vector<Coords> getUniqueLocations(iCSVFile &file) {
         locations.push_back(file.station_location.toCoords(file.METADATA.epsg));
     } else {
         for (size_t ii = 0; ii < file.getAllLocationsInData().size(); ii++) {
-            Coords latest = file.getLocationAt(ii).toCoords(file.METADATA.epsg);
+            const Coords latest = file.getLocationAt(ii).toCoords(file.METADATA.epsg);
             if (latest != locations.back()) {
                 locations.push_back(latest);
             }
