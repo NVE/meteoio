@@ -14,6 +14,17 @@ MACRO (SET_COMPILER_OPTIONS)
 	MARK_AS_ADVANCED(FORCE USER_COMPILER_OPTIONS)
 	SET(EXTRA "${EXTRA} ${USER_COMPILER_OPTIONS}")
 
+	IF(NOT (CMAKE_CXX_COMPILER_ID MATCHES "MSVC"))
+		#we consider that all other compilers support "-" options and silently ignore what they don't know
+		IF(ENABLE_LAPACK)
+			SET(EXTRA "${EXTRA} -DCLAPACK")
+		ENDIF(ENABLE_LAPACK)
+
+		IF(DEBUG_ARITHM)
+			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
+		ENDIF(DEBUG_ARITHM)
+	ENDIF()
+
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
@@ -37,13 +48,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL Intel)
-		IF(ENABLE_LAPACK)
-			SET(EXTRA "${EXTRA} -DCLAPACK")
-		ENDIF(ENABLE_LAPACK)
-		IF(DEBUG_ARITHM)
-			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
-		ENDIF(DEBUG_ARITHM)
-		
 		SET(WARNINGS_OFF "-Wno-long-long -Wno-unknown-pragmas -wd2015,11071")
 		SET(WARNINGS "-Wall -Wswitch ${WARNINGS_OFF}")
 		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
@@ -58,13 +62,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL Cray)
-		IF(ENABLE_LAPACK)
-			SET(EXTRA "${EXTRA} -DCLAPACK")
-		ENDIF(ENABLE_LAPACK)
-		IF(DEBUG_ARITHM)
-			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
-		ENDIF(DEBUG_ARITHM)
-		
 		SET(WARNINGS "-hlist=m -h negmsgs -h msglevel_3 -h nomessage=870") #870: accept multibyte chars
 		#SET(EXTRA_WARNINGS "-h msglevel_2")
 		SET(OPTIM "-O3 -hfp3 -h msglevel_4 -DNDEBUG -DNOSAFECHECKS")
@@ -82,15 +79,9 @@ MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
 		#we consider that all other compilers support "-" options and silently ignore what they don't know
-		IF(ENABLE_LAPACK)
-			SET(EXTRA "${EXTRA} -DCLAPACK")
-		ENDIF(ENABLE_LAPACK)
 		IF(WIN32)
 			LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 		ENDIF(WIN32)
-		IF(DEBUG_ARITHM)
-			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
-		ENDIF(DEBUG_ARITHM)
 		
 		SET(WARNINGS "-Wall -Wno-long-long -Wswitch") #-Wno-unknown-pragmas
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded
@@ -127,6 +118,7 @@ MACRO (SET_COMPILER_OPTIONS)
 				FIND_PROGRAM(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
 
 				IF(CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB)
+					#for cmake>3.9: set CMAKE_INTERPROCEDURAL_OPTIMIZATION to TRUE
 					SET(USE_LTO_OPTIMIZATIONS ON CACHE BOOL "Use Link Time Optmizations when compiling (memory heavy while compiling)")
 					MARK_AS_ADVANCED(FORCE USE_LTO_OPTIMIZATIONS)
 					IF(USE_LTO_OPTIMIZATIONS)
@@ -147,23 +139,11 @@ MACRO (SET_COMPILER_OPTIONS)
 			ENDIF(LEAKS_CHECK)
 		ENDIF()
 
-		IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 5.0)
-			IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
-				SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
-			ENDIF(PLUGIN_IMISIO)
-		ENDIF()
-
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		IF(ENABLE_LAPACK)
-			SET(EXTRA "${EXTRA} -DCLAPACK")
-		ENDIF(ENABLE_LAPACK)
 		IF(WIN32)
 			LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 		ENDIF(WIN32)
-		IF(DEBUG_ARITHM)
-			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
-		ENDIF(DEBUG_ARITHM)
 		
 		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unused-template -Wno-disabled-macro-expansion -Wno-c++98-compat -Wno-c++98-compat-pedantic")
 		SET(WARNINGS "-Wall -Wswitch -Weverything ${WARNINGS_OFF}") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...
@@ -209,8 +189,5 @@ MACRO (SET_COMPILER_OPTIONS)
 	IF(DEST STREQUAL "optimized")
 		SET(ARCH "${ARCH_OPTIM}")
 	ENDIF(DEST STREQUAL "optimized")
-
-	#show exception messages in a graphical message box
-	SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
 ENDMACRO (SET_COMPILER_OPTIONS)

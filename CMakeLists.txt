@@ -129,6 +129,7 @@ SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
 ## Additional Options
 ###########################################################
 SET(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
+MARK_AS_ADVANCED(FORCE LIMIT_OUT_ACCESS)
 # SET(LIMIT_BASE_DIR ".")
 IF(LIMIT_OUT_ACCESS)
 	IF(MSVC)	#TODO: replace by add_compile_definitions(LIMIT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
@@ -144,6 +145,16 @@ IF(LIMIT_OUT_ACCESS)
 	ENDIF(MSVC)
 ENDIF()
 
+IF(CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 5.0)
+		IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
+			SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
+		ENDIF(PLUGIN_IMISIO)
+	ENDIF()
+ENDIF()
+
+#show exception messages in a graphical message box
+SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
 ###########################################################
 #finally, SET compile flags
