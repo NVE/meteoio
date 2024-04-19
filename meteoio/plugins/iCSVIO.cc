@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2024 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -29,10 +29,11 @@ namespace mio {
 * @page icsvio iCSV
 * @section template_format Format
 *
-* @brief The Non-Binary Environmental Data Archive (iCSV) format is a versatile and intuitive format that merges the self-documenting
+* @brief The interoperable CSV format (iCSV) is a versatile and intuitive format that merges the self-documenting
 * capabilities of NetCDF with the human-friendly readability and writeability of CSV. It's primarily designed for the exchange and
-* preservation of time series data in environmental data repositories. For comprehensive details about the format, refer to the
-* <a href="https://github.com/GEUS-Glaciology-and-Climate/iCSV">official format documentation</a>.
+* preservation of time series data in environmental data repositories. For comprehensive details about the format, refer to its
+* <a href="https://github.com/GEUS-Glaciology-and-Climate/iCSV">official format documentation</a> (currently, the documentation refers to the
+* format by its previous name, Non-Binary Environmental Data Archive (NEAD). The new "iCSV" name will soon be propagated to all documents).
 *
 * When using iCSV with MeteoIO, the following additional MetaData is required:
 * - Timestamp or Julian field: This represents the timestamps of the measurement in ISO format.
