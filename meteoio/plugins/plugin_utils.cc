@@ -35,12 +35,12 @@ namespace PLUGIN
 * @throw InvalidNameException if a filename is invalid
 *
 */
-std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath, const std::string &pattern) {
+std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath, const std::string &dflt_extension) {
     std::vector<std::string> all_files_and_paths;
     for (const std::string& filename : vecFilenames) {
         const std::string extension(FileUtils::getExtension(filename));
         const std::string file_and_path =
-            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + pattern;
+            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + dflt_extension;
 
         if (!FileUtils::validFileAndPath(file_and_path)) // Check whether filename is valid
             throw InvalidNameException(file_and_path, AT);

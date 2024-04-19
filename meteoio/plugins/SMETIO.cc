@@ -176,15 +176,10 @@ void SMETIO::parseInputOutputSection()
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension);
 		} 
-		
-		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-			const std::string filename( vecFilenames[ii] );
-			const std::string extension( FileUtils::getExtension(filename) );
-			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
-			if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
-				throw InvalidNameException(file_and_path, AT);
-			vecFiles.push_back(file_and_path);
+		vecFiles =  getFilesWithPaths(vecFilenames, inpath, dflt_extension);
+		
+		for (const std::string file_and_path : vecFiles) {
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
 	}
