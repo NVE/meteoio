@@ -872,7 +872,7 @@ void EditingMetadata::editTimeSeries(STATIONS_SET& vecStation)
 
 ////////////////////////////////////////////////// RegFill
 EditingRegFill::EditingRegFill(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), source_stations(), params_to_merge(), regtype(LINEAR), verbose(false)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), source_stations(), params_to_merge(), regtype(LINEAR)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);

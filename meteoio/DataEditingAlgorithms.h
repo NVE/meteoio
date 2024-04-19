@@ -493,7 +493,6 @@ class EditingRegFill : public EditingBlock {
 		std::vector< std::string > source_stations;
 		std::set< std::string > params_to_merge;
 		RegressionType regtype;
-		bool verbose;
 };
 
 class EditingBlockFactory {
