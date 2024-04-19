@@ -16,8 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef ECSVHELP_H
-#define ECSVHELP_H
+#ifndef iCSVHELP_H
+#define iCSVHELP_H
 
 #include <meteoio/IOUtils.h>
 
@@ -29,12 +29,12 @@
 
 static const double default_nodata = M_PI;
 namespace mio {
-namespace ECSV {
+namespace iCSV {
 
 
 // ----------------- Datat structures -----------------
 /**
-    * @brief Represents a geographic location extracted from ECSV files. (POINT(X Y)...)
+    * @brief Represents a geographic location extracted from iCSV files. (POINT(X Y)...)
     */
 struct geoLocation {
     double x = default_nodata; /**< The x-coordinate of the location. */
@@ -90,7 +90,7 @@ bool operator==(const geoLocation& lhs, const geoLocation& rhs);
 bool operator!=(const geoLocation& lhs, const geoLocation& rhs);
 
 /**
-    * @brief Stores information on the METADATA section of a ECSV file.
+    * @brief Stores information on the METADATA section of a iCSV file.
     */
 struct MetaDataSection {
     char field_delimiter = '0'; /**< The field delimiter character. */
@@ -192,7 +192,7 @@ bool roughlyEqual(const MetaDataSection &lhs, const MetaDataSection &rhs);
 MetaDataSection& operator+=(MetaDataSection& lhs, const MetaDataSection& rhs);
 
 /**
-    * @brief Stores Information on the FIELDS section of a ECSV file.
+    * @brief Stores Information on the FIELDS section of a iCSV file.
     *
     */
 struct fieldsSection {
@@ -273,16 +273,16 @@ fieldsSection& operator+=(fieldsSection& lhs, const fieldsSection& rhs);
 std::vector<double> convertVector(const std::vector<std::string> &vec);
 std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, int epsg);
 geoLocation extractCoordinates(const std::string &geometry);
-geoLocation toECSVLocation(Coords coords, const int& epsg);
+geoLocation toiCSVLocation(Coords coords, const int& epsg);
 
 
 
-// ----------------- ECSVFile class -----------------
+// ----------------- iCSVFile class -----------------
 
 /**
-* @class ECSVFile
+* @class iCSVFile
 *
-* @brief This class is responsible for handling and storing ECSV files.
+* @brief This class is responsible for handling and storing iCSV files.
 *
 * General information about the file is stored as public members, the station_location is an additional member.
 * The MetaData is stored in the METADATA member, and the fields are stored in the FIELDS member.
@@ -294,7 +294,7 @@ geoLocation toECSVLocation(Coords coords, const int& epsg);
 * Getters are provided to access the data, Metadata is directly accessed.
 *
 */
-class ECSVFile {
+class iCSVFile {
     public:
         // Essential information
         size_t skip_lines_to_data;
@@ -322,9 +322,9 @@ class ECSVFile {
 
     public:
         // Constructors
-        ECSVFile();
-        ECSVFile(const ECSVFile &);
-        ECSVFile(const std::string &infile, const bool& read_sequential);
+        iCSVFile();
+        iCSVFile(const iCSVFile &);
+        iCSVFile(const std::string &infile, const bool& read_sequential);
 
         // Main methods
         void readFile(const std::string &infile, const bool& sequentially);
@@ -387,6 +387,6 @@ class ECSVFile {
         void populateFields(const std::string &key, const std::string &value);
 };
 
-} // namespace ECSV
+} // namespace iCSV
 } // namespace mio
-#endif // ECSVHELP_H
+#endif // iCSVHELP_H

@@ -19,22 +19,22 @@
 #include <fstream>
 #include <iostream>
 #include <meteoio/FStream.h>
-#include <meteoio/plugins/ECSVIO.h>
+#include <meteoio/plugins/iCSVIO.h>
 #include <regex>
 
 // using namespace std;
 
 namespace mio {
 /**
-* @page ecsvio ECSV
+* @page icsvio iCSV
 * @section template_format Format
 *
-* @brief The Non-Binary Environmental Data Archive (ECSV) format is a versatile and intuitive format that merges the self-documenting
+* @brief The Non-Binary Environmental Data Archive (iCSV) format is a versatile and intuitive format that merges the self-documenting
 * capabilities of NetCDF with the human-friendly readability and writeability of CSV. It's primarily designed for the exchange and
 * preservation of time series data in environmental data repositories. For comprehensive details about the format, refer to the
-* <a href="https://github.com/GEUS-Glaciology-and-Climate/ECSV">official format documentation</a>.
+* <a href="https://github.com/GEUS-Glaciology-and-Climate/iCSV">official format documentation</a>.
 *
-* When using ECSV with MeteoIO, the following additional MetaData is required:
+* When using iCSV with MeteoIO, the following additional MetaData is required:
 * - Timestamp or Julian field: This represents the timestamps of the measurement in ISO format.
 * - Location: This should be specified either in the header or in the appropriate column as a location for a station. Only POINT(x y)
 * or
@@ -54,25 +54,25 @@ namespace mio {
 * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
 * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH
 * directory
-* will be scanned for files ending in ".ecsv" and sorted in ascending order;
+* will be scanned for files ending in ".icsv" and sorted in ascending order;
 * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
 * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files,
 * the <a
 * href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
 * naming scheme will be used to derive the slope information (default: false, [Input] section).     *
-* - ECSV_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
-* - ECSV_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
+* - iCSV_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
+* - iCSV_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
 * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
 * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
-* - ECSV_SEPARATOR: choice of field delimiter, options are: [,;:|/\]; [Output] section
+* - iCSV_SEPARATOR: choice of field delimiter, options are: [,;:|/\]; [Output] section
 * 
-* @note There is a python package available to read ECSV files, see <a href="https://github.com/GEUS-Glaciology-and-Climate/pyECSV/tree/main">pyECSV</a>
+* @note There is a python package available to read iCSV files, see <a href="https://github.com/GEUS-Glaciology-and-Climate/pyiCSV/tree/main">pyiCSV</a>
 * 
 */
 
 // clang-format off
-static const std::string dflt_extension_ECSV = ".ecsv";
-const double ECSVIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
+static const std::string dflt_extension_iCSV = ".icsv";
+const double iCSVIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 static const std::streamsize MAXMEMORY = static_cast<std::streamsize>(20) * 1024 * 1024 * 1024; // if i use more than 20GB of memory for data read it sequentially
 // clang-format on
 
@@ -111,7 +111,7 @@ static std::string joinVector(const std::vector<std::string> &vec, const char &d
     return result;
 }
 
-static std::vector<Coords> getUniqueLocations(ECSVFile &file) {
+static std::vector<Coords> getUniqueLocations(iCSVFile &file) {
     std::vector<Coords> locations;
     if (file.location_in_header) {
         locations.push_back(file.station_location.toCoords(file.METADATA.epsg));
@@ -140,7 +140,7 @@ static std::vector<std::string> getFilesWithPaths(const std::vector<std::string>
     for (const std::string& filename : vecFilenames) {
         const std::string extension(FileUtils::getExtension(filename));
         const std::string file_and_path =
-            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + dflt_extension_ECSV;
+            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + dflt_extension_iCSV;
 
         if (!FileUtils::validFileAndPath(file_and_path)) // Check whether filename is valid
             throw InvalidNameException(file_and_path, AT);
@@ -152,31 +152,31 @@ static std::vector<std::string> getFilesWithPaths(const std::vector<std::string>
 static void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames) {
     bool is_recursive = false;
     cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-    std::list<std::string> dirlist(FileUtils::readDirectory(inpath, dflt_extension_ECSV, is_recursive));
+    std::list<std::string> dirlist(FileUtils::readDirectory(inpath, dflt_extension_iCSV, is_recursive));
     dirlist.sort();
     vecFilenames.reserve(dirlist.size());
     std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
 }
 
-using namespace ECSV;
+using namespace iCSV;
 
-// ----------------- ECSVIO -----------------
-ECSVIO::ECSVIO(const std::string &configfile)
+// ----------------- iCSVIO -----------------
+iCSVIO::iCSVIO(const std::string &configfile)
     : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_ECSV) {
+        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_iCSV) {
     parseInputSection();
     parseOutputSection();
 }
 
-ECSVIO::ECSVIO(const Config &cfgreader)
+iCSVIO::iCSVIO(const Config &cfgreader)
     : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_ECSV) {
+        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_iCSV) {
     parseInputSection();
     parseOutputSection();
 }
 
-// ----------------- ECSVIO parse -----------------
-void ECSVIO::parseInputSection() {
+// ----------------- iCSVIO parse -----------------
+void iCSVIO::parseInputSection() {
     // default timezones
 
     // Parse the [Input] and [Output] sections within Config object cfg
@@ -184,7 +184,7 @@ void ECSVIO::parseInputSection() {
 
     // Parse input section: extract number of files to read and store filenames in vecFiles
     const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
-    if (in_meteo == "ECSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+    if (in_meteo == "iCSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
         cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
         const std::string inpath = cfg.get("METEOPATH", "Input");
 
@@ -197,17 +197,17 @@ void ECSVIO::parseInputSection() {
         const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath);
         read_sequential = !areFilesWithinLimit(all_files_and_paths);
         for (auto &filename : all_files_and_paths)
-            stations_files.push_back(ECSVFile(filename, read_sequential));
+            stations_files.push_back(iCSVFile(filename, read_sequential));
     }
 }
 
-void ECSVIO::parseOutputSection() {
+void iCSVIO::parseOutputSection() {
     // Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
     cfg.getValue("TIME_ZONE", "Output", TZ_out, IOUtils::nothrow);
 
     outpath.clear();
     const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
-    if (out_meteo == "ECSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+    if (out_meteo == "iCSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
 
         cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
         const std::regex valid_extension("^[.][a-zA-Z0-9]+$");
@@ -223,39 +223,39 @@ void ECSVIO::parseOutputSection() {
 
         cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 
-        cfg.getValue("ECSV_APPEND", "Output", allow_append, IOUtils::nothrow);
-        cfg.getValue("ECSV_OVERWRITE", "Output", allow_overwrite, IOUtils::nothrow);
-        cfg.getValue("ECSV_SEPARATOR", "Output", out_delimiter,
+        cfg.getValue("iCSV_APPEND", "Output", allow_append, IOUtils::nothrow);
+        cfg.getValue("iCSV_OVERWRITE", "Output", allow_overwrite, IOUtils::nothrow);
+        cfg.getValue("iCSV_SEPARATOR", "Output", out_delimiter,
                         IOUtils::nothrow); // allow specifying a different field separator as required by some import programs
         std::vector<std::string> vecArgs;
 
         if (allow_overwrite && allow_append)
-            throw InvalidFormatException("Cannot allow both ECSV_APPEND and ECSV_OVERWRITE", AT);
+            throw InvalidFormatException("Cannot allow both iCSV_APPEND and iCSV_OVERWRITE", AT);
     }
 }
 
-// ------------------------------------- ECSVIO read -----------------------------------------
+// ------------------------------------- iCSVIO read -----------------------------------------
 
-void ECSVIO::readStationData(const Date & /*date*/, std::vector<StationData> &vecStation) {
+void iCSVIO::readStationData(const Date & /*date*/, std::vector<StationData> &vecStation) {
     vecStation.clear();
     vecStation.resize(stations_files.size());
 
     // Now loop through all requested stations, open the respective files and parse them
     for (size_t ii = 0; ii < stations_files.size(); ii++) {
         StationData sd;
-        ECSVFile &current_file = stations_files[ii];
+        iCSVFile &current_file = stations_files[ii];
 
         read_meta_data(current_file, sd);
         vecStation[ii] = sd;
     }
 }
 
-void ECSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
+void iCSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
     vecvecMeteo.clear();
     vecvecMeteo.resize(stations_files.size());
 
     for (size_t ii = 0; ii < stations_files.size(); ii++) {
-        ECSVFile current_file = stations_files[ii];
+        iCSVFile current_file = stations_files[ii];
         if (read_sequential) {
             readDataSequential(current_file);
         }
@@ -268,20 +268,20 @@ void ECSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::ve
     }
 }
 
-// --------------------------- ECSVIO read helper functions ---------------------------------------
+// --------------------------- iCSVIO read helper functions ---------------------------------------
 
 /**
-* @brief Reads the meta data from the ECSV file and populates the StationData object.
+* @brief Reads the meta data from the iCSV file and populates the StationData object.
 *
-* This function reads the meta data from the ECSV file specified by current_file and populates
+* This function reads the meta data from the iCSV file specified by current_file and populates
 * the StationData object specified by meta. It sets the meta data position, station ID, station name,
-* meta data slope, and extra information. If the location is not specified in the header of the ECSV file,
+* meta data slope, and extra information. If the location is not specified in the header of the iCSV file,
 * it sets the EPSG code for the position. The nodata value is used to handle missing data.
 *
-* @param current_file The ECSV file from which to read the meta data.
+* @param current_file The iCSV file from which to read the meta data.
 * @param meta The StationData object to populate with the meta data.
 */
-void ECSVIO::read_meta_data(const ECSVFile &current_file, StationData &meta) {
+void iCSVIO::read_meta_data(const iCSVFile &current_file, StationData &meta) {
     const double nodata_value = current_file.getNoData();
 
     setMetaDataPosition(current_file, meta, nodata_value);
@@ -294,7 +294,7 @@ void ECSVIO::read_meta_data(const ECSVFile &current_file, StationData &meta) {
     meta.extra = current_file.METADATA.toMetaMap();
 }
 
-void ECSVIO::setMetaDataPosition(const ECSVFile &current_file, StationData &meta, const double &nodata_value) {
+void iCSVIO::setMetaDataPosition(const iCSVFile &current_file, StationData &meta, const double &nodata_value) {
     meta.position.setProj(coordin, coordinparam);
     if (current_file.location_in_header) {
         const double east = IOUtils::standardizeNodata(current_file.station_location.x, nodata_value);
@@ -306,7 +306,7 @@ void ECSVIO::setMetaDataPosition(const ECSVFile &current_file, StationData &meta
         meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
 }
 
-void ECSVIO::setMetaDataSlope(const ECSVFile &current_file, StationData &meta, const double &nodata_value) {
+void iCSVIO::setMetaDataSlope(const iCSVFile &current_file, StationData &meta, const double &nodata_value) {
     const double slope_angle = IOUtils::standardizeNodata(current_file.station_location.slope_angle, nodata_value);
     const double slope_azi = IOUtils::standardizeNodata(current_file.station_location.slope_azi, nodata_value);
     if (slope_angle != IOUtils::nodata && slope_azi != IOUtils::nodata) {
@@ -325,10 +325,10 @@ void ECSVIO::setMetaDataSlope(const ECSVFile &current_file, StationData &meta, c
 /**
 * Reads data sequentially from a file.
 *
-* @param current_file The ECSVFile object representing the file to read from.
+* @param current_file The iCSVFile object representing the file to read from.
 * @throws IOException if the file cannot be opened.
 */
-void ECSVIO::readDataSequential(ECSVFile &current_file) {
+void iCSVIO::readDataSequential(iCSVFile &current_file) {
     std::ifstream file(current_file.filename);
     if (!file.is_open()) {
         throw IOException("Unable to open file " + current_file.filename, AT);
@@ -353,14 +353,14 @@ void ECSVIO::readDataSequential(ECSVFile &current_file) {
 * @brief Creates a vector of MeteoData objects, i.e. a time series.
 *
 * The MeteoData objects are created based on the
-* provided ECSVFile, Date, and geoLocation information.
+* provided iCSVFile, Date, and geoLocation information.
 *
-* @param current_file The ECSVFile object containing the necessary data.
+* @param current_file The iCSVFile object containing the necessary data.
 * @param date_vec The vector of Dates
 * @param location_vec The vector of glocations
 * @return std::vector<MeteoData> The vector of MeteoData objects created.
 */
-std::vector<MeteoData> ECSVIO::createMeteoDataVector(ECSVFile &current_file, std::vector<Date> &date_vec,
+std::vector<MeteoData> iCSVIO::createMeteoDataVector(iCSVFile &current_file, std::vector<Date> &date_vec,
                                                         std::vector<geoLocation> &location_vec) {
     std::vector<MeteoData> vecMeteo;
     vecMeteo.reserve(date_vec.size());
@@ -389,13 +389,13 @@ std::vector<MeteoData> ECSVIO::createMeteoDataVector(ECSVFile &current_file, std
     return vecMeteo;
 }
 
-void ECSVIO::setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, ECSVFile &current_file, double nodata) {
+void iCSVIO::setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, iCSVFile &current_file, double nodata) {
     tmp_md.meta.position.setPoint(IOUtils::standardizeNodata(loc.x, nodata), IOUtils::standardizeNodata(loc.y, nodata),
                                     IOUtils::standardizeNodata(loc.z, nodata), current_file.METADATA.epsg); // TODO: what happens if alt=nodata?
     tmp_md.meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
 }
 
-void ECSVIO::setMeteoDataFields(MeteoData &tmp_md, ECSVFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata) {
+void iCSVIO::setMeteoDataFields(MeteoData &tmp_md, iCSVFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata) {
     double offset = 0;
     double multiplier = 1;
     for (size_t field_idx = 0; field_idx < current_file.FIELDS.fields.size(); field_idx++) {
@@ -422,7 +422,7 @@ void ECSVIO::setMeteoDataFields(MeteoData &tmp_md, ECSVFile &current_file, Date 
 
 // assume an operational snowpack virtual slopes naming: the station ID is made of letters followed by a station
 // number (1 digit) and an optional virtual slope (1 digit, between 1 and 4)
-double ECSVIO::getSnowpackSlope(const std::string &id) {
+double iCSVIO::getSnowpackSlope(const std::string &id) {
     static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
@@ -448,9 +448,9 @@ double ECSVIO::getSnowpackSlope(const std::string &id) {
 }
 
 /**
-* @brief Associate MeteoData parameter index with each ECSV field.
+* @brief Associate MeteoData parameter index with each iCSV field.
 * @details This function associates a parameter index for MeteoData objects with the
-* lineup of field types in ECSV FIELDS
+* lineup of field types in iCSV FIELDS
 *
 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
 *
@@ -459,7 +459,7 @@ double ECSVIO::getSnowpackSlope(const std::string &id) {
 * @param[out] julian_present set to true if a column contains a julian date
 * @param[out] md a MeteoData object where extra parameters would be added
 */
-void ECSVIO::identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md,
+void iCSVIO::identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md,
                                 const std::string &geometry_field) {
     for (size_t ii = 0; ii < fields.size(); ii++) {
         const std::string &key = fields[ii];
@@ -498,15 +498,15 @@ void ECSVIO::identify_fields(const std::vector<std::string> &fields, std::vector
     }
 }
 
-// ---------------------------- ECSVIO write -----------------------------------
+// ---------------------------- iCSVIO write -----------------------------------
 
-void ECSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMeteo, const std::string &) {
+void iCSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMeteo, const std::string &) {
     for (size_t ii = 0; ii < vecvecMeteo.size(); ii++) {
         if (vecvecMeteo[ii].empty())
             continue;
 
         std::vector<MeteoData> vecMeteo = vecvecMeteo[ii];
-        ECSVFile outfile;
+        iCSVFile outfile;
         bool file_exists = createFilename(outfile, vecMeteo[0].meta, ii);
 
         prepareOutfile(outfile, vecMeteo, file_exists);
@@ -521,20 +521,20 @@ void ECSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMet
     }
 }
 
-// ----------------- ECSVIO write helper functions -----------------
+// ----------------- iCSVIO write helper functions -----------------
 /**
-* @brief Creates a filename for the ECSV file based on the given station data.
+* @brief Creates a filename for the iCSV file based on the given station data.
 *
 * Creates a filename based on the station id, and if none is provided, the internal index
 * of the station is used
 *
-* @param[out] outfile The ECSVFile object to store the generated filename.
+* @param[out] outfile The iCSVFile object to store the generated filename.
 * @param[in] station The StationData object containing the station information.
 * @param[in] station_number The index used to generate the default station ID.
 * @return True if the generated filename exists, false otherwise.
 * @throws InvalidNameException if the generated filename or path is invalid.
 */
-bool ECSVIO::createFilename(ECSVFile &outfile, const StationData &station, size_t ii) {
+bool iCSVIO::createFilename(iCSVFile &outfile, const StationData &station, size_t ii) {
     outfile.METADATA.station_id = station.getStationID().empty() ? "Station" + IOUtils::toString(ii + 1) : station.getStationID();
     outfile.filename = outpath + "/" + outfile.METADATA.station_id + file_extension_out;
     if (!FileUtils::validFileAndPath(outfile.filename)) {
@@ -554,7 +554,7 @@ bool ECSVIO::createFilename(ECSVFile &outfile, const StationData &station, size_
 * @param vecMeteo The vector of MeteoData containing the data to be written.
 * @param file_exists A flag indicating whether the file already exists.
 */
-void ECSVIO::prepareOutfile(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
+void iCSVIO::prepareOutfile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
     if (file_exists && allow_append) {
         outfile.readFile(outfile.filename, false);
         outfile.parseGeometry();
@@ -562,7 +562,7 @@ void ECSVIO::prepareOutfile(ECSVFile &outfile, const std::vector<MeteoData> &vec
         handleNewFile(outfile, vecMeteo, file_exists);
     }
 
-    outfile.firstline = ECSV_firstline;
+    outfile.firstline = iCSV_firstline;
     outfile.checkFormatValidity();
     outfile.checkMeteoIOCompatibility();
 
@@ -571,18 +571,18 @@ void ECSVIO::prepareOutfile(ECSVFile &outfile, const std::vector<MeteoData> &vec
     }
 }
 
-void ECSVIO::handleNewFile(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
+void iCSVIO::handleNewFile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
     if (file_exists && !allow_overwrite) {
-        throw IOException("File " + outfile.filename + " already exists and ECSV_OVERWRITE is not allowed", AT);
+        throw IOException("File " + outfile.filename + " already exists and iCSV_OVERWRITE is not allowed", AT);
     }
     createMetaDataSection(outfile, vecMeteo);
     createFieldsSection(outfile, vecMeteo);
 }
 
-void ECSVIO::handleFileAppend(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
-    if (outfile.location_in_header && outfile.station_location != toECSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg)) {
+void iCSVIO::handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
+    if (outfile.location_in_header && outfile.station_location != toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg)) {
         throw IOException("Inconsistent geographic coordinates between header and data in file \"" + outfile.filename + "\": " +
-                                outfile.station_location.toString() + " != " + toECSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg).toString(),
+                                outfile.station_location.toString() + " != " + toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg).toString(),
                             AT);
     }
     std::vector<std::string> columns_to_append = outfile.columnsToAppend(vecMeteo);
@@ -600,10 +600,10 @@ void ECSVIO::handleFileAppend(ECSVFile &outfile, const std::vector<MeteoData> &v
 * field delimiter, EPSG code, location geometry, and optional metadata. It also checks the consistency of the
 * location information and updates the location header accordingly.
 *
-* @param outfile The ECSVFile object representing the output file.
+* @param outfile The iCSVFile object representing the output file.
 * @param vecMeteo A vector of MeteoData objects containing the meteorological data.
 */
-void ECSVIO::createMetaDataSection(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
+void iCSVIO::createMetaDataSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
     outfile.FIELDS.fields.push_back("timestamp"); // force time stamp to be the first field
 
     outfile.METADATA.timezone = TZ_out;
@@ -631,14 +631,14 @@ void ECSVIO::createMetaDataSection(ECSVFile &outfile, const std::vector<MeteoDat
 }
 
 // TODO: somehow get other information like longname etc.
-void ECSVIO::createFieldsSection(ECSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
+void iCSVIO::createFieldsSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
     std::set<std::string> available_params = MeteoData::listAvailableParameters(vecMeteo);
     for (const auto &param : available_params) {
         outfile.FIELDS.fields.push_back(param);
     }
 }
 
-bool ECSVIO::checkLocationConsistency(const std::vector<MeteoData> &vecMeteo) {
+bool iCSVIO::checkLocationConsistency(const std::vector<MeteoData> &vecMeteo) {
     for (size_t ii = 1; ii < vecMeteo.size(); ii++) {
         const Coords &p1 = vecMeteo[ii - 1].meta.position;
         const Coords &p2 = vecMeteo[ii].meta.position;
@@ -652,7 +652,7 @@ bool ECSVIO::checkLocationConsistency(const std::vector<MeteoData> &vecMeteo) {
     return true;
 }
 
-std::string ECSVIO::getGeometry(const geoLocation &loc) {
+std::string iCSVIO::getGeometry(const geoLocation &loc) {
     bool dim_2 = loc.z == IOUtils::nodata;
     std::string geometry = dim_2 ? "POINT(" : "POINTZ(";
     geometry += std::to_string(loc.x) + " " + std::to_string(loc.y);
@@ -663,7 +663,7 @@ std::string ECSVIO::getGeometry(const geoLocation &loc) {
     return geometry;
 }
 
-void ECSVIO::writeToFile(const ECSVFile &outfile) {
+void iCSVIO::writeToFile(const iCSVFile &outfile) {
     ofilestream file(outfile.filename);
     if (!file.is_open()) {
         throw IOException("Unable to open file " + outfile.filename, AT);

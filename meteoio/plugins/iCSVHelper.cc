@@ -19,7 +19,7 @@
 #include <fstream>
 #include <iostream>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/plugins/ECSVHelper.h>
+#include <meteoio/plugins/iCSVHelper.h>
 #include <regex>
 
 // clang-format off
@@ -29,13 +29,13 @@ static const std::regex POINTZ("^POINTZ\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.
 // clang-format on
 
 /**
- * @file ECSVHelper.cc
- * @brief Contains helper functions and classes for processing ECSV data.
+ * @file iCSVHelper.cc
+ * @brief Contains helper functions and classes for processing iCSV data.
  */
 namespace mio {
-namespace ECSV {
+namespace iCSV {
     
-// ----------------- ECSV Helpers -----------------
+// ----------------- iCSV Helpers -----------------
 static void custom_assert(const std::string& value, const std::string& asssert_val) {
     if (value.empty() && !asssert_val.empty()) {
         std::cerr << "Assertion failed: No input value" << std::endl;
@@ -61,16 +61,16 @@ static void custom_assert(const std::string& value, const std::string& asssert_v
 // }
 
 /**
-* Checks if the first line of ECSV data is conforming to the standard.
+* Checks if the first line of iCSV data is conforming to the standard.
 *
-* @param firstline The first line of ECSV data.
+* @param firstline The first line of iCSV data.
 * @return True if the first line is valid, false otherwise.
 */
 static bool isValidFirstLine(const std::string &firstline) {
     std::istringstream iss(firstline);
-    std::string hash, ecsv, version, encoding;
-    iss >> hash >> ecsv >> version >> encoding;
-    custom_assert(ecsv, "ECSV");
+    std::string hash, icsv, version, encoding;
+    iss >> hash >> icsv >> version >> encoding;
+    custom_assert(icsv, "iCSV");
     custom_assert(version, "1.0");
     custom_assert(encoding, "UTF-8");
     return true;
@@ -165,7 +165,7 @@ std::vector<Coords> convertVector(const std::vector<geoLocation> &vec, const int
 * @param[in] epsg <a href="https://epsg.org/home.html">EPSG code</a> of the provided coordinates
 * @return The converted geoLocation object.
 */
-geoLocation toECSVLocation(Coords loc, const int& epsg) {
+geoLocation toiCSVLocation(Coords loc, const int& epsg) {
     geoLocation location;
     if (Coords::latlon_epsgs.find(epsg) != Coords::latlon_epsgs.end()) {
         location = geoLocation(loc.getLat(), loc.getLon(), loc.getAltitude());
@@ -199,13 +199,13 @@ geoLocation extractCoordinates(const std::string &geometry) {
 }
 
 
-// ----------------- ECSVFile -----------------
-ECSVFile::ECSVFile()
+// ----------------- iCSVFile -----------------
+iCSVFile::iCSVFile()
     : skip_lines_to_data(0), filename(""), firstline(""), station_location(), METADATA(), FIELDS(), location_in_header(true),
         timezone_in_data(false), timestamp_present(false), julian_present(false), time_id(IOUtils::npos), location_id(IOUtils::npos),
         dates_in_file(), row_data(), locations_in_data() {}
 
-ECSVFile::ECSVFile(const ECSVFile &other)
+iCSVFile::iCSVFile(const iCSVFile &other)
     : skip_lines_to_data(other.skip_lines_to_data), filename(other.filename), firstline(other.firstline),
         station_location(other.station_location), METADATA(other.METADATA), FIELDS(other.FIELDS),
         location_in_header(other.location_in_header), timezone_in_data(other.timezone_in_data),
@@ -214,16 +214,16 @@ ECSVFile::ECSVFile(const ECSVFile &other)
         locations_in_data(other.locations_in_data) {}
 
 /**
-* ECSVFile constructor
+* iCSVFile constructor
 *
-* @brief Reads a ECSV file, and checks the format
+* @brief Reads a iCSV file, and checks the format
 *
 * The data is only read if read_sequential is set to false. Otherwise, only the HEADER is processed
 *
 * @param[in] infile The path to the input file.
 * @param[in] read_sequential If true, only HEADER will be processed.
 */
-ECSVFile::ECSVFile(const std::string &infile, const bool& read_sequential)
+iCSVFile::iCSVFile(const std::string &infile, const bool& read_sequential)
     : skip_lines_to_data(0), filename(infile), firstline(""), station_location(), METADATA(), FIELDS(), location_in_header(true),
         timezone_in_data(false), timestamp_present(false), julian_present(false), time_id(IOUtils::npos), location_id(IOUtils::npos),
         dates_in_file(), row_data(), locations_in_data() {
@@ -234,14 +234,14 @@ ECSVFile::ECSVFile(const std::string &infile, const bool& read_sequential)
 }
 
 /**
-* Reads the contents of a ECSV file.
+* Reads the contents of a iCSV file.
 *
 * @param[in] infile The path of the input file to be read.
 * @param[in] sequentially Flag indicating whether to read the data
 * @throws IOException If there is an error opening or reading the file.
-* @throws InvalidFormatException If the ECSV file format is invalid.
+* @throws InvalidFormatException If the iCSV file format is invalid.
 */
-void ECSVFile::readFile(const std::string &infile, const bool& sequentially) {
+void iCSVFile::readFile(const std::string &infile, const bool& sequentially) {
     size_t hash_count = 0;
     std::string line;
 
@@ -271,7 +271,7 @@ void ECSVFile::readFile(const std::string &infile, const bool& sequentially) {
     skip_lines_to_data = hash_count;
 }
 
-bool ECSVFile::processLine(const std::string &line, std::string &section, const bool &sequentially) {
+bool iCSVFile::processLine(const std::string &line, std::string &section, const bool &sequentially) {
     if (line == "#")
         return true;
     if (line.find("[METADATA]") != std::string::npos) {
@@ -308,7 +308,7 @@ bool ECSVFile::processLine(const std::string &line, std::string &section, const 
     return true;
 }
 
-void ECSVFile::processContent(const std::string &content, const std::string &section) {
+void iCSVFile::processContent(const std::string &content, const std::string &section) {
     std::string key, value;
     if (section != "data") {
         std::vector<std::string> key_value = IOUtils::split(content, '=');
@@ -328,11 +328,11 @@ void ECSVFile::processContent(const std::string &content, const std::string &sec
     } else if (section == "data") {
         processData(content);
     } else {
-        throw InvalidFormatException("Invalid ECSV format", AT);
+        throw InvalidFormatException("Invalid iCSV format", AT);
     }
 }
 
-void ECSVFile::processData(const std::string &content) {
+void iCSVFile::processData(const std::string &content) {
     std::vector<std::string> row = IOUtils::split(content, METADATA.field_delimiter);
     Date tmp_date;
     // TODO: need to handle geometry = multiple columns
@@ -353,7 +353,7 @@ void ECSVFile::processData(const std::string &content) {
     dates_in_file.push_back(tmp_date);
 }
 
-void ECSVFile::populateMetaData(const std::string &key, const std::string &value) {
+void iCSVFile::populateMetaData(const std::string &key, const std::string &value) {
     if (key == "field_delimiter") {
         if (value.size() != 1) {
             throw IOException("Invalid field delimiter: " + value, AT);
@@ -381,7 +381,7 @@ void ECSVFile::populateMetaData(const std::string &key, const std::string &value
         METADATA.optional_metadata[key] = value;
 }
 
-void ECSVFile::populateFields(const std::string &key, const std::string &value) {
+void iCSVFile::populateFields(const std::string &key, const std::string &value) {
     if (key == "fields")
         FIELDS.fields = IOUtils::split(value, METADATA.field_delimiter);
     else if (key == "units_multipliers") {
@@ -401,14 +401,14 @@ void ECSVFile::populateFields(const std::string &key, const std::string &value) 
 }
 
 /**
-* Reads the data for a given date and fieldname from the ECSV file.
+* Reads the data for a given date and fieldname from the iCSV file.
 *
 * @param[in] r_date The date for which to read the data.
 * @param[in] fieldname The name of the field for which to read the data.
 * @return The data value for the given date and fieldname.
 * @throws IOException If there is no data available or if the date is out of range.
 */
-double ECSVFile::readData(const Date &r_date, const std::string &fieldname) {
+double iCSVFile::readData(const Date &r_date, const std::string &fieldname) {
     if (row_data.empty()) {
         throw IOException("No data available", AT);
     }
@@ -429,7 +429,7 @@ double ECSVFile::readData(const Date &r_date, const std::string &fieldname) {
 * @param[in] vecMeteo The vector of MeteoData objects to aggregate.
 * @throws IOException if the vector is empty.
 */
-void ECSVFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
+void iCSVFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
     if (vecMeteo.empty()) {
         throw IOException("No data available", AT);
     }
@@ -439,7 +439,7 @@ void ECSVFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
         dates_in_file.push_back(md.date);
         if (!location_in_header) {
             const Coords &loc = md.meta.position;
-            locations_in_data.push_back(toECSVLocation(loc, METADATA.epsg));
+            locations_in_data.push_back(toiCSVLocation(loc, METADATA.epsg));
         }
         std::vector<double> row;
         for (const auto &field : FIELDS.fields) {
@@ -461,12 +461,12 @@ void ECSVFile::aggregateData(const std::vector<MeteoData> &vecMeteo) {
 
 // ----------------- HEADER Format -----------------
 /**
-* @brief Checks the validity of the format for the ECSVFile.
+* @brief Checks the validity of the format for the iCSVFile.
 *
 * @return true if the format is valid, false otherwise.
 */
-bool ECSVFile::checkFormatValidity() {
-    static const std::string format_type = "ECSV format: ";
+bool iCSVFile::checkFormatValidity() {
+    static const std::string format_type = "iCSV format: ";
     if (!isValidFirstLine(firstline))
         throw InvalidFormatException(format_type + "Invalid first line: " + firstline, AT);
     if (METADATA.field_delimiter == '0')
@@ -524,11 +524,11 @@ bool ECSVFile::checkFormatValidity() {
 }
 
 /**
-* Checks the compatibility of the ECSV file with MeteoIO.
+* Checks the compatibility of the iCSV file with MeteoIO.
 *
-* @return true if the ECSV file is compatible with MeteoIO, false otherwise.
+* @return true if the iCSV file is compatible with MeteoIO, false otherwise.
 */
-bool ECSVFile::checkMeteoIOCompatibility() const {
+bool iCSVFile::checkMeteoIOCompatibility() const {
     static const std::string format_type = "MeteoIO format: ";
     if (station_location.isEmpty() && location_in_header ) {
         throw InvalidFormatException(format_type + "Please provide a location for a MeteoStation", AT);
@@ -540,21 +540,21 @@ bool ECSVFile::checkMeteoIOCompatibility() const {
     return true;
 }
 
-// ----------------- ECSVFile Helperss -----------------
-bool ECSVFile::isValidLocation(const geoLocation& location) { return location.x != getNoData() && location.y != getNoData(); }
+// ----------------- iCSVFile Helperss -----------------
+bool iCSVFile::isValidLocation(const geoLocation& location) { return location.x != getNoData() && location.y != getNoData(); }
 
-bool ECSVFile::isColumnName(const std::string &geometry) { // TODO: if column name can be multiple columns need to handle that
+bool iCSVFile::isColumnName(const std::string &geometry) { // TODO: if column name can be multiple columns need to handle that
     return std::find(FIELDS.fields.begin(), FIELDS.fields.end(), geometry) != FIELDS.fields.end();
 }
 
 /**
-* Finds parameters, that are used in MeteoIO but not given in a ECSV file.
+* Finds parameters, that are used in MeteoIO but not given in a iCSV file.
 *
 * @param[in] vecMeteo The vector of MeteoData objects to compare with.
 * @return A vector of strings containing the parameters to append.
 * @throws IOException if the vector is empty.
 */
-std::vector<std::string> ECSVFile::columnsToAppend(const std::vector<MeteoData> &vecMeteo) const {
+std::vector<std::string> iCSVFile::columnsToAppend(const std::vector<MeteoData> &vecMeteo) const {
     if (vecMeteo.empty()) {
         throw IOException("No data available", AT);
     }
@@ -579,7 +579,7 @@ std::vector<std::string> ECSVFile::columnsToAppend(const std::vector<MeteoData> 
 }
 
 /**
-* @brief Parses the geometry information of the ECSV file.
+* @brief Parses the geometry information of the iCSV file.
 *
 * This function extracts the coordinates from the metadata and checks if they are valid.
 * If the coordinates are empty or not a known WKTS station location, an exception is thrown.
@@ -589,7 +589,7 @@ std::vector<std::string> ECSVFile::columnsToAppend(const std::vector<MeteoData> 
 * @throws IOException if the geometry is neither a column name nor a known WKTS station location,
 * or if the location is invalid.
 */
-void ECSVFile::parseGeometry() {
+void iCSVFile::parseGeometry() {
     geoLocation coordinates( extractCoordinates(METADATA.geometry) );
     if (coordinates.isEmpty()) {
         if (!isColumnName(METADATA.geometry)) {
@@ -610,7 +610,7 @@ void ECSVFile::parseGeometry() {
     station_location = coordinates;
 }
 
-void ECSVFile::findTime() {
+void iCSVFile::findTime() {
     if (std::find(FIELDS.fields.begin(), FIELDS.fields.end(), "timestamp") == FIELDS.fields.end()) {
         timestamp_present = false;
     } else {
@@ -627,7 +627,7 @@ void ECSVFile::findTime() {
     time_id = timestamp_present ? FIELDS.getFieldIndex("timestamp") : FIELDS.getFieldIndex("julian");
 }
 
-void ECSVFile::findLocation() {
+void iCSVFile::findLocation() {
     if (location_in_header)
         return;
     // TODO: if geometry can be multiple columns, needs parsing
@@ -770,7 +770,7 @@ MetaDataSection &operator+=(MetaDataSection &lhs, const MetaDataSection &rhs) {
             lhs.optional_metadata[pair.first] = pair.second;
         }
     } else {
-        throw IOException("Cannot merge incompatible MetaDataSections in ECSVFiles");
+        throw IOException("Cannot merge incompatible MetaDataSections in iCSVFiles");
     }
 
     return lhs;
@@ -862,10 +862,10 @@ fieldsSection &operator+=(fieldsSection &lhs, const fieldsSection &rhs) {
             lhs.other_fields[pair.first] = pair.second;
         }
     } else {
-        throw IOException("Cannot merge incompatible fieldsSections in ECSVFiles");
+        throw IOException("Cannot merge incompatible fieldsSections in iCSVFiles");
     }
 
     return lhs;
 }
-} // namespace ECSV
+} // namespace iCSV
 } // namespace mio
