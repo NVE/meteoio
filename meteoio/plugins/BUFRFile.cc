@@ -17,6 +17,12 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @todo Maybe we cannot save all messages in memory, but need to read them one by one
+ * 
+ * @note For reading profiles, it will be possible to read all iterations in a subset (only way to allow subsets)
+**/
+
 #include <meteoio/plugins/BUFRFile.h>
 
 namespace mio {
@@ -35,7 +41,13 @@ void BUFRFile::readMetaData(const std::string& ref_coords) {
     messages = getMessages(in_file.get(), PRODUCT_BUFR);
     StationData meta_data;
     std::string error_msg;
-    for (CodesHandlePtr &message : messages) {      
+    for (CodesHandlePtr &message : messages) {    
+        long num_subsets = -1;
+        getParameter(message, "numberOfSubsets", num_subsets);
+        if (num_subsets > 1) {
+            throw IOException("Subsets in BUFR file " + filename + " are not supported", AT);
+        };
+        unpackMessage(message);
         Date date = getMessageDateBUFR(message);
         if (date < start_date) {
             start_date = date;
@@ -97,7 +109,7 @@ void BUFRFile::readData(std::vector<MeteoData> &vecMeteo, const std::map<std::st
     vecMeteo.clear();   // TODO: there is no possibility of vecMeteo being non-empty, correct?
     vecMeteo.resize(messages.size());
     for (CodesHandlePtr &message : messages) {
-        Date date = getMessageDateBUFR(message, tz);
+        Date date = getMessageDateBUFR(message, tz); // TODO: can use Dates set, but if there is subsets there might be more dates than subsets
         MeteoData md;
         md.setDate(date);
         md.meta = meta_data;

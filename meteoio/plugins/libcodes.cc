@@ -158,6 +158,12 @@ namespace mio {
             return handles;
         }
 
+        void unpackMessage(CodesHandlePtr& m) {
+            /* We need to instruct ecCodes to expand the descriptors
+            i.e. unpack the data values */
+            CODES_CHECK(codes_set_long(m.get(),"unpack",1),0);  
+        }
+
         // TODO: check if this gives the correct date, and what is d1, d2??
         Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
             Date base;
