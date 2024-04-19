@@ -18,12 +18,15 @@
 */
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/plugins/plugin_utils.h>
+
 #include <cstdio>
 #include <ctime>
 
 using namespace std;
 
 namespace mio {
+	using namespace PLUGIN;
 /**
  * @page smetio SMET
  * @section smetio_format Format
@@ -171,12 +174,7 @@ void SMETIO::parseInputOutputSection()
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
-			bool is_recursive = false;
-			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, dflt_extension, is_recursive) );
-			dirlist.sort();
-			vecFilenames.reserve( dirlist.size() );
-			std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
+			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension);
 		} 
 		
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {

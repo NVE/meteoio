@@ -29,8 +29,8 @@ namespace mio
 namespace PLUGIN
 {
 
-    std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath, const std::string& dflt_extension);
-    void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames, const std::string& dflt_extension);
+    std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath, const std::string& pattern);
+    void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames, const std::string& pattern);
 
     
 } // namespace PLUGIN
