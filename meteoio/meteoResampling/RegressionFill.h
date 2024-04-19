@@ -35,7 +35,7 @@ namespace mio {
  * @note As the resampling algorithm is specified for each parameter, but not station, when the parameter of a station for which no support station 
  * is specified is tried to be resampled, it will not do anything, so it is advised to set linear as a backup algorithm in the resampling stack.
  * 
- * @subsection Parameters
+ * @section Parameters
  * - VERBOSE: If set to true, the algorithm will print out information about the state of the resampling.
  * - ADDITIONAL_STATIONS#: Specifiy which station should be used to support which station. In the form of StationID1--StationID2, where 2 will be used to fill in 1. To specify multiple stations, use ADDITIONAL_STATIONS1, ADDITIONAL_STATIONS2, etc.
  *                          It is also possible to use "CLOSEST" as the second station, which will use the closest station to the first one.
@@ -47,7 +47,8 @@ namespace mio {
  * TA::REGFILL::VERBOSE = true
  * TA::ADDITIONAL_STATIONS1 = StationID1--StationID2
  * TA::ADDITIONAL_STATIONS2 = StationID2--WFJ2
- * 
+ * @endcode
+ *
  * @author Patrick Leibersperger
  * @date 2024-03-20
  * 

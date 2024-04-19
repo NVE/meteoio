@@ -81,7 +81,7 @@ namespace mio {
      * @brief This constructor is used to initialize an InterpolARIMA object for making predictions ahead or backward in time.
      *
      * @param data_in The input data for making predictions.
-     * @param gap_loc The end location of the data gap.
+     * @param data_end The end location of the data gap.
      * @param n_predictions The number of predictions to be made.
      * @param direction The direction of the prediction. Can be either "forward" or "past".
      * @param period The period for the ARIMA model.
