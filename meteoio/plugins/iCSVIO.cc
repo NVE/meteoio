@@ -29,9 +29,13 @@ namespace mio {
 * @page icsvio iCSV
 * @section template_format Format
 *
-* @brief The interoperable CSV format (iCSV) is a versatile and intuitive format that merges the self-documenting
-* capabilities of NetCDF with the human-friendly readability and writeability of CSV. It's primarily designed for the exchange and
-* preservation of time series data in environmental data repositories. For comprehensive details about the format, refer to its
+* @brief The <b>interoperable CSV</b> format (iCSV) is a versatile and intuitive format that merges the self-documenting
+* capabilities of NetCDF with the human-friendly readability and writeability of CSV.
+*
+* @details The iCSV format has been primarily designed for the exchange and preservation of time series data in environmental
+* data repositories but can also support a much broader use as very few metadata are mandatory (but many are available). Being
+* a text format, it should remain easily readable in decades to come, thus supporting long term data preservation.
+* For comprehensive details about the format, refer to its
 * <a href="https://github.com/GEUS-Glaciology-and-Climate/iCSV">official format documentation</a> (currently, the documentation refers to the
 * format by its previous name, Non-Binary Environmental Data Archive (NEAD). The new "iCSV" name will soon be propagated to all documents).
 *
