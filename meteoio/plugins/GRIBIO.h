@@ -36,7 +36,7 @@ namespace mio {
  * @date   2024-04-17
  * 
  * @todo Handle special cases
- * @todo Missing Values?
+ * @todo Missing Values-> set missingValues key to IOUtils::nodata
  */
 class GRIBIO : public IOInterface {
 	public:
