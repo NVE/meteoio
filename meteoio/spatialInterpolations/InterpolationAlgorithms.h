@@ -55,6 +55,7 @@ class Trend {
 		Fit1D trend_model;
 		const std::string param;
 		double user_lapse; ///<when detrending the data, this is a user provided lapse_rate
+		double trend_min, trend_max; ///<if these are provided, the calculated trend will be bound by a minimum and/or maximum value
 		double trend_min_alt, trend_max_alt; ///<if these are provided, the detrending/retrending will be bound by a minimum and/or maximum altitude
 		bool frac, soft, multilinear; ///<is the lapse rate to be interpreted as fractional? Should it be used as fallback (is_soft) or it is mandatory?
 };
