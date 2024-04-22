@@ -23,7 +23,7 @@
 
 /*
 NOTES:
-- needs documentatino and refactoring
+- needs documentatino
 */
 #include <meteoio/plugins/libcodes.h>
 #include <meteoio/FileUtils.h>

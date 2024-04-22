@@ -21,6 +21,8 @@
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/plugins/GRIBIO.h>
+#include <algorithm>
+
 
 namespace mio {
     using namespace codes;
@@ -44,12 +46,14 @@ namespace mio {
     const double GRIBIO::plugin_nodata = -999.; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
     const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
-#include <algorithm>
-
     static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
         auto it = std::find_if(cache.begin(), cache.end(), [&date](const GRIBFile &file) { return file.isValidDate(date); });
 
         return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
+    }
+
+    static void handleConversions(Grid2DObject& grid_out, const MeteoData::Parameters& parameter) { 
+        throw IOException("Special cases not implemented", AT);
     }
 
     // ----------------------------- INITIALIZE -----------------------------
