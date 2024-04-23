@@ -689,7 +689,6 @@ bool convertString(Date& t, std::string str, const double& time_zone, std::ios_b
 
 	if (sscanf(c_str, "%d-%u-%u %u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
 		const std::string timezone_iso(rest);
-		if (timezone_iso.empty() && time_zone==nodata) return false;
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
