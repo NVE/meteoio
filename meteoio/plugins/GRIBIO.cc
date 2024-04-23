@@ -44,6 +44,7 @@ namespace mio {
      */
 
     static const double plugin_nodata = IOUtils::nodata; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+    static const std::string default_extension = ".grib";
     const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
     static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
@@ -63,12 +64,20 @@ namespace mio {
     }
 
     // ----------------------------- INITIALIZE -----------------------------
-    GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile) {
+    GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(),
+                                                    meteo_pattern(), grid2d_ext(), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
+                                                    bearing_offset(IOUtils::nodata), latitudeOfNorthernPole(), longitudeOfNorthernPole(), llcorner_initialized(false), llcorner(), 
+                                                    cellsize(), factor_x(), factor_y(), grid_initialized(false), meteo_initialized(false), parameter_table(), 
+                                                    cache_meteo(), cache_grid2d(), vecPts() {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
         initialize();
     }
 
-    GRIBIO::GRIBIO(const Config &cfgreader) : cfg(cfgreader) {
+    GRIBIO::GRIBIO(const Config &cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(),
+                                                    meteo_pattern(), grid2d_ext(), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
+                                                    bearing_offset(IOUtils::nodata), latitudeOfNorthernPole(), longitudeOfNorthernPole(), llcorner_initialized(false), llcorner(), 
+                                                    cellsize(), factor_x(), factor_y(), grid_initialized(false), meteo_initialized(false), parameter_table(), 
+                                                    cache_meteo(), cache_grid2d(), vecPts() {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
         initialize();
     }
@@ -91,15 +100,15 @@ namespace mio {
         if (meteo_ext == "none")
             meteo_ext.clear();
         cfg.getValue("METEOPATTERN", "Input", meteo_pattern, IOUtils::nothrow);
-        if (meteo_ext == "none")
-            meteo_ext.clear();
+        if (meteo_pattern == "none")
+            meteo_pattern.clear();
 
         cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
         if (grid2d_ext == "none")
             grid2d_ext.clear();
         cfg.getValue("GRID2DPATTERN", "Input", grid_2d_pattern, IOUtils::nothrow);
-        if (grid2d_ext == "none")
-            grid2d_ext.clear();
+        if (grid_2d_pattern == "none")
+            grid_2d_pattern.clear();
 
         cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
         cfg.getValue("RECURSIVE", "Input", recursive_search, IOUtils::nothrow);
@@ -126,9 +135,9 @@ namespace mio {
         std::list<std::string>::const_iterator it = dirlist.begin();
         while ((it != dirlist.end())) {
             const std::string filename = *it;
-            if (filename.find(grid_2d_pattern) != std::string::npos) {
-                const std::string fullpath = grid2dpath_in + "/" + filename;
-                cache_grid2d.push_back(GRIBFile(fullpath, parameter_table.getIndexes())); // Files will not be read twice, as we enforce a seperation between meteo and grid
+            if (filename.find(in_pattern) != std::string::npos) {
+                const std::string fullpath = in_path + "/" + filename;
+                cache.push_back(GRIBFile(fullpath, parameter_table.getIndexes())); // Files will not be read twice, as we enforce a seperation between meteo and grid
             }
             it++;
         }
@@ -570,8 +579,5 @@ namespace mio {
             }
         }
         return true;
-    }
-
-    
-
+    }  
 } // namespace
