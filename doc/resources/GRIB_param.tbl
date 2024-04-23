@@ -37,60 +37,88 @@ paramIdType:long
 # parameterName:parameterId:levelType:levelNumber
 # If your levelType is surface, or something that does not need a levelNumber (i.e. height, or depth...) than just set it to 0
 
+
 # Meteo Data
+
 
 # Digital Elevation Model (read from geometric height per default)
 DEM:300008:surface:0
+
 # Pressure at the surface
 P:54:surface:0
+
 # Air Temperature at 2m
 TA:130:heightAboveGround:2
+
 # Snow Surface Temperature
 TSS:201203:depthBelowLand:0
+
 # Ground Temperature
 TSG:130:surface:0
+
 # Relative Humidity (in %) at 2m
 RH:157:heightAboveGround:2
-# Dew Point Temperture -------- is this necessary? (will be added as seperate parameter)
-DT:3017:heightAboveGround:2
+
+# Dew Point Temperture
+TD:3017:heightAboveGround:2
+
 # Water equivalent of precipitation (total precipitation) ---- is unit m correct?
 PSUM:228:surface:0
+
 # Snow height
 HS:3066:surface:0
+
 # Snow Snow Density 
 RHOS:33:surface:0
+
 # Snow Water Equivalent (kg/m2)
 SWE:228141:surface:0
-# Incoming Short Wave radiation ------ which one should actually be used? (why is ISWR filled twice?)
-ISWR:
+
+# Incoming Short Wave radiation ------ which one should actually be used? (why is ISWR filled twice?) (GLOB)
+ISWR:169:surface:0
+
 # Incoming Long Wave radiation
 ILWR:175:surface:0
+
 # Global Radiation Flux (is this ISWR?)
 GLOB:3117:surface:0
+
 # Reflected Short Wave Radiation ---- should i work with albedo?
 RSWR:
+
 # Maximum Wind Velocity at 10m
 VW_MAX:201187:heightAboveGround:10
+
 # Wind Direction at 10m
 DW:3031:heightAboveGround:10
+
 # Wind north component (Can also be used as a fallback for wind direction and wind speed)
 V:132:heightAboveGround:10
+
 # Wind east component (Can also be used as a fallback for wind direction and wind speed)
 U:131:heightAboveGround:10
+
 # Wind speed
 VW:10:heightAboveGround:10
 
+
 # Grid Specific Data
+
 
 # Total Runoff
 ROT:205:depthBelowLandLayer:0
+
 # Surface Albedo (0-1)
 ALB:243:surface:0
+
 # Cloud Cover (0-1)
 TAU_CLD:187:surface:0
+
 # Slope Angle
 SLOPE:163:surface:0
-# Slope Azimuth (eastward angle in radiant as default)
+
+# Slope Azimuth (eastward angle in radiant)
 AZI:162:surface:0
+
 # Vertical Wind Velocity
 W:135:hybrid:10

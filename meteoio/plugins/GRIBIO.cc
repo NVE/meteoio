@@ -43,7 +43,7 @@ namespace mio {
      * @note Grid2d and Meteo Files need to be seperated by either pattern or extension
      */
 
-    const double GRIBIO::plugin_nodata = -999.; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+    static const double plugin_nodata = IOUtils::nodata; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
     const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
     static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
@@ -52,8 +52,14 @@ namespace mio {
         return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
     }
 
-    static void handleConversions(Grid2DObject& grid_out, const MeteoData::Parameters& parameter) { 
-        throw IOException("Special cases not implemented", AT);
+    static void handleConversions(Grid2DObject& grid_out, const double& paramId) { 
+        if (paramId == 163) { // slope
+            grid_out.grid2D *= 90.;
+        } else if (paramId == 162) { // azi
+            grid_out.grid2D *= Cst::to_deg;
+            grid_out.grid2D -= 90.;
+        }
+
     }
 
     // ----------------------------- INITIALIZE -----------------------------
@@ -181,6 +187,7 @@ namespace mio {
 
     // ----------------------------- GRIDDED DATA -----------------------------
     void GRIBIO::read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params) {
+        setMissingValue(h, plugin_nodata);
         std::vector<double> values;
         getGriddedValues(h, values);
 
@@ -216,6 +223,13 @@ namespace mio {
             llcorner_initialized = true;
 
             grid_out.llcorner = llcorner;
+        }
+        double paramId;
+        getParameter(h, "paramId", paramId);
+        handleConversions(grid_out, paramId);
+        if (verbose) {
+            std::cerr << "Read " << values.size() << " values from GRIB file" << std::endl;
+            std::cerr << "Parameter " << paramId << std::endl;
         }
     }
 
@@ -277,10 +291,6 @@ namespace mio {
         return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no);
     };
 
-    static void handleSpecialCases(Grid2DObject &grid_out, const MeteoGrids::Parameters &parameter) {
-        throw IOException("Special cases not implemented", AT);
-    }
-
     void GRIBIO::read2DGrid(Grid2DObject &grid_out, const MeteoGrids::Parameters &parameter, const Date &date) {
         if (!grid_initialized) {
             scanPath(grid2dpath_in, grid2d_ext, grid_2d_pattern, cache_grid2d);
@@ -293,6 +303,9 @@ namespace mio {
                 std::cerr << "No grid found for the specified date" << std::endl;
             }
             return;
+        }
+        if (verbose) {
+            std::cerr << "Reading grid for date " << date.toString() << std::endl;
         }
 
         long level_no;
@@ -311,7 +324,6 @@ namespace mio {
                 getParameter(m, "level", level);
             if (level == level_no) {
                 read2Dlevel(m, grid_out, cache_grid2d[idx].getGridParams());
-                handleSpecialCases(grid_out, parameter);
                 return;
             }
         }
@@ -399,6 +411,7 @@ namespace mio {
             if (level_no != 0)
                 getParameter(m, "level", level);
             if (level == level_no) {
+                setMissingValue(m, plugin_nodata);
                 std::vector<double> outlats_vec(npoints), outlons_vec(npoints), distances_vec(npoints), values(npoints);
                 std::vector<int> indexes_vec(npoints);
                 std::tie(outlats_vec, outlons_vec, distances_vec, values, indexes_vec) = getNearestValues_grib(m, lats, lons);

@@ -68,6 +68,8 @@ namespace mio {
         template <typename T>
         void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value);
 
+        void setMissingValue(CodesHandlePtr &message, double missingValue);
+
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;

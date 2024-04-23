@@ -35,8 +35,6 @@ namespace mio {
  * @author Patrick Leibersperge
  * @date   2024-04-17
  * 
- * @todo Handle special cases
- * @todo Missing Values-> set missingValues key to IOUtils::nodata
  */
 class GRIBIO : public IOInterface {
 	public:
@@ -88,7 +86,6 @@ class GRIBIO : public IOInterface {
 		bool readMeteoMeta(GRIBFile& file ,std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
     	bool removeDuplicatePoints(std::vector<Coords> &vecPoints, std::vector<double> &lats, std::vector<double> &lons); // remove potential duplicates. Returns true if some have been removed
 
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string default_table;
 };
 

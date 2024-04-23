@@ -378,6 +378,11 @@ namespace mio {
             return std::make_tuple(std::move(out_lats), std::move(out_lons), std::move(distances), std::move(values), std::move(indexes));
         }
 
+        // ------------------- SETTERS -------------------
+        void setMissingValue(CodesHandlePtr &message, double missingValue) {
+            CODES_CHECK(codes_set_double(message.get(), "missingValue", missingValue), 0);
+        }
+
     } // namespace codes
 
 } // namespace mio
