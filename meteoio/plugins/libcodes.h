@@ -50,7 +50,7 @@ namespace mio {
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product = PRODUCT_GRIB);
         void unpackMessage(CodesHandlePtr& m);
 
-        Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in);
+        Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
         Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in=0);
         StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string& error);
 

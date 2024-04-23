@@ -91,10 +91,10 @@ namespace mio {
         const std::string tmp = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
         if (tmp == "GRIB") { // keep it synchronized with IOHandler.cc for plugin mapping!!
             cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-            cfg.getValue("GRIB_TABLE", "Input", table_path);
-
-            cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
         }
+        cfg.getValue("GRIB_TABLE", "Input", table_path);
+
+        cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
 
         cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
         if (meteo_ext == "none")
@@ -286,7 +286,7 @@ namespace mio {
         std::string level_key = parameter_table.getLevelKey();
         level_no = parameter_table.getLevelNo(param_name);
         std::string level_type = parameter_table.getLevelType(param_name);
-
+        // check type of level and where it is lost
         return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long);
     }
     
@@ -325,8 +325,10 @@ namespace mio {
 
         for (auto &m : messages) {
             long level = 0;
-            if (level_no != 0)
-                getParameter(m, "level", level);
+            getParameter(m, "level", level);
+            // if multiple timepoints in a grib file:
+            if (getMessageDateGrib(m, 0) != date)
+                continue;
             if (level == level_no) {
                 read2Dlevel(m, grid_out, cache_grid2d[idx].getGridParams());
                 return;
@@ -393,8 +395,8 @@ namespace mio {
 
     // ---------------------------- METEO DATA -----------------------------
     // ---------------------------- STATIC HELPERS
-    static bool compareByDate(const GRIBFile &a, const GRIBFile &b) { return a.getDate() < b.getDate(); }
-    static bool compareToDate(const GRIBFile &a, const Date &b) { return a.getDate() < b; } // TODO: check if it is < or >
+    static bool compareByDate(const GRIBFile &a, const GRIBFile &b) { return a.getStartDate() < b.getStartDate(); }
+    static bool compareToDate(const GRIBFile &a, const Date &b) { return a.getStartDate() < b; } // TODO: check if it is < or >
 
     static std::vector<MeteoData> createMeteoDataVector(const std::vector<StationData>& stations, const Date& date) {
         std::vector<MeteoData> vecMeteo;
@@ -411,10 +413,12 @@ namespace mio {
     }
 
     static void processMessages(std::vector<CodesHandlePtr>& messages, const long& level_no, std::vector<MeteoData>& vecMeteo, const std::vector<double>& lats, const std::vector<double>& lons, const size_t& npoints, const size_t& par_index) {
+        Date curr_date = vecMeteo.front().date;
         for (auto &m : messages) {
+            if (getMessageDateGrib(m, 0) != curr_date)
+                continue;
             long level = 0;
-            if (level_no != 0)
-                getParameter(m, "level", level);
+            getParameter(m, "level", level);
             if (level == level_no) {
                 setMissingValue(m, plugin_nodata);
                 std::vector<double> outlats_vec(npoints), outlons_vec(npoints), distances_vec(npoints), values(npoints);
@@ -460,39 +464,39 @@ namespace mio {
             start_idx--;
 
         for (size_t i = start_idx; i < cache_meteo.size(); i++) {
-            const Date &current_date = cache_meteo[i].getDate();
-            if (current_date > dateEnd) {
-                break;
-            }
-
-            if (!meta_ok) {
-                if (!readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons)) {
-                    // some points have been removed vecPts has been changed -> re-reading
-                    lats.clear();
-                    lons.clear();
-                    readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons);
+            for (const Date& current_date : cache_meteo[i].getDates()) {
+                if (current_date > dateEnd) {
+                    break;
                 }
-                vecvecMeteo.insert(vecvecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); // allocation for the vectors now that we know how many true stations we have
-                meta_ok = true;
-            }
-
-            std::vector<MeteoData> vecMeteo = createMeteoDataVector(stations, current_date);
-            const size_t npoints = vecMeteo.size();
-
-            for (size_t par_index; par_index <= MeteoData::Parameters::lastparam; par_index++) {
-                std::string param_name = MeteoData::getParameterName(par_index);
-
-                long level_no;
-                std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_meteo[i], param_name, parameter_table, level_no);
-
-                if (messages.empty()) {
-                    if (verbose) {
-                        std::cerr << "No messages found for parameter " << param_name << " in file " << cache_meteo[i].getFilename() << std::endl;
+                if (!meta_ok) {
+                    if (!readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons)) {
+                        // some points have been removed vecPts has been changed -> re-reading
+                        lats.clear();
+                        lons.clear();
+                        readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons);
                     }
-                    continue; 
+                    vecvecMeteo.insert(vecvecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); // allocation for the vectors now that we know how many true stations we have
+                    meta_ok = true;
                 }
 
-                processMessages(messages, level_no, vecMeteo, lats, lons, npoints, par_index);
+                std::vector<MeteoData> vecMeteo = createMeteoDataVector(stations, current_date);
+                const size_t npoints = vecMeteo.size();
+
+                for (size_t par_index; par_index <= MeteoData::Parameters::lastparam; par_index++) {
+                    std::string param_name = MeteoData::getParameterName(par_index);
+
+                    long level_no;
+                    std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_meteo[i], param_name, parameter_table, level_no);
+
+                    if (messages.empty()) {
+                        if (verbose) {
+                            std::cerr << "No messages found for parameter " << param_name << " in file " << cache_meteo[i].getFilename() << std::endl;
+                        }
+                        continue; 
+                    }
+
+                    processMessages(messages, level_no, vecMeteo, lats, lons, npoints, par_index);
+                }
             }
         }
     }

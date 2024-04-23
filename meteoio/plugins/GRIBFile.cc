@@ -31,8 +31,6 @@ namespace mio {
     GRIBTable::GRIBTable()
         : filename(), param_indexing(), level_indexing(), param_table(), param_table_double(), param_table_long(), level_type_table(), level_no_table(),
           parameter_id_type(PARAM_TYPE::STRING), known_params() {
-        init_known_params();
-        readTable();
     }
 
     GRIBTable::GRIBTable(const std::string &in_filename)
@@ -69,7 +67,7 @@ namespace mio {
         std::ifstream file(filename);
 
         if (!file.is_open()) {
-            throw AccessException("Could not open GRIB table: " + filename);
+            throw AccessException("Could not open GRIB table: " + filename, AT);
         }
 
         // Read the file line by line and parse it
@@ -217,13 +215,14 @@ namespace mio {
 
     // ------------------------- GRIBFile -------------------------
     GRIBFile::GRIBFile(const std::string &in_filename, const std::vector<std::string> &indexes)
-        : filename(in_filename), file(), grid_params(), timepoint() {
+        : filename(in_filename), file(), grid_params(), timepoints() {
 
             file = indexFile(filename, indexes, false); // true = verbose output
             checkValidity();
         }
     
     void GRIBFile::checkValidity() {
+        std::set<std::pair<Date, long>> timepoints_for_parameter;
         std::vector<CodesHandlePtr> messages = getMessages(filename, PRODUCT_GRIB);
         if (messages.empty()) {
             throw AccessException("No messages found in GRIB file: " + filename);
@@ -234,23 +233,21 @@ namespace mio {
             if (grid_params.empty()) {
                 grid_params = new_grid_params;
             } else if (!new_grid_params.empty() && grid_params != new_grid_params) {
-                    throw InvalidFormatException("Grid parameters do not match in GRIB file: " + filename);
+                    throw InvalidFormatException("Grid parameters do not match in GRIB file: " + filename,AT);
             }
 
-            double d1, d2;
-            if (timepoint == Date()) {
-                timepoint = getMessageDateGrib(m, d1, d2, 0);
-            } else {
-                Date new_timepoint = getMessageDateGrib(m, d1, d2, 0);
-                if (timepoint != new_timepoint && new_timepoint != Date()) {
-                    throw InvalidFormatException("There is more than 1 timepoint in GRIB file: " + filename);
-                }
-            
+            long paramId;
+            Date curr_date = getMessageDateGrib(m, 0);
+            getParameter(m, "paramId", paramId);
+            std::pair<std::set<std::pair<Date,long>>::iterator,bool> res = timepoints_for_parameter.insert(std::make_pair(curr_date, paramId));
+            timepoints.insert(curr_date);
+            if (!res.second) {
+                throw InvalidFormatException("Duplicate timepoints (" + curr_date.toString(Date::ISO) + ") found in GRIB file: " + filename, AT);
             }
         }
         if (grid_params.empty()) {
             throw InvalidFormatException("No grid parameters found in GRIB file: " + filename);
         }
-        if (timepoint == Date()) throw InvalidFormatException("No timepoint found in GRIB file: " + filename);
+        if (timepoints.empty()) throw InvalidFormatException("No timepoint found in GRIB file: " + filename,AT);
     }  
 } // namespace mio

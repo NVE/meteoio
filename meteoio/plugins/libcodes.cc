@@ -165,7 +165,7 @@ namespace mio {
         }
 
         // TODO: check if this gives the correct date, and what is d1, d2??
-        Date getMessageDateGrib(CodesHandlePtr &h, double &d1, double &d2, const double &tz_in) {
+        Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in) {
             Date base;
             long validityDate, validityTime;
             getParameter(h, "validityDate", validityDate);
@@ -175,46 +175,6 @@ namespace mio {
             const int hour = static_cast<int>(validityTime / 100), minutes = static_cast<int>(validityTime - hour * 100); // HACK: handle seconds!
             base.setDate(year, month, day, hour, minutes, tz_in);
 
-            // reading offset to base date/time, as used for forecast, computed at time t for t+offset
-            long startStep, endStep;
-            std::string stepUnits;
-            getParameter(h, "stepUnits", stepUnits);
-            getParameter(h, "startStep", startStep);
-            getParameter(h, "endStep", endStep);
-
-            double step_units; // in julian, ie. in days
-
-            std::string stepUnitsStr(stepUnits);
-            if (stepUnitsStr == "s") {
-                step_units = 1. / (24. * 60. * 60.);
-            } else if (stepUnitsStr == "m") {
-                step_units = 1. / (24. * 60.);
-            } else if (stepUnitsStr == "h") {
-                step_units = 1. / 24.;
-            } else if (stepUnitsStr == "D") {
-                step_units = 1.;
-            } else if (stepUnitsStr == "3H") {
-                step_units = 3. / 24.;
-            } else if (stepUnitsStr == "6H") {
-                step_units = 6. / 24.;
-            } else if (stepUnitsStr == "12H") {
-                step_units = 12. / 24.;
-            } else if (stepUnitsStr == "M") {
-                step_units = 30.44;
-            } else if (stepUnitsStr == "Y") {
-                step_units = 365.25;
-            } else if (stepUnitsStr == "10Y") {
-                step_units = 10 * 365.25;
-            } else if (stepUnitsStr == "C") {
-                step_units = 10 * 100 * 365.25;
-            } else {
-                std::ostringstream ss;
-                ss << "GRIB file using stepUnits=" << stepUnits << ", which is not supported";
-                throw InvalidFormatException(ss.str(), AT);
-            }
-
-            d1 = static_cast<double>(startStep) * step_units;
-            d2 = static_cast<double>(endStep) * step_units;
             return base;
         }
 

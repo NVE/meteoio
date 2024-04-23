@@ -96,15 +96,19 @@ class GRIBFile {
         }
 
         bool isValidDate(const Date& date) const {
-            return date == timepoint; // TODO: work with time range
+            return timepoints.find(date) != timepoints.end();
         }
 
         std::string getFilename() const {
             return filename;
         };
 
-        Date getDate() const {
-            return timepoint;
+        std::set<Date> getDates() const {
+            return timepoints;
+        }
+
+        Date getStartDate() const {
+            return *timepoints.begin();
         }
 
     private:
@@ -112,7 +116,7 @@ class GRIBFile {
         CodesIndexPtr file; // TODO: will this save the contents of the file? If so, it will be way to big to save, but then do calls to selectIndex always open the file?
 
         std::map<std::string, double> grid_params;
-        Date timepoint; // TODO: Do i need a validity range here?
+        std::set<Date> timepoints; 
 
         void checkValidity();
 
