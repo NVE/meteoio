@@ -295,10 +295,6 @@ namespace mio {
         return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no);
     };
 
-    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const MeteoData::Parameters &parameter, const GRIBTable &parameter_table, long &level_no) {
-        std::string param_name = MeteoData::getParameterName(parameter);
-        return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no);
-    };
 
     void GRIBIO::read2DGrid(Grid2DObject &grid_out, const MeteoGrids::Parameters &parameter, const Date &date) {
         if (!grid_initialized) {

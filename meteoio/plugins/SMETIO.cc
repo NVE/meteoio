@@ -179,7 +179,7 @@ void SMETIO::parseInputOutputSection()
 
 		vecFiles =  getFilesWithPaths(vecFilenames, inpath, dflt_extension);
 		
-		for (const std::string file_and_path : vecFiles) {
+		for (const std::string& file_and_path : vecFiles) {
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
 	}

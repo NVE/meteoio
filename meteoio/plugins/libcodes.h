@@ -70,22 +70,16 @@ namespace mio {
 
         void setMissingValue(CodesHandlePtr &message, double missingValue);
 
+        bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId);
+        bool selectParameter(codes_index* raw, const std::string& param_key, const double& paramId);
+        bool selectParameter(codes_index* raw, const std::string& param_key, const long& paramId);
+
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
 
 
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
-        static bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId) {
-            return codes_index_select_string(raw, param_key.c_str(), paramId.c_str()) == 0;
-        };
-        static bool selectParameter(codes_index* raw, const std::string& param_key, const double& paramId) {
-            return codes_index_select_double(raw, param_key.c_str(), paramId) == 0;
-        };
-        static bool selectParameter(codes_index* raw, const std::string& param_key, const long& paramId) {
-            return codes_index_select_long(raw, param_key.c_str(), paramId) == 0;
-        };
-
         // definition of the template functions
         template <typename T>
         void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {

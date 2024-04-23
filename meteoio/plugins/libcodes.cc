@@ -382,6 +382,16 @@ namespace mio {
         void setMissingValue(CodesHandlePtr &message, double missingValue) {
             CODES_CHECK(codes_set_double(message.get(), "missingValue", missingValue), 0);
         }
+                bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId) {
+            return codes_index_select_string(raw, param_key.c_str(), paramId.c_str()) == 0;
+        };
+        
+        bool selectParameter(codes_index* raw, const std::string& param_key, const double& paramId) {
+            return codes_index_select_double(raw, param_key.c_str(), paramId) == 0;
+        };
+        bool selectParameter(codes_index* raw, const std::string& param_key, const long& paramId) {
+            return codes_index_select_long(raw, param_key.c_str(), paramId) == 0;
+        };
 
     } // namespace codes
 

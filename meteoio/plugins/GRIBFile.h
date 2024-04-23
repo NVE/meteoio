@@ -89,15 +89,15 @@ class GRIBFile {
         template <typename T>
         std::vector<CodesHandlePtr> listParameterMessages(const std::string& param_key, const T& paramID, const std::string& level_key,const std::string &levelType) {
             return getMessages(file, param_key, paramID, level_key, levelType);
-        };
+        }
 
         std::map<std::string, double> getGridParams() const {
             return grid_params;
-        };
+        }
 
         bool isValidDate(const Date& date) const {
             return date == timepoint; // TODO: work with time range
-        };
+        }
 
         std::string getFilename() const {
             return filename;
@@ -105,7 +105,7 @@ class GRIBFile {
 
         Date getDate() const {
             return timepoint;
-        };
+        }
 
     private:
         std::string filename;

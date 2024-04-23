@@ -141,7 +141,7 @@ namespace mio {
 
     void GRIBTable::fillParameterTables(const std::vector<std::string> &line_vals) {
         std::string key, paramID, levelType;
-        double levelNo;
+        long levelNo;
         if (line_vals.size() != 4) {
             std::stringstream ss;
             ss << "Invalid number of values to retrieve data, got: ";
@@ -217,7 +217,7 @@ namespace mio {
 
     // ------------------------- GRIBFile -------------------------
     GRIBFile::GRIBFile(const std::string &in_filename, const std::vector<std::string> &indexes)
-        : filename(in_filename), file(), grid_params() {
+        : filename(in_filename), file(), grid_params(), timepoint() {
 
             file = indexFile(filename, indexes, false); // true = verbose output
             checkValidity();
