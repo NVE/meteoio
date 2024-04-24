@@ -33,6 +33,12 @@ paramIdType:long
 # Now the actual parameter identification. All pre defined MeteoIO parameters are listed here, with their default specification.
 # If you need to read additional parameters, just add them to the bottom of the list, with the same schema.
 
+# The paramId can be easily found by using the metview library from ECMWF installable with conda, and the command metview -e grib [filename] and looking 
+# Namespaces->paramater->paramId for the respective messages.
+# another option is using the ecCodes library by ECMWF with the grib_ls -p paramId [filename] which will print all the different paramIds in a file.
+
+# Per default (when available) the ERA5 paramId is used.
+
 # The specification is as follows:
 # parameterName:parameterId:levelType:levelNumber
 # If your levelType is surface, or something that does not need a levelNumber (i.e. height, or depth...) than just set it to 0
@@ -41,26 +47,23 @@ paramIdType:long
 # Meteo Data
 
 
-# Digital Elevation Model (read from geometric height per default)
-DEM:300008:surface:0
+# Digital Elevation Model (read from geopotential per default)
+DEM:129:surface:0
 
 # Pressure at the surface
-P:54:surface:0
+P:134:surface:0
 
 # Air Temperature at 2m
-TA:130:heightAboveGround:2
+TA:167:surface:0
 
 # Snow Surface Temperature
-TSS:201203:depthBelowLand:0
+TSS:238:surface:0
 
-# Ground Temperature
-TSG:130:surface:0
+# Ground Temperature (copernicus skin Temperature)
+TSG:235:surface:0
 
 # Relative Humidity (in %) at 2m
 RH:157:heightAboveGround:2
-
-# Dew Point Temperture
-TD:3017:heightAboveGround:2
 
 # Water equivalent of precipitation (total precipitation) ---- is unit m correct?
 PSUM:228:surface:0
@@ -68,23 +71,17 @@ PSUM:228:surface:0
 # Snow height
 HS:3066:surface:0
 
-# Snow Snow Density 
+# Snow Density 
 RHOS:33:surface:0
 
-# Snow Water Equivalent (kg/m2)
-SWE:228141:surface:0
+# Snow Water Equivalent (should be kg/m2) (read from snow depth water equivalent by default)
+SWE:141:surface:0
 
-# Incoming Short Wave radiation ------ which one should actually be used? (why is ISWR filled twice?) (GLOB)
+# Incoming Short Wave radiation (downward) ------  (why is ISWR filled twice?)
 ISWR:169:surface:0
 
-# Incoming Long Wave radiation
+# Incoming Long Wave radiation (downward)
 ILWR:175:surface:0
-
-# Global Radiation Flux (is this ISWR?)
-GLOB:3117:surface:0
-
-# Reflected Short Wave Radiation ---- should i work with albedo?
-RSWR:
 
 # Maximum Wind Velocity at 10m
 VW_MAX:201187:heightAboveGround:10
@@ -92,27 +89,21 @@ VW_MAX:201187:heightAboveGround:10
 # Wind Direction at 10m
 DW:3031:heightAboveGround:10
 
-# Wind north component (Can also be used as a fallback for wind direction and wind speed)
-V:132:heightAboveGround:10
-
-# Wind east component (Can also be used as a fallback for wind direction and wind speed)
-U:131:heightAboveGround:10
-
 # Wind speed
 VW:10:heightAboveGround:10
+
+# Cloud Cover (0-1)
+TAU_CLD:164:surface:0
 
 
 # Grid Specific Data
 
 
 # Total Runoff
-ROT:205:depthBelowLandLayer:0
+ROT:205:surface:0
 
-# Surface Albedo (0-1)
+# Surface Albedo (0-1) (forecast albedo per default)
 ALB:243:surface:0
-
-# Cloud Cover (0-1)
-TAU_CLD:187:surface:0
 
 # Slope Angle
 SLOPE:163:surface:0
@@ -122,3 +113,15 @@ AZI:162:surface:0
 
 # Vertical Wind Velocity
 W:135:hybrid:10
+
+# Wind north component (Can also be used as a fallback for wind direction and wind speed)
+V:166:surface:0
+
+# Wind east component (Can also be used as a fallback for wind direction and wind speed)
+U:165:surface:0
+
+# Dew Point Temperture
+TD:3017:heightAboveGround:2
+
+# Reflected Short Wave Radiation ---- should i work with albedo?
+# RSWR: 

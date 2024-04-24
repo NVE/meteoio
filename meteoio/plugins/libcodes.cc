@@ -112,23 +112,35 @@ namespace mio {
 
         // ------------------- GETTERS -------------------
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
-            CODES_CHECK(codes_get_double(h.get(), parameterName.c_str(), &parameterValue), 0);
+            int err = codes_get_double(h.get(), parameterName.c_str(), &parameterValue);
+            if (err != 0) {
+                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
         }
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue) {
-            CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &parameterValue), 0);
+            int err = codes_get_long(h.get(), parameterName.c_str(), &parameterValue);
+            if (err != 0) {
+                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
         }
 
         // casts long to int
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, int& parameterValue) {
             long tmp;
-            CODES_CHECK(codes_get_long(h.get(), parameterName.c_str(), &tmp), 0);
+            int err = codes_get_long(h.get(), parameterName.c_str(), &tmp);
+            if (err != 0) {
+                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
             parameterValue = static_cast<int>(tmp);
         }
 
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
             size_t len = 500;
             char name[500] = {'\0'};
-            CODES_CHECK(codes_get_string(h.get(), parameterName.c_str(), name, &len), 0);
+            int err = codes_get_string(h.get(), parameterName.c_str(), name, &len);
+            if (err != 0) {
+                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
             parameterValue = std::string(name);
         }
 
@@ -251,10 +263,19 @@ namespace mio {
             getParameter(h_unique, "Nj", Nj);
 
             double angleOfRotationInDegrees, latitudeOfSouthernPole, longitudeOfSouthernPole, latitudeOfNorthernPole, longitudeOfNorthernPole;
-            getParameter(h_unique, "angleOfRotationInDegrees", angleOfRotationInDegrees);
+            try {
+                getParameter(h_unique, "angleOfRotationInDegrees", angleOfRotationInDegrees);
+            } catch (...) {
+                angleOfRotationInDegrees = 0.; // angle of rotation is not there
+            }
 
-            getParameter(h_unique, "latitudeOfSouthernPoleInDegrees", latitudeOfSouthernPole);
-            getParameter(h_unique, "longitudeOfSouthernPoleInDegrees", longitudeOfSouthernPole);
+            try {
+                getParameter(h_unique, "latitudeOfSouthernPoleInDegrees", latitudeOfSouthernPole);
+                getParameter(h_unique, "longitudeOfSouthernPoleInDegrees", longitudeOfSouthernPole);
+            } catch (...) {
+                latitudeOfSouthernPole = -90.; // default values for when it is not rotated
+                longitudeOfSouthernPole = 0.;
+            }
             latitudeOfNorthernPole = -latitudeOfSouthernPole;
             longitudeOfNorthernPole = longitudeOfSouthernPole + 180.;
 
@@ -290,14 +311,12 @@ namespace mio {
         }
 
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string,double> &gridParams) {
-            codes_handle *raw = h.get();
-
             if (gridParams.empty()) {
                 gridParams = getGridParameters(h);
             }
 
             size_t values_len;
-            CODES_CHECK(codes_get_size(raw, "values", &values_len), 0);
+            CODES_CHECK(codes_get_size(h.get(), "values", &values_len), 0);
             double Ni = gridParams.at("Ni"), Nj = gridParams.at("Nj");
             if (values_len != (unsigned)(Ni * Nj)) {
                 std::ostringstream ss;
@@ -307,7 +326,7 @@ namespace mio {
             }
             
             values.resize(values_len);
-            GRIB_CHECK(codes_get_double_array(raw, "values", values.data(), &values_len), 0);
+            GRIB_CHECK(codes_get_double_array(h.get(), "values", values.data(), &values_len), 0);
 
         }
 
@@ -325,24 +344,18 @@ namespace mio {
          *         - values at the points,
          *         - indexes of the nearest values.
          */
-        std::tuple<std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<double>&&, std::vector<int>&&> getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons) {
-            codes_handle *raw = h.get();
-
+        void getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons, std::vector<double> &out_lats, std::vector<double> &out_lons, std::vector<double> &distances, std::vector<double> &values, std::vector<int> &indexes) {
             size_t npoints = in_lats.size();
-            std::vector<double> out_lats(npoints), out_lons(npoints), distances(npoints), values(npoints);
-            std::vector<int> indexes(npoints);
-
-
-            CODES_CHECK(codes_grib_nearest_find_multiple(raw, 0, in_lats.data(), in_lons.data(), static_cast<long>(npoints), out_lats.data(), out_lons.data(), values.data(), distances.data(), indexes.data()), 0);
-
-            return std::make_tuple(std::move(out_lats), std::move(out_lons), std::move(distances), std::move(values), std::move(indexes));
+            std::cout << "Finding nearest values\n";
+            CODES_CHECK(codes_grib_nearest_find_multiple(h.get(), 0, in_lats.data(), in_lons.data(), static_cast<long>(npoints), out_lats.data(), out_lons.data(), values.data(), distances.data(), indexes.data()), 0);
+            std::cout << "Found nearest values\n";
         }
 
         // ------------------- SETTERS -------------------
         void setMissingValue(CodesHandlePtr &message, double missingValue) {
             CODES_CHECK(codes_set_double(message.get(), "missingValue", missingValue), 0);
         }
-                bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId) {
+        bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId) {
             return codes_index_select_string(raw, param_key.c_str(), paramId.c_str()) == 0;
         };
         

@@ -53,6 +53,10 @@ class GRIBTable {
         void getParamId(const std::string &param_name, std::string &paramId, double &paramId_num, long &paramId_long) const;
         std::string getLevelType(const std::string &param_name) const;
         long getLevelNo(const std::string &param_name) const;
+
+#ifdef DEBUG
+        void printTable() const;
+#endif
     
     private:
         std::string filename;

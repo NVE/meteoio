@@ -42,47 +42,42 @@ namespace mio {
         CodesIndexPtr makeUnique(codes_index *i);
 
         // ------------------------- FILE AND MESSAGE HANDLING -------------------------
-        CodesIndexPtr indexFile(const std::string &filename, const std::vector<std::string>& index_keys, bool verbose);
+        CodesIndexPtr indexFile(const std::string &filename, const std::vector<std::string> &index_keys, bool verbose);
 
-        template <typename T>
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string& param_key, const T& paramID, const std::string& level_key,const std::string &levelType);
+        template <typename T> std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &param_key, const T &paramID, const std::string &level_key, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
-        std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product = PRODUCT_GRIB);
-        void unpackMessage(CodesHandlePtr& m);
+        std::vector<CodesHandlePtr> getMessages(FILE *in_file, ProductKind product = PRODUCT_GRIB);
+        void unpackMessage(CodesHandlePtr &m);
 
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
-        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in=0);
-        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string& error);
+        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in = 0);
+        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string &error);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
         std::map<std::string, double> getGriddedValues(CodesHandlePtr &h, std::vector<double> &values);
 
-        std::tuple<std::vector<double> &&, std::vector<double> &&, std::vector<double> &&, std::vector<double> &&, std::vector<int> &&>
-        getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons);
+        void getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons, std::vector<double> &out_lats, std::vector<double> &out_lons,
+                                   std::vector<double> &distances, std::vector<double> &values, std::vector<int> &indexes);
 
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, double &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, int &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
-        template <typename T>
-        void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value);
+        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value);
 
         void setMissingValue(CodesHandlePtr &message, double missingValue);
 
-        bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId);
-        bool selectParameter(codes_index* raw, const std::string& param_key, const double& paramId);
-        bool selectParameter(codes_index* raw, const std::string& param_key, const long& paramId);
-
+        bool selectParameter(codes_index *raw, const std::string &param_key, const std::string &paramId);
+        bool selectParameter(codes_index *raw, const std::string &param_key, const double &paramId);
+        bool selectParameter(codes_index *raw, const std::string &param_key, const long &paramId);
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
 
-
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
-        template <typename T>
-        void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {
+        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {
             T tmp = param_value;
             for (const auto &paramName : paramNames) {
                 getParameter(h, paramName, param_value);
@@ -94,7 +89,7 @@ namespace mio {
         }
 
         template <typename T>
-        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string& param_key, const T& paramID, const std::string& level_key,const std::string &levelType) {
+        std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &param_key, const T &paramID, const std::string &level_key, const std::string &levelType) {
             codes_index *raw = index.get();
             if (!selectParameter(raw, param_key, paramID)) {
                 return {};

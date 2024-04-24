@@ -46,19 +46,19 @@ namespace mio {
             std::string param_name = MeteoData::getParameterName(i);
             known_params.insert(param_name);
             param_table[param_name] = "";
-            param_table_double[param_name] = 0.0;
-            param_table_long[param_name] = 0;
+            param_table_double[param_name] = static_cast<double>(IOUtils::npos);;
+            param_table_long[param_name] = static_cast<long>(IOUtils::npos);;
             level_type_table[param_name] = "";
-            level_no_table[param_name] = 0.0;
+            level_no_table[param_name] = static_cast<long>(IOUtils::npos);
         }
         for (size_t i=0; i<MeteoGrids::nrOfParameters; i++) {
             std::string param_name = MeteoGrids::getParameterName(i);
             known_params.insert(param_name);
             param_table[param_name] = "";
-            param_table_double[param_name] = 0.0;
-            param_table_long[param_name] = 0;
+            param_table_double[param_name] = static_cast<double>(IOUtils::npos);;
+            param_table_long[param_name] = static_cast<long>(IOUtils::npos);;
             level_type_table[param_name] = "";
-            level_no_table[param_name] = 0.0;
+            level_no_table[param_name] = static_cast<long>(IOUtils::npos);
         }
     };
 
@@ -211,6 +211,31 @@ namespace mio {
 
     long GRIBTable::getLevelNo(const std::string &param_name) const { return level_no_table.at(param_name); }
 
+#ifdef DEBUG
+    void GRIBTable::printTable() const {
+        std::cerr << "GRIB table: " << filename << std::endl;
+        std::cerr << "Indexing: " << param_indexing << " " << level_indexing << std::endl;
+        std::cerr << "ParamIdType: ";
+        if (parameter_id_type == PARAM_TYPE::DOUBLE) {
+            std::cerr << "double" << std::endl;
+        } else if (parameter_id_type == PARAM_TYPE::STRING) {
+            std::cerr << "string" << std::endl;
+        } else if (parameter_id_type == PARAM_TYPE::LONG) {
+            std::cerr << "long" << std::endl;
+        } else {
+            std::cerr << "unknown" << std::endl;
+        }
+        for (const auto &p : param_table) {
+            std::cerr << p.first << " " << p.second << " " << param_table_double.at(p.first) << " " << param_table_long.at(p.first) << " " << level_type_table.at(p.first) << " " << level_no_table.at(p.first) << std::endl;
+        }
+        for (const auto &p : param_table_double) {
+            std::cerr << p.first << " " << p.second << " " << param_table.at(p.first) << " " << param_table_long.at(p.first) << " " << level_type_table.at(p.first) << " " << level_no_table.at(p.first) << std::endl;
+        }
+        for (const auto& p : param_table_long) {
+            std::cerr << p.first << " " << p.second << " " << param_table.at(p.first) << " " << param_table_double.at(p.first) << " " << level_type_table.at(p.first) << " " << level_no_table.at(p.first) << std::endl;
+        }
+    }
+#endif
 
 
     // ------------------------- GRIBFile -------------------------
@@ -228,12 +253,21 @@ namespace mio {
             throw AccessException("No messages found in GRIB file: " + filename);
         }
 
+        long edition = -1;
         for (auto &m : messages) {
+            long curr_edition;
+            getParameter(m, "editionNumber", curr_edition);
+            if (edition == -1)
+                edition = curr_edition;
+            else if (edition != curr_edition) {
+                // throw InvalidFormatException("Different GRIB editions found in GRIB file: " + filename, AT);
+            }
             std::map<std::string, double> new_grid_params = getGridParameters(m);
             if (grid_params.empty()) {
                 grid_params = new_grid_params;
             } else if (!new_grid_params.empty() && grid_params != new_grid_params) {
-                    throw InvalidFormatException("Grid parameters do not match in GRIB file: " + filename,AT);
+                std::cerr << "Grid parameters do not match in GRIB file: " << filename << std::endl; // TODO: change back
+                // throw InvalidFormatException("Grid parameters do not match in GRIB file: " + filename,AT);
             }
 
             long paramId;
