@@ -41,6 +41,7 @@ namespace mio {
      * - etc
      *
      * @note Grid2d and Meteo Files need to be seperated by either pattern or extension
+     * @todo When add parameter is available for MeteoGrids, support adding unknown parameters via the parameter table for GRIB
      */
 
     static const double plugin_nodata = IOUtils::nodata; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
@@ -90,32 +91,42 @@ namespace mio {
 
     void GRIBIO::setOptions() {
         std::cout << "Reading GRIB configuration" << std::endl;
-        const std::string tmp = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
-        if (tmp == "GRIB") { // keep it synchronized with IOHandler.cc for plugin mapping!!
-            cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+        const std::string in_2d = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
+        const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
+        const std::string in_dem = IOUtils::strToUpper(cfg.get("DEM", "Input", ""));
+
+        bool meteo_and_grid = in_2d == "GRIB" && in_meteo == "GRIB";
+
+        if (in_2d == "GRIB" || in_meteo == "GRIB" || in_dem == "GRIB") {
+            cfg.getValue("GRIB_TABLE", "Input", table_path, IOUtils::nothrow);
+            cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
+            cfg.getValue("RECURSIVE", "Input", recursive_search, IOUtils::nothrow);
         }
-        cfg.getValue("GRIB_TABLE", "Input", table_path);
 
-        cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
+        if (in_2d == "GRIB") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+            cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+            cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
+            if (grid2d_ext == "none")
+                grid2d_ext.clear();
+            cfg.getValue("GRID2DPATTERN", "Input", grid_2d_pattern, IOUtils::nothrow);
+            if (grid_2d_pattern == "none")
+                grid_2d_pattern.clear();
+        }
 
-        cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
-        if (meteo_ext == "none")
-            meteo_ext.clear();
-        cfg.getValue("METEOPATTERN", "Input", meteo_pattern, IOUtils::nothrow);
-        if (meteo_pattern == "none")
-            meteo_pattern.clear();
+        if (in_meteo == "GRIB") {
+            cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
+            if (meteo_ext == "none")
+                meteo_ext.clear();
+            cfg.getValue("METEOPATTERN", "Input", meteo_pattern, IOUtils::nothrow);
+            if (meteo_pattern == "none")
+                meteo_pattern.clear();
+        }
 
-        cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
-        if (grid2d_ext == "none")
-            grid2d_ext.clear();
-        cfg.getValue("GRID2DPATTERN", "Input", grid_2d_pattern, IOUtils::nothrow);
-        if (grid_2d_pattern == "none")
-            grid_2d_pattern.clear();
+        if (in_dem == "GRIB") {
+            cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
+        }
 
-        cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
-        cfg.getValue("RECURSIVE", "Input", recursive_search, IOUtils::nothrow);
-
-        if (meteo_ext == grid2d_ext && meteo_pattern == grid_2d_pattern && meteopath_in == grid2dpath_in)
+        if (meteo_and_grid && meteo_ext == grid2d_ext && meteo_pattern == grid_2d_pattern && meteopath_in == grid2dpath_in)
             throw InvalidArgumentException("Meteo and Grid2D files cannot have the same naming and be located in the same place.", AT);
     }
 
@@ -127,8 +138,8 @@ namespace mio {
 #endif
             table_path = default_table;
         }
-        parameter_table = GRIBTable(table_path);
         std::cout << "Using GRIB table " << table_path << std::endl;
+        parameter_table = GRIBTable(table_path);
 #ifdef DEBUG
         parameter_table.printTable();
 #endif
@@ -374,9 +385,8 @@ namespace mio {
 
     void GRIBIO::readDEM(DEMObject &dem_out) {
         const std::string filename = cfg.get("DEMFILE", "Input");
-        const std::string dem_table_path = cfg.get("DEM_TABLE", "Input", default_table);
 
-        GRIBTable dem_table(dem_table_path);
+        GRIBTable dem_table(table_path);
         GRIBFile dem_file(filename, dem_table.getIndexes());
 
         processSingleMessage(dem_out, dem_file, dem_table, MeteoGrids::DEM);
