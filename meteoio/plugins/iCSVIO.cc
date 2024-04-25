@@ -36,8 +36,7 @@ namespace mio {
 * data repositories but can also support a much broader use as very few metadata are mandatory (but many are available). Being
 * a text format, it should remain easily readable in decades to come, thus supporting long term data preservation.
 * For comprehensive details about the format, refer to its
-* <a href="https://github.com/GEUS-Glaciology-and-Climate/iCSV">official format documentation</a> (currently, the documentation refers to the
-* format by its previous name, Non-Binary Environmental Data Archive (NEAD). The new "iCSV" name will soon be propagated to all documents).
+* <a href="https://code.wsl.ch/EnviDat/icsv/-/blob/master/README.org">official format documentation</a>.
 *
 * When using iCSV with MeteoIO, the following additional MetaData is required:
 * - Timestamp or Julian field: This represents the timestamps of the measurement in ISO format.
