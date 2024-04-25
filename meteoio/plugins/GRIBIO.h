@@ -29,7 +29,7 @@ namespace mio {
 	using namespace codes;
 /**
  * @class GRIBIO
- * @brief This (empty) class is to be used as a gribio for developing new plugins
+ * @brief This class is used to read grib files
  *
  * @ingroup plugins
  * @author Patrick Leibersperge

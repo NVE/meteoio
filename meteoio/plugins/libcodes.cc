@@ -32,9 +32,27 @@ NOTES:
 #include <cstring>
 
 namespace mio {
+    /**
+     * @namespace codes
+     * @brief This namespace handles all the low level manipulation of GRIB and BUFR files with ecCodes
+     * 
+     * @section codes_intro Introduction
+     * This namespace provides a set of functions to handle GRIB and BUFR files using the ecCodes C library by the ECMWF (https://confluence.ecmwf.int/display/ECC/ecCodes+installation).
+     * Either a file is indexed (contained in CodesIndexPtr) and messages (contained as CodesHandlePtr) are read from this index by using key/value pairs.
+     * Or all messages are read from a file directly, without any additional information.
+     * The index does not use much memory, the handles do??. Therefore, the handles should be deleted as soon as they are not needed anymore.
+     * 
+     *
+     * @ingroup plugins
+     * @author Patrick Leibersperge
+     * @date   2024-04-17
+     * 
+     */
     namespace codes {
 
         // ------------------- BUFR -------------------
+
+        // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER {
                 {"P","pressure"}, 
                 {"TA","airTemperature"}, // TODO: or is it airTemperatureAt2M	
@@ -53,7 +71,8 @@ namespace mio {
                 {"PSUM_PH","precipitationType"} // should the type be mapped to the phase?
         };
 
-        static const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
+        // flags for the possible reference systems are 0-4 
+        const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
 
         // ------------------- POINTER HANDLING -------------------
         CodesHandlePtr makeUnique(codes_handle *h) {
@@ -68,11 +87,12 @@ namespace mio {
         }
 
         // ------------------- FILE HANDLING -------------------
-        // Function to get the list of parameters from a GRIB file, caller needs to free the index
+        // Index a file by a given set of keys, return the index
         CodesIndexPtr indexFile(const std::string &filename, const std::vector<std::string>& index_keys, bool verbose) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
 
+            // the keys have to be concatenated to a single string as "key1,key2,key3"
             std::string indexing_string;
             for (const std::string &key : index_keys) {
                 if (!indexing_string.empty()) {
@@ -82,6 +102,7 @@ namespace mio {
             }
 
             int ret;
+            // create the index
             codes_index *index = codes_index_new_from_file(0, filename.c_str(), indexing_string.c_str(), &ret);
 
             CODES_CHECK(ret, 0);
@@ -111,6 +132,7 @@ namespace mio {
         }
 
         // ------------------- GETTERS -------------------
+        // multiple overloads for different parameter types
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
             int err = codes_get_double(h.get(), parameterName.c_str(), &parameterValue);
             if (err != 0) {
@@ -123,7 +145,6 @@ namespace mio {
                 throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
             }
         }
-
         // casts long to int
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, int& parameterValue) {
             long tmp;
@@ -145,6 +166,8 @@ namespace mio {
         }
 
         // ------------------- MESSAGE HANDLING -------------------
+
+        // wrapper that opens a file, reads all messages and returns them as a vector of handles
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
@@ -154,19 +177,23 @@ namespace mio {
             return getMessages(fp, product);
         }
 
+        // get all messages from an openend file, closes the file as well
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product) {
             codes_handle *h = nullptr;
             int err = 0;
             std::vector<CodesHandlePtr> handles;
             while ((h = codes_handle_new_from_file(0, in_file, product, &err)) != nullptr) {
                 if (!h)
+                    fclose(in_file);
                     throw IOException("Unable to create handle from file", AT);
                 if (err != 0) {
                     codes_handle_delete(h);
+                    fclose(in_file);
                     throw IOException("Error reading message: Errno " + std::to_string(err), AT);
                 }
                 handles.push_back(makeUnique(h));
             }
+            fclose(in_file);
             return handles;
         }
 
@@ -176,7 +203,7 @@ namespace mio {
             CODES_CHECK(codes_set_long(m.get(),"unpack",1),0);  
         }
 
-        // TODO: check if this gives the correct date, and what is d1, d2??
+        // Return the timepoint a message is valid for
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in) {
             Date base;
             long validityDate, validityTime;
@@ -204,55 +231,6 @@ namespace mio {
             
             Date base(values[0], values[1], values[2], values[3], values[4], values[5], tz_in);
             return base;
-        };
-
-        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string& error) {
-            StationData stationData;
-
-            double latitude, longitude, altitude;
-            getParameter(h, "latitude", latitude);
-            getParameter(h, "longitude", longitude);
-
-            std::vector<std::string> height_keys = {"heightOfStation","height","elevation"};
-            getParameter(h, height_keys, altitude);
-
-            std::vector<std::string> id_keys = {"stationNumber", "nationalStationNumber", "stationID","stationId"};
-            std::vector<std::string> name_keys = {"shortStationName","stationOrSiteName","longStationName"};
-            std::string stationID, stationName;
-            getParameter(h, id_keys, stationID);
-            getParameter(h, name_keys, stationName);
-
-            long ref_flag = 999;
-            getParameter(h, "coordinateReferenceSystem", ref_flag);
-            Coords position;
-
-            if (ref_flag == 999 && ref_coords.empty()) {
-                error = "No reference coordinates found in BUFR file and none provided in the configuration";
-                return stationData;
-            }
-
-            if(ref_flag == 65535) {
-                if (ref_coords.empty()) {
-                    error = "Missing reference coordinates in BUFR file, and none provided in configuration";
-                    return stationData;
-                } else {
-                    Coords ref_coords_obj(ref_coords);
-                    ref_coords_obj.setLatLon(latitude, longitude, altitude);
-                    position = ref_coords_obj;
-                }
-            } else {
-                if (ref_flag > 3) {
-                    std::ostringstream ss;
-                    ss << "Unsuppported reference flag " << ref_flag << " in BUFR file";
-                    throw InvalidFormatException(ss.str(), AT);
-                } else {
-                    position.setEPSG(FLAG_TO_EPSG[ref_flag]);
-                    position.setPoint(latitude, longitude, altitude);
-                }
-            }
-            
-            stationData.setStationData(position, stationID, stationName);            
-            return stationData;
         };
 
 
@@ -330,20 +308,6 @@ namespace mio {
 
         }
 
-        // Retrieve Meteo Specific Data
-        /**
-         * Retrieves the nearest values from a GRIB message based on the given latitude and longitude coordinates.
-         *
-         * @param h The handle to the GRIB file.
-         * @param in_lats The input latitude coordinates.
-         * @param in_lons The input longitude coordinates.
-         * @return A tuple containing vectors with.
-         *         - the output latitude coordinates, 
-         *         - output longitude coordinates,
-         *         - distances between the points,
-         *         - values at the points,
-         *         - indexes of the nearest values.
-         */
         void getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons, std::vector<double> &out_lats, std::vector<double> &out_lons, std::vector<double> &distances, std::vector<double> &values, std::vector<int> &indexes) {
             size_t npoints = in_lats.size();
             CODES_CHECK(codes_grib_nearest_find_multiple(h.get(), 0, in_lats.data(), in_lons.data(), static_cast<long>(npoints), out_lats.data(), out_lons.data(), values.data(), distances.data(), indexes.data()), 0);
@@ -353,10 +317,11 @@ namespace mio {
         void setMissingValue(CodesHandlePtr &message, double missingValue) {
             CODES_CHECK(codes_set_double(message.get(), "missingValue", missingValue), 0);
         }
+
+        // multiple overloads for different parameter types
         bool selectParameter(codes_index* raw, const std::string& param_key, const std::string& paramId) {
             return codes_index_select_string(raw, param_key.c_str(), paramId.c_str()) == 0;
         };
-        
         bool selectParameter(codes_index* raw, const std::string& param_key, const double& paramId) {
             return codes_index_select_double(raw, param_key.c_str(), paramId) == 0;
         };

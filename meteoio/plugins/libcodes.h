@@ -25,6 +25,15 @@
 #include <iostream>
 
 namespace mio {
+    /**
+     * @namespace codes
+     * @brief This namespace handles all the low level manipulation of GRIB and BUFR files with ecCodes
+     *
+     * @ingroup plugins
+     * @author Patrick Leibersperge
+     * @date   2024-04-17
+     * 
+     */
     namespace codes {
 
         // ------------------------- POINTER HANDLING -------------------------
@@ -51,7 +60,6 @@ namespace mio {
 
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
         Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in = 0);
-        StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string &error);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
@@ -74,6 +82,7 @@ namespace mio {
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
+        extern const std::vector<int> FLAG_TO_EPSG;
 
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
