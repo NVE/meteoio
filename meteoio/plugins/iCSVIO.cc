@@ -189,7 +189,7 @@ void iCSVIO::parseInputSection() {
 
     // Parse input section: extract number of files to read and store filenames in vecFiles
     const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
-    if (in_meteo == "iCSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+    if (in_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
         cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
         const std::string inpath = cfg.get("METEOPATH", "Input");
 
@@ -203,7 +203,7 @@ void iCSVIO::parseInputSection() {
         read_sequential = !areFilesWithinLimit(all_files_and_paths);
         for (auto &filename : all_files_and_paths)
             stations_files.push_back(iCSVFile(filename, read_sequential));
-    }
+    } 
 }
 
 void iCSVIO::parseOutputSection() {
@@ -212,7 +212,7 @@ void iCSVIO::parseOutputSection() {
 
     outpath.clear();
     const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
-    if (out_meteo == "iCSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+    if (out_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
 
         cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
         const std::regex valid_extension("^[.][a-zA-Z0-9]+$");
@@ -227,7 +227,6 @@ void iCSVIO::parseOutputSection() {
         }
 
         cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-
         cfg.getValue("iCSV_APPEND", "Output", allow_append, IOUtils::nothrow);
         cfg.getValue("iCSV_OVERWRITE", "Output", allow_overwrite, IOUtils::nothrow);
         cfg.getValue("iCSV_SEPARATOR", "Output", out_delimiter,
@@ -236,7 +235,7 @@ void iCSVIO::parseOutputSection() {
 
         if (allow_overwrite && allow_append)
             throw InvalidFormatException("Cannot allow both iCSV_APPEND and iCSV_OVERWRITE", AT);
-    }
+    } 
 }
 
 // ------------------------------------- iCSVIO read -----------------------------------------
@@ -705,16 +704,20 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) {
     if (!outfile.location_in_header) {
         num_data_fields--;
     }
+    const auto& out_data = outfile.getRowData();
+    const auto& out_dates = outfile.getAllDatesInFile();
+    const auto& out_locations = outfile.getAllLocationsInData();
+    const double nodata = outfile.getNoData();
     for (size_t ii = 0; ii < outfile.getRowData().size(); ii++) {
         size_t data_idx = 0;
         for (size_t jj = 0; jj < outfile.FIELDS.fields.size(); jj++) {
             if (outfile.FIELDS.fields[jj] == "timestamp") {
-                file << outfile.getAllDatesInFile()[ii].toString(Date::ISO) << outfile.METADATA.field_delimiter;
+                file << out_dates[ii].toString(Date::ISO) << outfile.METADATA.field_delimiter;
             } else if (outfile.FIELDS.fields[jj] == outfile.METADATA.geometry) {
-                file << getGeometry(outfile.getAllLocationsInData()[ii]) << outfile.METADATA.field_delimiter;
+                file << getGeometry(out_locations[ii]) << outfile.METADATA.field_delimiter;
             } else {
                 if (data_idx < num_data_fields) {
-                    file << IOUtils::standardizeNodata(outfile.getRowData()[ii][data_idx], outfile.getNoData());
+                    file << IOUtils::standardizeNodata(out_data[ii][data_idx], nodata);
                 } else {
                     file << IOUtils::nodata;
                 }
@@ -724,7 +727,7 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) {
                 }
             }
         }
-        if (ii != outfile.getRowData().size() - 1) {
+        if (ii != out_data.size() - 1) {
             file << "\n";
         }
     }
