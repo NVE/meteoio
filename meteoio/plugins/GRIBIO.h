@@ -79,6 +79,7 @@ class GRIBIO : public IOInterface {
 		Coords getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string,double> &grid_params);
 
 		// GRIDDED DATA
+		void initializeLLCorner(const std::map<std::string, double>& grid_params);
 		void read2Dlevel(CodesHandlePtr &h, Grid2DObject &grid_out, const std::map<std::string, double> &grid_params );
 		void processSingleMessage(Grid2DObject& dem_out ,GRIBFile& dem_file, const GRIBTable& dem_table, const MeteoGrids::Parameters& parameter);
 
