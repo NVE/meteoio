@@ -29,18 +29,106 @@ namespace mio {
     /**
      * @page gribio GRIBIO
      * @section gribio_format Format
-     * *Put here the information about the standard format that is implemented*
+     * This plugin reads Meteorological data from GRIB files, specified by the WMO in their Manual of Codes 306. A short introduction to GRIB can be found at https://en.wikipedia.org/wiki/GRIB. 
+     * 
+     * In essence a Grib file contains an arbitrary number of messages. Each message is a self-explanatory record of some gridded data. Messages contain all the Metadata 
+     * and other relevant information, to correctly identify and interpret the data. The GRIB format is binary, and is therefore not human readable. There exists a variety 
+     * of software to read GRIB files, see Wiki entry. Here we use the ecCodes library from ECMWF (https://confluence.ecmwf.int/display/ECC/ecCodes+installation) to read GRIB files.
+     * 
+     * One big problem is, that the GRIB format is very flexible, and therefore the encoding of parameters... is specified in Tables provided by the data originating centers. 
+     * ecCodes uses many common tables to decode the data. However, (very unlikely) it might happen, that there is no table available.
+     * 
+     * The ECMWF provides a parameter database (https://codes.ecmwf.int/grib/param-db/) where all the information about parameter codes can be found. This is why we decided to 
+     * use their paramId as a key to identify the parameters. As there are many ways of specifing data, e.g. Air temperature at 2m as its own parameter 2mTempAir, the temperature read at 
+     * 2m: Temp at 2m, or the Atmospheric temperature at 2m... This is why we use a parameter table, that can be adjusted to the users needs. It can be found under doc/resources/GRIB_param.tbl. 
+     * It is a very basic text file, where empty lines, and lines starting wiht '#' are ignored. The default table is self explanatory, so read through the comments to see how to specify the 
+     * desired parameters.
+     * 
+     * Additionally, to read vertically spaced parameters the typeOfLevel and level values need to be specified. If there is no level needed, such as for a 
+     * surface level, just set the level to 0.
+     * 
+     * For now it is only possible to read parameters, that are predefined in MeteoIO (see MeteoGrids::Parameters, and MeteoData::Parameters). 
+     * 
+     * As it is incredibly flexible, we narrowed down the structure of GRIB files that MeteoIO is able to read. Each file can contain one or multiple timepoints, 
+     * but needs to contain all the parameters in one file. So having multiple files for the same timepoint is not supported.
+     * 
      *
-     * @section gribio_units Units
-     *
+     * @section paramId Finding the paramId
+     * If the default paramId is not the correct one for your GRIB file, you need to specify the correct ids in the parameer table. To find out, which 
+     * parameter maps to which paramId, we recommend using either the ecCodes grib tools (https://confluence.ecmwf.int/display/ECC/GRIB+tools) or the 
+     * metview software (https://metview.readthedocs.io/en/latest/). Both tools can be used to inspect the GRIB file and find the correct paramId. 
+     * If you want to use the Grib Tools from ecCodes, you can use the following command:
+     * @code
+     * grib_ls -p paramId,typeOfLevel,name filename.gribext 
+     * @endcode
+     * This will print the paramId and the name of the parameter for each message in the file. If there are a lot of messages in the file, i.e. many timepoints, 
+     * you will have a large output, which will be repeated a lot.
+     * 
+     * Metview is the easier option, as it is installable with conda via:
+     * @code
+     * conda install metview -c conda-forge
+     * @endcode
+     * After installation, you can open the GRIB file in Metview, and inspect the parameters with:
+     * @code
+     * metview -e grib filename.gribext
+     * @endcode
+     * This will open the Metview GUI, where you can inspect the File. You will get a list of all messages on the left, and on the right you can find information about 
+     * the selected message. You will be able to easily see, which message contains which parameter. To find out the paramId, and typeOfLevel, 
+     * select the Namespaces in the toolbar on the right, and choose "parameters" under which you can find the paramId and "vertical" for the typeOfLevel.
      *
      * @section gribio_keywords Keywords
      * This plugin uses the following keywords:
-     * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
-     * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
-     * - etc
-     *
-     * @note Grid2d and Meteo Files need to be seperated by either pattern or extension
+     * When reading Grid2d files:
+     * - GRID2DPATH: Path to the repository containing the GRIB files
+     * - GRID2DEXT: Extension of the GRIB files. If not specified, all files in the directory will be read
+     * - GRID2DPATTERN: Pattern to filter the files in the directory. If not specified, all files in the directory will be read
+     * - GRIB_TABLE: Path to the parameter table. If not specified, the default table will be used
+     * - VERBOSE: If set to true, the plugin will print out information about the read files
+     * - RECURSIVE: If set to true, the plugin will search the directory recursively
+     * 
+     * When reading DEM files:
+     * - DEMFILE: Path to the DEM file
+     * - GRIB_DEM_UPDATE: If set to true, the plugin will update the DEM 
+     * - VERBOSE: If set to true, the plugin will print out information about the read files
+     * - GRIB_TABLE: Path to the parameter table. If not specified, the default table will be used
+     * 
+     * When reading virtual stations from the files:
+     * - METEOPATH: Path to the repository containing the GRIB files
+     * - METEOEXT: Extension of the GRIB files. If not specified, all files in the directory will be read
+     * - METEOPATTERN: Pattern to filter the files in the directory. If not specified, all files in the directory will be read
+     * - STATION#: The position of station # (latlon,xy...)
+     * - GRIB_TABLE: Path to the parameter table. If not specified, the default table will be used
+     * - VERBOSE: If set to true, the plugin will print out information about the read files
+     * - RECURSIVE: If set to true, the plugin will search the directory recursively
+     * 
+     * @note Grid2d and Meteo Files need to be seperated by either pattern or extension, if both are used.
+     * @note It is only possible to provide one GRIB table for all the different types of files.
+     * 
+     * @section example Example
+     * @code 
+     * [INPUT]
+     * METEO = GRIB
+     * METEOPATH = ../
+     * METEOEXT = .grib
+     * METEOPATTERN = meteo
+     * STATION1 = latlon(5,9,-1)
+     * 
+     * DEM = GRIB
+     * DEMFILE = ../dem.grib
+     * GRIB_DEM_UPDATE = true
+     * 
+     * GRID2D = GRIB
+     * GRID2DPATH = ../
+     * GRID2DEXT = .grib
+     * GRID2DPATTERN = grid
+     * 
+     * GRIB_TABLE = test.tbl
+     * VERBOSE = true
+     * RECURSIVE = false
+     * @endcode
+     * 
+     * 
+     * 
      * @todo When add parameter is available for MeteoGrids, support adding unknown parameters via the parameter table for GRIB
      */
 
