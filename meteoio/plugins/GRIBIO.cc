@@ -90,7 +90,6 @@ namespace mio {
     }
 
     void GRIBIO::setOptions() {
-        std::cout << "Reading GRIB configuration" << std::endl;
         const std::string in_2d = IOUtils::strToUpper(cfg.get("GRID2D", "Input", ""));
         const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
         const std::string in_dem = IOUtils::strToUpper(cfg.get("DEM", "Input", ""));
@@ -138,7 +137,6 @@ namespace mio {
 #endif
             table_path = default_table;
         }
-        std::cout << "Using GRIB table " << table_path << std::endl;
         parameter_table = GRIBTable(table_path);
 #ifdef DEBUG
         parameter_table.printTable();
@@ -146,7 +144,6 @@ namespace mio {
     }
 
     void GRIBIO::scanPath(const std::string &in_path, const std::string &in_ext, const std::string &in_pattern, std::vector<GRIBFile> &cache) {
-        std::cout << "Scanning path " << in_path << " for GRIB files" << std::endl;
         std::list<std::string> dirlist;
         FileUtils::readDirectory(in_path, dirlist, in_ext, recursive_search);
 
@@ -176,7 +173,6 @@ namespace mio {
     }
 
     Coords GRIBIO::getGeolocalization(double &cellsize_x, double &cellsize_y, const std::map<std::string, double> &grid_params) {
-        std::cout << "Computing grid parameters" << std::endl;
         latitudeOfNorthernPole = grid_params.at("latitudeOfNorthernPole");
         longitudeOfNorthernPole = grid_params.at("longitudeOfNorthernPole");
         double ll_latitude = grid_params.at("ll_latitude");
@@ -356,9 +352,6 @@ namespace mio {
                 continue;
             }
             if (level == level_no) {
-                std::cout << "Reading grid for date " << date.toString() << std::endl;
-                std::cout << "at level " << level << std::endl;
-                std::cout << "with parameter " << MeteoGrids::getParameterName(parameter) << std::endl;
                 read2Dlevel(m, grid_out, cache_grid2d[idx].getGridParams());
                 return;
             }
@@ -445,11 +438,9 @@ namespace mio {
         for (auto &m : messages) {
             if (getMessageDateGrib(m, 0) != curr_date)
                 continue;
-            std::cout << "Message date matches" << std::endl;
             long level = 0;
             getParameter(m, "level", level);
             if (level == level_no) {
-                std::cout << "Reading level" << std::endl;
                 setMissingValue(m, plugin_nodata);
                 std::vector<double> outlats_vec(npoints), outlons_vec(npoints), distances_vec(npoints), values(npoints);
                 std::vector<int> indexes_vec(npoints);
@@ -466,16 +457,12 @@ namespace mio {
 
     // ---------------------------- METEO READING -----------------------------
     void GRIBIO::readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
-        // TODO : some debug msgs
-        std::cout << "Reading meteo data from " << dateStart.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << std::endl;
         if (!meteo_initialized) {
-            std::cout << "Initializing meteo data" << std::endl;
             readStations(vecPts);
             scanPath(meteopath_in, meteo_ext, meteo_pattern, cache_meteo);
             meteo_initialized = true;
             std::sort(cache_meteo.begin(), cache_meteo.end(), compareByDate);
         }
-        std::cout << "Cache contains " << cache_meteo.size() << " files" << std::endl;
 
         vecvecMeteo.clear();
 
@@ -490,7 +477,6 @@ namespace mio {
         size_t start_idx = 0;
         if (it != cache_meteo.end())
             start_idx = std::distance(cache_meteo.begin(), it);
-        std::cout << "Starting reading from file " << cache_meteo[start_idx].getFilename() << std::endl;
 
         if (start_idx > 0)
             start_idx--;
@@ -498,11 +484,9 @@ namespace mio {
         for (size_t i = start_idx; i < cache_meteo.size(); i++) {
             for (const Date& current_date : cache_meteo[i].getDates()) {
                 if (current_date > dateEnd) {
-                    std::cout << "Reached end date" << std::endl;
                     break;
                 }
                 if (!meta_ok) {
-                    std::cout << "Reading metadata" << std::endl;
                     if (!readMeteoMeta(cache_meteo[i], vecPts, stations, lats, lons)) {
                         // some points have been removed vecPts has been changed -> re-reading
                         lats.clear();
@@ -516,15 +500,11 @@ namespace mio {
                 std::vector<MeteoData> vecMeteoStations = createMeteoDataVector(stations, current_date);
                 const size_t npoints = vecMeteoStations.size();
 
-                std::cout << "Reading meteo data for date " << current_date.toString(Date::ISO) << std::endl;
-                std::cout << MeteoData::Parameters::lastparam << std::endl;
                 for (size_t par_index=0; par_index <= MeteoData::Parameters::lastparam; par_index++) {
                     std::string param_name = MeteoData::getParameterName(par_index);
-                    std::cout << "Reading parameter " << param_name << std::endl;
                     long level_no;
                     std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(cache_meteo[i], param_name, parameter_table, level_no, verbose);
 
-                    std::cout << "Messages size: " << messages.size() << std::endl;
                     if (messages.empty()) {
                         if (verbose) {
                             std::cout << "No messages found for parameter " << param_name << " in file " << cache_meteo[i].getFilename() << std::endl;
@@ -578,12 +558,8 @@ namespace mio {
         if (messages.size() > 1 && verbose) {
             std::cout << "Multiple messages containing DEM information found in file" << file.getFilename() << std::endl;
         }
-        std::cout << "npoints";
         const size_t npoints = vecPoints.size();
 
-        std::cout << "num points: " << npoints << std::endl;
-        std::cout << "First Point ";
-        std::cout << "lat: " << vecPoints[0].getLat() << " lon: " << vecPoints[0].getLon() << std::endl;
 
         CodesHandlePtr& h = messages.front();
         if (h == nullptr) {
@@ -606,10 +582,8 @@ namespace mio {
             throw InvalidArgumentException("lats and lons vectors must have the same size. Something went seriously wront", AT);
         std::vector<double> outlats_vec(n_lats), outlons_vec(n_lats), altitudes_vec(n_lats), distances_vec(n_lats);
         std::vector<int> indexes_vec(n_lats);
-        std::cout << "Getting nearest values from GRIB file" << std::endl;
         getNearestValues_grib(h, lats, lons, outlats_vec, outlons_vec, distances_vec, altitudes_vec, indexes_vec);
 
-        std::cout << "Removing duplicates" << std::endl;
         // remove potential duplicates
         if (removeDuplicatePoints(vecPoints, outlats_vec, outlons_vec) == true)
             return false;

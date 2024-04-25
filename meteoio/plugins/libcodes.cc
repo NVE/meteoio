@@ -346,9 +346,7 @@ namespace mio {
          */
         void getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons, std::vector<double> &out_lats, std::vector<double> &out_lons, std::vector<double> &distances, std::vector<double> &values, std::vector<int> &indexes) {
             size_t npoints = in_lats.size();
-            std::cout << "Finding nearest values\n";
             CODES_CHECK(codes_grib_nearest_find_multiple(h.get(), 0, in_lats.data(), in_lons.data(), static_cast<long>(npoints), out_lats.data(), out_lons.data(), values.data(), distances.data(), indexes.data()), 0);
-            std::cout << "Found nearest values\n";
         }
 
         // ------------------- SETTERS -------------------
