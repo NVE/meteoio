@@ -16,6 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef LIBCODES_H
+#define LIBCODES_H
 
 #include <meteoio/IOInterface.h>
 
@@ -59,7 +61,7 @@ namespace mio {
         void unpackMessage(CodesHandlePtr &m);
 
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
-        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in = 0);
+        Date getMessageDateBUFR(CodesHandlePtr &h, const size_t& subsetNumber, const double &tz_in = 0);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
         void getGriddedValues(CodesHandlePtr &h, std::vector<double> &values, std::map<std::string, double> &gridParams);
@@ -89,7 +91,11 @@ namespace mio {
         template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {
             T tmp = param_value;
             for (const auto &paramName : paramNames) {
-                getParameter(h, paramName, param_value);
+                try {
+                    getParameter(h, paramName, param_value);
+                } catch (const IOException &e) {
+                    continue;
+                }
                 if (param_value != tmp) {
                     return;
                 }
@@ -135,3 +141,4 @@ namespace mio {
         }
     }
 } // namespace mio
+#endif // LIBCODES_H

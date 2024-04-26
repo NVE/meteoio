@@ -35,21 +35,40 @@ class BUFRFile {
         
         void readMetaData(const std::string& ref_coords);
         // takes a map that contatins the bufr keys as keys, and names as values. Should map to itself, if no renaming is needed
-        void readData(std::vector<MeteoData> &vecMeteo, const std::map<std::string,std::string> &additional_params = {});
+        // returns a vector of meteo data timeseries, one for each station
+        void readData(std::vector<METEO_SET> &vecMeteo, std::map<std::string,size_t>& station_ids, const std::vector<std::string> &additional_params);
 
-        StationData getMetadata() const { return meta_data; };
+        const std::map<std::string, StationData>& getMetadata() const { return meta_data; };
+
+        bool hasMultipleSubets(const size_t &msg_index) const { return subset_numbers[msg_index] > 1; };
 
     private:
         std::string filename;
-        StationData meta_data;
+        std::map<std::string, StationData> meta_data;
 
         Date start_date;
         Date end_date;
-        std::set<Date> dates;
         double tz;
 
+        bool isMeteoTimeseries;
+        bool isProfile;
+        // for each message see if we need subset indexing
+        std::vector<size_t> subset_numbers;
+
         std::unique_ptr<FILE> in_file;
-        std::vector<CodesHandlePtr> messages;
+        std::vector<std::string> station_ids_in_file;
+
+        // HELPERS
+        bool isNewStation(const std::string &station_id) { return station_ids_in_file.end() == std::find(station_ids_in_file.begin(), station_ids_in_file.end(), station_id); };
+        double getNumSubsets(CodesHandlePtr &message, double default_value);
+        void processSubsets(CodesHandlePtr &message, const std::string &ref_coords, const size_t& num_subsets, std::map<std::string, std::set<Date>> &station_dates);
+        void processNewStation(const std::string &station_id, const StationData &new_meta, const Date &new_date, std::map<std::string, std::set<Date>> &station_dates);
+        void processExistingStation(const std::string &station_id, const StationData &new_meta, const Date &new_date, std::map<std::string, std::set<Date>> &station_dates);
+        void updateDateRange(const Date &new_date);
+        void updateStationIdsMapping(std::vector<METEO_SET> &vecMeteo, std::map<std::string, size_t>& station_ids_mapping);
+        void processMessage(std::vector<METEO_SET> &vecMeteo, std::map<std::string, size_t>& station_ids_mapping, const std::vector<std::string> &additional_params, CodesHandlePtr &message, size_t msg_id);
+
+
 
 };
 

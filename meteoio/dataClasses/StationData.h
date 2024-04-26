@@ -138,8 +138,8 @@ class StationData {
 		double azi; ///<Azimuth at the local slope at the station, in degrees, 0 at north, compass orientation
 
 	public:
-		bool isValid();
-		bool isEmpty();
+		bool isValid() const;
+		bool isEmpty() const;
 };
 
 typedef std::vector<StationData> STATIONS_SET;

@@ -219,7 +219,7 @@ namespace mio {
         }
 
         // assumes UTC 0, need to convert to local time after
-        Date getMessageDateBUFR(CodesHandlePtr &h, const double &tz_in){
+        Date getMessageDateBUFR(CodesHandlePtr &h, const size_t& subsetNumber, const double &tz_in){
             std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute", "second"};
             std::vector<int> values(parameters.size(), -1);
 

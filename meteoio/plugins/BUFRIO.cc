@@ -19,7 +19,7 @@
 // #include <meteoio/plugins/bufrio.h>
 #include <meteoio/plugins/BUFRIO.h>
 #include <meteoio/plugins/plugin_utils.h>
-
+#include <unordered_set>
 using namespace std;
 
 namespace mio {
@@ -42,14 +42,14 @@ const double BUFRIO::plugin_nodata = -999.; //plugin specific nodata value. It c
 const std::string dflt_extension_BUFR = ".bufr";
 const std::string BUFRIO::template_filename = "MeteoIO.bufr";
 
-BUFRIO::BUFRIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files()
+BUFRIO::BUFRIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	
 	parseInputSection();
 }
 
-BUFRIO::BUFRIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files()
+BUFRIO::BUFRIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputSection();
@@ -61,6 +61,8 @@ void BUFRIO::parseInputSection() {
         const std::string inpath = cfg.get("METEOPATH", "Input");
         std::vector<std::string> vecFilenames;
         cfg.getValues("STATION", "INPUT", vecFilenames);
+
+		cfg.getValue("ADDITIONAL_PARAMS", "INPUT", additional_params, IOUtils::nothrow);
 
 
         if (vecFilenames.empty())
@@ -78,24 +80,30 @@ void BUFRIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
                              std::vector< std::vector<MeteoData> >& vecvecMeteo)
 {
 	vecvecMeteo.clear();
-	vecvecMeteo.reserve(station_files.size());
+	std::map<std::string, size_t> station_ids;
 	for (auto &station_file : station_files) {
-		std::vector<MeteoData> vecMeteo;
-		station_file.readData(vecMeteo);
-		vecvecMeteo.push_back(vecMeteo);
+		station_file.readData(vecvecMeteo, station_ids, additional_params);
 	}
-	
+	// sort the data, as multiple bufr files can have information about the same station, but order is not guaranteed
+	for (auto &vecMeteo : vecvecMeteo) {
+		std::sort(vecMeteo.begin(), vecMeteo.end());
+	}
 }
 
 void BUFRIO::readStationData(const Date &/* date */, std::vector<StationData> &vecStation) {
 	vecStation.clear();
-	vecStation.reserve(station_files.size());
+	std::unordered_set<std::string> station_id_set;
 	for (const auto &station_file : station_files) {
-		vecStation.push_back(station_file.getMetadata());
+		for (const auto &station : station_file.getMetadata()) {
+			auto success = station_id_set.insert(station.second.getStationID());
+			if (success.second) {
+				vecStation.push_back(station.second);
+			}
+		}
 	}
 }
 
-void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name) {
+void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &/* vecMeteo */, const std::string &/* name */) {
 	throw IOException("Writing BUFR files is not implemented", AT);
 }
 

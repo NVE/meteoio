@@ -200,12 +200,12 @@ std::istream& operator>>(std::istream& is, StationData& station) {
 	return is;
 }
 
-bool StationData::isValid() {
+bool StationData::isValid() const {
 	if (position.isNodata() || stationID.empty()) return false;
 	return true;
 };
 
-bool StationData::isEmpty() {
+bool StationData::isEmpty() const {
 	if (position.isNodata() && stationID.empty() && stationName.empty()) return true;
 	return false;
 };
