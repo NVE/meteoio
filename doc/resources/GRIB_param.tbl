@@ -72,7 +72,7 @@ PSUM:228:surface:0
 HS:3066:surface:0
 
 # Snow Density 
-RHOS:33:surface:0
+RSNO:33:surface:0
 
 # Snow Water Equivalent (should be kg/m2) (read from snow depth water equivalent by default)
 SWE:141:surface:0

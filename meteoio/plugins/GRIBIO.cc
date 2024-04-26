@@ -245,6 +245,70 @@ namespace mio {
         }
     }
 
+    // ---------------------- STATIC HELPERS -------------------------------------------
+    // find the index of the file containing the date
+    static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
+        auto it = std::find_if(cache.begin(), cache.end(), [&date](const GRIBFile &file) { return file.isValidDate(date); });
+
+        return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
+    }
+
+    // do some conversions for parameters we know are different in GRIB
+    static void handleConversions(Grid2DObject& grid_out, const double& paramId) { 
+        if (paramId == 163) { // slope
+            grid_out.grid2D *= 90.;
+        } else if (paramId == 162) { // azi
+            grid_out.grid2D *= Cst::to_deg;
+            grid_out.grid2D -= 90.;
+        } else if (paramId == 129) { // geopotential
+            grid_out.grid2D /= Cst::gravity;
+        } 
+    }
+
+    // wrapper to find all the messages containing the parameter information, depending on the type of parameter id
+    static std::vector<CodesHandlePtr> findMessages(GRIBFile &file, const std::string &param_key, const std::string &level_key, const std::string &level_type, const std::string &paramID_string,
+                                                    double paramID_double, long paramID_long, const bool& verbose, const std::string& param_name) {
+        double npos_double = static_cast<double>(IOUtils::npos);
+        long npos_long = static_cast<long>(IOUtils::npos);
+
+        if (!paramID_string.empty() && paramID_double == npos_double && paramID_long == npos_long) {
+            return file.listParameterMessages(param_key, paramID_string, level_key, level_type);
+        } else if (paramID_string.empty() && paramID_double != npos_double && paramID_long == npos_long) {
+            return file.listParameterMessages(param_key, paramID_double, level_key, level_type);
+        } else if (paramID_string.empty() && paramID_double == npos_double && paramID_long != npos_long) {
+            return file.listParameterMessages(param_key, paramID_long, level_key, level_type);
+        } else {
+            if (verbose) {
+                std::cout << "No parameter id provided for "+param_name << std::endl;
+            }
+            return {};
+        }   
+    }
+
+    // get all the indexing information for the parameter and find the messages containing the parameter information
+    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const std::string &param_name, const GRIBTable &parameter_table, long &level_no, const bool& verbose) {
+        // get the paramID
+        std::string paramID_string;
+        double paramID_double;
+        long paramID_long;
+        parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
+
+        // get additional information from the parameter table
+        std::string param_key = parameter_table.getParamKey();
+        std::string level_key = parameter_table.getLevelKey();
+        level_no = parameter_table.getLevelNo(param_name);
+        std::string level_type = parameter_table.getLevelType(param_name);
+        // check type of level and where it is lost
+        return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long, verbose, param_name);
+    }
+    
+    // wrapper to be able to use it with MeteoGrids::Parameters
+    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const MeteoGrids::Parameters &parameter, const GRIBTable &parameter_table, long &level_no, const bool& verbose) {
+        std::string param_name = MeteoGrids::getParameterName(parameter);
+        return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no, verbose);
+    };
+
+
     // ----------------------------- GRIDDED DATA -----------------------------
     // legacy to support reading a single grid from a file
     void GRIBIO::read2DGrid(Grid2DObject &grid_out, const std::string &i_name) {
@@ -406,69 +470,6 @@ namespace mio {
         return cntr;
     }
     
-    // ---------------------- STATIC HELPERS -------------------------------------------
-    // find the index of the file containing the date
-    static size_t findDate(const std::vector<GRIBFile> &cache, const Date &date) {
-        auto it = std::find_if(cache.begin(), cache.end(), [&date](const GRIBFile &file) { return file.isValidDate(date); });
-
-        return (it != cache.end()) ? std::distance(cache.begin(), it) : IOUtils::npos;
-    }
-
-    // do some conversions for parameters we know are different in GRIB
-    static void handleConversions(Grid2DObject& grid_out, const double& paramId) { 
-        if (paramId == 163) { // slope
-            grid_out.grid2D *= 90.;
-        } else if (paramId == 162) { // azi
-            grid_out.grid2D *= Cst::to_deg;
-            grid_out.grid2D -= 90.;
-        } else if (paramId == 129) { // geopotential
-            grid_out.grid2D /= Cst::gravity;
-        } 
-    }
-
-    // wrapper to find all the messages containing the parameter information, depending on the type of parameter id
-    static std::vector<CodesHandlePtr> findMessages(GRIBFile &file, const std::string &param_key, const std::string &level_key, const std::string &level_type, const std::string &paramID_string,
-                                                    double paramID_double, long paramID_long, const bool& verbose, const std::string& param_name) {
-        double npos_double = static_cast<double>(IOUtils::npos);
-        long npos_long = static_cast<long>(IOUtils::npos);
-
-        if (!paramID_string.empty() && paramID_double == npos_double && paramID_long == npos_long) {
-            return file.listParameterMessages(param_key, paramID_string, level_key, level_type);
-        } else if (paramID_string.empty() && paramID_double != npos_double && paramID_long == npos_long) {
-            return file.listParameterMessages(param_key, paramID_double, level_key, level_type);
-        } else if (paramID_string.empty() && paramID_double == npos_double && paramID_long != npos_long) {
-            return file.listParameterMessages(param_key, paramID_long, level_key, level_type);
-        } else {
-            if (verbose) {
-                std::cout << "No parameter id provided for "+param_name << std::endl;
-            }
-            return {};
-        }   
-    }
-
-    // get all the indexing information for the parameter and find the messages containing the parameter information
-    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const std::string &param_name, const GRIBTable &parameter_table, long &level_no, const bool& verbose) {
-        // get the paramID
-        std::string paramID_string;
-        double paramID_double;
-        long paramID_long;
-        parameter_table.getParamId(param_name, paramID_string, paramID_double, paramID_long);
-
-        // get additional information from the parameter table
-        std::string param_key = parameter_table.getParamKey();
-        std::string level_key = parameter_table.getLevelKey();
-        level_no = parameter_table.getLevelNo(param_name);
-        std::string level_type = parameter_table.getLevelType(param_name);
-        // check type of level and where it is lost
-        return findMessages(file, param_key, level_key, level_type, paramID_string, paramID_double, paramID_long, verbose, param_name);
-    }
-    
-    // wrapper to be able to use it with MeteoGrids::Parameters
-    static std::vector<CodesHandlePtr> extractParameterInfoAndFindMessages(GRIBFile &file, const MeteoGrids::Parameters &parameter, const GRIBTable &parameter_table, long &level_no, const bool& verbose) {
-        std::string param_name = MeteoGrids::getParameterName(parameter);
-        return extractParameterInfoAndFindMessages(file, param_name, parameter_table, level_no, verbose);
-    };
-
 
     // ---------------------------- DIGITAL ELEVATION MODEL -----------------------------
     // Read a DEM from a file
@@ -514,6 +515,7 @@ namespace mio {
     void GRIBIO::processSingleMessage(Grid2DObject &dem_out, GRIBFile &dem_file, const GRIBTable &dem_table, const MeteoGrids::Parameters &parameter) {
         long level_no;
         std::vector<CodesHandlePtr> messages = extractParameterInfoAndFindMessages(dem_file, parameter, dem_table, level_no, verbose);
+
 
         if (messages.empty()) {
             throw IOException("No messages containing DEM information found." AT);

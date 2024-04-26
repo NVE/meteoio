@@ -183,9 +183,10 @@ namespace mio {
             int err = 0;
             std::vector<CodesHandlePtr> handles;
             while ((h = codes_handle_new_from_file(0, in_file, product, &err)) != nullptr) {
-                if (!h)
+                if (!h) {
                     fclose(in_file);
                     throw IOException("Unable to create handle from file", AT);
+                }
                 if (err != 0) {
                     codes_handle_delete(h);
                     fclose(in_file);
