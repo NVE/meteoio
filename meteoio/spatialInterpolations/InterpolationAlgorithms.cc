@@ -296,6 +296,8 @@ std::string InterpolationAlgorithm::getInfo() const
 * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
 * the fractional lapse from the data is made. The lapse rate that might be reported to the user will be computed as {data average}*{user-defined rate}
 * and is therefore NOT directly the user-defined lapse rate.
+*  - TREND_MIN: set the minimum allowed value of the trend (optional). When the computed trend is below this value, it is fixed at this value;
+*  - TREND_MAX: set the maximum allowed value of the trend (optional). When the computed trend is above this value, it is fixed at this value;
 *  - TREND_MIN_ALT: all points at elevations less than this will be detrended/retrended as if at this provided elevation (optional);
 *  - TREND_MAX_ALT: all points at elevations more than this will be detrended/retrended as if at this provided elevation (optional);
 *
@@ -304,8 +306,8 @@ std::string InterpolationAlgorithm::getInfo() const
 * @param[in] i_param the meteorological parameter that is handled, for user-friendly error messages
 */
 Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& algo, const std::string& i_param)
-          : multi_trend(), trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min_alt(-1e12), trend_max_alt(1e12),
-          frac(false), soft(false), multilinear(false)
+          : multi_trend(), trend_model(), param(i_param), user_lapse(IOUtils::nodata), trend_min(IOUtils::nodata), trend_max(IOUtils::nodata),
+          trend_min_alt(-1e12), trend_max_alt(1e12), frac(false), soft(false), multilinear(false)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -315,6 +317,10 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
 			IOUtils::parseArg(vecArgs[ii], where, frac);
 		} else if (vecArgs[ii].first=="SOFT") {
 			IOUtils::parseArg(vecArgs[ii], where, soft);
+		} else if (vecArgs[ii].first=="TREND_MIN") {
+			IOUtils::parseArg(vecArgs[ii], where, trend_min);
+		} else if (vecArgs[ii].first=="TREND_MAX") {
+			IOUtils::parseArg(vecArgs[ii], where, trend_max);
 		} else if (vecArgs[ii].first=="TREND_MIN_ALT") {
 			IOUtils::parseArg(vecArgs[ii], where, trend_min_alt);
 		} else if (vecArgs[ii].first=="TREND_MAX_ALT") {
@@ -327,6 +333,7 @@ Trend::Trend(const std::vector< std::pair<std::string, std::string> >& vecArgs, 
 	if (frac && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a lapse rate when using FRAC for "+where, AT);
 	if (soft && user_lapse==IOUtils::nodata) throw InvalidArgumentException("Please provide a fallback lapse rate when using SOFT for "+where, AT);
 	if (soft && frac) throw InvalidArgumentException("It is not possible to use SOFT and FRAC at the same time for "+where, AT);
+	if (trend_min != IOUtils::nodata && trend_max != IOUtils::nodata && trend_max < trend_min) throw InvalidArgumentException("TREND_MAX cannot be smaller than TREND_MIN ("+where+")", AT);
 }
 
 std::vector<double> Trend::getStationAltitudes(const std::vector<StationData>& vecMeta)
@@ -480,6 +487,17 @@ void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::v
 	if (user_lapse==IOUtils::nodata) {
 		trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 		status = trend_model.fit();
+		const double tmp_trend = trend_model(1.) - trend_model(0.);	// Query for trend
+		if (trend_min != IOUtils::nodata && tmp_trend < trend_min) {
+			trend_model.setLapseRate(trend_min);
+			status = trend_model.fit();
+			trend_model.setInfo(trend_model.getInfo() + " (trend: " + std::to_string(tmp_trend) + " is below TREND_MIN, now fixed at: " + std::to_string(trend_min) + ")");
+		}
+		if (trend_max != IOUtils::nodata && tmp_trend > trend_max) {
+			trend_model.setLapseRate(trend_max);
+			status = trend_model.fit();
+			trend_model.setInfo(trend_model.getInfo() + " (trend: " + std::to_string(tmp_trend) + " is above TREND_MAX, now fixed at: " + std::to_string(trend_max) + ")");
+		}
 	} else {
 		if (soft) {
 			trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
@@ -488,6 +506,19 @@ void Trend::initTrendModel(const std::vector<double>& vecAltitudes, const std::v
 				trend_model.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 				trend_model.setLapseRate(user_lapse);
 				status = trend_model.fit();
+			} else {
+				const double tmp_trend = trend_model(1.) - trend_model(0.);	// Query for trend
+				if (trend_min != IOUtils::nodata && tmp_trend < trend_min) {
+					trend_model.setLapseRate(trend_min);
+					status = trend_model.fit();
+					trend_model.setInfo(trend_model.getInfo() + " (trend: " + std::to_string(tmp_trend) + " is below TREND_MIN, now fixed at: " + std::to_string(trend_min) + ")");
+				}
+				if (trend_max != IOUtils::nodata && tmp_trend > trend_max) {
+					trend_model.setLapseRate(trend_max);
+					status = trend_model.fit();
+					trend_model.setInfo(trend_model.getInfo() + " (trend: " + std::to_string(tmp_trend) + " is above TREND_MAX, now fixed at: " + std::to_string(trend_max) + ")");
+				}
+
 			}
 		} else {
 			if (frac) { //forced FRAC

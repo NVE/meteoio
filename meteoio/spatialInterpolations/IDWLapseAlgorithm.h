@@ -42,6 +42,8 @@ namespace mio {
  * TA::algorithms      = IDW_LAPSE
  * TA::idw_lapse::soft = true
  * TA::idw_lapse::rate = -0.008
+ * TA::idw_lapse::trend_max = -0.006    # Wet adiabatic lapse rate
+ * TA::idw_lapse::trend_min = -0.010    # Dry adiabatic lapse rate
  * @endcode
  */
 class IDWLapseAlgorithm : public InterpolationAlgorithm {
