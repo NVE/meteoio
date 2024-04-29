@@ -61,6 +61,7 @@ namespace mio {
         void unpackMessage(CodesHandlePtr &m);
 
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
+        std::string getSubsetPrefix(const size_t &subsetNumber);
         Date getMessageDateBUFR(CodesHandlePtr &h, const size_t& subsetNumber, const double &tz_in = 0);
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique);
@@ -74,7 +75,7 @@ namespace mio {
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, int &param_value);
         void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
-        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value);
+        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t& subset_number = -1);
 
         void setMissingValue(CodesHandlePtr &message, double missingValue);
 
@@ -88,11 +89,13 @@ namespace mio {
 
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
-        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value) {
+        // -1 to indicate that the subset number is not used
+        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t &subset_number = -1) {
+            std::string subset_prefix = getSubsetPrefix(subset_number);
             T tmp = param_value;
             for (const auto &paramName : paramNames) {
                 try {
-                    getParameter(h, paramName, param_value);
+                    getParameter(h, subset_prefix + paramName, param_value);
                 } catch (const IOException &e) {
                     continue;
                 }

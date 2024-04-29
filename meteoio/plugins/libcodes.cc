@@ -138,11 +138,19 @@ namespace mio {
             if (err != 0) {
                 throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
             }
+            if (parameterValue == CODES_MISSING_DOUBLE) {
+                std::cout << "Parameter " << parameterName << " is missing\n";
+                parameterValue = IOUtils::nodata;
+            }
         }
         void getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue) {
             int err = codes_get_long(h.get(), parameterName.c_str(), &parameterValue);
             if (err != 0) {
                 throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
+            if (parameterValue == CODES_MISSING_LONG) {
+                std::cout << "Parameter " << parameterName << " is missing\n";
+                parameterValue = IOUtils::nodata;
             }
         }
         // casts long to int
@@ -151,6 +159,10 @@ namespace mio {
             int err = codes_get_long(h.get(), parameterName.c_str(), &tmp);
             if (err != 0) {
                 throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            }
+            if (tmp == CODES_MISSING_LONG) {
+                std::cout << "Parameter " << parameterName << " is missing\n";
+                parameterValue = IOUtils::nodata;
             }
             parameterValue = static_cast<int>(tmp);
         }
@@ -218,13 +230,28 @@ namespace mio {
             return base;
         }
 
+        /**
+         * Returns either an empty string or a prefix to index the subset in BUFR messages.
+         * As /subsetNumber=id/ where a key can follow. If no subset is present, an empty string is returned.
+         *
+         * @param subsetNumber The subset number.
+         * @return The subset prefix as a string.
+         */
+        std::string getSubsetPrefix(const size_t& subsetNumber) {
+            if (subsetNumber > 1) {
+                return "/subsetNumber=" + std::to_string(subsetNumber) + "/";
+            }
+            return "";
+        }
+
         // assumes UTC 0, need to convert to local time after
         Date getMessageDateBUFR(CodesHandlePtr &h, const size_t& subsetNumber, const double &tz_in){
+            std::string subset_prefix = getSubsetPrefix(subsetNumber);
             std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute", "second"};
             std::vector<int> values(parameters.size(), -1);
 
             for (size_t i = 0; i < parameters.size(); ++i) {
-                getParameter(h, parameters[i], values[i]);
+                getParameter(h, subset_prefix + parameters[i], values[i]);
             }
 
             if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1) return Date();

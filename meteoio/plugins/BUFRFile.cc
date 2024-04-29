@@ -44,8 +44,8 @@ namespace mio {
         std::vector<std::string> id_keys = {"stationNumber", "wigosIdentifierSeries", "shortStationName"};
         std::vector<std::string> name_keys = {"stationOrSiteName", "longStationName"};
         std::string stationID, stationName;
-        getParameter(h, id_keys, stationID);
-        getParameter(h, name_keys, stationName);
+        getParameter(h, id_keys, stationID, subsetNumber);
+        getParameter(h, name_keys, stationName, subsetNumber);
 
         if (stationID.empty()) {
             if (stationName.empty()) {
@@ -61,20 +61,21 @@ namespace mio {
 
     // Read all the necessary metadata from a BUFR file
     static StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string &error, const size_t &subsetNumber) {
+        std::string subset_prefix = getSubsetPrefix(subsetNumber);
         StationData stationData;
 
         double latitude, longitude, altitude;
-        getParameter(h, "latitude", latitude);
-        getParameter(h, "longitude", longitude);
+        getParameter(h, subset_prefix + "latitude", latitude);
+        getParameter(h, subset_prefix + "longitude", longitude);
 
         std::vector<std::string> height_keys = {"heightOfStation", "height", "elevation"};
-        getParameter(h, height_keys, altitude);
+        getParameter(h, height_keys, altitude, subsetNumber);
 
         std::string stationID, stationName;
         getStationIdfromMessage(h, stationID, stationName, subsetNumber);
 
         long ref_flag = 999;
-        getParameter(h, "coordinateReferenceSystem", ref_flag);
+        getParameter(h, subset_prefix + "coordinateReferenceSystem", ref_flag);
         Coords position;
 
         if (ref_flag == 999 && ref_coords.empty()) {
@@ -107,17 +108,18 @@ namespace mio {
     };
 
     static void fillFromMessage(MeteoData &md, CodesHandlePtr &message, const std::vector<std::string> &additional_params, const size_t &subsetNumber) {
+        std::string subset_prefix = getSubsetPrefix(subsetNumber);
         // fill the MeteoData object with data from the message and additional_params
         for (size_t id = 0; id < md.getNrOfParameters(); id++) {
             std::string param_name = md.getParameterName(id);
-            getParameter(message, BUFR_PARAMETER.at(param_name), md(id));
+            getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id));
             if (param_name == "TAU_CLD") {
                 md(id) = md(id) / 100.0;
             }
         }
         for (const auto &params : additional_params) {
             double value = IOUtils::nodata;
-            getParameter(message, params, value);
+            getParameter(message, subset_prefix + params, value);
             size_t param_id = md.addParameter(params);
             md(param_id) = value;
         }

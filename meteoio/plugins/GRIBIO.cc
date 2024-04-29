@@ -137,8 +137,8 @@ namespace mio {
     const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
     // ----------------------------- INITIALIZE -----------------------------
-    GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(),
-                                                    meteo_pattern(), grid2d_ext(), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
+    GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(default_extension),
+                                                    meteo_pattern(), grid2d_ext(default_extension), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
                                                     bearing_offset(IOUtils::nodata), latitudeOfNorthernPole(), longitudeOfNorthernPole(), llcorner_initialized(false), llcorner(), 
                                                     cellsize(), factor_x(), factor_y(), grid_initialized(false), meteo_initialized(false), parameter_table(), 
                                                     cache_meteo(), cache_grid2d(), vecPts() {
@@ -146,8 +146,8 @@ namespace mio {
         initialize();
     }
 
-    GRIBIO::GRIBIO(const Config &cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(),
-                                                    meteo_pattern(), grid2d_ext(), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
+    GRIBIO::GRIBIO(const Config &cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(default_extension),
+                                                    meteo_pattern(), grid2d_ext(default_extension), grid_2d_pattern(), recursive_search(false), verbose(false), update_dem(false), 
                                                     bearing_offset(IOUtils::nodata), latitudeOfNorthernPole(), longitudeOfNorthernPole(), llcorner_initialized(false), llcorner(), 
                                                     cellsize(), factor_x(), factor_y(), grid_initialized(false), meteo_initialized(false), parameter_table(), 
                                                     cache_meteo(), cache_grid2d(), vecPts() {

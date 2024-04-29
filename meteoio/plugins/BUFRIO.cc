@@ -62,11 +62,16 @@ void BUFRIO::parseInputSection() {
         std::vector<std::string> vecFilenames;
         cfg.getValues("STATION", "INPUT", vecFilenames);
 
+		std::string bufr_ext = dflt_extension_BUFR;
+		cfg.getValue("BUFREXT", "Input", bufr_ext, IOUtils::nothrow);
+		if (bufr_ext == "none")
+			bufr_ext.clear();
+
 		cfg.getValue("ADDITIONAL_PARAMS", "INPUT", additional_params, IOUtils::nothrow);
 
 
         if (vecFilenames.empty())
-            scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_BUFR);
+            scanMeteoPath(cfg, inpath, vecFilenames, bufr_ext);
 
         const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_BUFR);
 		for (const auto &filename : all_files_and_paths) {
