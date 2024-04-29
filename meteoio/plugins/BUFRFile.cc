@@ -29,13 +29,13 @@ namespace mio {
 
     using namespace codes;
     // initialize start_date very low, and end_date very high
-    BUFRFile::BUFRFile(const std::string &in_filename, const std::string &ref_coords)
-        : filename(in_filename), meta_data(), start_date(), end_date(), tz(), isMeteoTimeseries(false), isProfile(false), subset_numbers(), in_file(fopen(filename.c_str(), "r")), station_ids_in_file()  {
-        if (!in_file) {
-            throw AccessException("Could not open file " + filename);
-        };
+    BUFRFile::BUFRFile(const std::string &in_filename, const std::string &ref_coords, bool verbose_in, double tz_in)
+        : filename(in_filename), meta_data(), station_timezones(), start_date(), end_date(), default_timezone(tz_in), isMeteoTimeseries(false), isProfile(false), subset_numbers(), station_ids_in_file(), verbose(verbose_in)  {
 
         readMetaData(ref_coords);
+        if (default_timezone == IOUtils::nodata) {
+            throw IOException("Default timezone cannot be nodata", AT);
+        }
     };
 
 
@@ -59,8 +59,9 @@ namespace mio {
         return;
     };
 
-    // Read all the necessary metadata from a BUFR file
-    static StationData getStationDataBUFR(CodesHandlePtr &h, const std::string &ref_coords, std::string &error, const size_t &subsetNumber) {
+    // Read all the necessary metadata from a BUFR file, returns timezone if possible
+    static StationData getStationDataBUFR(CodesHandlePtr &h, double& timezone,const std::string &ref_coords, const size_t &subsetNumber, std::string &info_msg) {
+        std::string error;
         std::string subset_prefix = getSubsetPrefix(subsetNumber);
         StationData stationData;
 
@@ -68,54 +69,76 @@ namespace mio {
         getParameter(h, subset_prefix + "latitude", latitude);
         getParameter(h, subset_prefix + "longitude", longitude);
 
-        std::vector<std::string> height_keys = {"heightOfStation", "height", "elevation"};
-        getParameter(h, height_keys, altitude, subsetNumber);
+        std::vector<std::string> height_keys = {"heightOfStation", "height", "elevation", "heightOfStationGroundAboveMeanSeaLevel"};
+        bool success = getParameter(h, height_keys, altitude, subsetNumber);
+        if (!success) {
+            std::cerr << "No altitude for station found in BUFR file" << std::endl;
+            altitude = IOUtils::nodata;
+        }
+
 
         std::string stationID, stationName;
         getStationIdfromMessage(h, stationID, stationName, subsetNumber);
 
-        long ref_flag = 999;
-        getParameter(h, subset_prefix + "coordinateReferenceSystem", ref_flag);
+        long ref_flag;
+        bool found_ref = getParameter(h, subset_prefix + "coordinateReferenceSystem", ref_flag, IOUtils::nothrow);
+        if (!found_ref) { // weird behaviour where value is changed to random values if not found
+            ref_flag = 999;
+        }
         Coords position;
 
-        if (ref_flag == 999 && ref_coords.empty()) {
-            error = "No reference coordinates found in BUFR file and none provided in the configuration";
-            return stationData;
-        }
-
-        if (ref_flag == 65535) {
+        if (ref_flag == 999 || ref_flag == 65535) {
             if (ref_coords.empty()) {
-                error = "Missing reference coordinates in BUFR file, and none provided in configuration";
-                return stationData;
+                error = (ref_flag == 999) ? "No reference coordinates found in BUFR file and none provided in the configuration"
+                                          : "Missing reference coordinates in BUFR file, and none provided in configuration";
+                throw InvalidFormatException(error, AT);
             } else {
                 Coords ref_coords_obj(ref_coords);
                 ref_coords_obj.setLatLon(latitude, longitude, altitude);
                 position = ref_coords_obj;
+                info_msg = (ref_flag == 999) ? "Using reference coordinates from configuration. Could not find any in BUFR file."
+                                            : "Using reference coordinates from configuration. Missing coordinates reference in file";
             }
-        } else {
-            if (ref_flag > 3) {
-                std::ostringstream ss;
-                ss << "Unsuppported reference flag " << ref_flag << " in BUFR file";
-                throw InvalidFormatException(ss.str(), AT);
-            } else {
-                position.setEPSG(FLAG_TO_EPSG[ref_flag]);
-                position.setPoint(latitude, longitude, altitude);
-            }
-        }
+        } else if (ref_flag > 3) {
+            std::ostringstream ss;
+            ss << "Unsuppported reference flag " << ref_flag << " in BUFR file";
+            throw InvalidFormatException(ss.str(), AT);
+        } else if (ref_flag <= 3) {
+            info_msg = "Using coordinates reference from BUFR file";
+            position.setEPSG(FLAG_TO_EPSG[ref_flag]);
+            position.setPoint(latitude, longitude, altitude);
+        } 
+
 
         stationData.setStationData(position, stationID, stationName);
+
+        bool hasTz = getParameter(h, subset_prefix + "timeDifferenceUtcLmt", timezone, IOUtils::nothrow);
+        if (!hasTz) {
+            timezone = IOUtils::nodata; // default to UTC
+        } else {
+            timezone /= 60.0; // convert to hours
+        }
         return stationData;
     };
 
-    static void fillFromMessage(MeteoData &md, CodesHandlePtr &message, const std::vector<std::string> &additional_params, const size_t &subsetNumber) {
+    static std::vector<std::string> fillFromMessage(MeteoData &md, CodesHandlePtr &message, const std::vector<std::string> &additional_params, const size_t &subsetNumber) {
         std::string subset_prefix = getSubsetPrefix(subsetNumber);
         // fill the MeteoData object with data from the message and additional_params
+        std::vector<std::string> param_names_found;
         for (size_t id = 0; id < md.getNrOfParameters(); id++) {
             std::string param_name = md.getParameterName(id);
-            getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id));
-            if (param_name == "TAU_CLD") {
+            bool success = getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id), IOUtils::nothrow);
+            if (!success) {
+                md(id) = IOUtils::nodata;
+            }
+            if (md(id) != IOUtils::nodata) {
+                param_names_found.push_back(param_name);
+            }
+            if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata) {
                 md(id) = md(id) / 100.0;
             }
+            if (param_name == "TA") 
+                md(id) = 273.15;
         }
         for (const auto &params : additional_params) {
             double value = IOUtils::nodata;
@@ -123,20 +146,21 @@ namespace mio {
             size_t param_id = md.addParameter(params);
             md(param_id) = value;
         }
+
+        return param_names_found;
     };
 
     static bool areMultipleSubsetsInMessage(CodesHandlePtr &h, double &num_subsets) {
         getParameter(h, "numberOfSubsets", num_subsets);
-        return num_subsets > 1;
+        return num_subsets > 0;
     };
 
     // ------------------ GET ALL STATION DATA ------------------
     void BUFRFile::readMetaData(const std::string &ref_coords) {
-        std::vector<CodesHandlePtr> messages = getMessages(in_file.get(), PRODUCT_BUFR);
+        std::vector<CodesHandlePtr> messages = getMessages(filename, PRODUCT_BUFR);
         const double NO_SUBSETS_FOUND = -1;
         size_t message_counter = 1;
         std::map<std::string, std::set<Date>> station_dates;
-
         for (auto &message : messages) {
             double num_subsets = getNumSubsets(message, NO_SUBSETS_FOUND);
             subset_numbers.push_back(static_cast<size_t>(num_subsets));
@@ -147,23 +171,39 @@ namespace mio {
             message_counter++;
         }
         if (meta_data.empty()) {
-            throw IOException("No valid stations found in file " + filename);
+            throw IOException("No valid stations found in file " + filename, AT);
         }
-        tz = IOUtils::nodata; // TODO: find timezone from location
+
         isMeteoTimeseries = true;
     }
 
     // ------------------ STATION HELPERS ------------------
     double BUFRFile::getNumSubsets(CodesHandlePtr &message, double default_value) {
         bool hasMultipleSubsets = areMultipleSubsetsInMessage(message, default_value);
-        return hasMultipleSubsets ? default_value : 1;
+        return hasMultipleSubsets ? default_value : 0;
     }
 
     void BUFRFile::processSubsets(CodesHandlePtr &message, const std::string &ref_coords, const size_t& num_subsets, std::map<std::string, std::set<Date>> &station_dates) {
-        std::string error_msg;
-        for (size_t sb_id = 0; sb_id < num_subsets; sb_id++) {
-            StationData new_meta = getStationDataBUFR(message, ref_coords, error_msg, sb_id);
-            Date new_date = getMessageDateBUFR(message, sb_id, tz);
+        std::string info_msg;
+        bool warned_tz = false;
+        for (size_t sb_id = 1; sb_id <= num_subsets; sb_id++) {
+            std::string new_info;
+            double tz_for_station;
+            StationData new_meta = getStationDataBUFR(message, tz_for_station,ref_coords, sb_id, new_info);
+            if (!info_msg.empty() && verbose && new_info != info_msg){
+                std::cout << new_info << std::endl;
+                info_msg = new_info;
+            }
+
+            if (tz_for_station == IOUtils::nodata) {
+                if (!warned_tz) {
+                    std::cerr << "No timezone found for station in file " << filename << ". Using User provided Timezone: " << default_timezone <<" (default: GMT+0)" << std::endl;
+                    warned_tz = true;
+                }
+                tz_for_station = default_timezone;
+            }
+            
+            Date new_date = getMessageDateBUFR(message, sb_id, tz_for_station);
             std::string station_id = new_meta.getStationID();
 
             if (isNewStation(station_id)) {
@@ -171,14 +211,13 @@ namespace mio {
             } else {
                 processExistingStation(station_id, new_meta, new_date, station_dates);
             }
-
             updateDateRange(new_date);
         }
     }
 
     void BUFRFile::processNewStation(const std::string &station_id, const StationData &new_meta, const Date &new_date, std::map<std::string, std::set<Date>> &station_dates) {
         if (!new_meta.isValid())
-            throw IOException("No valid station metadata for station " + station_id + " file " + filename);
+            throw IOException("No valid station metadata for station " + station_id + " file " + filename, AT);
         station_ids_in_file.push_back(station_id);
         meta_data[station_id] = new_meta;
 
@@ -186,6 +225,7 @@ namespace mio {
         std::set<Date> dates;
         dates.insert(new_date);
         station_dates[station_id] = dates;
+        station_timezones[station_id] = new_date.getTimeZone(); 
     }
 
     void BUFRFile::processExistingStation(const std::string &station_id, const StationData &new_meta, const Date &new_date, std::map<std::string, std::set<Date>> &station_dates) {
@@ -202,12 +242,8 @@ namespace mio {
     }
 
     void BUFRFile::updateDateRange(const Date &new_date) {
-        if (new_date < start_date) {
-            start_date = new_date;
-        };
-        if (new_date > end_date) {
-            end_date = new_date;
-        };
+        start_date.isUndef() ? start_date = new_date : start_date = std::min(start_date, new_date);
+        end_date.isUndef() ? end_date = new_date : end_date = std::max(end_date, new_date);
     }
 
     // ------------------ READ DATA ------------------
@@ -215,10 +251,11 @@ namespace mio {
         // a bufr file can contain multiple messages, each message can contain multiple subsets
         // the order of where stations are stored at what date is quite arbitrary, so we need to map the station ids to the correct index in vecMeteo
         // as well as keeping track between calls, what station ids we already have
-        auto messages = getMessages(in_file.get(), PRODUCT_BUFR);
+        auto messages = getMessages(filename, PRODUCT_BUFR);
         updateStationIdsMapping(vecMeteo, station_ids_mapping);
 
         for (size_t msg_id = 0; msg_id < messages.size(); msg_id++) {
+            unpackMessage(messages[msg_id]);
             processMessage(vecMeteo, station_ids_mapping, additional_params, messages[msg_id], msg_id);
         }
     }
@@ -236,17 +273,28 @@ namespace mio {
 
     void BUFRFile::processMessage(std::vector<METEO_SET> &vecMeteo, std::map<std::string, size_t>& station_ids_mapping, const std::vector<std::string> &additional_params, CodesHandlePtr &message, size_t msg_id) {
         // TODO: if we need speedup cache the date and meta data (station id) for each message and subset
-        for (size_t sub_id = 0; sub_id < subset_numbers[msg_id]; sub_id++) {
+        std::set<std::string> param_names_in_file;
+        for (size_t sub_id = 1; sub_id <= subset_numbers[msg_id]; sub_id++) {
             std::string station_id, stationName;
             getStationIdfromMessage(message, station_id, stationName, sub_id);
             size_t index_in_vecMeteo = station_ids_mapping[station_id];
             
-            Date date = getMessageDateBUFR(message, sub_id,tz);
+            Date date = getMessageDateBUFR(message, sub_id,station_timezones[station_id]);
             MeteoData md;
             md.setDate(date);
             md.meta = meta_data[station_id];
-            fillFromMessage(md, message, additional_params, sub_id);
+            std::vector<std::string> found_params = fillFromMessage(md, message, additional_params, sub_id);
+            if (verbose) {
+                param_names_in_file.insert(found_params.begin(), found_params.end());
+            }
             vecMeteo[index_in_vecMeteo].push_back(md);
+        }
+        if (verbose) {
+            std::cout << "Found parameters in file " << filename << ": ";
+            for (const auto &param : param_names_in_file) {
+                std::cout << param << " ";
+            }
+            std::cout << std::endl;
         }
     }
 } // namespace mio

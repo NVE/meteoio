@@ -69,20 +69,25 @@ void BUFRIO::parseInputSection() {
 
 		cfg.getValue("ADDITIONAL_PARAMS", "INPUT", additional_params, IOUtils::nothrow);
 
+		double fallback_tz = 0;
+		cfg.getValue("FALLBACKTZ", "Input", fallback_tz, IOUtils::nothrow);
+
+		bool verbose = false;
+		cfg.getValue("VERBOSE", "Input", verbose, IOUtils::nothrow);
 
         if (vecFilenames.empty())
             scanMeteoPath(cfg, inpath, vecFilenames, bufr_ext);
 
         const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_BUFR);
 		for (const auto &filename : all_files_and_paths) {
-			station_files.push_back(BUFRFile(filename, coordin));
+			station_files.push_back(BUFRFile(filename, coordin, verbose, fallback_tz));
 		}
 	}
 }
 
 
 void BUFRIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& vecvecMeteo)
+                             std::vector< std::vector<MeteoData>>& vecvecMeteo)
 {
 	vecvecMeteo.clear();
 	std::map<std::string, size_t> station_ids;

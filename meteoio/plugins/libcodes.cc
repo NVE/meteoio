@@ -55,7 +55,7 @@ namespace mio {
         // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER {
                 {"P","pressure"}, 
-                {"TA","airTemperature"}, // TODO: or is it airTemperatureAt2M	
+                {"TA","airTemperatureAt2M"}, // TODO: or is it airTemperatureAt2M	
                 {"RH","relativeHumidity"}, 
                 {"TSG","groundTemperature"}, 
                 {"TSS","snowTemperature"}, 
@@ -133,48 +133,66 @@ namespace mio {
 
         // ------------------- GETTERS -------------------
         // multiple overloads for different parameter types
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue) {
+        bool getParameter(CodesHandlePtr &h, const std::string& parameterName, double& parameterValue, const IOUtils::ThrowOptions& throwError) {
             int err = codes_get_double(h.get(), parameterName.c_str(), &parameterValue);
-            if (err != 0) {
-                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            if (err != 0 ) {
+                if (throwError == IOUtils::dothrow) {
+                    std::cout << "Error reading parameter " << parameterName << ": Errno " << err << "\n";
+                    CODES_CHECK(err, 0);
+                }
+                return false;
             }
             if (parameterValue == CODES_MISSING_DOUBLE) {
-                std::cout << "Parameter " << parameterName << " is missing\n";
                 parameterValue = IOUtils::nodata;
             }
+            return true;
         }
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue) {
+        bool getParameter(CodesHandlePtr &h, const std::string& parameterName, long& parameterValue, const IOUtils::ThrowOptions& throwError) {
             int err = codes_get_long(h.get(), parameterName.c_str(), &parameterValue);
-            if (err != 0) {
-                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            if (err != 0 ) {
+                if (throwError == IOUtils::dothrow) {
+                    std::cout << "Error reading parameter " << parameterName << ": Errno " << err << "\n";
+                    CODES_CHECK(err, 0);
+                }
+                return false;
             }
             if (parameterValue == CODES_MISSING_LONG) {
-                std::cout << "Parameter " << parameterName << " is missing\n";
                 parameterValue = IOUtils::nodata;
             }
+            return true;
         }
         // casts long to int
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, int& parameterValue) {
+        bool getParameter(CodesHandlePtr &h, const std::string& parameterName, int& parameterValue, const IOUtils::ThrowOptions& throwError) {
             long tmp;
             int err = codes_get_long(h.get(), parameterName.c_str(), &tmp);
-            if (err != 0) {
-                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            if (err != 0 ) {
+                if (throwError == IOUtils::dothrow) {
+                    std::cout << "Error reading parameter " << parameterName << ": Errno " << err << "\n";
+                    CODES_CHECK(err, 0);
+                }
+                return false;
             }
             if (tmp == CODES_MISSING_LONG) {
                 std::cout << "Parameter " << parameterName << " is missing\n";
                 parameterValue = IOUtils::nodata;
             }
             parameterValue = static_cast<int>(tmp);
+            return true;
         }
 
-        void getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue) {
+        bool getParameter(CodesHandlePtr &h, const std::string& parameterName, std::string& parameterValue, const IOUtils::ThrowOptions& throwError) {
             size_t len = 500;
             char name[500] = {'\0'};
             int err = codes_get_string(h.get(), parameterName.c_str(), name, &len);
-            if (err != 0) {
-                throw IOException("Error reading parameter " + parameterName + ": Errno " + std::to_string(err), AT);
+            if (err != 0 ) {
+                if (throwError == IOUtils::dothrow) {
+                    std::cout << "Error reading parameter " << parameterName << ": Errno " << err << "\n";
+                    CODES_CHECK(err, 0);
+                }
+                return false;
             }
             parameterValue = std::string(name);
+            return true;
         }
 
         // ------------------- MESSAGE HANDLING -------------------
@@ -183,13 +201,12 @@ namespace mio {
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product) {
             if (!FileUtils::fileExists(filename))
                 throw AccessException(filename, AT); // prevent invalid filenames
-            errno = 0;
+
             FILE *fp = fopen(filename.c_str(),"r");
-            
             return getMessages(fp, product);
         }
 
-        // get all messages from an openend file, closes the file as well
+        // wrapper that reads all messages from a file and returns them as a vector of handles, closes on crash
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product) {
             codes_handle *h = nullptr;
             int err = 0;
@@ -200,13 +217,13 @@ namespace mio {
                     throw IOException("Unable to create handle from file", AT);
                 }
                 if (err != 0) {
-                    codes_handle_delete(h);
                     fclose(in_file);
+                    CODES_CHECK(err, 0);
+                    codes_handle_delete(h);
                     throw IOException("Error reading message: Errno " + std::to_string(err), AT);
                 }
                 handles.push_back(makeUnique(h));
             }
-            fclose(in_file);
             return handles;
         }
 
@@ -238,7 +255,7 @@ namespace mio {
          * @return The subset prefix as a string.
          */
         std::string getSubsetPrefix(const size_t& subsetNumber) {
-            if (subsetNumber > 1) {
+            if (subsetNumber > 0) {
                 return "/subsetNumber=" + std::to_string(subsetNumber) + "/";
             }
             return "";
@@ -247,14 +264,21 @@ namespace mio {
         // assumes UTC 0, need to convert to local time after
         Date getMessageDateBUFR(CodesHandlePtr &h, const size_t& subsetNumber, const double &tz_in){
             std::string subset_prefix = getSubsetPrefix(subsetNumber);
-            std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute", "second"};
-            std::vector<int> values(parameters.size(), -1);
+            std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute"}; // second is optional
+            std::vector<int> values(6, -1); // year, month, day, hour, minute, second
 
             for (size_t i = 0; i < parameters.size(); ++i) {
                 getParameter(h, subset_prefix + parameters[i], values[i]);
             }
 
-            if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1) return Date();
+            int second;
+            bool success = getParameter(h, subset_prefix + "second", second, IOUtils::nothrow);
+            if (!success) {
+                second = -1; // second is optional, and if not present is set to weird number
+            }
+            values[5] = second;
+
+            if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1 || values[4] == -1) return Date();
             if (values[5] == -1) return Date(values[0], values[1], values[2], values[3], values[4], tz_in);
             
             Date base(values[0], values[1], values[2], values[3], values[4], values[5], tz_in);

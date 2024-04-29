@@ -31,7 +31,7 @@ using namespace codes;
 
 class BUFRFile {
     public:
-        BUFRFile(const std::string &filename, const std::string& ref_coords);
+        BUFRFile(const std::string &filename, const std::string& ref_coords, bool verbose = false, double default_timezone = IOUtils::nodata);
         
         void readMetaData(const std::string& ref_coords);
         // takes a map that contatins the bufr keys as keys, and names as values. Should map to itself, if no renaming is needed
@@ -45,18 +45,21 @@ class BUFRFile {
     private:
         std::string filename;
         std::map<std::string, StationData> meta_data;
+        std::map<std::string, double> station_timezones;
+
 
         Date start_date;
         Date end_date;
-        double tz;
+        double default_timezone;
 
         bool isMeteoTimeseries;
         bool isProfile;
         // for each message see if we need subset indexing
         std::vector<size_t> subset_numbers;
 
-        std::unique_ptr<FILE> in_file;
         std::vector<std::string> station_ids_in_file;
+
+        bool verbose;
 
         // HELPERS
         bool isNewStation(const std::string &station_id) { return station_ids_in_file.end() == std::find(station_ids_in_file.begin(), station_ids_in_file.end(), station_id); };

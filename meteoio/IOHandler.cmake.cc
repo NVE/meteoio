@@ -31,9 +31,10 @@
 #cmakedefine PLUGIN_ARGOSIO
 #cmakedefine PLUGIN_ARPSIO
 #cmakedefine PLUGIN_A3DIO
-#cmakedefine PLUGIN_DBO
+#cmakedefine PLUGIN_BUFRIO
 #cmakedefine PLUGIN_COSMOXMLIO
 #cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_DBO
 #cmakedefine PLUGIN_GEOTOPIO
 #cmakedefine PLUGIN_GOESIO
 #cmakedefine PLUGIN_GRASSIO
@@ -276,7 +277,10 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_CSVIO
 	if (plugin_name == "CSV") return new CsvIO(i_cfg);
 #endif
-	#ifdef PLUGIN_DBO
+#ifdef PLUGIN_BUFRIO
+	if (plugin_name == "BUFR") return new BUFRIO(i_cfg);
+#endif
+#ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(i_cfg);
 #endif
 #ifdef PLUGIN_GEOTOPIO

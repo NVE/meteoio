@@ -46,6 +46,7 @@ namespace mio {
         struct IndexDeleter {
             void operator()(codes_index *i) const { codes_index_delete(i); }
         };
+
         using CodesHandlePtr = std::unique_ptr<codes_handle, HandleDeleter>;
         using CodesIndexPtr = std::unique_ptr<codes_index, IndexDeleter>;
 
@@ -57,7 +58,7 @@ namespace mio {
 
         template <typename T> std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &param_key, const T &paramID, const std::string &level_key, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
-        std::vector<CodesHandlePtr> getMessages(FILE *in_file, ProductKind product = PRODUCT_GRIB);
+        std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product = PRODUCT_GRIB);
         void unpackMessage(CodesHandlePtr &m);
 
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in);
@@ -71,11 +72,11 @@ namespace mio {
         void getNearestValues_grib(CodesHandlePtr &h, const std::vector<double> &in_lats, const std::vector<double> &in_lons, std::vector<double> &out_lats, std::vector<double> &out_lons,
                                    std::vector<double> &distances, std::vector<double> &values, std::vector<int> &indexes);
 
-        void getParameter(CodesHandlePtr &h, const std::string &parameterName, double &param_value);
-        void getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value);
-        void getParameter(CodesHandlePtr &h, const std::string &parameterName, int &param_value);
-        void getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value);
-        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t& subset_number = -1);
+        bool getParameter(CodesHandlePtr &h, const std::string &parameterName, double &param_value, const IOUtils::ThrowOptions& throwError = IOUtils::dothrow);
+        bool getParameter(CodesHandlePtr &h, const std::string &parameterName, long &param_value, const IOUtils::ThrowOptions& throwError = IOUtils::dothrow);
+        bool getParameter(CodesHandlePtr &h, const std::string &parameterName, int &param_value, const IOUtils::ThrowOptions& throwError = IOUtils::dothrow);
+        bool getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value, const IOUtils::ThrowOptions& throwError = IOUtils::dothrow);
+        template <typename T> bool getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t& subset_number = -1);
 
         void setMissingValue(CodesHandlePtr &message, double missingValue);
 
@@ -90,20 +91,16 @@ namespace mio {
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
         // -1 to indicate that the subset number is not used
-        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t &subset_number) {
+        template <typename T> bool getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t &subset_number) {
             std::string subset_prefix = getSubsetPrefix(subset_number);
             T tmp = param_value;
             for (const auto &paramName : paramNames) {
-                try {
-                    getParameter(h, subset_prefix + paramName, param_value);
-                } catch (const IOException &e) {
-                    continue;
-                }
+                getParameter(h, subset_prefix + paramName, param_value, IOUtils::nothrow);
                 if (param_value != tmp) {
-                    return;
+                    return true;
                 }
             }
-            return;
+            return false;
         }
 
         template <typename T>
