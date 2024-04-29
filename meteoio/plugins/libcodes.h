@@ -90,7 +90,7 @@ namespace mio {
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
         // -1 to indicate that the subset number is not used
-        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t &subset_number = -1) {
+        template <typename T> void getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t &subset_number) {
             std::string subset_prefix = getSubsetPrefix(subset_number);
             T tmp = param_value;
             for (const auto &paramName : paramNames) {
