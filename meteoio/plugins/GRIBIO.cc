@@ -134,7 +134,6 @@ namespace mio {
 
     static const double plugin_nodata = IOUtils::nodata; // plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
     static const std::string default_extension = ".grib";
-    const std::string GRIBIO::default_table = "doc/resources/GRIB_param.tbl";
 
     // ----------------------------- INITIALIZE -----------------------------
     GRIBIO::GRIBIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), meteopath_in(), grid2dpath_in(), table_path(), meteo_ext(default_extension),
@@ -206,9 +205,10 @@ namespace mio {
 #ifdef DEBUG
             std::cerr << "No GRIB table specified, using default table" << std::endl;
 #endif
-            table_path = default_table;
+            parameter_table = GRIBTable();
+        } else {
+            parameter_table = GRIBTable(table_path);
         }
-        parameter_table = GRIBTable(table_path);
 #ifdef DEBUG
         parameter_table.printTable();
 #endif
@@ -453,6 +453,7 @@ namespace mio {
         double cntr_lat, cntr_lon; // geographic coordinates
         CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5 * (ll_latitude + ur_latitude), .5 * (ll_longitude + ur_longitude), cntr_lat, cntr_lon);
 
+
         double bearing;
         cellsize_x = CoordsAlgorithms::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
         cellsize_y = CoordsAlgorithms::VincentyDistance(ll_lat, cntr_lon, ur_lat, cntr_lon, bearing) / (double)Nj;
@@ -626,7 +627,7 @@ namespace mio {
                     vecvecMeteo.insert(vecvecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); // allocation for the vectors now that we know how many true stations we have
                     meta_ok = true;
                 }
-                
+
                 // create a vector of MeteoData objects for each station
                 std::vector<MeteoData> vecMeteoStations = createMeteoDataVector(stations, current_date);
                 const size_t npoints = vecMeteoStations.size();
@@ -712,6 +713,7 @@ namespace mio {
         for (size_t ii = 0; ii < npoints; ii++) {
             CoordsAlgorithms::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
         }
+
 
         // retrieve nearest points
         size_t n_lats = lats.size();

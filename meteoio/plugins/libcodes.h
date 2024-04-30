@@ -87,6 +87,9 @@ namespace mio {
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
         extern const std::vector<int> FLAG_TO_EPSG;
+        extern const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE;
+        extern const std::map<std::string, std::string> GRIB_DEFAULT_LEVELTYPE_TABLE;
+        extern const std::map<std::string, long> GRIB_DEFAULT_LEVELNO_TABLE;
 
         // ------------------------- TEMPLATE FUNCTIONS -------------------------
         // definition of the template functions
@@ -139,6 +142,6 @@ namespace mio {
             }
             return handles;
         }
-    }
+    };
 } // namespace mio
 #endif // LIBCODES_H

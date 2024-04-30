@@ -29,13 +29,21 @@ namespace mio {
     // ------------------------- GRIBTable -------------------------
 
     GRIBTable::GRIBTable()
-        : filename(), param_indexing(), level_indexing(), param_table(), param_table_double(), param_table_long(), level_type_table(), level_no_table(),
-          parameter_id_type(PARAM_TYPE::STRING), known_params() {
+        : filename(), param_indexing("paramId"), level_indexing("typeOfLevel"), param_table(), param_table_double(), param_table_long(GRIB_DEFAULT_PARAM_TABLE), level_type_table(GRIB_DEFAULT_LEVELTYPE_TABLE), level_no_table(GRIB_DEFAULT_LEVELNO_TABLE),
+          parameter_id_type(PARAM_TYPE::LONG), known_params() {
+        
+        // add the default parameters to the known parameters
+        for (auto &p : GRIB_DEFAULT_PARAM_TABLE) {
+            known_params.insert(p.first);
+        }
+
     }
+
+
 
     GRIBTable::GRIBTable(const std::string &in_filename)
         : filename(in_filename), param_indexing(), level_indexing(), param_table(), param_table_double(), param_table_long(), level_type_table(), level_no_table(),
-          parameter_id_type(PARAM_TYPE::STRING), known_params() {
+          parameter_id_type(PARAM_TYPE::LONG), known_params() {
         // Open the file
         init_known_params();
         readTable();

@@ -1,4 +1,4 @@
-# This is the default file that is used, to read GRIB files. To read parameters differently than specified here, 
+# This is the default setting that is used, to read GRIB files. To read parameters differently than specified here, 
 # just copy this file, and edit the respective part, and hint to it with the GRIB_TABLE ini-key.
 
 # Empty lines and lines starting with '#' or ' ' will be skipped.

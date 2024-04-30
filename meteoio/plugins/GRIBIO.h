@@ -87,7 +87,6 @@ class GRIBIO : public IOInterface {
 		bool readMeteoMeta(GRIBFile& file ,std::vector<Coords>& vecPoints, std::vector<StationData> &stations, std::vector<double> &lats, std::vector<double> &lons);
     	bool removeDuplicatePoints(std::vector<Coords> &vecPoints, std::vector<double> &lats, std::vector<double> &lons); // remove potential duplicates. Returns true if some have been removed
 
-		static const std::string default_table;
 };
 
 } //namespace
