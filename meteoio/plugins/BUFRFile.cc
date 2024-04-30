@@ -128,21 +128,24 @@ namespace mio {
         for (size_t id = 0; id < md.getNrOfParameters(); id++) {
             std::string param_name = md.getParameterName(id);
             bool success = getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id), IOUtils::nothrow);
-            if (!success) {
-                md(id) = IOUtils::nodata;
+            if (param_name == "TA" && !success) {
+                // airTemperatureAt2M is not defined, but maybe airTemperature is
+                success = getParameter(message, subset_prefix + "airTemperature", md(id), IOUtils::nothrow);
             }
-            if (md(id) != IOUtils::nodata) {
+
+            if (!success) 
+                md(id) = IOUtils::nodata;
+            else {
                 param_names_found.push_back(param_name);
             }
-            if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata) {
+            
+            if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata) { // convert to decimal, cannot be put in the success loop, as it might also be found but set as missing
                 md(id) = md(id) / 100.0;
             }
-            if (param_name == "TA") 
-                md(id) = 273.15;
         }
         for (const auto &params : additional_params) {
             double value = IOUtils::nodata;
-            getParameter(message, subset_prefix + params, value);
+            getParameter(message, subset_prefix + params, value); // should throw an error, as user defined parameters should be in the file
             size_t param_id = md.addParameter(params);
             md(param_id) = value;
         }

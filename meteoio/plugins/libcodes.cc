@@ -55,7 +55,7 @@ namespace mio {
         // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER {
                 {"P","pressure"}, 
-                {"TA","airTemperatureAt2M"}, // TODO: or is it airTemperatureAt2M	
+                {"TA","airTemperatureAt2M"}, // Can also be found as airTemperature under heightOfSensor(somthing like this) = 2
                 {"RH","relativeHumidity"}, 
                 {"TSG","groundTemperature"}, 
                 {"TSS","snowTemperature"}, 
