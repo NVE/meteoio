@@ -40,6 +40,7 @@ namespace mio {
 
 
     // ------------------ STATIC HELPERS ------------------
+    //--------- read the metadata
     static void getStationIdfromMessage(CodesHandlePtr &h, std::string &station_id, std::string &station_name, const size_t& subsetNumber) {
         std::vector<std::string> id_keys = {"stationNumber", "wigosIdentifierSeries", "shortStationName"};
         std::vector<std::string> name_keys = {"stationOrSiteName", "longStationName"};
@@ -59,13 +60,8 @@ namespace mio {
         return;
     };
 
-    // Read all the necessary metadata from a BUFR file, returns timezone if possible
-    static StationData getStationDataBUFR(CodesHandlePtr &h, double& timezone,const std::string &ref_coords, const size_t &subsetNumber, std::string &info_msg) {
-        std::string error;
+    static void getPosition(CodesHandlePtr &h, double &latitude, double &longitude, double &altitude, const double &subsetNumber) {
         std::string subset_prefix = getSubsetPrefix(subsetNumber);
-        StationData stationData;
-
-        double latitude, longitude, altitude;
         getParameter(h, subset_prefix + "latitude", latitude);
         getParameter(h, subset_prefix + "longitude", longitude);
 
@@ -75,22 +71,20 @@ namespace mio {
             std::cerr << "No altitude for station found in BUFR file" << std::endl;
             altitude = IOUtils::nodata;
         }
+    }
 
-
-        std::string stationID, stationName;
-        getStationIdfromMessage(h, stationID, stationName, subsetNumber);
-
+    static void handleReferenceCoordinates(CodesHandlePtr &h, Coords &position, const double& latitude, const double& longitude, const double& altitude,const std::string &subset_prefix, const std::string &ref_coords, std::string &info_msg) {
         long ref_flag;
         bool found_ref = getParameter(h, subset_prefix + "coordinateReferenceSystem", ref_flag, IOUtils::nothrow);
         if (!found_ref) { // weird behaviour where value is changed to random values if not found
             ref_flag = 999;
         }
-        Coords position;
 
+        // multiple possible ways to get the reference coordinates
         if (ref_flag == 999 || ref_flag == 65535) {
             if (ref_coords.empty()) {
-                error = (ref_flag == 999) ? "No reference coordinates found in BUFR file and none provided in the configuration"
-                                          : "Missing reference coordinates in BUFR file, and none provided in configuration";
+                std::string error = (ref_flag == 999) ? "No reference coordinates found in BUFR file and none provided in the configuration"
+                                                      : "Missing reference coordinates in BUFR file, and none provided in configuration";
                 throw InvalidFormatException(error, AT);
             } else {
                 Coords ref_coords_obj(ref_coords);
@@ -108,47 +102,85 @@ namespace mio {
             position.setEPSG(FLAG_TO_EPSG[ref_flag]);
             position.setPoint(latitude, longitude, altitude);
         } 
+    }
 
-
-        stationData.setStationData(position, stationID, stationName);
-
+    static void getTimezone(CodesHandlePtr &h, double &timezone, const std::string &subset_prefix) {
+        // get the timezone if available otherwise default to UTC
         bool hasTz = getParameter(h, subset_prefix + "timeDifferenceUtcLmt", timezone, IOUtils::nothrow);
         if (!hasTz) {
             timezone = IOUtils::nodata; // default to UTC
         } else {
             timezone /= 60.0; // convert to hours
         }
+    }
+
+    // !!!Read all the necessary metadata from a BUFR file, returns timezone if possible
+    static StationData getStationDataBUFR(CodesHandlePtr &h, double& timezone,const std::string &ref_coords, const size_t &subsetNumber, std::string &info_msg) {
+        std::string error;
+        std::string subset_prefix = getSubsetPrefix(subsetNumber);
+        StationData stationData;
+
+        // get the station ID and station name
+        std::string stationID, stationName;
+        getStationIdfromMessage(h, stationID, stationName, subsetNumber);
+
+
+        // get the position 
+        double latitude, longitude, altitude;
+        getPosition(h, latitude, longitude, altitude, subsetNumber);
+
+
+        Coords position;
+
+        handleReferenceCoordinates(h, position, latitude, longitude, altitude, subset_prefix, ref_coords, info_msg);
+
+        stationData.setStationData(position, stationID, stationName);
+
+        getTimezone(h, timezone, subset_prefix);
         return stationData;
     };
 
+
+    // -----------Read the date from a BUFR message
+    static void fillAdditionalParams(MeteoData &md, CodesHandlePtr &message, const std::vector<std::string> &additional_params, const std::string &subset_prefix) {
+        for (const auto &params : additional_params) {
+            double value = IOUtils::nodata;
+            getParameter(message, subset_prefix + params, value); // should throw an error, as user defined parameters should be in the file
+            
+            size_t param_id = md.addParameter(params);
+            md(param_id) = value;
+        }
+    };
+
+    static void handleSpecialCases(CodesHandlePtr &message, MeteoData &md, const std::string &subset_prefix, const std::string &param_name, bool& success, const size_t &id) {
+        // handle special cases, where the parameter name is not the same as in the MeteoData object
+        // e.g. airTemperatureAt2M is not defined, but maybe airTemperature is and conver TAU_CLD to decimal
+        if (param_name == "TA" && !success) 
+            success = getParameter(message, subset_prefix + "airTemperature", md(id), IOUtils::nothrow);
+        else if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata)
+            md(id) = md(id) / 100.0;
+    };
+
+    // !!!Read the date from a BUFR message, by looping through all meteodata parameters
     static std::vector<std::string> fillFromMessage(MeteoData &md, CodesHandlePtr &message, const std::vector<std::string> &additional_params, const size_t &subsetNumber) {
         std::string subset_prefix = getSubsetPrefix(subsetNumber);
         // fill the MeteoData object with data from the message and additional_params
         std::vector<std::string> param_names_found;
         for (size_t id = 0; id < md.getNrOfParameters(); id++) {
             std::string param_name = md.getParameterName(id);
+
             bool success = getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id), IOUtils::nothrow);
-            if (param_name == "TA" && !success) {
-                // airTemperatureAt2M is not defined, but maybe airTemperature is
-                success = getParameter(message, subset_prefix + "airTemperature", md(id), IOUtils::nothrow);
-            }
+            handleSpecialCases(message, md, subset_prefix, param_name, success, id);
 
             if (!success) 
                 md(id) = IOUtils::nodata;
             else {
                 param_names_found.push_back(param_name);
             }
-            
-            if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata) { // convert to decimal, cannot be put in the success loop, as it might also be found but set as missing
-                md(id) = md(id) / 100.0;
-            }
+
         }
-        for (const auto &params : additional_params) {
-            double value = IOUtils::nodata;
-            getParameter(message, subset_prefix + params, value); // should throw an error, as user defined parameters should be in the file
-            size_t param_id = md.addParameter(params);
-            md(param_id) = value;
-        }
+        
+        fillAdditionalParams(md, message, additional_params, subset_prefix);
 
         return param_names_found;
     };
@@ -160,6 +192,10 @@ namespace mio {
 
     // ------------------ GET ALL STATION DATA ------------------
     void BUFRFile::readMetaData(const std::string &ref_coords) {
+        // a bufr file can contain multiple messages, each message can contain multiple subsets
+        // the order of stations and parameters is arbitrary.
+        // So we go through all messages and its subsets to find all stations, and then check that there are no duplicate dates for any station 
+        // Also we check that for each station we have the necessary metadata, and that the metadata is consistent
         std::vector<CodesHandlePtr> messages = getMessages(filename, PRODUCT_BUFR);
         const double NO_SUBSETS_FOUND = -1;
         size_t message_counter = 1;

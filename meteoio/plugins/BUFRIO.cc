@@ -26,16 +26,43 @@ namespace mio {
 /**
  * @page bufrio BUFRIO
  * @section bufrio_format Format
- * *Put here the information about the standard format that is implemented*
- *
- * @section bufrio_units Units
- *
- *
+ * BUFR is a binary data format, that was introduced by the WMO to universally store meteorological observation data. It is very flexible and powerful, 
+ * but can be quite complex to handle. An introduction can be found at 	https://en.wikipedia.org/wiki/BUFR. 
+ * 
+ * A BUFR file can contain multiple messages, each of which can contain multiple subsets. Where the data is stored with its metadata and can be read by 
+ * its respective key. Here we use keys from the WMO element table 40 (https://confluence.ecmwf.int/display/ECC/WMO%3D40+element+table) to read the data.
+ * 
+ * To inspect your BUFR files we recommend using bufr tools: (https://confluence.ecmwf.int/display/ECC/BUFR+tools) or the 
+ * metview software (https://metview.readthedocs.io/en/latest/). These are provided by ECMWF and therefore use the same BUFR reading library (ecCodes) as MeteoIO.
+ * 
+ * Prior to reading the data a scan of the file is done, to find all stations in the file, together with their meta data, and if it is valid (we require position (lat,lon,alt) and station ID) 
+ * If no station ID but a station Name is found, we use this as station ID. Additionally we require unique timepoints per station.
+ * 
+ * So far only reading parameters known to MeteoIO is supported. And the BUFR file can not contain multiple datapoints for the same station and time. Such as
+ * for height profiles. I.e., we require only static station observations.
+ * @note If you require these functionality please reach out to us, so we can improve on this plugin.
+ * 
+ * It is not yet possible to write BUFR files with MeteoIO, but will soon be possible.
+ * 
  * @section bufrio_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - etc
+ * - METEOPATH: Path to the BUFR files
+ * - BUFREXT: Extension of the BUFR files (default: .bufr)
+ * - STATION#: File name per station
+ * - ADDITIONAL_PARAMS: Additional parameters to read from the BUFR file, as a comma separated list of WMO element table 40 keys
+ * - FALLBACKTZ: Fallback timezone in hours, if no timezone information is found in the BUFR file (default: GMT+0)
+ * - VERBOSE: Print additional information during reading (default: false)
+ * 
+ * @section bufrio_example Example
+ * @code
+ * METEO = BUFR
+ * METEOPATH = path/to/bufr/files
+ * BUFREXT = .bfr
+ * ADDITIONAL_PARAMS = airTemperature, dewPointTemperature
+ * STATION1 = example.bfr
+ * VERBOSE = TRUE
+ * @endcode
+ * 
  */
 using namespace PLUGIN;
 const double BUFRIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
