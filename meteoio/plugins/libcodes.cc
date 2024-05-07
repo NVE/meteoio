@@ -77,9 +77,9 @@ namespace mio {
         // ------------------- GRIB -------------------
         // TODO: Find out how to incorporate RSWR, PSUM_PH
         const long NOPARAMID = -1;
-        const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE{{"DEM", 129}, {"P", 134},       {"TA", 167},  {"TSS", 228},  {"TSG", 235},  {"RH", 157},        {"PSUM", 228},
-                                                                   {"HS", 3066}, {"RSNO", 33},     {"SWE", 141}, {"ISWR", 169}, {"ILWR", 175}, {"VW_MAX", 201187}, {"DW", 3031},
-                                                                   {"VW", 10},   {"TAU_CLD", 164}, {"ROT", 205}, {"ALB", 243},  {"SLOP", 163}, {"AZI", 162},       {"W", 135},
+        const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE{{"DEM", 129}, {"P", 134},       {"TA", 167},  {"TSS", 228},        {"TSG", 235},          {"RH", 157},        {"PSUM", 228},
+                                                                   {"HS", 3066}, {"RSNO", 33},     {"SWE", 141}, {"ISWR", 169},       {"ILWR", 175},         {"VW_MAX", 201187}, {"DW", 3031},
+                                                                   {"VW", 10},   {"TAU_CLD", 164}, {"ROT", 205}, {"ALB", 243},        {"SLOP", 163},         {"AZI", 162},       {"W", 135},
                                                                    {"V", 166},   {"U", 165},       {"TD", 3017}, {"RSWR", NOPARAMID}, {"PSUM_PH", NOPARAMID}};
 
         const std::map<std::string, std::string> GRIB_DEFAULT_LEVELTYPE_TABLE{{"DEM", "surface"},
@@ -106,12 +106,12 @@ namespace mio {
                                                                               {"V", "surface"},
                                                                               {"U", "surface"},
                                                                               {"TD", "heightAboveGround"},
-                                                                              {"RSWR", ""}, 
+                                                                              {"RSWR", ""},
                                                                               {"PSUM_PH", ""}};
 
-        const std::map<std::string, long> GRIB_DEFAULT_LEVELNO_TABLE{{"DEM", 0},  {"P", 0},    {"TA", 0},   {"TSS", 0},     {"TSG", 0}, {"RH", 2},  {"PSUM", 0},    {"HS", 3066}, {"RSNO", 0},
-                                                                     {"SWE", 0},  {"ISWR", 0}, {"ILWR", 0}, {"VW_MAX", 10}, {"DW", 10}, {"VW", 10}, {"TAU_CLD", 0}, {"ROT", 0},   {"ALB", 0},
-                                                                     {"SLOP", 0}, {"AZI", 0},  {"W", 10},   {"V", 0},       {"U", 0},   {"TD", 2},  {"RSWR", 0}, {"PSUM_PH", 0}};
+        const std::map<std::string, long> GRIB_DEFAULT_LEVELNO_TABLE{{"DEM", 0},  {"P", 0},    {"TA", 0},   {"TSS", 0},     {"TSG", 0}, {"RH", 2},  {"PSUM", 0},    {"HS", 3066},  {"RSNO", 0},
+                                                                     {"SWE", 0},  {"ISWR", 0}, {"ILWR", 0}, {"VW_MAX", 10}, {"DW", 10}, {"VW", 10}, {"TAU_CLD", 0}, {"ROT", 0},    {"ALB", 0},
+                                                                     {"SLOP", 0}, {"AZI", 0},  {"W", 10},   {"V", 0},       {"U", 0},   {"TD", 2},  {"RSWR", 0},    {"PSUM_PH", 0}};
 
         // ------------------- POINTER HANDLING -------------------
         CodesHandlePtr makeUnique(codes_handle *h) {
@@ -408,6 +408,50 @@ namespace mio {
         bool selectParameter(codes_index *raw, const std::string &param_key, const std::string &paramId) { return codes_index_select_string(raw, param_key.c_str(), paramId.c_str()) == 0; };
         bool selectParameter(codes_index *raw, const std::string &param_key, const double &paramId) { return codes_index_select_double(raw, param_key.c_str(), paramId) == 0; };
         bool selectParameter(codes_index *raw, const std::string &param_key, const long &paramId) { return codes_index_select_long(raw, param_key.c_str(), paramId) == 0; };
+
+        // ------------------- WRITE -------------------
+        void writeToFile(CodesHandlePtr &h, const std::string &filename) { codes_write_message(h.get(), filename.c_str(), "wb"); }
+
+        CodesHandlePtr createBUFRMessageFromSample() {
+            codes_handle *ibufr = codes_handle_new_from_samples(nullptr, "BUFR4");
+            codes_set_double(ibufr, "edition", 4);
+            codes_set_double(ibufr, "masterTableNumber", 0);
+            codes_set_double(ibufr, "masterTablesVersionNumber", 31);
+            codes_set_double(ibufr, "dataCategory", 0);
+            codes_set_double(ibufr, "dataSubCategory", 2);
+            codes_set_double(ibufr, "unexpandedDescriptors", 307092);
+            codes_set_double(ibufr, "compressedData", 0);
+
+            return makeUnique(ibufr);
+        }
+
+        void setTime(CodesHandlePtr& ibufr, const Date& date) {
+            int year, month, day, hour, minute, second;
+            date.getDate(year, month, day, hour, minute, second);
+            codes_set_long(ibufr.get(), "typicalYear", year);
+            codes_set_long(ibufr.get(), "year", year);
+            codes_set_long(ibufr.get(), "typicalMonth", month);
+            codes_set_long(ibufr.get(), "month", month);
+            codes_set_long(ibufr.get(), "typicalDay", day);
+            codes_set_long(ibufr.get(), "day", day);
+            codes_set_long(ibufr.get(), "typicalHour", hour);
+            codes_set_long(ibufr.get(), "hour", hour);
+            codes_set_long(ibufr.get(), "typicalMinute", minute);
+            codes_set_long(ibufr.get(), "minute", minute);
+            codes_set_long(ibufr.get(), "typicalSecond", second);
+            codes_set_long(ibufr.get(), "second", second);
+        }
+
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue) {
+            codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue);
+        }
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue) {
+            codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue);
+        }
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue) {
+            size_t len = parameterValue.size();
+            codes_set_string(ibufr.get(), parameterName.c_str(), parameterValue.c_str(), &len);
+        }
 
     } // namespace codes
 

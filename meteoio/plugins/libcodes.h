@@ -56,6 +56,7 @@ namespace mio {
         // ------------------------- FILE AND MESSAGE HANDLING -------------------------
         CodesIndexPtr indexFile(const std::string &filename, const std::vector<std::string> &index_keys, bool verbose);
 
+        // ------------------------- GETTERS -------------------------
         template <typename T> std::vector<CodesHandlePtr> getMessages(CodesIndexPtr &index, const std::string &param_key, const T &paramID, const std::string &level_key, const std::string &levelType);
         std::vector<CodesHandlePtr> getMessages(const std::string &filename, ProductKind product = PRODUCT_GRIB);
         std::vector<CodesHandlePtr> getMessages(FILE* in_file, ProductKind product = PRODUCT_GRIB);
@@ -78,11 +79,20 @@ namespace mio {
         bool getParameter(CodesHandlePtr &h, const std::string &parameterName, std::string &param_value, const IOUtils::ThrowOptions& throwError = IOUtils::dothrow);
         template <typename T> bool getParameter(CodesHandlePtr &h, const std::vector<std::string> &paramNames, T &param_value, const size_t& subset_number = -1);
 
+        // ------------------------- SETTERS -------------------------
         void setMissingValue(CodesHandlePtr &message, double missingValue);
 
         bool selectParameter(codes_index *raw, const std::string &param_key, const std::string &paramId);
         bool selectParameter(codes_index *raw, const std::string &param_key, const double &paramId);
         bool selectParameter(codes_index *raw, const std::string &param_key, const long &paramId);
+
+        // ------------------------- WRITE -------------------------
+        void writeToFile(CodesHandlePtr &h, const std::string &filename);
+        CodesHandlePtr createBUFRMessageFromSample();
+        void setTime(CodesHandlePtr& ibufr, const Date& date);
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue);
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue);
+        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue);
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
