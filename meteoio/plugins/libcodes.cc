@@ -25,6 +25,7 @@
 NOTES:
 - needs documentatino
 */
+#include <meteoio/FStream.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/plugins/libcodes.h>
 
@@ -69,6 +70,11 @@ namespace mio {
             {"TAU_CLD", "cloudCoverTotal	"},     // TODO: is in per_cent
             {"PSUM", "totalPrecipitationOrTotalWaterEquivalent	"},
             {"PSUM_PH", "precipitationType"} // should the type be mapped to the phase?
+        };
+
+        // an alternative mapping of BUFR parameters to MeteoIO parameters
+        const std::map<std::string, std::string> BUFR_PARAMETER_ALT { 
+            {"TA", "airTemperature"}
         };
 
         // flags for the possible reference systems are 0-4
@@ -410,22 +416,34 @@ namespace mio {
         bool selectParameter(codes_index *raw, const std::string &param_key, const long &paramId) { return codes_index_select_long(raw, param_key.c_str(), paramId) == 0; };
 
         // ------------------- WRITE -------------------
-        void writeToFile(CodesHandlePtr &h, const std::string &filename) { codes_write_message(h.get(), filename.c_str(), "wb"); }
+        void writeToFile(CodesHandlePtr &h, const std::string &filename) {
+            if (!FileUtils::fileExists(filename)) {
+                ofilestream ofs(filename);
+                ofs.close();
+            }
+            codes_write_message(h.get(), filename.c_str(), "a");
+        }
 
         CodesHandlePtr createBUFRMessageFromSample() {
-            codes_handle *ibufr = codes_handle_new_from_samples(nullptr, "BUFR4");
-            codes_set_double(ibufr, "edition", 4);
-            codes_set_double(ibufr, "masterTableNumber", 0);
-            codes_set_double(ibufr, "masterTablesVersionNumber", 31);
-            codes_set_double(ibufr, "dataCategory", 0);
-            codes_set_double(ibufr, "dataSubCategory", 2);
-            codes_set_double(ibufr, "unexpandedDescriptors", 307092);
-            codes_set_double(ibufr, "compressedData", 0);
-
+            codes_handle *ibufr = codes_handle_new_from_samples(NULL, "BUFR4");
+            if (!ibufr) {
+                throw IOException("Unable to create handle from sample", AT);
+            }
+            CODES_CHECK(codes_set_long(ibufr, "edition", 4),0);
+            CODES_CHECK(codes_set_long(ibufr, "masterTableNumber", 0),0);
+            CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", 40),0);
+            CODES_CHECK(codes_set_long(ibufr, "dataCategory", 0),0);
+            CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2),0);
+            std::vector<long> descriptors = {301003	, 1002};
+            int err = codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size());
+            if (err != 0) {
+                std::cout << "Error setting unexpandedDescriptors: Errno " << err << "\n";
+            }
+            // CODES_CHECK(codes_set_long(ibufr, "unexpandedDescriptors", 301030	),0);
             return makeUnique(ibufr);
         }
 
-        void setTime(CodesHandlePtr& ibufr, const Date& date) {
+        void setTime(CodesHandlePtr &ibufr, const Date &date) {
             int year, month, day, hour, minute, second;
             date.getDate(year, month, day, hour, minute, second);
             codes_set_long(ibufr.get(), "typicalYear", year);
@@ -442,15 +460,24 @@ namespace mio {
             codes_set_long(ibufr.get(), "second", second);
         }
 
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue) {
-            codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue);
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const double &parameterValue) { 
+            int err = codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue); 
+            return err == 0;
         }
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue) {
-            codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue);
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const long &parameterValue) {
+            int err =  codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue); 
+            return err == 0;
         }
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue) {
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const std::string &parameterValue) {
             size_t len = parameterValue.size();
-            codes_set_string(ibufr.get(), parameterName.c_str(), parameterValue.c_str(), &len);
+            int err = codes_set_string(ibufr.get(), parameterName.c_str(), parameterValue.c_str(), &len);
+            return err == 0;
+        }
+
+        void packMessage(CodesHandlePtr &m) {
+            /* We need to instruct ecCodes to pack the descriptors
+            i.e. pack the data values */
+            CODES_CHECK(codes_set_long(m.get(), "pack", 1), 0);
         }
 
     } // namespace codes

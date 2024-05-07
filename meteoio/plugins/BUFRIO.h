@@ -49,11 +49,15 @@ class BUFRIO : public IOInterface {
 
 		std::vector<BUFRFile> station_files;
         std::vector<std::string> additional_params;
+        
+        std::string outpath;
+        bool separate_stations;
 
 		static const std::string template_filename;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 
         void parseInputSection();
+        void parseOutputSection();
 
 
 };

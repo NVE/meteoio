@@ -90,12 +90,14 @@ namespace mio {
         void writeToFile(CodesHandlePtr &h, const std::string &filename);
         CodesHandlePtr createBUFRMessageFromSample();
         void setTime(CodesHandlePtr& ibufr, const Date& date);
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue);
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue);
-        void setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue);
+        bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue);
+        bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue);
+        bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue);
+        void packMessage(CodesHandlePtr &m);
 
         // ------------------------- CONSTANTS -------------------------
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
+        extern const std::map<std::string, std::string> BUFR_PARAMETER_ALT;
         extern const std::vector<int> FLAG_TO_EPSG;
         extern const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE;
         extern const std::map<std::string, std::string> GRIB_DEFAULT_LEVELTYPE_TABLE;

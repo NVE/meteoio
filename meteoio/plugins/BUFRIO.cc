@@ -62,6 +62,8 @@ namespace mio {
      * STATION1 = example.bfr
      * VERBOSE = TRUE
      * @endcode
+	 * 
+	 * @todo For writing profiles use the respective BUFR profile template
      *
      */
     using namespace PLUGIN;
@@ -69,15 +71,17 @@ namespace mio {
     const std::string dflt_extension_BUFR = ".bufr";
     const std::string BUFRIO::template_filename = "MeteoIO.bufr";
 
-    BUFRIO::BUFRIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params() {
+    BUFRIO::BUFRIO(const std::string &configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params(), outpath(), separate_stations(false) {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
         parseInputSection();
+        parseOutputSection();
     }
 
-    BUFRIO::BUFRIO(const Config &cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params() {
+    BUFRIO::BUFRIO(const Config &cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params(), outpath(), separate_stations(false) {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
         parseInputSection();
+        parseOutputSection();
     }
 
     void BUFRIO::parseInputSection() {
@@ -110,6 +114,17 @@ namespace mio {
         }
     }
 
+    void BUFRIO::parseOutputSection() {
+        const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
+        if (out_meteo == "BUFR") {
+            outpath = cfg.get("METEOPATH", "Output", "");
+            if (outpath.empty()) {
+                throw IOException("No output path specified for BUFR output", AT);
+            }
+            separate_stations = cfg.get("SEPARATESTATIONS", "Output", false);
+        }
+    }
+
     void BUFRIO::readMeteoData(const Date & /*dateStart*/, const Date & /*dateEnd*/, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
         vecvecMeteo.clear();
         std::map<std::string, size_t> station_ids;
@@ -139,34 +154,53 @@ namespace mio {
 
     static void setStationData(CodesHandlePtr &message, const StationData &station, const Coords &position) {
         setParameter(message, "stationID", station.getStationID());
-        setParameter(message, "stationName", station.getStationName());
-        setParameter(message, "latitude", position.getLat());
-        setParameter(message, "longitude", position.getLon());
-        setParameter(message, "altitude", position.getAltitude());
+		// if (!setParameter(message, "stationID", station.getStationID()))
+			// throw IOException("Station ID could not be set", AT);
+        setParameter(message, "statoinName", station.getStationID());
+		// if (!setParameter(message, "stationName", station.getStationName()))
+			// throw IOException("Station Name could not be set", AT);
+        setParameter(message, "longitude", station.getStationID());
+		// if (!setParameter(message, "latitude", position.getLat()))
+			// throw IOException("latitude could not be set", AT);
+        setParameter(message, "latitude", station.getStationID());
+		// if (!setParameter(message, "longitude", position.getLon()))
+			// throw IOException("longitude could not be set", AT);
+        setParameter(message, "altitude", station.getStationID());
+		// if (!setParameter(message, "altitude", position.getAltitude()))
+			// throw IOException("altitude could not be set", AT);
     }
 
     static void setMeteoData(CodesHandlePtr &message, const MeteoData &meteo, const std::set<std::string> &available_params) {
         for (const auto &param : available_params) {
             size_t param_id = meteo.getParameterIndex(param);
-            setParameter(message, BUFR_PARAMETER.at(param), meteo(param_id));
+            bool success = setParameter(message, BUFR_PARAMETER.at(param), meteo(param_id));
+			if (!success) {
+				success = setParameter(message, BUFR_PARAMETER_ALT.at(param), meteo(param_id));
+			}
+			// if (!success) 
+				// throw IOException("Parameter " + param + " could not be set", AT);
         }
     }
 
-    void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &filename) {
+    void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string & /* name */) {
         // I found no way of creating Subsets in BUFR files with ecCodes, so each time point and each station are 1 message
-        for (const auto &vecStation : vecMeteo) {
+        const std::string prefix = "/meteoio_";
+		// const std::string extension = FileUtils::getDateTime()+".bufr";
+		const std::string extension = dflt_extension_BUFR;
+		for (const auto &vecStation : vecMeteo) {
             const StationData station = vecStation.front().meta;
             const Coords position = station.getPosition();
             const std::set<std::string> available_params = MeteoData::listAvailableParameters(vecStation);
+			const std::string outfile = outpath + prefix + (separate_stations ? station.getStationID() : "") + extension;
             for (const auto &meteo : vecStation) {
                 CodesHandlePtr message = createBUFRMessageFromSample();
                 setMissingValue(message, plugin_nodata);
                 setTime(message, meteo.date);
                 setStationData(message, station, position);
                 setMeteoData(message, meteo, available_params);
-                writeToFile(message, filename);
+				packMessage(message);
+                writeToFile(message, outfile);
             }
         }
     }
-
 } // namespace

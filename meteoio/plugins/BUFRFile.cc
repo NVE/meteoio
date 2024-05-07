@@ -152,12 +152,10 @@ namespace mio {
         }
     };
 
-    static void handleSpecialCases(CodesHandlePtr &message, MeteoData &md, const std::string &subset_prefix, const std::string &param_name, bool& success, const size_t &id) {
+    static void handleSpecialCases(CodesHandlePtr &/* message */, MeteoData &md, const std::string &/* subset_prefix */, const std::string &param_name, bool& /* success */, const size_t &id) {
         // handle special cases, where the parameter name is not the same as in the MeteoData object
         // e.g. airTemperatureAt2M is not defined, but maybe airTemperature is and conver TAU_CLD to decimal
-        if (param_name == "TA" && !success) 
-            success = getParameter(message, subset_prefix + "airTemperature", md(id), IOUtils::nothrow);
-        else if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata)
+        if (param_name == "TAU_CLD" && md(id) != IOUtils::nodata)
             md(id) = md(id) / 100.0;
     };
 
@@ -170,6 +168,8 @@ namespace mio {
             std::string param_name = md.getParameterName(id);
 
             bool success = getParameter(message, subset_prefix + BUFR_PARAMETER.at(param_name), md(id), IOUtils::nothrow);
+            if (!success)
+                success = getParameter(message, subset_prefix + BUFR_PARAMETER_ALT.at(param_name), md(id), IOUtils::nothrow);
             handleSpecialCases(message, md, subset_prefix, param_name, success, id);
 
             if (!success) 
