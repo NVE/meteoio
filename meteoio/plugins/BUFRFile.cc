@@ -60,7 +60,7 @@ namespace mio {
         return;
     };
 
-    static void getPosition(CodesHandlePtr &h, double &latitude, double &longitude, double &altitude, const double &subsetNumber) {
+    static void getPosition(CodesHandlePtr &h, double &latitude, double &longitude, double &altitude, const size_t &subsetNumber) {
         std::string subset_prefix = getSubsetPrefix(subsetNumber);
         getParameter(h, subset_prefix + "latitude", latitude);
         getParameter(h, subset_prefix + "longitude", longitude);

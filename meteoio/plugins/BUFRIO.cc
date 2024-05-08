@@ -42,25 +42,39 @@ namespace mio {
      * for height profiles. I.e., we require only static station observations.
      * @note If you require these functionality please reach out to us, so we can improve on this plugin.
      *
-     * It is not yet possible to write BUFR files with MeteoIO, but will soon be possible.
+     * It is also possible to write BUFR files. However, only writing predefined parameters is supported, and only 
+     * one parameter per station, i.e. it is not possible to have 2 air temperature parameters in one message.
+     * 
+     * The filenames are generated on the fly, as meteoio_(timestamp).bufr, where the timestamp is the current date and time.
+     * Each datapoint is its own message in the end, as it is not possible to create subsets with eccodes.
      *
      * @section bufrio_keywords Keywords
      * This plugin uses the following keywords:
+     * INPUT:
      * - METEOPATH: Path to the BUFR files
      * - BUFREXT: Extension of the BUFR files (default: .bufr)
      * - STATION#: File name per station
      * - ADDITIONAL_PARAMS: Additional parameters to read from the BUFR file, as a comma separated list of WMO element table 40 keys
      * - FALLBACKTZ: Fallback timezone in hours, if no timezone information is found in the BUFR file (default: GMT+0)
      * - VERBOSE: Print additional information during reading (default: false)
-     *
+     *OUTPUT:
+     * - METEOPATH: Path to the BUFR files
+     * - SEPARATESTATIONS: Write each station to a separate file (default: false)
+     * 
      * @section bufrio_example Example
      * @code
+     * [INPUT]
      * METEO = BUFR
      * METEOPATH = path/to/bufr/files
      * BUFREXT = .bfr
      * ADDITIONAL_PARAMS = airTemperature, dewPointTemperature
      * STATION1 = example.bfr
      * VERBOSE = TRUE
+     * 
+     * [OUTPUT]
+     * METEO = BUFR
+     * METEOPATH = path/to/output
+     * SEPARATESTATIONS = TRUE
      * @endcode
      *
      * @todo For writing profiles use the respective BUFR profile template
@@ -196,16 +210,15 @@ namespace mio {
             if (!success) {
                 success = setParameter(message, BUFR_PARAMETER_ALT.at(param), meteo(param_id));
             }
-            // if (!success)
-            //     throw IOException("Parameter " + param + " could not be set", AT);
+            if (!success)
+                throw IOException("Parameter " + param + " could not be set", AT);
         }
     }
 
     void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string & /* name */) {
         // I found no way of creating Subsets in BUFR files with ecCodes, so each time point and each station are 1 message
         const std::string prefix = "/meteoio_";
-        // const std::string extension = FileUtils::getDateTime()+".bufr";
-        const std::string extension = dflt_extension_BUFR;
+        const std::string extension = FileUtils::getDateTime()+".bufr";
         for (const auto &vecStation : vecMeteo) {
             const StationData station = vecStation.front().meta;
             const Coords position = station.getPosition();
