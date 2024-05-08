@@ -436,7 +436,7 @@ namespace mio {
             CODES_CHECK(codes_set_long(ibufr, "internationalDataSubCategory", 2), 0);
             CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2),0);
             // these are all the descriptors needed to include the meteoio parameters
-            std::vector<long> descriptors = {301011, 301013, 1102, 1018, 1002, 301021, 7030, 7004,12004,13003,12120,12131,13013,11012,11011,11041,14017,14018,20010,13011,20021};
+            std::vector<long> descriptors = {301011, 301013, 1018,1002, 1015, 301021, 7030, 7004,12004,13003,12120,12131,13013,11012,11011,11041,14017,14018,20010,13011,20021};
             CODES_CHECK(codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size()),0);
             return makeUnique(ibufr);
         }

@@ -65,6 +65,7 @@ namespace mio {
      *
      * @todo For writing profiles use the respective BUFR profile template
      * @todo If writing arbitrary parameters is required, we need descriptors and parameter keys, which are not hardcoded 
+     * @todo map precip type from code to...
      *
      */
     using namespace PLUGIN;
@@ -195,8 +196,8 @@ namespace mio {
             if (!success) {
                 success = setParameter(message, BUFR_PARAMETER_ALT.at(param), meteo(param_id));
             }
-            if (!success)
-                throw IOException("Parameter " + param + " could not be set", AT);
+            // if (!success)
+            //     throw IOException("Parameter " + param + " could not be set", AT);
         }
     }
 
