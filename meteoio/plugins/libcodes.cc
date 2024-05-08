@@ -63,11 +63,11 @@ namespace mio {
             {"HS", "totalSnowDepth"},
             {"VW", "windSpeed"},
             {"DW", "windDirection"},
-            {"VW_MAX", "maximumWindSpeedMeanWind"}, // TODO: or is it maximumWindGustSpeed
-            {"RSWR", ""},                           // TODO: which parameters are tey
-            {"ISWR", ""},                           // TODO: which parameters are tey
-            {"ILWR", ""},                           // TODO: which parameters are tey
-            {"TAU_CLD", "cloudCoverTotal	"},     // TODO: is in per_cent
+            {"VW_MAX", "maximumWindGustSpeed"},
+            {"RSWR", ""},                           // TODO: there is no parameter for it, should we save albedo? --> also need to find descriptor
+            {"ISWR", "instantaneousShortWaveRadiation"},
+            {"ILWR", "instantaneousLongWaveRadiation"},
+            {"TAU_CLD", "cloudCoverTotal	"},
             {"PSUM", "totalPrecipitationOrTotalWaterEquivalent	"},
             {"PSUM_PH", "precipitationType"} // should the type be mapped to the phase?
         };
@@ -433,31 +433,29 @@ namespace mio {
             CODES_CHECK(codes_set_long(ibufr, "masterTableNumber", 0),0);
             CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", 40),0);
             CODES_CHECK(codes_set_long(ibufr, "dataCategory", 0),0);
+            CODES_CHECK(codes_set_long(ibufr, "internationalDataSubCategory", 2), 0);
             CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2),0);
-            std::vector<long> descriptors = {301003	, 1002};
-            int err = codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size());
-            if (err != 0) {
-                std::cout << "Error setting unexpandedDescriptors: Errno " << err << "\n";
-            }
-            // CODES_CHECK(codes_set_long(ibufr, "unexpandedDescriptors", 301030	),0);
+            // these are all the descriptors needed to include the meteoio parameters
+            std::vector<long> descriptors = {301011, 301013, 1102, 1018, 1002, 301021, 7030, 7004,12004,13003,12120,12131,13013,11012,11011,11041,14017,14018,20010,13011,20021};
+            CODES_CHECK(codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size()),0);
             return makeUnique(ibufr);
         }
 
         void setTime(CodesHandlePtr &ibufr, const Date &date) {
             int year, month, day, hour, minute, second;
             date.getDate(year, month, day, hour, minute, second);
-            codes_set_long(ibufr.get(), "typicalYear", year);
-            codes_set_long(ibufr.get(), "year", year);
-            codes_set_long(ibufr.get(), "typicalMonth", month);
-            codes_set_long(ibufr.get(), "month", month);
-            codes_set_long(ibufr.get(), "typicalDay", day);
-            codes_set_long(ibufr.get(), "day", day);
-            codes_set_long(ibufr.get(), "typicalHour", hour);
-            codes_set_long(ibufr.get(), "hour", hour);
-            codes_set_long(ibufr.get(), "typicalMinute", minute);
-            codes_set_long(ibufr.get(), "minute", minute);
-            codes_set_long(ibufr.get(), "typicalSecond", second);
-            codes_set_long(ibufr.get(), "second", second);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalYear", year),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "year", year),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMonth", month),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "month", month),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalDay", day),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "day", day),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalHour", hour),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "hour", hour),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMinute", minute),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "minute", minute),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalSecond", second),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "second", second),0);
         }
 
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const double &parameterValue) { 
