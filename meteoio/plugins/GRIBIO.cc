@@ -29,6 +29,7 @@ namespace mio {
     /**
      * @page gribio GRIBIO
      * @section gribio_format Format
+     * @note This plugin requires the ecCodes library to be installed. It is available at https://confluence.ecmwf.int/display/ECC/ecCodes+Home
      * This plugin reads Meteorological data from GRIB files, specified by the WMO in their Manual of Codes 306. A short introduction to GRIB can be found at https://en.wikipedia.org/wiki/GRIB. 
      * 
      * In essence a Grib file contains an arbitrary number of messages. Each message is a self-explanatory record of some gridded data. Messages contain all the Metadata 

@@ -26,6 +26,7 @@ namespace mio {
     /**
      * @page bufrio BUFRIO
      * @section bufrio_format Format
+     * @note This plugin requires the ecCodes library to be installed. It is available at https://confluence.ecmwf.int/display/ECC/ecCodes+Home
      * BUFR is a binary data format, that was introduced by the WMO to universally store meteorological observation data. It is very flexible and powerful,
      * but can be quite complex to handle. An introduction can be found at 	https://en.wikipedia.org/wiki/BUFR.
      *
